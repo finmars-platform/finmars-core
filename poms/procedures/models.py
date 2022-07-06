@@ -1,7 +1,7 @@
 import json
 
 from django.db import models
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from poms.common.models import NamedModel, DataTimeStampedModel
 from poms.integrations.models import DataProvider
@@ -21,10 +21,10 @@ _l = logging.getLogger('poms.procedures')
 
 class BaseProcedure(NamedModel, DataTimeStampedModel):
 
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
-    notes_for_users = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes for user'))
+    notes_for_users = models.TextField(blank=True, default='', verbose_name=gettext_lazy('notes for user'))
 
     class Meta(NamedModel.Meta):
         abstract = True
@@ -42,34 +42,34 @@ class BaseProcedureInstance(DataTimeStampedModel):
     STATUS_ERROR = 'E'
 
     STATUS_CHOICES = (
-        (STATUS_INIT, ugettext_lazy('Init')),
-        (STATUS_PENDING, ugettext_lazy('Pending')),
-        (STATUS_DONE, ugettext_lazy('Done')),
-        (STATUS_ERROR, ugettext_lazy('Error')),
+        (STATUS_INIT, gettext_lazy('Init')),
+        (STATUS_PENDING, gettext_lazy('Pending')),
+        (STATUS_DONE, gettext_lazy('Done')),
+        (STATUS_ERROR, gettext_lazy('Error')),
     )
 
     STARTED_BY_MEMBER = 'M'
     STARTED_BY_SCHEDULE = 'S'
 
     STARTED_BY_CHOICES = (
-        (STARTED_BY_MEMBER, ugettext_lazy('Member')),
-        (STARTED_BY_SCHEDULE, ugettext_lazy('Schedule')),
+        (STARTED_BY_MEMBER, gettext_lazy('Member')),
+        (STARTED_BY_SCHEDULE, gettext_lazy('Schedule')),
     )
 
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
     status = models.CharField(max_length=1, default=STATUS_INIT, choices=STATUS_CHOICES,
-                              verbose_name=ugettext_lazy('status'))
+                              verbose_name=gettext_lazy('status'))
 
     started_by = models.CharField(max_length=1, default=STARTED_BY_MEMBER, choices=STARTED_BY_CHOICES,
-                                  verbose_name=ugettext_lazy('started by'))
+                                  verbose_name=gettext_lazy('started by'))
 
-    member = models.ForeignKey(Member, null=True, blank=True, verbose_name=ugettext_lazy('member'), on_delete=models.SET_NULL)
-    schedule_instance = models.ForeignKey(ScheduleInstance, null=True, blank=True,  verbose_name=ugettext_lazy('schedule instance'), on_delete=models.SET_NULL)
+    member = models.ForeignKey(Member, null=True, blank=True, verbose_name=gettext_lazy('member'), on_delete=models.SET_NULL)
+    schedule_instance = models.ForeignKey(ScheduleInstance, null=True, blank=True,  verbose_name=gettext_lazy('schedule instance'), on_delete=models.SET_NULL)
 
-    error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=ugettext_lazy('error code'))
-    error_message = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('error message'))
+    error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=gettext_lazy('error code'))
+    error_message = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('error message'))
 
     action = models.CharField(max_length=255, null=True, blank=True)
     provider = models.CharField(max_length=255, null=True, blank=True)
@@ -89,77 +89,77 @@ class PricingProcedure(BaseProcedure):
     CREATED_BY_CURRENCY = 3
 
     TYPES = (
-        (CREATED_BY_USER, ugettext_lazy('Created by User')),
-        (CREATED_BY_INSTRUMENT, ugettext_lazy('Created by Instrument')),
-        (CREATED_BY_CURRENCY, ugettext_lazy('Created by Currency')),
+        (CREATED_BY_USER, gettext_lazy('Created by User')),
+        (CREATED_BY_INSTRUMENT, gettext_lazy('Created by Instrument')),
+        (CREATED_BY_CURRENCY, gettext_lazy('Created by Currency')),
     )
 
     type = models.PositiveSmallIntegerField(default=CREATED_BY_USER, choices=TYPES,
-                                            verbose_name=ugettext_lazy('type'))
+                                            verbose_name=gettext_lazy('type'))
 
     # DEPRECATED since 21.02.2020
-    # price_is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('price is active'))
+    # price_is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('price is active'))
 
-    price_date_from = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date from'))
+    price_date_from = models.DateField(null=True, blank=True, verbose_name=gettext_lazy('price date from'))
 
     price_date_from_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                            verbose_name=ugettext_lazy('price date from expr'))
+                                            verbose_name=gettext_lazy('price date from expr'))
 
-    price_date_to = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date to'))
+    price_date_to = models.DateField(null=True, blank=True, verbose_name=gettext_lazy('price date to'))
 
     price_date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                          verbose_name=ugettext_lazy('price date to expr'))
+                                          verbose_name=gettext_lazy('price date to expr'))
 
     # DEPRECATED since 27.04.2020
-    # price_balance_date = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price balance date'))
+    # price_balance_date = models.DateField(null=True, blank=True, verbose_name=gettext_lazy('price balance date'))
     #
     # price_balance_date_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-    #                                            verbose_name=ugettext_lazy('price balance date expr'))
+    #                                            verbose_name=gettext_lazy('price balance date expr'))
 
-    price_fill_days = models.PositiveSmallIntegerField(default=0, verbose_name=ugettext_lazy('price fill days'))
+    price_fill_days = models.PositiveSmallIntegerField(default=0, verbose_name=gettext_lazy('price fill days'))
 
     # DEPRECATED since 27.04.2020
-    # price_override_existed = models.BooleanField(default=True, verbose_name=ugettext_lazy('price override existed'))
+    # price_override_existed = models.BooleanField(default=True, verbose_name=gettext_lazy('price override existed'))
 
-    price_get_principal_prices = models.BooleanField(default=False, verbose_name=ugettext_lazy('price get principal prices'))
-    price_get_accrued_prices = models.BooleanField(default=False, verbose_name=ugettext_lazy('price get accrued prices'))
-    price_get_fx_rates = models.BooleanField(default=False, verbose_name=ugettext_lazy('price get fx rates'))
+    price_get_principal_prices = models.BooleanField(default=False, verbose_name=gettext_lazy('price get principal prices'))
+    price_get_accrued_prices = models.BooleanField(default=False, verbose_name=gettext_lazy('price get accrued prices'))
+    price_get_fx_rates = models.BooleanField(default=False, verbose_name=gettext_lazy('price get fx rates'))
 
-    price_overwrite_principal_prices = models.BooleanField(default=False, verbose_name=ugettext_lazy('price overwrite principal prices'))
-    price_overwrite_accrued_prices = models.BooleanField(default=False, verbose_name=ugettext_lazy('price overwrite accrued prices'))
-    price_overwrite_fx_rates = models.BooleanField(default=False, verbose_name=ugettext_lazy('price overwrite fx rates'))
+    price_overwrite_principal_prices = models.BooleanField(default=False, verbose_name=gettext_lazy('price overwrite principal prices'))
+    price_overwrite_accrued_prices = models.BooleanField(default=False, verbose_name=gettext_lazy('price overwrite accrued prices'))
+    price_overwrite_fx_rates = models.BooleanField(default=False, verbose_name=gettext_lazy('price overwrite fx rates'))
 
     # DEPRECATED since 21.02.2020
-    # accrual_is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('accrual is active'))
+    # accrual_is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('accrual is active'))
     #
-    # accrual_date_from = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('accrual date from'))
+    # accrual_date_from = models.DateField(null=True, blank=True, verbose_name=gettext_lazy('accrual date from'))
     # accrual_date_from_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-    #                                            verbose_name=ugettext_lazy('accrual date from expr'))
+    #                                            verbose_name=gettext_lazy('accrual date from expr'))
     #
-    # accrual_date_to = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('accrual date to'))
+    # accrual_date_to = models.DateField(null=True, blank=True, verbose_name=gettext_lazy('accrual date to'))
     # accrual_date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-    #                                           verbose_name=ugettext_lazy('accrual date to expr'))
+    #                                           verbose_name=gettext_lazy('accrual date to expr'))
 
     pricing_policy_filters = models.TextField(blank=True, default='',
-                                              verbose_name=ugettext_lazy('pricing policy filters'))
+                                              verbose_name=gettext_lazy('pricing policy filters'))
 
     portfolio_filters = models.TextField(blank=True, default='',
-                                         verbose_name=ugettext_lazy('portfolio filters'))
+                                         verbose_name=gettext_lazy('portfolio filters'))
 
-    instrument_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('instrument filters'))
+    instrument_filters = models.TextField(blank=True, default='', verbose_name=gettext_lazy('instrument filters'))
 
-    currency_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('currency filters'))
+    currency_filters = models.TextField(blank=True, default='', verbose_name=gettext_lazy('currency filters'))
 
 
-    instrument_type_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('instrument type filters'))
+    instrument_type_filters = models.TextField(blank=True, default='', verbose_name=gettext_lazy('instrument type filters'))
 
-    instrument_pricing_scheme_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('instrument pricing scheme filters'))
+    instrument_pricing_scheme_filters = models.TextField(blank=True, default='', verbose_name=gettext_lazy('instrument pricing scheme filters'))
 
-    instrument_pricing_condition_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('instrument pricing condition filters'))
+    instrument_pricing_condition_filters = models.TextField(blank=True, default='', verbose_name=gettext_lazy('instrument pricing condition filters'))
 
-    currency_pricing_scheme_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('currency pricing scheme filters'))
+    currency_pricing_scheme_filters = models.TextField(blank=True, default='', verbose_name=gettext_lazy('currency pricing scheme filters'))
 
-    currency_pricing_condition_filters = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('currency pricing condition filters'))
+    currency_pricing_condition_filters = models.TextField(blank=True, default='', verbose_name=gettext_lazy('currency pricing condition filters'))
 
 
 
@@ -249,11 +249,11 @@ class PricingParentProcedureInstance(models.Model):
     modified = models.DateTimeField(auto_now=True, editable=False, db_index=True)
 
 
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
     procedure = models.ForeignKey(PricingProcedure, on_delete=models.CASCADE,
-                                          verbose_name=ugettext_lazy('procedure'))
+                                          verbose_name=gettext_lazy('procedure'))
 
     class Meta:
         ordering = ['-created']
@@ -262,16 +262,16 @@ class PricingParentProcedureInstance(models.Model):
 class PricingProcedureInstance(BaseProcedureInstance):
 
     procedure = models.ForeignKey(PricingProcedure, on_delete=models.CASCADE,
-                                          verbose_name=ugettext_lazy('procedure'))
+                                          verbose_name=gettext_lazy('procedure'))
 
     parent_procedure_instance = models.ForeignKey(PricingParentProcedureInstance, on_delete=models.CASCADE,
                                                   related_name='procedures',
-                                                  verbose_name=ugettext_lazy('parent pricing procedure'), null=True, blank=True)
+                                                  verbose_name=gettext_lazy('parent pricing procedure'), null=True, blank=True)
 
-    successful_prices_count = models.IntegerField(default=0, verbose_name=ugettext_lazy('successful prices count'))
-    error_prices_count = models.IntegerField(default=0, verbose_name=ugettext_lazy('error prices count'))
+    successful_prices_count = models.IntegerField(default=0, verbose_name=gettext_lazy('successful prices count'))
+    error_prices_count = models.IntegerField(default=0, verbose_name=gettext_lazy('error prices count'))
 
-    json_request_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json request data'))
+    json_request_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json request data'))
 
     @property
     def request_data(self):
@@ -310,24 +310,24 @@ class RequestDataFileProcedure(BaseProcedure):
 
 
 
-    provider = models.ForeignKey(DataProvider, verbose_name=ugettext_lazy('provider'), on_delete=models.CASCADE)
+    provider = models.ForeignKey(DataProvider, verbose_name=gettext_lazy('provider'), on_delete=models.CASCADE)
 
     scheme_type = models.CharField(max_length=255, choices=SCHEME_TYPE_CHOICES, default='transaction_import')
 
     scheme_user_code = models.CharField(max_length=255)
 
-    date_from = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date from'))
+    date_from = models.DateField(null=True, blank=True, verbose_name=gettext_lazy('price date from'))
 
     date_from_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                            verbose_name=ugettext_lazy('price date from expr'))
+                                            verbose_name=gettext_lazy('price date from expr'))
 
-    date_to = models.DateField(null=True, blank=True, verbose_name=ugettext_lazy('price date to'))
+    date_to = models.DateField(null=True, blank=True, verbose_name=gettext_lazy('price date to'))
 
     date_to_expr = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                          verbose_name=ugettext_lazy('price date to expr'))
+                                          verbose_name=gettext_lazy('price date to expr'))
 
 
-    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+    json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
     @property
     def data(self):
@@ -350,14 +350,14 @@ class RequestDataFileProcedure(BaseProcedure):
 class RequestDataFileProcedureInstance(BaseProcedureInstance):
 
     procedure = models.ForeignKey(RequestDataFileProcedure, on_delete=models.CASCADE,
-                                          verbose_name=ugettext_lazy('procedure'))
+                                          verbose_name=gettext_lazy('procedure'))
 
-    private_key = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('private key'))
-    public_key = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('public key'))
-    symmetric_key = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('symmetric key'))
+    private_key = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('private key'))
+    public_key = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('public key'))
+    symmetric_key = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('symmetric key'))
 
 
-    json_request_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+    json_request_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
     class Meta:
         ordering = ['-created']
@@ -383,9 +383,9 @@ class RequestDataFileProcedureInstance(BaseProcedureInstance):
 
 class ExpressionProcedure(BaseProcedure):
 
-    code = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('code'))
+    code = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('code'))
 
-    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+    json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
     @property
     def data(self):
@@ -408,12 +408,12 @@ class ExpressionProcedure(BaseProcedure):
 class ExpressionProcedureContextVariable(models.Model):
     procedure = models.ForeignKey(ExpressionProcedure, on_delete=models.CASCADE,
                                   related_name="context_variables",
-                                  verbose_name=ugettext_lazy('procedure'))
-    order = models.IntegerField(default=0, verbose_name=ugettext_lazy("order"))
+                                  verbose_name=gettext_lazy('procedure'))
+    order = models.IntegerField(default=0, verbose_name=gettext_lazy("order"))
     name = models.CharField(max_length=255)
     expression = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                  verbose_name=ugettext_lazy('expression'))
-    notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
+                                  verbose_name=gettext_lazy('expression'))
+    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
 
 
     def __str__(self):
@@ -422,11 +422,11 @@ class ExpressionProcedureContextVariable(models.Model):
 class ExpressionProcedureInstance(BaseProcedureInstance):
 
     procedure = models.ForeignKey(ExpressionProcedure, on_delete=models.CASCADE,
-                                  verbose_name=ugettext_lazy('procedure'))
+                                  verbose_name=gettext_lazy('procedure'))
 
-    calculated_options_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('calculated options'))
+    calculated_options_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('calculated options'))
 
-    result = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('result'))
+    result = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('result'))
 
     class Meta:
         ordering = ['-created']

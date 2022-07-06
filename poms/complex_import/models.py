@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from poms.common.models import DataTimeStampedModel, NamedModel
 from poms.users.models import MasterUser
@@ -8,8 +8,8 @@ from poms.users.models import MasterUser
 
 class ComplexImportScheme(NamedModel, DataTimeStampedModel):
 
-    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     class Meta:
         unique_together = (
@@ -40,17 +40,17 @@ CLASSIFIER_HANDLER = [
 
 
 class ComplexImportSchemeAction(models.Model):
-    action_notes = models.TextField(default='', verbose_name=ugettext_lazy('action notes'))
-    order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
+    action_notes = models.TextField(default='', verbose_name=gettext_lazy('action notes'))
+    order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
 
     skip = models.BooleanField(default=False,
-                              verbose_name=ugettext_lazy('Skip Action'))
+                              verbose_name=gettext_lazy('Skip Action'))
 
     complex_import_scheme = models.ForeignKey(ComplexImportScheme, related_name='actions', on_delete=models.CASCADE)
 
     class Meta:
-        verbose_name = ugettext_lazy('action')
-        verbose_name_plural = ugettext_lazy('actions')
+        verbose_name = gettext_lazy('action')
+        verbose_name_plural = gettext_lazy('actions')
         index_together = [
             ['complex_import_scheme', 'order'],
         ]
@@ -63,26 +63,26 @@ class ComplexImportSchemeAction(models.Model):
 class ComplexImportSchemeActionCsvImport(ComplexImportSchemeAction):
     csv_import_scheme = models.ForeignKey('csv_import.CsvImportScheme', null=True, blank=True,
                                           on_delete=models.SET_NULL,
-                                          related_name='+', verbose_name=ugettext_lazy('csv import scheme'))
+                                          related_name='+', verbose_name=gettext_lazy('csv import scheme'))
 
     mode = models.CharField(max_length=255, choices=MODE_CHOICES, default='')
     missing_data_handler = models.CharField(max_length=255, choices=MISSING_DATA_CHOICES, default='throw_error')
     classifier_handler = models.CharField(max_length=255, choices=CLASSIFIER_HANDLER, default='skip')
     error_handler = models.CharField(max_length=255, choices=ERROR_HANDLER_CHOICES, default='break')
 
-    notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
+    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
 
 
 class ComplexImportSchemeActionTransactionImport(ComplexImportSchemeAction):
     complex_transaction_import_scheme = models.ForeignKey('integrations.ComplexTransactionImportScheme', null=True,
                                                           blank=True, on_delete=models.SET_NULL,
-                                                          related_name='+', verbose_name=ugettext_lazy(
+                                                          related_name='+', verbose_name=gettext_lazy(
             'complex transaction import scheme'))
 
     missing_data_handler = models.CharField(max_length=255, choices=MISSING_DATA_CHOICES, default='throw_error')
     error_handler = models.CharField(max_length=255, choices=ERROR_HANDLER_CHOICES, default='break')
 
-    notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
+    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
 
 
 class ComplexImport(models.Model):

@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils.encoding import smart_text
+from django.utils.encoding import force_str
 from rest_framework.fields import ReadOnlyField
 from rest_framework.relations import PrimaryKeyRelatedField
 
@@ -74,7 +74,7 @@ class TransactionTypeInputContentTypeField(SlugRelatedFilteredField):
             return self.get_queryset().get(app_label=app_label, model=model)
 
         except ObjectDoesNotExist:
-            self.fail('does_not_exist', slug_name=self.slug_field, value=smart_text(data))
+            self.fail('does_not_exist', slug_name=self.slug_field, value=force_str(data))
         except (TypeError, ValueError):
             self.fail('invalid')
 

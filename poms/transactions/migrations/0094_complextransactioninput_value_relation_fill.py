@@ -16,51 +16,51 @@ def fix_transactions(apps, schema_editor):
     ComplexTransactionInput = apps.get_model("transactions", "ComplexTransactionInput")
 
     # account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
-    #                             verbose_name=ugettext_lazy('account'))
+    #                             verbose_name=gettext_lazy('account'))
     # instrument_type = models.ForeignKey('instruments.InstrumentType', null=True, blank=True, on_delete=models.SET_NULL,
-    #                                     related_name='+', verbose_name=ugettext_lazy('instrument type'))
+    #                                     related_name='+', verbose_name=gettext_lazy('instrument type'))
     # instrument = models.ForeignKey('instruments.Instrument', null=True, blank=True, on_delete=models.SET_NULL,
-    #                                related_name='+', verbose_name=ugettext_lazy('instrument'))
+    #                                related_name='+', verbose_name=gettext_lazy('instrument'))
     # currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL,
-    #                              related_name='+', verbose_name=ugettext_lazy('currency'))
+    #                              related_name='+', verbose_name=gettext_lazy('currency'))
     # counterparty = models.ForeignKey('counterparties.Counterparty', null=True, blank=True, on_delete=models.SET_NULL,
-    #                                  related_name='+', verbose_name=ugettext_lazy('counterparty'))
+    #                                  related_name='+', verbose_name=gettext_lazy('counterparty'))
     # responsible = models.ForeignKey('counterparties.Responsible', null=True, blank=True, on_delete=models.SET_NULL,
-    #                                 related_name='+', verbose_name=ugettext_lazy('responsible'))
+    #                                 related_name='+', verbose_name=gettext_lazy('responsible'))
     # portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.SET_NULL,
-    #                               related_name='+', verbose_name=ugettext_lazy('portfolio'))
+    #                               related_name='+', verbose_name=gettext_lazy('portfolio'))
     # strategy1 = models.ForeignKey('strategies.Strategy1', null=True, blank=True, on_delete=models.SET_NULL,
-    #                               related_name='+', verbose_name=ugettext_lazy('strategy 1'))
+    #                               related_name='+', verbose_name=gettext_lazy('strategy 1'))
     # strategy2 = models.ForeignKey('strategies.Strategy2', null=True, blank=True, on_delete=models.SET_NULL,
-    #                               related_name='+', verbose_name=ugettext_lazy('strategy 2'))
+    #                               related_name='+', verbose_name=gettext_lazy('strategy 2'))
     # strategy3 = models.ForeignKey('strategies.Strategy3', null=True, blank=True, on_delete=models.SET_NULL,
-    #                               related_name='+', verbose_name=ugettext_lazy('strategy 3'))
+    #                               related_name='+', verbose_name=gettext_lazy('strategy 3'))
     # daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
     #                                         on_delete=models.SET_NULL, related_name='+',
-    #                                         verbose_name=ugettext_lazy('daily pricing model'))
+    #                                         verbose_name=gettext_lazy('daily pricing model'))
     # payment_size_detail = models.ForeignKey('instruments.PaymentSizeDetail', null=True, blank=True,
     #                                         on_delete=models.SET_NULL, related_name='+',
-    #                                         verbose_name=ugettext_lazy('payment size detail'))
+    #                                         verbose_name=gettext_lazy('payment size detail'))
     #
     # pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True,
     #                                    on_delete=models.SET_NULL, related_name='+',
-    #                                    verbose_name=ugettext_lazy('pricing policy'))
+    #                                    verbose_name=gettext_lazy('pricing policy'))
     #
     # periodicity = models.ForeignKey('instruments.Periodicity', null=True, blank=True,
     #                                 on_delete=models.PROTECT, related_name='+',
-    #                                 verbose_name=ugettext_lazy('periodicity'))
+    #                                 verbose_name=gettext_lazy('periodicity'))
     #
     # accrual_calculation_model = models.ForeignKey('instruments.AccrualCalculationModel', null=True, blank=True,
     #                                               on_delete=models.PROTECT, related_name='+',
-    #                                               verbose_name=ugettext_lazy('accrual calculation model'))
+    #                                               verbose_name=gettext_lazy('accrual calculation model'))
     #
     # event_class = models.ForeignKey(EventClass, null=True, blank=True,
     #                                 on_delete=models.PROTECT, related_name='+',
-    #                                 verbose_name=ugettext_lazy('event class'))
+    #                                 verbose_name=gettext_lazy('event class'))
     #
     # notification_class = models.ForeignKey(NotificationClass, null=True, blank=True,
     #                                        on_delete=models.PROTECT, related_name='+',
-    #                                        verbose_name=ugettext_lazy('notification class'))
+    #                                        verbose_name=gettext_lazy('notification class'))
 
     counter = 0
 

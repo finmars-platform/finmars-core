@@ -44,7 +44,7 @@ from .filters import SchemeContentTypeFilter
 from .models import CsvDataImport, CsvImportScheme
 from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer, CsvDataFileImport
 
-from django.utils.translation import ugettext
+from django.utils.translation import gettext_lazy
 from logging import getLogger
 from openpyxl import load_workbook
 
@@ -341,11 +341,11 @@ def get_row_data_converted(row, csv_fields, csv_row_dict_raw, context, conversio
 
             except (ExpressionEvalError, TypeError, Exception, KeyError):
 
-                csv_row_dict[csv_field.name] = ugettext('Invalid expression')
+                csv_row_dict[csv_field.name] = gettext_lazy('Invalid expression')
 
                 error = {
                     'name': csv_field.name,
-                    'value': ugettext('Invalid expression')
+                    'value': gettext_lazy('Invalid expression')
                 }
 
                 conversion_errors.append(error)
@@ -608,7 +608,7 @@ def process_csv_file(master_user,
 
                             inputs_messages.append(message)
 
-                        error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
+                        error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + gettext_lazy(
                             'Can\'t process fields: %(messages)s') % {
                                                          'messages': ', '.join(str(m) for m in inputs_messages)
                                                      }
@@ -773,7 +773,7 @@ def process_csv_file(master_user,
                                              "reason": "Invalid Expression"}
                                         )
 
-                                        executed_expressions.append(ugettext('Invalid expression'))
+                                        executed_expressions.append(gettext_lazy('Invalid expression'))
 
                                 # _l.debug('executed_expression %s' % executed_expression)
 
@@ -799,7 +799,7 @@ def process_csv_file(master_user,
                                          "reason": "Invalid Expression"}
                                     )
 
-                                    executed_expressions.append(ugettext('Invalid expression'))
+                                    executed_expressions.append(gettext_lazy('Invalid expression'))
 
                                 attr_type = GenericAttributeType.objects.get(pk=executed_attr['dynamic_attribute_id'])
 
@@ -861,7 +861,7 @@ def process_csv_file(master_user,
                             inputs_messages.append(message)
 
                         error_row['level'] = 'error'
-                        error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
+                        error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + gettext_lazy(
                             'Can\'t process fields: %(inputs)s') % {
                                                          'inputs': ', '.join(str(m) for m in inputs_messages)}
 
@@ -893,7 +893,7 @@ def process_csv_file(master_user,
 
             except Exception as e:
 
-                error_row['error_message'] = error_row['error_message'] + ugettext(
+                error_row['error_message'] = error_row['error_message'] + gettext_lazy(
                     'Unhandled Error. %s' % e)
 
             finally:
@@ -1001,7 +1001,7 @@ class ValidateHandler:
 
                 error_row['error_reaction'] = 'Continue import'
                 error_row['level'] = 'error'
-                error_row['error_message'] = error_row['error_message'] + ugettext(
+                error_row['error_message'] = error_row['error_message'] + gettext_lazy(
                     'Validation error %(error)s ') % {
                                                  'error': 'Cannot create attribute. Attribute type %s, value %s. Exception: %s' % (
                                                  attr_type_user_code, result_attr['executed_expression'], e)
@@ -1027,7 +1027,7 @@ class ValidateHandler:
 
             error_row['error_reaction'] = 'Continue import'
             error_row['level'] = 'error'
-            error_row['error_message'] = error_row['error_message'] + ugettext(
+            error_row['error_message'] = error_row['error_message'] + gettext_lazy(
                 'Validation error %(error)s ') % {
                                              'error': 'Cannot create instance'
                                          }
@@ -1059,7 +1059,7 @@ class ValidateHandler:
 
             error_row['error_reaction'] = 'Continue import'
             error_row['level'] = 'error'
-            error_row['error_message'] = error_row['error_message'] + ugettext(
+            error_row['error_message'] = error_row['error_message'] + gettext_lazy(
                 'Validation error %(error)s ') % {
                                              'error': e
                                          }
@@ -1087,7 +1087,7 @@ class ValidateHandler:
 
             error_row['level'] = 'error'
             error_row['error_reaction'] = 'Skipped'
-            error_row['error_message'] = error_row['error_message'] + str(ugettext(
+            error_row['error_message'] = error_row['error_message'] + str(gettext_lazy(
                 'Entry already exists '))
 
         return result_item, error_row
@@ -1182,7 +1182,7 @@ class ValidateHandler:
 
             _l.debug(e)
             _l.debug('Can\'t process file', exc_info=True)
-            instance.error_message = ugettext("Invalid file format or file already deleted.")
+            instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
         finally:
             # import_file_storage.delete(instance.file_path)
             SFS.delete(instance.file_path)
@@ -1337,7 +1337,7 @@ class ImportHandler:
 
             error_row['error_reaction'] = 'Continue import'
             error_row['level'] = 'error'
-            error_row['error_message'] = error_row['error_message'] + ugettext(
+            error_row['error_message'] = error_row['error_message'] + gettext_lazy(
                 'Cannot create simple instance %(error)s ') % {
                                              'error': e}
 
@@ -1513,7 +1513,7 @@ class ImportHandler:
 
             error_row['error_reaction'] = 'Continue import'
             error_row['level'] = 'error'
-            error_row['error_message'] = error_row['error_message'] + ugettext(
+            error_row['error_message'] = error_row['error_message'] + gettext_lazy(
                 'Validation error %(error)s ') % {
                                              'error': e
                                          }
@@ -1551,7 +1551,7 @@ class ImportHandler:
 
             error_row['error_reaction'] = 'Continue import'
             error_row['level'] = 'error'
-            error_row['error_message'] = error_row['error_message'] + str(ugettext(
+            error_row['error_message'] = error_row['error_message'] + str(gettext_lazy(
                 'Validation error %(error)s ') % {
                                                                               'error': e
                                                                           })
@@ -1742,7 +1742,7 @@ class ImportHandler:
 
             _l.debug(e)
             _l.debug('Can\'t process file', exc_info=True)
-            instance.error_message = ugettext("Invalid file format or file already deleted.")
+            instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
         finally:
             # import_file_storage.delete(instance.file_path)
             if instance.file_path:
@@ -2732,7 +2732,7 @@ class UnifiedImportHandler():
 
             _l.debug(e)
             _l.debug('Can\'t process file', exc_info=True)
-            self.instance.error_message = ugettext("Invalid file format or file already deleted.")
+            self.instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
         finally:
             # import_file_storage.delete(instance.file_path)
             SFS.delete(self.instance.file_path)

@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 import json
 
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 from rest_framework import serializers
 
 from poms.common.fields import DateTimeTzAwareField
@@ -36,7 +36,7 @@ class NotificationSerializer(serializers.ModelSerializer):
                   'data']
 
     def get_message(self, value):
-        return force_text(value)
+        return force_str(value)
 
     def get_actor(self, value):
         if value.actor_object_id:

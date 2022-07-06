@@ -4,7 +4,7 @@ from django import forms
 from django.contrib import admin
 from django.urls import reverse_lazy
 from django.utils.html import escape
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from poms.common.admin import ClassModelAdmin, AbstractModelAdmin
 from poms.integrations.models import Task, ImportConfig, ProviderClass, CurrencyMapping, \
@@ -93,7 +93,7 @@ class InstrumentDownloadSchemeAdmin(AbstractModelAdmin):
             return ', '.join(f)
         return None
 
-    fields0.short_description = ugettext_lazy('fields')
+    fields0.short_description = gettext_lazy('fields')
 
 
 admin.site.register(InstrumentDownloadScheme, InstrumentDownloadSchemeAdmin)
@@ -115,7 +115,7 @@ class PriceDownloadSchemeAdmin(AbstractModelAdmin):
             return ', '.join(f)
         return None
 
-    instrument_yesterday_fields0.short_description = ugettext_lazy('instrument yesterday fields')
+    instrument_yesterday_fields0.short_description = gettext_lazy('instrument yesterday fields')
 
     def instrument_history_fields0(self, obj):
         f = obj.instrument_history_fields
@@ -123,7 +123,7 @@ class PriceDownloadSchemeAdmin(AbstractModelAdmin):
             return ', '.join(f)
         return None
 
-    instrument_history_fields0.short_description = ugettext_lazy('instrument history fields')
+    instrument_history_fields0.short_description = gettext_lazy('instrument history fields')
 
     def currency_history_fields0(self, obj):
         f = obj.currency_history_fields
@@ -131,7 +131,7 @@ class PriceDownloadSchemeAdmin(AbstractModelAdmin):
             return ', '.join(f)
         return None
 
-    currency_history_fields0.short_description = ugettext_lazy('currency history fields')
+    currency_history_fields0.short_description = gettext_lazy('currency history fields')
 
 
 admin.site.register(PriceDownloadScheme, PriceDownloadSchemeAdmin)
@@ -302,7 +302,7 @@ class PricingAutomatedScheduleAdmin(AbstractModelAdmin):
         return None
 
     last_run_task_url.allow_tags = True
-    last_run_task_url.short_description = ugettext_lazy('last run task')
+    last_run_task_url.short_description = gettext_lazy('last run task')
 
 
 admin.site.register(PricingAutomatedSchedule, PricingAutomatedScheduleAdmin)

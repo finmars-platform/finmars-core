@@ -59,7 +59,7 @@ from rest_framework import parsers, renderers, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.core.exceptions import ValidationError
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from django.core.signing import TimestampSigner
 from celery.result import AsyncResult
@@ -439,7 +439,7 @@ class ResetPasswordRequestTokenViewSet(AbstractApiView, ViewSet):
         if not active_user_found:
             raise ValidationError({
                 'email': ValidationError(
-                    ugettext_lazy(
+                    gettext_lazy(
                         "There is no active user associated with this e-mail address or the password can not be changed"),
                     code='invalid')}
             )

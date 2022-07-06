@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.db import models
 from django.utils.text import Truncator
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from django.core.cache import cache
 
 
@@ -15,15 +15,15 @@ EXPRESSION_FIELD_LENGTH = 1024
 
 
 class NamedModel(models.Model):
-    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
-    name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
-    # short_name = models.CharField(max_length=50, null=True, blank=True, verbose_name=ugettext_lazy('short name'))
-    short_name = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('short name'))
-    public_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('public name'),
-                                   help_text=ugettext_lazy('used if user does not have permissions to view object'))
-    notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
+    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+    name = models.CharField(max_length=255, verbose_name=gettext_lazy('name'))
+    # short_name = models.CharField(max_length=50, null=True, blank=True, verbose_name=gettext_lazy('short name'))
+    short_name = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('short name'))
+    public_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('public name'),
+                                   help_text=gettext_lazy('used if user does not have permissions to view object'))
+    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
 
-    is_enabled = models.BooleanField(default=True, db_index=True, verbose_name=ugettext_lazy('is enabled'))
+    is_enabled = models.BooleanField(default=True, db_index=True, verbose_name=gettext_lazy('is enabled'))
 
     class Meta:
         abstract = True
@@ -50,9 +50,9 @@ class NamedModel(models.Model):
 
 class DataTimeStampedModel(models.Model):
     created = models.DateTimeField(auto_now_add=True, editable=False, null=True, db_index=True,
-                                   verbose_name=ugettext_lazy('created'))
+                                   verbose_name=gettext_lazy('created'))
     modified = models.DateTimeField(auto_now=True, editable=False, db_index=True,
-                                    verbose_name=ugettext_lazy('modified'))
+                                    verbose_name=gettext_lazy('modified'))
 
     class Meta:
         abstract = True
@@ -60,9 +60,9 @@ class DataTimeStampedModel(models.Model):
 
 class TimeStampedModel(models.Model):
     created = models.DateTimeField(auto_now_add=True, editable=False, db_index=True,
-                                   verbose_name=ugettext_lazy('created'))
+                                   verbose_name=gettext_lazy('created'))
     modified = models.DateTimeField(auto_now=True, editable=False, db_index=True,
-                                    verbose_name=ugettext_lazy('modified'))
+                                    verbose_name=gettext_lazy('modified'))
 
     class Meta:
         abstract = True
@@ -71,11 +71,11 @@ class TimeStampedModel(models.Model):
 
 
 class AbstractClassModel(models.Model):
-    id = models.PositiveSmallIntegerField(primary_key=True, verbose_name=ugettext_lazy('ID'))
-    user_code = models.CharField(max_length=255, unique=True, verbose_name=ugettext_lazy('user code'))
-    name = models.CharField(max_length=255, blank=True, default='', verbose_name=ugettext_lazy('name'))
-    short_name = models.CharField(max_length=255, blank=True, default='', verbose_name=ugettext_lazy('short name'))
-    description = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('description'))
+    id = models.PositiveSmallIntegerField(primary_key=True, verbose_name=gettext_lazy('ID'))
+    user_code = models.CharField(max_length=255, unique=True, verbose_name=gettext_lazy('user code'))
+    name = models.CharField(max_length=255, blank=True, default='', verbose_name=gettext_lazy('name'))
+    short_name = models.CharField(max_length=255, blank=True, default='', verbose_name=gettext_lazy('short name'))
+    description = models.TextField(blank=True, default='', verbose_name=gettext_lazy('description'))
 
     class Meta:
         abstract = True
@@ -96,8 +96,8 @@ class AbstractClassModel(models.Model):
 
 
 class FakeDeletableModel(models.Model):
-    is_deleted = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is deleted'))
-    deleted_user_code =  models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('deleted user code'))
+    is_deleted = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is deleted'))
+    deleted_user_code =  models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('deleted user code'))
 
     class Meta:
         abstract = True

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from mptt.utils import get_cached_trees
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -201,7 +201,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
             if attribute_type.content_type_id != ctype.id:
                 raise ValidationError(
-                    {'attribute_type': ugettext_lazy('Invalid pk "%(pk)s" - object does not exist.') % {
+                    {'attribute_type': gettext_lazy('Invalid pk "%(pk)s" - object does not exist.') % {
                         'pk': attribute_type.id}})
 
             if has_view_perms(member, attribute_type):
@@ -680,7 +680,7 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
         if attribute_type.value_type == GenericAttributeType.CLASSIFIER and classifier:
             if attribute_type.id != classifier.attribute_type_id:
                 # raise ValidationError(
-                #     {'classifier': ugettext_lazy('Invalid pk "%(pk)s" - object does not exist.') % {
+                #     {'classifier': gettext_lazy('Invalid pk "%(pk)s" - object does not exist.') % {
                 #         'pk': classifier.id}})
                 self.fields['classifier'].fail('does_not_exist', pk_value=classifier.id)
 

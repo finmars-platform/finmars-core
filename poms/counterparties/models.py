@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedModel
 from poms.common.wrapper_models import NamedModelAutoMapping
@@ -14,14 +14,14 @@ from poms.users.models import MasterUser, Member
 
 class CounterpartyGroup(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='counterparty_groups',
-                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
+    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
+    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
-        verbose_name = ugettext_lazy('counterparty group')
-        verbose_name_plural = ugettext_lazy('counterparty groups')
+        verbose_name = gettext_lazy('counterparty group')
+        verbose_name_plural = gettext_lazy('counterparty groups')
         permissions = [
             # ('view_counterpartygroup', 'Can view counterparty group'),
             ('manage_counterpartygroup', 'Can manage counterparty group'),
@@ -34,19 +34,19 @@ class CounterpartyGroup(NamedModel, FakeDeletableModel):
 
 class Counterparty(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='counterparties',
-                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(CounterpartyGroup, related_name='counterparties', null=True, blank=True,
-                              verbose_name=ugettext_lazy('group'), on_delete=models.SET_NULL)
+                              verbose_name=gettext_lazy('group'), on_delete=models.SET_NULL)
     is_valid_for_all_portfolios = models.BooleanField(default=True,
-                                                      verbose_name=ugettext_lazy('is valid for all portfolios'))
+                                                      verbose_name=gettext_lazy('is valid for all portfolios'))
 
-    attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
+    attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
+    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
+    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
-        verbose_name = ugettext_lazy('counterparty')
-        verbose_name_plural = ugettext_lazy('counterparties')
+        verbose_name = gettext_lazy('counterparty')
+        verbose_name_plural = gettext_lazy('counterparties')
         ordering = ['user_code']
         permissions = [
             # ('view_counterparty', 'Can view counterparty'),
@@ -60,14 +60,14 @@ class Counterparty(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMod
 
 class ResponsibleGroup(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='responsible_groups',
-                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
+    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
+    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
-        verbose_name = ugettext_lazy('responsible group')
-        verbose_name_plural = ugettext_lazy('responsible groups')
+        verbose_name = gettext_lazy('responsible group')
+        verbose_name_plural = gettext_lazy('responsible groups')
         permissions = [
             # ('view_responsiblegroup', 'Can view responsible group'),
             ('manage_responsiblegroup', 'Can manage responsible group'),
@@ -79,19 +79,19 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
 
 
 class Responsible(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
-    master_user = models.ForeignKey(MasterUser, related_name='responsibles', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey(MasterUser, related_name='responsibles', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(ResponsibleGroup, related_name='responsibles', null=True, blank=True,
-                              verbose_name=ugettext_lazy('group'), on_delete=models.SET_NULL)
+                              verbose_name=gettext_lazy('group'), on_delete=models.SET_NULL)
     is_valid_for_all_portfolios = models.BooleanField(default=True,
-                                                      verbose_name=ugettext_lazy('is valid for all portfolios'))
+                                                      verbose_name=gettext_lazy('is valid for all portfolios'))
 
-    attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
+    attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
+    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
+    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
-        verbose_name = ugettext_lazy('responsible')
-        verbose_name_plural = ugettext_lazy('responsibles')
+        verbose_name = gettext_lazy('responsible')
+        verbose_name_plural = gettext_lazy('responsibles')
         ordering = ['user_code']
         permissions = [
             # ('view_responsible', 'Can view responsible'),

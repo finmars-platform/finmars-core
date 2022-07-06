@@ -14,7 +14,7 @@ from itertools import groupby
 from django.conf import settings
 from django.db.models import Q
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext, ugettext_lazy
+from django.utils.translation import gettext_lazy, gettext_lazy
 
 from poms.accounts.models import Account, AccountType
 from poms.common import formula
@@ -1033,14 +1033,14 @@ class ReportItem(_Base):
     # TYPE_INVESTED_CURRENCY = 300
     # TYPE_INVESTED_SUMMARY = 301
     TYPE_CHOICES = (
-        (TYPE_UNKNOWN, ugettext_lazy('Unknown')),
-        (TYPE_INSTRUMENT, ugettext_lazy('Instrument')),
-        (TYPE_CURRENCY, ugettext_lazy('Currency')),
-        (TYPE_TRANSACTION_PL, ugettext_lazy('Transaction PL')),
-        (TYPE_FX_TRADE, ugettext_lazy('FX-Trade')),
-        (TYPE_CASH_IN_OUT, ugettext_lazy('Cash In/Out')),
-        (TYPE_MISMATCH, ugettext_lazy('Mismatch')),
-        (TYPE_SUMMARY, ugettext_lazy('Summary')),
+        (TYPE_UNKNOWN, gettext_lazy('Unknown')),
+        (TYPE_INSTRUMENT, gettext_lazy('Instrument')),
+        (TYPE_CURRENCY, gettext_lazy('Currency')),
+        (TYPE_TRANSACTION_PL, gettext_lazy('Transaction PL')),
+        (TYPE_FX_TRADE, gettext_lazy('FX-Trade')),
+        (TYPE_CASH_IN_OUT, gettext_lazy('Cash In/Out')),
+        (TYPE_MISMATCH, gettext_lazy('Mismatch')),
+        (TYPE_SUMMARY, gettext_lazy('Summary')),
         # (TYPE_INVESTED_CURRENCY, 'Invested'),
         # (TYPE_INVESTED_SUMMARY, 'Invested summary'),
     )
@@ -1050,10 +1050,10 @@ class ReportItem(_Base):
     SUBTYPE_CLOSED = 2
     SUBTYPE_OPENED = 3
     SUBTYPE_CHOICES = (
-        (SUBTYPE_UNKNOWN, ugettext_lazy('Unknown')),
-        (SUBTYPE_TOTAL, ugettext_lazy('Total')),
-        (SUBTYPE_CLOSED, ugettext_lazy('Closed')),
-        (SUBTYPE_OPENED, ugettext_lazy('Opened')),
+        (SUBTYPE_UNKNOWN, gettext_lazy('Unknown')),
+        (SUBTYPE_TOTAL, gettext_lazy('Total')),
+        (SUBTYPE_CLOSED, gettext_lazy('Closed')),
+        (SUBTYPE_OPENED, gettext_lazy('Opened')),
     )
 
     type = TYPE_UNKNOWN
@@ -2293,22 +2293,22 @@ class ReportItem(_Base):
             return getattr(self.ccy, 'short_name', None)
 
         elif self.type == ReportItem.TYPE_TRANSACTION_PL:
-            return ugettext('Transaction PL')
+            return gettext_lazy('Transaction PL')
 
         elif self.type == ReportItem.TYPE_FX_TRADE:
-            # return ugettext('FX-Trade')
-            return ugettext('FX-Trades: %s/%s') % (getattr(self.trn_ccy, 'short_name', None),
+            # return gettext_lazy('FX-Trade')
+            return gettext_lazy('FX-Trades: %s/%s') % (getattr(self.trn_ccy, 'short_name', None),
                                                    getattr(self.ccy, 'short_name', None),)
 
         elif self.type == ReportItem.TYPE_CASH_IN_OUT:
-            # return ugettext('Cash In/Out: %s/%s')
-            return ugettext('Cash In/Out: %s') % getattr(self.ccy, 'short_name', None)
+            # return gettext_lazy('Cash In/Out: %s/%s')
+            return gettext_lazy('Cash In/Out: %s') % getattr(self.ccy, 'short_name', None)
 
         elif self.type == ReportItem.TYPE_MISMATCH:
             return getattr(self.instr, 'short_name', None)
 
         elif self.type == ReportItem.TYPE_SUMMARY:
-            return ugettext('Summary')
+            return gettext_lazy('Summary')
 
         return '<ERROR>'
 
@@ -2324,22 +2324,22 @@ class ReportItem(_Base):
             return getattr(self.ccy, 'name', None)
 
         elif self.type == ReportItem.TYPE_TRANSACTION_PL:
-            return ugettext('Transaction PL')
+            return gettext_lazy('Transaction PL')
 
         elif self.type == ReportItem.TYPE_FX_TRADE:
-            # return ugettext('FX-Trade')
-            return ugettext('FX-Trades: %s/%s') % (
+            # return gettext_lazy('FX-Trade')
+            return gettext_lazy('FX-Trades: %s/%s') % (
                 getattr(self.trn_ccy, 'name', None), getattr(self.ccy, 'name', None),)
 
         elif self.type == ReportItem.TYPE_CASH_IN_OUT:
-            # return ugettext('Cash In/Out: %s/%s')
-            return ugettext('Cash In/Out: %s') % getattr(self.ccy, 'name', None)
+            # return gettext_lazy('Cash In/Out: %s/%s')
+            return gettext_lazy('Cash In/Out: %s') % getattr(self.ccy, 'name', None)
 
         elif self.type == ReportItem.TYPE_MISMATCH:
             return getattr(self.instr, 'name', None)
 
         elif self.type == ReportItem.TYPE_SUMMARY:
-            return ugettext('Summary')
+            return gettext_lazy('Summary')
 
         return '<ERROR>'
 
@@ -2363,7 +2363,7 @@ class ReportItem(_Base):
                     }
                     value = formula.safe_eval(cf.expr, names=names, context=self.report.context)
                 except formula.InvalidExpression:
-                    value = ugettext('Invalid expression')
+                    value = gettext_lazy('Invalid expression')
             else:
                 value = None
             res.append({

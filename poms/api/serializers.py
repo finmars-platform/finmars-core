@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -81,7 +81,7 @@ class ExpressionSerializer(serializers.Serializer):
                 try:
                     names2 = formula.safe_eval(names2, context=self.context)
                 except formula.InvalidExpression as e:
-                    raise ValidationError({'names2': ugettext_lazy('Invalid expression.')})
+                    raise ValidationError({'names2': gettext_lazy('Invalid expression.')})
             names = {}
             if names1:
                 names.update(names1)
@@ -92,7 +92,7 @@ class ExpressionSerializer(serializers.Serializer):
                 attrs['result'] = formula.safe_eval(expression, names, context=self.context)
             except formula.InvalidExpression as e:
                 _l.error("Manual expression error %s" % e)
-                raise ValidationError({'expression': ugettext_lazy('Invalid expression.'), "error_message": str(e)})
+                raise ValidationError({'expression': gettext_lazy('Invalid expression.'), "error_message": str(e)})
         return attrs
 
     def get_help(self, obj):

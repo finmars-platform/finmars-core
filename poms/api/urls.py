@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.conf.urls import url, include
+from django.urls import re_path, include
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import routers
 
@@ -494,48 +494,48 @@ router.register(r'recovery/layout', layout_recovery.FixLayoutViewSet, 'recovery_
 
 
 urlpatterns = [
-    url(r'^v1/', include(router.urls)),
+    re_path(r'^v1/', include(router.urls)),
 
 
     # external callbacks
 
-    url(r'instruments/instrument-database-search', instruments.InstrumentDatabaseSearchViewSet.as_view()),
-    url(r'currencies/currency-database-search', currencies.CurrencyDatabaseSearchViewSet.as_view()),
-    url(r'internal/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view())),
-    url(r'internal/brokers/bloomberg-forwards/callback', csrf_exempt(pricing.PricingBrokerBloombergForwardsHandler.as_view())),
-    url(r'internal/brokers/wtrade/callback', csrf_exempt(pricing.PricingBrokerWtradeHandler.as_view())),
-    url(r'internal/brokers/cbonds/callback', csrf_exempt(pricing.PricingBrokerCbondsHandler.as_view())),
-    url(r'internal/brokers/fx-cbonds/callback', csrf_exempt(pricing.PricingBrokerFxCbondsHandler.as_view())),
-    url(r'internal/brokers/fixer/callback', csrf_exempt(pricing.PricingBrokerFixerHandler.as_view())),
-    url(r'internal/brokers/alphav/callback', csrf_exempt(pricing.PricingBrokerAlphavHandler.as_view())),
-    url(r'internal/data/transactions/callback', csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),
-    url(r'internal/data/transactions/json', csrf_exempt(integrations.TransactionImportJson.as_view())),
-    url(r'integrations/superset/get-security-token', csrf_exempt(integrations.SupersetGetSecurityToken.as_view())),
-    url(r'instruments/instrument-external-api', csrf_exempt(instruments.InstrumentExternalAPIViewSet.as_view())),
-    url(r'instruments/fdb-create-from-callback', csrf_exempt(instruments.InstrumentFDBCreateFromCallbackViewSet.as_view())),
+    re_path(r'instruments/instrument-database-search', instruments.InstrumentDatabaseSearchViewSet.as_view()),
+    re_path(r'currencies/currency-database-search', currencies.CurrencyDatabaseSearchViewSet.as_view()),
+    re_path(r'internal/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view())),
+    re_path(r'internal/brokers/bloomberg-forwards/callback', csrf_exempt(pricing.PricingBrokerBloombergForwardsHandler.as_view())),
+    re_path(r'internal/brokers/wtrade/callback', csrf_exempt(pricing.PricingBrokerWtradeHandler.as_view())),
+    re_path(r'internal/brokers/cbonds/callback', csrf_exempt(pricing.PricingBrokerCbondsHandler.as_view())),
+    re_path(r'internal/brokers/fx-cbonds/callback', csrf_exempt(pricing.PricingBrokerFxCbondsHandler.as_view())),
+    re_path(r'internal/brokers/fixer/callback', csrf_exempt(pricing.PricingBrokerFixerHandler.as_view())),
+    re_path(r'internal/brokers/alphav/callback', csrf_exempt(pricing.PricingBrokerAlphavHandler.as_view())),
+    re_path(r'internal/data/transactions/callback', csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),
+    re_path(r'internal/data/transactions/json', csrf_exempt(integrations.TransactionImportJson.as_view())),
+    re_path(r'integrations/superset/get-security-token', csrf_exempt(integrations.SupersetGetSecurityToken.as_view())),
+    re_path(r'instruments/instrument-external-api', csrf_exempt(instruments.InstrumentExternalAPIViewSet.as_view())),
+    re_path(r'instruments/fdb-create-from-callback', csrf_exempt(instruments.InstrumentFDBCreateFromCallbackViewSet.as_view())),
 
-    url(r'^authorizer/token-auth/', ObtainAuthToken.as_view(), name='api-token-auth'),
-    url(r'^authorizer/set-token-auth/', SetAuthToken.as_view(), name='set-token-auth'),
-    url(r'^authorizer/create-user/', CreateUser.as_view(), name='create-user'),
-    url(r'^authorizer/create-master-user/', CreateMasterUser.as_view(), name='create-master-user'),
-    url(r'^authorizer/rename-master-user/', RenameMasterUser.as_view(), name='rename-master-user'),
-    url(r'^authorizer/create-member/', CreateMember.as_view(), name='create-member'),
-    url(r'^authorizer/delete-member/', DeleteMember.as_view(), name='delete-member'),
-    url(r'^authorizer/master-user-change-owner/', MasterUserChangeOwner.as_view(), name='master-user-change-owner')
+    re_path(r'^authorizer/token-auth/', ObtainAuthToken.as_view(), name='api-token-auth'),
+    re_path(r'^authorizer/set-token-auth/', SetAuthToken.as_view(), name='set-token-auth'),
+    re_path(r'^authorizer/create-user/', CreateUser.as_view(), name='create-user'),
+    re_path(r'^authorizer/create-master-user/', CreateMasterUser.as_view(), name='create-master-user'),
+    re_path(r'^authorizer/rename-master-user/', RenameMasterUser.as_view(), name='rename-master-user'),
+    re_path(r'^authorizer/create-member/', CreateMember.as_view(), name='create-member'),
+    re_path(r'^authorizer/delete-member/', DeleteMember.as_view(), name='delete-member'),
+    re_path(r'^authorizer/master-user-change-owner/', MasterUserChangeOwner.as_view(), name='master-user-change-owner')
 ]
 
 if 'rest_framework_swagger' in settings.INSTALLED_APPS:
     urlpatterns += [
-        url(r'^schema/', api.SchemaViewSet.as_view()),
+        re_path(r'^schema/', api.SchemaViewSet.as_view()),
     ]
 
-if settings.DEBUG:
+if settings.SERVER_TYPE == 'local':
     import debug_toolbar
 
     urlpatterns += [
-        url('__debug__/', include(debug_toolbar.urls)),
+        re_path('__debug__/', include(debug_toolbar.urls)),
     ]
 
     urlpatterns += [
-        url(r'^dev/auth/', include('rest_framework.urls', namespace='rest_framework')),
+        re_path(r'^dev/auth/', include('rest_framework.urls', namespace='rest_framework')),
     ]

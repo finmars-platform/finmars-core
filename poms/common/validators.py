@@ -1,11 +1,11 @@
 from __future__ import unicode_literals
 
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 
 class PhoneNumberValidator(object):
     code = 'invalid'
-    message = ugettext_lazy('Enter a valid phone number.')
+    message = gettext_lazy('Enter a valid phone number.')
 
     def __init__(self):
         pass

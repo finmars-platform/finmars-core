@@ -27,7 +27,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.timezone import now
-from django.utils.translation import ugettext
+from django.utils.translation import gettext_lazy
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
 
@@ -2397,7 +2397,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
 
                 error_rows['level'] = 'error'
 
-                error_rows['error_message'] = error_rows['error_message'] + '\n' + str(ugettext(
+                error_rows['error_message'] = error_rows['error_message'] + '\n' + str(gettext_lazy(
                     'Can\'t process fields: %(fields)s') % {
                                                                                            'fields': ', '.join(
                                                                                                '[' + f.transaction_type_input.name + '] '
@@ -2440,12 +2440,12 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                     if tt_process.uniqueness_status == 'skip':
                         error_rows['level'] = 'skip'
                         error_rows['error_message'] = error_rows['error_message'] + str(
-                            ugettext('Unique code already exist. Skip'))
+                            gettext_lazy('Unique code already exist. Skip'))
 
                     if tt_process.uniqueness_status == 'error':
                         error_rows['level'] = 'error'
                         error_rows['error_message'] = error_rows['error_message'] + str(
-                            ugettext('Unique code already exist. Error'))
+                            gettext_lazy('Unique code already exist. Error'))
 
                     processed_scenarios = processed_scenarios + 1
 
@@ -2603,7 +2603,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                         except Exception:
                             _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                             _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
-                            error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
+                            error_rows['error_data']['data']['imported_columns'].append(gettext_lazy('Invalid expression'))
                             inputs_error.append(i)
 
                     if instance.scheme.column_matcher == 'name':
@@ -2622,7 +2622,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                         except Exception:
                             _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                             _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
-                            error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
+                            error_rows['error_data']['data']['imported_columns'].append(gettext_lazy('Invalid expression'))
                             inputs_error.append(i)
 
                 # _l.debug('Row %s inputs_raw: %s' % (row_index, inputs_raw))
@@ -2646,7 +2646,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                     error_rows['level'] = 'error'
 
                     error_rows['error_message'] = error_rows['error_message'] + str(
-                        ugettext('Can\'t process fields: %(inputs)s') % {
+                        gettext_lazy('Can\'t process fields: %(inputs)s') % {
                             'inputs': ', '.join('[' + i.name + '] (Can\'t find input)' for i in inputs_error)
                         })
                     instance.error_rows.append(error_rows)
@@ -2670,7 +2670,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                     except Exception:
                         _l.debug('can\'t process conversion input: %s|%s', i.name, i.column, exc_info=True)
                         error_rows['error_data']['data']['converted_imported_columns'].append(
-                            ugettext('Invalid expression'))
+                            gettext_lazy('Invalid expression'))
                         inputs_conversion_error.append(i)
 
                 # _l.debug('Row %s inputs_conversion: %s' % (row_index, inputs))
@@ -2680,7 +2680,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                     error_rows['level'] = 'error'
 
                     error_rows['error_message'] = error_rows['error_message'] + str(
-                        ugettext('Can\'t process fields: %(inputs)s') % {
+                        gettext_lazy('Can\'t process fields: %(inputs)s') % {
                             'inputs': ', '.join(
                                 '[' + i.name + '] (Imported column conversion expression, value; "' + i.name_exp + '")'
                                 for
@@ -2714,7 +2714,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                 #         error_rows['error_data']['data']['calculated_columns'].append(row[index])
                 #     except Exception:
                 #         _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
-                #         error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
+                #         error_rows['error_data']['data']['calculated_columns'].append(gettext_lazy('Invalid expression'))
                 #         calculated_columns_error.append(i)
 
                 # _l.debug('Row %s inputs_with_calculated: %s' % (row_index, inputs))
@@ -2726,7 +2726,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                     error_rows['level'] = 'error'
 
                     _l.debug('can\'t process rule expression', exc_info=True)
-                    error_rows['error_message'] = error_rows['error_message'] + '\n' + str(ugettext(
+                    error_rows['error_message'] = error_rows['error_message'] + '\n' + str(gettext_lazy(
                         'Can\'t eval rule expression'))
                     instance.error_rows.append(error_rows)
                     if instance.break_on_error:
@@ -2743,7 +2743,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                     error_rows['level'] = 'error'
 
                     error_rows['error_message'] = error_rows['error_message'] + str(
-                        ugettext('Rule expression is invalid'))
+                        gettext_lazy('Rule expression is invalid'))
 
                     if instance.break_on_error:
                         instance.error_row_index = row_index
@@ -2921,7 +2921,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
         except Exception:
 
             _l.debug('Can\'t process file', exc_info=True)
-            instance.error_message = ugettext("Invalid file format or file already deleted.")
+            instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
 
             if execution_context and execution_context["started_by"] == 'procedure':
                 send_system_message(master_user=instance.master_user,
@@ -3480,7 +3480,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                         except Exception:
                             _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                             _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
-                            error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
+                            error_rows['error_data']['data']['imported_columns'].append(gettext_lazy('Invalid expression'))
                             inputs_error.append(i)
 
                     if instance.scheme.column_matcher == 'name':
@@ -3494,7 +3494,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                         except Exception:
                             _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                             _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
-                            error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
+                            error_rows['error_data']['data']['imported_columns'].append(gettext_lazy('Invalid expression'))
                             inputs_error.append(i)
 
                 # _l.info('Row %s inputs_raw: %s' % (row_index, inputs_raw))
@@ -3526,7 +3526,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                     except Exception:
                         _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                         error_rows['error_data']['data']['converted_imported_columns'].append(
-                            ugettext('Invalid expression'))
+                            gettext_lazy('Invalid expression'))
                         inputs_error.append(i)
 
                 # _l.info('Row %s inputs_converted: %s' % (row_index, inputs))
@@ -3554,7 +3554,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                         error_rows['error_data']['data']['calculated_columns'].append(row[index])
                     except Exception:
                         _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
-                        error_rows['error_data']['data']['calculated_columns'].append(ugettext('Invalid expression'))
+                        error_rows['error_data']['data']['calculated_columns'].append(gettext_lazy('Invalid expression'))
                         calculated_columns_error.append(i)
 
                 if inputs_error:
@@ -3562,7 +3562,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                     error_rows['level'] = 'error'
 
                     error_rows['error_message'] = error_rows['error_message'] + str(
-                        ugettext('Can\'t process inputs: %(inputs)s') % {
+                        gettext_lazy('Can\'t process inputs: %(inputs)s') % {
                             'inputs': ', '.join('[' + i.name + ']' for i in inputs_error)
                         })
                     instance.error_rows.append(error_rows)
@@ -3585,7 +3585,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                     _l.info('can\'t process rule expression', exc_info=True)
                     _l.info('error %s' % e)
                     error_rows['error_message'] = error_rows['error_message'] + str(
-                        ugettext('Can\'t eval rule expression'))
+                        gettext_lazy('Can\'t eval rule expression'))
                     instance.error_rows.append(error_rows)
                     if instance.break_on_error:
                         instance.error_row_index = row_index
@@ -3603,7 +3603,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                     error_rows['level'] = 'error'
 
                     error_rows['error_message'] = error_rows['error_message'] + str(
-                        ugettext('Rule expression is invalid'))
+                        gettext_lazy('Rule expression is invalid'))
 
                     if instance.break_on_error:
                         instance.error_row_index = row_index
@@ -3648,13 +3648,13 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
                             _l.info('rule does not find: %s', rule_value, exc_info=True)
                             error_rows['error_message'] = error_rows['error_message'] + str(
-                                ugettext('Can\'t find transaction type by "%(value)s"') % {
+                                gettext_lazy('Can\'t find transaction type by "%(value)s"') % {
                                     'value': rule_value
                                 })
                             instance.error_rows.append(error_rows)
 
                             error_rows['error_data']['data']['transaction_type_selector'].append(
-                                ugettext('Invalid expression'))
+                                gettext_lazy('Invalid expression'))
 
                             if instance.break_on_error:
                                 instance.error_row_index = row_index
@@ -3695,7 +3695,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                                 fields_error.append(field)
 
                                 error_rows['error_data']['data']['executed_input_expressions'].append(
-                                    ugettext('Invalid expression'))
+                                    gettext_lazy('Invalid expression'))
 
                         if len(fields_error):
 
@@ -3711,7 +3711,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                                 inputs_messages.append(message)
 
                             error_rows['error_message'] = error_rows['error_message'] + str(
-                                ugettext('Can\'t process fields: %(messages)s') % {
+                                gettext_lazy('Can\'t process fields: %(messages)s') % {
                                     'messages': ', '.join(str(m) for m in inputs_messages)
                                 })
 
@@ -3832,7 +3832,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
         except Exception:
             _l.info('Can\'t process file', exc_info=True)
-            instance.error_message = ugettext("Invalid file format or file already deleted.")
+            instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
         finally:
             # import_file_storage.delete(instance.file_path)
             SFS.delete(instance.file_path)

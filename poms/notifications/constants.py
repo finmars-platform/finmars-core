@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 DEBUG = messages.DEBUG
 INFO = messages.INFO
@@ -8,9 +8,9 @@ WARNING = messages.WARNING
 ERROR = messages.ERROR
 
 LEVELS = (
-    (DEBUG, ugettext_lazy('debug')),
-    (INFO, ugettext_lazy('info')),
-    (SUCCESS, ugettext_lazy('success')),
-    (WARNING, ugettext_lazy('warning')),
-    (ERROR, ugettext_lazy('error')),
+    (DEBUG, gettext_lazy('debug')),
+    (INFO, gettext_lazy('info')),
+    (SUCCESS, gettext_lazy('success')),
+    (WARNING, gettext_lazy('warning')),
+    (ERROR, gettext_lazy('error')),
 )

@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from rest_framework import ISO_8601
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField, DateTimeField, FloatField, empty, RegexField
@@ -140,7 +140,7 @@ class FloatEvalField(FloatField):
                 expr = str(data)
                 return formula.safe_eval(expr, context=self.context)
             except (formula.InvalidExpression, ArithmeticError):
-                raise ValidationError(ugettext_lazy('Invalid expression.'))
+                raise ValidationError(gettext_lazy('Invalid expression.'))
 
 
 class ISINField(RegexField):

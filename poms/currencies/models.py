@@ -8,7 +8,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.functional import SimpleLazyObject
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedModel
 from poms.common.utils import date_now
@@ -35,29 +35,29 @@ currencies_data = SimpleLazyObject(_load_currencies_data)
 
 
 class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
-    master_user = models.ForeignKey(MasterUser, related_name='currencies', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey(MasterUser, related_name='currencies', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     reference_for_pricing = models.CharField(max_length=100, blank=True, default='',
-                                             verbose_name=ugettext_lazy('reference for pricing'))
+                                             verbose_name=gettext_lazy('reference for pricing'))
 
     # daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
-    #                                         verbose_name=ugettext_lazy('daily pricing model'), on_delete=models.CASCADE)
+    #                                         verbose_name=gettext_lazy('daily pricing model'), on_delete=models.CASCADE)
     # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
-    #                                           blank=True, verbose_name=ugettext_lazy('price download scheme'))
+    #                                           blank=True, verbose_name=gettext_lazy('price download scheme'))
 
     pricing_condition = models.ForeignKey('instruments.PricingCondition', null=True, blank=True,
-                                            verbose_name=ugettext_lazy('pricing condition'), on_delete=models.CASCADE)
+                                            verbose_name=gettext_lazy('pricing condition'), on_delete=models.CASCADE)
 
-    attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
-    # tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
+    attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
+    # tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
-    default_fx_rate = models.FloatField(default=1, verbose_name=ugettext_lazy('default fx rate'))
+    default_fx_rate = models.FloatField(default=1, verbose_name=gettext_lazy('default fx rate'))
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
+    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
-        verbose_name = ugettext_lazy('currency')
-        verbose_name_plural = ugettext_lazy('currencies')
+        verbose_name = gettext_lazy('currency')
+        verbose_name_plural = gettext_lazy('currencies')
         permissions = [
             # ('view_currency', 'Can view currency'),
             ('manage_currency', 'Can manage currency'),
@@ -74,18 +74,18 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
 
 
 class CurrencyHistory(DataTimeStampedModel):
-    currency = models.ForeignKey(Currency, related_name='histories', verbose_name=ugettext_lazy('currency'), on_delete=models.CASCADE)
+    currency = models.ForeignKey(Currency, related_name='histories', verbose_name=gettext_lazy('currency'), on_delete=models.CASCADE)
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, null=True, blank=True,
-                                       verbose_name=ugettext_lazy('pricing policy'))
-    date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
-    fx_rate = models.FloatField(default=1, verbose_name=ugettext_lazy('fx rate'))
+                                       verbose_name=gettext_lazy('pricing policy'))
+    date = models.DateField(db_index=True, default=date_now, verbose_name=gettext_lazy('date'))
+    fx_rate = models.FloatField(default=1, verbose_name=gettext_lazy('fx rate'))
 
     procedure_modified_datetime = models.DateTimeField(null=True, blank=True,
-                                                       verbose_name=ugettext_lazy('procedure_modified_datetime'))
+                                                       verbose_name=gettext_lazy('procedure_modified_datetime'))
 
     class Meta:
-        verbose_name = ugettext_lazy('currency history')
-        verbose_name_plural = ugettext_lazy('currency histories')
+        verbose_name = gettext_lazy('currency history')
+        verbose_name_plural = gettext_lazy('currency histories')
         unique_together = (
             ('currency', 'pricing_policy', 'date',)
         )

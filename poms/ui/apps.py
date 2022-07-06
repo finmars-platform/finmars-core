@@ -1,14 +1,14 @@
 from django.apps import AppConfig
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 
 class UiConfig(AppConfig):
     name = 'poms.ui'
-    verbose_name = ugettext_lazy('UI layout')
+    verbose_name = gettext_lazy('UI layout')
 
     def ready(self):
         post_migrate.connect(self.update_transaction_classes, sender=self)

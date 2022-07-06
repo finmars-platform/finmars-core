@@ -7,7 +7,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from mptt.models import MPTTModel
 
 from poms.accounts.models import Account
@@ -54,25 +54,25 @@ class TransactionClass(AbstractClassModel):
     DISTRIBUTION = 13  # if portfolio registry, # share price decrease
 
     CLASSES = (
-        (BUY, 'BUY', ugettext_lazy("Buy")),
-        (SELL, 'SELL', ugettext_lazy("Sell")),
-        (FX_TRADE, 'FX_TRADE', ugettext_lazy("FX Trade")),
-        (INSTRUMENT_PL, 'INSTRUMENT_PL', ugettext_lazy("Instrument PL")),
-        (TRANSACTION_PL, 'TRANSACTION_PL', ugettext_lazy("Transaction PL")),
-        (TRANSFER, 'TRANSFER', ugettext_lazy("Transfer")),
-        (FX_TRANSFER, 'FX_TRANSFER', ugettext_lazy("FX Transfer")),
-        (CASH_INFLOW, 'CASH_INFLOW', ugettext_lazy("Cash-Inflow")),
-        (CASH_OUTFLOW, 'CASH_OUTFLOW', ugettext_lazy("Cash-Outflow")),
-        (DEFAULT, '-', ugettext_lazy("Default")),
-        (PLACEHOLDER, 'PLACEHOLDER', ugettext_lazy("Technical: Placeholder")),
+        (BUY, 'BUY', gettext_lazy("Buy")),
+        (SELL, 'SELL', gettext_lazy("Sell")),
+        (FX_TRADE, 'FX_TRADE', gettext_lazy("FX Trade")),
+        (INSTRUMENT_PL, 'INSTRUMENT_PL', gettext_lazy("Instrument PL")),
+        (TRANSACTION_PL, 'TRANSACTION_PL', gettext_lazy("Transaction PL")),
+        (TRANSFER, 'TRANSFER', gettext_lazy("Transfer")),
+        (FX_TRANSFER, 'FX_TRANSFER', gettext_lazy("FX Transfer")),
+        (CASH_INFLOW, 'CASH_INFLOW', gettext_lazy("Cash-Inflow")),
+        (CASH_OUTFLOW, 'CASH_OUTFLOW', gettext_lazy("Cash-Outflow")),
+        (DEFAULT, '-', gettext_lazy("Default")),
+        (PLACEHOLDER, 'PLACEHOLDER', gettext_lazy("Technical: Placeholder")),
 
-        (INJECTION, 'INJECTION', ugettext_lazy("Injection")),
-        (DISTRIBUTION, 'DISTRIBUTION', ugettext_lazy("Distribution")),
+        (INJECTION, 'INJECTION', gettext_lazy("Injection")),
+        (DISTRIBUTION, 'DISTRIBUTION', gettext_lazy("Distribution")),
     )
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('transaction class')
-        verbose_name_plural = ugettext_lazy('transaction classes')
+        verbose_name = gettext_lazy('transaction class')
+        verbose_name_plural = gettext_lazy('transaction classes')
 
 
 class ComplexTransactionStatus(AbstractClassModel):
@@ -81,15 +81,15 @@ class ComplexTransactionStatus(AbstractClassModel):
     IGNORE = 3
 
     CLASSES = (
-        (BOOKED, 'BOOKED', ugettext_lazy("Booked")),
-        (PENDING, 'PENDING', ugettext_lazy("Pending")),
-        (IGNORE, 'IGNORE', ugettext_lazy("Ignore")),
+        (BOOKED, 'BOOKED', gettext_lazy("Booked")),
+        (PENDING, 'PENDING', gettext_lazy("Pending")),
+        (IGNORE, 'IGNORE', gettext_lazy("Ignore")),
 
     )
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('complex transaction status')
-        verbose_name_plural = ugettext_lazy('complex transaction status')
+        verbose_name = gettext_lazy('complex transaction status')
+        verbose_name_plural = gettext_lazy('complex transaction status')
 
 
 class ActionClass(AbstractClassModel):
@@ -97,13 +97,13 @@ class ActionClass(AbstractClassModel):
     CREATE_INSTRUMENT_PARAMETER = 2
 
     CLASSES = (
-        (CREATE_INSTRUMENT, 'CREATE_INSTRUMENT', ugettext_lazy("Create instrument")),
-        (CREATE_INSTRUMENT_PARAMETER, 'CREATE_INSTRUMENT_PARAMETER', ugettext_lazy("Create instrument parameter")),
+        (CREATE_INSTRUMENT, 'CREATE_INSTRUMENT', gettext_lazy("Create instrument")),
+        (CREATE_INSTRUMENT_PARAMETER, 'CREATE_INSTRUMENT_PARAMETER', gettext_lazy("Create instrument parameter")),
     )
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('action class')
-        verbose_name_plural = ugettext_lazy('action classes')
+        verbose_name = gettext_lazy('action class')
+        verbose_name_plural = gettext_lazy('action classes')
 
 
 class EventClass(AbstractClassModel):
@@ -111,13 +111,13 @@ class EventClass(AbstractClassModel):
     REGULAR = 2
 
     CLASSES = (
-        (ONE_OFF, 'ONE_OFF', ugettext_lazy('One-off')),
-        (REGULAR, 'REGULAR', ugettext_lazy('Regular')),
+        (ONE_OFF, 'ONE_OFF', gettext_lazy('One-off')),
+        (REGULAR, 'REGULAR', gettext_lazy('Regular')),
     )
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('event class')
-        verbose_name_plural = ugettext_lazy('event classes')
+        verbose_name = gettext_lazy('event class')
+        verbose_name_plural = gettext_lazy('event classes')
 
 
 class NotificationClass(AbstractClassModel):
@@ -143,38 +143,38 @@ class NotificationClass(AbstractClassModel):
 
     CLASSES = (
         (DONT_REACT, 'DONT_REACT',
-         ugettext_lazy("Don't inform (don't react)")),
+         gettext_lazy("Don't inform (don't react)")),
         (APPLY_DEF_ON_EDATE, 'APPLY_DEF_ON_EDATE',
-         ugettext_lazy("Don't inform (apply default on effective date)")),
+         gettext_lazy("Don't inform (apply default on effective date)")),
         (APPLY_DEF_ON_NDATE, 'APPLY_DEF_ON_NDATE',
-         ugettext_lazy("Don't inform (apply default on notification date)")),
+         gettext_lazy("Don't inform (apply default on notification date)")),
         (INFORM_ON_NDATE_WITH_REACT, 'INFORM_ON_NDATE_WITH_REACT',
-         ugettext_lazy("Inform on notification date (with reaction)")),
+         gettext_lazy("Inform on notification date (with reaction)")),
         (INFORM_ON_NDATE_APPLY_DEF, 'INFORM_ON_NDATE_APPLY_DEF',
-         ugettext_lazy("Inform on notification date (apply default)")),
+         gettext_lazy("Inform on notification date (apply default)")),
         (INFORM_ON_NDATE_DONT_REACT, 'INFORM_ON_NDATE_DONT_REACT',
-         ugettext_lazy("Inform on notification date (don't react)")),
+         gettext_lazy("Inform on notification date (don't react)")),
         (INFORM_ON_EDATE_WITH_REACT, 'INFORM_ON_EDATE_WITH_REACT',
-         ugettext_lazy("Inform on effective date (with reaction)")),
+         gettext_lazy("Inform on effective date (with reaction)")),
         (INFORM_ON_EDATE_APPLY_DEF, 'INFORM_ON_EDATE_APPLY_DEF',
-         ugettext_lazy("Inform on effective date (apply default)")),
+         gettext_lazy("Inform on effective date (apply default)")),
         (INFORM_ON_EDATE_DONT_REACT, 'INFORM_ON_EDATE_DONT_REACT',
-         ugettext_lazy("Inform on effective date (don't react)")),
+         gettext_lazy("Inform on effective date (don't react)")),
         (INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_EDATE, 'INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_EDATE',
-         ugettext_lazy("Inform on notification date & effective date (with reaction on effective date)")),
+         gettext_lazy("Inform on notification date & effective date (with reaction on effective date)")),
         (INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_NDATE, 'INFORM_ON_NDATE_AND_EDATE_WITH_REACT_ON_NDATE',
-         ugettext_lazy("Inform on notification date & effective date (with reaction on notification date)")),
+         gettext_lazy("Inform on notification date & effective date (with reaction on notification date)")),
         (INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_EDATE, 'INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_EDATE',
-         ugettext_lazy("Inform on notification date & effective date (apply default on effective date)")),
+         gettext_lazy("Inform on notification date & effective date (apply default on effective date)")),
         (INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_NDATE, 'INFORM_ON_NDATE_AND_EDATE_APPLY_DEF_ON_NDATE',
-         ugettext_lazy("Inform on notification date & effective date (apply default on notification date)")),
+         gettext_lazy("Inform on notification date & effective date (apply default on notification date)")),
         (INFORM_ON_NDATE_AND_EDATE_DONT_REACT, 'INFORM_ON_NDATE_AND_EDATE_DONT_REACT',
-         ugettext_lazy("Inform on notification date & effective date (don't react)")),
+         gettext_lazy("Inform on notification date & effective date (don't react)")),
     )
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('notification class')
-        verbose_name_plural = ugettext_lazy('notification classes')
+        verbose_name = gettext_lazy('notification class')
+        verbose_name_plural = gettext_lazy('notification classes')
 
     @staticmethod
     def get_notify_on_effective_date_classes():
@@ -278,36 +278,36 @@ class PeriodicityGroup(AbstractClassModel):
     ANUALLY = 12
     ANUALLY_CALENDAR = 13
     CLASSES = (
-        (DAILY, 'DAILY', ugettext_lazy("daily")),
-        (WEEKLY, 'WEEKLY', ugettext_lazy("weekly (+7d)")),
-        (WEEKLY_EOW, 'WEEKLY_EOW', ugettext_lazy("weekly (eow)")),
-        (BE_WEEKLY, 'BE_WEEKLY', ugettext_lazy("bi-weekly (+14d)")),
-        (BE_WEEKLY_EOW, 'BE_WEEKLY_EOW', ugettext_lazy("bi-weekly (eow)")),
-        (MONTHLY, 'MONTHLY', ugettext_lazy("monthly (+1m)")),
-        (MONTHLY_EOM, 'MONTHLY_EOM', ugettext_lazy("monthly (eom)")),
-        (QUARTERLY, 'QUARTERLY', ugettext_lazy("quarterly (+3m)")),
-        (QUARTERLY_CALENDAR, 'QUARTERLY_CALENDAR', ugettext_lazy("quarterly (calendar)")),
-        (SEMI_ANUALLY, 'SEMI_ANUALLY', ugettext_lazy("semi-anually (+6m)")),
-        (SEMI_ANUALLY_CALENDAR, 'SEMI_ANUALLY_CALENDAR', ugettext_lazy("semi-anually (calendar)")),
-        (ANUALLY, 'ANUALLY', ugettext_lazy("anually (+12m)")),
-        (ANUALLY_CALENDAR, 'ANUALLY_CALENDAR', ugettext_lazy("anually (eoy)")),
+        (DAILY, 'DAILY', gettext_lazy("daily")),
+        (WEEKLY, 'WEEKLY', gettext_lazy("weekly (+7d)")),
+        (WEEKLY_EOW, 'WEEKLY_EOW', gettext_lazy("weekly (eow)")),
+        (BE_WEEKLY, 'BE_WEEKLY', gettext_lazy("bi-weekly (+14d)")),
+        (BE_WEEKLY_EOW, 'BE_WEEKLY_EOW', gettext_lazy("bi-weekly (eow)")),
+        (MONTHLY, 'MONTHLY', gettext_lazy("monthly (+1m)")),
+        (MONTHLY_EOM, 'MONTHLY_EOM', gettext_lazy("monthly (eom)")),
+        (QUARTERLY, 'QUARTERLY', gettext_lazy("quarterly (+3m)")),
+        (QUARTERLY_CALENDAR, 'QUARTERLY_CALENDAR', gettext_lazy("quarterly (calendar)")),
+        (SEMI_ANUALLY, 'SEMI_ANUALLY', gettext_lazy("semi-anually (+6m)")),
+        (SEMI_ANUALLY_CALENDAR, 'SEMI_ANUALLY_CALENDAR', gettext_lazy("semi-anually (calendar)")),
+        (ANUALLY, 'ANUALLY', gettext_lazy("anually (+12m)")),
+        (ANUALLY_CALENDAR, 'ANUALLY_CALENDAR', gettext_lazy("anually (eoy)")),
     )
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('periodicity group')
-        verbose_name_plural = ugettext_lazy('periodicity group')
+        verbose_name = gettext_lazy('periodicity group')
+        verbose_name_plural = gettext_lazy('periodicity group')
 
 
 class TransactionTypeGroup(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='transaction_type_groups',
-                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
+    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
+    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
-        verbose_name = ugettext_lazy('transaction type group')
-        verbose_name_plural = ugettext_lazy('transaction type groups')
+        verbose_name = gettext_lazy('transaction type group')
+        verbose_name_plural = gettext_lazy('transaction type groups')
         permissions = [
             # ('view_transactiontypegroup', 'Can view transaction type group'),
             ('manage_transactiontypegroup', 'Can manage transaction type group'),
@@ -319,237 +319,237 @@ class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     HIDE_PARAMETERS = 2
 
     VISIBILITY_STATUS_CHOICES = (
-        (SHOW_PARAMETERS, ugettext_lazy('Show Parameters')),
-        (HIDE_PARAMETERS, ugettext_lazy('Hide Parameters')),
+        (SHOW_PARAMETERS, gettext_lazy('Show Parameters')),
+        (HIDE_PARAMETERS, gettext_lazy('Hide Parameters')),
     )
 
     TYPE_DEFAULT = 1
     TYPE_PROCEDURE = 2  # Complex Transaction will not be created
 
     TYPE_CHOICES = (
-        (TYPE_DEFAULT, ugettext_lazy('Default')),
-        (TYPE_PROCEDURE, ugettext_lazy('Procedure')),
+        (TYPE_DEFAULT, gettext_lazy('Default')),
+        (TYPE_PROCEDURE, gettext_lazy('Procedure')),
     )
 
     BOOK_WITHOUT_UNIQUE_CODE = 1
     SKIP_BOOK_WITH_UNIQUE_CODE = 2
 
     BOOK_WITH_UNIQUE_CODE_CHOICES = (
-        (BOOK_WITHOUT_UNIQUE_CODE, ugettext_lazy('Book without unique code')),
-        (SKIP_BOOK_WITH_UNIQUE_CODE, ugettext_lazy('Skip')),
+        (BOOK_WITHOUT_UNIQUE_CODE, gettext_lazy('Book without unique code')),
+        (SKIP_BOOK_WITH_UNIQUE_CODE, gettext_lazy('Skip')),
     )
 
     master_user = models.ForeignKey(MasterUser, related_name='transaction_types',
-                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(TransactionTypeGroup, null=True, blank=True, on_delete=models.PROTECT,
-                              verbose_name=ugettext_lazy('group'))
+                              verbose_name=gettext_lazy('group'))
     date_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                 verbose_name=ugettext_lazy('date expr'))
+                                 verbose_name=gettext_lazy('date expr'))
     display_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('display expr'))
+                                    verbose_name=gettext_lazy('display expr'))
 
     context_parameters_notes = models.TextField(null=True, blank=True,
-                                                verbose_name=ugettext_lazy('context parameters notes'))
+                                                verbose_name=gettext_lazy('context parameters notes'))
 
     transaction_unique_code_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                                    verbose_name=ugettext_lazy('transaction unique code expr'))
+                                                    verbose_name=gettext_lazy('transaction unique code expr'))
 
     transaction_unique_code_options = models.PositiveSmallIntegerField(default=BOOK_WITHOUT_UNIQUE_CODE,
                                                                        choices=BOOK_WITH_UNIQUE_CODE_CHOICES,
-                                                                       verbose_name=ugettext_lazy(
+                                                                       verbose_name=gettext_lazy(
                                                                            'transaction unique code options'))
 
     instrument_types = models.ManyToManyField('instruments.InstrumentType', related_name='transaction_types',
-                                              blank=True, verbose_name=ugettext_lazy('instrument types'))
+                                              blank=True, verbose_name=gettext_lazy('instrument types'))
     is_valid_for_all_portfolios = models.BooleanField(default=True,
-                                                      verbose_name=ugettext_lazy('is valid for all portfolios'))
+                                                      verbose_name=gettext_lazy('is valid for all portfolios'))
     is_valid_for_all_instruments = models.BooleanField(default=True,
-                                                       verbose_name=ugettext_lazy('is valid for all instruments'))
+                                                       verbose_name=gettext_lazy('is valid for all instruments'))
 
     book_transaction_layout_json = models.TextField(null=True, blank=True,
-                                                    verbose_name=ugettext_lazy('book transaction layout json'))
+                                                    verbose_name=gettext_lazy('book transaction layout json'))
 
-    attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
+    attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
     visibility_status = models.PositiveSmallIntegerField(default=SHOW_PARAMETERS, choices=VISIBILITY_STATUS_CHOICES,
                                                          db_index=True,
-                                                         verbose_name=ugettext_lazy(
+                                                         verbose_name=gettext_lazy(
                                                              'visibility_status'))  # settings for complex transaction
 
     type = models.PositiveSmallIntegerField(default=TYPE_DEFAULT, choices=TYPE_CHOICES, db_index=True,
-                                            verbose_name=ugettext_lazy('type'))
+                                            verbose_name=gettext_lazy('type'))
 
     user_text_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user text 1'))
+                                   verbose_name=gettext_lazy('user text 1'))
 
     user_text_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user text 2'))
+                                   verbose_name=gettext_lazy('user text 2'))
 
     user_text_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user text 3'))
+                                   verbose_name=gettext_lazy('user text 3'))
 
     user_text_4 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user text 4'))
+                                   verbose_name=gettext_lazy('user text 4'))
 
     user_text_5 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user text 5'))
+                                   verbose_name=gettext_lazy('user text 5'))
 
     user_text_6 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user text 6'))
+                                   verbose_name=gettext_lazy('user text 6'))
 
     user_text_7 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user text 7'))
+                                   verbose_name=gettext_lazy('user text 7'))
 
     user_text_8 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user text 8'))
+                                   verbose_name=gettext_lazy('user text 8'))
 
     user_text_9 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user text 9'))
+                                   verbose_name=gettext_lazy('user text 9'))
 
     user_text_10 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 10'))
+                                    verbose_name=gettext_lazy('user text 10'))
 
     user_text_11 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 11'))
+                                    verbose_name=gettext_lazy('user text 11'))
 
     user_text_12 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 12'))
+                                    verbose_name=gettext_lazy('user text 12'))
 
     user_text_13 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 13'))
+                                    verbose_name=gettext_lazy('user text 13'))
 
     user_text_14 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 14'))
+                                    verbose_name=gettext_lazy('user text 14'))
 
     user_text_15 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 15'))
+                                    verbose_name=gettext_lazy('user text 15'))
 
     user_text_16 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 16'))
+                                    verbose_name=gettext_lazy('user text 16'))
 
     user_text_17 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 17'))
+                                    verbose_name=gettext_lazy('user text 17'))
 
     user_text_18 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 18'))
+                                    verbose_name=gettext_lazy('user text 18'))
 
     user_text_19 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 19'))
+                                    verbose_name=gettext_lazy('user text 19'))
 
     user_text_20 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 20'))
+                                    verbose_name=gettext_lazy('user text 20'))
 
     user_text_21 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 21'))
+                                    verbose_name=gettext_lazy('user text 21'))
 
     user_text_22 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 22'))
+                                    verbose_name=gettext_lazy('user text 22'))
 
     user_text_23 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 23'))
+                                    verbose_name=gettext_lazy('user text 23'))
 
     user_text_24 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 24'))
+                                    verbose_name=gettext_lazy('user text 24'))
 
     user_text_25 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 25'))
+                                    verbose_name=gettext_lazy('user text 25'))
 
     user_text_26 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 26'))
+                                    verbose_name=gettext_lazy('user text 26'))
 
     user_text_27 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 27'))
+                                    verbose_name=gettext_lazy('user text 27'))
 
     user_text_28 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 28'))
+                                    verbose_name=gettext_lazy('user text 28'))
 
     user_text_29 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 29'))
+                                    verbose_name=gettext_lazy('user text 29'))
 
     user_text_30 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                    verbose_name=ugettext_lazy('user text 30'))
+                                    verbose_name=gettext_lazy('user text 30'))
 
     user_number_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                     verbose_name=ugettext_lazy('user number 1'))
+                                     verbose_name=gettext_lazy('user number 1'))
 
     user_number_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                     verbose_name=ugettext_lazy('user number 2'))
+                                     verbose_name=gettext_lazy('user number 2'))
 
     user_number_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                     verbose_name=ugettext_lazy('user number 3'))
+                                     verbose_name=gettext_lazy('user number 3'))
 
     user_number_4 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                     verbose_name=ugettext_lazy('user number 4'))
+                                     verbose_name=gettext_lazy('user number 4'))
 
     user_number_5 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                     verbose_name=ugettext_lazy('user number 5'))
+                                     verbose_name=gettext_lazy('user number 5'))
 
     user_number_6 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                     verbose_name=ugettext_lazy('user number 6'))
+                                     verbose_name=gettext_lazy('user number 6'))
 
     user_number_7 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                     verbose_name=ugettext_lazy('user number 7'))
+                                     verbose_name=gettext_lazy('user number 7'))
 
     user_number_8 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                     verbose_name=ugettext_lazy('user number 8'))
+                                     verbose_name=gettext_lazy('user number 8'))
 
     user_number_9 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                     verbose_name=ugettext_lazy('user number 9'))
+                                     verbose_name=gettext_lazy('user number 9'))
 
     user_number_10 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                      verbose_name=ugettext_lazy('user number 10'))
+                                      verbose_name=gettext_lazy('user number 10'))
 
     user_number_11 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                      verbose_name=ugettext_lazy('user number 11'))
+                                      verbose_name=gettext_lazy('user number 11'))
 
     user_number_12 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                      verbose_name=ugettext_lazy('user number 12'))
+                                      verbose_name=gettext_lazy('user number 12'))
 
     user_number_13 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                      verbose_name=ugettext_lazy('user number 13'))
+                                      verbose_name=gettext_lazy('user number 13'))
 
     user_number_14 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                      verbose_name=ugettext_lazy('user number 14'))
+                                      verbose_name=gettext_lazy('user number 14'))
 
     user_number_15 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                      verbose_name=ugettext_lazy('user number 15'))
+                                      verbose_name=gettext_lazy('user number 15'))
 
     user_number_16 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                      verbose_name=ugettext_lazy('user number 16'))
+                                      verbose_name=gettext_lazy('user number 16'))
 
     user_number_17 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                      verbose_name=ugettext_lazy('user number 17'))
+                                      verbose_name=gettext_lazy('user number 17'))
 
     user_number_18 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                      verbose_name=ugettext_lazy('user number 18'))
+                                      verbose_name=gettext_lazy('user number 18'))
 
     user_number_19 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                      verbose_name=ugettext_lazy('user number 19'))
+                                      verbose_name=gettext_lazy('user number 19'))
 
     user_number_20 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                      verbose_name=ugettext_lazy('user number 20'))
+                                      verbose_name=gettext_lazy('user number 20'))
 
     user_date_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user date 1'))
+                                   verbose_name=gettext_lazy('user date 1'))
 
     user_date_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user date 2'))
+                                   verbose_name=gettext_lazy('user date 2'))
 
     user_date_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user date 3'))
+                                   verbose_name=gettext_lazy('user date 3'))
 
     user_date_4 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user date 4'))
+                                   verbose_name=gettext_lazy('user date 4'))
 
     user_date_5 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user date 5'))
+                                   verbose_name=gettext_lazy('user date 5'))
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
+    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
+    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
-        verbose_name = ugettext_lazy('transaction type')
-        verbose_name_plural = ugettext_lazy('transaction types')
+        verbose_name = gettext_lazy('transaction type')
+        verbose_name_plural = gettext_lazy('transaction types')
         permissions = [
             # ('view_transactiontype', 'Can view transaction type'),
             ('manage_transactiontype', 'Can manage transaction type'),
@@ -576,16 +576,16 @@ class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 # acc - content_type:account
 
 # CONTEXT_PROPERTIES = (
-#     (1, ugettext_lazy('Instrument')),
-#     (2, ugettext_lazy('Pricing Currency')),
-#     (3, ugettext_lazy('Accrued Currency')),
-#     (4, ugettext_lazy('Portfolio')),
-#     (5, ugettext_lazy('Account')),
-#     (6, ugettext_lazy('Strategy 1')),
-#     (7, ugettext_lazy('Strategy 2')),
-#     (8, ugettext_lazy('Strategy 3')),
-#     (9, ugettext_lazy('Position')),
-#     (10, ugettext_lazy('Effective Date')),
+#     (1, gettext_lazy('Instrument')),
+#     (2, gettext_lazy('Pricing Currency')),
+#     (3, gettext_lazy('Accrued Currency')),
+#     (4, gettext_lazy('Portfolio')),
+#     (5, gettext_lazy('Account')),
+#     (6, gettext_lazy('Strategy 1')),
+#     (7, gettext_lazy('Strategy 2')),
+#     (8, gettext_lazy('Strategy 3')),
+#     (9, gettext_lazy('Position')),
+#     (10, gettext_lazy('Effective Date')),
 # )
 
 class TransactionTypeContextParameter(models.Model):
@@ -595,19 +595,19 @@ class TransactionTypeContextParameter(models.Model):
     DATE = 40
 
     TYPES = (
-        (NUMBER, ugettext_lazy('Number')),
-        (STRING, ugettext_lazy('String')),
-        (DATE, ugettext_lazy('Date')),
+        (NUMBER, gettext_lazy('Number')),
+        (STRING, gettext_lazy('String')),
+        (DATE, gettext_lazy('Date')),
     )
 
     transaction_type = models.ForeignKey(TransactionType, related_name='context_parameters',
-                                         verbose_name=ugettext_lazy('transaction type'), on_delete=models.CASCADE)
-    name = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('name'))
+                                         verbose_name=gettext_lazy('transaction type'), on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('name'))
 
     value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
-                                                  verbose_name=ugettext_lazy('value type'))
+                                                  verbose_name=gettext_lazy('value type'))
 
-    order = models.IntegerField(default=1, verbose_name=ugettext_lazy('order'))
+    order = models.IntegerField(default=1, verbose_name=gettext_lazy('order'))
 
 
 class TransactionTypeInput(models.Model):
@@ -632,59 +632,59 @@ class TransactionTypeInput(models.Model):
     # INSTRUMENT_TYPE = 190
 
     TYPES = (
-        (NUMBER, ugettext_lazy('Number')),
-        (STRING, ugettext_lazy('String')),
-        (DATE, ugettext_lazy('Date')),
-        # (EXPRESSION, ugettext_lazy('Expression')),
-        (RELATION, ugettext_lazy('Relation')),
-        (SELECTOR, ugettext_lazy('Selector')),
-        (BUTTON, ugettext_lazy('Button')),
-        # (ACCOUNT, ugettext_lazy('Account')),
-        # (INSTRUMENT, ugettext_lazy('Instrument')),
-        # (CURRENCY, ugettext_lazy('Currency')),
-        # (COUNTERPARTY, ugettext_lazy('Counterparty')),
-        # (RESPONSIBLE, ugettext_lazy('Responsible')),
-        # (STRATEGY1, ugettext_lazy('Strategy 1')),
-        # (STRATEGY2, ugettext_lazy('Strategy 2')),
-        # (STRATEGY3, ugettext_lazy('Strategy 3')),
-        # (DAILY_PRICING_MODEL, ugettext_lazy('Daily pricing model')),
-        # (PAYMENT_SIZE_DETAIL, ugettext_lazy('Payment size detail')),
-        # (INSTRUMENT_TYPE, ugettext_lazy('Instrument type'))
+        (NUMBER, gettext_lazy('Number')),
+        (STRING, gettext_lazy('String')),
+        (DATE, gettext_lazy('Date')),
+        # (EXPRESSION, gettext_lazy('Expression')),
+        (RELATION, gettext_lazy('Relation')),
+        (SELECTOR, gettext_lazy('Selector')),
+        (BUTTON, gettext_lazy('Button')),
+        # (ACCOUNT, gettext_lazy('Account')),
+        # (INSTRUMENT, gettext_lazy('Instrument')),
+        # (CURRENCY, gettext_lazy('Currency')),
+        # (COUNTERPARTY, gettext_lazy('Counterparty')),
+        # (RESPONSIBLE, gettext_lazy('Responsible')),
+        # (STRATEGY1, gettext_lazy('Strategy 1')),
+        # (STRATEGY2, gettext_lazy('Strategy 2')),
+        # (STRATEGY3, gettext_lazy('Strategy 3')),
+        # (DAILY_PRICING_MODEL, gettext_lazy('Daily pricing model')),
+        # (PAYMENT_SIZE_DETAIL, gettext_lazy('Payment size detail')),
+        # (INSTRUMENT_TYPE, gettext_lazy('Instrument type'))
     )
 
     transaction_type = models.ForeignKey(TransactionType, related_name='inputs',
-                                         verbose_name=ugettext_lazy('transaction type'), on_delete=models.CASCADE)
-    name = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('name'))
+                                         verbose_name=gettext_lazy('transaction type'), on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('name'))
 
-    tooltip = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('tooltip'))
+    tooltip = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('tooltip'))
 
-    verbose_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('verbose name'))
+    verbose_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('verbose name'))
     value_type = models.PositiveSmallIntegerField(default=NUMBER, choices=TYPES,
-                                                  verbose_name=ugettext_lazy('value type'))
-    content_type = models.ForeignKey(ContentType, null=True, blank=True, verbose_name=ugettext_lazy('content type'),
+                                                  verbose_name=gettext_lazy('value type'))
+    content_type = models.ForeignKey(ContentType, null=True, blank=True, verbose_name=gettext_lazy('content type'),
                                      on_delete=models.SET_NULL)
 
     reference_table = models.CharField(max_length=255, null=True, blank=True,
-                                       verbose_name=ugettext_lazy('reference table'))
+                                       verbose_name=gettext_lazy('reference table'))
 
-    order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
+    order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
     value_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True,
-                                  verbose_name=ugettext_lazy('value expression'),
-                                  help_text=ugettext_lazy('this is expression for recalculate value'))
+                                  verbose_name=gettext_lazy('value expression'),
+                                  help_text=gettext_lazy('this is expression for recalculate value'))
 
-    is_fill_from_context = models.BooleanField(default=False, verbose_name=ugettext_lazy('is fill from context'))
+    is_fill_from_context = models.BooleanField(default=False, verbose_name=gettext_lazy('is fill from context'))
     context_property = models.CharField(max_length=255, null=True, blank=True,
-                                        verbose_name=ugettext_lazy('context property'))
+                                        verbose_name=gettext_lazy('context property'))
 
     value = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True,
-                             verbose_name=ugettext_lazy('value'),
-                             help_text=ugettext_lazy('this is expression for default value'))
+                             verbose_name=gettext_lazy('value'),
+                             help_text=gettext_lazy('this is expression for default value'))
 
     settings = models.ForeignKey('transactions.TransactionTypeInputSettings', null=True, blank=True,
                                  on_delete=models.SET_NULL,
-                                 verbose_name=ugettext_lazy('settings'))
+                                 verbose_name=gettext_lazy('settings'))
 
-    json_button_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json button data'))
+    json_button_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json button data'))
 
     @property
     def button_data(self):
@@ -704,8 +704,8 @@ class TransactionTypeInput(models.Model):
             self.json_button_data = None
 
     class Meta:
-        verbose_name = ugettext_lazy('transaction type input')
-        verbose_name_plural = ugettext_lazy('transaction type inputs')
+        verbose_name = gettext_lazy('transaction type input')
+        verbose_name_plural = gettext_lazy('transaction type inputs')
         unique_together = [
             ['transaction_type', 'name'],
         ]
@@ -737,12 +737,12 @@ class TransactionTypeInput(models.Model):
 class TransactionTypeInputSettings(models.Model):
     transaction_type_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.CASCADE,
                                                related_name='settings_old',
-                                               verbose_name=ugettext_lazy('transaction type input'))
+                                               verbose_name=gettext_lazy('transaction type input'))
 
     linked_inputs_names = models.TextField(blank=True, default='', null=True,
-                                           verbose_name=ugettext_lazy('linked_input_names'))
+                                           verbose_name=gettext_lazy('linked_input_names'))
     recalc_on_change_linked_inputs = models.TextField(blank=True, default='', null=True,
-                                                      verbose_name=ugettext_lazy('recalc on change linked inputs'))
+                                                      verbose_name=gettext_lazy('recalc on change linked inputs'))
 
 
 class RebookReactionChoice():
@@ -772,18 +772,18 @@ class RebookReactionChoice():
 
 class TransactionTypeAction(models.Model):
     transaction_type = models.ForeignKey(TransactionType, related_name='actions', on_delete=models.PROTECT,
-                                         verbose_name=ugettext_lazy('transaction type'))
-    order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
-    action_notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('action notes'))
+                                         verbose_name=gettext_lazy('transaction type'))
+    order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
+    action_notes = models.TextField(blank=True, default='', verbose_name=gettext_lazy('action notes'))
 
     rebook_reaction = models.IntegerField(default=0, choices=RebookReactionChoice.choices)
 
     condition_expr = models.CharField(max_length=1000, blank=True, default='',
-                                      verbose_name=ugettext_lazy('condition expression'))
+                                      verbose_name=gettext_lazy('condition expression'))
 
     class Meta:
-        verbose_name = ugettext_lazy('action')
-        verbose_name_plural = ugettext_lazy('actions')
+        verbose_name = gettext_lazy('action')
+        verbose_name_plural = gettext_lazy('actions')
         # unique_together = [
         #     ['transaction_type', 'order']
         # ]
@@ -798,90 +798,90 @@ class TransactionTypeAction(models.Model):
 
 class TransactionTypeActionInstrument(TransactionTypeAction):
     user_code = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                 verbose_name=ugettext_lazy('user code'))
+                                 verbose_name=gettext_lazy('user code'))
     name = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                            verbose_name=ugettext_lazy('name'))
+                            verbose_name=gettext_lazy('name'))
     public_name = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('public name'))
+                                   verbose_name=gettext_lazy('public name'))
     short_name = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                  verbose_name=ugettext_lazy('short name'))
+                                  verbose_name=gettext_lazy('short name'))
     notes = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                             verbose_name=ugettext_lazy('notes'))
+                             verbose_name=gettext_lazy('notes'))
 
     instrument_type = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                       verbose_name=ugettext_lazy('instrument type'))
+                                       verbose_name=gettext_lazy('instrument type'))
 
     instrument_type_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                              related_name='+', verbose_name=ugettext_lazy('instrument type input'))
+                                              related_name='+', verbose_name=gettext_lazy('instrument type input'))
 
     pricing_currency = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                        verbose_name=ugettext_lazy('pricing currency'))
+                                        verbose_name=gettext_lazy('pricing currency'))
 
     pricing_currency_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                               related_name='+', verbose_name=ugettext_lazy('pricing currency input'))
+                                               related_name='+', verbose_name=gettext_lazy('pricing currency input'))
 
     price_multiplier = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
-                                        verbose_name=ugettext_lazy('price multiplier'))
+                                        verbose_name=gettext_lazy('price multiplier'))
 
     accrued_currency = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                        verbose_name=ugettext_lazy('accrued currency'))
+                                        verbose_name=gettext_lazy('accrued currency'))
 
     accrued_currency_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                               related_name='+', verbose_name=ugettext_lazy('accrued currency input'))
+                                               related_name='+', verbose_name=gettext_lazy('accrued currency input'))
 
     accrued_multiplier = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
-                                          verbose_name=ugettext_lazy('accrued multiplier'))
+                                          verbose_name=gettext_lazy('accrued multiplier'))
 
     payment_size_detail = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                           verbose_name=ugettext_lazy('payment_size detail'))
+                                           verbose_name=gettext_lazy('payment_size detail'))
 
     payment_size_detail_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
                                                   on_delete=models.SET_NULL,
                                                   related_name='+',
-                                                  verbose_name=ugettext_lazy('payment size detail input'))
+                                                  verbose_name=gettext_lazy('payment size detail input'))
 
     pricing_condition = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                         verbose_name=ugettext_lazy('pricing condition'))
+                                         verbose_name=gettext_lazy('pricing condition'))
 
     pricing_condition_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
                                                 on_delete=models.SET_NULL,
                                                 related_name='+',
-                                                verbose_name=ugettext_lazy('pricing condition input'))
+                                                verbose_name=gettext_lazy('pricing condition input'))
 
     default_price = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
-                                     verbose_name=ugettext_lazy('default price'))
+                                     verbose_name=gettext_lazy('default price'))
     default_accrued = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
-                                       verbose_name=ugettext_lazy('default accrued'))
+                                       verbose_name=gettext_lazy('default accrued'))
 
     user_text_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user text 1'))
+                                   verbose_name=gettext_lazy('user text 1'))
     user_text_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user text 2'))
+                                   verbose_name=gettext_lazy('user text 2'))
     user_text_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('user text 3'))
+                                   verbose_name=gettext_lazy('user text 3'))
 
     reference_for_pricing = models.CharField(max_length=100, blank=True, default='',
-                                             verbose_name=ugettext_lazy('reference for pricing'))
+                                             verbose_name=gettext_lazy('reference for pricing'))
     # daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
     #                                         on_delete=models.SET_NULL, related_name='+',
-    #                                         verbose_name=ugettext_lazy('daily pricing model'))
+    #                                         verbose_name=gettext_lazy('daily pricing model'))
     # daily_pricing_model_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
     #                                               on_delete=models.SET_NULL,
     #                                               related_name='+',
-    #                                               verbose_name=ugettext_lazy('daily pricing model input'))
+    #                                               verbose_name=gettext_lazy('daily pricing model input'))
     # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.SET_NULL, null=True,
-    #                                           blank=True, verbose_name=ugettext_lazy('price download scheme'))
+    #                                           blank=True, verbose_name=gettext_lazy('price download scheme'))
     # price_download_scheme_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
     #                                                 on_delete=models.SET_NULL, related_name='+',
-    #                                                 verbose_name=ugettext_lazy('price download scheme input'))
+    #                                                 verbose_name=gettext_lazy('price download scheme input'))
     maturity_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='now()',
-                                     verbose_name=ugettext_lazy('maturity date'))
+                                     verbose_name=gettext_lazy('maturity date'))
     maturity_price = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
-                                      verbose_name=ugettext_lazy('default price'))
+                                      verbose_name=gettext_lazy('default price'))
 
     class Meta:
-        verbose_name = ugettext_lazy('transaction type action instrument')
-        verbose_name_plural = ugettext_lazy('transaction type action instruments')
+        verbose_name = gettext_lazy('transaction type action instrument')
+        verbose_name_plural = gettext_lazy('transaction type action instruments')
 
     def __str__(self):
         return 'Instrument action #%s' % self.order
@@ -889,174 +889,174 @@ class TransactionTypeActionInstrument(TransactionTypeAction):
 
 class TransactionTypeActionTransaction(TransactionTypeAction):
     transaction_class = models.ForeignKey(TransactionClass, on_delete=models.PROTECT, related_name='+',
-                                          verbose_name=ugettext_lazy('transaction class'))
+                                          verbose_name=gettext_lazy('transaction class'))
 
     instrument = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                  verbose_name=ugettext_lazy('instrument'))
+                                  verbose_name=gettext_lazy('instrument'))
 
     instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                         related_name='+', verbose_name=ugettext_lazy('instrument input'))
+                                         related_name='+', verbose_name=gettext_lazy('instrument input'))
     instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
                                            on_delete=models.SET_NULL, related_name='+',
-                                           verbose_name=ugettext_lazy('instrument phantom'))
+                                           verbose_name=gettext_lazy('instrument phantom'))
 
     transaction_currency = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                            verbose_name=ugettext_lazy('transaction currency'))
+                                            verbose_name=gettext_lazy('transaction currency'))
 
     transaction_currency_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
                                                    on_delete=models.SET_NULL, related_name='+',
-                                                   verbose_name=ugettext_lazy('transaction currency input'))
+                                                   verbose_name=gettext_lazy('transaction currency input'))
 
     position_size_with_sign = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.',
-                                               verbose_name=ugettext_lazy('position size with sign'))
+                                               verbose_name=gettext_lazy('position size with sign'))
 
     settlement_currency = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                           verbose_name=ugettext_lazy('settlement currency'))
+                                           verbose_name=gettext_lazy('settlement currency'))
 
     settlement_currency_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
                                                   on_delete=models.SET_NULL,
                                                   related_name='+',
-                                                  verbose_name=ugettext_lazy('settlement currency input'))
+                                                  verbose_name=gettext_lazy('settlement currency input'))
 
     cash_consideration = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.',
-                                          verbose_name=ugettext_lazy('cash consideration'))
+                                          verbose_name=gettext_lazy('cash consideration'))
     principal_with_sign = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.',
-                                           verbose_name=ugettext_lazy('principal with sign'))
+                                           verbose_name=gettext_lazy('principal with sign'))
     carry_with_sign = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.',
-                                       verbose_name=ugettext_lazy('carry with sign'))
+                                       verbose_name=gettext_lazy('carry with sign'))
     overheads_with_sign = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.',
-                                           verbose_name=ugettext_lazy('overheads with sign'))
+                                           verbose_name=gettext_lazy('overheads with sign'))
 
     portfolio = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                 verbose_name=ugettext_lazy('portfolio'))
+                                 verbose_name=gettext_lazy('portfolio'))
 
     portfolio_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                        related_name='+', verbose_name=ugettext_lazy('portfolio input'))
+                                        related_name='+', verbose_name=gettext_lazy('portfolio input'))
 
     account_position = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                        verbose_name=ugettext_lazy('account position'))
+                                        verbose_name=gettext_lazy('account position'))
 
     account_position_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                               related_name='+', verbose_name=ugettext_lazy('account position input'))
+                                               related_name='+', verbose_name=gettext_lazy('account position input'))
 
     account_cash = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                    verbose_name=ugettext_lazy('account cash'))
+                                    verbose_name=gettext_lazy('account cash'))
 
     account_cash_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                           related_name='+', verbose_name=ugettext_lazy('account cash input'))
+                                           related_name='+', verbose_name=gettext_lazy('account cash input'))
 
     account_interim = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                       verbose_name=ugettext_lazy('account interim'))
+                                       verbose_name=gettext_lazy('account interim'))
 
     account_interim_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                              related_name='+', verbose_name=ugettext_lazy('account interim input'))
+                                              related_name='+', verbose_name=gettext_lazy('account interim input'))
 
     accounting_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                       verbose_name=ugettext_lazy('accounting date'))
+                                       verbose_name=gettext_lazy('accounting date'))
     cash_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                 verbose_name=ugettext_lazy('cash date'))
+                                 verbose_name=gettext_lazy('cash date'))
 
     strategy1_position = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                          verbose_name=ugettext_lazy('strategy1 position'))
+                                          verbose_name=gettext_lazy('strategy1 position'))
 
     strategy1_position_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                                  related_name='+',
-                                                 verbose_name=ugettext_lazy('strategy 1 position input'))
+                                                 verbose_name=gettext_lazy('strategy 1 position input'))
 
     strategy1_cash = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                      verbose_name=ugettext_lazy('strategy1 cash'))
+                                      verbose_name=gettext_lazy('strategy1 cash'))
 
     strategy1_cash_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                             related_name='+', verbose_name=ugettext_lazy('strategy 1 cash input'))
+                                             related_name='+', verbose_name=gettext_lazy('strategy 1 cash input'))
 
     strategy2_position = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                          verbose_name=ugettext_lazy('strategy2 position'))
+                                          verbose_name=gettext_lazy('strategy2 position'))
 
     strategy2_position_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                                  related_name='+',
-                                                 verbose_name=ugettext_lazy('strategy 2 position input'))
+                                                 verbose_name=gettext_lazy('strategy 2 position input'))
 
     strategy2_cash = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                      verbose_name=ugettext_lazy('strategy2 cash'))
+                                      verbose_name=gettext_lazy('strategy2 cash'))
 
     strategy2_cash_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                             related_name='+', verbose_name=ugettext_lazy('strategy 2 cash input'))
+                                             related_name='+', verbose_name=gettext_lazy('strategy 2 cash input'))
 
     strategy3_position = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                          verbose_name=ugettext_lazy('strategy3 position'))
+                                          verbose_name=gettext_lazy('strategy3 position'))
 
     strategy3_position_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                                  related_name='+',
-                                                 verbose_name=ugettext_lazy('strategy 3 position input'))
+                                                 verbose_name=gettext_lazy('strategy 3 position input'))
 
     strategy3_cash = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                      verbose_name=ugettext_lazy('strategy3 cash'))
+                                      verbose_name=gettext_lazy('strategy3 cash'))
 
     strategy3_cash_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                             related_name='+', verbose_name=ugettext_lazy('strategy 3 cash input'))
+                                             related_name='+', verbose_name=gettext_lazy('strategy 3 cash input'))
 
     linked_instrument = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                         verbose_name=ugettext_lazy('linked instrument'))
+                                         verbose_name=gettext_lazy('linked instrument'))
 
     linked_instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                                related_name='+', verbose_name=ugettext_lazy('linked instrument input'))
+                                                related_name='+', verbose_name=gettext_lazy('linked instrument input'))
     linked_instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
                                                   on_delete=models.SET_NULL, related_name='+',
-                                                  verbose_name=ugettext_lazy('linked instrument phantom'))
+                                                  verbose_name=gettext_lazy('linked instrument phantom'))
 
     allocation_balance = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                          verbose_name=ugettext_lazy('allocation balance'))
+                                          verbose_name=gettext_lazy('allocation balance'))
 
     allocation_balance_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                                  related_name='+',
-                                                 verbose_name=ugettext_lazy('allocation balance input'))
+                                                 verbose_name=gettext_lazy('allocation balance input'))
     allocation_balance_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
                                                    on_delete=models.SET_NULL, related_name='+',
-                                                   verbose_name=ugettext_lazy('allocation balance phantom'))
+                                                   verbose_name=gettext_lazy('allocation balance phantom'))
 
     allocation_pl = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                     verbose_name=ugettext_lazy('allocation pl'))
+                                     verbose_name=gettext_lazy('allocation pl'))
 
     allocation_pl_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                            related_name='+', verbose_name=ugettext_lazy('allocation pl input'))
+                                            related_name='+', verbose_name=gettext_lazy('allocation pl input'))
     allocation_pl_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
                                               on_delete=models.SET_NULL, related_name='+',
-                                              verbose_name=ugettext_lazy('allocation pl phantom'))
+                                              verbose_name=gettext_lazy('allocation pl phantom'))
 
     responsible = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                   verbose_name=ugettext_lazy('responsible'))
+                                   verbose_name=gettext_lazy('responsible'))
 
     responsible_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                          related_name='+', verbose_name=ugettext_lazy('responsible input'))
+                                          related_name='+', verbose_name=gettext_lazy('responsible input'))
 
     counterparty = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                    verbose_name=ugettext_lazy('responsible'))
+                                    verbose_name=gettext_lazy('responsible'))
 
     counterparty_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                           related_name='+', verbose_name=ugettext_lazy('counterparty input'))
+                                           related_name='+', verbose_name=gettext_lazy('counterparty input'))
 
     reference_fx_rate = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
-                                         verbose_name=ugettext_lazy('reference FX-rate'))
+                                         verbose_name=gettext_lazy('reference FX-rate'))
 
     factor = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
-                              verbose_name=ugettext_lazy('factor'))
+                              verbose_name=gettext_lazy('factor'))
     trade_price = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
-                                   verbose_name=ugettext_lazy('trade price'))
+                                   verbose_name=gettext_lazy('trade price'))
     position_amount = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
-                                       verbose_name=ugettext_lazy('position amount'))
+                                       verbose_name=gettext_lazy('position amount'))
     principal_amount = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
-                                        verbose_name=ugettext_lazy('principal amount'))
+                                        verbose_name=gettext_lazy('principal amount'))
     carry_amount = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
-                                    verbose_name=ugettext_lazy('carry amount'))
+                                    verbose_name=gettext_lazy('carry amount'))
     overheads = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
-                                 verbose_name=ugettext_lazy('overheads'))
+                                 verbose_name=gettext_lazy('overheads'))
 
     notes = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                             verbose_name=ugettext_lazy('notes'))
+                             verbose_name=gettext_lazy('notes'))
 
     class Meta:
-        verbose_name = ugettext_lazy('transaction type action transaction')
-        verbose_name_plural = ugettext_lazy('transaction type action transactions')
+        verbose_name = gettext_lazy('transaction type action transaction')
+        verbose_name_plural = gettext_lazy('transaction type action transactions')
 
     def __str__(self):
         return 'Transaction action #%s' % self.order
@@ -1064,22 +1064,22 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
 
 class TransactionTypeActionInstrumentFactorSchedule(TransactionTypeAction):
     instrument = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                  verbose_name=ugettext_lazy('instrument'))
+                                  verbose_name=gettext_lazy('instrument'))
     instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                         related_name='+', verbose_name=ugettext_lazy('instrument input'))
+                                         related_name='+', verbose_name=gettext_lazy('instrument input'))
     instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
                                            on_delete=models.SET_NULL, related_name='+',
-                                           verbose_name=ugettext_lazy('instrument phantom'))
+                                           verbose_name=gettext_lazy('instrument phantom'))
 
     effective_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                      verbose_name=ugettext_lazy('effective date'))
+                                      verbose_name=gettext_lazy('effective date'))
 
     factor_value = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
-                                    verbose_name=ugettext_lazy('factor value'))
+                                    verbose_name=gettext_lazy('factor value'))
 
     class Meta:
-        verbose_name = ugettext_lazy('transaction type action instrument factor schedule')
-        verbose_name_plural = ugettext_lazy('transaction type action instrument factor schedules')
+        verbose_name = gettext_lazy('transaction type action instrument factor schedule')
+        verbose_name_plural = gettext_lazy('transaction type action instrument factor schedules')
 
     def __str__(self):
         return 'InstrumentFactor action #%s' % self.order
@@ -1088,28 +1088,28 @@ class TransactionTypeActionInstrumentFactorSchedule(TransactionTypeAction):
 # DEPRECATED (25.05.2020), delete soon
 class TransactionTypeActionInstrumentManualPricingFormula(TransactionTypeAction):
     instrument = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                  verbose_name=ugettext_lazy('instrument'))
+                                  verbose_name=gettext_lazy('instrument'))
     instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                         related_name='+', verbose_name=ugettext_lazy('instrument input'))
+                                         related_name='+', verbose_name=gettext_lazy('instrument input'))
     instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
                                            on_delete=models.SET_NULL, related_name='+',
-                                           verbose_name=ugettext_lazy('instrument phantom'))
+                                           verbose_name=gettext_lazy('instrument phantom'))
 
     pricing_policy = models.ForeignKey(PricingPolicy, null=True, blank=True, on_delete=models.SET_NULL,
                                        related_name='+',
-                                       verbose_name=ugettext_lazy('pricing policy'))
+                                       verbose_name=gettext_lazy('pricing policy'))
     pricing_policy_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                             related_name='+', verbose_name=ugettext_lazy('pricing policy input'))
+                                             related_name='+', verbose_name=gettext_lazy('pricing policy input'))
 
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                            verbose_name=ugettext_lazy('expr'))
+                            verbose_name=gettext_lazy('expr'))
 
     notes = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
-                             verbose_name=ugettext_lazy('notes'))
+                             verbose_name=gettext_lazy('notes'))
 
     class Meta:
-        verbose_name = ugettext_lazy('transaction type action instrument manual pricing formula')
-        verbose_name_plural = ugettext_lazy('transaction type action instrument manual pricing formula')
+        verbose_name = gettext_lazy('transaction type action instrument manual pricing formula')
+        verbose_name_plural = gettext_lazy('transaction type action instrument manual pricing formula')
 
     def __str__(self):
         return 'InstrumentManualPricingFormula action #%s' % self.order
@@ -1117,47 +1117,47 @@ class TransactionTypeActionInstrumentManualPricingFormula(TransactionTypeAction)
 
 class TransactionTypeActionInstrumentAccrualCalculationSchedules(TransactionTypeAction):
     instrument = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                  verbose_name=ugettext_lazy('instrument'))
+                                  verbose_name=gettext_lazy('instrument'))
 
     instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                         related_name='+', verbose_name=ugettext_lazy('instrument input'))
+                                         related_name='+', verbose_name=gettext_lazy('instrument input'))
     instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
                                            on_delete=models.SET_NULL, related_name='+',
-                                           verbose_name=ugettext_lazy('instrument phantom'))
+                                           verbose_name=gettext_lazy('instrument phantom'))
 
     accrual_calculation_model = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                                 verbose_name=ugettext_lazy('accrual calculation model'))
+                                                 verbose_name=gettext_lazy('accrual calculation model'))
 
     accrual_calculation_model_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True,
                                                         on_delete=models.SET_NULL,
                                                         related_name='+',
-                                                        verbose_name=ugettext_lazy('accrual calculation model input'))
+                                                        verbose_name=gettext_lazy('accrual calculation model input'))
 
     periodicity = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                   verbose_name=ugettext_lazy('periodicity'))
+                                   verbose_name=gettext_lazy('periodicity'))
 
     periodicity_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                           related_name='+',
-                                          verbose_name=ugettext_lazy('periodicity input'))
+                                          verbose_name=gettext_lazy('periodicity input'))
 
     accrual_start_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                          verbose_name=ugettext_lazy('accrual start date'))
+                                          verbose_name=gettext_lazy('accrual start date'))
 
     first_payment_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                          verbose_name=ugettext_lazy('first payment date'))
+                                          verbose_name=gettext_lazy('first payment date'))
 
     accrual_size = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0.0',
-                                    verbose_name=ugettext_lazy('accrual size'))
+                                    verbose_name=gettext_lazy('accrual size'))
 
     periodicity_n = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                     verbose_name=ugettext_lazy('periodicity n'))
+                                     verbose_name=gettext_lazy('periodicity n'))
 
     notes = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
-                             verbose_name=ugettext_lazy('notes'))
+                             verbose_name=gettext_lazy('notes'))
 
     class Meta:
-        verbose_name = ugettext_lazy('transaction type action instrument accrual calculation schedules')
-        verbose_name_plural = ugettext_lazy('transaction type action instrument accrual calculation schedules')
+        verbose_name = gettext_lazy('transaction type action instrument accrual calculation schedules')
+        verbose_name_plural = gettext_lazy('transaction type action instrument accrual calculation schedules')
 
     def __str__(self):
         return 'InstrumentAccrualCalculationSchedules action #%s' % self.order
@@ -1165,58 +1165,58 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedules(TransactionType
 
 class TransactionTypeActionInstrumentEventSchedule(TransactionTypeAction):
     instrument = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                  verbose_name=ugettext_lazy('instrument'))
+                                  verbose_name=gettext_lazy('instrument'))
     instrument_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                         related_name='+', verbose_name=ugettext_lazy('instrument input'))
+                                         related_name='+', verbose_name=gettext_lazy('instrument input'))
     instrument_phantom = models.ForeignKey(TransactionTypeActionInstrument, null=True, blank=True,
                                            on_delete=models.SET_NULL, related_name='+',
-                                           verbose_name=ugettext_lazy('instrument phantom'))
+                                           verbose_name=gettext_lazy('instrument phantom'))
 
     periodicity = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                   verbose_name=ugettext_lazy('periodicity'))
+                                   verbose_name=gettext_lazy('periodicity'))
 
     periodicity_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                           related_name='+',
-                                          verbose_name=ugettext_lazy('periodicity input'))
+                                          verbose_name=gettext_lazy('periodicity input'))
 
     notification_class = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                          verbose_name=ugettext_lazy('notification class'))
+                                          verbose_name=gettext_lazy('notification class'))
 
     notification_class_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                                  related_name='+',
-                                                 verbose_name=ugettext_lazy('notification class input'))
+                                                 verbose_name=gettext_lazy('notification class input'))
 
     event_class = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', null=True,
-                                   verbose_name=ugettext_lazy('event class'))
+                                   verbose_name=gettext_lazy('event class'))
 
     event_class_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
                                           related_name='+',
-                                          verbose_name=ugettext_lazy('event class input'))
+                                          verbose_name=gettext_lazy('event class input'))
 
     effective_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                      verbose_name=ugettext_lazy('effective date'))
+                                      verbose_name=gettext_lazy('effective date'))
 
     final_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                  verbose_name=ugettext_lazy('final date'))
+                                  verbose_name=gettext_lazy('final date'))
 
     is_auto_generated = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                         verbose_name=ugettext_lazy('is autogenerated'))
+                                         verbose_name=gettext_lazy('is autogenerated'))
 
     notify_in_n_days = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                        verbose_name=ugettext_lazy('notify in n days'))
+                                        verbose_name=gettext_lazy('notify in n days'))
 
     periodicity_n = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                     verbose_name=ugettext_lazy('periodicity n'))
+                                     verbose_name=gettext_lazy('periodicity n'))
 
     name = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
-                            verbose_name=ugettext_lazy('name'))
+                            verbose_name=gettext_lazy('name'))
 
     description = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
-                                   verbose_name=ugettext_lazy('description'))
+                                   verbose_name=gettext_lazy('description'))
 
     class Meta:
-        verbose_name = ugettext_lazy('transaction type action instrument event schedules')
-        verbose_name_plural = ugettext_lazy('transaction type action instrument event schedules')
+        verbose_name = gettext_lazy('transaction type action instrument event schedules')
+        verbose_name_plural = gettext_lazy('transaction type action instrument event schedules')
 
     def __str__(self):
         return 'TransactionTypeActionInstrumentEventSchedules action #%s' % self.order
@@ -1225,36 +1225,36 @@ class TransactionTypeActionInstrumentEventSchedule(TransactionTypeAction):
 class TransactionTypeActionInstrumentEventScheduleAction(TransactionTypeAction):
     event_schedule = models.ForeignKey(EventSchedule, null=True, blank=True, on_delete=models.SET_NULL,
                                        related_name='+',
-                                       verbose_name=ugettext_lazy('event schedule'))
+                                       verbose_name=gettext_lazy('event schedule'))
     event_schedule_input = models.ForeignKey(TransactionTypeInput, null=True, blank=True, on_delete=models.SET_NULL,
-                                             related_name='+', verbose_name=ugettext_lazy('event schedule input'))
+                                             related_name='+', verbose_name=gettext_lazy('event schedule input'))
 
     #  on_delete=models.PROTECT, TODO check later phantom permossions
     event_schedule_phantom = models.ForeignKey(TransactionTypeActionInstrumentEventSchedule, null=True, blank=True,
                                                related_name='+',
-                                               verbose_name=ugettext_lazy('event schedule phantom'),
+                                               verbose_name=gettext_lazy('event schedule phantom'),
                                                on_delete=models.SET_NULL)
 
     transaction_type_from_instrument_type = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
-                                                             verbose_name=ugettext_lazy('text'))
+                                                             verbose_name=gettext_lazy('text'))
 
     is_book_automatic = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default=False,
-                                         verbose_name=ugettext_lazy("is book automatic"),
-                                         help_text=ugettext_lazy('If checked - is book automatic'))
+                                         verbose_name=gettext_lazy("is book automatic"),
+                                         help_text=gettext_lazy('If checked - is book automatic'))
 
     is_sent_to_pending = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default=False,
-                                          verbose_name=ugettext_lazy("is sent to pending"),
-                                          help_text=ugettext_lazy('If checked - is sent to pending'))
+                                          verbose_name=gettext_lazy("is sent to pending"),
+                                          help_text=gettext_lazy('If checked - is sent to pending'))
 
     button_position = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='0',
-                                       verbose_name=ugettext_lazy('button position'))
+                                       verbose_name=gettext_lazy('button position'))
 
     text = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
-                            verbose_name=ugettext_lazy('text'))
+                            verbose_name=gettext_lazy('text'))
 
     class Meta:
-        verbose_name = ugettext_lazy('transaction type action instrument event schedule action')
-        verbose_name_plural = ugettext_lazy('transaction type action instrument event schedule actions')
+        verbose_name = gettext_lazy('transaction type action instrument event schedule action')
+        verbose_name_plural = gettext_lazy('transaction type action instrument event schedule actions')
 
     def __str__(self):
         return 'TransactionTypeActionInstrumentEventScheduleAction action #%s' % self.order
@@ -1262,11 +1262,11 @@ class TransactionTypeActionInstrumentEventScheduleAction(TransactionTypeAction):
 
 class TransactionTypeActionExecuteCommand(TransactionTypeAction):
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                            verbose_name=ugettext_lazy('expr'))
+                            verbose_name=gettext_lazy('expr'))
 
     class Meta:
-        verbose_name = ugettext_lazy('transaction type action execute command action')
-        verbose_name_plural = ugettext_lazy('transaction type action execute command actions')
+        verbose_name = gettext_lazy('transaction type action execute command action')
+        verbose_name_plural = gettext_lazy('transaction type action execute command actions')
 
     def __str__(self):
         return 'TransactionTypeActionExecuteCommand action #%s' % self.order
@@ -1274,17 +1274,17 @@ class TransactionTypeActionExecuteCommand(TransactionTypeAction):
 
 class EventToHandle(NamedModel):
     master_user = models.ForeignKey(MasterUser, related_name='events_to_handle',
-                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     transaction_type = models.ForeignKey(TransactionType, on_delete=models.PROTECT,
-                                         verbose_name=ugettext_lazy('transaction type'))
+                                         verbose_name=gettext_lazy('transaction type'))
     notification_date = models.DateField(null=True, blank=True,
-                                         verbose_name=ugettext_lazy('notification date'))
+                                         verbose_name=gettext_lazy('notification date'))
     effective_date = models.DateField(null=True, blank=True,
-                                      verbose_name=ugettext_lazy('effective date'))
+                                      verbose_name=gettext_lazy('effective date'))
 
     class Meta(NamedModel.Meta):
-        verbose_name = ugettext_lazy('event to handle')
-        verbose_name_plural = ugettext_lazy('events to handle')
+        verbose_name = gettext_lazy('event to handle')
+        verbose_name_plural = gettext_lazy('events to handle')
 
 
 class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
@@ -1292,164 +1292,164 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
     PENDING = 2
     IGNORE = 3
     STATUS_CHOICES = (
-        (PRODUCTION, ugettext_lazy('Booked')),
-        (PENDING, ugettext_lazy('Pending')),
-        (IGNORE, ugettext_lazy('Ignore')),
+        (PRODUCTION, gettext_lazy('Booked')),
+        (PENDING, gettext_lazy('Pending')),
+        (IGNORE, gettext_lazy('Ignore')),
     )
 
     SHOW_PARAMETERS = 1
     HIDE_PARAMETERS = 2
 
     VISIBILITY_STATUS_CHOICES = (
-        (SHOW_PARAMETERS, ugettext_lazy('Show Parameters')),
-        (HIDE_PARAMETERS, ugettext_lazy('Hide Parameters')),
+        (SHOW_PARAMETERS, gettext_lazy('Show Parameters')),
+        (HIDE_PARAMETERS, gettext_lazy('Hide Parameters')),
     )
 
     master_user = models.ForeignKey(MasterUser, related_name='complex_transactions',
-                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     transaction_type = models.ForeignKey(TransactionType, on_delete=models.PROTECT,
-                                         verbose_name=ugettext_lazy('transaction type'))
+                                         verbose_name=gettext_lazy('transaction type'))
 
-    is_locked = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is locked'))
-    is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is canceled'))
-    error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=ugettext_lazy('error code'))
+    is_locked = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is locked'))
+    is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is canceled'))
+    error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=gettext_lazy('error code'))
 
-    date = models.DateField(default=date_now, db_index=True, verbose_name=ugettext_lazy("date"))
+    date = models.DateField(default=date_now, db_index=True, verbose_name=gettext_lazy("date"))
     status_old = models.PositiveSmallIntegerField(default=PRODUCTION, choices=STATUS_CHOICES, db_index=True,
-                                                  verbose_name=ugettext_lazy('status'))
+                                                  verbose_name=gettext_lazy('status'))
     status = models.ForeignKey(ComplexTransactionStatus, on_delete=models.PROTECT,
                                default=ComplexTransactionStatus.BOOKED,
-                               verbose_name=ugettext_lazy("status"))
+                               verbose_name=gettext_lazy("status"))
 
     visibility_status = models.PositiveSmallIntegerField(default=SHOW_PARAMETERS, choices=VISIBILITY_STATUS_CHOICES,
                                                          db_index=True,
-                                                         verbose_name=ugettext_lazy('visibility_status'))
+                                                         verbose_name=gettext_lazy('visibility_status'))
 
-    code = models.IntegerField(default=0, verbose_name=ugettext_lazy('code'))
+    code = models.IntegerField(default=0, verbose_name=gettext_lazy('code'))
 
     transaction_unique_code = models.CharField(max_length=255, null=True, blank=True,
-                                               verbose_name=ugettext_lazy('transaction unique code'))
+                                               verbose_name=gettext_lazy('transaction unique code'))
 
-    text = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('text'))
+    text = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('text'))
 
-    user_text_1 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 1'))
+    user_text_1 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 1'))
 
-    user_text_2 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 2'))
+    user_text_2 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 2'))
 
-    user_text_3 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 3'))
+    user_text_3 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 3'))
 
-    user_text_4 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 4'))
+    user_text_4 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 4'))
 
-    user_text_5 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 5'))
+    user_text_5 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 5'))
 
-    user_text_6 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 6'))
+    user_text_6 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 6'))
 
-    user_text_7 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 7'))
+    user_text_7 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 7'))
 
-    user_text_8 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 8'))
+    user_text_8 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 8'))
 
-    user_text_9 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 9'))
+    user_text_9 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 9'))
 
-    user_text_10 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 10'))
+    user_text_10 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 10'))
 
-    user_text_11 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 11'))
+    user_text_11 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 11'))
 
-    user_text_12 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 12'))
+    user_text_12 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 12'))
 
-    user_text_13 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 13'))
+    user_text_13 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 13'))
 
-    user_text_14 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 14'))
+    user_text_14 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 14'))
 
-    user_text_15 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 15'))
+    user_text_15 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 15'))
 
-    user_text_16 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 16'))
+    user_text_16 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 16'))
 
-    user_text_17 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 17'))
+    user_text_17 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 17'))
 
-    user_text_18 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 18'))
+    user_text_18 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 18'))
 
-    user_text_19 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 19'))
+    user_text_19 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 19'))
 
-    user_text_20 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 20'))
+    user_text_20 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 20'))
 
-    user_text_21 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 21'))
+    user_text_21 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 21'))
 
-    user_text_22 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 22'))
+    user_text_22 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 22'))
 
-    user_text_23 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 23'))
+    user_text_23 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 23'))
 
-    user_text_24 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 24'))
+    user_text_24 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 24'))
 
-    user_text_25 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 25'))
+    user_text_25 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 25'))
 
-    user_text_26 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 26'))
+    user_text_26 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 26'))
 
-    user_text_27 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 27'))
+    user_text_27 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 27'))
 
-    user_text_28 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 28'))
+    user_text_28 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 28'))
 
-    user_text_29 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 29'))
+    user_text_29 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 29'))
 
-    user_text_30 = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('user text 30'))
+    user_text_30 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 30'))
 
-    user_number_1 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 1'))
+    user_number_1 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 1'))
 
-    user_number_2 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 2'))
+    user_number_2 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 2'))
 
-    user_number_3 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 3'))
+    user_number_3 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 3'))
 
-    user_number_4 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 4'))
+    user_number_4 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 4'))
 
-    user_number_5 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 5'))
+    user_number_5 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 5'))
 
-    user_number_6 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 6'))
+    user_number_6 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 6'))
 
-    user_number_7 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 7'))
+    user_number_7 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 7'))
 
-    user_number_8 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 8'))
+    user_number_8 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 8'))
 
-    user_number_9 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 9'))
+    user_number_9 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 9'))
 
-    user_number_10 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 10'))
+    user_number_10 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 10'))
 
-    user_number_11 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 11'))
+    user_number_11 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 11'))
 
-    user_number_12 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 12'))
+    user_number_12 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 12'))
 
-    user_number_13 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 13'))
+    user_number_13 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 13'))
 
-    user_number_14 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 14'))
+    user_number_14 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 14'))
 
-    user_number_15 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 15'))
+    user_number_15 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 15'))
 
-    user_number_16 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 16'))
+    user_number_16 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 16'))
 
-    user_number_17 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 17'))
+    user_number_17 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 17'))
 
-    user_number_18 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 18'))
+    user_number_18 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 18'))
 
-    user_number_19 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 19'))
+    user_number_19 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 19'))
 
-    user_number_20 = models.IntegerField(null=True, verbose_name=ugettext_lazy('user number 20'))
+    user_number_20 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 20'))
 
-    user_date_1 = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("user date 1"))
+    user_date_1 = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 1"))
 
-    user_date_2 = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("user date 2"))
+    user_date_2 = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 2"))
 
-    user_date_3 = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("user date 3"))
+    user_date_3 = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 3"))
 
-    user_date_4 = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("user date 4"))
+    user_date_4 = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 4"))
 
-    user_date_5 = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("user date 5"))
+    user_date_5 = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 5"))
 
-    attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
+    attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
+    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta:
-        verbose_name = ugettext_lazy('complex transaction')
-        verbose_name_plural = ugettext_lazy('complex transactions')
+        verbose_name = gettext_lazy('complex transaction')
+        verbose_name_plural = gettext_lazy('complex transactions')
         index_together = [
             ['transaction_type', 'code']
         ]
@@ -1478,211 +1478,211 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
 
 class ComplexTransactionInput(models.Model):
     complex_transaction = models.ForeignKey(ComplexTransaction, on_delete=models.CASCADE, related_name='inputs',
-                                            verbose_name=ugettext_lazy('complex transaction'))
+                                            verbose_name=gettext_lazy('complex transaction'))
     transaction_type_input = models.ForeignKey(TransactionTypeInput, on_delete=models.CASCADE, related_name='+',
-                                               verbose_name=ugettext_lazy('transaction type input'))
+                                               verbose_name=gettext_lazy('transaction type input'))
 
-    value_relation = models.TextField(default='', blank=True, verbose_name=ugettext_lazy('value relation'))
+    value_relation = models.TextField(default='', blank=True, verbose_name=gettext_lazy('value relation'))
 
-    value_string = models.TextField(default='', blank=True, verbose_name=ugettext_lazy('value string'))
-    value_float = models.FloatField(default=0.0, verbose_name=ugettext_lazy('value float'))
-    value_date = models.DateField(default=date.min, verbose_name=ugettext_lazy('value date'))
+    value_string = models.TextField(default='', blank=True, verbose_name=gettext_lazy('value string'))
+    value_float = models.FloatField(default=0.0, verbose_name=gettext_lazy('value float'))
+    value_date = models.DateField(default=date.min, verbose_name=gettext_lazy('value date'))
 
     account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.SET_NULL, related_name='+',
-                                verbose_name=ugettext_lazy('account'))
+                                verbose_name=gettext_lazy('account'))
     instrument_type = models.ForeignKey('instruments.InstrumentType', null=True, blank=True, on_delete=models.SET_NULL,
-                                        related_name='+', verbose_name=ugettext_lazy('instrument type'))
+                                        related_name='+', verbose_name=gettext_lazy('instrument type'))
     instrument = models.ForeignKey('instruments.Instrument', null=True, blank=True, on_delete=models.SET_NULL,
-                                   related_name='+', verbose_name=ugettext_lazy('instrument'))
+                                   related_name='+', verbose_name=gettext_lazy('instrument'))
     currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL,
-                                 related_name='+', verbose_name=ugettext_lazy('currency'))
+                                 related_name='+', verbose_name=gettext_lazy('currency'))
     counterparty = models.ForeignKey('counterparties.Counterparty', null=True, blank=True, on_delete=models.SET_NULL,
-                                     related_name='+', verbose_name=ugettext_lazy('counterparty'))
+                                     related_name='+', verbose_name=gettext_lazy('counterparty'))
     responsible = models.ForeignKey('counterparties.Responsible', null=True, blank=True, on_delete=models.SET_NULL,
-                                    related_name='+', verbose_name=ugettext_lazy('responsible'))
+                                    related_name='+', verbose_name=gettext_lazy('responsible'))
     portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.SET_NULL,
-                                  related_name='+', verbose_name=ugettext_lazy('portfolio'))
+                                  related_name='+', verbose_name=gettext_lazy('portfolio'))
     strategy1 = models.ForeignKey('strategies.Strategy1', null=True, blank=True, on_delete=models.SET_NULL,
-                                  related_name='+', verbose_name=ugettext_lazy('strategy 1'))
+                                  related_name='+', verbose_name=gettext_lazy('strategy 1'))
     strategy2 = models.ForeignKey('strategies.Strategy2', null=True, blank=True, on_delete=models.SET_NULL,
-                                  related_name='+', verbose_name=ugettext_lazy('strategy 2'))
+                                  related_name='+', verbose_name=gettext_lazy('strategy 2'))
     strategy3 = models.ForeignKey('strategies.Strategy3', null=True, blank=True, on_delete=models.SET_NULL,
-                                  related_name='+', verbose_name=ugettext_lazy('strategy 3'))
+                                  related_name='+', verbose_name=gettext_lazy('strategy 3'))
     daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
                                             on_delete=models.SET_NULL, related_name='+',
-                                            verbose_name=ugettext_lazy('daily pricing model'))
+                                            verbose_name=gettext_lazy('daily pricing model'))
     payment_size_detail = models.ForeignKey('instruments.PaymentSizeDetail', null=True, blank=True,
                                             on_delete=models.SET_NULL, related_name='+',
-                                            verbose_name=ugettext_lazy('payment size detail'))
+                                            verbose_name=gettext_lazy('payment size detail'))
 
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True,
                                        on_delete=models.SET_NULL, related_name='+',
-                                       verbose_name=ugettext_lazy('pricing policy'))
+                                       verbose_name=gettext_lazy('pricing policy'))
 
     periodicity = models.ForeignKey('instruments.Periodicity', null=True, blank=True,
                                     on_delete=models.PROTECT, related_name='+',
-                                    verbose_name=ugettext_lazy('periodicity'))
+                                    verbose_name=gettext_lazy('periodicity'))
 
     accrual_calculation_model = models.ForeignKey('instruments.AccrualCalculationModel', null=True, blank=True,
                                                   on_delete=models.PROTECT, related_name='+',
-                                                  verbose_name=ugettext_lazy('accrual calculation model'))
+                                                  verbose_name=gettext_lazy('accrual calculation model'))
 
     event_class = models.ForeignKey(EventClass, null=True, blank=True,
                                     on_delete=models.PROTECT, related_name='+',
-                                    verbose_name=ugettext_lazy('event class'))
+                                    verbose_name=gettext_lazy('event class'))
 
     notification_class = models.ForeignKey(NotificationClass, null=True, blank=True,
                                            on_delete=models.PROTECT, related_name='+',
-                                           verbose_name=ugettext_lazy('notification class'))
+                                           verbose_name=gettext_lazy('notification class'))
 
     class Meta:
-        verbose_name = ugettext_lazy('complex transaction input')
-        verbose_name_plural = ugettext_lazy('complex transaction inputs')
+        verbose_name = gettext_lazy('complex transaction input')
+        verbose_name_plural = gettext_lazy('complex transaction inputs')
         unique_together = [
             ['complex_transaction', 'transaction_type_input', ]
         ]
 
 
 class Transaction(models.Model):
-    master_user = models.ForeignKey(MasterUser, related_name='transactions', verbose_name=ugettext_lazy('master user'),
+    master_user = models.ForeignKey(MasterUser, related_name='transactions', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
     complex_transaction = models.ForeignKey(ComplexTransaction, on_delete=models.CASCADE,
                                             related_name='transactions',
-                                            verbose_name=ugettext_lazy('complex transaction'))
-    complex_transaction_order = models.PositiveSmallIntegerField(default=0.0, verbose_name=ugettext_lazy(
+                                            verbose_name=gettext_lazy('complex transaction'))
+    complex_transaction_order = models.PositiveSmallIntegerField(default=0.0, verbose_name=gettext_lazy(
         'complex transaction order'))
-    transaction_code = models.IntegerField(default=0, verbose_name=ugettext_lazy('transaction code'))
+    transaction_code = models.IntegerField(default=0, verbose_name=gettext_lazy('transaction code'))
     transaction_class = models.ForeignKey(TransactionClass, on_delete=models.PROTECT,
-                                          verbose_name=ugettext_lazy("transaction class"))
+                                          verbose_name=gettext_lazy("transaction class"))
 
-    # is_locked = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is locked'))
-    is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is canceled'))
+    # is_locked = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is locked'))
+    is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is canceled'))
 
-    error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=ugettext_lazy('error code'))
+    error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=gettext_lazy('error code'))
 
     # Position related
     instrument = models.ForeignKey(Instrument, related_name='transactions', on_delete=models.PROTECT, null=True,
-                                   blank=True, verbose_name=ugettext_lazy("instrument"))
+                                   blank=True, verbose_name=gettext_lazy("instrument"))
     transaction_currency = models.ForeignKey(Currency, related_name='transactions',
                                              on_delete=models.PROTECT, null=True, blank=True,
-                                             verbose_name=ugettext_lazy("transaction currency"))
-    position_size_with_sign = models.FloatField(default=0.0, verbose_name=ugettext_lazy("position size with sign"))
+                                             verbose_name=gettext_lazy("transaction currency"))
+    position_size_with_sign = models.FloatField(default=0.0, verbose_name=gettext_lazy("position size with sign"))
 
     # Cash related
     settlement_currency = models.ForeignKey(Currency, related_name='transactions_settlement_currency',
-                                            on_delete=models.PROTECT, verbose_name=ugettext_lazy("settlement currency"))
-    cash_consideration = models.FloatField(default=0.0, verbose_name=ugettext_lazy("cash consideration"))
+                                            on_delete=models.PROTECT, verbose_name=gettext_lazy("settlement currency"))
+    cash_consideration = models.FloatField(default=0.0, verbose_name=gettext_lazy("cash consideration"))
 
     # P&L related
-    principal_with_sign = models.FloatField(default=0.0, verbose_name=ugettext_lazy("principal with sign"))
-    carry_with_sign = models.FloatField(default=0.0, verbose_name=ugettext_lazy("carry with sign"))
-    overheads_with_sign = models.FloatField(default=0.0, verbose_name=ugettext_lazy("overheads with sign"))
+    principal_with_sign = models.FloatField(default=0.0, verbose_name=gettext_lazy("principal with sign"))
+    carry_with_sign = models.FloatField(default=0.0, verbose_name=gettext_lazy("carry with sign"))
+    overheads_with_sign = models.FloatField(default=0.0, verbose_name=gettext_lazy("overheads with sign"))
 
     # accounting dates
     transaction_date = models.DateField(editable=False, default=date_now, db_index=True,
-                                        verbose_name=ugettext_lazy("transaction date"))
-    accounting_date = models.DateField(default=date_now, db_index=True, verbose_name=ugettext_lazy("accounting date"))
-    cash_date = models.DateField(default=date_now, db_index=True, verbose_name=ugettext_lazy("cash date"))
+                                        verbose_name=gettext_lazy("transaction date"))
+    accounting_date = models.DateField(default=date_now, db_index=True, verbose_name=gettext_lazy("accounting date"))
+    cash_date = models.DateField(default=date_now, db_index=True, verbose_name=gettext_lazy("cash date"))
 
     # portfolio
-    portfolio = models.ForeignKey(Portfolio, on_delete=models.PROTECT, verbose_name=ugettext_lazy("portfolio"))
+    portfolio = models.ForeignKey(Portfolio, on_delete=models.PROTECT, verbose_name=gettext_lazy("portfolio"))
 
     # accounts
     account_position = models.ForeignKey(Account, related_name='transactions_account_position',
                                          on_delete=models.PROTECT, null=True, blank=True,
-                                         verbose_name=ugettext_lazy("account position"))
+                                         verbose_name=gettext_lazy("account position"))
     account_cash = models.ForeignKey(Account, related_name='transactions_account_cash', on_delete=models.PROTECT,
-                                     null=True, blank=True, verbose_name=ugettext_lazy("account cash"))
+                                     null=True, blank=True, verbose_name=gettext_lazy("account cash"))
     account_interim = models.ForeignKey(Account, related_name='transactions_account_interim', on_delete=models.PROTECT,
-                                        null=True, blank=True, verbose_name=ugettext_lazy("account interim"))
+                                        null=True, blank=True, verbose_name=gettext_lazy("account interim"))
 
     # strategies
     strategy1_position = models.ForeignKey(Strategy1, related_name='transactions_strategy1_position',
                                            null=True, blank=True, on_delete=models.PROTECT,
-                                           verbose_name=ugettext_lazy("strategy 1 cash"))
+                                           verbose_name=gettext_lazy("strategy 1 cash"))
     strategy1_cash = models.ForeignKey(Strategy1, related_name='transactions_strategy1_cash',
                                        null=True, blank=True, on_delete=models.PROTECT,
-                                       verbose_name=ugettext_lazy("strategy 1 position"))
+                                       verbose_name=gettext_lazy("strategy 1 position"))
     strategy2_position = models.ForeignKey(Strategy2, related_name='transactions_strategy2_position',
                                            null=True, blank=True, on_delete=models.PROTECT,
-                                           verbose_name=ugettext_lazy("strategy 2 cash"))
+                                           verbose_name=gettext_lazy("strategy 2 cash"))
     strategy2_cash = models.ForeignKey(Strategy2, related_name='transactions_strategy2_cash',
                                        null=True, blank=True, on_delete=models.PROTECT,
-                                       verbose_name=ugettext_lazy("strategy 2 position"))
+                                       verbose_name=gettext_lazy("strategy 2 position"))
     strategy3_position = models.ForeignKey(Strategy3, related_name='transactions_strategy3_position',
                                            null=True, blank=True, on_delete=models.PROTECT,
-                                           verbose_name=ugettext_lazy("strategy 3 cash"))
+                                           verbose_name=gettext_lazy("strategy 3 cash"))
     strategy3_cash = models.ForeignKey(Strategy3, related_name='transactions_strategy3_cash',
                                        null=True, blank=True, on_delete=models.PROTECT,
-                                       verbose_name=ugettext_lazy("strategy 3 position"))
+                                       verbose_name=gettext_lazy("strategy 3 position"))
 
     # responsible & counterparty
 
     responsible = models.ForeignKey(Responsible, related_name='transactions',
                                     on_delete=models.PROTECT, null=True, blank=True,
-                                    verbose_name=ugettext_lazy("responsible"),
-                                    help_text=ugettext_lazy("Trader or transaction executor"))
+                                    verbose_name=gettext_lazy("responsible"),
+                                    help_text=gettext_lazy("Trader or transaction executor"))
     counterparty = models.ForeignKey(Counterparty, related_name='transactions',
                                      on_delete=models.PROTECT, null=True, blank=True,
-                                     verbose_name=ugettext_lazy("counterparty"))
+                                     verbose_name=gettext_lazy("counterparty"))
 
     # linked instrument
 
     linked_instrument = models.ForeignKey(Instrument, related_name='transactions_linked',
                                           on_delete=models.PROTECT, null=True, blank=True,
-                                          verbose_name=ugettext_lazy("linked instrument"))
+                                          verbose_name=gettext_lazy("linked instrument"))
 
     # allocations
 
     allocation_balance = models.ForeignKey(Instrument, related_name='transactions_allocation_balance',
                                            on_delete=models.PROTECT, null=True, blank=True,
-                                           verbose_name=ugettext_lazy("allocation balance"))
+                                           verbose_name=gettext_lazy("allocation balance"))
 
     allocation_pl = models.ForeignKey(Instrument, related_name='transactions_allocation_pl',
                                       on_delete=models.PROTECT, null=True, blank=True,
-                                      verbose_name=ugettext_lazy("allocation P&L"))
+                                      verbose_name=gettext_lazy("allocation P&L"))
 
-    reference_fx_rate = models.FloatField(default=0.0, verbose_name=ugettext_lazy("reference fx-rate"),
-                                          help_text=ugettext_lazy(
+    reference_fx_rate = models.FloatField(default=0.0, verbose_name=gettext_lazy("reference fx-rate"),
+                                          help_text=gettext_lazy(
                                               "FX rate to convert from Settlement ccy to Instrument "
                                               "Ccy on Accounting Date (trade date)"))
 
     # other
-    is_locked = models.BooleanField(default=False, verbose_name=ugettext_lazy("is locked"),
-                                    help_text=ugettext_lazy('If checked - transaction cannot be changed'))
-    # is_canceled = models.BooleanField(default=False, verbose_name=ugettext_lazy("is canceled"),
-    #                                   help_text=ugettext_lazy('If checked - transaction is cancelled'))
+    is_locked = models.BooleanField(default=False, verbose_name=gettext_lazy("is locked"),
+                                    help_text=gettext_lazy('If checked - transaction cannot be changed'))
+    # is_canceled = models.BooleanField(default=False, verbose_name=gettext_lazy("is canceled"),
+    #                                   help_text=gettext_lazy('If checked - transaction is cancelled'))
 
-    factor = models.FloatField(default=0.0, verbose_name=ugettext_lazy("factor"),
-                               help_text=ugettext_lazy('Multiplier (for calculations on the form)'))
-    trade_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy("trade price"),
-                                    help_text=ugettext_lazy('Price (for calculations on the form)'))
+    factor = models.FloatField(default=0.0, verbose_name=gettext_lazy("factor"),
+                               help_text=gettext_lazy('Multiplier (for calculations on the form)'))
+    trade_price = models.FloatField(default=0.0, verbose_name=gettext_lazy("trade price"),
+                                    help_text=gettext_lazy('Price (for calculations on the form)'))
 
-    ytm_at_cost = models.FloatField(default=0.0, verbose_name=ugettext_lazy("YTM at cost"),
-                                    help_text=ugettext_lazy('YTM at cost'))
+    ytm_at_cost = models.FloatField(default=0.0, verbose_name=gettext_lazy("YTM at cost"),
+                                    help_text=gettext_lazy('YTM at cost'))
 
-    position_amount = models.FloatField(default=0.0, verbose_name=ugettext_lazy("position amount"),
-                                        help_text=ugettext_lazy(
+    position_amount = models.FloatField(default=0.0, verbose_name=gettext_lazy("position amount"),
+                                        help_text=gettext_lazy(
                                             'Absolute value of Position with Sign (for calculations on the form)'))
-    principal_amount = models.FloatField(default=0.0, verbose_name=ugettext_lazy("principal amount"),
-                                         help_text=ugettext_lazy(
+    principal_amount = models.FloatField(default=0.0, verbose_name=gettext_lazy("principal amount"),
+                                         help_text=gettext_lazy(
                                              'Absolute value of Principal with Sign (for calculations on the form)'))
-    carry_amount = models.FloatField(default=0.0, verbose_name=ugettext_lazy("carry amount"),
-                                     help_text=ugettext_lazy(
+    carry_amount = models.FloatField(default=0.0, verbose_name=gettext_lazy("carry amount"),
+                                     help_text=gettext_lazy(
                                          'Absolute value of Carry with Sign (for calculations on the form)'))
-    overheads = models.FloatField(default=0.0, verbose_name=ugettext_lazy("overheads"),
-                                  help_text=ugettext_lazy(
+    overheads = models.FloatField(default=0.0, verbose_name=gettext_lazy("overheads"),
+                                  help_text=gettext_lazy(
                                       'Absolute value of overheads (for calculations on the form)'))
 
-    notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
+    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
 
-    attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
+    attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
+    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta:
-        verbose_name = ugettext_lazy('transaction')
-        verbose_name_plural = ugettext_lazy('transactions')
+        verbose_name = gettext_lazy('transaction')
+        verbose_name_plural = gettext_lazy('transactions')
         index_together = [
             ['master_user', 'transaction_code']
         ]
@@ -1894,21 +1894,21 @@ class Transaction(models.Model):
 
 class ExternalCashFlow(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='external_cash_flows',
-                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     date = models.DateField(default=date_now, db_index=True,
-                            verbose_name=ugettext_lazy("date"))
+                            verbose_name=gettext_lazy("date"))
     portfolio = models.ForeignKey(Portfolio, related_name='external_cash_flows', on_delete=models.PROTECT,
-                                  verbose_name=ugettext_lazy("portfolio"))
+                                  verbose_name=gettext_lazy("portfolio"))
     account = models.ForeignKey(Account, related_name='external_cash_flows', on_delete=models.PROTECT,
-                                verbose_name=ugettext_lazy("account"))
+                                verbose_name=gettext_lazy("account"))
     currency = models.ForeignKey(Currency, related_name='external_cash_flows', on_delete=models.PROTECT,
-                                 verbose_name=ugettext_lazy("currency"))
+                                 verbose_name=gettext_lazy("currency"))
     amount = models.FloatField(default=0.,
-                               verbose_name=ugettext_lazy("amount"))
+                               verbose_name=gettext_lazy("amount"))
 
     class Meta:
-        verbose_name = ugettext_lazy('external cash flow')
-        verbose_name_plural = ugettext_lazy('external cash flows')
+        verbose_name = gettext_lazy('external cash flow')
+        verbose_name_plural = gettext_lazy('external cash flows')
         ordering = ['date']
 
     def __str__(self):
@@ -1918,21 +1918,21 @@ class ExternalCashFlow(models.Model):
 
 class ExternalCashFlowStrategy(models.Model):
     external_cash_flow = models.ForeignKey(ExternalCashFlow, related_name='strategies',
-                                           verbose_name=ugettext_lazy("external cash flow"), on_delete=models.CASCADE)
-    order = models.IntegerField(default=0, verbose_name=ugettext_lazy("order"))
+                                           verbose_name=gettext_lazy("external cash flow"), on_delete=models.CASCADE)
+    order = models.IntegerField(default=0, verbose_name=gettext_lazy("order"))
     strategy1 = models.ForeignKey(Strategy1, on_delete=models.PROTECT, null=True, blank=True,
                                   related_name="external_cash_flow_strategies1",
-                                  verbose_name=ugettext_lazy("strategy1"))
+                                  verbose_name=gettext_lazy("strategy1"))
     strategy2 = models.ForeignKey(Strategy2, on_delete=models.PROTECT, null=True, blank=True,
                                   related_name="external_cash_flow_strategies2",
-                                  verbose_name=ugettext_lazy("strategy2"))
+                                  verbose_name=gettext_lazy("strategy2"))
     strategy3 = models.ForeignKey(Strategy3, on_delete=models.PROTECT, null=True, blank=True,
                                   related_name="external_cash_flow_strategies3",
-                                  verbose_name=ugettext_lazy("strategy3"))
+                                  verbose_name=gettext_lazy("strategy3"))
 
     class Meta:
-        verbose_name = ugettext_lazy('external cash flow strategy')
-        verbose_name_plural = ugettext_lazy('external cash flow strtegies')
+        verbose_name = gettext_lazy('external cash flow strategy')
+        verbose_name_plural = gettext_lazy('external cash flow strtegies')
         ordering = ['order']
 
     def __str__(self):

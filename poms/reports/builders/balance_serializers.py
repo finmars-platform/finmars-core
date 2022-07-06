@@ -7,7 +7,7 @@ from datetime import timedelta, date
 import time
 from django.conf import settings
 from django.db.models import ForeignKey
-from django.utils.translation import ugettext_lazy, ugettext
+from django.utils.translation import gettext_lazy, gettext_lazy
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -345,7 +345,7 @@ class ReportItemSerializer(serializers.Serializer):
                 try:
                     value = formula.safe_eval(expr, names=names, context=self.context)
                 except formula.InvalidExpression:
-                    value = ugettext('Invalid expression')
+                    value = gettext_lazy('Invalid expression')
                 return value
         return None
 
@@ -369,10 +369,10 @@ class ReportSerializer(ReportSerializerWithLogs):
     save_report = serializers.BooleanField(default=False)
 
     pl_first_date = serializers.DateField(required=False, allow_null=True,
-                                          help_text=ugettext_lazy('First date for pl report'))
+                                          help_text=gettext_lazy('First date for pl report'))
     report_type = serializers.ChoiceField(read_only=True, choices=Report.TYPE_CHOICES)
     report_date = serializers.DateField(required=False, allow_null=True, default=date_now,
-                                        help_text=ugettext_lazy('Report date or second date for pl report'))
+                                        help_text=gettext_lazy('Report date or second date for pl report'))
     report_currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
     pricing_policy = PricingPolicyField()
     cost_method = serializers.PrimaryKeyRelatedField(queryset=CostMethod.objects, allow_null=True, allow_empty=True)
@@ -425,20 +425,20 @@ class ReportSerializer(ReportSerializerWithLogs):
                                                              allow_empty=True)
     date_field = serializers.ChoiceField(required=False, allow_null=True,
                                          choices=(
-                                             ('transaction_date', ugettext('Transaction date')),
-                                             ('accounting_date', ugettext('Accounting date')),
-                                             ('date', ugettext('Date')),
-                                             ('cash_date', ugettext('Cash date')),
-                                             ('user_date_1', ugettext('User Date 1')),
-                                             ('user_date_2', ugettext('User Date 2')),
-                                             ('user_date_3', ugettext('User Date 3')),
-                                             ('user_date_4', ugettext('User Date 4')),
-                                             ('user_date_5', ugettext('User Date 5')),
-                                             ('user_date_6', ugettext('User Date 6')),
-                                             ('user_date_7', ugettext('User Date 7')),
-                                             ('user_date_8', ugettext('User Date 8')),
-                                             ('user_date_9', ugettext('User Date 9')),
-                                             ('user_date_10', ugettext('User Date 10')),
+                                             ('transaction_date', gettext_lazy('Transaction date')),
+                                             ('accounting_date', gettext_lazy('Accounting date')),
+                                             ('date', gettext_lazy('Date')),
+                                             ('cash_date', gettext_lazy('Cash date')),
+                                             ('user_date_1', gettext_lazy('User Date 1')),
+                                             ('user_date_2', gettext_lazy('User Date 2')),
+                                             ('user_date_3', gettext_lazy('User Date 3')),
+                                             ('user_date_4', gettext_lazy('User Date 4')),
+                                             ('user_date_5', gettext_lazy('User Date 5')),
+                                             ('user_date_6', gettext_lazy('User Date 6')),
+                                             ('user_date_7', gettext_lazy('User Date 7')),
+                                             ('user_date_8', gettext_lazy('User Date 8')),
+                                             ('user_date_9', gettext_lazy('User Date 9')),
+                                             ('user_date_10', gettext_lazy('User Date 10')),
                                          ))
 
     pricing_policy_object = PricingPolicyViewSerializer(source='pricing_policy', read_only=True)
@@ -496,7 +496,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
         pl_first_date = attrs.get('pl_first_date', None)
         if pl_first_date and pl_first_date >= attrs['report_date']:
-            raise ValidationError(ugettext('"pl_first_date" must be lesser than "report_date"'))
+            raise ValidationError(gettext_lazy('"pl_first_date" must be lesser than "report_date"'))
 
         # if settings.DEBUG:
         #     if not attrs.get('pl_first_date', None):
@@ -619,7 +619,7 @@ class ReportSerializer(ReportSerializerWithLogs):
                                         value = formula.safe_eval(expr, names=names, context=self.context)
                                     except formula.InvalidExpression as e:
                                         # _l.debug('error %s %s' % (cf["name"], e))
-                                        value = ugettext('Invalid expression')
+                                        value = gettext_lazy('Invalid expression')
                                 else:
                                     value = None
 
@@ -627,7 +627,7 @@ class ReportSerializer(ReportSerializerWithLogs):
                                     custom_fields_names[cf['user_code']] = value
                                 else:
                                     if custom_fields_names[cf['user_code']] == None or custom_fields_names[
-                                        cf['user_code']] == ugettext('Invalid expression'):
+                                        cf['user_code']] == gettext_lazy('Invalid expression'):
                                         custom_fields_names[cf['user_code']] = value
 
                         names['custom_fields'] = custom_fields_names
@@ -647,7 +647,7 @@ class ReportSerializer(ReportSerializerWithLogs):
                                             value = formula.safe_eval('str(item)', names={'item': value},
                                                                       context=self.context)
                                         except formula.InvalidExpression:
-                                            value = ugettext('Invalid expression (Type conversion error)')
+                                            value = gettext_lazy('Invalid expression (Type conversion error)')
                                     else:
                                         value = None
 
@@ -658,7 +658,7 @@ class ReportSerializer(ReportSerializerWithLogs):
                                             value = formula.safe_eval('float(item)', names={'item': value},
                                                                       context=self.context)
                                         except formula.InvalidExpression:
-                                            value = ugettext('Invalid expression (Type conversion error)')
+                                            value = gettext_lazy('Invalid expression (Type conversion error)')
                                     else:
                                         value = None
                                 elif cf['value_type'] == 40:
@@ -669,7 +669,7 @@ class ReportSerializer(ReportSerializerWithLogs):
                                                                       names={'item': value},
                                                                       context=self.context)
                                         except formula.InvalidExpression:
-                                            value = ugettext('Invalid expression (Type conversion error)')
+                                            value = gettext_lazy('Invalid expression (Type conversion error)')
                                     else:
                                         value = None
 

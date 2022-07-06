@@ -5,19 +5,19 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 
 class AuthLogEntry(models.Model):
-    date = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name=ugettext_lazy('date'))
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=ugettext_lazy('user'), on_delete=models.CASCADE)
-    user_ip = models.GenericIPAddressField(null=True, blank=True, verbose_name=ugettext_lazy('user ip'))
-    user_agent = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user agent'))
-    is_success = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is success'))
+    date = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name=gettext_lazy('date'))
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=gettext_lazy('user'), on_delete=models.CASCADE)
+    user_ip = models.GenericIPAddressField(null=True, blank=True, verbose_name=gettext_lazy('user ip'))
+    user_agent = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user agent'))
+    is_success = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is success'))
 
     class Meta:
-        verbose_name = ugettext_lazy('authenticate log')
-        verbose_name_plural = ugettext_lazy('authenticate logs')
+        verbose_name = gettext_lazy('authenticate log')
+        verbose_name_plural = gettext_lazy('authenticate logs')
         ordering = ['-date']
 
     def __str__(self):
@@ -55,45 +55,45 @@ class ObjectHistory4Entry(models.Model):
 
     # actor = models.ForeignKey(ObjectHistory4Actor)
     master_user = models.ForeignKey('users.MasterUser', related_name='object_histories',
-                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     member = models.ForeignKey('users.Member', related_name='object_histories', null=True, blank=True,
-                               on_delete=models.SET_NULL, verbose_name=ugettext_lazy('member'))
+                               on_delete=models.SET_NULL, verbose_name=gettext_lazy('member'))
 
-    group_id = models.IntegerField(default=0, verbose_name=ugettext_lazy('group id'))
-    created = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name=ugettext_lazy('created'))
+    group_id = models.IntegerField(default=0, verbose_name=gettext_lazy('group id'))
+    created = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name=gettext_lazy('created'))
 
     actor_content_type = models.ForeignKey(ContentType, related_name='+', blank=True, null=True,
-                                           verbose_name=ugettext_lazy('actor content type'), on_delete=models.SET_NULL)
-    actor_object_id = models.BigIntegerField(blank=True, null=True, verbose_name=ugettext_lazy('actor object id'))
+                                           verbose_name=gettext_lazy('actor content type'), on_delete=models.SET_NULL)
+    actor_object_id = models.BigIntegerField(blank=True, null=True, verbose_name=gettext_lazy('actor object id'))
     actor_content_object = GenericForeignKey(ct_field='actor_content_type', fk_field='actor_object_id')
-    actor_object_repr = models.TextField(blank=True, verbose_name=ugettext_lazy('actor object repr'))
+    actor_object_repr = models.TextField(blank=True, verbose_name=gettext_lazy('actor object repr'))
 
-    action_flag = models.PositiveSmallIntegerField(choices=FLAG_CHOICES, verbose_name=ugettext_lazy('action flag'))
+    action_flag = models.PositiveSmallIntegerField(choices=FLAG_CHOICES, verbose_name=gettext_lazy('action flag'))
 
     content_type = models.ForeignKey(ContentType, related_name='+', blank=True, null=True,
-                                     verbose_name=ugettext_lazy('content type'), on_delete=models.SET_NULL)
-    object_id = models.BigIntegerField(blank=True, null=True, verbose_name=ugettext_lazy('object id'))
+                                     verbose_name=gettext_lazy('content type'), on_delete=models.SET_NULL)
+    object_id = models.BigIntegerField(blank=True, null=True, verbose_name=gettext_lazy('object id'))
     content_object = GenericForeignKey()
-    object_repr = models.TextField(blank=True, verbose_name=ugettext_lazy('object repr'))
+    object_repr = models.TextField(blank=True, verbose_name=gettext_lazy('object repr'))
 
-    field_name = models.CharField(max_length=50, null=True, blank=True, verbose_name=ugettext_lazy('field name'))
+    field_name = models.CharField(max_length=50, null=True, blank=True, verbose_name=gettext_lazy('field name'))
 
-    value = models.TextField(blank=True, verbose_name=ugettext_lazy('value'))
+    value = models.TextField(blank=True, verbose_name=gettext_lazy('value'))
     value_content_type = models.ForeignKey(ContentType, related_name='+', blank=True, null=True,
-                                           verbose_name=ugettext_lazy('value content type'), on_delete=models.SET_NULL)
-    value_object_id = models.BigIntegerField(blank=True, null=True, verbose_name=ugettext_lazy('value object id'))
+                                           verbose_name=gettext_lazy('value content type'), on_delete=models.SET_NULL)
+    value_object_id = models.BigIntegerField(blank=True, null=True, verbose_name=gettext_lazy('value object id'))
     value_content_object = GenericForeignKey(ct_field='value_content_type', fk_field='value_object_id')
 
-    old_value = models.TextField(blank=True, verbose_name=ugettext_lazy('old value'))
+    old_value = models.TextField(blank=True, verbose_name=gettext_lazy('old value'))
     old_value_content_type = models.ForeignKey(ContentType, related_name='+', blank=True, null=True,
-                                               verbose_name=ugettext_lazy('old value content type'), on_delete=models.SET_NULL)
+                                               verbose_name=gettext_lazy('old value content type'), on_delete=models.SET_NULL)
     old_value_object_id = models.BigIntegerField(blank=True, null=True,
-                                                 verbose_name=ugettext_lazy('old value object id'))
+                                                 verbose_name=gettext_lazy('old value object id'))
     old_value_content_object = GenericForeignKey(ct_field='old_value_content_type', fk_field='old_value_object_id')
 
     class Meta:
-        verbose_name = ugettext_lazy('object history (v4)')
-        verbose_name_plural = ugettext_lazy('object histories (v4)')
+        verbose_name = gettext_lazy('object history (v4)')
+        verbose_name_plural = gettext_lazy('object histories (v4)')
         ordering = ['-created']
         index_together = [
             ['master_user', 'created'],
@@ -191,51 +191,51 @@ class ObjectHistory4Entry(models.Model):
         }
         if self.action_flag == self.ADDITION:
             if self.is_root_object:
-                return ugettext_lazy('Added "%(object_name)s" "%(object_repr)s".') % data
+                return gettext_lazy('Added "%(object_name)s" "%(object_repr)s".') % data
             else:
-                return ugettext_lazy(
+                return gettext_lazy(
                     'Added "%(object_name)s" "%(object_repr)s" inside "%(actor_object_name)s" "%(actor_object_repr)s".') % data
         elif self.action_flag == self.DELETION:
             if self.is_root_object:
-                return ugettext_lazy('Deleted "%(object_name)s" "%(object_repr)s".') % data
+                return gettext_lazy('Deleted "%(object_name)s" "%(object_repr)s".') % data
             else:
-                return ugettext_lazy(
+                return gettext_lazy(
                     'Deleted "%(object_name)s" "%(object_repr)s" inside "%(actor_object_name)s" "%(actor_object_repr)s".') % data
         elif self.action_flag == self.CHANGE:
             if self.is_root_object:
-                return ugettext_lazy(
+                return gettext_lazy(
                     'Changed "%(field_name)s" in "%(object_name)s" "%(object_repr)s" from "%(old_value)s" to "%(value)s".') % data
             else:
-                return ugettext_lazy(
+                return gettext_lazy(
                     'Changed "%(field_name)s" in "%(object_name)s" "%(object_repr)s" from "%(old_value)s" to "%(value)s" inside "%(actor_object_name)s" "%(actor_object_repr)s".') % data
         elif self.action_flag == self.M2M_ADDITION:
             if self.is_root_object:
-                return ugettext_lazy(
+                return gettext_lazy(
                     'Added "%(value_object_name)s" "%(value)s" into "%(field_name)s" in "%(object_name)s" "%(object_repr)s".') % data
             else:
-                return ugettext_lazy(
+                return gettext_lazy(
                     'Added "%(value_object_name)s" "%(value)s" into "%(field_name)s" in "%(object_name)s" "%(object_repr)s" inside "%(actor_object_name)s" "%(actor_object_repr)s".') % data
         elif self.action_flag == self.M2M_DELETION:
             if self.is_root_object:
-                return ugettext_lazy(
+                return gettext_lazy(
                     'Deleted "%(value_object_name)s" "%(value)s" from "%(field_name)s" in "%(object_name)s" "%(object_repr)s".') % data
             else:
-                return ugettext_lazy(
+                return gettext_lazy(
                     'Deleted "%(value_object_name)s" "%(value)s" from "%(field_name)s" in "%(object_name)s" "%(object_repr)s" inside "%(actor_object_name)s" "%(actor_object_repr)s".') % data
         return None
 
 
 class InstrumentAudit(models.Model):
-    master_user = models.ForeignKey('users.MasterUser', related_name='+', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey('users.MasterUser', related_name='+', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     class Meta:
-        verbose_name = ugettext_lazy('instrument audit')
-        verbose_name_plural = ugettext_lazy('instrument audit')
+        verbose_name = gettext_lazy('instrument audit')
+        verbose_name_plural = gettext_lazy('instrument audit')
 
 
 class TransactionAudit(models.Model):
-    master_user = models.ForeignKey('users.MasterUser', related_name='+', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey('users.MasterUser', related_name='+', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     class Meta:
-        verbose_name = ugettext_lazy('transaction audit')
-        verbose_name_plural = ugettext_lazy('transaction audit')
+        verbose_name = gettext_lazy('transaction audit')
+        verbose_name_plural = gettext_lazy('transaction audit')

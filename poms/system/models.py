@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 
 from django.core.serializers.json import DjangoJSONEncoder
@@ -9,11 +9,11 @@ import json
 
 class EcosystemConfiguration(models.Model):
 
-    name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
+    name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=gettext_lazy('name'))
 
-    description = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('description'))
+    description = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('description'))
 
-    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+    json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
     @property
     def data(self):

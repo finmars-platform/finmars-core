@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from poms.common.models import DataTimeStampedModel, NamedModel
 from poms.users.models import MasterUser
@@ -41,11 +41,11 @@ COLUMN_MATCHER_CHOICES = [
 
 class CsvImportScheme(NamedModel, DataTimeStampedModel):
 
-    content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user') , on_delete=models.CASCADE)
-    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user code'))
+    content_type = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user') , on_delete=models.CASCADE)
+    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
 
-    filter_expr = models.CharField(max_length=1000, default='', blank=True, null=True, verbose_name=ugettext_lazy('filter expression'))
+    filter_expr = models.CharField(max_length=1000, default='', blank=True, null=True, verbose_name=gettext_lazy('filter expression'))
 
     mode = models.CharField(max_length=255, choices=MODE_CHOICES, default='skip')
     delimiter = models.CharField(max_length=255, choices=DELIMITER_CHOICES, default=',')
@@ -70,16 +70,16 @@ class CsvImportScheme(NamedModel, DataTimeStampedModel):
 
 class CsvImportSchemeCalculatedInput(models.Model):
     scheme = models.ForeignKey(CsvImportScheme, related_name='calculated_inputs',
-                               verbose_name=ugettext_lazy('scheme'), on_delete=models.CASCADE)
+                               verbose_name=gettext_lazy('scheme'), on_delete=models.CASCADE)
     # order = models.SmallIntegerField(default=0)
     name = models.CharField(max_length=255)
     column = models.SmallIntegerField()
 
-    name_expr = models.CharField(max_length=1000, default='', verbose_name=ugettext_lazy('name expression'))
+    name_expr = models.CharField(max_length=1000, default='', verbose_name=gettext_lazy('name expression'))
 
     class Meta:
-        verbose_name = ugettext_lazy('csv import scheme calculated input')
-        verbose_name_plural = ugettext_lazy('csv import scheme calculated inputs')
+        verbose_name = gettext_lazy('csv import scheme calculated input')
+        verbose_name_plural = gettext_lazy('csv import scheme calculated inputs')
         # ordering = ['order']
         order_with_respect_to = 'scheme'
 
@@ -92,13 +92,13 @@ class CsvField(models.Model):
     name = models.CharField(max_length=255, blank=True, default='')
     column_name = models.CharField(max_length=255, blank=True, null=True)
 
-    name_expr = models.CharField(max_length=1000, default='', verbose_name=ugettext_lazy('name expression'))
+    name_expr = models.CharField(max_length=1000, default='', verbose_name=gettext_lazy('name expression'))
 
     scheme = models.ForeignKey(CsvImportScheme, related_name='csv_fields', on_delete=models.CASCADE)
 
     class Meta:
-        verbose_name = ugettext_lazy('csv field')
-        verbose_name_plural = ugettext_lazy('csv fields')
+        verbose_name = gettext_lazy('csv field')
+        verbose_name_plural = gettext_lazy('csv fields')
 
         index_together = [
             ['scheme'],
@@ -109,9 +109,9 @@ class EntityField(models.Model):
     name = models.CharField(max_length=255)
     expression = models.CharField(max_length=255, blank=True, default='')
 
-    use_default = models.BooleanField(default=True,  verbose_name=ugettext_lazy('use default'))
+    use_default = models.BooleanField(default=True,  verbose_name=gettext_lazy('use default'))
 
-    order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
+    order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
 
     system_property_key = models.CharField(max_length=255, null=True)
     dynamic_attribute_id = models.IntegerField(null=True)
@@ -119,8 +119,8 @@ class EntityField(models.Model):
     scheme = models.ForeignKey(CsvImportScheme, related_name='entity_fields', on_delete=models.CASCADE)
 
     class Meta:
-        verbose_name = ugettext_lazy('entity field')
-        verbose_name_plural = ugettext_lazy('entity fields')
+        verbose_name = gettext_lazy('entity field')
+        verbose_name_plural = gettext_lazy('entity fields')
 
         index_together = [
             ['scheme', 'order'],

@@ -1,7 +1,7 @@
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
@@ -17,45 +17,45 @@ class GenericAttributeType(NamedModel):
     DATE = 40
 
     VALUE_TYPES = (
-        (NUMBER, ugettext_lazy('Number')),
-        (STRING, ugettext_lazy('String')),
-        (DATE, ugettext_lazy('Date')),
-        (CLASSIFIER, ugettext_lazy('Classifier')),
+        (NUMBER, gettext_lazy('Number')),
+        (STRING, gettext_lazy('String')),
+        (DATE, gettext_lazy('Date')),
+        (CLASSIFIER, gettext_lazy('Classifier')),
     )
 
     USER = 1
     SYSTEM = 2
 
     KIND_TYPES = (
-        (USER, ugettext_lazy('User')),
-        (SYSTEM, ugettext_lazy('System')),
+        (USER, gettext_lazy('User')),
+        (SYSTEM, gettext_lazy('System')),
     )
 
-    master_user = models.ForeignKey(MasterUser, verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
-    content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type'), on_delete=models.CASCADE)
     value_type = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=STRING,
-                                                  verbose_name=ugettext_lazy('value type'))
+                                                  verbose_name=gettext_lazy('value type'))
 
     kind = models.PositiveSmallIntegerField(choices=KIND_TYPES, default=USER,
-                                            verbose_name=ugettext_lazy('kind'))
+                                            verbose_name=gettext_lazy('kind'))
 
-    tooltip = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('tooltip'))
+    tooltip = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('tooltip'))
 
-    favorites = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('favorites'))
+    favorites = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('favorites'))
 
-    prefix = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('prefix'))
+    prefix = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('prefix'))
 
-    expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True, verbose_name=ugettext_lazy('expression'))
+    expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True, verbose_name=gettext_lazy('expression'))
 
-    can_recalculate = models.BooleanField(default=False, verbose_name=ugettext_lazy("can recalculate"))
+    can_recalculate = models.BooleanField(default=False, verbose_name=gettext_lazy("can recalculate"))
 
-    order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
+    order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
+    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta):
-        verbose_name = ugettext_lazy('attribute type')
-        verbose_name_plural = ugettext_lazy('attribute types')
+        verbose_name = gettext_lazy('attribute type')
+        verbose_name_plural = gettext_lazy('attribute types')
         ordering = ['name']
         unique_together = [
             ['master_user', 'content_type', 'user_code']
@@ -82,9 +82,9 @@ class GenericAttributeType(NamedModel):
 
 class GenericAttributeTypeOption(models.Model):
     attribute_type = models.ForeignKey(GenericAttributeType, related_name='options',
-                                       verbose_name=ugettext_lazy('attribute type'), on_delete=models.CASCADE)
-    member = models.ForeignKey(Member, verbose_name=ugettext_lazy('member'), on_delete=models.CASCADE)
-    is_hidden = models.BooleanField(default=False, verbose_name=ugettext_lazy('is hidden'))
+                                       verbose_name=gettext_lazy('attribute type'), on_delete=models.CASCADE)
+    member = models.ForeignKey(Member, verbose_name=gettext_lazy('member'), on_delete=models.CASCADE)
+    is_hidden = models.BooleanField(default=False, verbose_name=gettext_lazy('is hidden'))
 
     class Meta:
         unique_together = [
@@ -98,19 +98,19 @@ class GenericAttributeTypeOption(models.Model):
 
 class GenericClassifier(MPTTModel):
     attribute_type = models.ForeignKey(GenericAttributeType, related_name='classifiers',
-                                       verbose_name=ugettext_lazy('attribute type'), on_delete=models.CASCADE)
+                                       verbose_name=gettext_lazy('attribute type'), on_delete=models.CASCADE)
 
     parent = TreeForeignKey('self', null=True, blank=True, related_name='children', db_index=True,
-                            verbose_name=ugettext_lazy('parent'), on_delete=models.CASCADE)
+                            verbose_name=gettext_lazy('parent'), on_delete=models.CASCADE)
 
-    name = models.CharField(max_length=255, blank=True, verbose_name=ugettext_lazy('name'))
+    name = models.CharField(max_length=255, blank=True, verbose_name=gettext_lazy('name'))
 
     class MPTTMeta:
         order_insertion_by = ['attribute_type', 'name']
 
     class Meta:
-        verbose_name = ugettext_lazy('classifier')
-        verbose_name_plural = ugettext_lazy('classifiers')
+        verbose_name = gettext_lazy('classifier')
+        verbose_name_plural = gettext_lazy('classifiers')
         ordering = ['tree_id', 'level', 'name']
 
     def __str__(self):
@@ -118,22 +118,22 @@ class GenericClassifier(MPTTModel):
 
 
 class GenericAttribute(models.Model):
-    attribute_type = models.ForeignKey(GenericAttributeType, verbose_name=ugettext_lazy('attribute type'), on_delete=models.CASCADE)
+    attribute_type = models.ForeignKey(GenericAttributeType, verbose_name=gettext_lazy('attribute type'), on_delete=models.CASCADE)
 
-    content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
-    object_id = models.BigIntegerField(db_index=True, verbose_name=ugettext_lazy('object id'))
+    content_type = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type'), on_delete=models.CASCADE)
+    object_id = models.BigIntegerField(db_index=True, verbose_name=gettext_lazy('object id'))
     content_object = GenericForeignKey('content_type', 'object_id')
 
     value_string = models.CharField(db_index=True, max_length=255, null=True, blank=True,
-                                    verbose_name=ugettext_lazy('value (String)'))
-    value_float = models.FloatField(db_index=True, null=True, blank=True, verbose_name=ugettext_lazy('value (Float)'))
-    value_date = models.DateField(db_index=True, null=True, blank=True, verbose_name=ugettext_lazy('value (Date)'))
+                                    verbose_name=gettext_lazy('value (String)'))
+    value_float = models.FloatField(db_index=True, null=True, blank=True, verbose_name=gettext_lazy('value (Float)'))
+    value_date = models.DateField(db_index=True, null=True, blank=True, verbose_name=gettext_lazy('value (Date)'))
     classifier = models.ForeignKey(GenericClassifier, on_delete=models.SET_NULL, null=True, blank=True,
-                                   verbose_name=ugettext_lazy('classifier'))
+                                   verbose_name=gettext_lazy('classifier'))
 
     class Meta:
-        verbose_name = ugettext_lazy('attribute')
-        verbose_name_plural = ugettext_lazy('attributes')
+        verbose_name = gettext_lazy('attribute')
+        verbose_name_plural = gettext_lazy('attributes')
         index_together = [
             ['content_type', 'object_id']
         ]

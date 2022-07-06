@@ -1,7 +1,7 @@
 import sys
 
 from datetime import date
-from django.utils.translation import ugettext
+from django.utils.translation import gettext_lazy
 
 from poms.common import formula
 from poms.reports.builders.base_item import BaseReport
@@ -154,7 +154,7 @@ class TransactionReportItem:
         #             }
         #             value = formula.safe_eval(cf.expr, names=names, context=self.report.context)
         #         except formula.InvalidExpression:
-        #             value = ugettext('Invalid expression')
+        #             value = gettext_lazy('Invalid expression')
         #     else:
         #         value = None
         #     res.append({

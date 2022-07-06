@@ -1,7 +1,7 @@
 from django.db import models
 
 
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.transactions.models import ComplexTransaction, TransactionType
@@ -11,14 +11,14 @@ from poms.users.models import MasterUser
 class TransactionTypeReconField(models.Model):
 
     transaction_type = models.ForeignKey(TransactionType, related_name='recon_fields',
-                                         verbose_name=ugettext_lazy('transaction type'), on_delete=models.CASCADE)
+                                         verbose_name=gettext_lazy('transaction type'), on_delete=models.CASCADE)
 
-    reference_name = models.CharField(max_length=255, verbose_name=ugettext_lazy('reference name '))
-    description = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('description'))
+    reference_name = models.CharField(max_length=255, verbose_name=gettext_lazy('reference name '))
+    description = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('description'))
 
-    value_string = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('value string'),  blank=True, default='',)
-    value_float = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('value float'),  blank=True, default='',)
-    value_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('value date'),  blank=True, default='',)
+    value_string = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=gettext_lazy('value string'),  blank=True, default='',)
+    value_float = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=gettext_lazy('value float'),  blank=True, default='',)
+    value_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=gettext_lazy('value date'),  blank=True, default='',)
 
 
 class ReconciliationComplexTransactionField(models.Model):
@@ -29,35 +29,35 @@ class ReconciliationComplexTransactionField(models.Model):
     IGNORE = 4
 
     STATUS_CHOICES = (
-        (MATCHED, ugettext_lazy('Matched')),
-        (UNMATCHED, ugettext_lazy('Unmatched')),
-        (AUTO_MATCHED, ugettext_lazy('Auto Matched')),
-        (IGNORE, ugettext_lazy('Ignore')),
+        (MATCHED, gettext_lazy('Matched')),
+        (UNMATCHED, gettext_lazy('Unmatched')),
+        (AUTO_MATCHED, gettext_lazy('Auto Matched')),
+        (IGNORE, gettext_lazy('Ignore')),
     )
 
-    master_user = models.ForeignKey(MasterUser, verbose_name=ugettext_lazy('master user'),
+    master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
-    complex_transaction = models.ForeignKey(ComplexTransaction, related_name='recon_fields', on_delete=models.CASCADE, verbose_name=ugettext_lazy('complex transaction'))
+    complex_transaction = models.ForeignKey(ComplexTransaction, related_name='recon_fields', on_delete=models.CASCADE, verbose_name=gettext_lazy('complex transaction'))
 
-    reference_name = models.CharField(max_length=255, verbose_name=ugettext_lazy('reference name '))
+    reference_name = models.CharField(max_length=255, verbose_name=gettext_lazy('reference name '))
 
-    description = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('description'))
+    description = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('description'))
 
-    value_string = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('value string'))
-    value_float = models.FloatField(blank=True, null=True, verbose_name=ugettext_lazy('value float'))
-    value_date = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("value date"))
+    value_string = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('value string'))
+    value_float = models.FloatField(blank=True, null=True, verbose_name=gettext_lazy('value float'))
+    value_date = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("value date"))
 
     status = models.PositiveSmallIntegerField(default=UNMATCHED, choices=STATUS_CHOICES, db_index=True,
-                                              verbose_name=ugettext_lazy('status'))
+                                              verbose_name=gettext_lazy('status'))
 
-    match_date = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("value date"))
+    match_date = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("value date"))
 
-    notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
+    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
 
     class Meta:
-        verbose_name = ugettext_lazy('reconciliation complex transaction field')
-        verbose_name_plural = ugettext_lazy('reconciliation complex transaction fields')
+        verbose_name = gettext_lazy('reconciliation complex transaction field')
+        verbose_name_plural = gettext_lazy('reconciliation complex transaction fields')
 
 
 class ReconciliationBankFileField(models.Model):
@@ -68,44 +68,44 @@ class ReconciliationBankFileField(models.Model):
     IGNORE = 4
     AUTO_MATCHED = 5
     STATUS_CHOICES = (
-        (MATCHED, ugettext_lazy('Matched')),
-        (CONFLICT, ugettext_lazy('Conflict')),
-        (RESOLVED, ugettext_lazy('Resolved')),
-        (IGNORE, ugettext_lazy('Ignore')),
-        (AUTO_MATCHED, ugettext_lazy('Auto Matched')),
+        (MATCHED, gettext_lazy('Matched')),
+        (CONFLICT, gettext_lazy('Conflict')),
+        (RESOLVED, gettext_lazy('Resolved')),
+        (IGNORE, gettext_lazy('Ignore')),
+        (AUTO_MATCHED, gettext_lazy('Auto Matched')),
     )
 
-    master_user = models.ForeignKey(MasterUser, verbose_name=ugettext_lazy('master user'),
+    master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
-    source_id = models.CharField(max_length=30, null=True, blank=True, verbose_name=ugettext_lazy('source id'))
+    source_id = models.CharField(max_length=30, null=True, blank=True, verbose_name=gettext_lazy('source id'))
 
-    reference_name = models.CharField(max_length=255, verbose_name=ugettext_lazy('reference name '))
+    reference_name = models.CharField(max_length=255, verbose_name=gettext_lazy('reference name '))
 
-    description = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('description'))
+    description = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('description'))
 
-    value_string = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('value string'))
-    value_float = models.FloatField(blank=True, null=True, verbose_name=ugettext_lazy('value float'))
-    value_date = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("value date"))
+    value_string = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('value string'))
+    value_float = models.FloatField(blank=True, null=True, verbose_name=gettext_lazy('value float'))
+    value_date = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("value date"))
 
-    is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is canceled'))
+    is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is canceled'))
 
     status = models.PositiveSmallIntegerField(default=CONFLICT, choices=STATUS_CHOICES, db_index=True,
-                                              verbose_name=ugettext_lazy('status'))
+                                              verbose_name=gettext_lazy('status'))
 
-    file_name = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('file name'))
-    import_scheme_name = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('import scheme name'))
+    file_name = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('file name'))
+    import_scheme_name = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('import scheme name'))
 
-    reference_date = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("value date"))
+    reference_date = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("value date"))
 
-    notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
+    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
 
     linked_complex_transaction_field = models.ForeignKey(ReconciliationComplexTransactionField, null=True, blank=True, on_delete=models.SET_NULL,
-                                             related_name='bank_file_fields', verbose_name=ugettext_lazy('linked complex transaction field'))
+                                             related_name='bank_file_fields', verbose_name=gettext_lazy('linked complex transaction field'))
 
     class Meta:
-        verbose_name = ugettext_lazy('reconciliation bank file field')
-        verbose_name_plural = ugettext_lazy('reconciliation bank file fields')
+        verbose_name = gettext_lazy('reconciliation bank file field')
+        verbose_name_plural = gettext_lazy('reconciliation bank file fields')
 
         unique_together = [
             ['master_user', 'source_id', 'reference_name', 'import_scheme_name'],
@@ -114,26 +114,26 @@ class ReconciliationBankFileField(models.Model):
 
 class ReconciliationNewBankFileField(models.Model):
 
-    master_user = models.ForeignKey(MasterUser,  verbose_name=ugettext_lazy('master user'),
+    master_user = models.ForeignKey(MasterUser,  verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
-    source_id = models.CharField(max_length=30, null=True, blank=True, verbose_name=ugettext_lazy('source id'))
+    source_id = models.CharField(max_length=30, null=True, blank=True, verbose_name=gettext_lazy('source id'))
 
-    reference_name = models.CharField(max_length=255, verbose_name=ugettext_lazy('reference name '))
+    reference_name = models.CharField(max_length=255, verbose_name=gettext_lazy('reference name '))
 
-    description = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('description'))
+    description = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('description'))
 
-    value_string = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('value string'))
-    value_float = models.FloatField(blank=True, null=True, verbose_name=ugettext_lazy('value float'))
-    value_date = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("value date"))
+    value_string = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('value string'))
+    value_float = models.FloatField(blank=True, null=True, verbose_name=gettext_lazy('value float'))
+    value_date = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("value date"))
 
-    is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=ugettext_lazy('is canceled'))
+    is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is canceled'))
 
-    file_name = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('file name'))
-    import_scheme_name = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('import scheme name'))
+    file_name = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('file name'))
+    import_scheme_name = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('import scheme name'))
 
-    reference_date = models.DateField(blank=True, db_index=True, null=True, verbose_name=ugettext_lazy("value date"))
+    reference_date = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("value date"))
 
     class Meta:
-        verbose_name = ugettext_lazy('reconciliation new bank file field')
-        verbose_name_plural = ugettext_lazy('reconciliation new bank file fields')
+        verbose_name = gettext_lazy('reconciliation new bank file field')
+        verbose_name_plural = gettext_lazy('reconciliation new bank file fields')

@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import logging
+from contextlib import ContextDecorator
 from threading import local
 
 from django.apps import apps
@@ -10,7 +11,6 @@ from django.core.signals import request_finished
 from django.db import transaction
 from django.db.models.signals import post_init, post_save, post_delete, m2m_changed
 from django.dispatch import receiver
-from django.utils.decorators import ContextDecorator
 
 from poms.common.middleware import get_request
 

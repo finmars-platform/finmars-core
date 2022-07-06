@@ -14,7 +14,7 @@ import datetime
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from celery.schedules import crontab
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 import base64
 # from botocore.exceptions import ClientError
@@ -146,7 +146,6 @@ INSTALLED_APPS = [
     # 'two_factor',
     'django_celery_results',
     'django_celery_beat',
-    # 'debug_toolbar',
 ]
 
 if SERVER_TYPE == 'local':
@@ -172,7 +171,6 @@ MIDDLEWARE = [
 
     'corsheaders.middleware.CorsMiddleware',
     'corsheaders.middleware.CorsPostCsrfMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 
     'poms.http_sessions.middleware.SessionMiddleware',
     'poms.common.middleware.CommonMiddleware',
@@ -216,6 +214,10 @@ TEMPLATES = [
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'libraries' : {
+                'staticfiles': 'django.templatetags.static',
+            }
+
         },
     },
 ]
@@ -267,10 +269,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en'
 LANGUAGES = [
-    ('en', ugettext_lazy('English')),
-    # ('es', ugettext_lazy('Spanish')),
-    # ('de', ugettext_lazy('Deutsch')),
-    # ('ru', ugettext_lazy('Russian')),
+    ('en', gettext_lazy('English')),
+    # ('es', gettext_lazy('Spanish')),
+    # ('de', gettext_lazy('Deutsch')),
+    # ('ru', gettext_lazy('Russian')),
 ]
 
 TIME_ZONE = 'UTC'
@@ -418,7 +420,7 @@ LOGGING = {
             'format': '%(log_color)s [' + HOST_LOCATION + '] [' + BASE_API_URL + '] [%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
             'log_colors': {
                 'DEBUG':    'cyan',
-                'INFO':     'blue',
+                'INFO':     'white',
                 'WARNING':  'yellow',
                 'ERROR':    'red',
                 'CRITICAL': 'bold_red',
@@ -763,9 +765,8 @@ INTERNAL_IPS = [
     # ...
 ]
 
-if DEBUG:
+if SERVER_TYPE == 'local':
     DEBUG_TOOLBAR_PANELS = [
-        'ddt_request_history.panels.request_history.RequestHistoryPanel',  # Here it is
         'debug_toolbar.panels.versions.VersionsPanel',
         'debug_toolbar.panels.timer.TimerPanel',
         'debug_toolbar.panels.settings.SettingsPanel',
@@ -802,3 +803,6 @@ else:
     DROP_VIEWS = True
 
 JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', None)
+
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'

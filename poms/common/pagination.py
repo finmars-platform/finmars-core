@@ -5,8 +5,6 @@ from django.core.paginator import InvalidPage
 from rest_framework.exceptions import NotFound
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.settings import api_settings
-from django.utils import six
-from django.conf import settings
 
 
 import logging

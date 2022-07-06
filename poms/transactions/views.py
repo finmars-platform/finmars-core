@@ -4,7 +4,7 @@ import django_filters
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Prefetch, Q
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
@@ -1464,7 +1464,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
     def bulk_update_properties(self, request):
         data = request.data
         if not isinstance(data, list):
-            raise ValidationError(ugettext_lazy('Required list'))
+            raise ValidationError(gettext_lazy('Required list'))
 
         partial = request.method.lower() == 'patch'
         # queryset = self.filter_queryset(self.get_queryset())
@@ -1497,7 +1497,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                     errors.append(serializer.errors)
                 else:
                     errors.append({
-                        api_settings.NON_FIELD_ERRORS_KEY: ugettext_lazy('Not Found')
+                        api_settings.NON_FIELD_ERRORS_KEY: gettext_lazy('Not Found')
                     })
             raise ValidationError(errors)
         else:

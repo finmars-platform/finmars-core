@@ -6,7 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import DatabaseError, IntegrityError
-from django.utils.translation import ugettext
+from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
 
 from poms.accounts.models import Account
@@ -693,10 +693,10 @@ class TransactionTypeProcess(object):
                             _l.info("Instrument save error %s" % e)
 
                             self._add_err_msg(errors, 'non_field_errors',
-                                              ugettext(
+                                              gettext_lazy(
                                                   'Invalid instrument action fields (please, use type convertion).'))
                         except DatabaseError:
-                            self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                            self._add_err_msg(errors, 'non_field_errors', gettext_lazy('General DB error.'))
                         else:
                             instrument_map[action.order] = instrument
 
@@ -796,10 +796,10 @@ class TransactionTypeProcess(object):
                 except (ValueError, TypeError, IntegrityError):
 
                     self._add_err_msg(errors, 'non_field_errors',
-                                      ugettext(
+                                      gettext_lazy(
                                           'Invalid instrument factor schedule action fields (please, use type convertion).'))
                 except DatabaseError:
-                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                    self._add_err_msg(errors, 'non_field_errors', gettext_lazy('General DB error.'))
                 finally:
                     if bool(errors):
                         _l.debug(errors)
@@ -894,10 +894,10 @@ class TransactionTypeProcess(object):
                 except (ValueError, TypeError, IntegrityError):
 
                     self._add_err_msg(errors, 'non_field_errors',
-                                      ugettext(
+                                      gettext_lazy(
                                           'Invalid instrument manual pricing formula action fields (please, use type convertion).'))
                 except DatabaseError:
-                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                    self._add_err_msg(errors, 'non_field_errors', gettext_lazy('General DB error.'))
                 finally:
                     if bool(errors):
                         _l.debug(errors)
@@ -1019,10 +1019,10 @@ class TransactionTypeProcess(object):
                 except (ValueError, TypeError, IntegrityError):
 
                     self._add_err_msg(errors, 'non_field_errors',
-                                      ugettext(
+                                      gettext_lazy(
                                           'Invalid instrument accrual calculation schedule action fields (please, use type convertion).'))
                 except DatabaseError:
-                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                    self._add_err_msg(errors, 'non_field_errors', gettext_lazy('General DB error.'))
                 finally:
                     if bool(errors):
                         _l.debug(errors)
@@ -1148,10 +1148,10 @@ class TransactionTypeProcess(object):
                 except (ValueError, TypeError, IntegrityError):
 
                     self._add_err_msg(errors, 'non_field_errors',
-                                      ugettext(
+                                      gettext_lazy(
                                           'Invalid instrument event schedule action fields (please, use type convertion).'))
                 except DatabaseError:
-                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                    self._add_err_msg(errors, 'non_field_errors', gettext_lazy('General DB error.'))
                 else:
                     event_schedules_map[action.id] = event_schedule
                 finally:
@@ -1268,10 +1268,10 @@ class TransactionTypeProcess(object):
                 except (ValueError, TypeError, IntegrityError) as e:
 
                     self._add_err_msg(errors, 'non_field_errors',
-                                      ugettext(
+                                      gettext_lazy(
                                           'Invalid instrument event schedule action action fields (please, use type convertion).'))
                 except DatabaseError:
-                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                    self._add_err_msg(errors, 'non_field_errors', gettext_lazy('General DB error.'))
                 finally:
                     if bool(errors):
                         _l.debug(errors)
@@ -1317,10 +1317,10 @@ class TransactionTypeProcess(object):
                     _l.info("Execute command error %s " % e)
 
                     self._add_err_msg(errors, 'non_field_errors',
-                                      ugettext(
+                                      gettext_lazy(
                                           'Invalid execute command (Invalid Expression)'))
                 except DatabaseError:
-                    self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                    self._add_err_msg(errors, 'non_field_errors', gettext_lazy('General DB error.'))
                 finally:
                     if bool(errors):
                         _l.debug(errors)
@@ -1751,9 +1751,9 @@ class TransactionTypeProcess(object):
                         _l.debug(error)
 
                         self._add_err_msg(errors, 'non_field_errors',
-                                          ugettext('Invalid transaction action fields (please, use type convertion).'))
+                                          gettext_lazy('Invalid transaction action fields (please, use type convertion).'))
                     except DatabaseError:
-                        self._add_err_msg(errors, 'non_field_errors', ugettext('General DB error.'))
+                        self._add_err_msg(errors, 'non_field_errors', gettext_lazy('General DB error.'))
                     else:
                         self.transactions.append(transaction)
                     finally:
@@ -2006,10 +2006,10 @@ class TransactionTypeProcess(object):
 
         # uniqueness below
 
-        # 1 (SKIP, ugettext_lazy('Skip')),
-        # 2 (BOOK_WITHOUT_UNIQUE_CODE, ugettext_lazy('Book without Unique Code ')),
-        # 3 (OVERWRITE, ugettext_lazy('Overwrite')),
-        # 4 (TREAT_AS_ERROR, ugettext_lazy('Treat as error')),
+        # 1 (SKIP, gettext_lazy('Skip')),
+        # 2 (BOOK_WITHOUT_UNIQUE_CODE, gettext_lazy('Book without Unique Code ')),
+        # 3 (OVERWRITE, gettext_lazy('Overwrite')),
+        # 4 (TREAT_AS_ERROR, gettext_lazy('Treat as error')),
 
         _l.debug('execute_uniqueness_expression self.uniqueness_reaction %s' % self.uniqueness_reaction)
 
@@ -2463,7 +2463,7 @@ class TransactionTypeProcess(object):
         assign_perms3(instr, perms)
 
     def _set_eval_error(self, errors, attr_name, expression, exc=None):
-        msg = ugettext('Invalid expression "%(expression)s".') % {
+        msg = gettext_lazy('Invalid expression "%(expression)s".') % {
             'expression': expression,
         }
         return self._add_err_msg(errors, attr_name, msg)

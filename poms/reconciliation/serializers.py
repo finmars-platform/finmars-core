@@ -10,7 +10,7 @@ from poms.users.fields import MasterUserField, HiddenMemberField
 
 from poms.integrations.storage import import_file_storage
 
-from django.utils.translation import ugettext, ugettext_lazy
+from django.utils.translation import gettext_lazy, gettext_lazy
 from django.utils import timezone
 
 import uuid
@@ -186,7 +186,7 @@ class ProcessBankFileForReconcileSerializer(serializers.Serializer):
                 SFS.save(file_path, file)
                 validated_data['file_path'] = file_path
             else:
-                raise serializers.ValidationError({'file': ugettext('Required field.')})
+                raise serializers.ValidationError({'file': gettext_lazy('Required field.')})
         return ProcessBankFileForReconcile(**validated_data)
 
     def _get_path(self, owner, file_name):
