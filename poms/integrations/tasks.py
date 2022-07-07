@@ -3914,6 +3914,7 @@ def complex_transaction_csv_file_import_validate_parallel(task_id):
         with SFS.open(celery_task.options_object['file_path'], 'rb') as f:
 
             _l.info("Start reading file to split it into chunks")
+            _l.debug("Start reading file to split it into chunks options %s" % celery_task.options_object)
 
             ext = celery_task.options_object['file_path'].split('.')[-1]
 

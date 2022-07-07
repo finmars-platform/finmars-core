@@ -947,6 +947,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         # REFACTOR THIS
 
         options_object = {}
+        options_object['filename'] = instance.filename
         options_object['file_path'] = instance.file_path
         options_object['scheme_id'] = instance.scheme.id
         options_object['execution_context'] = None
@@ -1092,10 +1093,11 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
         # REFACTOR THIS
 
         options_object = {}
+        options_object['filename'] = instance.filename
         options_object['file_path'] = instance.file_path
+        options_object['scheme_id'] = instance.scheme.id
+        options_object['execution_context'] = None
 
-        if instance.scheme:
-            options_object['scheme_id'] = instance.scheme.id
 
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,

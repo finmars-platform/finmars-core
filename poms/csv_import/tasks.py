@@ -182,7 +182,6 @@ def generate_file_report(instance, master_user, scheme, type, name, procedure_in
 
     file_report = FileReport()
 
-
     if procedure_instance:
         file_name = 'file_report_%s_procedure_instance_%s.csv' % (current_date_time, str(procedure_instance.id))
         name = "%s %s Procedure Instance %s" % (name, current_date_time, str(procedure_instance.id))
@@ -460,7 +459,7 @@ def process_csv_file(master_user,
 
     elif '.csv' in task_instance.filename or (execution_context and execution_context["started_by"] == 'procedure'):
 
-        delimiter = task_instance.delimiter.encode('utf-8').decode('unicode_escape')
+        delimiter = task_instance.scheme.delimiter.encode('utf-8').decode('unicode_escape')
 
         reader = csv.reader(file, delimiter=delimiter, quotechar=task_instance.quotechar,
                             strict=False, skipinitialspace=True)
@@ -525,7 +524,7 @@ def process_csv_file(master_user,
         if row_index == 0:
             first_row = row
 
-        if row_index != 0 or (celery_task.options_object and 'items' in celery_task.options_object):
+        if row_index != 0 or (celery_task and celery_task.options_object and 'items' in celery_task.options_object):
 
             try:
 
@@ -1004,7 +1003,7 @@ class ValidateHandler:
                 error_row['error_message'] = error_row['error_message'] + gettext_lazy(
                     'Validation error %(error)s ') % {
                                                  'error': 'Cannot create attribute. Attribute type %s, value %s. Exception: %s' % (
-                                                 attr_type_user_code, result_attr['executed_expression'], e)
+                                                     attr_type_user_code, result_attr['executed_expression'], e)
                                              }
 
     def instance_full_clean(self, scheme, result, error_handler, error_row):
@@ -1094,7 +1093,7 @@ class ValidateHandler:
 
     def _row_count(self, file, instance):
 
-        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+        delimiter = instance.scheme.delimiter.encode('utf-8').decode('unicode_escape')
 
         reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
                             strict=False, skipinitialspace=True)
@@ -1110,10 +1109,15 @@ class ValidateHandler:
 
         _l.debug('ValidateHandler.process: initialized')
 
-        instance = CsvDataFileImport(task_id=celery_task.id, master_user=celery_task.master_user,
-                                     member=celery_task.member)
-
         scheme = CsvImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
+
+        instance = CsvDataFileImport(task_id=celery_task.id,
+                                     master_user=celery_task.master_user,
+                                     member=celery_task.member,
+                                     scheme=scheme,
+                                     file_path=celery_task.options_object['file_path'],
+                                     filename=celery_task.options_object['filename']
+                                     )
 
         error_handler = scheme.error_handler
         missing_data_handler = scheme.missing_data_handler
@@ -1127,9 +1131,16 @@ class ValidateHandler:
 
         try:
             with SFS.open(instance.file_path, 'rb') as f:
+
+                _l.info('ValidateHandler.proces nstance.file_path %s' % instance.file_path)
+                _l.info('ValidateHandler.proces f %s' % f)
+
                 with NamedTemporaryFile() as tmpf:
+
                     for chunk in f.chunks():
                         tmpf.write(chunk)
+                    tmpf.flush()
+
                     tmpf.flush()
 
                     if '.csv' in instance.filename:
@@ -1618,7 +1629,7 @@ class ImportHandler:
 
     def _row_count(self, file, instance):
 
-        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+        delimiter = instance.scheme.delimiter.encode('utf-8').decode('unicode_escape')
 
         reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
                             strict=False, skipinitialspace=True)
@@ -1636,10 +1647,14 @@ class ImportHandler:
 
         _l.debug('ImportHandler.process: initialized')
 
-        instance = CsvDataFileImport(task_id=celery_task.id, master_user=celery_task.master_user,
-                                     member=celery_task.member)
-
         scheme = CsvImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
+
+        instance = CsvDataFileImport(task_id=celery_task.id,
+                                     master_user=celery_task.master_user,
+                                     member=celery_task.member,
+                                     scheme=scheme,
+                                     file_path=celery_task.options_object['file_path'],
+                                     filename=celery_task.options_object['filename'])
 
         error_handler = scheme.error_handler
         missing_data_handler = scheme.missing_data_handler
@@ -1661,7 +1676,7 @@ class ImportHandler:
 
         try:
 
-            if celery_task.options_object and 'items' in celery_task.options_object:
+            if celery_task and celery_task.options_object and 'items' in celery_task.options_object:
 
                 _l.info("Parse json data")
 
@@ -1749,7 +1764,8 @@ class ImportHandler:
                 SFS.delete(instance.file_path)
 
         if instance.stats and len(instance.stats):
-            instance.stats_file_report = generate_file_report(instance, master_user, scheme, 'csv_import.import', 'Simple Data Import', procedure_instance)
+            instance.stats_file_report = generate_file_report(instance, master_user, scheme, 'csv_import.import',
+                                                              'Simple Data Import', procedure_instance)
 
             send_websocket_message(data={
                 'type': 'simple_import_status',
@@ -1789,7 +1805,6 @@ class ImportHandler:
                                     source="Simple Import Service",
                                     text="User %s Import Finished" % member.username,
                                     file_report_id=instance.stats_file_report)
-
 
         if procedure_instance and procedure_instance.schedule_instance:
             procedure_instance.schedule_instance.run_next_procedure()
@@ -1956,7 +1971,7 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
     with transaction.atomic():
 
         _l.info('data_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (
-        procedure_instance_id, celery_task_id))
+            procedure_instance_id, celery_task_id))
 
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
         from poms.procedures.models import RequestDataFileProcedureInstance
@@ -1989,7 +2004,8 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
                                 source="Data File Procedure Service",
                                 text=text)
 
-            transaction.on_commit(lambda: data_csv_file_import.apply_async(kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
+            transaction.on_commit(lambda: data_csv_file_import.apply_async(
+                kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
 
 
         except Exception as e:
@@ -2365,7 +2381,6 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     for key, value in _tmp_attributes_dict.items():
         object_data['attributes'].append(value)
 
-
     _l.info("Settings attributes for instrument done object_data %s " % object_data)
 
     object_data['master_user'] = master_user.id
@@ -2547,7 +2562,7 @@ class UnifiedImportHandler():
 
     def _row_count(self, file, instance):
 
-        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+        delimiter = instance.scheme.delimiter.encode('utf-8').decode('unicode_escape')
 
         reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
                             strict=False, skipinitialspace=True)
@@ -2659,7 +2674,7 @@ class UnifiedImportHandler():
         errors = []
         results = []
 
-        delimiter = self.instance.delimiter.encode('utf-8').decode('unicode_escape')
+        delimiter = self.instance.scheme.delimiter.encode('utf-8').decode('unicode_escape')
 
         reader = csv.reader(file, delimiter=delimiter, quotechar=self.instance.quotechar,
                             strict=False, skipinitialspace=True)
