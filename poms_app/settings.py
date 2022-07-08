@@ -174,7 +174,7 @@ MIDDLEWARE = [
 
     'poms.http_sessions.middleware.SessionMiddleware',
     'poms.common.middleware.CommonMiddleware',
-    'poms.common.middleware.CustomExceptionMiddleware'
+    'poms.common.middleware.CustomExceptionMiddleware',
     # 'poms.users.middleware.AuthenticationMiddleware',
     # 'poms.users.middleware.TimezoneMiddleware',
     # 'poms.users.middleware.LocaleMiddleware',
@@ -464,7 +464,8 @@ REST_FRAMEWORK = {
         # 'rest_framework.authentication.SessionAuthentication',
         # 'rest_framework.authentication.BasicAuthentication',
         # 'rest_framework.authentication.TokenAuthentication',
-        "poms.auth_tokens.authentication.ExpiringTokenAuthentication",
+        "poms.common.authentication.KeycloakAuthentication",
+        # "poms.auth_tokens.authentication.ExpiringTokenAuthentication",
     ),
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
     'DEFAULT_PERMISSION_CLASSES': (
@@ -807,3 +808,10 @@ JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', None)
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+
+KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'https://keycloak.finmars.com:8443')
+KEYCLOAK_REALM = os.environ.get('KEYCLOAK_REALM', 'finmars')
+KEYCLOAK_CLIENT_ID = os.environ.get('KEYCLOAK_CLIENT_ID', 'finmars-backend')
+KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY', 'R8BlgeDuXZSzFINMLv8Pf84S8OQ4iONy')
+

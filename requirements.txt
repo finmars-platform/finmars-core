@@ -124,3 +124,4 @@ vine==5.0.0
 wcwidth==0.2.5
 websockets==8.1
 XlsxWriter==0.9.6
+python-keycloak-client==0.2.3

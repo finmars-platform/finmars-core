@@ -521,7 +521,8 @@ urlpatterns = [
     re_path(r'^authorizer/rename-master-user/', RenameMasterUser.as_view(), name='rename-master-user'),
     re_path(r'^authorizer/create-member/', CreateMember.as_view(), name='create-member'),
     re_path(r'^authorizer/delete-member/', DeleteMember.as_view(), name='delete-member'),
-    re_path(r'^authorizer/master-user-change-owner/', MasterUserChangeOwner.as_view(), name='master-user-change-owner')
+    re_path(r'^authorizer/master-user-change-owner/', MasterUserChangeOwner.as_view(), name='master-user-change-owner'),
+
 ]
 
 if 'rest_framework_swagger' in settings.INSTALLED_APPS:
