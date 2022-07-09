@@ -4,6 +4,7 @@ from django_filters.rest_framework import FilterSet
 
 from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
+from poms.common.mixins import DestroySystemicModelMixin
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, CrossEntityAttributeExtension, \
@@ -238,7 +239,7 @@ class ListLayoutFilterSet(FilterSet):
         fields = []
 
 
-class ListLayoutViewSet(AbstractModelViewSet):
+class ListLayoutViewSet(AbstractModelViewSet, DestroySystemicModelMixin):
     queryset = ListLayout.objects.select_related(
         'member',
         'content_type'
