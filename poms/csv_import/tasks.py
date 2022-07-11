@@ -267,7 +267,7 @@ def generate_file_report_simple(instance, type, name):
 
         file_report.upload_file(file_name=file_name, text=result, master_user=instance.master_user)
         file_report.master_user = instance.master_user
-        file_report.name = "%s %s" % (name, current_date_time)
+        file_report.name = "%s %s" % (name, current_date_time) + '.csv'
         file_report.file_name = file_name
         file_report.type = type
         file_report.notes = 'System File'
