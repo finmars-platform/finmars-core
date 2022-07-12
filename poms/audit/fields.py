@@ -1,5 +1,5 @@
 from django.contrib.contenttypes.models import ContentType
-from django.utils.encoding import smart_text
+from django.utils.encoding import force_str
 
 from poms.audit.filters import ObjectHistoryContentTypeFilter
 from poms.common.fields import SlugRelatedFilteredField
@@ -20,7 +20,7 @@ class ObjectHistoryContentTypeField(SlugRelatedFilteredField):
             app_label, model = data.split('.')
             return self.get_queryset().get(app_label=app_label, model=model)
         except ObjectHistoryContentTypeField:
-            self.fail('does_not_exist', slug_name=self.slug_field, value=smart_text(data))
+            self.fail('does_not_exist', slug_name=self.slug_field, value=force_str(data))
         except (TypeError, ValueError):
             self.fail('invalid')
 

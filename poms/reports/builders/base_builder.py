@@ -1027,7 +1027,7 @@ class BaseReportBuilder:
         return Portfolio.objects.prefetch_related(
             # get_attributes_prefetch_simple()
             'attributes'
-        ).defer('object_permissions', 'responsibles', 'counterparties', 'transaction_types', 'accounts', 'tags').filter(
+        ).defer('object_permissions', 'responsibles', 'counterparties', 'transaction_types', 'accounts').filter(
             id__in=ids)
 
     def _get_instruments_by_ids(self, ids):

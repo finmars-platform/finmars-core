@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 STRING = 10
 NUMBER = 20
@@ -15,17 +15,17 @@ SELECTOR = 110
 BUTTON = 120
 
 SYSTEM_VALUE_TYPES = (
-    (NUMBER, ugettext_lazy('Number')),
-    (STRING, ugettext_lazy('String')),
-    (DATE, ugettext_lazy('Date')),
-    (CLASSIFIER, ugettext_lazy('Classifier')),
-    (BOOLEAN, ugettext_lazy('Boolean')),
-    (SYSTEM_ATTRIBUTE, ugettext_lazy('System Attribute')),
-    (USER_ATTRIBUTE, ugettext_lazy('User Attribute')),
-    (RELATION, ugettext_lazy('Relation')),
-    (SELECTOR, ugettext_lazy('Selector')),
-    (BUTTON, ugettext_lazy('Button')),
-    (DATETIME, ugettext_lazy('Datetime'))
+    (NUMBER, gettext_lazy('Number')),
+    (STRING, gettext_lazy('String')),
+    (DATE, gettext_lazy('Date')),
+    (CLASSIFIER, gettext_lazy('Classifier')),
+    (BOOLEAN, gettext_lazy('Boolean')),
+    (SYSTEM_ATTRIBUTE, gettext_lazy('System Attribute')),
+    (USER_ATTRIBUTE, gettext_lazy('User Attribute')),
+    (RELATION, gettext_lazy('Relation')),
+    (SELECTOR, gettext_lazy('Selector')),
+    (BUTTON, gettext_lazy('Button')),
+    (DATETIME, gettext_lazy('Datetime'))
 )
 
 class SystemValueType():

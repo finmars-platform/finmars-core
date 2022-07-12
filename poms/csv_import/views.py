@@ -96,6 +96,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
         options_object = {}
         options_object['file_path'] = instance.file_path
+        options_object['filename'] = instance.filename
         options_object['scheme_id'] = instance.scheme.id
         options_object['execution_context'] = None
 
@@ -144,6 +145,7 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
         options_object = {}
         options_object['file_path'] = instance.file_path
+        options_object['filename'] = instance.filename
         options_object['scheme_id'] = instance.scheme.id
         options_object['execution_context'] = None
 

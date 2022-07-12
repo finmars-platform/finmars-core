@@ -6,7 +6,7 @@ from dateutil import parser
 from dateutil.rrule import rrule, DAILY
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from poms.common import formula
 from poms.currencies.models import CurrencyHistory, Currency
@@ -183,7 +183,7 @@ class AbstractProvider(object):
                         except formula.InvalidExpression:
                             _l.info('Invalid instrument attribute expression conversion: id=%s, input=%s, expr=%s, values=%s',
                                      instrument_download_scheme.id, input, input.name_expr, values)
-                            errors[input] = [ugettext_lazy('Invalid expression.')]
+                            errors[input] = [gettext_lazy('Invalid expression.')]
                             continue
 
             try:
@@ -191,7 +191,7 @@ class AbstractProvider(object):
             except formula.InvalidExpression:
                 _l.info('Invalid instrument attribute expression: id=%s, attr=%s, expr=%s, values=%s',
                          instrument_download_scheme.id, 'instrument_user_code', instrument_download_scheme.instrument_user_code, values)
-                errors['instrument_user_code'] = [ugettext_lazy('Invalid expression.')]
+                errors['instrument_user_code'] = [gettext_lazy('Invalid expression.')]
                 instr = Instrument(master_user=master_user)
                 return instr, errors
 
@@ -217,7 +217,7 @@ class AbstractProvider(object):
                 except formula.InvalidExpression:
                     _l.info('Invalid instrument attribute expression: id=%s, attr=%s, expr=%s, values=%s',
                              instrument_download_scheme.id, attr, expr, values)
-                    errors[attr] = [ugettext_lazy('Invalid expression.')]
+                    errors[attr] = [gettext_lazy('Invalid expression.')]
 
                     v = 'Invalid Expression'
 
@@ -232,7 +232,7 @@ class AbstractProvider(object):
                         self.set_instrument_attr(instrument_download_scheme, instr, attr, v)
 
                     else:
-                        errors[attr] = [ugettext_lazy('This field is required.')]
+                        errors[attr] = [gettext_lazy('This field is required.')]
                 elif attr in ('instrument_type',):
                     # if self.is_empty_value(v):
                     #     pass
@@ -242,7 +242,7 @@ class AbstractProvider(object):
                         # setattr(instr, attr, v)
                         self.set_instrument_attr(instrument_download_scheme, instr, attr, v)
                     else:
-                        errors[attr] = [ugettext_lazy('This field is required.')]
+                        errors[attr] = [gettext_lazy('This field is required.')]
                 elif attr in ('price_multiplier', 'accrued_multiplier', 'default_price', 'default_accrued',
                               'maturity_price'):
                     if self.is_empty_value(v):
@@ -251,7 +251,7 @@ class AbstractProvider(object):
                         try:
                             setattr(instr, attr, float(v))
                         except (ValueError, TypeError):
-                            errors[attr] = [ugettext_lazy('A valid number is required.')]
+                            errors[attr] = [gettext_lazy('A valid number is required.')]
                 elif attr in ('maturity_date',):
                     if self.is_empty_value(v):
                         pass
@@ -262,7 +262,7 @@ class AbstractProvider(object):
                             # setattr(instr, attr, v)
                             self.set_instrument_attr(instrument_download_scheme, instr, attr, v)
                         else:
-                            errors[attr] = [ugettext_lazy('A valid date is required.')]
+                            errors[attr] = [gettext_lazy('A valid date is required.')]
 
                 elif attr in ('instrument_user_code', 'instrument_name', 'instrument_short_name', 'instrument_public_name', 'instrument_notes'):
                     if self.is_empty_value(v):
@@ -321,7 +321,7 @@ class AbstractProvider(object):
                     except formula.InvalidExpression:
                         _l.debug('Invalid instrument dynamic attribute expression: id=%s, attr=%s, expr="%s", values=%s',
                                  instrument_download_scheme.id, attr.id, attr.value, values)
-                        errors[err_name] = [ugettext_lazy('Invalid expression.')]
+                        errors[err_name] = [gettext_lazy('Invalid expression.')]
                         continue
                     # if not self.is_empty_value(v):
                     #     attr_mapped_values = self.get_instrument_attribute_value(master_user, provider, tattr, v)
@@ -343,7 +343,7 @@ class AbstractProvider(object):
                                 try:
                                     iattr.value_float = float(v)
                                 except (ValueError, TypeError):
-                                    errors[err_name] = [ugettext_lazy('A valid number is required.')]
+                                    errors[err_name] = [gettext_lazy('A valid number is required.')]
                         elif tattr.value_type == GenericAttributeType.DATE:
                             if self.is_empty_value(v):
                                 pass
@@ -353,7 +353,7 @@ class AbstractProvider(object):
                                 if isinstance(v, date):
                                     iattr.value_date = v
                                 else:
-                                    errors[err_name] = [ugettext_lazy('A valid date is required.')]
+                                    errors[err_name] = [gettext_lazy('A valid date is required.')]
                         elif tattr.value_type == GenericAttributeType.CLASSIFIER:
                             if self.is_empty_value(v):
                                 pass
@@ -363,9 +363,9 @@ class AbstractProvider(object):
                                 if v:
                                     iattr.classifier = v
                                 else:
-                                    errors[err_name] = [ugettext_lazy('This field is required.')]
+                                    errors[err_name] = [gettext_lazy('This field is required.')]
                 else:
-                    errors[err_name] = [ugettext_lazy('Expression required')]
+                    errors[err_name] = [gettext_lazy('Expression required')]
         return iattrs
 
     def create_accrual_calculation_schedules(self, instrument_download_scheme, instrument, values):
@@ -436,7 +436,7 @@ class AbstractProvider(object):
 
     @staticmethod
     def fail_pricing_policy(errors, pricing_policy, names):
-        msg = ugettext_lazy('Invalid pricing policy expression in "%(pricing_policy)s".') % {
+        msg = gettext_lazy('Invalid pricing policy expression in "%(pricing_policy)s".') % {
             'pricing_policy': pricing_policy.name
         }
         msgs = errors.get('pricing_policy', None) or []
@@ -447,7 +447,7 @@ class AbstractProvider(object):
 
     @staticmethod
     def fail_manual_pricing_formula(errors, manual_pricing_formula, names):
-        msg = ugettext_lazy('Invalid manual pricing formula expression in instrument "%(instrument)s".') % {
+        msg = gettext_lazy('Invalid manual pricing formula expression in instrument "%(instrument)s".') % {
             'instrument': manual_pricing_formula.instrument.user_code
         }
         msgs = errors.get('manual_pricing_formula', None) or []

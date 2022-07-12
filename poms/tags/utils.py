@@ -1,5 +1,5 @@
 from django.db.models import Q, Prefetch
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.tags.models import TagLink, Tag
@@ -7,7 +7,7 @@ from poms.tags.models import TagLink, Tag
 
 def filter_by_tag_name(queryset, value):
     if value:
-        tags = force_text(value).split(',')
+        tags = force_str(value).split(',')
         f = Q()
         for t in tags:
             f |= Q(tags__name__istartswith=t)

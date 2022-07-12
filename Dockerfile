@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -60,7 +60,6 @@ RUN chmod 501 /etc/filebeat/filebeat.yml
 RUN chmod +x /var/app/docker/finmars-run.sh  && \
     chmod +x /etc/init.d/celeryd  && \
     chmod +x /etc/init.d/celerybeat  && \
-
     chmod 640 /etc/default/celeryd  && \
     chmod 640 /etc/default/celerybeat
 

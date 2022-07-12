@@ -14,7 +14,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext, ugettext_lazy
+from django.utils.translation import gettext_lazy
 from mptt.models import MPTTModel
 
 from poms.common import formula
@@ -47,17 +47,17 @@ class InstrumentClass(AbstractClassModel):
     DEFAULT = 6
 
     CLASSES = (
-        (GENERAL, 'GENERAL', ugettext_lazy("General Class")),
-        (EVENT_AT_MATURITY, 'EVENT_AT_MATURITY', ugettext_lazy("Event at Maturity")),
-        (REGULAR_EVENT_AT_MATURITY, 'REGULAR_EVENT_AT_MATURITY', ugettext_lazy("Regular Event with Maturity")),
-        (PERPETUAL_REGULAR_EVENT, 'PERPETUAL_REGULAR_EVENT', ugettext_lazy("Perpetual Regular Event")),
-        (CONTRACT_FOR_DIFFERENCE, 'CONTRACT_FOR_DIFFERENCE', ugettext_lazy("Contract for Difference")),
-        (DEFAULT, '-', ugettext_lazy("Default"))
+        (GENERAL, 'GENERAL', gettext_lazy("General Class")),
+        (EVENT_AT_MATURITY, 'EVENT_AT_MATURITY', gettext_lazy("Event at Maturity")),
+        (REGULAR_EVENT_AT_MATURITY, 'REGULAR_EVENT_AT_MATURITY', gettext_lazy("Regular Event with Maturity")),
+        (PERPETUAL_REGULAR_EVENT, 'PERPETUAL_REGULAR_EVENT', gettext_lazy("Perpetual Regular Event")),
+        (CONTRACT_FOR_DIFFERENCE, 'CONTRACT_FOR_DIFFERENCE', gettext_lazy("Contract for Difference")),
+        (DEFAULT, '-', gettext_lazy("Default"))
     )
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('instrument class')
-        verbose_name_plural = ugettext_lazy('instrument classes')
+        verbose_name = gettext_lazy('instrument class')
+        verbose_name_plural = gettext_lazy('instrument classes')
 
     @property
     def has_one_off_event(self):
@@ -77,20 +77,20 @@ class DailyPricingModel(AbstractClassModel):
     PROVIDER_IF_OPEN = 5
     DEFAULT = 6
     CLASSES = (
-        (SKIP, 'SKIP', ugettext_lazy("No Pricing (no Price History)")),
+        (SKIP, 'SKIP', gettext_lazy("No Pricing (no Price History)")),
         (FORMULA_ALWAYS, 'FORMULA_ALWAYS',
-         ugettext_lazy("Don't download, just apply Formula / Pricing Policy (always)")),
+         gettext_lazy("Don't download, just apply Formula / Pricing Policy (always)")),
         (FORMULA_IF_OPEN, 'FORMULA_IF_OPEN',
-         ugettext_lazy("Download & apply Formula / Pricing Policy (if non-zero position)")),
-        (PROVIDER_ALWAYS, 'PROVIDER_ALWAYS', ugettext_lazy("Download & apply Formula / Pricing Policy (always)")),
+         gettext_lazy("Download & apply Formula / Pricing Policy (if non-zero position)")),
+        (PROVIDER_ALWAYS, 'PROVIDER_ALWAYS', gettext_lazy("Download & apply Formula / Pricing Policy (always)")),
         (PROVIDER_IF_OPEN, 'PROVIDER_IF_OPEN',
-         ugettext_lazy("Don't download, just apply Formula / Pricing Policy (if non-zero position)")),
-        (DEFAULT, '-', ugettext_lazy("Use Default Price (no Price History)"))
+         gettext_lazy("Don't download, just apply Formula / Pricing Policy (if non-zero position)")),
+        (DEFAULT, '-', gettext_lazy("Use Default Price (no Price History)"))
     )
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('daily pricing model')
-        verbose_name_plural = ugettext_lazy('daily pricing models')
+        verbose_name = gettext_lazy('daily pricing model')
+        verbose_name_plural = gettext_lazy('daily pricing models')
 
 
 class PricingCondition(AbstractClassModel):
@@ -99,14 +99,14 @@ class PricingCondition(AbstractClassModel):
     RUN_VALUATION_ALWAYS = 3
 
     CLASSES = (
-        (NO_VALUATION, 'NO_VALUATION', ugettext_lazy("Don't Run Valuation")),
-        (RUN_VALUATION_IF_NON_ZERO, 'RUN_VALUATION_IF_OPEN', ugettext_lazy("Run Valuation: if non-zero position")),
-        (RUN_VALUATION_ALWAYS, 'RUN_VALUATION_ALWAYS', ugettext_lazy("Run Valuation: always"))
+        (NO_VALUATION, 'NO_VALUATION', gettext_lazy("Don't Run Valuation")),
+        (RUN_VALUATION_IF_NON_ZERO, 'RUN_VALUATION_IF_OPEN', gettext_lazy("Run Valuation: if non-zero position")),
+        (RUN_VALUATION_ALWAYS, 'RUN_VALUATION_ALWAYS', gettext_lazy("Run Valuation: always"))
     )
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('pricing condition')
-        verbose_name_plural = ugettext_lazy('pricing conditions ')
+        verbose_name = gettext_lazy('pricing condition')
+        verbose_name_plural = gettext_lazy('pricing conditions ')
 
         base_manager_name = 'objects'
 
@@ -120,16 +120,16 @@ class ExposureCalculationModel(AbstractClassModel):
     UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT = 5
 
     CLASSES = (
-        (MARKET_VALUE, 'MARKET_VALUE', ugettext_lazy("Market value")),
-        (PRICE_EXPOSURE, 'PRICE_EXPOSURE', ugettext_lazy("Price exposure")),
-        (DELTA_ADJUSTED_PRICE_EXPOSURE, 'DELTA_ADJUSTED_PRICE_EXPOSURE', ugettext_lazy("Delta adjusted price exposure")),
-        (UNDERLYING_LONG_SHORT_EXPOSURE_NET, 'UNDERLYING_LONG_SHORT_EXPOSURE_NET', ugettext_lazy("Underlying long short exposure net")),
-        (UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT, 'UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT', ugettext_lazy("Underlying long short exposure split"))
+        (MARKET_VALUE, 'MARKET_VALUE', gettext_lazy("Market value")),
+        (PRICE_EXPOSURE, 'PRICE_EXPOSURE', gettext_lazy("Price exposure")),
+        (DELTA_ADJUSTED_PRICE_EXPOSURE, 'DELTA_ADJUSTED_PRICE_EXPOSURE', gettext_lazy("Delta adjusted price exposure")),
+        (UNDERLYING_LONG_SHORT_EXPOSURE_NET, 'UNDERLYING_LONG_SHORT_EXPOSURE_NET', gettext_lazy("Underlying long short exposure net")),
+        (UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT, 'UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT', gettext_lazy("Underlying long short exposure split"))
     )
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('Exposure calculation model')
-        verbose_name_plural = ugettext_lazy('Exposure calculation models ')
+        verbose_name = gettext_lazy('Exposure calculation model')
+        verbose_name_plural = gettext_lazy('Exposure calculation models ')
 
 
 # <select id="u948_input" class="u948_input">
@@ -149,16 +149,16 @@ class LongUnderlyingExposure(AbstractClassModel):
     LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE = 5
 
     CLASSES = (
-        (ZERO, 'ZERO', ugettext_lazy("Zero")),
-        (LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE, 'LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE', ugettext_lazy("Long Underlying Instrument Price Exposure")),
-        (LONG_UNDERLYING_INSTRUMENT_PRICE_DELTA, 'LONG_UNDERLYING_INSTRUMENT_PRICE_DELTA', ugettext_lazy("Long Underlying Instrument Price Delta")),
-        (LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE, 'LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE', ugettext_lazy("Long Underlying Currency FX Rate Exposure")),
-        (LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE, 'LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE', ugettext_lazy("Long Underlying Currency FX Rate Delta-adjusted Exposure"))
+        (ZERO, 'ZERO', gettext_lazy("Zero")),
+        (LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE, 'LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE', gettext_lazy("Long Underlying Instrument Price Exposure")),
+        (LONG_UNDERLYING_INSTRUMENT_PRICE_DELTA, 'LONG_UNDERLYING_INSTRUMENT_PRICE_DELTA', gettext_lazy("Long Underlying Instrument Price Delta")),
+        (LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE, 'LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE', gettext_lazy("Long Underlying Currency FX Rate Exposure")),
+        (LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE, 'LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE', gettext_lazy("Long Underlying Currency FX Rate Delta-adjusted Exposure"))
     )
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('Long underlying exposure')
-        verbose_name_plural = ugettext_lazy('Long underlying exposure ')
+        verbose_name = gettext_lazy('Long underlying exposure')
+        verbose_name_plural = gettext_lazy('Long underlying exposure ')
 
 
 class ShortUnderlyingExposure(AbstractClassModel):
@@ -170,17 +170,17 @@ class ShortUnderlyingExposure(AbstractClassModel):
     SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE = 5
 
     CLASSES = (
-        (ZERO, 'ZERO', ugettext_lazy("Zero")),
-        (SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE, 'SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE', ugettext_lazy("Short Underlying Instrument Price Exposure")),
-        (SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA, 'SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA', ugettext_lazy("Short Underlying Instrument Price Delta")),
-        (SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE, 'SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE', ugettext_lazy("Short Underlying Currency FX Rate Exposure")),
-        (SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE, 'SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE', ugettext_lazy("Short Underlying Currency FX Rate Delta-adjusted Exposure"))
+        (ZERO, 'ZERO', gettext_lazy("Zero")),
+        (SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE, 'SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE', gettext_lazy("Short Underlying Instrument Price Exposure")),
+        (SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA, 'SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA', gettext_lazy("Short Underlying Instrument Price Delta")),
+        (SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE, 'SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE', gettext_lazy("Short Underlying Currency FX Rate Exposure")),
+        (SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE, 'SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE', gettext_lazy("Short Underlying Currency FX Rate Delta-adjusted Exposure"))
     )
 
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('Short underlying exposure')
-        verbose_name_plural = ugettext_lazy('Short underlying exposure ')
+        verbose_name = gettext_lazy('Short underlying exposure')
+        verbose_name_plural = gettext_lazy('Short underlying exposure ')
 
 
 class AccrualCalculationModel(AbstractClassModel):
@@ -212,37 +212,37 @@ class AccrualCalculationModel(AbstractClassModel):
     DEFAULT = 25
 
     CLASSES = (
-        (NONE, 'NONE', ugettext_lazy("none")),
-        (ACT_ACT, 'ACT_ACT', ugettext_lazy("ACT/ACT")),
-        (ACT_ACT_ISDA, 'ACT_ACT_ISDA', ugettext_lazy("ACT/ACT - ISDA")),
-        (ACT_360, 'ACT_360', ugettext_lazy("ACT/360")),
-        (ACT_365, 'ACT_365', ugettext_lazy("ACT/365")),
-        (ACT_365_25, 'ACT_365_25', ugettext_lazy("Act/365.25")),
-        (ACT_365_366, 'ACT_365_366', ugettext_lazy("Act/365(366)")),
-        (ACT_1_365, 'ACT_1_365', ugettext_lazy("Act+1/365")),
-        (ACT_1_360, 'ACT_1_360', ugettext_lazy("Act+1/360")),
-        # (C_30_ACT, 'C_30_ACT', ugettext_lazy("30/ACT")),
-        (C_30_360, 'C_30_360', ugettext_lazy("30/360")),
-        (C_30_360_NO_EOM, 'C_30_360_NO_EOM', ugettext_lazy("30/360 (NO EOM)")),
-        (C_30E_P_360_ITL, 'C_30E_P_360_ITL', ugettext_lazy("30E+/360.ITL")),
-        (NL_365, 'NL_365', ugettext_lazy("NL/365")),
-        (NL_365_NO_EOM, 'NL_365_NO_EOM', ugettext_lazy("NL/365 (NO-EOM)")),
-        (ISMA_30_360, 'ISMA_30_360', ugettext_lazy("ISMA-30/360")),
-        (ISMA_30_360_NO_EOM, 'ISMA_30_360_NO_EOM', ugettext_lazy("ISMA-30/360 (NO EOM)")),
-        (US_MINI_30_360_EOM, 'US_MINI_30_360_EOM', ugettext_lazy("US MUNI-30/360 (EOM)")),
-        (US_MINI_30_360_NO_EOM, 'US_MINI_30_360_NO_EOM', ugettext_lazy("US MUNI-30/360 (NO EOM)")),
-        (BUS_DAYS_252, 'BUS_DAYS_252', ugettext_lazy("BUS DAYS/252")),
-        (GERMAN_30_360_EOM, 'GERMAN_30_360_EOM', ugettext_lazy("GERMAN-30/360 (EOM)")),
-        (GERMAN_30_360_NO_EOM, 'GERMAN_30_360_NO_EOM', ugettext_lazy("GERMAN-30/360 (NO EOM)")),
-        (REVERSED_ACT_365, 'REVERSED_ACT_365', ugettext_lazy("Reversed ACT/365")),
-        (C_30E_P_360, 'C_30E_P_360', ugettext_lazy('30E+/360')),
-        (DEFAULT, '-', ugettext_lazy('Default'))
+        (NONE, 'NONE', gettext_lazy("none")),
+        (ACT_ACT, 'ACT_ACT', gettext_lazy("ACT/ACT")),
+        (ACT_ACT_ISDA, 'ACT_ACT_ISDA', gettext_lazy("ACT/ACT - ISDA")),
+        (ACT_360, 'ACT_360', gettext_lazy("ACT/360")),
+        (ACT_365, 'ACT_365', gettext_lazy("ACT/365")),
+        (ACT_365_25, 'ACT_365_25', gettext_lazy("Act/365.25")),
+        (ACT_365_366, 'ACT_365_366', gettext_lazy("Act/365(366)")),
+        (ACT_1_365, 'ACT_1_365', gettext_lazy("Act+1/365")),
+        (ACT_1_360, 'ACT_1_360', gettext_lazy("Act+1/360")),
+        # (C_30_ACT, 'C_30_ACT', gettext_lazy("30/ACT")),
+        (C_30_360, 'C_30_360', gettext_lazy("30/360")),
+        (C_30_360_NO_EOM, 'C_30_360_NO_EOM', gettext_lazy("30/360 (NO EOM)")),
+        (C_30E_P_360_ITL, 'C_30E_P_360_ITL', gettext_lazy("30E+/360.ITL")),
+        (NL_365, 'NL_365', gettext_lazy("NL/365")),
+        (NL_365_NO_EOM, 'NL_365_NO_EOM', gettext_lazy("NL/365 (NO-EOM)")),
+        (ISMA_30_360, 'ISMA_30_360', gettext_lazy("ISMA-30/360")),
+        (ISMA_30_360_NO_EOM, 'ISMA_30_360_NO_EOM', gettext_lazy("ISMA-30/360 (NO EOM)")),
+        (US_MINI_30_360_EOM, 'US_MINI_30_360_EOM', gettext_lazy("US MUNI-30/360 (EOM)")),
+        (US_MINI_30_360_NO_EOM, 'US_MINI_30_360_NO_EOM', gettext_lazy("US MUNI-30/360 (NO EOM)")),
+        (BUS_DAYS_252, 'BUS_DAYS_252', gettext_lazy("BUS DAYS/252")),
+        (GERMAN_30_360_EOM, 'GERMAN_30_360_EOM', gettext_lazy("GERMAN-30/360 (EOM)")),
+        (GERMAN_30_360_NO_EOM, 'GERMAN_30_360_NO_EOM', gettext_lazy("GERMAN-30/360 (NO EOM)")),
+        (REVERSED_ACT_365, 'REVERSED_ACT_365', gettext_lazy("Reversed ACT/365")),
+        (C_30E_P_360, 'C_30E_P_360', gettext_lazy('30E+/360')),
+        (DEFAULT, '-', gettext_lazy('Default'))
     )
 
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('accrual calculation model')
-        verbose_name_plural = ugettext_lazy('accrual calculation models')
+        verbose_name = gettext_lazy('accrual calculation model')
+        verbose_name_plural = gettext_lazy('accrual calculation models')
 
 
 class PaymentSizeDetail(AbstractClassModel):
@@ -254,18 +254,18 @@ class PaymentSizeDetail(AbstractClassModel):
     PER_DAY = 6
     DEFAULT = 7
     CLASSES = (
-        (PERCENT, 'PERCENT', ugettext_lazy("% per annum")),
-        (PER_ANNUM, 'PER_ANNUM', ugettext_lazy("per annum")),
-        (PER_QUARTER, 'PER_QUARTER', ugettext_lazy("per quarter")),
-        (PER_MONTH, 'PER_MONTH', ugettext_lazy("per month")),
-        (PER_WEEK, 'PER_WEEK', ugettext_lazy("per week")),
-        (PER_DAY, 'PER_DAY', ugettext_lazy("per day")),
-        (DEFAULT, '-', ugettext_lazy("Default")),
+        (PERCENT, 'PERCENT', gettext_lazy("% per annum")),
+        (PER_ANNUM, 'PER_ANNUM', gettext_lazy("per annum")),
+        (PER_QUARTER, 'PER_QUARTER', gettext_lazy("per quarter")),
+        (PER_MONTH, 'PER_MONTH', gettext_lazy("per month")),
+        (PER_WEEK, 'PER_WEEK', gettext_lazy("per week")),
+        (PER_DAY, 'PER_DAY', gettext_lazy("per day")),
+        (DEFAULT, '-', gettext_lazy("Default")),
     )
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('payment size detail')
-        verbose_name_plural = ugettext_lazy('payment size details')
+        verbose_name = gettext_lazy('payment size detail')
+        verbose_name_plural = gettext_lazy('payment size details')
 
 
 class Periodicity(AbstractClassModel):
@@ -286,26 +286,26 @@ class Periodicity(AbstractClassModel):
     DEFAULT = 13
 
     CLASSES = (
-        (N_DAY, 'N_DAY', ugettext_lazy("N Days")),
-        (N_WEEK_EOBW, 'N_WEEK_EOBW', ugettext_lazy("N Weeks (eobw)")),
-        (N_MONTH_EOM, 'N_MONTH_EOM', ugettext_lazy("N Months (eom)")),
-        (N_MONTH_SAME_DAY, 'N_MONTH_SAME_DAY', ugettext_lazy("N Months (same date)")),
-        (N_YEAR_EOY, 'N_YEAR_EOY', ugettext_lazy("N Years (eoy)")),
-        (N_YEAR_SAME_DAY, 'N_YEAR_SAME_DAY', ugettext_lazy("N Years (same date)")),
+        (N_DAY, 'N_DAY', gettext_lazy("N Days")),
+        (N_WEEK_EOBW, 'N_WEEK_EOBW', gettext_lazy("N Weeks (eobw)")),
+        (N_MONTH_EOM, 'N_MONTH_EOM', gettext_lazy("N Months (eom)")),
+        (N_MONTH_SAME_DAY, 'N_MONTH_SAME_DAY', gettext_lazy("N Months (same date)")),
+        (N_YEAR_EOY, 'N_YEAR_EOY', gettext_lazy("N Years (eoy)")),
+        (N_YEAR_SAME_DAY, 'N_YEAR_SAME_DAY', gettext_lazy("N Years (same date)")),
 
-        (WEEKLY, 'WEEKLY', ugettext_lazy('Weekly')),
-        (MONTHLY, 'MONTHLY', ugettext_lazy('Monthly')),
-        (BIMONTHLY, 'BIMONTHLY', ugettext_lazy('Bimonthly')),
-        (QUARTERLY, 'QUARTERLY', ugettext_lazy('Quarterly')),
-        (SEMI_ANNUALLY, 'SEMI_ANNUALLY', ugettext_lazy('Semi-annually')),
-        (ANNUALLY, 'ANNUALLY', ugettext_lazy('Annually')),
+        (WEEKLY, 'WEEKLY', gettext_lazy('Weekly')),
+        (MONTHLY, 'MONTHLY', gettext_lazy('Monthly')),
+        (BIMONTHLY, 'BIMONTHLY', gettext_lazy('Bimonthly')),
+        (QUARTERLY, 'QUARTERLY', gettext_lazy('Quarterly')),
+        (SEMI_ANNUALLY, 'SEMI_ANNUALLY', gettext_lazy('Semi-annually')),
+        (ANNUALLY, 'ANNUALLY', gettext_lazy('Annually')),
 
-        (DEFAULT, '-', ugettext_lazy('-')),
+        (DEFAULT, '-', gettext_lazy('-')),
     )
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('periodicity')
-        verbose_name_plural = ugettext_lazy('periodicities')
+        verbose_name = gettext_lazy('periodicity')
+        verbose_name_plural = gettext_lazy('periodicities')
 
     def to_timedelta(self, n=1, i=1, same_date=None):
         if self.id == Periodicity.N_DAY:
@@ -379,14 +379,14 @@ class CostMethod(AbstractClassModel):
     FIFO = 2
     LIFO = 3
     CLASSES = (
-        (AVCO, 'AVCO', ugettext_lazy('AVCO')),
-        (FIFO, 'FIFO', ugettext_lazy('FIFO')),
-        # (LIFO, ugettext_lazy('LIFO')),
+        (AVCO, 'AVCO', gettext_lazy('AVCO')),
+        (FIFO, 'FIFO', gettext_lazy('FIFO')),
+        # (LIFO, gettext_lazy('LIFO')),
     )
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('cost method')
-        verbose_name_plural = ugettext_lazy('cost methods')
+        verbose_name = gettext_lazy('cost method')
+        verbose_name_plural = gettext_lazy('cost methods')
 
 
 
@@ -394,29 +394,29 @@ class PricingPolicy(NamedModel, DataTimeStampedModel):
     # DISABLED = 0
     # BLOOMBERG = 1
     # TYPES = (
-    #     (DISABLED, ugettext_lazy('Disabled')),
-    #     (BLOOMBERG, ugettext_lazy('Bloomberg')),
+    #     (DISABLED, gettext_lazy('Disabled')),
+    #     (BLOOMBERG, gettext_lazy('Bloomberg')),
     # )
 
     master_user = models.ForeignKey(MasterUser, related_name='pricing_policies',
-                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     # type = models.PositiveIntegerField(default=DISABLED, choices=TYPES)
 
     # expr - DEPRECATED
     expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='', blank=True, null=True,
-                            verbose_name=ugettext_lazy('expression'))
+                            verbose_name=gettext_lazy('expression'))
 
     default_instrument_pricing_scheme = models.ForeignKey(InstrumentPricingScheme, null=True, blank=True,
-                                                          verbose_name=ugettext_lazy(
+                                                          verbose_name=gettext_lazy(
                                                               'default instrument pricing scheme'),
                                                           on_delete=models.SET_NULL)
     default_currency_pricing_scheme = models.ForeignKey(CurrencyPricingScheme, null=True, blank=True,
-                                                        verbose_name=ugettext_lazy('default currency pricing scheme'),
+                                                        verbose_name=gettext_lazy('default currency pricing scheme'),
                                                         on_delete=models.SET_NULL)
 
     class Meta(AbstractClassModel.Meta):
-        verbose_name = ugettext_lazy('pricing policy')
-        verbose_name_plural = ugettext_lazy('pricing policies')
+        verbose_name = gettext_lazy('pricing policy')
+        verbose_name_plural = gettext_lazy('pricing policies')
         unique_together = [
             ['master_user', 'user_code']
         ]
@@ -435,98 +435,98 @@ class PricingPolicy(NamedModel, DataTimeStampedModel):
 
 class InstrumentType( NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='instrument_types',
-                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     instrument_class = models.ForeignKey(InstrumentClass, related_name='instrument_types', on_delete=models.PROTECT,
-                                         verbose_name=ugettext_lazy('instrument class'))
+                                         verbose_name=gettext_lazy('instrument class'))
 
     one_off_event = models.ForeignKey('transactions.TransactionType', null=True, blank=True, on_delete=models.PROTECT,
-                                      related_name='+', verbose_name=ugettext_lazy('one-off event'))
+                                      related_name='+', verbose_name=gettext_lazy('one-off event'))
     regular_event = models.ForeignKey('transactions.TransactionType', null=True, blank=True, on_delete=models.PROTECT,
-                                      related_name='+', verbose_name=ugettext_lazy('regular event'))
+                                      related_name='+', verbose_name=gettext_lazy('regular event'))
 
     factor_same = models.ForeignKey('transactions.TransactionType', null=True, blank=True, on_delete=models.PROTECT,
-                                    related_name='+', verbose_name=ugettext_lazy('factor same'))
+                                    related_name='+', verbose_name=gettext_lazy('factor same'))
     factor_up = models.ForeignKey('transactions.TransactionType', null=True, blank=True, on_delete=models.PROTECT,
-                                  related_name='+', verbose_name=ugettext_lazy('factor up'))
+                                  related_name='+', verbose_name=gettext_lazy('factor up'))
     factor_down = models.ForeignKey('transactions.TransactionType', null=True, blank=True, on_delete=models.PROTECT,
-                                    related_name='+', verbose_name=ugettext_lazy('factor down'))
+                                    related_name='+', verbose_name=gettext_lazy('factor down'))
 
-    attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
+    attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
-    has_second_exposure_currency = models.BooleanField(default=False, verbose_name=ugettext_lazy('has second exposure currency'))
+    has_second_exposure_currency = models.BooleanField(default=False, verbose_name=gettext_lazy('has second exposure currency'))
 
     object_permissions = GenericRelation(GenericObjectPermission)
 
-    instrument_form_layouts = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('instrument form layouts'))
+    instrument_form_layouts = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('instrument form layouts'))
 
     payment_size_detail = models.ForeignKey(PaymentSizeDetail, on_delete=models.PROTECT, null=True, blank=True,
-                                            verbose_name=ugettext_lazy('payment size detail'))
+                                            verbose_name=gettext_lazy('payment size detail'))
 
     accrued_currency = models.ForeignKey('currencies.Currency', null=True, blank=True, related_name='instrument_types_accrued',
-                                         on_delete=models.PROTECT, verbose_name=ugettext_lazy('accrued currency'))
-    accrued_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('accrued multiplier'))
+                                         on_delete=models.PROTECT, verbose_name=gettext_lazy('accrued currency'))
+    accrued_multiplier = models.FloatField(default=1.0, verbose_name=gettext_lazy('accrued multiplier'))
 
-    default_accrued = models.FloatField(default=0.0, verbose_name=ugettext_lazy('default accrued'))
+    default_accrued = models.FloatField(default=0.0, verbose_name=gettext_lazy('default accrued'))
 
-    instrument_factor_schedule_json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('instrument factor schedule json data'))
+    instrument_factor_schedule_json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('instrument factor schedule json data'))
 
     exposure_calculation_model = models.ForeignKey(ExposureCalculationModel, null=True, blank=True,
-                                                   verbose_name=ugettext_lazy('exposure calculation model'),
+                                                   verbose_name=gettext_lazy('exposure calculation model'),
                                                    on_delete=models.SET_NULL)
 
-    long_underlying_instrument = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('long underlying instrument'))
+    long_underlying_instrument = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('long underlying instrument'))
 
-    underlying_long_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('underlying long multiplier'))
+    underlying_long_multiplier = models.FloatField(default=1.0, verbose_name=gettext_lazy('underlying long multiplier'))
 
-    short_underlying_instrument = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('short underlying instrument'))
+    short_underlying_instrument = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('short underlying instrument'))
 
-    underlying_short_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('underlying short multiplier'))
+    underlying_short_multiplier = models.FloatField(default=1.0, verbose_name=gettext_lazy('underlying short multiplier'))
 
     long_underlying_exposure = models.ForeignKey(LongUnderlyingExposure, null=True, blank=True,
                                                  related_name="instrument_type_long_instruments",
-                                                 verbose_name=ugettext_lazy('long underlying exposure'),
+                                                 verbose_name=gettext_lazy('long underlying exposure'),
                                                  on_delete=models.SET_NULL)
 
     short_underlying_exposure = models.ForeignKey(ShortUnderlyingExposure, null=True, blank=True,
                                                   related_name="instrument_type_short_instruments",
-                                                  verbose_name=ugettext_lazy('short underlying exposure'),
+                                                  verbose_name=gettext_lazy('short underlying exposure'),
                                                   on_delete=models.SET_NULL)
 
-    co_directional_exposure_currency = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('co directional exposure currency'))
+    co_directional_exposure_currency = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('co directional exposure currency'))
     co_directional_exposure_currency_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.RELATION,
-                                                                 verbose_name=ugettext_lazy('co directional exposure currency value type'))
+                                                                 verbose_name=gettext_lazy('co directional exposure currency value type'))
 
-    counter_directional_exposure_currency =  models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('counter directional exposure currency'))
+    counter_directional_exposure_currency =  models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('counter directional exposure currency'))
     counter_directional_exposure_currency_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.RELATION,
-                                                                                   verbose_name=ugettext_lazy('counter directional exposure currency value type'))
+                                                                                   verbose_name=gettext_lazy('counter directional exposure currency value type'))
 
-    default_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('default price'))
-    maturity_date = models.DateField(default=date.max,  null=True, verbose_name=ugettext_lazy('maturity date'))
-    maturity_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('maturity price'))
+    default_price = models.FloatField(default=0.0, verbose_name=gettext_lazy('default price'))
+    maturity_date = models.DateField(default=date.max,  null=True, verbose_name=gettext_lazy('maturity date'))
+    maturity_price = models.FloatField(default=0.0, verbose_name=gettext_lazy('maturity price'))
 
     DIRECT_POSITION = 1
     FACTOR_ADJUSTED_POSITION = 2
     DO_NOT_SHOW = 3
 
     VALUE_TYPES = (
-        (DIRECT_POSITION, ugettext_lazy('Direct Position')),
-        (FACTOR_ADJUSTED_POSITION, ugettext_lazy('Factor Adjusted Position')),
-        (DO_NOT_SHOW, ugettext_lazy('Do not show')),
+        (DIRECT_POSITION, gettext_lazy('Direct Position')),
+        (FACTOR_ADJUSTED_POSITION, gettext_lazy('Factor Adjusted Position')),
+        (DO_NOT_SHOW, gettext_lazy('Do not show')),
     )
 
     pricing_currency = models.ForeignKey('currencies.Currency', null=True, blank=True, related_name='instrument_types_pricing',
-                                         on_delete=models.PROTECT, verbose_name=ugettext_lazy('pricing currency'))
-    price_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('price multiplier'))
+                                         on_delete=models.PROTECT, verbose_name=gettext_lazy('pricing currency'))
+    price_multiplier = models.FloatField(default=1.0, verbose_name=gettext_lazy('price multiplier'))
 
     position_reporting = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=DIRECT_POSITION,
-                                                  verbose_name=ugettext_lazy('position reporting'))
+                                                  verbose_name=gettext_lazy('position reporting'))
 
     pricing_condition = models.ForeignKey(PricingCondition, null=True, blank=True,
-                                          verbose_name=ugettext_lazy('pricing condition'),
+                                          verbose_name=gettext_lazy('pricing condition'),
                                           on_delete=models.SET_NULL)
 
     reference_for_pricing = models.CharField(max_length=100, blank=True, default='',
-                                             verbose_name=ugettext_lazy('reference for pricing'))
+                                             verbose_name=gettext_lazy('reference for pricing'))
 
 
     @property
@@ -547,8 +547,8 @@ class InstrumentType( NamedModelAutoMapping, FakeDeletableModel, DataTimeStamped
             self.instrument_factor_schedule_json_data = None
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
-        verbose_name = ugettext_lazy('instrument type')
-        verbose_name_plural = ugettext_lazy('instrument types')
+        verbose_name = gettext_lazy('instrument type')
+        verbose_name_plural = gettext_lazy('instrument types')
         permissions = [
             # ('view_instrumenttype', 'Can view instrument type'),
             ('manage_instrumenttype', 'Can manage instrument type'),
@@ -567,15 +567,15 @@ class InstrumentTypeAccrual(models.Model):
 
     instrument_type = models.ForeignKey(InstrumentType, on_delete=models.CASCADE,
                                         related_name='accruals',
-                                        verbose_name=ugettext_lazy('instrument type'))
+                                        verbose_name=gettext_lazy('instrument type'))
 
-    name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
+    name = models.CharField(max_length=255, verbose_name=gettext_lazy('name'))
 
-    order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
+    order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
 
-    autogenerate = models.BooleanField(default=True, verbose_name=ugettext_lazy('autogenerate'))
+    autogenerate = models.BooleanField(default=True, verbose_name=gettext_lazy('autogenerate'))
 
-    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+    json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
     class Meta:
 
@@ -603,15 +603,15 @@ class InstrumentTypeEvent(models.Model):
 
     instrument_type = models.ForeignKey(InstrumentType, on_delete=models.CASCADE,
                                         related_name='events',
-                                        verbose_name=ugettext_lazy('instrument type'))
+                                        verbose_name=gettext_lazy('instrument type'))
 
-    name = models.CharField(max_length=255, verbose_name=ugettext_lazy('name'))
+    name = models.CharField(max_length=255, verbose_name=gettext_lazy('name'))
 
-    order = models.IntegerField(default=0, verbose_name=ugettext_lazy('order'))
+    order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
 
-    autogenerate = models.BooleanField(default=True, verbose_name=ugettext_lazy('autogenerate'))
+    autogenerate = models.BooleanField(default=True, verbose_name=gettext_lazy('autogenerate'))
 
-    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+    json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
     class Meta:
 
@@ -643,60 +643,60 @@ class InstrumentTypeInstrumentAttribute(models.Model):
     DATE = 40
 
     VALUE_TYPES = (
-        (NUMBER, ugettext_lazy('Number')),
-        (STRING, ugettext_lazy('String')),
-        (DATE, ugettext_lazy('Date')),
-        (CLASSIFIER, ugettext_lazy('Classifier')),
+        (NUMBER, gettext_lazy('Number')),
+        (STRING, gettext_lazy('String')),
+        (DATE, gettext_lazy('Date')),
+        (CLASSIFIER, gettext_lazy('Classifier')),
     )
 
 
     instrument_type = models.ForeignKey(InstrumentType, on_delete=models.CASCADE,
                                         related_name='instrument_attributes',
-                                        verbose_name=ugettext_lazy('instrument attributes'))
+                                        verbose_name=gettext_lazy('instrument attributes'))
 
-    attribute_type_user_code = models.CharField(max_length=255, verbose_name=ugettext_lazy('attribute type user code'))
+    attribute_type_user_code = models.CharField(max_length=255, verbose_name=gettext_lazy('attribute type user code'))
 
     value_type = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=STRING,
-                                                  verbose_name=ugettext_lazy('value type'))
+                                                  verbose_name=gettext_lazy('value type'))
 
     value_string = models.CharField(db_index=True, max_length=255, null=True, blank=True,
-                                    verbose_name=ugettext_lazy('value (String)'))
-    value_float = models.FloatField(db_index=True, null=True, blank=True, verbose_name=ugettext_lazy('value (Float)'))
-    value_date = models.DateField(db_index=True, null=True, blank=True, verbose_name=ugettext_lazy('value (Date)'))
+                                    verbose_name=gettext_lazy('value (String)'))
+    value_float = models.FloatField(db_index=True, null=True, blank=True, verbose_name=gettext_lazy('value (Float)'))
+    value_date = models.DateField(db_index=True, null=True, blank=True, verbose_name=gettext_lazy('value (Date)'))
     value_classifier = models.CharField(db_index=True, max_length=255, null=True, blank=True,
-                                    verbose_name=ugettext_lazy('value (Classifier)'))
+                                    verbose_name=gettext_lazy('value (Classifier)'))
 
 
 class InstrumentTypeInstrumentFactorSchedule(models.Model):
 
     instrument_type = models.ForeignKey(InstrumentType, on_delete=models.CASCADE,
                                         related_name='instrument_factor_schedules',
-                                        verbose_name=ugettext_lazy('instrument attributes'))
+                                        verbose_name=gettext_lazy('instrument attributes'))
 
-    effective_date =  models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('effective date'))
+    effective_date =  models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('effective date'))
     effective_date_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
-                                                                     verbose_name=ugettext_lazy('effective date'))
+                                                                     verbose_name=gettext_lazy('effective date'))
 
-    position_factor_value = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('position factor value'))
+    position_factor_value = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('position factor value'))
     position_factor_value_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
-                                                                 verbose_name=ugettext_lazy('position factor value value type'))
+                                                                 verbose_name=gettext_lazy('position factor value value type'))
 
-    factor_value1 = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('factor value 1'))
+    factor_value1 = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('factor value 1'))
     factor_value1_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
-                                                                        verbose_name=ugettext_lazy('factor value1 value type'))
+                                                                        verbose_name=gettext_lazy('factor value1 value type'))
 
-    factor_value2 = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('factor value 2'))
+    factor_value2 = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('factor value 2'))
     factor_value2_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
-                                                                verbose_name=ugettext_lazy('factor value2 value type'))
+                                                                verbose_name=gettext_lazy('factor value2 value type'))
 
-    factor_value3 = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('factor value 3 '))
+    factor_value3 = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('factor value 3 '))
     factor_value3_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
-                                                                verbose_name=ugettext_lazy('factor value3 value type'))
+                                                                verbose_name=gettext_lazy('factor value3 value type'))
 
 
     class Meta:
-        verbose_name = ugettext_lazy('instrument type instrument factor schedule')
-        verbose_name_plural = ugettext_lazy('instrument type  instrument factor schedules')
+        verbose_name = gettext_lazy('instrument type instrument factor schedule')
+        verbose_name_plural = gettext_lazy('instrument type  instrument factor schedules')
 
     def __str__(self):
         return '%s' % self.effective_date
@@ -704,105 +704,105 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
 
 class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     # class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
-    master_user = models.ForeignKey(MasterUser, related_name='instruments', verbose_name=ugettext_lazy('master user'),
+    master_user = models.ForeignKey(MasterUser, related_name='instruments', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
     instrument_type = models.ForeignKey(InstrumentType, on_delete=models.PROTECT,
-                                        verbose_name=ugettext_lazy('instrument type'))
+                                        verbose_name=gettext_lazy('instrument type'))
 
-    is_active = models.BooleanField(default=True, verbose_name=ugettext_lazy('is active'))
-    has_linked_with_portfolio = models.BooleanField(default=False, verbose_name=ugettext_lazy('has linked with portfolio'))
+    is_active = models.BooleanField(default=True, verbose_name=gettext_lazy('is active'))
+    has_linked_with_portfolio = models.BooleanField(default=False, verbose_name=gettext_lazy('has linked with portfolio'))
     pricing_currency = models.ForeignKey('currencies.Currency', on_delete=models.PROTECT,
-                                         verbose_name=ugettext_lazy('pricing currency'))
-    price_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('price multiplier'))
+                                         verbose_name=gettext_lazy('pricing currency'))
+    price_multiplier = models.FloatField(default=1.0, verbose_name=gettext_lazy('price multiplier'))
     accrued_currency = models.ForeignKey('currencies.Currency', related_name='instruments_accrued',
-                                         on_delete=models.PROTECT, verbose_name=ugettext_lazy('accrued currency'))
-    accrued_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('accrued multiplier'))
+                                         on_delete=models.PROTECT, verbose_name=gettext_lazy('accrued currency'))
+    accrued_multiplier = models.FloatField(default=1.0, verbose_name=gettext_lazy('accrued multiplier'))
 
     payment_size_detail = models.ForeignKey(PaymentSizeDetail, on_delete=models.PROTECT, null=True, blank=True,
-                                            verbose_name=ugettext_lazy('payment size detail'))
+                                            verbose_name=gettext_lazy('payment size detail'))
 
-    default_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('default price'))
-    default_accrued = models.FloatField(default=0.0, verbose_name=ugettext_lazy('default accrued'))
+    default_price = models.FloatField(default=0.0, verbose_name=gettext_lazy('default price'))
+    default_accrued = models.FloatField(default=0.0, verbose_name=gettext_lazy('default accrued'))
 
-    user_text_1 = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user text 1'),
-                                   help_text=ugettext_lazy('User specified field 1'))
-    user_text_2 = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user text 2'),
-                                   help_text=ugettext_lazy('User specified field 2'))
-    user_text_3 = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user text 3'),
-                                   help_text=ugettext_lazy('User specified field 3'))
+    user_text_1 = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user text 1'),
+                                   help_text=gettext_lazy('User specified field 1'))
+    user_text_2 = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user text 2'),
+                                   help_text=gettext_lazy('User specified field 2'))
+    user_text_3 = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user text 3'),
+                                   help_text=gettext_lazy('User specified field 3'))
 
     reference_for_pricing = models.CharField(max_length=100, blank=True, default='',
-                                             verbose_name=ugettext_lazy('reference for pricing'))
+                                             verbose_name=gettext_lazy('reference for pricing'))
     daily_pricing_model = models.ForeignKey(DailyPricingModel, null=True, blank=True,
-                                            verbose_name=ugettext_lazy('daily pricing model'),
+                                            verbose_name=gettext_lazy('daily pricing model'),
                                             on_delete=models.SET_NULL)
 
     pricing_condition = models.ForeignKey(PricingCondition, null=True, blank=True,
-                                          verbose_name=ugettext_lazy('pricing condition'),
+                                          verbose_name=gettext_lazy('pricing condition'),
                                           on_delete=models.SET_NULL)
 
     exposure_calculation_model = models.ForeignKey(ExposureCalculationModel, null=True, blank=True,
-                                          verbose_name=ugettext_lazy('exposure calculation model'),
+                                          verbose_name=gettext_lazy('exposure calculation model'),
                                           on_delete=models.SET_NULL)
 
     long_underlying_instrument = models.ForeignKey('self', null=True, blank=True,
                                                    related_name="long_underlying_instruments",
-                                                   verbose_name=ugettext_lazy('long underlying instrument'),
+                                                   verbose_name=gettext_lazy('long underlying instrument'),
                                                    on_delete=models.SET_NULL)
 
-    underlying_long_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('underlying long multiplier'))
+    underlying_long_multiplier = models.FloatField(default=1.0, verbose_name=gettext_lazy('underlying long multiplier'))
 
     short_underlying_instrument = models.ForeignKey('self', null=True, blank=True,
                                                     related_name="short_underlying_instruments",
-                                                    verbose_name=ugettext_lazy('short underlying instrument'),
+                                                    verbose_name=gettext_lazy('short underlying instrument'),
                                                     on_delete=models.SET_NULL)
 
-    underlying_short_multiplier = models.FloatField(default=1.0, verbose_name=ugettext_lazy('underlying short multiplier'))
+    underlying_short_multiplier = models.FloatField(default=1.0, verbose_name=gettext_lazy('underlying short multiplier'))
 
 
     long_underlying_exposure = models.ForeignKey(LongUnderlyingExposure, null=True, blank=True,
                                                    related_name="long_instruments",
-                                                   verbose_name=ugettext_lazy('long underlying exposure'),
+                                                   verbose_name=gettext_lazy('long underlying exposure'),
                                                    on_delete=models.SET_NULL)
 
     short_underlying_exposure = models.ForeignKey(ShortUnderlyingExposure, null=True, blank=True,
                                                   related_name="short_instruments",
-                                                 verbose_name=ugettext_lazy('short underlying exposure'),
+                                                 verbose_name=gettext_lazy('short underlying exposure'),
                                                  on_delete=models.SET_NULL)
 
     # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
-    #                                           blank=True, verbose_name=ugettext_lazy('price download scheme'))
-    maturity_date = models.DateField(default=date.max,  null=True, verbose_name=ugettext_lazy('maturity date'))
-    maturity_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('maturity price'))
+    #                                           blank=True, verbose_name=gettext_lazy('price download scheme'))
+    maturity_date = models.DateField(default=date.max,  null=True, verbose_name=gettext_lazy('maturity date'))
+    maturity_price = models.FloatField(default=0.0, verbose_name=gettext_lazy('maturity price'))
 
-    attributes = GenericRelation(GenericAttribute, verbose_name=ugettext_lazy('attributes'))
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=ugettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=ugettext_lazy('tags'))
+    attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
+    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
+    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     co_directional_exposure_currency = models.ForeignKey('currencies.Currency', related_name='co_directional_exposure_currency', on_delete=models.SET_NULL, null=True, blank=True,
-                                         verbose_name=ugettext_lazy('co directional exposure currency'))
+                                         verbose_name=gettext_lazy('co directional exposure currency'))
 
     counter_directional_exposure_currency = models.ForeignKey('currencies.Currency', related_name='counter_directional_exposure_currency', on_delete=models.SET_NULL, null=True, blank=True,
-                                         verbose_name=ugettext_lazy('counter directional exposure currency'))
+                                         verbose_name=gettext_lazy('counter directional exposure currency'))
 
     DIRECT_POSITION = 1
     FACTOR_ADJUSTED_POSITION = 2
     DO_NOT_SHOW = 3
 
     VALUE_TYPES = (
-        (DIRECT_POSITION, ugettext_lazy('Direct Position')),
-        (FACTOR_ADJUSTED_POSITION, ugettext_lazy('Factor Adjusted Position')),
-        (DO_NOT_SHOW, ugettext_lazy('Do not show')),
+        (DIRECT_POSITION, gettext_lazy('Direct Position')),
+        (FACTOR_ADJUSTED_POSITION, gettext_lazy('Factor Adjusted Position')),
+        (DO_NOT_SHOW, gettext_lazy('Do not show')),
     )
 
     position_reporting = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=DIRECT_POSITION,
-                                                          verbose_name=ugettext_lazy('position reporting'))
+                                                          verbose_name=gettext_lazy('position reporting'))
 
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
-        verbose_name = ugettext_lazy('instrument')
-        verbose_name_plural = ugettext_lazy('instruments')
+        verbose_name = gettext_lazy('instrument')
+        verbose_name_plural = gettext_lazy('instruments')
         permissions = [
             # ('view_instrument', 'Can view instrument'),
             ('manage_instrument', 'Can manage instrument'),
@@ -1419,15 +1419,15 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 # DEPRECTATED (25.05.2020) delete soon
 class ManualPricingFormula(models.Model):
     instrument = models.ForeignKey(Instrument, related_name='manual_pricing_formulas',
-                                   verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
+                                   verbose_name=gettext_lazy('instrument'), on_delete=models.CASCADE)
     pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE, related_name='manual_pricing_formulas',
-                                       verbose_name=ugettext_lazy('pricing policy'))
-    expr = models.CharField(max_length=255, blank=True, default='', verbose_name=ugettext_lazy('expression'))
-    notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
+                                       verbose_name=gettext_lazy('pricing policy'))
+    expr = models.CharField(max_length=255, blank=True, default='', verbose_name=gettext_lazy('expression'))
+    notes = models.TextField(blank=True, default='', verbose_name=gettext_lazy('notes'))
 
     class Meta:
-        verbose_name = ugettext_lazy('manual pricing formula')
-        verbose_name_plural = ugettext_lazy('manual pricing formulas')
+        verbose_name = gettext_lazy('manual pricing formula')
+        verbose_name_plural = gettext_lazy('manual pricing formulas')
         unique_together = [
             ['instrument', 'pricing_policy']
         ]
@@ -1440,32 +1440,32 @@ class ManualPricingFormula(models.Model):
 class AccrualCalculationSchedule(models.Model):
 
     instrument = models.ForeignKey(Instrument, related_name='accrual_calculation_schedules',
-                                   verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
-    accrual_start_date = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('accrual start date'))
+                                   verbose_name=gettext_lazy('instrument'), on_delete=models.CASCADE)
+    accrual_start_date = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('accrual start date'))
     accrual_start_date_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
-                                                                     verbose_name=ugettext_lazy('accrual start date value type'))
+                                                                     verbose_name=gettext_lazy('accrual start date value type'))
     accrual_end_date = None  # excluded date
-    first_payment_date = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('first payment date'))
+    first_payment_date = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('first payment date'))
     first_payment_date_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
-                                                                     verbose_name=ugettext_lazy('first payment date value type'))
+                                                                     verbose_name=gettext_lazy('first payment date value type'))
     # TODO: is %
-    accrual_size = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('accrual size'))
+    accrual_size = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('accrual size'))
     accrual_size_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.NUMBER,
-                                                                     verbose_name=ugettext_lazy('accrual size value type'))
+                                                                     verbose_name=gettext_lazy('accrual size value type'))
 
     accrual_calculation_model = models.ForeignKey(AccrualCalculationModel, on_delete=models.PROTECT,
-                                                  verbose_name=ugettext_lazy('accrual calculation model'))
+                                                  verbose_name=gettext_lazy('accrual calculation model'))
     periodicity = models.ForeignKey(Periodicity, on_delete=models.PROTECT, null=True, blank=True,
-                                    verbose_name=ugettext_lazy('periodicity'))
-    periodicity_n = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('periodicity n'))
+                                    verbose_name=gettext_lazy('periodicity'))
+    periodicity_n = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('periodicity n'))
     periodicity_n_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.NUMBER,
-                                                               verbose_name=ugettext_lazy('periodicity n value type'))
+                                                               verbose_name=gettext_lazy('periodicity n value type'))
 
-    notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
+    notes = models.TextField(blank=True, default='', verbose_name=gettext_lazy('notes'))
 
     class Meta:
-        verbose_name = ugettext_lazy('accrual calculation schedule')
-        verbose_name_plural = ugettext_lazy('accrual calculation schedules')
+        verbose_name = gettext_lazy('accrual calculation schedule')
+        verbose_name_plural = gettext_lazy('accrual calculation schedules')
         ordering = ['accrual_start_date']
 
     def __str__(self):
@@ -1473,28 +1473,28 @@ class AccrualCalculationSchedule(models.Model):
 
 
 class PriceHistory(DataTimeStampedModel):
-    instrument = models.ForeignKey(Instrument, related_name='prices', verbose_name=ugettext_lazy('instrument'),
+    instrument = models.ForeignKey(Instrument, related_name='prices', verbose_name=gettext_lazy('instrument'),
                                    on_delete=models.CASCADE)
     pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE, null=True, blank=True,
-                                       verbose_name=ugettext_lazy('pricing policy'))
-    date = models.DateField(db_index=True, default=date_now, verbose_name=ugettext_lazy('date'))
-    principal_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('principal price'))
-    accrued_price = models.FloatField(default=0.0, verbose_name=ugettext_lazy('accrued price'))
+                                       verbose_name=gettext_lazy('pricing policy'))
+    date = models.DateField(db_index=True, default=date_now, verbose_name=gettext_lazy('date'))
+    principal_price = models.FloatField(default=0.0, verbose_name=gettext_lazy('principal price'))
+    accrued_price = models.FloatField(default=0.0, verbose_name=gettext_lazy('accrued price'))
 
-    long_delta = models.FloatField(default=0.0, verbose_name=ugettext_lazy('long delta'))
-    short_delta = models.FloatField(default=0.0, verbose_name=ugettext_lazy('short delta'))
+    long_delta = models.FloatField(default=0.0, verbose_name=gettext_lazy('long delta'))
+    short_delta = models.FloatField(default=0.0, verbose_name=gettext_lazy('short delta'))
 
-    ytm = models.FloatField(default=0.0, verbose_name=ugettext_lazy('ytm'))
-    nav = models.FloatField(default=0.0, verbose_name=ugettext_lazy('nav'))
-    cash_flow = models.FloatField(default=0.0, verbose_name=ugettext_lazy('cash flow'))
-    modified_duration = models.FloatField(default=0.0, verbose_name=ugettext_lazy('modified duration'))
+    ytm = models.FloatField(default=0.0, verbose_name=gettext_lazy('ytm'))
+    nav = models.FloatField(default=0.0, verbose_name=gettext_lazy('nav'))
+    cash_flow = models.FloatField(default=0.0, verbose_name=gettext_lazy('cash flow'))
+    modified_duration = models.FloatField(default=0.0, verbose_name=gettext_lazy('modified duration'))
 
     procedure_modified_datetime = models.DateTimeField(null=True, blank=True,
-                                    verbose_name=ugettext_lazy('procedure_modified_datetime'))
+                                    verbose_name=gettext_lazy('procedure_modified_datetime'))
 
     class Meta:
-        verbose_name = ugettext_lazy('price history')
-        verbose_name_plural = ugettext_lazy('price histories')
+        verbose_name = gettext_lazy('price history')
+        verbose_name_plural = gettext_lazy('price histories')
         unique_together = (
             ('instrument', 'pricing_policy', 'date',)
         )
@@ -1665,14 +1665,14 @@ class PriceHistory(DataTimeStampedModel):
 
 class InstrumentFactorSchedule(models.Model):
     instrument = models.ForeignKey(Instrument, related_name='factor_schedules',
-                                   verbose_name=ugettext_lazy('instrument'), on_delete=models.CASCADE)
-    effective_date = models.DateField(default=date_now, verbose_name=ugettext_lazy('effective date'))
-    factor_value = models.FloatField(default=0., verbose_name=ugettext_lazy('factor value'))
+                                   verbose_name=gettext_lazy('instrument'), on_delete=models.CASCADE)
+    effective_date = models.DateField(default=date_now, verbose_name=gettext_lazy('effective date'))
+    factor_value = models.FloatField(default=0., verbose_name=gettext_lazy('factor value'))
 
 
     class Meta:
-        verbose_name = ugettext_lazy('instrument factor schedule')
-        verbose_name_plural = ugettext_lazy('instrument factor schedules')
+        verbose_name = gettext_lazy('instrument factor schedule')
+        verbose_name_plural = gettext_lazy('instrument factor schedules')
         ordering = ['effective_date']
 
 
@@ -1681,53 +1681,53 @@ class InstrumentFactorSchedule(models.Model):
 
 
 class EventSchedule(models.Model):
-    instrument = models.ForeignKey(Instrument, related_name='event_schedules', verbose_name=ugettext_lazy('instrument'),
+    instrument = models.ForeignKey(Instrument, related_name='event_schedules', verbose_name=gettext_lazy('instrument'),
                                    on_delete=models.CASCADE)
 
     # T O D O: name & description is expression
     # T O D O: default settings.POMS_EVENT_*
-    name = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=ugettext_lazy('name'))
+    name = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=gettext_lazy('name'))
     description = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('description'))
+                                   verbose_name=gettext_lazy('description'))
 
     event_class = models.ForeignKey('transactions.EventClass', on_delete=models.PROTECT,
-                                    verbose_name=ugettext_lazy('event class'))
+                                    verbose_name=gettext_lazy('event class'))
 
     # T O D O: add to MasterUser defaults
     notification_class = models.ForeignKey('transactions.NotificationClass', on_delete=models.PROTECT,
-                                           verbose_name=ugettext_lazy('notification class'))
+                                           verbose_name=gettext_lazy('notification class'))
 
     # TODO: is first_payment_date for regular
     # TODO: is instrument.maturity for one-off
-    effective_date = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('effective date'))
+    effective_date = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('effective date'))
     effective_date_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
-                                                                     verbose_name=ugettext_lazy('effective date value type'))
+                                                                     verbose_name=gettext_lazy('effective date value type'))
 
-    notify_in_n_days = models.PositiveIntegerField(default=0, verbose_name=ugettext_lazy('notify in N days'))
+    notify_in_n_days = models.PositiveIntegerField(default=0, verbose_name=gettext_lazy('notify in N days'))
 
     periodicity = models.ForeignKey(Periodicity, null=True, blank=True, on_delete=models.PROTECT,
-                                    verbose_name=ugettext_lazy('periodicity'))
-    periodicity_n = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('periodicity n'))
+                                    verbose_name=gettext_lazy('periodicity'))
+    periodicity_n = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('periodicity n'))
     periodicity_n_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.NUMBER,
-                                                             verbose_name=ugettext_lazy('periodicity n value type'))
+                                                             verbose_name=gettext_lazy('periodicity n value type'))
     # TODO: =see next accrual_calculation_schedule.accrual_start_date or instrument.maturity_date (if last)
-    final_date = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('final date'))  # excluded date
+    final_date = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('final date'))  # excluded date
     final_date_value_type = models.PositiveSmallIntegerField(choices=SYSTEM_VALUE_TYPES, default=SystemValueType.DATE,
-                                                                 verbose_name=ugettext_lazy('final_date value type'))
+                                                                 verbose_name=gettext_lazy('final_date value type'))
 
-    is_auto_generated = models.BooleanField(default=False, verbose_name=ugettext_lazy('is auto generated'))
+    is_auto_generated = models.BooleanField(default=False, verbose_name=gettext_lazy('is auto generated'))
     accrual_calculation_schedule = models.ForeignKey(AccrualCalculationSchedule, null=True, blank=True, editable=False,
                                                      related_name='event_schedules',
-                                                     verbose_name=ugettext_lazy('accrual calculation schedule'),
-                                                     help_text=ugettext_lazy(
+                                                     verbose_name=gettext_lazy('accrual calculation schedule'),
+                                                     help_text=gettext_lazy(
                                                          'Used for store link when is_auto_generated is True'),
                                                      on_delete=models.SET_NULL)
     factor_schedule = models.ForeignKey(InstrumentFactorSchedule, null=True, blank=True, editable=False,
-                                        related_name='event_schedules', verbose_name=ugettext_lazy('factor schedule'),
-                                        help_text=ugettext_lazy('Used for store link when is_auto_generated is True'),
+                                        related_name='event_schedules', verbose_name=gettext_lazy('factor schedule'),
+                                        help_text=gettext_lazy('Used for store link when is_auto_generated is True'),
                                         on_delete=models.SET_NULL)
 
-    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+    json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
     @property
     def data(self):
@@ -1747,8 +1747,8 @@ class EventSchedule(models.Model):
             self.json_data = None
 
     class Meta:
-        verbose_name = ugettext_lazy('event schedule')
-        verbose_name_plural = ugettext_lazy('event schedules')
+        verbose_name = gettext_lazy('event schedule')
+        verbose_name_plural = gettext_lazy('event schedules')
         ordering = ['effective_date']
 
     def __str__(self):
@@ -1868,23 +1868,23 @@ class EventSchedule(models.Model):
 class EventScheduleAction(models.Model):
     # TODO: for auto generated always one
     event_schedule = models.ForeignKey(EventSchedule, related_name='actions',
-                                       verbose_name=ugettext_lazy('event schedule'), on_delete=models.CASCADE)
+                                       verbose_name=gettext_lazy('event schedule'), on_delete=models.CASCADE)
     # transaction_type = models.ForeignKey('transactions.TransactionType', on_delete=models.PROTECT,
-    #                                      verbose_name=ugettext_lazy('transaction type'))
+    #                                      verbose_name=gettext_lazy('transaction type'))
 
-    transaction_type = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('transaction type'))
+    transaction_type = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('transaction type'))
 
     # T O D O: on auto generate fill 'Book: ' + transaction_type
     text = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                            verbose_name=ugettext_lazy('text'))
+                            verbose_name=gettext_lazy('text'))
     # T O D O: add to MasterUser defaults
-    is_sent_to_pending = models.BooleanField(default=True, verbose_name=ugettext_lazy('is sent to pending'))
+    is_sent_to_pending = models.BooleanField(default=True, verbose_name=gettext_lazy('is sent to pending'))
     # T O D O: add to MasterUser defaults
     # T O D O: rename to: is_book_automatic (used when now notification)
-    is_book_automatic = models.BooleanField(default=True, verbose_name=ugettext_lazy('is book automatic'))
-    button_position = models.IntegerField(default=0, verbose_name=ugettext_lazy('button position'))
+    is_book_automatic = models.BooleanField(default=True, verbose_name=gettext_lazy('is book automatic'))
+    button_position = models.IntegerField(default=0, verbose_name=gettext_lazy('button position'))
 
-    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+    json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
     @property
     def data(self):
@@ -1904,8 +1904,8 @@ class EventScheduleAction(models.Model):
             self.json_data = None
 
     class Meta:
-        verbose_name = ugettext_lazy('event schedule action')
-        verbose_name_plural = ugettext_lazy('event schedule actions')
+        verbose_name = gettext_lazy('event schedule action')
+        verbose_name_plural = gettext_lazy('event schedule actions')
         ordering = ['is_book_automatic', 'button_position']
 
     def __str__(self):
@@ -1926,62 +1926,62 @@ class GeneratedEvent(models.Model):
     ERROR = 9
 
     STATUS_CHOICES = (
-        (NEW, ugettext_lazy('New')),
-        (INFORMED, ugettext_lazy('Informed')),
-        (BOOKED_SYSTEM_DEFAULT, ugettext_lazy('Booked (system, default)')),
-        (BOOKED_USER_ACTIONS, ugettext_lazy('Booked (user, actions)')),
-        (BOOKED_USER_DEFAULT, ugettext_lazy('Booked (user, default)')),
+        (NEW, gettext_lazy('New')),
+        (INFORMED, gettext_lazy('Informed')),
+        (BOOKED_SYSTEM_DEFAULT, gettext_lazy('Booked (system, default)')),
+        (BOOKED_USER_ACTIONS, gettext_lazy('Booked (user, actions)')),
+        (BOOKED_USER_DEFAULT, gettext_lazy('Booked (user, default)')),
 
-        (BOOKED_PENDING_SYSTEM_DEFAULT, ugettext_lazy('Booked, pending (system, default)')),
-        (BOOKED_PENDING_USER_ACTIONS, ugettext_lazy('Booked, pending (user, actions)')),
-        (BOOKED_PENDING_USER_DEFAULT, ugettext_lazy('Booked, pending (user, default)')),
-        (ERROR, ugettext_lazy('Error')),
+        (BOOKED_PENDING_SYSTEM_DEFAULT, gettext_lazy('Booked, pending (system, default)')),
+        (BOOKED_PENDING_USER_ACTIONS, gettext_lazy('Booked, pending (user, actions)')),
+        (BOOKED_PENDING_USER_DEFAULT, gettext_lazy('Booked, pending (user, default)')),
+        (ERROR, gettext_lazy('Error')),
     )
 
     master_user = models.ForeignKey(MasterUser, related_name='generated_events',
-                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
-    effective_date = models.DateField(default=date_now, db_index=True, verbose_name=ugettext_lazy('effective date'))
+    effective_date = models.DateField(default=date_now, db_index=True, verbose_name=gettext_lazy('effective date'))
     effective_date_notified = models.BooleanField(default=False, db_index=True,
-                                                  verbose_name=ugettext_lazy('effective date notified'))
+                                                  verbose_name=gettext_lazy('effective date notified'))
     notification_date = models.DateField(default=date_now, db_index=True,
-                                         verbose_name=ugettext_lazy('notification date'))
+                                         verbose_name=gettext_lazy('notification date'))
     notification_date_notified = models.BooleanField(default=False, db_index=True,
-                                                     verbose_name=ugettext_lazy('notification date notified'))
+                                                     verbose_name=gettext_lazy('notification date notified'))
 
     status = models.PositiveSmallIntegerField(default=NEW, choices=STATUS_CHOICES, db_index=True,
-                                              verbose_name=ugettext_lazy('status'))
-    status_date = models.DateTimeField(default=timezone.now, db_index=True, verbose_name=ugettext_lazy('status date'))
+                                              verbose_name=gettext_lazy('status'))
+    status_date = models.DateTimeField(default=timezone.now, db_index=True, verbose_name=gettext_lazy('status date'))
 
     event_schedule = models.ForeignKey(EventSchedule,on_delete=models.CASCADE,
-                                       related_name='generated_events', verbose_name=ugettext_lazy('event schedule'))
+                                       related_name='generated_events', verbose_name=gettext_lazy('event schedule'))
 
     instrument = models.ForeignKey('instruments.Instrument', null=True, blank=True, on_delete=models.PROTECT,
-                                   related_name='generated_events', verbose_name=ugettext_lazy('instrument'))
+                                   related_name='generated_events', verbose_name=gettext_lazy('instrument'))
     portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.PROTECT,
-                                  related_name='generated_events', verbose_name=ugettext_lazy('portfolio'))
+                                  related_name='generated_events', verbose_name=gettext_lazy('portfolio'))
     account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.PROTECT,
-                                related_name='generated_events', verbose_name=ugettext_lazy('account'))
+                                related_name='generated_events', verbose_name=gettext_lazy('account'))
     strategy1 = models.ForeignKey('strategies.Strategy1', null=True, blank=True, on_delete=models.PROTECT,
-                                  related_name='generated_events', verbose_name=ugettext_lazy('strategy1'))
+                                  related_name='generated_events', verbose_name=gettext_lazy('strategy1'))
     strategy2 = models.ForeignKey('strategies.Strategy2', null=True, blank=True, on_delete=models.PROTECT,
-                                  related_name='generated_events', verbose_name=ugettext_lazy('strategy2'))
+                                  related_name='generated_events', verbose_name=gettext_lazy('strategy2'))
     strategy3 = models.ForeignKey('strategies.Strategy3', null=True, blank=True, on_delete=models.PROTECT,
-                                  related_name='generated_events', verbose_name=ugettext_lazy('strategy3'))
-    position = models.FloatField(default=0.0, verbose_name=ugettext_lazy('position'))
+                                  related_name='generated_events', verbose_name=gettext_lazy('strategy3'))
+    position = models.FloatField(default=0.0, verbose_name=gettext_lazy('position'))
 
     action = models.ForeignKey(EventScheduleAction, null=True, blank=True, on_delete=models.SET_NULL,
-                               related_name='generated_events', verbose_name=ugettext_lazy('action'))
+                               related_name='generated_events', verbose_name=gettext_lazy('action'))
     transaction_type = models.ForeignKey('transactions.TransactionType', null=True, blank=True,
                                          on_delete=models.SET_NULL, related_name='generated_events',
-                                         verbose_name=ugettext_lazy('transaction type'))
+                                         verbose_name=gettext_lazy('transaction type'))
     complex_transaction = models.ForeignKey('transactions.ComplexTransaction', null=True, blank=True,
                                             on_delete=models.SET_NULL, related_name='generated_events',
-                                            verbose_name=ugettext_lazy('complex transaction'))
+                                            verbose_name=gettext_lazy('complex transaction'))
     member = models.ForeignKey('users.Member', null=True, blank=True, on_delete=models.SET_NULL,
-                               verbose_name=ugettext_lazy('member'))
+                               verbose_name=gettext_lazy('member'))
 
-    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+    json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
     @property
     def data(self):
@@ -2001,8 +2001,8 @@ class GeneratedEvent(models.Model):
             self.json_data = None
 
     class Meta:
-        verbose_name = ugettext_lazy('generated event')
-        verbose_name_plural = ugettext_lazy('generated events')
+        verbose_name = gettext_lazy('generated event')
+        verbose_name_plural = gettext_lazy('generated events')
         ordering = ['effective_date']
 
     def __str__(self):
@@ -2126,26 +2126,26 @@ class GeneratedEvent(models.Model):
 
 class EventScheduleConfig(models.Model):
     master_user = models.OneToOneField('users.MasterUser', related_name='instrument_event_schedule_config',
-                                       verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+                                       verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     name = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                            verbose_name=ugettext_lazy('name'))
+                            verbose_name=gettext_lazy('name'))
     description = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                                   verbose_name=ugettext_lazy('description'))
+                                   verbose_name=gettext_lazy('description'))
     notification_class = models.ForeignKey('transactions.NotificationClass', null=True, blank=True,
-                                           on_delete=models.PROTECT, verbose_name=ugettext_lazy('notification class'))
-    notify_in_n_days = models.PositiveSmallIntegerField(default=0, verbose_name=ugettext_lazy('notify in N days'))
-    action_text = models.CharField(max_length=255, blank=True, default='', verbose_name=ugettext_lazy('action text'))
+                                           on_delete=models.PROTECT, verbose_name=gettext_lazy('notification class'))
+    notify_in_n_days = models.PositiveSmallIntegerField(default=0, verbose_name=gettext_lazy('notify in N days'))
+    action_text = models.CharField(max_length=255, blank=True, default='', verbose_name=gettext_lazy('action text'))
     action_is_sent_to_pending = models.BooleanField(default=True,
-                                                    verbose_name=ugettext_lazy('action is sent to pending'))
-    action_is_book_automatic = models.BooleanField(default=True, verbose_name=ugettext_lazy('action is book automatic'))
+                                                    verbose_name=gettext_lazy('action is sent to pending'))
+    action_is_book_automatic = models.BooleanField(default=True, verbose_name=gettext_lazy('action is book automatic'))
 
     class Meta:
-        verbose_name = ugettext_lazy('event schedule config')
-        verbose_name_plural = ugettext_lazy('event schedule configs')
+        verbose_name = gettext_lazy('event schedule config')
+        verbose_name_plural = gettext_lazy('event schedule configs')
 
     def __str__(self):
-        return ugettext('event schedule config')
+        return gettext_lazy('event schedule config')
 
     @staticmethod
     def create_default(master_user):

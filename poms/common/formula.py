@@ -247,6 +247,7 @@ def _format_date(date, format=None):
         format = str(format)
     return date.strftime(format)
 
+
 def _get_list_of_dates_between_two_dates(date_from, date_to):
     return get_list_of_dates_between_two_dates(date_from, date_to)
 
@@ -622,6 +623,15 @@ def _join(data, separator):
     return separator.join(data)
 
 
+def _reverse(items):
+    if isinstance(items, str):
+        return items[::-1]
+
+    items.reverse()
+
+    return items
+
+
 def _parse_bool(a):
     if isinstance(a, (bool)):
         return a
@@ -956,7 +966,7 @@ def _get_instruments(evaluator, **kwargs):
 
         master_user = get_master_user_from_context(context)
 
-        items = Instrument.objects.filter(master_user=master_user, **kwargs)
+        items = Instrument.objects.filter(master_user=master_user, is_deleted=False, **kwargs)
         result = []
 
         for item in items:
@@ -981,7 +991,7 @@ def _get_currencies(evaluator, **kwargs):
 
         master_user = get_master_user_from_context(context)
 
-        items = Currency.objects.filter(master_user=master_user, **kwargs)
+        items = Currency.objects.filter(master_user=master_user, is_deleted=False, **kwargs)
 
         result = []
 
@@ -995,7 +1005,6 @@ def _get_currencies(evaluator, **kwargs):
 
 
 _get_currencies.evaluator = True
-
 
 
 def _convert_to_number(evaluator, text_number, thousand_separator="", decimal_separator=".", has_braces=False):
@@ -1105,7 +1114,7 @@ def _get_fx_rate(evaluator, date, currency, pricing_policy, default_value=0):
 _get_fx_rate.evaluator = True
 
 
-def _add_fx_history(evaluator, date, currency, pricing_policy, fx_rate=0, overwrite=True):
+def _add_fx_rate(evaluator, date, currency, pricing_policy, fx_rate=0, overwrite=True):
     from poms.users.utils import get_master_user_from_context
     from poms.currencies.models import CurrencyHistory
 
@@ -1139,7 +1148,7 @@ def _add_fx_history(evaluator, date, currency, pricing_policy, fx_rate=0, overwr
     return True
 
 
-_add_fx_history.evaluator = True
+_add_fx_rate.evaluator = True
 
 
 def _add_price_history(evaluator, date, instrument, pricing_policy, principal_price=0, accrued_price=0, overwrite=True):
@@ -1160,8 +1169,11 @@ def _add_price_history(evaluator, date, instrument, pricing_policy, principal_pr
                                           pricing_policy=pricing_policy)
 
         if overwrite:
-            result.principal_price = principal_price
-            result.accrued_price = accrued_price
+            if principal_price is not None:
+                result.principal_price = principal_price
+
+            if accrued_price is not None:
+                result.accrued_price = accrued_price
 
             result.save()
 
@@ -1198,8 +1210,10 @@ def _get_latest_principal_price(evaluator, date_from, date_to, instrument, prici
         _l.info("_get_latest_principal_price instrument %s " % instrument)
         _l.info("_get_latest_principal_price  pricing_policy %s " % pricing_policy)
 
-        results = PriceHistory.objects.filter(date__gte=date_from, date__lte=date_to, instrument=instrument,
-                                              pricing_policy=pricing_policy).order_by('-date')
+        results = PriceHistory.objects.exclude(principal_price=0).filter(date__gte=date_from, date__lte=date_to,
+                                                                         instrument=instrument,
+                                                                         pricing_policy=pricing_policy).order_by(
+            '-date')
 
         _l.info("_get_latest_principal_price results %s " % results)
 
@@ -1213,6 +1227,72 @@ def _get_latest_principal_price(evaluator, date_from, date_to, instrument, prici
 
 
 _get_latest_principal_price.evaluator = True
+
+
+def _get_latest_principal_price_date(evaluator, instrument, pricing_policy, default_value=None):
+    try:
+        from poms.users.utils import get_master_user_from_context
+        from poms.instruments.models import PriceHistory
+
+        context = evaluator.context
+        master_user = get_master_user_from_context(context)
+
+        instrument = _safe_get_instrument(evaluator, instrument)
+        pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+
+        _l.info("_get_latest_principal_price instrument %s " % instrument)
+        _l.info("_get_latest_principal_price  pricing_policy %s " % pricing_policy)
+
+        results = PriceHistory.objects.exclude(principal_price=0).filter(instrument=instrument,
+                                                                         pricing_policy=pricing_policy).order_by(
+            '-date')
+
+        _l.info("_get_latest_principal_price_date results %s " % results)
+
+        if len(list(results)):
+            return results[0].date
+
+        return default_value
+    except Exception as e:
+        _l.error("_get_latest_principal_price_date exception %s " % str(e))
+        _l.error("_get_latest_principal_price_date exception %s " % traceback.format_exc())
+        return default_value
+
+
+_get_latest_principal_price_date.evaluator = True
+
+
+def _get_latest_fx_rate(evaluator, date_from, date_to, currency, pricing_policy, default_value=None):
+    try:
+        from poms.users.utils import get_master_user_from_context
+        from poms.currencies.models import CurrencyHistory
+
+        context = evaluator.context
+        master_user = get_master_user_from_context(context)
+
+        date_from = _parse_date(date_from)
+        date_to = _parse_date(date_to)
+        currency = _safe_get_currency(evaluator, currency)
+        pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+
+        _l.info("_get_latest_fx_rate instrument %s " % currency)
+        _l.info("_get_latest_fx_rate  pricing_policy %s " % pricing_policy)
+
+        results = CurrencyHistory.objects.filter(date__gte=date_from, date__lte=date_to, currency=currency,
+                                                 pricing_policy=pricing_policy).order_by('-date')
+
+        _l.info("_get_latest_fx_rate results %s " % results)
+
+        if len(list(results)):
+            return results[0].fx_rate
+
+        return default_value
+    except Exception as e:
+        _l.info("_get_latest_fx_rate exception %s " % e)
+        return default_value
+
+
+_get_latest_fx_rate.evaluator = True
 
 
 def _get_price_history_principal_price(evaluator, date, instrument, pricing_policy, default_value=0):
@@ -1540,25 +1620,33 @@ def _safe_get_instrument(evaluator, instrument):
 
 
 def _get_currency(evaluator, currency):
+    try:
 
-    currency = _safe_get_currency(evaluator, currency)
+        currency = _safe_get_currency(evaluator, currency)
 
-    context = evaluator.context
+        context = evaluator.context
 
-    from poms.currencies.serializers import CurrencySerializer
-    return CurrencySerializer(instance=currency, context=context).data
+        from poms.currencies.serializers import CurrencySerializer
+        return CurrencySerializer(instance=currency, context=context).data
+    except Exception as e:
+        return None
+
 
 _get_currency.evaluator = True
 
 
 def _get_instrument(evaluator, instrument):
+    try:
+        instrument = _safe_get_instrument(evaluator, instrument)
 
-    instrument = _safe_get_instrument(evaluator, instrument)
+        context = evaluator.context
 
-    context = evaluator.context
+        from poms.instruments.serializers import InstrumentSerializer
+        return InstrumentSerializer(instance=instrument, context=context).data
 
-    from poms.instruments.serializers import InstrumentSerializer
-    return InstrumentSerializer(instance=instrument, context=context).data
+    except Exception as e:
+        return None
+
 
 _get_instrument.evaluator = True
 
@@ -1716,7 +1804,7 @@ def _get_instrument_user_attribute_value(evaluator, instrument, attribute_user_c
 _get_instrument_user_attribute_value.evaluator = True
 
 
-def _get_instrument_accrued_price(evaluator, instrument, date):
+def _calculate_accrued_price(evaluator, instrument, date):
     if instrument is None or date is None:
         return 0.0
     instrument = _safe_get_instrument(evaluator, instrument)
@@ -1725,7 +1813,48 @@ def _get_instrument_accrued_price(evaluator, instrument, date):
     return _check_float(val)
 
 
-_get_instrument_accrued_price.evaluator = True
+_calculate_accrued_price.evaluator = True
+
+def _get_position_size_on_date(evaluator, instrument, date, accounts=None, portfolios=None):
+    try:
+        result = 0
+
+        context = evaluator.context
+
+        from poms.users.utils import get_master_user_from_context
+        from poms.transactions.models import Transaction
+        master_user = get_master_user_from_context(context)
+
+        instrument = _safe_get_instrument(evaluator, instrument)
+        date = _parse_date(date)
+
+        transactions = Transaction.objects.filter(master_user=master_user, accounting_date__lte=date, instrument=instrument)
+
+        if accounts:
+            transactions = transactions.filter(account_position__in=accounts)
+
+        # _l.info('portfolios %s' % type(portfolios))
+
+        if portfolios:
+            transactions = transactions.filter(portfolio__in=portfolios)
+
+        # _l.info('transactions %s ' % transactions)
+
+        for trn in transactions:
+
+            result = result + trn.position_size_with_sign
+
+
+        return result
+
+    except Exception as e:
+        _l.error('_get_position_size_on_date exception occurred %s' % e)
+        _l.error(traceback.format_exc())
+        return 0
+
+
+_get_position_size_on_date.evaluator = True
+
 
 
 def _get_instrument_accrual_size(evaluator, instrument, date):
@@ -2163,19 +2292,20 @@ _run_task.evaluator = True
 
 
 def _run_pricing_procedure(evaluator, user_code, **kwargs):
-
     try:
         from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_member_from_context
         from poms.procedures.models import PricingProcedure
         from poms.pricing.handlers import PricingProcedureProcess
 
         context = evaluator.context
 
         master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
 
         procedure = PricingProcedure.objects.get(master_user=master_user, user_code=user_code)
 
-        instance = PricingProcedureProcess(procedure=procedure, master_user=master_user, **kwargs)
+        instance = PricingProcedureProcess(procedure=procedure, master_user=master_user, member=member, **kwargs)
         instance.process()
 
 
@@ -2186,21 +2316,38 @@ def _run_pricing_procedure(evaluator, user_code, **kwargs):
 _run_pricing_procedure.evaluator = True
 
 
-def _run_data_procedure(evaluator, user_code, **kwargs):
+def _run_data_procedure(evaluator, user_code, user_context=None, **kwargs):
+    _l.info('_run_data_procedure')
 
     try:
         from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_member_from_context
         from poms.procedures.models import RequestDataFileProcedure
         from poms.procedures.handlers import RequestDataFileProcedureProcess
 
         context = evaluator.context
 
         master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
+
+        _l.info('_run_data_procedure.context %s' % context)
+
+        merged_context = {}
+        merged_context.update(context)
+
+        if 'names' not in merged_context:
+            merged_context['names'] = {}
+
+        merged_context['names'].update(user_context)
+
+        _l.info('merged_context %s' % merged_context)
 
         procedure = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=user_code)
 
+        kwargs.pop('user_context', None)
 
-        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, **kwargs)
+        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member,
+                                                   context=merged_context, **kwargs)
         instance.process()
 
 
@@ -2504,6 +2651,7 @@ FUNCTIONS = [
     SimpleEval2Def('format_number', _format_number),
     SimpleEval2Def('parse_number', _parse_number),
     SimpleEval2Def('join', _join),
+    SimpleEval2Def('reverse', _reverse),
 
     SimpleEval2Def('simple_price', _simple_price),
 
@@ -2518,7 +2666,8 @@ FUNCTIONS = [
 
     SimpleEval2Def('get_instrument_accrual_size', _get_instrument_accrual_size),
     SimpleEval2Def('get_instrument_accrual_factor', _get_instrument_accrual_factor),
-    SimpleEval2Def('get_instrument_accrued_price', _get_instrument_accrued_price),
+    SimpleEval2Def('calculate_accrued_price', _calculate_accrued_price),
+    SimpleEval2Def('get_position_size_on_date', _get_position_size_on_date),
     SimpleEval2Def('get_instrument_factor', _get_instrument_factor),
     SimpleEval2Def('get_instrument_coupon_factor', _get_instrument_coupon_factor),
     SimpleEval2Def('get_instrument_coupon', _get_instrument_coupon),
@@ -2528,10 +2677,12 @@ FUNCTIONS = [
     SimpleEval2Def('get_accrued_price', _get_price_history_accrued_price),
     SimpleEval2Def('get_next_coupon_date', _get_next_coupon_date),
     SimpleEval2Def('get_factor', _get_factor_schedule),
-    SimpleEval2Def('add_fx_history', _add_fx_history),
+    SimpleEval2Def('add_fx_rate', _add_fx_rate),
     SimpleEval2Def('add_price_history', _add_price_history),
     SimpleEval2Def('generate_user_code', _generate_user_code),
     SimpleEval2Def('get_latest_principal_price', _get_latest_principal_price),
+    SimpleEval2Def('get_latest_principal_price_date', _get_latest_principal_price_date),
+    SimpleEval2Def('get_latest_fx_rate', _get_latest_fx_rate),
 
     SimpleEval2Def('get_instrument_user_attribute_value', _get_instrument_user_attribute_value),
 
@@ -2594,7 +2745,7 @@ SAFE_TYPES = (bool, int, float, str, list, tuple, dict, OrderedDict,
 
 class SimpleEval2(object):
     def __init__(self, names=None, max_time=None, add_print=False, allow_assign=False, now=None, context=None):
-        self.max_time = max_time or 5  # one second
+        self.max_time = max_time or 60  # one second
         # self.max_time = 10000000000
         self.start_time = 0
         self.tik_time = 0

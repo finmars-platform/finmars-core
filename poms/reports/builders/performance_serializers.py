@@ -4,7 +4,7 @@ import uuid
 from datetime import date
 
 from django.db.models import ForeignKey
-from django.utils.translation import ugettext
+from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 
 from poms.accounts.fields import AccountField
@@ -37,6 +37,8 @@ class PerformanceReportItemSerializer(serializers.Serializer):
     end_nav = serializers.FloatField(read_only=True)
 
     cash_flow = serializers.FloatField(read_only=True)
+    cash_inflow = serializers.FloatField(read_only=True)
+    cash_outflow = serializers.FloatField(read_only=True)
     nav = serializers.FloatField(read_only=True)
     instrument_return = serializers.FloatField(read_only=True)
     cumulative_return = serializers.FloatField(read_only=True)
@@ -95,7 +97,7 @@ class PerformanceReportSerializer(serializers.Serializer):
     registers = RegisterField(many=True, required=False, allow_null=True, allow_empty=True)
     # periods = ExpressionField(required=False, allow_blank=True, allow_null=True, default='',
     #                           initial='date_group(transaction.accounting_date, [[None,None,timedelta(months=1),["[","%Y-%m-%d","/","","%Y-%m-%d","]"]]], "Err")')
-    # report_currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
+    report_currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
     # pricing_policy = PricingPolicyField()
 
     # portfolio_mode = serializers.ChoiceField(default=PerformanceReport.MODE_INDEPENDENT,
@@ -151,6 +153,8 @@ class PerformanceReportSerializer(serializers.Serializer):
     end_nav = serializers.ReadOnlyField()
     grand_return = serializers.ReadOnlyField()
     grand_cash_flow = serializers.ReadOnlyField()
+    grand_cash_inflow = serializers.ReadOnlyField()
+    grand_cash_outflow = serializers.ReadOnlyField()
     grand_nav = serializers.ReadOnlyField()
 
     # item_portfolios = ReportPortfolioSerializer(many=True, read_only=True)
@@ -168,7 +172,7 @@ class PerformanceReportSerializer(serializers.Serializer):
     # def validate(self, attrs):
     #     periods = attrs['periods']
     #     if not periods.startswith('date_group('):
-    #         raise serializers.ValidationError({'periods': ugettext('function "date_group" not found')})
+    #         raise serializers.ValidationError({'periods': gettext_lazy('function "date_group" not found')})
     #     return attrs
 
     def to_representation(self, instance):
@@ -230,6 +234,8 @@ class PerformanceReportSerializer(serializers.Serializer):
             report_instance.end_nav = instance.end_nav
             report_instance.grand_return = instance.grand_return
             report_instance.grand_cash_flow = instance.grand_cash_flow
+            report_instance.grand_cash_inflow = instance.grand_cash_inflow
+            report_instance.grand_cash_outflow = instance.grand_cash_outflow
             report_instance.grand_nav = instance.grand_nav
 
             report_instance.report_uuid = report_uuid
@@ -324,14 +330,14 @@ class PerformanceReportSerializer(serializers.Serializer):
         #                         try:
         #                             value = formula.safe_eval(expr, names=names, context=self.context)
         #                         except formula.InvalidExpression:
-        #                             value = ugettext('Invalid expression')
+        #                             value = gettext_lazy('Invalid expression')
         #                     else:
         #                         value = None
         #
         #                     if not cf['user_code'] in custom_fields_names:
         #                         custom_fields_names[cf['user_code']] = value
         #                     else:
-        #                         if custom_fields_names[cf['user_code']] == None or custom_fields_names[cf['user_code']] == ugettext('Invalid expression'):
+        #                         if custom_fields_names[cf['user_code']] == None or custom_fields_names[cf['user_code']] == gettext_lazy('Invalid expression'):
         #                             custom_fields_names[cf['user_code']] = value
         #
         #             names['custom_fields'] = custom_fields_names
@@ -350,7 +356,7 @@ class PerformanceReportSerializer(serializers.Serializer):
         #                             try:
         #                                 value = formula.safe_eval('str(item)', names={'item': value}, context=self.context)
         #                             except formula.InvalidExpression:
-        #                                 value = ugettext('Invalid expression')
+        #                                 value = gettext_lazy('Invalid expression')
         #                         else:
         #                             value = None
         #
@@ -360,7 +366,7 @@ class PerformanceReportSerializer(serializers.Serializer):
         #                             try:
         #                                 value = formula.safe_eval('float(item)', names={'item': value}, context=self.context)
         #                             except formula.InvalidExpression:
-        #                                 value = ugettext('Invalid expression')
+        #                                 value = gettext_lazy('Invalid expression')
         #                         else:
         #                             value = None
         #                     elif cf['value_type'] == 40:
@@ -369,7 +375,7 @@ class PerformanceReportSerializer(serializers.Serializer):
         #                             try:
         #                                 value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value}, context=self.context)
         #                             except formula.InvalidExpression:
-        #                                 value = ugettext('Invalid expression')
+        #                                 value = gettext_lazy('Invalid expression')
         #                         else:
         #                             value = None
         #

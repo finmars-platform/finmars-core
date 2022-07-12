@@ -3,12 +3,12 @@ from __future__ import unicode_literals
 from django.apps import AppConfig
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 
 class TransactionsConfig(AppConfig):
     name = 'poms.transactions'
-    verbose_name = ugettext_lazy('Transactions')
+    verbose_name = gettext_lazy('Transactions')
 
     def ready(self):
         post_migrate.connect(self.update_transaction_classes, sender=self)

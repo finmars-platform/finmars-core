@@ -1,4 +1,5 @@
 import json
+import traceback
 from datetime import timedelta
 
 import requests
@@ -33,7 +34,7 @@ _l = logging.getLogger('poms.procedures')
 
 class RequestDataFileProcedureProcess(object):
 
-    def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None, member=None, schedule_instance=None):
+    def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None, member=None, schedule_instance=None, context=None):
 
         _l.debug('RequestDataFileProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
 
@@ -42,6 +43,7 @@ class RequestDataFileProcedureProcess(object):
 
         self.member = member
         self.schedule_instance = schedule_instance
+        self.context = context
 
         self.execute_procedure_date_expressions()
 
@@ -71,142 +73,153 @@ class RequestDataFileProcedureProcess(object):
 
             try:
 
-                procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
-                                                                                     master_user=self.master_user,
-                                                                                     status=RequestDataFileProcedureInstance.STATUS_PENDING,
-                                                                                     schedule_instance=self.schedule_instance,
-                                                                                     action='request_transaction_file',
-                                                                                     provider='universal',
+                with transaction.atomic():
 
-                                                                                     action_verbose='Request file with Transactions',
-                                                                                     provider_verbose='universal'
+                    procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
+                                                                                         master_user=self.master_user,
+                                                                                         status=RequestDataFileProcedureInstance.STATUS_PENDING,
+                                                                                         schedule_instance=self.schedule_instance,
+                                                                                         action='request_transaction_file',
+                                                                                         provider='universal',
 
-                                                                                     )
+                                                                                         action_verbose='Request file with Transactions',
+                                                                                         provider_verbose='universal'
 
-                send_system_message(master_user=self.master_user,
-                                    source="Data File Procedure Service",
-                                    text="universal Broker.  Procedure %s. Start" % procedure_instance.id,
-                                    )
+                                                                                         )
 
-                headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+                    send_system_message(master_user=self.master_user,
+                                        source="Data File Procedure Service",
+                                        text="universal Broker.  Procedure %s. Start" % procedure_instance.id,
+                                        )
 
-                url = self.procedure.data['url']
-                security_token = self.procedure.data['security_token']
+                    headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
-                data = {
-                    'security_token': security_token,
-                    "id": procedure_instance.id,
-                    "user": {
-                        "token": self.master_user.token,
-                        "credentials": {}
-                    },
-                    "provider": self.procedure.provider.user_code,
-                    "scheme_name": self.procedure.scheme_user_code,
-                    "scheme_type": self.procedure.scheme_type,
-                    "data": [],
-                    "options": self.procedure.data,
-                    "error_status": 0,
-                    "error_message": "",
-                }
+                    url = self.procedure.data['url']
+                    security_token = self.procedure.data['security_token']
 
-                if self.procedure.date_from:
-                    data["date_from"] = str(self.procedure.date_from)
+                    data = {
+                        'security_token': security_token,
+                        "id": procedure_instance.id,
+                        "user": {
+                            "token": self.master_user.token,
+                            "credentials": {}
+                        },
+                        "provider": self.procedure.provider.user_code,
+                        "scheme_name": self.procedure.scheme_user_code,
+                        "scheme_type": self.procedure.scheme_type,
+                        "data": [],
+                        "options": self.procedure.data,
+                        "error_status": 0,
+                        "error_message": "",
+                    }
 
-                if self.procedure.date_to:
-                    data["date_to"] = str(self.procedure.date_to)
+                    if self.context:
+                        if 'names' in self.context:
+                            if "echo" in data['options']:
+                                for key, value in data['options']["echo"].items():
 
-                # if self.procedure.data['currencies']:
-                #     data["options"]['currencies'] = self.procedure.data['currencies']
+                                    if value in self.context['names']:
+                                        data['options']["echo"][key] = str(self.context['names'][value])
 
-                _l.info('request universal url %s' % url)
-                # _l.info('request universal data %s' % data)
+                    if self.procedure.date_from:
+                        data["date_from"] = str(self.procedure.date_from)
 
-                procedure_instance.request_data = data
-                procedure_instance.save()
+                    if self.procedure.date_to:
+                        data["date_to"] = str(self.procedure.date_to)
 
-                response = requests.post(url=url, json=data, headers=headers)
+                    # if self.procedure.data['currencies']:
+                    #     data["options"]['currencies'] = self.procedure.data['currencies']
 
-                response_data = None
+                    _l.info('request universal url %s' % url)
+                    _l.info('request universal data %s' % data)
+                    _l.info('request universal self.context %s' % self.context)
 
-                if len(response.text) < 5000:
-                    _l.info('response %s' % response.text)
+                    procedure_instance.request_data = data
+                    procedure_instance.save()
 
-                current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+                    response = requests.post(url=url, json=data, headers=headers)
 
-                file_report = FileReport()
+                    response_data = None
 
-                file_name = "universal Broker Response %s.json" % current_date_time
+                    if len(response.text) < 5000:
+                        _l.info('response %s' % response.text)
 
-                file_content = ''
+                    current_date_time = now().strftime("%Y-%m-%d-%H-%M")
 
-                try:
+                    file_report = FileReport()
 
-                    response_data = response.json()
+                    file_name = "Universal Broker Response %s %s.json" % (procedure_instance.id, current_date_time)
 
-                    file_content = json.dumps(response_data, indent=4)
-                except Exception as e:
+                    file_content = ''
 
-                    _l.info('response %s' % response.text)
-                    _l.info("Response parse error %s" % e)
-                    file_content = response.text
+                    try:
 
-                file_report.upload_file(file_name=file_name, text=file_content, master_user=self.master_user)
-                file_report.master_user = self.master_user
-                file_report.name = file_name
-                file_report.file_name = file_name
-                file_report.type = 'procedure.requestdatafileprocedure'
-                file_report.notes = 'System File'
+                        response_data = response.json()
 
-                file_report.save()
+                        file_content = json.dumps(response_data, indent=4)
+                    except Exception as e:
 
-                send_system_message(master_user=procedure_instance.master_user,
-                                    source="Data File Procedure Service",
-                                    text="universal Broker. Procedure %s. Response Received" % procedure_instance.id,
-                                    file_report_id=file_report.id)
+                        _l.info('response %s' % response.text)
+                        _l.info("Response parse error %s" % e)
+                        file_content = response.text
 
-                procedure_id = response_data['id']
+                    file_report.upload_file(file_name=file_name, text=file_content, master_user=self.master_user)
+                    file_report.master_user = self.master_user
+                    file_report.name = file_name
+                    file_report.file_name = file_name
+                    file_report.type = 'procedure.requestdatafileprocedure'
+                    file_report.notes = 'System File'
 
-                master_user = MasterUser.objects.get(token=response_data['user']['token'])
+                    file_report.save()
 
-                procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id,
-                                                                                  master_user=master_user)
+                    send_system_message(master_user=procedure_instance.master_user,
+                                        source="Data File Procedure Service",
+                                        text="universal Broker. Procedure %s. Response Received" % procedure_instance.id,
+                                        file_report_id=file_report.id)
 
-                procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
-                procedure_instance.save()
+                    procedure_id = response_data['id']
 
-                send_system_message(master_user=procedure_instance.master_user,
-                                    source="Data File Procedure Service",
-                                    text="universal Broker. Procedure %s. Done, start import" % procedure_instance.id,
-                                    )
+                    master_user = MasterUser.objects.get(token=response_data['user']['token'])
 
-                celery_task = CeleryTask.objects.create(master_user=master_user,
-                                                        member=self.member,
-                                                        type='transaction_import')
+                    procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id,
+                                                                                      master_user=master_user)
 
-                options_object = {}
+                    procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
+                    procedure_instance.save()
 
-                options_object['items'] = response_data['data']
+                    send_system_message(master_user=procedure_instance.master_user,
+                                        source="Data File Procedure Service",
+                                        text="universal Broker. Procedure %s. Done, start import" % procedure_instance.id,
+                                        )
 
-                celery_task.options_object = options_object
+                    celery_task = CeleryTask.objects.create(master_user=master_user,
+                                                            member=self.member,
+                                                            type='transaction_import')
 
-                celery_task.save()
+                    options_object = {}
 
-                def run_tasks():
+                    options_object['items'] = response_data['data']
 
-                    if procedure_instance.procedure.scheme_type == 'transaction_import':
-                        complex_transaction_csv_file_import_by_procedure_json.apply_async(
-                            kwargs={'procedure_instance_id': procedure_instance.id,
-                                    'celery_task_id': celery_task.id,
-                                    })
+                    celery_task.options_object = options_object
 
-                    if procedure_instance.procedure.scheme_type == 'simple_import':
-                        data_csv_file_import_by_procedure_json.apply_async(
-                            kwargs={'procedure_instance_id': procedure_instance.id,
-                                    'celery_task_id': celery_task.id,
-                                    })
+                    celery_task.save()
+
+                    def run_tasks():
+
+                        if procedure_instance.procedure.scheme_type == 'transaction_import':
+                            complex_transaction_csv_file_import_by_procedure_json.apply_async(
+                                kwargs={'procedure_instance_id': procedure_instance.id,
+                                        'celery_task_id': celery_task.id,
+                                        })
+
+                        if procedure_instance.procedure.scheme_type == 'simple_import':
+                            data_csv_file_import_by_procedure_json.apply_async(
+                                kwargs={'procedure_instance_id': procedure_instance.id,
+                                        'celery_task_id': celery_task.id,
+                                        })
 
 
-                on_commit(run_tasks)
+                    on_commit(run_tasks)
 
 
             except Exception as e:
@@ -422,79 +435,82 @@ class ExpressionProcedureProcess(object):
         self.member = member
         self.schedule_instance = schedule_instance
 
-        self.execute_procedure_date_expressions()
-
         self.context = {'master_user': master_user, 'member': member}
 
-    def get_list_of_dates_between_two_dates(self, date_from, date_to):
-        result = []
+        self.execute_context_variables_expressions()
 
-        diff = date_to - date_from
 
-        for i in range(diff.days + 1):
-            day = date_from + timedelta(days=i)
-            result.append(day)
+    def execute_context_variables_expressions(self):
 
-        return result
+        self.context_names = {}
 
-    def execute_procedure_date_expressions(self):
+        _l.info('ExpressionProcedureProcess.execute_context_variables_expressions %s ' % self.procedure.context_variables.all())
 
-        if self.procedure.date_from_expr:
+        for item in self.procedure.context_variables.all():
+
             try:
-                self.procedure.date_from = formula.safe_eval(self.procedure.date_from_expr, names={})
-            except formula.InvalidExpression as e:
-                _l.debug("Cant execute date from expression %s " % e)
+                self.context_names[item.name] = formula.safe_eval(item.expression, names=self.context_names,  context=self.context)
 
-        if self.procedure.date_to_expr:
-            try:
-                self.procedure.date_to = formula.safe_eval(self.procedure.date_to_expr, names={})
-            except formula.InvalidExpression as e:
-                _l.debug("Cant execute date to expression %s " % e)
+            except Exception as e:
+                _l.info('execute_context_variables_expressions.e %s' % e)
+                self.context_names[item.name] = 'Invalid Expression'
+
+        _l.info('self.context_names %s' % self.context_names)
 
     def process(self):
 
-        procedure_instance = ExpressionProcedureInstance.objects.create(procedure=self.procedure,
-                                                                             master_user=self.master_user,
-                                                                             status=ExpressionProcedureInstance.STATUS_PENDING,
-                                                                             schedule_instance=self.schedule_instance,
-                                                                             action='execute_expression_procedure',
-                                                                             provider='finmars',
 
-                                                                             action_verbose='Execute Expression Procedure',
-                                                                             provider_verbose='Finmars'
+        try:
 
-                                                                             )
+            procedure_instance = ExpressionProcedureInstance.objects.create(procedure=self.procedure,
+                                                                                 master_user=self.master_user,
+                                                                                 status=ExpressionProcedureInstance.STATUS_PENDING,
+                                                                                 schedule_instance=self.schedule_instance,
+                                                                                 action='execute_expression_procedure',
+                                                                                 provider='finmars',
 
-        send_system_message(master_user=self.master_user,
-                            source="Expression Procedure Service",
-                            text="Procedure %s. Start" % procedure_instance.id,
-                            )
+                                                                                 action_verbose='Execute Expression Procedure',
+                                                                                 provider_verbose='Finmars'
 
-        names = self.procedure.data
+                                                                                 )
 
-        if not names:
-            names = {}
+            send_system_message(master_user=self.master_user,
+                                source="Expression Procedure Service",
+                                text="Procedure %s. Start" % procedure_instance.id,
+                                )
 
-        names['context_date_from'] = self.procedure.date_from
-        names['context_date_to'] = self.procedure.date_to
+            names = self.procedure.data
 
-        result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
+            if not names:
+                names = {}
 
-        if result:
+            for key, value in self.context_names.items():
+                names[key] = value
 
-            # _l.info('result %s' % result)
+            self.context['names'] = names
 
-            if not procedure_instance.result:
-                procedure_instance.result = ''
-            procedure_instance.result = procedure_instance.result + ' \n' + str(result)
+            _l.info('ExpressionProcedureProcess.names %s' % names)
+            _l.info('ExpressionProcedureProcess.context %s' % self.context)
 
+            result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
 
-        send_system_message(master_user=self.master_user,
-                            source="Expression Procedure Service",
-                            text="Procedure %s. Done" % procedure_instance.id,
-                            )
+            _l.debug('ExpressionProcedureProcess.result %s' % result)
 
-        procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE
+            if result:
+
+                procedure_instance.result = result
 
 
-        procedure_instance.save()
+            send_system_message(master_user=self.master_user,
+                                source="Expression Procedure Service",
+                                text="Procedure %s. Done" % procedure_instance.id,
+                                )
+
+            procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE
+
+
+            procedure_instance.save()
+
+        except Exception as e:
+            _l.error("ExpressionProcedureProcess.process error %s" % e)
+            _l.error(traceback.print_exc())

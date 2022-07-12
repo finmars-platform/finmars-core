@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 from rest_framework.fields import empty
 
@@ -61,9 +61,9 @@ class TagSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerial
 
 class TagField(serializers.RelatedField):
     default_error_messages = {
-        'required': ugettext_lazy('This field is required.'),
-        'does_not_exist': ugettext_lazy('Invalid pk "{pk_value}" - object does not exist.'),
-        'incorrect_type': ugettext_lazy('Incorrect type. Expected pk value, received {data_type}.'),
+        'required': gettext_lazy('This field is required.'),
+        'does_not_exist': gettext_lazy('Invalid pk "{pk_value}" - object does not exist.'),
+        'incorrect_type': gettext_lazy('Incorrect type. Expected pk value, received {data_type}.'),
     }
 
     def get_queryset(self):

@@ -13,7 +13,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 
 from poms.common.models import NamedModel, FakeDeletableModel
@@ -34,8 +34,8 @@ TIMEZONE_COMMON_CHOICES = sorted(list((k, k) for k in pytz.common_timezones))
 
 class ResetPasswordToken(models.Model):
     class Meta:
-        verbose_name = ugettext_lazy("Password Reset Token")
-        verbose_name_plural = ugettext_lazy("Password Reset Tokens")
+        verbose_name = gettext_lazy("Password Reset Token")
+        verbose_name_plural = gettext_lazy("Password Reset Tokens")
 
     @staticmethod
     def generate_key():
@@ -50,29 +50,29 @@ class ResetPasswordToken(models.Model):
         settings.AUTH_USER_MODEL,
         related_name='password_reset_tokens',
         on_delete=models.CASCADE,
-        verbose_name=ugettext_lazy("The User which is associated to this password reset token")
+        verbose_name=gettext_lazy("The User which is associated to this password reset token")
     )
 
     created_at = models.DateTimeField(
         auto_now_add=True,
-        verbose_name=ugettext_lazy("When was this token generated")
+        verbose_name=gettext_lazy("When was this token generated")
     )
 
     # Key field, though it is not the primary key of the model
     key = models.CharField(
-        ugettext_lazy("Key"),
+        gettext_lazy("Key"),
         max_length=64,
         db_index=True,
         unique=True
     )
 
     ip_address = models.GenericIPAddressField(
-        ugettext_lazy("The IP address of this session"),
+        gettext_lazy("The IP address of this session"),
         default="127.0.0.1"
     )
     user_agent = models.CharField(
         max_length=256,
-        verbose_name=ugettext_lazy("HTTP User Agent"),
+        verbose_name=gettext_lazy("HTTP User Agent"),
         default=""
     )
 
@@ -109,118 +109,118 @@ class MasterUser(models.Model):
     STATUS_BACKUP = 3
 
     STATUSES = (
-        (STATUS_ONLINE, ugettext_lazy('Online')),
-        (STATUS_OFFLINE, ugettext_lazy('Offline')),
-        (STATUS_BACKUP, ugettext_lazy('Backup')),
+        (STATUS_ONLINE, gettext_lazy('Online')),
+        (STATUS_OFFLINE, gettext_lazy('Offline')),
+        (STATUS_BACKUP, gettext_lazy('Backup')),
     )
 
     name = models.CharField(max_length=255, null=True, blank=True,
-                            verbose_name=ugettext_lazy('name'))
+                            verbose_name=gettext_lazy('name'))
 
-    description = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('description'))
+    description = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('description'))
 
     status = models.PositiveSmallIntegerField(default=STATUS_ONLINE, choices=STATUSES,
-                                                  verbose_name=ugettext_lazy('status'))
+                                                  verbose_name=gettext_lazy('status'))
 
     language = models.CharField(max_length=LANGUAGE_MAX_LENGTH, default=settings.LANGUAGE_CODE,
-                                verbose_name=ugettext_lazy('language'))
+                                verbose_name=gettext_lazy('language'))
     timezone = models.CharField(max_length=TIMEZONE_MAX_LENGTH, default=settings.TIME_ZONE,
-                                verbose_name=ugettext_lazy('timezone'))
+                                verbose_name=gettext_lazy('timezone'))
     system_currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL,
                                         related_name='+',
-                                        verbose_name=ugettext_lazy('system currency'))
+                                        verbose_name=gettext_lazy('system currency'))
 
     account_type = models.ForeignKey('accounts.AccountType', null=True, blank=True, on_delete=models.SET_NULL,
-                                     verbose_name=ugettext_lazy('account type'))
+                                     verbose_name=gettext_lazy('account type'))
     account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.SET_NULL,
-                                verbose_name=ugettext_lazy('account'))
+                                verbose_name=gettext_lazy('account'))
 
     currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL,
-                                 verbose_name=ugettext_lazy('currency'))
+                                 verbose_name=gettext_lazy('currency'))
     counterparty_group = models.ForeignKey('counterparties.CounterpartyGroup', null=True, blank=True,
-                                           on_delete=models.SET_NULL, verbose_name=ugettext_lazy('counterparty group'))
+                                           on_delete=models.SET_NULL, verbose_name=gettext_lazy('counterparty group'))
     counterparty = models.ForeignKey('counterparties.Counterparty', null=True, blank=True, on_delete=models.SET_NULL,
-                                     verbose_name=ugettext_lazy('counterparty'))
+                                     verbose_name=gettext_lazy('counterparty'))
     responsible_group = models.ForeignKey('counterparties.ResponsibleGroup', null=True, blank=True,
-                                          on_delete=models.SET_NULL, verbose_name=ugettext_lazy('responsible group'))
+                                          on_delete=models.SET_NULL, verbose_name=gettext_lazy('responsible group'))
     responsible = models.ForeignKey('counterparties.Responsible', null=True, blank=True, on_delete=models.SET_NULL,
-                                    verbose_name=ugettext_lazy('responsible'))
+                                    verbose_name=gettext_lazy('responsible'))
 
     instrument_type = models.ForeignKey('instruments.InstrumentType', null=True, blank=True, on_delete=models.SET_NULL,
-                                        verbose_name=ugettext_lazy('instrument type'))
+                                        verbose_name=gettext_lazy('instrument type'))
     instrument = models.ForeignKey('instruments.Instrument', null=True, blank=True, on_delete=models.SET_NULL,
-                                   verbose_name=ugettext_lazy('instrument'))
+                                   verbose_name=gettext_lazy('instrument'))
 
     portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.SET_NULL,
-                                  verbose_name=ugettext_lazy('portfolio'))
+                                  verbose_name=gettext_lazy('portfolio'))
 
     strategy1_group = models.ForeignKey('strategies.Strategy1Group', null=True, blank=True, on_delete=models.SET_NULL,
                                         related_name='master_user_strategy1_group',
-                                        verbose_name=ugettext_lazy('strategy1 group'))
+                                        verbose_name=gettext_lazy('strategy1 group'))
     strategy1_subgroup = models.ForeignKey('strategies.Strategy1Subgroup', null=True, blank=True,
                                            on_delete=models.SET_NULL, related_name='master_user_strategy1_subgroup',
-                                           verbose_name=ugettext_lazy('strategy1 subgroup'))
+                                           verbose_name=gettext_lazy('strategy1 subgroup'))
     strategy1 = models.ForeignKey('strategies.Strategy1', null=True, blank=True, on_delete=models.SET_NULL,
-                                  related_name='master_user_strategy1', verbose_name=ugettext_lazy('strategy1'))
+                                  related_name='master_user_strategy1', verbose_name=gettext_lazy('strategy1'))
 
     strategy2_group = models.ForeignKey('strategies.Strategy2Group', null=True, blank=True, on_delete=models.SET_NULL,
                                         related_name='master_user_strategy2_group',
-                                        verbose_name=ugettext_lazy('strategy2 group'))
+                                        verbose_name=gettext_lazy('strategy2 group'))
     strategy2_subgroup = models.ForeignKey('strategies.Strategy2Subgroup', null=True, blank=True,
                                            on_delete=models.SET_NULL, related_name='master_user_strategy2_subgroup',
-                                           verbose_name=ugettext_lazy('strategy2 subgroup'))
+                                           verbose_name=gettext_lazy('strategy2 subgroup'))
     strategy2 = models.ForeignKey('strategies.Strategy2', null=True, blank=True, on_delete=models.SET_NULL,
-                                  related_name='master_user_strategy2', verbose_name=ugettext_lazy('strategy2'))
+                                  related_name='master_user_strategy2', verbose_name=gettext_lazy('strategy2'))
 
     strategy3_group = models.ForeignKey('strategies.Strategy3Group', null=True, blank=True, on_delete=models.SET_NULL,
                                         related_name='master_user_strategy3_group',
-                                        verbose_name=ugettext_lazy('strategy3 group'))
+                                        verbose_name=gettext_lazy('strategy3 group'))
     strategy3_subgroup = models.ForeignKey('strategies.Strategy3Subgroup', null=True, blank=True,
                                            on_delete=models.SET_NULL, related_name='master_user_strategy3_subgroup',
-                                           verbose_name=ugettext_lazy('strategy3 subgroup'))
+                                           verbose_name=gettext_lazy('strategy3 subgroup'))
     strategy3 = models.ForeignKey('strategies.Strategy3', null=True, blank=True, on_delete=models.SET_NULL,
-                                  related_name='master_user_strategy3', verbose_name=ugettext_lazy('strategy3'))
+                                  related_name='master_user_strategy3', verbose_name=gettext_lazy('strategy3'))
 
     thread_group = models.ForeignKey('chats.ThreadGroup', null=True, blank=True, on_delete=models.SET_NULL,
                                      related_name='master_user_thread_group',
-                                     verbose_name=ugettext_lazy('thread group'))
+                                     verbose_name=gettext_lazy('thread group'))
 
     transaction_type = models.ForeignKey('transactions.TransactionType', null=True, blank=True,
                                          on_delete=models.SET_NULL,
-                                         verbose_name=ugettext_lazy('transaction type'))
+                                         verbose_name=gettext_lazy('transaction type'))
 
     transaction_type_group = models.ForeignKey('transactions.TransactionTypeGroup', null=True, blank=True,
                                                on_delete=models.SET_NULL,
-                                               verbose_name=ugettext_lazy('transaction type group'))
+                                               verbose_name=gettext_lazy('transaction type group'))
 
     mismatch_portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.SET_NULL,
                                            related_name='master_user_mismatch_portfolio',
-                                           verbose_name=ugettext_lazy('mismatch portfolio'))
+                                           verbose_name=gettext_lazy('mismatch portfolio'))
     mismatch_account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.SET_NULL,
                                          related_name='master_user_mismatch_account',
-                                         verbose_name=ugettext_lazy('mismatch account'))
+                                         verbose_name=gettext_lazy('mismatch account'))
 
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True, on_delete=models.SET_NULL,
-                                       verbose_name=ugettext_lazy('pricing policy'))
+                                       verbose_name=gettext_lazy('pricing policy'))
 
     # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
     #                                           on_delete=models.SET_NULL,
-    #                                           verbose_name=ugettext_lazy('price download scheme'))
+    #                                           verbose_name=gettext_lazy('price download scheme'))
 
     # TODO: what is notification_business_days
     notification_business_days = models.IntegerField(default=0)
 
     user_code_counters = ArrayField(models.IntegerField(null=True, blank=True), null=True, blank=True)
 
-    token = models.CharField(unique=True, max_length=32, null=True, blank=True, verbose_name=ugettext_lazy('token'))
+    token = models.CharField(unique=True, max_length=32, null=True, blank=True, verbose_name=gettext_lazy('token'))
 
     unique_id = models.UUIDField(null=True, blank=True)
 
     objects = MasterUserManager()
 
     class Meta:
-        verbose_name = ugettext_lazy('master user')
-        verbose_name_plural = ugettext_lazy('master users')
+        verbose_name = gettext_lazy('master user')
+        verbose_name_plural = gettext_lazy('master users')
         ordering = ['name']
 
     def __str__(self):
@@ -964,10 +964,10 @@ class MasterUser(models.Model):
         self.create_entity_tooltips()
         self.create_color_palettes()
 
-        group = Group.objects.create(master_user=self, name='%s' % ugettext_lazy('Administrators'), role=Group.ADMIN)
+        group = Group.objects.create(master_user=self, name='%s' % gettext_lazy('Administrators'), role=Group.ADMIN)
         group.grant_all_permissions_to_public_group(group, master_user=self)
 
-        group = Group.objects.create(master_user=self, name='%s' % ugettext_lazy('Guests'), role=Group.USER)
+        group = Group.objects.create(master_user=self, name='%s' % gettext_lazy('Guests'), role=Group.USER)
 
         self.save()
 
@@ -1048,105 +1048,105 @@ class MasterUser(models.Model):
 
 class EcosystemDefault(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='ecosystem_default',
-                                    verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE,)
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE,)
 
     account_type = models.ForeignKey('accounts.AccountType', null=True, blank=True, on_delete=models.PROTECT,
-                                     verbose_name=ugettext_lazy('account type'))
+                                     verbose_name=gettext_lazy('account type'))
     account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.PROTECT,
-                                verbose_name=ugettext_lazy('account'))
+                                verbose_name=gettext_lazy('account'))
 
     currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.PROTECT,
-                                 verbose_name=ugettext_lazy('currency'))
+                                 verbose_name=gettext_lazy('currency'))
     counterparty_group = models.ForeignKey('counterparties.CounterpartyGroup', null=True, blank=True,
-                                           on_delete=models.PROTECT, verbose_name=ugettext_lazy('counterparty group'))
+                                           on_delete=models.PROTECT, verbose_name=gettext_lazy('counterparty group'))
     counterparty = models.ForeignKey('counterparties.Counterparty', null=True, blank=True, on_delete=models.PROTECT,
-                                     verbose_name=ugettext_lazy('counterparty'))
+                                     verbose_name=gettext_lazy('counterparty'))
     responsible_group = models.ForeignKey('counterparties.ResponsibleGroup', null=True, blank=True,
-                                          on_delete=models.PROTECT, verbose_name=ugettext_lazy('responsible group'))
+                                          on_delete=models.PROTECT, verbose_name=gettext_lazy('responsible group'))
     responsible = models.ForeignKey('counterparties.Responsible', null=True, blank=True, on_delete=models.PROTECT,
-                                    verbose_name=ugettext_lazy('responsible'))
+                                    verbose_name=gettext_lazy('responsible'))
 
     instrument_type = models.ForeignKey('instruments.InstrumentType', null=True, blank=True, on_delete=models.PROTECT,
-                                        verbose_name=ugettext_lazy('instrument type'))
+                                        verbose_name=gettext_lazy('instrument type'))
     instrument = models.ForeignKey('instruments.Instrument', null=True, blank=True, on_delete=models.PROTECT,
-                                   verbose_name=ugettext_lazy('instrument'))
+                                   verbose_name=gettext_lazy('instrument'))
 
     portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.PROTECT,
-                                  verbose_name=ugettext_lazy('portfolio'))
+                                  verbose_name=gettext_lazy('portfolio'))
 
     strategy1_group = models.ForeignKey('strategies.Strategy1Group', null=True, blank=True, on_delete=models.PROTECT,
 
-                                        verbose_name=ugettext_lazy('strategy1 group'))
+                                        verbose_name=gettext_lazy('strategy1 group'))
     strategy1_subgroup = models.ForeignKey('strategies.Strategy1Subgroup', null=True, blank=True,
                                            on_delete=models.PROTECT,
-                                           verbose_name=ugettext_lazy('strategy1 subgroup'))
+                                           verbose_name=gettext_lazy('strategy1 subgroup'))
     strategy1 = models.ForeignKey('strategies.Strategy1', null=True, blank=True, on_delete=models.PROTECT,
-                                  verbose_name=ugettext_lazy('strategy1'))
+                                  verbose_name=gettext_lazy('strategy1'))
 
     strategy2_group = models.ForeignKey('strategies.Strategy2Group', null=True, blank=True, on_delete=models.PROTECT,
-                                        verbose_name=ugettext_lazy('strategy2 group'))
+                                        verbose_name=gettext_lazy('strategy2 group'))
     strategy2_subgroup = models.ForeignKey('strategies.Strategy2Subgroup', null=True, blank=True,
                                            on_delete=models.PROTECT,
-                                           verbose_name=ugettext_lazy('strategy2 subgroup'))
+                                           verbose_name=gettext_lazy('strategy2 subgroup'))
     strategy2 = models.ForeignKey('strategies.Strategy2', null=True, blank=True, on_delete=models.PROTECT,
-                                  verbose_name=ugettext_lazy('strategy2'))
+                                  verbose_name=gettext_lazy('strategy2'))
 
     strategy3_group = models.ForeignKey('strategies.Strategy3Group', null=True, blank=True, on_delete=models.PROTECT,
-                                        verbose_name=ugettext_lazy('strategy3 group'))
+                                        verbose_name=gettext_lazy('strategy3 group'))
     strategy3_subgroup = models.ForeignKey('strategies.Strategy3Subgroup', null=True, blank=True,
                                            on_delete=models.PROTECT,
-                                           verbose_name=ugettext_lazy('strategy3 subgroup'))
+                                           verbose_name=gettext_lazy('strategy3 subgroup'))
     strategy3 = models.ForeignKey('strategies.Strategy3', null=True, blank=True, on_delete=models.PROTECT,
-                                  verbose_name=ugettext_lazy('strategy3'))
+                                  verbose_name=gettext_lazy('strategy3'))
 
     thread_group = models.ForeignKey('chats.ThreadGroup', null=True, blank=True, on_delete=models.PROTECT,
-                                     verbose_name=ugettext_lazy('thread group'))
+                                     verbose_name=gettext_lazy('thread group'))
 
     transaction_type = models.ForeignKey('transactions.TransactionType', null=True, blank=True,
                                          on_delete=models.PROTECT,
-                                         verbose_name=ugettext_lazy('transaction type'))
+                                         verbose_name=gettext_lazy('transaction type'))
 
     transaction_type_group = models.ForeignKey('transactions.TransactionTypeGroup', null=True, blank=True,
                                                on_delete=models.PROTECT,
-                                               verbose_name=ugettext_lazy('transaction type group'))
+                                               verbose_name=gettext_lazy('transaction type group'))
 
     mismatch_portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.PROTECT,
                                            related_name='ecosystem_default_mismatch_portfolio',
-                                           verbose_name=ugettext_lazy('mismatch portfolio'))
+                                           verbose_name=gettext_lazy('mismatch portfolio'))
     mismatch_account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.PROTECT,
                                          related_name='ecosystem_default_mismatch_account',
-                                         verbose_name=ugettext_lazy('mismatch account'))
+                                         verbose_name=gettext_lazy('mismatch account'))
 
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True, on_delete=models.PROTECT,
-                                       verbose_name=ugettext_lazy('pricing policy'))
+                                       verbose_name=gettext_lazy('pricing policy'))
 
     # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
     #                                           on_delete=models.PROTECT,
-    #                                           verbose_name=ugettext_lazy('price download scheme'))
+    #                                           verbose_name=gettext_lazy('price download scheme'))
 
     instrument_class = models.ForeignKey('instruments.InstrumentClass', null=True, blank=True,
                                          on_delete=models.PROTECT,
-                                         verbose_name=ugettext_lazy('instrument class'))
+                                         verbose_name=gettext_lazy('instrument class'))
 
     # daily_pricing_model = models.ForeignKey('instruments.DailyPricingModel', null=True, blank=True,
     #                                         on_delete=models.PROTECT,
-    #                                         verbose_name=ugettext_lazy('daily pricing model'))
+    #                                         verbose_name=gettext_lazy('daily pricing model'))
 
     accrual_calculation_model = models.ForeignKey('instruments.AccrualCalculationModel', null=True, blank=True,
                                                   on_delete=models.PROTECT,
-                                                  verbose_name=ugettext_lazy('accrual calculation model'))
+                                                  verbose_name=gettext_lazy('accrual calculation model'))
 
     payment_size_detail = models.ForeignKey('instruments.PaymentSizeDetail', null=True, blank=True,
                                             on_delete=models.PROTECT,
-                                            verbose_name=ugettext_lazy('payment size detail'))
+                                            verbose_name=gettext_lazy('payment size detail'))
 
     periodicity = models.ForeignKey('instruments.Periodicity', null=True, blank=True,
                                     on_delete=models.PROTECT,
-                                    verbose_name=ugettext_lazy('periodicity'))
+                                    verbose_name=gettext_lazy('periodicity'))
 
     pricing_condition = models.ForeignKey('instruments.PricingCondition', null=True, blank=True,
                                             on_delete=models.PROTECT,
-                                            verbose_name=ugettext_lazy('pricing condition'))
+                                            verbose_name=gettext_lazy('pricing condition'))
 
 
 class Member(FakeDeletableModel):
@@ -1155,37 +1155,37 @@ class Member(FakeDeletableModel):
     EMAIL_ONLY = 3
     SHOW_ONLY = 4
     STATUS_CHOICES = (
-        (DO_NOT_NOTIFY, ugettext_lazy('Do not notify')),
-        (SHOW_AND_EMAIL, ugettext_lazy('Show & Email notifications')),
-        (EMAIL_ONLY, ugettext_lazy('Email notifications')),
-        (SHOW_ONLY, ugettext_lazy('Show notifications')),
+        (DO_NOT_NOTIFY, gettext_lazy('Do not notify')),
+        (SHOW_AND_EMAIL, gettext_lazy('Show & Email notifications')),
+        (EMAIL_ONLY, gettext_lazy('Email notifications')),
+        (SHOW_ONLY, gettext_lazy('Show notifications')),
     )
 
-    master_user = models.ForeignKey(MasterUser, related_name='members', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey(MasterUser, related_name='members', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-                             related_name='members', verbose_name=ugettext_lazy('user'))
+                             related_name='members', verbose_name=gettext_lazy('user'))
 
     username = models.CharField(max_length=255, blank=True, default='', editable=False,
-                                verbose_name=ugettext_lazy('username'))
+                                verbose_name=gettext_lazy('username'))
     first_name = models.CharField(max_length=30, blank=True, default='', editable=False,
-                                  verbose_name=ugettext_lazy('first name'))
+                                  verbose_name=gettext_lazy('first name'))
     last_name = models.CharField(max_length=30, blank=True, default='', editable=False,
-                                 verbose_name=ugettext_lazy('last name'))
-    email = models.EmailField(blank=True, default='', editable=False, verbose_name=ugettext_lazy('email'))
+                                 verbose_name=gettext_lazy('last name'))
+    email = models.EmailField(blank=True, default='', editable=False, verbose_name=gettext_lazy('email'))
 
     notification_level = models.PositiveSmallIntegerField(default=SHOW_ONLY, choices=STATUS_CHOICES, db_index=True,
-                                                          verbose_name=ugettext_lazy('notification level'))
+                                                          verbose_name=gettext_lazy('notification level'))
 
     interface_level = models.PositiveSmallIntegerField(default=20, db_index=True,
-                                                       verbose_name=ugettext_lazy('interface level'))
+                                                       verbose_name=gettext_lazy('interface level'))
 
-    join_date = models.DateTimeField(auto_now_add=True, verbose_name=ugettext_lazy('join date'))
-    is_owner = models.BooleanField(default=False, verbose_name=ugettext_lazy('is owner'))
-    is_admin = models.BooleanField(default=False, verbose_name=ugettext_lazy('is admin'))
+    join_date = models.DateTimeField(auto_now_add=True, verbose_name=gettext_lazy('join date'))
+    is_owner = models.BooleanField(default=False, verbose_name=gettext_lazy('is owner'))
+    is_admin = models.BooleanField(default=False, verbose_name=gettext_lazy('is admin'))
 
-    groups = models.ManyToManyField('Group', blank=True, related_name='members', verbose_name=ugettext_lazy('groups'))
+    groups = models.ManyToManyField('Group', blank=True, related_name='members', verbose_name=gettext_lazy('groups'))
 
-    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+    json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
     @property
     def data(self):
@@ -1207,8 +1207,8 @@ class Member(FakeDeletableModel):
     # permissions = models.ManyToManyField(Permission, blank=True)
 
     class Meta(FakeDeletableModel.Meta):
-        verbose_name = ugettext_lazy('member')
-        verbose_name_plural = ugettext_lazy('members')
+        verbose_name = gettext_lazy('member')
+        verbose_name_plural = gettext_lazy('members')
         unique_together = [
             ['master_user', 'user']
         ]
@@ -1237,14 +1237,14 @@ class Member(FakeDeletableModel):
 class OtpToken(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-                             related_name='otp_tokens', verbose_name=ugettext_lazy('OTP Token'))
+                             related_name='otp_tokens', verbose_name=gettext_lazy('OTP Token'))
 
-    name = models.CharField(max_length=80, verbose_name=ugettext_lazy('name'))
+    name = models.CharField(max_length=80, verbose_name=gettext_lazy('name'))
 
     secret = models.CharField(max_length=16, blank=True, default='', editable=False,
-                                verbose_name=ugettext_lazy('secret'))
+                                verbose_name=gettext_lazy('secret'))
 
-    is_active = models.BooleanField(default=False, verbose_name=ugettext_lazy('is active'))
+    is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
 
 
 class InviteToMasterUser(models.Model):
@@ -1258,19 +1258,19 @@ class InviteToMasterUser(models.Model):
                (DECLINED, 'Declined'),
                )
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='invites_to_master_user', verbose_name=ugettext_lazy('user'), on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='invites_to_master_user', verbose_name=gettext_lazy('user'), on_delete=models.CASCADE)
     from_member = models.ForeignKey(Member, related_name="invites_to_users",
-                                    verbose_name=ugettext_lazy('from_member'), on_delete=models.CASCADE)
+                                    verbose_name=gettext_lazy('from_member'), on_delete=models.CASCADE)
 
-    master_user = models.ForeignKey(MasterUser, related_name='invites_to_users', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey(MasterUser, related_name='invites_to_users', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
-    groups = models.ManyToManyField('Group', blank=True, related_name='invites', verbose_name=ugettext_lazy('groups'))
+    groups = models.ManyToManyField('Group', blank=True, related_name='invites', verbose_name=gettext_lazy('groups'))
 
     status = models.IntegerField(default=0, choices=STATUS_CHOICES)
 
     class Meta:
-        verbose_name = ugettext_lazy('invite to master user')
-        verbose_name_plural = ugettext_lazy('invites to master user')
+        verbose_name = gettext_lazy('invite to master user')
+        verbose_name_plural = gettext_lazy('invites to master user')
 
         unique_together = [
             ['user', 'master_user']
@@ -1282,21 +1282,21 @@ class InviteToMasterUser(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, related_name='profile',
-                                verbose_name=ugettext_lazy('user'), on_delete=models.CASCADE)
+                                verbose_name=gettext_lazy('user'), on_delete=models.CASCADE)
     language = models.CharField(max_length=LANGUAGE_MAX_LENGTH, default=settings.LANGUAGE_CODE,
-                                verbose_name=ugettext_lazy('language'))
+                                verbose_name=gettext_lazy('language'))
     timezone = models.CharField(max_length=TIMEZONE_MAX_LENGTH, default=settings.TIME_ZONE,
-                                verbose_name=ugettext_lazy('timezone'))
+                                verbose_name=gettext_lazy('timezone'))
 
-    two_factor_verification = models.BooleanField(default=False, verbose_name=ugettext_lazy('two factor verification'))
+    two_factor_verification = models.BooleanField(default=False, verbose_name=gettext_lazy('two factor verification'))
 
-    active_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=ugettext_lazy('master user'), on_delete=models.SET_NULL)
+    active_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=gettext_lazy('master user'), on_delete=models.SET_NULL)
 
     user_unique_id = models.UUIDField(null=True, blank=True)
 
     class Meta:
-        verbose_name = ugettext_lazy('profile')
-        verbose_name_plural = ugettext_lazy('profiles')
+        verbose_name = gettext_lazy('profile')
+        verbose_name_plural = gettext_lazy('profiles')
 
     def __str__(self):
         return self.user.username
@@ -1304,9 +1304,9 @@ class UserProfile(models.Model):
 
 class UsercodePrefix(models.Model):
 
-    master_user = models.ForeignKey(MasterUser, verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE )
-    value = models.CharField(max_length=80, verbose_name=ugettext_lazy('prefix'))
-    notes = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('notes'))
+    master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE )
+    value = models.CharField(max_length=80, verbose_name=gettext_lazy('prefix'))
+    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
 
 
 class Group(models.Model):
@@ -1318,17 +1318,17 @@ class Group(models.Model):
     # If user has is_admin: True he will see everything anyway
 
     ROLE_CHOICES = (
-        (ADMIN, ugettext_lazy('Admin')),
-        (USER, ugettext_lazy('User')),
+        (ADMIN, gettext_lazy('Admin')),
+        (USER, gettext_lazy('User')),
     )
 
-    master_user = models.ForeignKey(MasterUser, related_name='groups', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE )
-    name = models.CharField(max_length=80, verbose_name=ugettext_lazy('name'))
+    master_user = models.ForeignKey(MasterUser, related_name='groups', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE )
+    name = models.CharField(max_length=80, verbose_name=gettext_lazy('name'))
 
     role = models.PositiveSmallIntegerField(default=USER, choices=ROLE_CHOICES, db_index=True,
-                                                         verbose_name=ugettext_lazy('role'))
+                                                         verbose_name=gettext_lazy('role'))
 
-    permission_table_json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
+    permission_table_json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
     @property
     def permission_table(self):
@@ -1348,8 +1348,8 @@ class Group(models.Model):
             self.permission_table_json_data = None
 
     class Meta:
-        verbose_name = ugettext_lazy('group')
-        verbose_name_plural = ugettext_lazy('groups')
+        verbose_name = gettext_lazy('group')
+        verbose_name_plural = gettext_lazy('groups')
         unique_together = [
             ['master_user', 'name']
         ]
@@ -1439,13 +1439,13 @@ class Group(models.Model):
 
 class FakeSequence(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='fake_sequences',
-                                    verbose_name=ugettext_lazy('master user'),on_delete=models.CASCADE )
-    name = models.CharField(max_length=80, verbose_name=ugettext_lazy('name'))
-    value = models.PositiveIntegerField(default=0, verbose_name=ugettext_lazy('value'))
+                                    verbose_name=gettext_lazy('master user'),on_delete=models.CASCADE )
+    name = models.CharField(max_length=80, verbose_name=gettext_lazy('name'))
+    value = models.PositiveIntegerField(default=0, verbose_name=gettext_lazy('value'))
 
     class Meta:
-        verbose_name = ugettext_lazy('fake sequence')
-        verbose_name_plural = ugettext_lazy('fake sequences')
+        verbose_name = gettext_lazy('fake sequence')
+        verbose_name_plural = gettext_lazy('fake sequences')
         unique_together = [
             ['master_user', 'name']
         ]

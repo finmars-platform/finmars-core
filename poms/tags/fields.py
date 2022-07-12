@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 
 from poms.common.fields import SlugRelatedFilteredField
 from poms.obj_perms.fields import PrimaryKeyRelatedFilteredWithObjectPermissionField
@@ -26,7 +26,7 @@ class TagContentTypeField(SlugRelatedFilteredField):
             app_label, model = data.split('.')
             return self.get_queryset().get(app_label=app_label, model=model)
         except ObjectDoesNotExist:
-            self.fail('does_not_exist', slug_name=self.slug_field, value=smart_text(data))
+            self.fail('does_not_exist', slug_name=self.slug_field, value=smart_str(data))
         except (TypeError, ValueError):
             self.fail('invalid')
 

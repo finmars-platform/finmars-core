@@ -10,14 +10,13 @@ from poms.instruments.serializers import InstrumentViewSerializer, PricingPolicy
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord
-from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField
 
 from poms.users.fields import MasterUserField
 
 
 class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
-                          ModelWithUserCodeSerializer, ModelWithTagSerializer, ModelWithTimeStampSerializer):
+                          ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
 
     master_user = MasterUserField()
     accounts = AccountField(many=True, allow_null=True, required=False)
@@ -32,7 +31,6 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
             'is_deleted', 'accounts', 'responsibles', 'counterparties', 'transaction_types',
             'is_enabled',
 
-            'default_price'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -102,6 +100,7 @@ class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWith
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
             'is_deleted',  'is_enabled', 'portfolio', 'linked_instrument', 'valuation_pricing_policy', 'valuation_currency',
             'valuation_currency_object', 'portfolio_object', 'linked_instrument_object', 'valuation_pricing_policy_object',
+            'default_price'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -133,6 +132,7 @@ class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWi
             'portfolio', 'linked_instrument', 'valuation_pricing_policy', 'valuation_currency',
 
             'valuation_currency_object', 'portfolio_object', 'linked_instrument_object', 'valuation_pricing_policy_object',
+            'default_price'
 
         ]
 

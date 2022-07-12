@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from django.core.exceptions import ObjectDoesNotExist, FieldDoesNotExist
 from django.db.models import ProtectedError
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, ValidationError, PermissionDenied
@@ -22,7 +22,7 @@ class DestroyModelMixinExt(DestroyModelMixin):
             self.perform_destroy(instance)
         except ProtectedError:
             return Response({
-                api_settings.NON_FIELD_ERRORS_KEY: ugettext_lazy(
+                api_settings.NON_FIELD_ERRORS_KEY: gettext_lazy(
                     'Cannot delete instance because they are referenced through a protected foreign key'),
             }, status=status.HTTP_409_CONFLICT)
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -73,7 +73,7 @@ class BulkCreateModelMixin(CreateModelMixin):
     def bulk_create(self, request):
         data = request.data
         if not isinstance(data, list):
-            raise ValidationError(ugettext_lazy('Required list'))
+            raise ValidationError(gettext_lazy('Required list'))
 
         has_error = False
         serializers = []
@@ -102,7 +102,7 @@ class BulkUpdateModelMixin(UpdateModelMixin):
     def bulk_update(self, request):
         data = request.data
         if not isinstance(data, list):
-            raise ValidationError(ugettext_lazy('Required list'))
+            raise ValidationError(gettext_lazy('Required list'))
 
         partial = request.method.lower() == 'patch'
         # queryset = self.filter_queryset(self.get_queryset())
@@ -135,7 +135,7 @@ class BulkUpdateModelMixin(UpdateModelMixin):
                     errors.append(serializer.errors)
                 else:
                     errors.append({
-                        api_settings.NON_FIELD_ERRORS_KEY: ugettext_lazy('Not Found')
+                        api_settings.NON_FIELD_ERRORS_KEY: gettext_lazy('Not Found')
                     })
             raise ValidationError(errors)
         else:
@@ -154,7 +154,7 @@ class BulkSaveModelMixin(CreateModelMixin, UpdateModelMixin):
     def bulk_save(self, request):
         data = request.data
         if not isinstance(data, list):
-            raise ValidationError(ugettext_lazy('Required list'))
+            raise ValidationError(gettext_lazy('Required list'))
 
         partial = request.method.lower() == 'patch'
         queryset = self.filter_queryset(self.get_queryset())
@@ -191,7 +191,7 @@ class BulkSaveModelMixin(CreateModelMixin, UpdateModelMixin):
                     errors.append(serializer.errors)
                 else:
                     errors.append({
-                        api_settings.NON_FIELD_ERRORS_KEY: ugettext_lazy('Not Found')
+                        api_settings.NON_FIELD_ERRORS_KEY: gettext_lazy('Not Found')
                     })
             raise ValidationError(errors)
         else:

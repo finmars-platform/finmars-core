@@ -6,7 +6,7 @@ from django.db import models
 import pytz
 
 
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 
 import binascii
@@ -34,8 +34,8 @@ class AuthToken(models.Model):
         verbose_name="User",
     )
 
-    current_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=ugettext_lazy('master user'),  on_delete=models.SET_NULL)
-    current_member = models.ForeignKey(Member, null=True, blank=True, verbose_name=ugettext_lazy('member'),  on_delete=models.SET_NULL)
+    current_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=gettext_lazy('master user'),  on_delete=models.SET_NULL)
+    current_member = models.ForeignKey(Member, null=True, blank=True, verbose_name=gettext_lazy('member'),  on_delete=models.SET_NULL)
 
     created = models.DateTimeField("Created", auto_now_add=True)
 

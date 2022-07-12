@@ -1,6 +1,6 @@
 import json
 
-from django.utils.encoding import force_text
+from django.utils.encoding import force_str
 
 
 def send(recipients, message=None, actor=None, verb=None, action_object=None, target=None, data=None, throttle=False):
@@ -31,7 +31,7 @@ def send(recipients, message=None, actor=None, verb=None, action_object=None, ta
         n.recipient_member = recipient_member
         n.message = message
         n.actor = actor
-        n.verb = force_text(verb)
+        n.verb = force_str(verb)
         n.action_object = action_object
         n.target = target
         n.data = json.dumps(data, sort_keys=True) if data else None

@@ -1,7 +1,7 @@
 import logging
 from collections import OrderedDict
 
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from poms.common import formula
 from poms.transactions.serializers import TransactionSerializer
@@ -54,8 +54,8 @@ _l = logging.getLogger('poms.transactions.renderer')
 #                 _l.debug('Invalid display expression: transaction_type=%s, display_expr="%s"',
 #                          transaction_type.id, transaction_type.display_expr,
 #                          exc_info=True)
-#                 return ugettext_lazy('Invalid transaction type display expression.')
-#         return ugettext_lazy('Empty transaction type display expression.')
+#                 return gettext_lazy('Invalid transaction type display expression.')
+#         return gettext_lazy('Empty transaction type display expression.')
 #
 #     def _process_object(self, data):
 #         if isinstance(data, (list, tuple)):

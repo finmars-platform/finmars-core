@@ -44,7 +44,7 @@ from .filters import SchemeContentTypeFilter
 from .models import CsvDataImport, CsvImportScheme
 from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer, CsvDataFileImport
 
-from django.utils.translation import ugettext
+from django.utils.translation import gettext_lazy
 from logging import getLogger
 from openpyxl import load_workbook
 
@@ -83,7 +83,7 @@ class ProxyRequest(object):
         self.user = user
 
 
-def generate_file_report(instance, master_user, scheme, type, name):
+def generate_file_report(instance, master_user, scheme, type, name, procedure_instance):
     columns = ['Row number']
 
     columns = columns + instance.stats[0]['error_data']['columns']['imported_columns']
@@ -178,12 +178,20 @@ def generate_file_report(instance, master_user, scheme, type, name):
     current_date_time = now().strftime("%Y-%m-%d-%H-%M")
 
     file_name = 'file_report_%s.csv' % current_date_time
+    name = "%s %s" % (name, current_date_time)
 
     file_report = FileReport()
 
+    if procedure_instance:
+        file_name = 'file_report_%s_procedure_instance_%s.csv' % (current_date_time, str(procedure_instance.id))
+        name = "%s %s Procedure Instance %s" % (name, current_date_time, str(procedure_instance.id))
+    else:
+        file_name = 'file_report_%s.csv' % current_date_time
+        name = "%s %s" % (name, current_date_time)
+
     file_report.upload_file(file_name=file_name, text=result, master_user=master_user)
     file_report.master_user = master_user
-    file_report.name = "%s %s" % (name, current_date_time)
+    file_report.name = name
     file_report.file_name = file_name
     file_report.type = type
     file_report.notes = 'System File'
@@ -332,11 +340,11 @@ def get_row_data_converted(row, csv_fields, csv_row_dict_raw, context, conversio
 
             except (ExpressionEvalError, TypeError, Exception, KeyError):
 
-                csv_row_dict[csv_field.name] = ugettext('Invalid expression')
+                csv_row_dict[csv_field.name] = gettext_lazy('Invalid expression')
 
                 error = {
                     'name': csv_field.name,
-                    'value': ugettext('Invalid expression')
+                    'value': gettext_lazy('Invalid expression')
                 }
 
                 conversion_errors.append(error)
@@ -451,7 +459,7 @@ def process_csv_file(master_user,
 
     elif '.csv' in task_instance.filename or (execution_context and execution_context["started_by"] == 'procedure'):
 
-        delimiter = task_instance.delimiter.encode('utf-8').decode('unicode_escape')
+        delimiter = task_instance.scheme.delimiter.encode('utf-8').decode('unicode_escape')
 
         reader = csv.reader(file, delimiter=delimiter, quotechar=task_instance.quotechar,
                             strict=False, skipinitialspace=True)
@@ -516,7 +524,7 @@ def process_csv_file(master_user,
         if row_index == 0:
             first_row = row
 
-        if row_index != 0 or (celery_task.options_object and 'items' in celery_task.options_object):
+        if row_index != 0 or (celery_task and celery_task.options_object and 'items' in celery_task.options_object):
 
             try:
 
@@ -599,7 +607,7 @@ def process_csv_file(master_user,
 
                             inputs_messages.append(message)
 
-                        error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
+                        error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + gettext_lazy(
                             'Can\'t process fields: %(messages)s') % {
                                                          'messages': ', '.join(str(m) for m in inputs_messages)
                                                      }
@@ -764,7 +772,7 @@ def process_csv_file(master_user,
                                              "reason": "Invalid Expression"}
                                         )
 
-                                        executed_expressions.append(ugettext('Invalid expression'))
+                                        executed_expressions.append(gettext_lazy('Invalid expression'))
 
                                 # _l.debug('executed_expression %s' % executed_expression)
 
@@ -790,7 +798,7 @@ def process_csv_file(master_user,
                                          "reason": "Invalid Expression"}
                                     )
 
-                                    executed_expressions.append(ugettext('Invalid expression'))
+                                    executed_expressions.append(gettext_lazy('Invalid expression'))
 
                                 attr_type = GenericAttributeType.objects.get(pk=executed_attr['dynamic_attribute_id'])
 
@@ -852,7 +860,7 @@ def process_csv_file(master_user,
                             inputs_messages.append(message)
 
                         error_row['level'] = 'error'
-                        error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + ugettext(
+                        error_row['error_message'] = error_row['error_message'] + '\n' + '\n' + gettext_lazy(
                             'Can\'t process fields: %(inputs)s') % {
                                                          'inputs': ', '.join(str(m) for m in inputs_messages)}
 
@@ -884,7 +892,7 @@ def process_csv_file(master_user,
 
             except Exception as e:
 
-                error_row['error_message'] = error_row['error_message'] + ugettext(
+                error_row['error_message'] = error_row['error_message'] + gettext_lazy(
                     'Unhandled Error. %s' % e)
 
             finally:
@@ -992,10 +1000,10 @@ class ValidateHandler:
 
                 error_row['error_reaction'] = 'Continue import'
                 error_row['level'] = 'error'
-                error_row['error_message'] = error_row['error_message'] + ugettext(
+                error_row['error_message'] = error_row['error_message'] + gettext_lazy(
                     'Validation error %(error)s ') % {
                                                  'error': 'Cannot create attribute. Attribute type %s, value %s. Exception: %s' % (
-                                                 attr_type_user_code, result_attr['executed_expression'], e)
+                                                     attr_type_user_code, result_attr['executed_expression'], e)
                                              }
 
     def instance_full_clean(self, scheme, result, error_handler, error_row):
@@ -1018,7 +1026,7 @@ class ValidateHandler:
 
             error_row['error_reaction'] = 'Continue import'
             error_row['level'] = 'error'
-            error_row['error_message'] = error_row['error_message'] + ugettext(
+            error_row['error_message'] = error_row['error_message'] + gettext_lazy(
                 'Validation error %(error)s ') % {
                                              'error': 'Cannot create instance'
                                          }
@@ -1050,7 +1058,7 @@ class ValidateHandler:
 
             error_row['error_reaction'] = 'Continue import'
             error_row['level'] = 'error'
-            error_row['error_message'] = error_row['error_message'] + ugettext(
+            error_row['error_message'] = error_row['error_message'] + gettext_lazy(
                 'Validation error %(error)s ') % {
                                              'error': e
                                          }
@@ -1078,14 +1086,14 @@ class ValidateHandler:
 
             error_row['level'] = 'error'
             error_row['error_reaction'] = 'Skipped'
-            error_row['error_message'] = error_row['error_message'] + str(ugettext(
+            error_row['error_message'] = error_row['error_message'] + str(gettext_lazy(
                 'Entry already exists '))
 
         return result_item, error_row
 
     def _row_count(self, file, instance):
 
-        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+        delimiter = instance.scheme.delimiter.encode('utf-8').decode('unicode_escape')
 
         reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
                             strict=False, skipinitialspace=True)
@@ -1101,10 +1109,15 @@ class ValidateHandler:
 
         _l.debug('ValidateHandler.process: initialized')
 
-        instance = CsvDataFileImport(task_id=celery_task.id, master_user=celery_task.master_user,
-                                     member=celery_task.member)
-
         scheme = CsvImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
+
+        instance = CsvDataFileImport(task_id=celery_task.id,
+                                     master_user=celery_task.master_user,
+                                     member=celery_task.member,
+                                     scheme=scheme,
+                                     file_path=celery_task.options_object['file_path'],
+                                     filename=celery_task.options_object['filename']
+                                     )
 
         error_handler = scheme.error_handler
         missing_data_handler = scheme.missing_data_handler
@@ -1118,9 +1131,16 @@ class ValidateHandler:
 
         try:
             with SFS.open(instance.file_path, 'rb') as f:
+
+                _l.info('ValidateHandler.proces nstance.file_path %s' % instance.file_path)
+                _l.info('ValidateHandler.proces f %s' % f)
+
                 with NamedTemporaryFile() as tmpf:
+
                     for chunk in f.chunks():
                         tmpf.write(chunk)
+                    tmpf.flush()
+
                     tmpf.flush()
 
                     if '.csv' in instance.filename:
@@ -1173,7 +1193,7 @@ class ValidateHandler:
 
             _l.debug(e)
             _l.debug('Can\'t process file', exc_info=True)
-            instance.error_message = ugettext("Invalid file format or file already deleted.")
+            instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
         finally:
             # import_file_storage.delete(instance.file_path)
             SFS.delete(instance.file_path)
@@ -1328,7 +1348,7 @@ class ImportHandler:
 
             error_row['error_reaction'] = 'Continue import'
             error_row['level'] = 'error'
-            error_row['error_message'] = error_row['error_message'] + ugettext(
+            error_row['error_message'] = error_row['error_message'] + gettext_lazy(
                 'Cannot create simple instance %(error)s ') % {
                                              'error': e}
 
@@ -1504,7 +1524,7 @@ class ImportHandler:
 
             error_row['error_reaction'] = 'Continue import'
             error_row['level'] = 'error'
-            error_row['error_message'] = error_row['error_message'] + ugettext(
+            error_row['error_message'] = error_row['error_message'] + gettext_lazy(
                 'Validation error %(error)s ') % {
                                              'error': e
                                          }
@@ -1542,7 +1562,7 @@ class ImportHandler:
 
             error_row['error_reaction'] = 'Continue import'
             error_row['level'] = 'error'
-            error_row['error_message'] = error_row['error_message'] + str(ugettext(
+            error_row['error_message'] = error_row['error_message'] + str(gettext_lazy(
                 'Validation error %(error)s ') % {
                                                                               'error': e
                                                                           })
@@ -1609,7 +1629,7 @@ class ImportHandler:
 
     def _row_count(self, file, instance):
 
-        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+        delimiter = instance.scheme.delimiter.encode('utf-8').decode('unicode_escape')
 
         reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
                             strict=False, skipinitialspace=True)
@@ -1627,10 +1647,14 @@ class ImportHandler:
 
         _l.debug('ImportHandler.process: initialized')
 
-        instance = CsvDataFileImport(task_id=celery_task.id, master_user=celery_task.master_user,
-                                     member=celery_task.member)
-
         scheme = CsvImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
+
+        instance = CsvDataFileImport(task_id=celery_task.id,
+                                     master_user=celery_task.master_user,
+                                     member=celery_task.member,
+                                     scheme=scheme,
+                                     file_path=celery_task.options_object['file_path'],
+                                     filename=celery_task.options_object['filename'])
 
         error_handler = scheme.error_handler
         missing_data_handler = scheme.missing_data_handler
@@ -1652,7 +1676,7 @@ class ImportHandler:
 
         try:
 
-            if celery_task.options_object and 'items' in celery_task.options_object:
+            if celery_task and celery_task.options_object and 'items' in celery_task.options_object:
 
                 _l.info("Parse json data")
 
@@ -1733,14 +1757,15 @@ class ImportHandler:
 
             _l.debug(e)
             _l.debug('Can\'t process file', exc_info=True)
-            instance.error_message = ugettext("Invalid file format or file already deleted.")
+            instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
         finally:
             # import_file_storage.delete(instance.file_path)
             if instance.file_path:
                 SFS.delete(instance.file_path)
 
         if instance.stats and len(instance.stats):
-            instance.stats_file_report = generate_file_report(instance, master_user, scheme, 'csv_import.import', 'Simple Data Import')
+            instance.stats_file_report = generate_file_report(instance, master_user, scheme, 'csv_import.import',
+                                                              'Simple Data Import', procedure_instance)
 
             send_websocket_message(data={
                 'type': 'simple_import_status',
@@ -1780,7 +1805,6 @@ class ImportHandler:
                                     source="Simple Import Service",
                                     text="User %s Import Finished" % member.username,
                                     file_report_id=instance.stats_file_report)
-
 
         if procedure_instance and procedure_instance.schedule_instance:
             procedure_instance.schedule_instance.run_next_procedure()
@@ -1947,7 +1971,7 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
     with transaction.atomic():
 
         _l.info('data_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (
-        procedure_instance_id, celery_task_id))
+            procedure_instance_id, celery_task_id))
 
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
         from poms.procedures.models import RequestDataFileProcedureInstance
@@ -1972,14 +1996,16 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
             celery_task.options_object = options_object
             celery_task.save()
 
-            text = "Data File Procedure %s. File is received. Importing JSON" % (
+            text = "Data File Procedure %s. Procedure Instance %s. File is received. Importing JSON" % (
+                procedure_instance.id,
                 procedure_instance.procedure.user_code)
 
             send_system_message(master_user=procedure_instance.master_user,
                                 source="Data File Procedure Service",
                                 text=text)
 
-            transaction.on_commit(lambda: data_csv_file_import.apply_async(kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
+            transaction.on_commit(lambda: data_csv_file_import.apply_async(
+                kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
 
 
         except Exception as e:
@@ -2237,7 +2263,7 @@ def set_accruals_for_instrument(instrument_object, data_object, instrument_type_
 # Global method for create instrument object from Instrument Type Defaults
 def handler_instrument_object(source_data, instrument_type, master_user, ecosystem_default, attribute_types):
     object_data = {}
-    object_data = source_data.copy()
+    # object_data = source_data.copy()
 
     object_data['instrument_type'] = instrument_type.id
 
@@ -2259,6 +2285,11 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     # 
     #     object_data['accrued_currency'] = ecosystem_default.currency.id
 
+    object_data['public_name'] = source_data['public_name']
+    object_data['user_code'] = source_data['user_code']
+    object_data['name'] = source_data['name']
+    object_data['short_name'] = source_data['short_name']
+
     object_data['accrued_currency'] = object_data['pricing_currency']
     object_data['co_directional_exposure_currency'] = object_data['pricing_currency']
     object_data['counter_directional_exposure_currency'] = object_data['pricing_currency']
@@ -2277,6 +2308,12 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     #
     #     object_data['pricing_condition'] = ecosystem_default.pricing_condition.id
 
+    if 'maturity_price' in source_data:
+        try:
+            object_data['maturity_price'] = float(source_data['maturity_price'])
+        except Exception as e:
+            _l.warn("Could not set maturity price")
+
     if 'maturity' in source_data and source_data['maturity'] != '':
         object_data['maturity_date'] = source_data['maturity']
 
@@ -2291,50 +2328,60 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
     # object_data['attributes'] = []
 
+    _l.info("Settings attributes for instrument done attribute_types %s " % attribute_types)
+
     _tmp_attributes_dict = {}
 
     for item in object_data['attributes']:
         _tmp_attributes_dict[item['attribute_type']] = item
 
-    for attribute_type in attribute_types:
+    if 'attributes' in source_data:
 
-        lower_user_code = attribute_type.user_code.lower()
+        for attribute_type in attribute_types:
 
-        if lower_user_code in source_data:
+            lower_user_code = attribute_type.user_code.lower()
 
-            attribute = {
-                'attribute_type': attribute_type.id,
-            }
+            for key, value in source_data['attributes'].items():
 
-            if attribute_type.value_type == 10:
-                attribute['value_string'] = source_data[lower_user_code]
+                _l_key = key.lower()
 
-            if attribute_type.value_type == 20:
-                attribute['value_float'] = source_data[lower_user_code]
+                if _l_key == lower_user_code:
 
-            if attribute_type.value_type == 30:
+                    attribute = {
+                        'attribute_type': attribute_type.id,
+                    }
 
-                try:
+                    if attribute_type.value_type == 10:
+                        attribute['value_string'] = value
 
-                    classifier = GenericClassifier.objects.get(attribute_type=attribute_type,
-                                                               name=source_data[lower_user_code])
+                    if attribute_type.value_type == 20:
+                        attribute['value_float'] = value
 
-                    attribute['classifier'] = classifier.id
+                    if attribute_type.value_type == 30:
 
-                except Exception as e:
-                    attribute['classifier'] = None
+                        try:
 
-            if attribute_type.value_type == 40:
-                attribute['value_date'] = source_data[lower_user_code]
+                            classifier = GenericClassifier.objects.get(attribute_type=attribute_type,
+                                                                       name=value)
 
-            _tmp_attributes_dict[attribute['attribute_type']] = attribute
+                            attribute['classifier'] = classifier.id
+
+                        except Exception as e:
+                            attribute['classifier'] = None
+
+                    if attribute_type.value_type == 40:
+                        attribute['value_date'] = value
+
+                    _tmp_attributes_dict[attribute['attribute_type']] = attribute
 
     object_data['attributes'] = []
+
+    _l.info('_tmp_attributes_dict %s' % _tmp_attributes_dict)
 
     for key, value in _tmp_attributes_dict.items():
         object_data['attributes'].append(value)
 
-    _l.info("Settings attributes for instrument done")
+    _l.info("Settings attributes for instrument done object_data %s " % object_data)
 
     object_data['master_user'] = master_user.id
     object_data['manual_pricing_formulas'] = []
@@ -2515,7 +2562,7 @@ class UnifiedImportHandler():
 
     def _row_count(self, file, instance):
 
-        delimiter = instance.delimiter.encode('utf-8').decode('unicode_escape')
+        delimiter = instance.scheme.delimiter.encode('utf-8').decode('unicode_escape')
 
         reader = csv.reader(file, delimiter=delimiter, quotechar=instance.quotechar,
                             strict=False, skipinitialspace=True)
@@ -2627,7 +2674,7 @@ class UnifiedImportHandler():
         errors = []
         results = []
 
-        delimiter = self.instance.delimiter.encode('utf-8').decode('unicode_escape')
+        delimiter = self.instance.scheme.delimiter.encode('utf-8').decode('unicode_escape')
 
         reader = csv.reader(file, delimiter=delimiter, quotechar=self.instance.quotechar,
                             strict=False, skipinitialspace=True)
@@ -2700,7 +2747,7 @@ class UnifiedImportHandler():
 
             _l.debug(e)
             _l.debug('Can\'t process file', exc_info=True)
-            self.instance.error_message = ugettext("Invalid file format or file already deleted.")
+            self.instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
         finally:
             # import_file_storage.delete(instance.file_path)
             SFS.delete(self.instance.file_path)

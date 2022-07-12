@@ -7,7 +7,7 @@ from poms.common import formula
 from poms.integrations.models import Task
 # from poms.integrations.storage import import_file_storage
 from tempfile import NamedTemporaryFile
-from django.utils.translation import ugettext
+from django.utils.translation import gettext_lazy
 from django.db import transaction
 from poms.common.utils import date_now
 
@@ -92,7 +92,7 @@ def process_bank_file_for_reconcile(self, instance):
                     error_rows['error_data']['data']['imported_columns'].append(row[i.column - 1])
                 except:
                     _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
-                    error_rows['error_data']['data']['imported_columns'].append(ugettext('Invalid expression'))
+                    error_rows['error_data']['data']['imported_columns'].append(gettext_lazy('Invalid expression'))
                     inputs_error.append(i)
 
             if inputs_error:
@@ -100,7 +100,7 @@ def process_bank_file_for_reconcile(self, instance):
                 error_rows['level'] = 'error'
 
                 error_rows['error_message'] = error_rows['error_message'] + str(
-                    ugettext('Can\'t process fields: %(inputs)s') % {
+                    gettext_lazy('Can\'t process fields: %(inputs)s') % {
                         'inputs': ', '.join('[' + i.name + '] (Can\'t find input)' for i in inputs_error)
                     })
                 instance.error_rows.append(error_rows)
@@ -124,7 +124,7 @@ def process_bank_file_for_reconcile(self, instance):
                 except:
                     _l.debug('can\'t process conversion input: %s|%s', i.name, i.column, exc_info=True)
                     error_rows['error_data']['data']['converted_imported_columns'].append(
-                        ugettext('Invalid expression'))
+                        gettext_lazy('Invalid expression'))
                     inputs_conversion_error.append(i)
 
             if inputs_conversion_error:
@@ -132,7 +132,7 @@ def process_bank_file_for_reconcile(self, instance):
                 error_rows['level'] = 'error'
 
                 error_rows['error_message'] = error_rows['error_message'] + str(
-                    ugettext('Can\'t process fields: %(inputs)s') % {
+                    gettext_lazy('Can\'t process fields: %(inputs)s') % {
                         'inputs': ', '.join(
                             '[' + i.name + '] (Imported column conversion expression, value; "' + i.name_exp + '")' for
                             i in inputs_conversion_error)
@@ -154,7 +154,7 @@ def process_bank_file_for_reconcile(self, instance):
                 error_rows['level'] = 'error'
 
                 _l.debug('can\'t process selector value expression', exc_info=True)
-                error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + str(ugettext(
+                error_rows['error_message'] = error_rows['error_message'] + '\n' + '\n' + str(gettext_lazy(
                     'Can\'t eval rule expression'))
                 instance.error_rows.append(error_rows)
                 if instance.break_on_error:
@@ -311,7 +311,7 @@ def process_bank_file_for_reconcile(self, instance):
 
     except:
         _l.debug('Can\'t process file', exc_info=True)
-        instance.error_message = ugettext("Invalid file format or file already deleted.")
+        instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
     finally:
         SFS.delete(instance.file_path)
 

@@ -1,6 +1,6 @@
 import logging
 
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from poms.reports.builders.transaction_item import TransactionReportItem, TransactionReport
 
@@ -12,9 +12,9 @@ class CashFlowProjectionReportItem(TransactionReportItem):
     BALANCE = 2
     ROLLING = 3
     TYPE_CHOICES = (
-        (DEFAULT, ugettext_lazy('Default')),
-        (BALANCE, ugettext_lazy('Balance')),
-        (ROLLING, ugettext_lazy('Rolling')),
+        (DEFAULT, gettext_lazy('Default')),
+        (BALANCE, gettext_lazy('Balance')),
+        (ROLLING, gettext_lazy('Rolling')),
     )
 
     def __init__(self, report, type=DEFAULT, trn=None, cash_consideration_before=0.0, cash_consideration_after=0.0,

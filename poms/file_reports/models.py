@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from poms.file_reports.storage import file_reports_storage
 from poms.users.models import MasterUser
@@ -22,12 +22,12 @@ from tempfile import NamedTemporaryFile
 class FileReport(models.Model):
     name = models.CharField(max_length=255)
     type = models.CharField(max_length=255, blank=True, default='', )
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'),
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
-    file_url = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('File URL'))
+    file_url = models.TextField(blank=True, default='', verbose_name=gettext_lazy('File URL'))
     file_name = models.CharField(max_length=255, blank=True, default='')
-    notes = models.TextField(blank=True, default='', verbose_name=ugettext_lazy('notes'))
+    notes = models.TextField(blank=True, default='', verbose_name=gettext_lazy('notes'))
 
     created_at = models.DateTimeField(auto_now_add=True)
 

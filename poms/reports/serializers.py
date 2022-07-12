@@ -633,7 +633,7 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 #                 try:
 #                     value = formula.safe_eval(expr, names=names, context=self.context)
 #                 except formula.InvalidExpression:
-#                     value = ugettext('Invalid expression')
+#                     value = gettext_lazy('Invalid expression')
 #                 return value
 #         return None
 #
@@ -654,9 +654,9 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 #     member = HiddenMemberField()
 #     pricing_policy = PricingPolicyField()
 #     pl_first_date = serializers.DateField(required=False, allow_null=True,
-#                                           help_text=ugettext_lazy('First date for pl report'))
+#                                           help_text=gettext_lazy('First date for pl report'))
 #     report_date = serializers.DateField(required=False, allow_null=True, default=date_now,
-#                                         help_text=ugettext_lazy('Report date or second date for pl report'))
+#                                         help_text=gettext_lazy('Report date or second date for pl report'))
 #     report_currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
 #     cost_method = serializers.PrimaryKeyRelatedField(queryset=CostMethod.objects, allow_null=True, allow_empty=True)
 #
@@ -686,9 +686,9 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 #     date_field = serializers.ChoiceField(required=False, allow_null=True,
 #                                          initial='transaction_date', default='transaction_date',
 #                                          choices=(
-#                                              ('transaction_date', ugettext_lazy('Transaction date')),
-#                                              ('accounting_date', ugettext_lazy('Accounting date')),
-#                                              ('cash_date', ugettext_lazy('Cash date')),
+#                                              ('transaction_date', gettext_lazy('Transaction date')),
+#                                              ('accounting_date', gettext_lazy('Accounting date')),
+#                                              ('cash_date', gettext_lazy('Cash date')),
 #                                          ))
 #
 #     items = ReportItemSerializer(many=True, read_only=True)
@@ -720,7 +720,7 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 #
 #         pl_first_date = attrs.get('pl_first_date', None)
 #         if pl_first_date and pl_first_date >= attrs['report_date']:
-#             raise ValidationError(ugettext('"pl_first_date" must be lesser than "report_date"'))
+#             raise ValidationError(gettext_lazy('"pl_first_date" must be lesser than "report_date"'))
 #
 #         # if settings.DEBUG:
 #         #     if not attrs.get('pl_first_date', None):

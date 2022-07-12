@@ -244,7 +244,7 @@ def calculate_portfolio_register_record(master_users=None):
                             # let's MOVE block NAV here
                             record.dealing_price_valuation_currency = record.nav_previous_day_valuation_currency / record.n_shares_previous_day
                         else:
-                            record.dealing_price_valuation_currency = portfolio_register.portfolio.default_price
+                            record.dealing_price_valuation_currency = portfolio_register.default_price
 
                     if trn.position_size_with_sign:
                         record.n_shares_added = trn.position_size_with_sign
@@ -318,40 +318,48 @@ def calculate_portfolio_register_price_history(master_users=None):
 
                     for date in dates:
 
-                        price_history = None
-                        registry_record = PortfolioRegisterRecord.objects.filter(instrument=portfolio_register.linked_instrument, transaction_date__lte=date).order_by('-transaction_date')[0]
-
                         try:
 
-                            price_history = PriceHistory.objects.get(instrument=portfolio_register.linked_instrument, date=date,
-                                                                     pricing_policy=pricing_policy)
+                            price_history = None
+                            registry_record = PortfolioRegisterRecord.objects.filter(instrument=portfolio_register.linked_instrument, transaction_date__lte=date).order_by('-transaction_date', '-transaction_code')[0]
+
+                            try:
+
+                                price_history = PriceHistory.objects.get(instrument=portfolio_register.linked_instrument, date=date,
+                                                                         pricing_policy=pricing_policy)
+                            except Exception as e:
+                                price_history = PriceHistory(instrument=portfolio_register.linked_instrument, date=date,
+                                                             pricing_policy=pricing_policy)
+
+
+                            balance_report = calculate_simple_balance_report(date, portfolio_register, pricing_policy)
+
+                            nav = 0
+                            cash_flow = 0
+
+                            for item in balance_report.items:
+
+                                if item['market_value']:
+                                    nav = nav + item['market_value']
+
+                            cash_flow = calculate_cash_flow(master_user, date, pricing_policy, portfolio_register)
+
+
+                            # principal_price = nav / (registry_record.n_shares_previous_day + registry_record.n_shares_added)
+                            principal_price = nav / registry_record.rolling_shares_of_the_day
+
+
+                            price_history.nav = nav
+                            price_history.cash_flow = cash_flow
+                            price_history.principal_price = principal_price
+
+                            price_history.save()
+
                         except Exception as e:
-                            price_history = PriceHistory(instrument=portfolio_register.linked_instrument, date=date,
-                                                         pricing_policy=pricing_policy)
-
-
-                        balance_report = calculate_simple_balance_report(date, portfolio_register, pricing_policy)
-
-                        nav = 0
-                        cash_flow = 0
-
-                        for item in balance_report.items:
-
-                            if item['market_value']:
-                                nav = nav + item['market_value']
-
-                        cash_flow = calculate_cash_flow(master_user, date, pricing_policy, portfolio_register)
-
-
-                        principal_price = nav / (registry_record.n_shares_previous_day + registry_record.n_shares_added)
-
-
-                        price_history.nav = nav
-                        price_history.cash_flow = cash_flow
-                        price_history.principal_price = principal_price
-
-                        price_history.save()
+                            _l.info('calculate_portfolio_register_price_history.error %s ' % e)
+                            _l.info('date %s' % date)
 
     except Exception as e:
 
-        _l.error(traceback.format_exc())
+        _l.error("calculate_portfolio_register_price_history.exception %s" % e)
+        _l.error("calculate_portfolio_register_price_history.exception %s" % traceback.format_exc())

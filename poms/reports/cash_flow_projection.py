@@ -7,7 +7,7 @@
 #
 # from django.db import transaction
 # from django.db.models import Q
-# from django.utils.translation import ugettext
+# from django.utils.translation import gettext_lazy
 #
 # from poms.accounts.models import Account, AccountType
 # from poms.common import formula
@@ -177,7 +177,7 @@
 #                     }
 #                     value = formula.safe_eval(cf.expr, names=names, context=self.report.context)
 #                 except formula.InvalidExpression:
-#                     value = ugettext('Invalid expression')
+#                     value = gettext_lazy('Invalid expression')
 #             else:
 #                 value = None
 #             res.append({

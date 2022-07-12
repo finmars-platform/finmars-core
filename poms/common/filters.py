@@ -15,8 +15,8 @@ from django.db.models import Q
 
 from django.contrib.contenttypes.models import ContentType
 
-from django.utils.translation import ugettext_lazy as _
-from django.utils import six
+from django.utils.translation import gettext_lazy as _
+from six import string_types
 from django.core.exceptions import ImproperlyConfigured
 
 from django.core.exceptions import FieldDoesNotExist
@@ -509,7 +509,7 @@ class OrderingPostFilter(BaseFilterBackend):
 
     def get_default_ordering(self, view):
         ordering = getattr(view, 'ordering', None)
-        if isinstance(ordering, six.string_types):
+        if isinstance(ordering, string_types):
             return (ordering,)
         return ordering
 
@@ -558,7 +558,7 @@ class OrderingPostFilter(BaseFilterBackend):
             ]
         else:
             valid_fields = [
-                (item, item) if isinstance(item, six.string_types) else item
+                (item, item) if isinstance(item, string_types) else item
                 for item in valid_fields
             ]
 

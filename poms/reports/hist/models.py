@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from django.db import models
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from poms.users.models import MasterUser
 
@@ -13,15 +13,15 @@ from poms.users.models import MasterUser
 #     COST = 3
 #     YTM = 4
 #     CLASSES = (
-#         (BALANCE, 'BALANCE', ugettext_lazy('BALANCE')),
-#         (P_L, 'P_L', ugettext_lazy('P&L')),
-#         (COST, 'COST', ugettext_lazy('COST')),
-#         (YTM, 'YTM', ugettext_lazy('YTM')),
+#         (BALANCE, 'BALANCE', gettext_lazy('BALANCE')),
+#         (P_L, 'P_L', gettext_lazy('P&L')),
+#         (COST, 'COST', gettext_lazy('COST')),
+#         (YTM, 'YTM', gettext_lazy('YTM')),
 #     )
 #
 #     class Meta(AbstractClassModel.Meta):
-#         verbose_name = ugettext_lazy('report class')
-#         verbose_name_plural = ugettext_lazy('report classes')
+#         verbose_name = gettext_lazy('report class')
+#         verbose_name_plural = gettext_lazy('report classes')
 
 
 class CustomField(models.Model):
@@ -31,8 +31,8 @@ class CustomField(models.Model):
     expr = models.CharField(max_length=255)
 
     class Meta:
-        verbose_name = ugettext_lazy('custom field')
-        verbose_name_plural = ugettext_lazy('custom fields')
+        verbose_name = gettext_lazy('custom field')
+        verbose_name_plural = gettext_lazy('custom fields')
         unique_together = [
             ['master_user', 'name']
         ]
@@ -45,40 +45,40 @@ class BalanceReport(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='balance_reports')
 
     class Meta:
-        verbose_name = ugettext_lazy('balance report')
-        verbose_name_plural = ugettext_lazy('balance reports')
+        verbose_name = gettext_lazy('balance report')
+        verbose_name_plural = gettext_lazy('balance reports')
 
 
 class PLReport(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='pl_reports')
 
     class Meta:
-        verbose_name = ugettext_lazy('p&l report')
-        verbose_name_plural = ugettext_lazy('p&l report')
+        verbose_name = gettext_lazy('p&l report')
+        verbose_name_plural = gettext_lazy('p&l report')
 
 
 class PerformanceReport(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='performance_reports')
 
     class Meta:
-        verbose_name = ugettext_lazy('performance report')
-        verbose_name_plural = ugettext_lazy('performance reports')
+        verbose_name = gettext_lazy('performance report')
+        verbose_name_plural = gettext_lazy('performance reports')
 
 
 class CashFlowReport(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='cashflow_reports')
 
     class Meta:
-        verbose_name = ugettext_lazy('cash flow report')
-        verbose_name_plural = ugettext_lazy('cash flow reports')
+        verbose_name = gettext_lazy('cash flow report')
+        verbose_name_plural = gettext_lazy('cash flow reports')
 
 
 class TransactionReport(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='transaction_reports')
 
     class Meta:
-        verbose_name = ugettext_lazy('transaction report')
-        verbose_name_plural = ugettext_lazy('transaction reports')
+        verbose_name = gettext_lazy('transaction report')
+        verbose_name_plural = gettext_lazy('transaction reports')
 
 
 # # ----------------------------------------------------------------------------------------------------------------------

@@ -5,19 +5,19 @@ import uuid
 from django.conf import settings
 from django.contrib.sessions.base_session import AbstractBaseSession
 from django.db import models
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from poms.http_sessions.backends.db import SessionStore
 from poms.users.models import MasterUser, Member
 
 
 class Session(AbstractBaseSession):
-    id = models.UUIDField(unique=True, default=uuid.uuid4, verbose_name=ugettext_lazy('public id'))
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, verbose_name=ugettext_lazy('user'), on_delete=models.CASCADE)
-    user_agent = models.CharField(max_length=255, null=True, blank=True, verbose_name=ugettext_lazy('user agent'))
-    user_ip = models.GenericIPAddressField(null=True, blank=True, verbose_name=ugettext_lazy('user ip'))
-    current_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=ugettext_lazy('master user'),  on_delete=models.SET_NULL)
-    current_member = models.ForeignKey(Member, null=True, blank=True, verbose_name=ugettext_lazy('member'),  on_delete=models.SET_NULL)
+    id = models.UUIDField(unique=True, default=uuid.uuid4, verbose_name=gettext_lazy('public id'))
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, verbose_name=gettext_lazy('user'), on_delete=models.CASCADE)
+    user_agent = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user agent'))
+    user_ip = models.GenericIPAddressField(null=True, blank=True, verbose_name=gettext_lazy('user ip'))
+    current_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=gettext_lazy('master user'),  on_delete=models.SET_NULL)
+    current_member = models.ForeignKey(Member, null=True, blank=True, verbose_name=gettext_lazy('member'),  on_delete=models.SET_NULL)
 
     class Meta(AbstractBaseSession.Meta):
         ordering = ['expire_date']

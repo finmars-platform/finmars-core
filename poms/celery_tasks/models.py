@@ -1,5 +1,5 @@
 from django.db import models
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 import json
 from django.core.serializers.json import DjangoJSONEncoder
@@ -23,10 +23,10 @@ class CeleryTask(TimeStampedModel):
         (STATUS_TIMEOUT, 'TIMEOUT'),
     )
 
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
-    member = models.ForeignKey('users.Member', verbose_name=ugettext_lazy('member'), null=True, blank=True, on_delete=models.SET_NULL)
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    member = models.ForeignKey('users.Member', verbose_name=gettext_lazy('member'), null=True, blank=True, on_delete=models.SET_NULL)
 
-    is_system_task = models.BooleanField(default=False, verbose_name=ugettext_lazy("is system task"))
+    is_system_task = models.BooleanField(default=False, verbose_name=gettext_lazy("is system task"))
 
     celery_task_id = models.CharField(null=True, max_length=255)
     status = models.CharField(null=True, max_length=1, default=STATUS_INIT, choices=STATUS_CHOICES,
@@ -34,12 +34,12 @@ class CeleryTask(TimeStampedModel):
     type = models.CharField(max_length=50, blank=True, null=True)
 
     parent = models.ForeignKey('self', null=True, blank=True, related_name='children',
-                               verbose_name=ugettext_lazy('parent'), on_delete=models.SET_NULL)
+                               verbose_name=gettext_lazy('parent'), on_delete=models.SET_NULL)
 
-    options = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('options'))
-    result = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('result'))
+    options = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('options'))
+    result = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('result'))
 
-    file_report = models.ForeignKey('file_reports.FileReport',null=True, blank=True, verbose_name=ugettext_lazy('file report'), on_delete=models.SET_NULL)
+    file_report = models.ForeignKey('file_reports.FileReport',null=True, blank=True, verbose_name=gettext_lazy('file report'), on_delete=models.SET_NULL)
 
     class Meta:
         ordering = ['-created']

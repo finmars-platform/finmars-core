@@ -3,6 +3,8 @@ from django.views.decorators.cache import never_cache
 from rest_framework.views import APIView
 
 from concurrent.futures import ThreadPoolExecutor
+from django.utils.decorators import method_decorator
+
 
 from healthcheck.handlers import DatabasePlugin, MemoryUsagePlugin, DiskUsagePlugin, UptimePlugin, CeleryPlugin
 
@@ -49,7 +51,7 @@ class HealthcheckView(APIView):
 
         return errors
 
-    @never_cache
+    @method_decorator(never_cache, name='dispatch')
     def get(self, request, *args, **kwargs):
 
         data = {}

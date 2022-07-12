@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from poms.common.tests import BaseApiWithPermissionTestCase, BaseApiWithAttributesTestCase, \
-    BaseAttributeTypeApiTestCase, BaseApiWithTagsTestCase, BaseNamedModelTestCase
+    BaseAttributeTypeApiTestCase, BaseNamedModelTestCase
 from poms.portfolios.models import Portfolio
 
 
@@ -26,7 +26,7 @@ class PortfolioAttributeTypeApiTestCase(BaseAttributeTypeApiTestCase):
         # self._change_permission = 'change_portfolioattributetype'
 
 
-class PortfolioApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase,
+class PortfolioApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase,
                            BaseApiWithAttributesTestCase):
     model = Portfolio
 

@@ -3033,7 +3033,8 @@ class PLReportBuilderSql:
 
             if settings.DEBUG:
                 with open(os.path.join(settings.BASE_DIR, 'query_result_before_execution_pl.txt'), 'w') as the_file:
-                    the_file.write(query)
+                    the_file.\
+                        write(query)
 
             cursor.execute(query)
 
@@ -3459,7 +3460,7 @@ class PLReportBuilderSql:
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions', 'responsibles', 'counterparties', 'transaction_types', 'accounts', 'tags') \
+        ).defer('object_permissions', 'responsibles', 'counterparties', 'transaction_types', 'accounts') \
             .filter(master_user=self.instance.master_user) \
             .filter(
             id__in=ids)

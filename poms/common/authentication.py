@@ -1,0 +1,65 @@
+import datetime
+
+import pytz
+from django.conf import settings
+from django.utils import timezone
+from rest_framework.authentication import TokenAuthentication, get_authorization_header
+from rest_framework.exceptions import AuthenticationFailed
+from django.utils.translation import gettext_lazy as _
+from rest_framework import HTTP_HEADER_ENCODING, exceptions
+from django.contrib.auth import user_logged_in, user_login_failed, get_user_model
+
+from poms.auth_tokens.models import AuthToken
+
+import logging
+
+from poms.common.keycloak import KeycloakConnect
+
+_l = logging.getLogger('poms.common')
+
+
+
+
+class KeycloakAuthentication(TokenAuthentication):
+
+    def authenticate(self, request):
+        auth = get_authorization_header(request).split()
+
+        if not auth or auth[0].lower() != self.keyword.lower().encode():
+            return None
+
+        if len(auth) == 1:
+            msg = _('Invalid token header. No credentials provided.')
+            raise exceptions.AuthenticationFailed(msg)
+        elif len(auth) > 2:
+            msg = _('Invalid token header. Token string should not contain spaces.')
+            raise exceptions.AuthenticationFailed(msg)
+
+        try:
+            token = auth[1].decode()
+        except UnicodeError:
+            msg = _('Invalid token header. Token string should not contain invalid characters.')
+            raise exceptions.AuthenticationFailed(msg)
+
+        return self.authenticate_credentials(token)
+
+    def authenticate_credentials(self, key, request=None):
+
+        self.keycloak = KeycloakConnect(server_url=settings.KEYCLOAK_SERVER_URL,
+                                        realm_name=settings.KEYCLOAK_REALM,
+                                        client_id=settings.KEYCLOAK_CLIENT_ID,
+                                        client_secret_key=settings.KEYCLOAK_CLIENT_SECRET_KEY)
+
+        if not self.keycloak.is_token_active(key):
+
+            msg = _('Invalid or expired token.')
+            raise exceptions.AuthenticationFailed(msg)
+
+        userinfo = self.keycloak.userinfo(key)
+
+        user_model = get_user_model()
+
+        user = user_model.objects.get(username=userinfo['preferred_username'])
+
+        return user, key
+

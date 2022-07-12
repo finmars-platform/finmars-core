@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model, authenticate, update_session_aut
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.utils import translation
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.fields import empty
@@ -58,7 +58,7 @@ class EmailSerializer(serializers.Serializer):
 
 
 class PasswordTokenSerializer(serializers.Serializer):
-    password = serializers.CharField(label=ugettext_lazy("Password"), style={'input_type': 'password'})
+    password = serializers.CharField(label=gettext_lazy("Password"), style={'input_type': 'password'})
     token = serializers.CharField()
 
 
@@ -71,7 +71,7 @@ class MasterUserCreateSerializer(serializers.Serializer):
         description = validated_data.get('description')
 
         if MasterUser.objects.filter(name=name).exists():
-            error = {"name": [ugettext_lazy('Name already in use.')]}
+            error = {"name": [gettext_lazy('Name already in use.')]}
             raise serializers.ValidationError(error)
 
         return validated_data
@@ -117,7 +117,7 @@ class MasterUserCopySerializer(serializers.Serializer):
             name = validated_data.get('name')
 
             if MasterUser.objects.filter(name=name).exists():
-                error = {"name": [ugettext_lazy('Name already in use.')]}
+                error = {"name": [gettext_lazy('Name already in use.')]}
                 raise serializers.ValidationError(error)
 
         return MasterUserCopy(**validated_data)
@@ -149,17 +149,17 @@ class UserRegisterSerializer(serializers.Serializer):
         # print('account_type %s' % account_type)
 
         if settings.REGISTER_ACCESS_KEY != access_key:
-            error = {"access_key": [ugettext_lazy('Access key is invalid.')]}
+            error = {"access_key": [gettext_lazy('Access key is invalid.')]}
             raise serializers.ValidationError(error)
 
         user_model = get_user_model()
 
         if user_model.objects.filter(username=username).exists():
-            error = {"username": [ugettext_lazy('User already exist.')]}
+            error = {"username": [gettext_lazy('User already exist.')]}
             raise serializers.ValidationError(error)
 
         if user_model.objects.filter(email=email).exists():
-            error = {"email": [ugettext_lazy('Email already exist.')]}
+            error = {"email": [gettext_lazy('Email already exist.')]}
             raise serializers.ValidationError(error)
 
         user = user_model.objects.create_user(username=username, password=password, email=email)
@@ -184,7 +184,7 @@ class UserRegisterSerializer(serializers.Serializer):
 #             new_password = validated_data['new_password']
 #             user.set_password(new_password)
 #             return validated_data
-#         raise PermissionDenied(ugettext_lazy('Invalid password'))
+#         raise PermissionDenied(gettext_lazy('Invalid password'))
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -245,7 +245,7 @@ class UserSetPasswordSerializer(serializers.Serializer):
         new_password = attrs['new_password']
 
         if not user.check_password(password):
-            raise serializers.ValidationError({'password': ugettext_lazy('bad password')})
+            raise serializers.ValidationError({'password': gettext_lazy('bad password')})
 
         try:
             validate_password(new_password, user)

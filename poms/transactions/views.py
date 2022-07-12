@@ -4,7 +4,7 @@ import django_filters
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models import Prefetch, Q
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
@@ -420,13 +420,13 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         context_allocation_balance = None
         context_allocation_pl = None
 
-        context_position = request.query_params.get('context_position', None)
+        context_position_size = request.query_params.get('context_position_size', None)
 
-        if context_position:
+        if context_position_size:
             try:
-                context_position = float(context_position)
+                context_position_size = float(context_position_size)
             except Exception as e:
-                context_position = None
+                context_position_size = None
 
         context_effective_date = request.query_params.get('context_effective_date', None)
         context_notification_date = request.query_params.get('context_notification_date', None)
@@ -517,7 +517,7 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
             'context_strategy1': context_strategy1,
             'context_strategy2': context_strategy2,
             'context_strategy3': context_strategy3,
-            'context_position': context_position,
+            'context_position_size': context_position_size,
             'context_effective_date': context_effective_date,
             # 'notification_date': context_notification_date, # not in context variables
             # 'final_date': context_final_date,
@@ -1464,7 +1464,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
     def bulk_update_properties(self, request):
         data = request.data
         if not isinstance(data, list):
-            raise ValidationError(ugettext_lazy('Required list'))
+            raise ValidationError(gettext_lazy('Required list'))
 
         partial = request.method.lower() == 'patch'
         # queryset = self.filter_queryset(self.get_queryset())
@@ -1497,7 +1497,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                     errors.append(serializer.errors)
                 else:
                     errors.append({
-                        api_settings.NON_FIELD_ERRORS_KEY: ugettext_lazy('Not Found')
+                        api_settings.NON_FIELD_ERRORS_KEY: gettext_lazy('Not Found')
                     })
             raise ValidationError(errors)
         else:

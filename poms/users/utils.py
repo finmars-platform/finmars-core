@@ -106,24 +106,9 @@ def get_master_user_and_member(request):
         raise PermissionDenied()
 
     try:
-        token = AuthToken.objects.get(key=request.auth.key)
 
-        master_user_id = token.current_master_user_id
-        member_id = token.current_member_id
-
-        member = None
-        master_user = None
-
-        if master_user_id is not None:
-
-            master_user = MasterUser.objects.get(id=master_user_id)
-
-        if member_id is not None:
-
-            try:
-                member = Member.objects.get(user=request.user, master_user=master_user_id)
-            except Member.DoesNotExist:
-                return None, master_user
+        member = Member.objects.get(user=request.user)
+        master_user = member.master_user
 
         return member, master_user
 
@@ -132,6 +117,37 @@ def get_master_user_and_member(request):
         _l.debug('get_master_user_and_member: token not found')
 
         raise NotFound()
+
+    # if not request.user.is_authenticated:
+    #     raise PermissionDenied()
+    #
+    # try:
+    #     token = AuthToken.objects.get(key=request.auth.key)
+    #
+    #     master_user_id = token.current_master_user_id
+    #     member_id = token.current_member_id
+    #
+    #     member = None
+    #     master_user = None
+    #
+    #     if master_user_id is not None:
+    #
+    #         master_user = MasterUser.objects.get(id=master_user_id)
+    #
+    #     if member_id is not None:
+    #
+    #         try:
+    #             member = Member.objects.get(user=request.user, master_user=master_user_id)
+    #         except Member.DoesNotExist:
+    #             return None, master_user
+    #
+    #     return member, master_user
+    #
+    # except AuthToken.DoesNotExist:
+    #
+    #     _l.debug('get_master_user_and_member: token not found')
+    #
+    #     raise NotFound()
 
 
 # def get_master_user(request):

@@ -4,7 +4,7 @@ from functools import update_wrapper
 
 from django import forms
 from django.conf import settings
-from django.conf.urls import url
+from django.urls import re_path
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.contrib.auth.admin import UserAdmin
@@ -13,7 +13,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db.models import F
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 from poms.common.admin import AbstractModelAdmin
 from poms.instruments.models import EventScheduleConfig
@@ -115,38 +115,38 @@ class MasterUserAdmin(AbstractModelAdmin):
             cloner = FullDataCloner(mu)
             cloner.clone()
 
-    clone_data.short_description = ugettext_lazy("Clone selected master users")
+    clone_data.short_description = gettext_lazy("Clone selected master users")
 
     def generate_events(self, request, queryset):
         from poms.instruments.tasks import generate_events
         generate_events.apply_async(kwargs={'master_users': [mu.pk for mu in queryset]})
 
-    generate_events.short_description = ugettext_lazy("Generate and check events")
+    generate_events.short_description = gettext_lazy("Generate and check events")
 
     def patch_currencies(self, request, queryset):
         for mu in queryset:
             mu.patch_currencies()
 
-    patch_currencies.short_description = ugettext_lazy("Patch currencies")
+    patch_currencies.short_description = gettext_lazy("Patch currencies")
 
     def patch_currencies_with_overwrites(self, request, queryset):
         for mu in queryset:
             mu.patch_currencies(True, True)
 
-    patch_currencies_with_overwrites.short_description = ugettext_lazy(
+    patch_currencies_with_overwrites.short_description = gettext_lazy(
         "Patch currencies (and overwrite names and reference_for_pricing)")
 
     def patch_bloomberg_currency_mappings(self, request, queryset):
         for mu in queryset:
             mu.patch_bloomberg_currency_mappings()
 
-    patch_bloomberg_currency_mappings.short_description = ugettext_lazy("Patch bloomberg mapping")
+    patch_bloomberg_currency_mappings.short_description = gettext_lazy("Patch bloomberg mapping")
 
     def patch_bloomberg_currency_mappings_with_overwrites(self, request, queryset):
         for mu in queryset:
             mu.patch_bloomberg_currency_mappings(True)
 
-    patch_bloomberg_currency_mappings_with_overwrites.short_description = ugettext_lazy(
+    patch_bloomberg_currency_mappings_with_overwrites.short_description = gettext_lazy(
         "Patch bloomberg mapping (and overwrite value)")
 
     def set_activate_link(self, obj):
@@ -175,14 +175,14 @@ class MasterUserAdmin(AbstractModelAdmin):
         info = self.model._meta.app_label, self.model._meta.model_name
 
         urls = [
-                   url(r'^(.+)/set_active/$', wrap(self.set_active_view), name='%s_%s_setactive' % info),
-                   url(r'^(.+)/clear_active/$', wrap(self.clear_active_view), name='%s_%s_clearactive' % info),
+                   re_path(r'^(.+)/set_active/$', wrap(self.set_active_view), name='%s_%s_setactive' % info),
+                   re_path(r'^(.+)/clear_active/$', wrap(self.clear_active_view), name='%s_%s_clearactive' % info),
                ] + urls
         return urls
 
     def set_active_view(self, request, object_id, form_url='', extra_context=None):
         self.set_active_master_user(request, object_id)
-        self.message_user(request, ugettext_lazy("Active master user successful set."))
+        self.message_user(request, gettext_lazy("Active master user successful set."))
         if 'HTTP_REFERER' in request.META:
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         else:
@@ -190,7 +190,7 @@ class MasterUserAdmin(AbstractModelAdmin):
 
     def clear_active_view(self, request, object_id, form_url='', extra_context=None):
         self.set_active_master_user(request, None)
-        self.message_user(request, ugettext_lazy("Active master user successful unset."))
+        self.message_user(request, gettext_lazy("Active master user successful unset."))
         if 'HTTP_REFERER' in request.META:
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         else:

@@ -8,7 +8,7 @@ from logging import getLogger
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
-from django.utils.translation import ugettext, ugettext_lazy
+from django.utils.translation import gettext_lazy, gettext_lazy
 from rest_framework import serializers
 from rest_framework.fields import empty
 from rest_framework.validators import UniqueTogetherValidator
@@ -230,8 +230,6 @@ class InstrumentDownloadSchemeSerializer(ModelWithUserCodeSerializer, ModelWithT
 
     def save_inputs(self, instance, inputs):
 
-
-
         pk_set = set()
         for input_values in inputs:
             input_id = input_values.pop('id', None)
@@ -324,7 +322,7 @@ class PriceDownloadSchemeViewSerializer(serializers.ModelSerializer):
 #             UniqueTogetherValidator(
 #                 queryset=CurrencyMapping.objects.all(),
 #                 fields=('master_user', 'provider', 'value'),
-#                 message=ugettext_lazy('The fields provider and value must make a unique set.')
+#                 message=gettext_lazy('The fields provider and value must make a unique set.')
 #             )
 #         ]
 #
@@ -351,7 +349,7 @@ class PriceDownloadSchemeViewSerializer(serializers.ModelSerializer):
 #             UniqueTogetherValidator(
 #                 queryset=InstrumentTypeMapping.objects.all(),
 #                 fields=('master_user', 'provider', 'value'),
-#                 message=ugettext_lazy('The fields provider and value must make a unique set.')
+#                 message=gettext_lazy('The fields provider and value must make a unique set.')
 #             )
 #         ]
 #
@@ -381,7 +379,7 @@ class PriceDownloadSchemeViewSerializer(serializers.ModelSerializer):
 #             UniqueTogetherValidator(
 #                 queryset=InstrumentAttributeValueMapping.objects.all(),
 #                 fields=('master_user', 'provider', 'value'),
-#                 message=ugettext_lazy('The fields provider and value must make a unique set.')
+#                 message=gettext_lazy('The fields provider and value must make a unique set.')
 #             )
 #         ]
 #
@@ -422,7 +420,7 @@ class PriceDownloadSchemeViewSerializer(serializers.ModelSerializer):
 #             UniqueTogetherValidator(
 #                 queryset=AccrualCalculationModelMapping.objects.all(),
 #                 fields=('master_user', 'provider', 'value'),
-#                 message=ugettext_lazy('The fields provider and value must make a unique set.')
+#                 message=gettext_lazy('The fields provider and value must make a unique set.')
 #             )
 #         ]
 #
@@ -448,7 +446,7 @@ class PriceDownloadSchemeViewSerializer(serializers.ModelSerializer):
 #             UniqueTogetherValidator(
 #                 queryset=PeriodicityMapping.objects.all(),
 #                 fields=('master_user', 'provider', 'value'),
-#                 message=ugettext_lazy('The fields provider and value must make a unique set.')
+#                 message=gettext_lazy('The fields provider and value must make a unique set.')
 #             )
 #         ]
 #
@@ -475,7 +473,7 @@ class AbstractMappingSerializer(serializers.ModelSerializer):
         #     UniqueTogetherValidator(
         #         queryset=CurrencyMapping.objects.all(),
         #         fields=('master_user', 'provider', 'value'),
-        #         message=ugettext_lazy('The fields provider and value must make a unique set.')
+        #         message=gettext_lazy('The fields provider and value must make a unique set.')
         #     )
         # ]
 
@@ -493,7 +491,7 @@ class AbstractMappingSerializer(serializers.ModelSerializer):
             UniqueTogetherValidator(
                 queryset=model.objects.all(),
                 fields=('master_user', 'provider', 'value'),
-                message=ugettext_lazy('The fields provider and value must make a unique set.')
+                message=gettext_lazy('The fields provider and value must make a unique set.')
             )
         )
 
@@ -517,7 +515,7 @@ class AbstractClassifierMappingSerializer(serializers.ModelSerializer):
         #     UniqueTogetherValidator(
         #         queryset=CurrencyMapping.objects.all(),
         #         fields=('master_user', 'provider', 'value'),
-        #         message=ugettext_lazy('The fields provider and value must make a unique set.')
+        #         message=gettext_lazy('The fields provider and value must make a unique set.')
         #     )
         # ]
 
@@ -535,7 +533,7 @@ class AbstractClassifierMappingSerializer(serializers.ModelSerializer):
             UniqueTogetherValidator(
                 queryset=model.objects.all(),
                 fields=('master_user', 'provider', 'value', 'attribute_type'),
-                message=ugettext_lazy('The fields provider, value and attribute_type must make a unique set.')
+                message=gettext_lazy('The fields provider, value and attribute_type must make a unique set.')
             )
         )
 
@@ -1111,14 +1109,14 @@ class ImportInstrumentSerializer(serializers.Serializer):
         except ProviderException:
             raise serializers.ValidationError(
                 {'instrument_download_scheme':
-                     ugettext('Check "%(provider)s" provider configuration.') % {
+                     gettext_lazy('Check "%(provider)s" provider configuration.') % {
                          'provider': instrument_download_scheme.provider}
                  })
 
         if not provider.is_valid_reference(instrument_code):
             raise serializers.ValidationError(
                 {'instrument_code':
-                     ugettext('Invalid value for "%(provider)s" provider.') % {
+                     gettext_lazy('Invalid value for "%(provider)s" provider.') % {
                          'reference': instrument_code,
                          'provider': instrument_download_scheme.provider}
                  })
@@ -1128,9 +1126,9 @@ class ImportInstrumentSerializer(serializers.Serializer):
             try:
                 task_result_overrides = json.loads(task_result_overrides)
             except ValueError:
-                raise serializers.ValidationError({'task_result_overrides': ugettext('Invalid JSON string.')})
+                raise serializers.ValidationError({'task_result_overrides': gettext_lazy('Invalid JSON string.')})
         if not isinstance(task_result_overrides, dict):
-            raise serializers.ValidationError({'task_result_overrides': ugettext('Invalid value.')})
+            raise serializers.ValidationError({'task_result_overrides': gettext_lazy('Invalid value.')})
 
         task_result_overrides = {k: v for k, v in task_result_overrides.items()
                                  if k in instrument_download_scheme.fields}
@@ -1404,8 +1402,8 @@ class ImportPricingSerializer(serializers.Serializer):
         date_to = attrs.get('date_to', yesterday) or yesterday
         if date_from > date_to:
             raise serializers.ValidationError({
-                'date_from': ugettext('Invalid date range'),
-                'date_to': ugettext('Invalid date range'),
+                'date_from': gettext_lazy('Invalid date range'),
+                'date_to': gettext_lazy('Invalid date range'),
             })
 
         balance_date = attrs.get('balance_date', date_to) or date_to
@@ -1907,7 +1905,7 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
 
                 # TODO check why is that?
                 # if field0.transaction_type_input.transaction_type_id != rule.transaction_type_id:
-                #     raise serializers.ValidationError(ugettext('Invalid transaction type input. (Hacker has detected!)'))
+                #     raise serializers.ValidationError(gettext_lazy('Invalid transaction type input. (Hacker has detected!)'))
 
                 field0.save()
                 pk_set.add(field0.id)
@@ -2015,7 +2013,7 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
                 SFS.save(file_path, file)
                 validated_data['file_path'] = file_path
             else:
-                raise serializers.ValidationError({'file': ugettext('Required field.')})
+                raise serializers.ValidationError({'file': gettext_lazy('Required field.')})
 
         return ComplexTransactionCsvFileImport(**validated_data)
 
@@ -2093,7 +2091,7 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
 #                 SFS.save(file_path, file)
 #                 validated_data['file_path'] = file_path
 #             else:
-#                 raise serializers.ValidationError({'file': ugettext('Required field.')})
+#                 raise serializers.ValidationError({'file': gettext_lazy('Required field.')})
 #
 #         return ComplexTransactionCsvFileImport(**validated_data)
 #

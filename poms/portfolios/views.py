@@ -23,8 +23,6 @@ from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegist
 from poms.portfolios.serializers import PortfolioSerializer, PortfolioLightSerializer, PortfolioEvSerializer, \
     PortfolioRegisterSerializer, PortfolioRegisterEvSerializer, PortfolioRegisterRecordSerializer, \
     PortfolioRegisterRecordEvSerializer, CalculateRecordsSerializer
-from poms.tags.filters import TagFilter
-from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import TransactionType, TransactionTypeGroup
 from poms.users.filters import OwnerByMasterUserFilter
 from rest_framework.decorators import action
@@ -65,7 +63,6 @@ class PortfolioFilterSet(FilterSet):
     responsible = ModelExtWithPermissionMultipleChoiceFilter(model=Responsible, field_name='responsibles')
     counterparty = ModelExtWithPermissionMultipleChoiceFilter(model=Counterparty, field_name='counterparties')
     transaction_type = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType, field_name='transaction_types')
-    tag = TagFilter(model=Portfolio)
     member = ObjectPermissionMemberFilter(object_permission_model=Portfolio)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Portfolio)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Portfolio)
@@ -86,7 +83,6 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
         Prefetch('counterparties', queryset=Counterparty.objects.select_related('group')),
         Prefetch('transaction_types', queryset=TransactionType.objects.select_related('group')),
         get_attributes_prefetch(),
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Portfolio),
             ('accounts', Account),
@@ -136,7 +132,6 @@ class PortfolioEvFilterSet(FilterSet):
     responsible = ModelExtWithPermissionMultipleChoiceFilter(model=Responsible, field_name='responsibles')
     counterparty = ModelExtWithPermissionMultipleChoiceFilter(model=Counterparty, field_name='counterparties')
     transaction_type = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType, field_name='transaction_types')
-    tag = TagFilter(model=Portfolio)
     member = ObjectPermissionMemberFilter(object_permission_model=Portfolio)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Portfolio)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Portfolio)

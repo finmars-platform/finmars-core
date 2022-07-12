@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from datetime import timedelta
 
-from django.utils.translation import ugettext
+from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 
 from poms.accounts.fields import AccountField
@@ -93,20 +93,20 @@ class TransactionReportSerializer(serializers.Serializer):
 
     date_field = serializers.ChoiceField(required=False, allow_null=True,
                                          choices=(
-                                             ('transaction_date', ugettext('Transaction date')),
-                                             ('accounting_date', ugettext('Accounting date')),
-                                             ('cash_date', ugettext('Cash date')),
-                                             ('date', ugettext('Date')),
-                                             ('user_date_1', ugettext('User Date 1')),
-                                             ('user_date_2', ugettext('User Date 2')),
-                                             ('user_date_3', ugettext('User Date 3')),
-                                             ('user_date_4', ugettext('User Date 4')),
-                                             ('user_date_5', ugettext('User Date 5')),
-                                             ('user_date_6', ugettext('User Date 6')),
-                                             ('user_date_7', ugettext('User Date 7')),
-                                             ('user_date_8', ugettext('User Date 8')),
-                                             ('user_date_9', ugettext('User Date 9')),
-                                             ('user_date_10', ugettext('User Date 10')),
+                                             ('transaction_date', gettext_lazy('Transaction date')),
+                                             ('accounting_date', gettext_lazy('Accounting date')),
+                                             ('cash_date', gettext_lazy('Cash date')),
+                                             ('date', gettext_lazy('Date')),
+                                             ('user_date_1', gettext_lazy('User Date 1')),
+                                             ('user_date_2', gettext_lazy('User Date 2')),
+                                             ('user_date_3', gettext_lazy('User Date 3')),
+                                             ('user_date_4', gettext_lazy('User Date 4')),
+                                             ('user_date_5', gettext_lazy('User Date 5')),
+                                             ('user_date_6', gettext_lazy('User Date 6')),
+                                             ('user_date_7', gettext_lazy('User Date 7')),
+                                             ('user_date_8', gettext_lazy('User Date 8')),
+                                             ('user_date_9', gettext_lazy('User Date 9')),
+                                             ('user_date_10', gettext_lazy('User Date 10')),
                                          ))
 
     begin_date = serializers.DateField(required=False, allow_null=True)
@@ -242,14 +242,14 @@ class TransactionReportSerializer(serializers.Serializer):
                                 try:
                                     value = formula.safe_eval(expr, names=names, context=self.context)
                                 except formula.InvalidExpression:
-                                    value = ugettext('Invalid expression')
+                                    value = gettext_lazy('Invalid expression')
                             else:
                                 value = None
 
                             if not cf['user_code'] in custom_fields_names:
                                 custom_fields_names[cf['user_code']] = value
                             else:
-                                if custom_fields_names[cf['user_code']] == None or custom_fields_names[cf['user_code']] == ugettext('Invalid expression'):
+                                if custom_fields_names[cf['user_code']] == None or custom_fields_names[cf['user_code']] == gettext_lazy('Invalid expression'):
                                     custom_fields_names[cf['user_code']] = value
 
                     names['custom_fields'] = custom_fields_names
@@ -268,7 +268,7 @@ class TransactionReportSerializer(serializers.Serializer):
                                     try:
                                         value = formula.safe_eval('str(item)', names={'item': value}, context=self.context)
                                     except formula.InvalidExpression:
-                                        value = ugettext('Invalid expression')
+                                        value = gettext_lazy('Invalid expression')
                                 else:
                                     value = None
 
@@ -278,7 +278,7 @@ class TransactionReportSerializer(serializers.Serializer):
                                     try:
                                         value = formula.safe_eval('float(item)', names={'item': value}, context=self.context)
                                     except formula.InvalidExpression:
-                                        value = ugettext('Invalid expression')
+                                        value = gettext_lazy('Invalid expression')
                                 else:
                                     value = None
                             elif cf['value_type'] == 40:
@@ -287,7 +287,7 @@ class TransactionReportSerializer(serializers.Serializer):
                                     try:
                                         value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value}, context=self.context)
                                     except formula.InvalidExpression:
-                                        value = ugettext('Invalid expression')
+                                        value = gettext_lazy('Invalid expression')
                                 else:
                                     value = None
 
@@ -434,20 +434,20 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
 
     date_field = serializers.ChoiceField(required=False, allow_null=True,
                                          choices=(
-                                             ('transaction_date', ugettext('Transaction date')),
-                                             ('accounting_date', ugettext('Accounting date')),
-                                             ('cash_date', ugettext('Cash date')),
-                                             ('date', ugettext('Date')),
-                                             ('user_date_1', ugettext('User Date 1')),
-                                             ('user_date_2', ugettext('User Date 2')),
-                                             ('user_date_3', ugettext('User Date 3')),
-                                             ('user_date_4', ugettext('User Date 4')),
-                                             ('user_date_5', ugettext('User Date 5')),
-                                             # ('user_date_6', ugettext('User Date 6')),
-                                             # ('user_date_7', ugettext('User Date 7')),
-                                             # ('user_date_8', ugettext('User Date 8')),
-                                             # ('user_date_9', ugettext('User Date 9')),
-                                             # ('user_date_10', ugettext('User Date 10')),
+                                             ('transaction_date', gettext_lazy('Transaction date')),
+                                             ('accounting_date', gettext_lazy('Accounting date')),
+                                             ('cash_date', gettext_lazy('Cash date')),
+                                             ('date', gettext_lazy('Date')),
+                                             ('user_date_1', gettext_lazy('User Date 1')),
+                                             ('user_date_2', gettext_lazy('User Date 2')),
+                                             ('user_date_3', gettext_lazy('User Date 3')),
+                                             ('user_date_4', gettext_lazy('User Date 4')),
+                                             ('user_date_5', gettext_lazy('User Date 5')),
+                                             # ('user_date_6', gettext_lazy('User Date 6')),
+                                             # ('user_date_7', gettext_lazy('User Date 7')),
+                                             # ('user_date_8', gettext_lazy('User Date 8')),
+                                             # ('user_date_9', gettext_lazy('User Date 9')),
+                                             # ('user_date_10', gettext_lazy('User Date 10')),
                                          ))
 
     begin_date = serializers.DateField(required=False, allow_null=True, initial=date_now() - timedelta(days=365), default=date_now() - timedelta(days=365))
@@ -603,7 +603,7 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
                                     try:
                                         value = formula.safe_eval(expr, names=names, context=self.context)
                                     except formula.InvalidExpression:
-                                        value = ugettext('Invalid expression')
+                                        value = gettext_lazy('Invalid expression')
                                 else:
                                     value = None
 
@@ -611,7 +611,7 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
                                     custom_fields_names[cf['user_code']] = value
                                 else:
                                     if custom_fields_names[cf['user_code']] == None or custom_fields_names[
-                                        cf['user_code']] == ugettext('Invalid expression'):
+                                        cf['user_code']] == gettext_lazy('Invalid expression'):
                                         custom_fields_names[cf['user_code']] = value
 
                         names['custom_fields'] = custom_fields_names
@@ -630,7 +630,7 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
                                         try:
                                             value = formula.safe_eval('str(item)', names={'item': value}, context=self.context)
                                         except formula.InvalidExpression:
-                                            value = ugettext('Invalid expression')
+                                            value = gettext_lazy('Invalid expression')
                                     else:
                                         value = None
 
@@ -640,7 +640,7 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
                                         try:
                                             value = formula.safe_eval('float(item)', names={'item': value}, context=self.context)
                                         except formula.InvalidExpression:
-                                            value = ugettext('Invalid expression')
+                                            value = gettext_lazy('Invalid expression')
                                     else:
                                         value = None
                                 elif cf['value_type'] == 40:
@@ -649,7 +649,7 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
                                         try:
                                             value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value}, context=self.context)
                                         except formula.InvalidExpression:
-                                            value = ugettext('Invalid expression')
+                                            value = gettext_lazy('Invalid expression')
                                     else:
                                         value = None
 

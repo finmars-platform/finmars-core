@@ -14,7 +14,7 @@ import datetime
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from celery.schedules import crontab
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 import base64
 # from botocore.exceptions import ClientError
@@ -146,7 +146,6 @@ INSTALLED_APPS = [
     # 'two_factor',
     'django_celery_results',
     'django_celery_beat',
-    # 'debug_toolbar',
 ]
 
 if SERVER_TYPE == 'local':
@@ -172,11 +171,10 @@ MIDDLEWARE = [
 
     'corsheaders.middleware.CorsMiddleware',
     'corsheaders.middleware.CorsPostCsrfMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 
     'poms.http_sessions.middleware.SessionMiddleware',
     'poms.common.middleware.CommonMiddleware',
-    'poms.common.middleware.CustomExceptionMiddleware'
+    'poms.common.middleware.CustomExceptionMiddleware',
     # 'poms.users.middleware.AuthenticationMiddleware',
     # 'poms.users.middleware.TimezoneMiddleware',
     # 'poms.users.middleware.LocaleMiddleware',
@@ -216,6 +214,10 @@ TEMPLATES = [
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
             ],
+            'libraries' : {
+                'staticfiles': 'django.templatetags.static',
+            }
+
         },
     },
 ]
@@ -267,10 +269,10 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en'
 LANGUAGES = [
-    ('en', ugettext_lazy('English')),
-    # ('es', ugettext_lazy('Spanish')),
-    # ('de', ugettext_lazy('Deutsch')),
-    # ('ru', ugettext_lazy('Russian')),
+    ('en', gettext_lazy('English')),
+    # ('es', gettext_lazy('Spanish')),
+    # ('de', gettext_lazy('Deutsch')),
+    # ('ru', gettext_lazy('Russian')),
 ]
 
 TIME_ZONE = 'UTC'
@@ -418,7 +420,6 @@ LOGGING = {
             'format': '%(log_color)s [' + HOST_LOCATION + '] [' + BASE_API_URL + '] [%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
             'log_colors': {
                 'DEBUG':    'cyan',
-                'INFO':     'blue',
                 'WARNING':  'yellow',
                 'ERROR':    'red',
                 'CRITICAL': 'bold_red',
@@ -431,9 +432,11 @@ LOGGING = {
             'formatter': 'verbose'
         },
         'file': {
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': '/var/log/finmars/django.log',
-            'formatter': 'verbose'
+            'maxBytes': 1024*1024*5, # 5 MB
+            'formatter': 'verbose',
+            'backupCount': 5
         }
     },
     'loggers': {
@@ -461,7 +464,8 @@ REST_FRAMEWORK = {
         # 'rest_framework.authentication.SessionAuthentication',
         # 'rest_framework.authentication.BasicAuthentication',
         # 'rest_framework.authentication.TokenAuthentication',
-        "poms.auth_tokens.authentication.ExpiringTokenAuthentication",
+        "poms.common.authentication.KeycloakAuthentication",
+        # "poms.auth_tokens.authentication.ExpiringTokenAuthentication",
     ),
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
     'DEFAULT_PERMISSION_CLASSES': (
@@ -763,9 +767,8 @@ INTERNAL_IPS = [
     # ...
 ]
 
-if DEBUG:
+if SERVER_TYPE == 'local':
     DEBUG_TOOLBAR_PANELS = [
-        'ddt_request_history.panels.request_history.RequestHistoryPanel',  # Here it is
         'debug_toolbar.panels.versions.VersionsPanel',
         'debug_toolbar.panels.timer.TimerPanel',
         'debug_toolbar.panels.settings.SettingsPanel',
@@ -802,3 +805,13 @@ else:
     DROP_VIEWS = True
 
 JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', None)
+
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+
+KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'https://keycloak.finmars.com:8443')
+KEYCLOAK_REALM = os.environ.get('KEYCLOAK_REALM', 'finmars')
+KEYCLOAK_CLIENT_ID = os.environ.get('KEYCLOAK_CLIENT_ID', 'finmars-backend')
+KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY', 'R8BlgeDuXZSzFINMLv8Pf84S8OQ4iONy')
+

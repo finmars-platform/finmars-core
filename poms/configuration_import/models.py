@@ -1,6 +1,6 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import gettext_lazy
 
 import json
 from django.core.serializers.json import DjangoJSONEncoder
@@ -9,10 +9,10 @@ from poms.users.models import MasterUser
 
 
 class ConfigurationEntityArchetype(models.Model):
-    name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=ugettext_lazy('name'))
-    json_data = models.TextField(null=True, blank=True, verbose_name=ugettext_lazy('json data'))
-    master_user = models.ForeignKey(MasterUser, verbose_name=ugettext_lazy('master user'), on_delete=models.CASCADE)
-    content_type = models.ForeignKey(ContentType, verbose_name=ugettext_lazy('content type'), on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=gettext_lazy('name'))
+    json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
+    master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type'), on_delete=models.CASCADE)
 
     class Meta:
         unique_together = (
