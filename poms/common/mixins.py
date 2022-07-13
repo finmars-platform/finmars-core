@@ -265,7 +265,6 @@ class BulkModelMixin(BulkCreateModelMixin, BulkUpdateModelMixin, BulkDestroyMode
 class DestroySystemicModelMixin(DestroyModelMixinExt):
     def perform_destroy(self, instance):
         if hasattr(instance, 'is_systemic') and instance.is_systemic:
-            _l.info("TESTING common.mixins.DestroySystemicModelMixin raise error")
             raise MethodNotAllowed('DELETE',
                                    detail='Method "DELETE" not allowed. Can not delete entity with is_systemic == true')
         else:

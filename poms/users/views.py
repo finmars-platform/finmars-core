@@ -561,11 +561,11 @@ class MasterUserViewSet(AbstractModelViewSet):
 
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         lookup_value = self.kwargs[lookup_url_kwarg]
-        # _l.info("testing users.views.MasterUserViewSet.get_object lookup_value", str(lookup_value))
+
         if lookup_value == '0':
             return self.request.user.master_user
         obj = super(MasterUserViewSet, self).get_object()
-        # _l.info("testing users.views.MasterUserViewSet.get_object obj", str(type(obj)))
+
         _l.debug('set_master_user get_object done: %s' % (time.perf_counter() - set_st))
 
         return obj
@@ -834,16 +834,7 @@ class MemberViewSet(AbstractModelViewSet):
     def get_object(self):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         lookup_value = self.kwargs[lookup_url_kwarg]
-        _l.info("testing_opendatabase users.views.MemberViewSet.get_object 1 " + str(lookup_value) + ", type: " + str(type(lookup_value)))
-        if lookup_value == '0':
-            try:
-                _l.info("testing_opendatabase users.views.MemberViewSet.get_object 1 lookup_value" + str(lookup_value) + ", type: " + str(lookup_value))
-                if hasattr(self.request.user, 'member'):
-                    _l.info("testing_opendatabase users.views.MemberViewSet.get_object 1 member " + str(self.request.user.member))
-                return self.request.user.member
-            except AttributeError:
-                return None
-        _l.info("testing_opendatabase users.views.MemberViewSet.get_object 2")
+
         return super(MemberViewSet, self).get_object()
 
     def update(self, request, *args, **kwargs):

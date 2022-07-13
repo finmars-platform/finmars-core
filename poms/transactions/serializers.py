@@ -130,7 +130,7 @@ class TransactionTypeActionInstrumentEventSchedulePhantomField(serializers.Integ
 class TransactionTypeContextParameterSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransactionTypeContextParameter
-        fields = ['name', 'value_type', 'order']
+        fields = ['user_code', 'name', 'value_type', 'order']
 
 
 class TransactionTypeInputSettingsSerializer(serializers.ModelSerializer):
@@ -1759,6 +1759,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                     context_parameter = TransactionTypeContextParameter.objects.get(transaction_type=instance,
                                                                                     order=context_parameter_field_data[
                                                                                         'order'],
+                                                                                    user_code=context_parameter_field_data[
+                                                                                        'user_code'],
                                                                                     name=context_parameter_field_data[
                                                                                         'name'])
                 except TransactionTypeContextParameter.DoesNotExist:
