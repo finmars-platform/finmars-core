@@ -1990,6 +1990,7 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
             options_object = celery_task.options_object
 
             options_object['file_path'] = ''
+            options_object['filename'] = ''
             options_object['scheme_id'] = scheme.id
             options_object['execution_context'] = {'started_by': 'procedure'}
 
