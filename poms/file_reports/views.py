@@ -57,8 +57,6 @@ class FileReportViewSet(AbstractModelViewSet):
 
             file_data = instance.get_file()
 
-            file_data = 'test,test,test'
-
         except FileReport.DoesNotExist:
             return Response({'status': 'notfound'}, status=status.HTTP_404_NOT_FOUND)
 
