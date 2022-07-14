@@ -23,6 +23,9 @@ _l = logging.getLogger('poms.common')
 class KeycloakAuthentication(TokenAuthentication):
 
     def authenticate(self, request):
+
+        print('KeycloakAuthentication.authenticate')
+
         auth = get_authorization_header(request).split()
 
         if not auth:
@@ -31,7 +34,7 @@ class KeycloakAuthentication(TokenAuthentication):
 
                 if 'access_token' == key:
 
-                    auth = ['Token', value]
+                    auth = ['Token'.encode(), value.encode()]
 
         if not auth or auth[0].lower() != self.keyword.lower().encode():
                 return None

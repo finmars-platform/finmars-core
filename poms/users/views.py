@@ -834,16 +834,16 @@ class MemberViewSet(AbstractModelViewSet):
     def get_object(self):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         lookup_value = self.kwargs[lookup_url_kwarg]
-        _l.info("testing_opendatabase users.views.MemberViewSet.get_object 1 " + str(lookup_value) + ", type: " + str(type(lookup_value)))
+        # _l.info("testing_opendatabase users.views.MemberViewSet.get_object 1 " + str(lookup_value) + ", type: " + str(type(lookup_value)))
         if lookup_value == '0':
             try:
-                _l.info("testing_opendatabase users.views.MemberViewSet.get_object 1 lookup_value" + str(lookup_value) + ", type: " + str(lookup_value))
-                if hasattr(self.request.user, 'member'):
-                    _l.info("testing_opendatabase users.views.MemberViewSet.get_object 1 member " + str(self.request.user.member))
+                # _l.info("testing_opendatabase users.views.MemberViewSet.get_object 1 lookup_value" + str(lookup_value) + ", type: " + str(lookup_value))
+                # if hasattr(self.request.user, 'member'):
+                    # _l.info("testing_opendatabase users.views.MemberViewSet.get_object 1 member " + str(self.request.user.member))
                 return self.request.user.member
             except AttributeError:
                 return None
-        _l.info("testing_opendatabase users.views.MemberViewSet.get_object 2")
+        # _l.info("testing_opendatabase users.views.MemberViewSet.get_object 2")
         return super(MemberViewSet, self).get_object()
 
     def update(self, request, *args, **kwargs):
