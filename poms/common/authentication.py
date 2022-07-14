@@ -31,7 +31,7 @@ class KeycloakAuthentication(TokenAuthentication):
 
                 if 'access_token' == key:
 
-                    auth = value
+                    auth = ['Token', value]
 
         if not auth or auth[0].lower() != self.keyword.lower().encode():
                 return None
