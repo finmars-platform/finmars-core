@@ -25,8 +25,16 @@ class KeycloakAuthentication(TokenAuthentication):
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
 
+        if not auth:
+
+            for key, value in request.COOKIES.items():
+
+                if 'access_token' == key:
+
+                    auth = value
+
         if not auth or auth[0].lower() != self.keyword.lower().encode():
-            return None
+                return None
 
         if len(auth) == 1:
             msg = _('Invalid token header. No credentials provided.')
