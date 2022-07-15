@@ -30,7 +30,7 @@ from poms.reports.builders.base_serializers import ReportPortfolioSerializer, \
     ReportInstrumentTypeSerializer, ReportAccountTypeSerializer, ReportGenericAttributeSerializer, \
     ReportSerializerWithLogs
 # from poms.reports.fields import CustomFieldField
-from poms.reports.fields import BalanceReportCustomFieldField
+from poms.reports.fields import BalanceReportCustomFieldField, PLReportCustomFieldField
 from poms.reports.models import BalanceReportInstance, BalanceReportInstanceItem, PLReportInstance, PLReportInstanceItem
 from poms.reports.serializers import BalanceReportCustomFieldSerializer
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
@@ -1173,7 +1173,10 @@ class BalanceReportSqlSerializer(ReportSerializer):
         return data
 
 
-class PLReportSqlSerializer(ReportSerializer):
+class PLReportSqlSerializer(PLReportSerializer):
+
+    custom_fields = PLReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
+
     items = serializers.SerializerMethodField()
 
     item_instruments = serializers.SerializerMethodField()
