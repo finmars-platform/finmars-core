@@ -1927,7 +1927,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
 
     file_report.upload_file(file_name=file_name, text=result, master_user=master_user)
     file_report.master_user = master_user
-    file_report.name = "%s %s" % (name, current_date_time)
+    file_report.name = "%s %s" % (name, current_date_time) + '.csv'
     file_report.file_name = file_name
     file_report.type = type
     file_report.notes = 'System File'
@@ -4203,6 +4203,7 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
             options_object = celery_task.options_object
 
             options_object['file_path'] = ''
+            options_object['filename'] = ''
             options_object['scheme_id'] = scheme.id
             options_object['execution_context'] = {'started_by': 'procedure'}
 

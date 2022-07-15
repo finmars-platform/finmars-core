@@ -52,8 +52,6 @@ def send_websocket_message(data,  level='system', context=None):
 
         try:
 
-
-
             message = {
                 "level": level,
                 "master_user": None,
