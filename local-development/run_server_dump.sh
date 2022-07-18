@@ -24,4 +24,6 @@ CBONDS_BROKER_URL=https://data.finmars.com:18443/ \
 UNIFIED_DATA_PROVIDER_URL=https://finmars.com/udp/ \
 SUPERSET_URL=https://superset.finmars.com/ \
 JWT_SECRET_KEY=09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3ab \
+KEYCLOAK_REALM=dev-finmars \
+KEYCLOAK_CLIENT_SECRET_KEY=jQ64iExlgclcrlBQbTxcOumL8cyU58RN \
 BACKEND_ROLES="ALL" python manage.py runserver

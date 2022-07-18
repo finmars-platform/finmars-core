@@ -134,7 +134,7 @@ INSTALLED_APPS = [
 
     'crispy_forms',
     'rest_framework',
-    # 'rest_framework_swagger',
+    'rest_framework_swagger',
 
     'corsheaders',
 
@@ -458,6 +458,7 @@ LOGGING = {
 }
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'poms.common.pagination.PageNumberPaginationExt',
     'PAGE_SIZE': 40,
     'DEFAULT_AUTHENTICATION_CLASSES': (
