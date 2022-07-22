@@ -2105,7 +2105,7 @@ class TransactionFileResultSerializer(ModelWithTimeStampSerializer):
     class Meta:
         model = TransactionFileResult
         fields = [
-            'id', 'master_user', 'provider', 'scheme_user_code', 'file'
+            'id', 'master_user', 'provider', 'scheme_user_code', 'file_path', 'file_name'
         ]
 
 

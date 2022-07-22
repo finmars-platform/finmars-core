@@ -46,6 +46,8 @@ class ApiConfig(AppConfig):
 
                 url = settings.AUTHORIZER_URL + '/backend-is-ready/'
 
+                _l.info("register_at_authorizer_service url %s" % url)
+
                 response = requests.post(url=url, data=json.dumps(data), headers=headers)
 
                 _l.info("register_at_authorizer_service processing response.status_code %s" % response.status_code)

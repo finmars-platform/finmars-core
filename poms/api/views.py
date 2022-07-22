@@ -93,6 +93,6 @@ if 'rest_framework_swagger' in settings.INSTALLED_APPS:
     class SchemaViewSet(AbstractApiView):
         renderer_classes = [SwaggerUIRenderer, OpenAPIRenderer]
 
-        def get(self, request: object, kwargs: object) -> object:
+        def get(self, request):
             generator = schemas.SchemaGenerator(title='FinMars API')
             return response.Response(generator.get_schema(request=request))

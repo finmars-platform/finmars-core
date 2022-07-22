@@ -489,7 +489,7 @@ class ResponsibleClassifierMappingFilterSet(AbstractMappingFilterSet):
     attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
 
     class Meta(AbstractMappingFilterSet.Meta):
-        model = CounterpartyClassifierMapping
+        model = ResponsibleClassifierMapping
 
 
 class ResponsibleMappingViewSet(AbstractMappingViewSet):

@@ -18,6 +18,7 @@ from poms.common.utils import delete_keys_from_dict, recursive_callback
 from poms.common.views import AbstractModelViewSet
 from poms.complex_import.models import ComplexImportScheme, ComplexImportSchemeAction, \
     ComplexImportSchemeActionCsvImport, ComplexImportSchemeActionTransactionImport
+from poms.configuration_export.serializers import EmptySerializer
 from poms.counterparties.models import Counterparty, Responsible
 from poms.csv_import.models import CsvField, EntityField, CsvImportScheme
 from poms.currencies.models import Currency
@@ -203,6 +204,9 @@ def get_access_table(member):
 
 
 class ConfigurationExportViewSet(AbstractModelViewSet):
+
+    serializer_class = EmptySerializer
+
 
     def list(self, request):
 
@@ -2215,6 +2219,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
 class MappingExportViewSet(AbstractModelViewSet):
 
+    serializer_class = EmptySerializer
+
     def list(self, request):
         self._master_user = request.user.master_user
         self._member = request.user.member
@@ -2842,6 +2848,8 @@ class MappingExportViewSet(AbstractModelViewSet):
 
 
 class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
+
+    serializer_class = EmptySerializer
 
     def create(self, request, *args, **kwargs):
 
