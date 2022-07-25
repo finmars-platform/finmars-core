@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import json
+
 import django_filters
 import requests
 from django.contrib.contenttypes.models import ContentType
@@ -77,7 +79,6 @@ import logging
 from poms_app import settings
 
 _l = logging.getLogger('poms.instruments')
-
 
 
 class InstrumentClassViewSet(AbstractClassModelViewSet):
@@ -265,14 +266,12 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
         instrument_type = InstrumentType.objects.get(pk=pk)
 
         instance = InstrumentTypeProcess(instrument_type=instrument_type,
-                                          context=self.get_serializer_context())
+                                         context=self.get_serializer_context())
 
         serializer = self.get_serializer(instance=instance)
         return Response(serializer.data)
 
-
-
-    @action(detail=True, methods=['get','put'], url_path='update-pricing',  permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['get', 'put'], url_path='update-pricing', permission_classes=[IsAuthenticated])
     def update_pricing(self, request, pk=None):
         instrument_type = self.get_object()
 
@@ -288,7 +287,8 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
         for instrument in instruments:
 
             try:
-                policy = InstrumentPricingPolicy.objects.get(instrument=instrument, pricing_policy=request.data['pricing_policy'])
+                policy = InstrumentPricingPolicy.objects.get(instrument=instrument,
+                                                             pricing_policy=request.data['pricing_policy'])
 
                 if request.data['overwrite_default_parameters']:
 
@@ -303,7 +303,8 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
                 else:
                     print("Nothing changed for %s" % policy)
             except InstrumentPricingPolicy.DoesNotExist:
-                print("Policy %s is not found for instrument %s" % (request.data['pricing_policy_object']['name'], instrument))
+                print("Policy %s is not found for instrument %s" % (
+                request.data['pricing_policy_object']['name'], instrument))
 
         return Response({"status": "ok"})
 
@@ -416,7 +417,7 @@ class InstrumentTypeLightViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name',
     ]
 
-    @action(detail=True, methods=['get','put'], url_path='update-pricing',  permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['get', 'put'], url_path='update-pricing', permission_classes=[IsAuthenticated])
     def update_pricing(self, request, pk=None):
         instrument_type = self.get_object()
 
@@ -432,7 +433,8 @@ class InstrumentTypeLightViewSet(AbstractWithObjectPermissionViewSet):
         for instrument in instruments:
 
             try:
-                policy = InstrumentPricingPolicy.objects.get(instrument=instrument, pricing_policy=request.data['pricing_policy'])
+                policy = InstrumentPricingPolicy.objects.get(instrument=instrument,
+                                                             pricing_policy=request.data['pricing_policy'])
 
                 if request.data['overwrite_default_parameters']:
 
@@ -447,7 +449,8 @@ class InstrumentTypeLightViewSet(AbstractWithObjectPermissionViewSet):
                 else:
                     print("Nothing changed for %s" % policy)
             except InstrumentPricingPolicy.DoesNotExist:
-                print("Policy %s is not found for instrument %s" % (request.data['pricing_policy_object']['name'], instrument))
+                print("Policy %s is not found for instrument %s" % (
+                request.data['pricing_policy_object']['name'], instrument))
 
         return Response({"status": "ok"})
 
@@ -496,6 +499,7 @@ class InstrumentFilterSet(FilterSet):
     class Meta:
         model = Instrument
         fields = []
+
 
 # For usual GET/PUT/ADD/CREATE
 # Not for getting List
@@ -589,7 +593,8 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
             'task_id': ret.id,
         })
 
-    @action(detail=False, methods=['post'], url_path='system-generate-and-process', serializer_class=serializers.Serializer)
+    @action(detail=False, methods=['post'], url_path='system-generate-and-process',
+            serializer_class=serializers.Serializer)
     def system_generate_and_process(self, request):
 
         ret = generate_events_do_not_inform_apply_default.apply_async()
@@ -631,7 +636,8 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
             'tasks_ids': tasks_ids
         })
 
-    @action(detail=False, methods=['post'], url_path='generate-events-range-for-single-instrument', serializer_class=serializers.Serializer)
+    @action(detail=False, methods=['post'], url_path='generate-events-range-for-single-instrument',
+            serializer_class=serializers.Serializer)
     def generate_events_range_for_single_instrument(self, request):
 
         print('request.data %s ' % request.data)
@@ -686,7 +692,7 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
         })
 
     @action(detail=False, methods=['post'], url_path='recalculate-prices-accrued-price',
-                serializer_class=InstrumentCalculatePricesAccruedPriceSerializer)
+            serializer_class=InstrumentCalculatePricesAccruedPriceSerializer)
     def calculate_prices_accrued_price(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -705,14 +711,11 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
         return Response(serializer.data)
 
 
-
 # Not for getting List
 class InstrumentExternalAPIViewSet(APIView):
-
     permission_classes = []
 
     def post(self, request):
-
 
         token = request.data["token"]
 
@@ -732,16 +735,13 @@ class InstrumentExternalAPIViewSet(APIView):
             if key == 'attributes':
 
                 for attr_key, attr_value in request.data['data']['attributes'].items():
-
                     instrument_data[attr_key] = attr_value
 
             else:
                 instrument_data[key] = value
 
-
-
-        attribute_types =  GenericAttributeType.objects.filter(master_user=master_user,
-                                                                    content_type=content_type)
+        attribute_types = GenericAttributeType.objects.filter(master_user=master_user,
+                                                              content_type=content_type)
 
         try:
 
@@ -753,7 +753,8 @@ class InstrumentExternalAPIViewSet(APIView):
 
             _l.info('Instrument Type is not found %s' % e)
 
-        object_data = handler_instrument_object(instrument_data, instrument_type, master_user, ecosystem_defaults, attribute_types)
+        object_data = handler_instrument_object(instrument_data, instrument_type, master_user, ecosystem_defaults,
+                                                attribute_types)
 
         serializer = InstrumentSerializer(data=object_data, context=context)
 
@@ -785,7 +786,6 @@ class InstrumentExternalAPIViewSet(APIView):
 
 
 class InstrumentFDBCreateFromCallbackViewSet(APIView):
-
     permission_classes = []
 
     def get(self, request):
@@ -808,7 +808,6 @@ class InstrumentFDBCreateFromCallbackViewSet(APIView):
             context = {'request': request, 'master_user': task.master_user}
 
             data = request.data
-
 
             result_instrument = None
             instrument_code = data['isin']
@@ -878,8 +877,6 @@ class InstrumentLightViewSet(AbstractWithObjectPermissionViewSet):
     ]
 
 
-
-
 class InstrumentForSelectFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
@@ -891,6 +888,7 @@ class InstrumentForSelectFilterSet(FilterSet):
     class Meta:
         model = Instrument
         fields = []
+
 
 class InstrumentForSelectViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Instrument.objects.select_related(
@@ -915,57 +913,124 @@ class InstrumentForSelectViewSet(AbstractWithObjectPermissionViewSet):
 
 
 class InstrumentDatabaseSearchViewSet(APIView):
-
     permission_classes = []
 
     def get(self, request):
 
-        headers = {'Content-type': 'application/json'}
+        if settings.CBONDS_BROKER_URL:
 
-        payload_jwt = {
-            "sub":  settings.BASE_API_URL, #"user_id_or_name",
-            "role": 0 # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
-        }
+            headers = {'Content-type': 'application/json'}
 
-        token = encode_with_jwt(payload_jwt)
+            payload_jwt = {
+                "sub": settings.BASE_API_URL,  # "user_id_or_name",
+                "role": 0  # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
+            }
 
-        name = request.query_params.get('name', '')
-        instrument_type = request.query_params.get('instrument_type', '')
-        page = request.query_params.get('page', 1)
+            token = encode_with_jwt(payload_jwt)
 
-        headers['Authorization'] = 'Bearer %s' % token
+            name = request.query_params.get('name', '')
+            instrument_type = request.query_params.get('instrument_type', '')
+            page = request.query_params.get('page', 1)
 
-        result = {}
+            headers['Authorization'] = 'Bearer %s' % token
 
-        _l.info('headers %s' % headers)
-
-        url = str(settings.CBONDS_BROKER_URL) + 'instr/find/name/%s?page=%s' % (name, page)
-
-        if instrument_type:
-            url = url + '&instrument_type=' + str(instrument_type)
-
-
-        _l.info("Requesting URL %s" % url)
-
-        response = None
-
-        try:
-            response = requests.get(url=url, headers=headers)
-        except Exception as e:
-            _l.info("Request error %s" % e)
             result = {}
 
-        try:
-            result = response.json()
-        except Exception as e:
-            if response:
-                _l.info('response %s' % response.text )
-                _l.info("Response parse error %s" % e)
-            result = {}
+            _l.info('headers %s' % headers)
 
+            url = str(settings.CBONDS_BROKER_URL) + 'instr/find/name/%s?page=%s' % (name, page)
+
+            if instrument_type:
+                url = url + '&instrument_type=' + str(instrument_type)
+
+            _l.info("Requesting URL %s" % url)
+
+            response = None
+
+            try:
+                response = requests.get(url=url, headers=headers)
+            except Exception as e:
+                _l.info("Request error %s" % e)
+                result = {}
+
+            try:
+                result = response.json()
+            except Exception as e:
+                if response:
+                    _l.info('response %s' % response.text)
+                    _l.info("Response parse error %s" % e)
+                result = {}
+
+        else:
+
+            if settings.FINMARS_DATABASE_URL:
+
+                if settings.FINMARS_DATABASE_USER and settings.FINMARS_DATABASE_PASSWORD:
+                    headers = {
+                        'Accept': 'application/json',
+                        'Content-type': 'application/json'
+                    }
+
+                    auth_url = settings.FINMARS_DATABASE_URL + 'api/authenticate'
+
+                    auth_request_body = {
+                        "username": settings.FINMARS_DATABASE_USER,
+                        "password": settings.FINMARS_DATABASE_PASSWORD
+                    }
+
+                    auth_response = requests.post(url=auth_url, headers=headers, data=json.dumps(auth_request_body))
+
+                    auth_response_json = auth_response.json()
+
+                    auth_token = auth_response_json['id_token']
+
+                    name = request.query_params.get('name', '')
+                    size = request.query_params.get('size', 40)
+                    page = request.query_params.get('page', 0)
+
+                    instruments_url = settings.FINMARS_DATABASE_URL + 'api/instrument-narrows?page=' + str(page) + '&size=' + str(size) + '&query.contains=' + name
+
+                    headers['Authorization'] = 'Bearer ' + auth_token
+
+                    _l.info("InstrumentDatabaseSearchViewSet.requesting url %s" % instruments_url)
+
+                    response = requests.get(url=instruments_url, headers=headers)
+
+                    items = response.json()
+
+                    # TODO refactor Interface and refactor mappedItems
+                    # foundItems
+                    # pageNum: 0
+                    # pageSize: 20
+                    # resultCount: 816
+
+                    mappedItems = []
+
+                    for item in items:
+
+                        mappedItem = {}
+
+                        mappedItem['instrumentType'] = item['instrumentType']['userCode']
+                        mappedItem['issueName'] = item['name']
+                        mappedItem['referenceId'] = item['isin']
+                        mappedItem['last_cbonds_update'] = item['modifiedAt'].split('T')[0]
+
+                        mappedItem['commonCode'] = ''
+                        mappedItem['figi'] = ''
+                        mappedItem['issuerName'] = ''
+                        mappedItem['wkn'] = ''
+
+                        mappedItems.append(mappedItem)
+
+
+                    result = {
+                        'foundItems': mappedItems,
+                        'pageNum': int(page),
+                        'pageSize': int(size),
+                        'resultCount': int(response.headers['X-Total-Count'])
+                    }
 
         return Response(result)
-
 
 
 class InstrumentEvFilterSet(FilterSet):
@@ -1010,6 +1075,7 @@ class InstrumentEvViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
     ]
+
 
 class InstrumentEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Instrument.objects.select_related(
@@ -1330,8 +1396,6 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
 
                     generated_event.save()
 
-
-
                 history.set_actor_content_object(instance.complex_transaction)
 
                 return Response(serializer.data)
@@ -1391,7 +1455,6 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
 
         serializer = self.get_serializer(instance=generated_event)
         return Response(serializer.data)
-
 
 
 class GeneratedEventEvViewSet(AbstractModelViewSet):
@@ -1508,8 +1571,6 @@ class GeneratedEventEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, C
         AttributeFilter,
         GroupsAttributeFilter
     ]
-
-
 
 
 class EventScheduleConfigViewSet(AbstractModelViewSet):
