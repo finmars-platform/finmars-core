@@ -1010,10 +1010,10 @@ class InstrumentDatabaseSearchViewSet(APIView):
 
                         mappedItem = {}
 
-                        mappedItem['instrumentType'] = item['instrumentType']['userCode']
+                        mappedItem['instrumentType'] = item['instrument_type']['user_code']
                         mappedItem['issueName'] = item['name']
                         mappedItem['referenceId'] = item['isin']
-                        mappedItem['last_cbonds_update'] = item['modifiedAt'].split('T')[0]
+                        mappedItem['last_cbonds_update'] = item['modified_at'].split('T')[0]
 
                         mappedItem['commonCode'] = ''
                         mappedItem['figi'] = ''

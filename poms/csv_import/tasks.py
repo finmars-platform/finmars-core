@@ -2286,7 +2286,7 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     # 
     #     object_data['accrued_currency'] = ecosystem_default.currency.id
 
-    object_data['public_name'] = source_data['public_name']
+    object_data['public_name'] = source_data['name']
     object_data['user_code'] = source_data['user_code']
     object_data['name'] = source_data['name']
     object_data['short_name'] = source_data['short_name']

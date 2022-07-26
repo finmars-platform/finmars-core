@@ -303,6 +303,8 @@ def create_instrument_from_finmars_database(data, master_user, member):
             else:
                 instrument_data[key] = value
 
+        _l.info('create_instrument_from_finmars_database.instrument_data %s' % instrument_data)
+
         # TODO remove stocks ASAP as configuration ready
         if instrument_data['instrument_type']['user_code'] == 'stocks' or instrument_data['instrument_type']['user_code'] == 'stock':
 
@@ -343,7 +345,7 @@ def create_instrument_from_finmars_database(data, master_user, member):
 
         except Exception as e:
 
-            _l.info('Instrument Type %s is not found %s' % (instrument_data['instrument_type'], e))
+            _l.info('Instrument Type %s is not found %s' % (instrument_data['instrument_type']['user_code'], e))
 
             raise Exception("Instrument Type %s is not found %s" % (instrument_data['instrument_type'], e))
 
@@ -1022,14 +1024,15 @@ def download_instrument_finmars_database(instrument_code=None, instrument_name=N
 
             result_instrument = None
 
-            if 'instruments' in data:
+            if 'instruments' in data['data']:
 
-                if 'currencies' in data:
-                    for item in data['currencies']:
-                        if item:
-                            currency = create_currency_cbond(item, master_user, member)
+                if 'currencies' in data['data']:
+                    if data['data']['currencies']:
+                        for item in data['data']['currencies']:
+                            if item:
+                                currency = create_currency_cbond(item, master_user, member)
 
-                for item in data['instruments']:
+                for item in data['data']['instruments']:
                     instrument = create_instrument_from_finmars_database(item, master_user, member)
 
                     if instrument.user_code == instrument_code:
@@ -1058,6 +1061,9 @@ def download_instrument_finmars_database(instrument_code=None, instrument_name=N
             return task, errors
 
         except Exception as e:
+            _l.error("download_instrument_finmars_database e %s " % e)
+            _l.error("download_instrument_finmars_database traceback %s " % traceback.format_exc())
+
             errors.append("download_instrument_finmars_database Could not create instrument. %s" % str(e))
             return task, errors
 
