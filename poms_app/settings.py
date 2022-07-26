@@ -434,7 +434,7 @@ LOGGING = {
         'file': {
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': '/var/log/finmars/django.log',
-            'maxBytes': 1024*1024*5, # 5 MB
+            'maxBytes': 1024*1024*10, # 10 MB
             'formatter': 'verbose',
             'backupCount': 5
         }
