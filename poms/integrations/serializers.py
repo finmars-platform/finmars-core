@@ -43,7 +43,7 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.storage import import_file_storage
 from poms.integrations.tasks import download_instrument, test_certificate, download_instrument_cbond, \
-    download_unified_data, download_currency_cbond
+    download_unified_data, download_currency_cbond, download_instrument_finmars_database
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericAttributeTypeSerializer, \
     GenericClassifierSerializer
@@ -58,6 +58,7 @@ from poms.users.fields import MasterUserField, MemberField, HiddenMemberField
 from django.core.validators import RegexValidator
 
 from poms.users.models import EcosystemDefault
+from poms_app import settings
 
 _l = getLogger('poms.integrations')
 
@@ -1182,23 +1183,49 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
     errors = serializers.ReadOnlyField()
 
     def create(self, validated_data):
-        task_result_overrides = validated_data.get('task_result_overrides', None)
-        instance = ImportInstrumentEntry(**validated_data)
 
-        task, errors = download_instrument_cbond(
-            instrument_code=instance.instrument_code,
-            instrument_name=instance.instrument_name,
-            instrument_type_code=instance.instrument_type_code,
-            master_user=instance.master_user,
-            member=instance.member
-        )
-        instance.task_object = task
-        instance.errors = errors
+        if settings.CBONDS_BROKER_URL:
+            task_result_overrides = validated_data.get('task_result_overrides', None)
+            instance = ImportInstrumentEntry(**validated_data)
 
-        if task and task.result_object:
-            instance.result_id = task.result_object['instrument_id']
+            task, errors = download_instrument_cbond(
+                instrument_code=instance.instrument_code,
+                instrument_name=instance.instrument_name,
+                instrument_type_code=instance.instrument_type_code,
+                master_user=instance.master_user,
+                member=instance.member
+            )
+            instance.task_object = task
+            instance.errors = errors
 
-        return instance
+            if task and task.result_object:
+                instance.result_id = task.result_object['instrument_id']
+
+            return instance
+
+        else:
+
+            if settings.FINMARS_DATABASE_URL:
+
+                if settings.FINMARS_DATABASE_USER and settings.FINMARS_DATABASE_PASSWORD:
+
+                    task_result_overrides = validated_data.get('task_result_overrides', None)
+                    instance = ImportInstrumentEntry(**validated_data)
+
+                    task, errors = download_instrument_finmars_database(
+                        instrument_code=instance.instrument_code,
+                        instrument_name=instance.instrument_name,
+                        instrument_type_code=instance.instrument_type_code,
+                        master_user=instance.master_user,
+                        member=instance.member
+                    )
+                    instance.task_object = task
+                    instance.errors = errors
+
+                    if task and task.result_object:
+                        instance.result_id = task.result_object['instrument_id']
+
+                    return instance
 
 
 class ImportCurrencyCbondsSerializer(serializers.Serializer):
