@@ -2999,7 +2999,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                     error_rows['error_message'] = error_rows['error_message'] + str(
                         gettext_lazy('Can\'t process fields: %(inputs)s') % {
                             'inputs': ', '.join(
-                                '[' + i.name + '] (Imported column conversion expression, value; "' + i.name_exp + '")'
+                                '[' + str(i.name) + '] (Imported column conversion expression, value; "' + str(i.name_exp) + '")'
                                 for
                                 i in inputs_conversion_error)
                         })
