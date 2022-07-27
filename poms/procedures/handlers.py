@@ -223,7 +223,7 @@ class RequestDataFileProcedureProcess(object):
 
 
             except Exception as e:
-                _l.info("universal broker error %s" % e)
+                _l.error("universal broker error %s" % e)
                 send_system_message(master_user=self.master_user,
                                     source="Data File Procedure Service",
                                     text="universal Broker. Procedure is not created.  Something went wrong %s" % e,

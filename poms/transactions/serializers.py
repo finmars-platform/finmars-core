@@ -2301,6 +2301,7 @@ class TransactionSerializer(ModelWithObjectPermissionSerializer):
             'principal_amount',
             'carry_amount',
             'overheads',
+            'ytm_at_cost',
             'notes',
 
             # 'transaction_class_object',
