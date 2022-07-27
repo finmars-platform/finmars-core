@@ -10,6 +10,8 @@ from rest_framework.mixins import UpdateModelMixin, DestroyModelMixin, CreateMod
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 
+import logging
+_l = logging.getLogger('poms.common.mixins')
 
 # TODO: Permissions for method and per-object must be verified!!!!
 
@@ -259,3 +261,11 @@ class BulkModelMixin(BulkCreateModelMixin, BulkUpdateModelMixin, BulkDestroyMode
             return self.bulk_delete(request)
 
         raise MethodNotAllowed(request.method)
+
+class DestroySystemicModelMixin(DestroyModelMixinExt):
+    def perform_destroy(self, instance):
+        if hasattr(instance, 'is_systemic') and instance.is_systemic:
+            raise MethodNotAllowed('DELETE',
+                                   detail='Method "DELETE" not allowed. Can not delete entity with is_systemic == true')
+        else:
+            super(DestroySystemicModelMixin, self).perform_destroy(instance)

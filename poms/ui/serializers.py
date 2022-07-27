@@ -162,7 +162,7 @@ class ListLayoutSerializer(ModelWithTimeStampSerializer):
 
     class Meta:
         model = ListLayout
-        fields = ['id', 'member', 'content_type', 'name', 'user_code', 'is_default', 'is_active', 'data', 'origin_for_global_layout', 'sourced_from_global_layout']
+        fields = ['id', 'member', 'content_type', 'name', 'user_code', 'is_default', 'is_active', 'is_systemic', 'data', 'origin_for_global_layout', 'sourced_from_global_layout']
 
     def to_representation(self, instance):
 
@@ -200,7 +200,7 @@ class ListLayoutLightSerializer(ModelWithTimeStampSerializer):
 
     class Meta:
         model = ListLayout
-        fields = ['id', 'member', 'content_type', 'name', 'user_code', 'is_default', 'is_active',  'origin_for_global_layout', 'sourced_from_global_layout']
+        fields = ['id', 'member', 'content_type', 'name', 'user_code', 'is_default', 'is_active', 'is_systemic', 'origin_for_global_layout', 'sourced_from_global_layout']
 
 
 class DashboardLayoutSerializer(ModelWithTimeStampSerializer):

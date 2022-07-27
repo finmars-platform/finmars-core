@@ -401,6 +401,7 @@ class ListLayout(BaseLayout, TimeStampedModel):
     user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
     is_default = models.BooleanField(default=False, verbose_name=gettext_lazy('is default'))
     is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
+    is_systemic = models.BooleanField(default=False, verbose_name=gettext_lazy('is systemic'))
 
     is_fixed = models.BooleanField(default=False, verbose_name=gettext_lazy('is fixeds'))
 

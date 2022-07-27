@@ -602,12 +602,19 @@ class TransactionTypeContextParameter(models.Model):
 
     transaction_type = models.ForeignKey(TransactionType, related_name='context_parameters',
                                          verbose_name=gettext_lazy('transaction type'), on_delete=models.CASCADE)
+    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
     name = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('name'))
 
     value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
                                                   verbose_name=gettext_lazy('value type'))
 
     order = models.IntegerField(default=1, verbose_name=gettext_lazy('order'))
+
+    class Meta:
+        ordering = ['order']
+        constraints = [
+            models.UniqueConstraint(fields=['transaction_type', 'user_code'], name='unique ttype context parameter')
+        ]
 
 
 class TransactionTypeInput(models.Model):
