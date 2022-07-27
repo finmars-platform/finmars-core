@@ -2360,6 +2360,94 @@ def _run_data_procedure(evaluator, user_code, user_context=None, **kwargs):
 _run_data_procedure.evaluator = True
 
 
+def _rebook_transaction(evaluator, code, values=None, user_context=None, **kwargs):
+    _l.info('_rebook_transaction')
+
+    try:
+        from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_member_from_context
+        from poms.procedures.models import RequestDataFileProcedure
+        from poms.procedures.handlers import RequestDataFileProcedureProcess
+        from poms.transactions.handlers import TransactionTypeProcess
+        from poms.transactions.models import ComplexTransaction
+        from poms.transactions.serializers import TransactionTypeProcessSerializer
+
+        context = evaluator.context
+
+        master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
+
+        _l.info('_rebook_transaction.context %s' % context)
+
+        merged_context = {}
+        merged_context.update(context)
+
+        if 'names' not in merged_context:
+            merged_context['names'] = {}
+
+        if user_context:
+            merged_context['names'].update(user_context)
+
+        _l.info('_rebook_transaction.merged_context %s' % merged_context)
+
+        try:
+
+            complex_transaction = ComplexTransaction.objects.get(code=code)
+
+            _l.debug('_rebook_transaction.get complex transaction %s' % complex_transaction)
+
+
+            instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
+                                              process_mode='rebook',
+                                              complex_transaction=complex_transaction,
+                                              context=merged_context, member=member)
+
+            serializer = TransactionTypeProcessSerializer(instance=instance, context=merged_context)
+
+            data = serializer.data
+
+            # _l.debug('_rebook_transaction.get data to fill rebook processor %s' % data)
+
+
+            instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
+                                              process_mode='rebook',
+                                              complex_transaction=complex_transaction,
+                                              complex_transaction_status=ComplexTransaction.PRODUCTION,
+                                              context=merged_context,
+                                              member=member)
+
+            if not values:
+                values = {}
+
+            data['values'] = dict(data['values'])
+
+            data['values'].update(values)
+
+            _l.debug('_rebook_transaction.get data to fill with values %s' % values)
+            _l.debug('_rebook_transaction.get data to fill with result values %s' % data['values'])
+
+            # _l.info('_rebook_transaction.data %s' % data)
+
+            serializer = TransactionTypeProcessSerializer(instance=instance, data=data, context=merged_context)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+
+        except Exception as e:
+
+            _l.error("_rebook_transaction. could not rebook exception %s" % e)
+            _l.error("_rebook_transaction. could not rebook traceback %s" % traceback.format_exc())
+
+
+    except Exception as e:
+        _l.error("_rebook_transaction. general exception %s" % e)
+        _l.error("_rebook_transaction. general exception traceback %s" % traceback.format_exc())
+
+
+_rebook_transaction.evaluator = True
+
+
+
+
 def _simple_group(val, ranges, default=None):
     for begin, end, text in ranges:
         if begin is None:
@@ -2736,6 +2824,7 @@ FUNCTIONS = [
     SimpleEval2Def('run_task', _run_task),
     SimpleEval2Def('run_pricing_procedure', _run_pricing_procedure),
     SimpleEval2Def('run_data_procedure', _run_data_procedure),
+    SimpleEval2Def('rebook_transaction', _rebook_transaction),
 
 ]
 empty = object()

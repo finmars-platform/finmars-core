@@ -1473,10 +1473,10 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
     def save(self, *args, **kwargs):
         cache.clear()
 
-        print("Complex Transaction Save status %s" % self.status)
-        print("Complex Transaction Save text %s" % self.text)
-        print("Complex Transaction Save date %s" % self.date)
-        print("Complex Transaction Save transaction_unique_code %s" % self.transaction_unique_code)
+        _l.info("Complex Transaction Save status %s" % self.status)
+        _l.info("Complex Transaction Save text %s" % self.text)
+        _l.info("Complex Transaction Save date %s" % self.date)
+        _l.info("Complex Transaction Save transaction_unique_code %s" % self.transaction_unique_code)
 
         if self.code is None or self.code == 0:
             self.code = FakeSequence.next_value(self.transaction_type.master_user, 'complex_transaction', d=100)
