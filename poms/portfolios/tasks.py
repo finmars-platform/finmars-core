@@ -2,7 +2,7 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import time
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from celery import shared_task
 from django.db import transaction
@@ -280,10 +280,11 @@ def calculate_portfolio_register_record(master_users=None):
 
 
 @shared_task(name='portfolios.calculate_portfolio_register_price_history', ignore_result=True)
-def calculate_portfolio_register_price_history(master_users=None):
+def calculate_portfolio_register_price_history(master_users=None, date_from=None):
+
     try:
 
-        _l.debug('calculate_portfolio_register_nav: master_users=%s', master_users)
+        _l.info('calculate_portfolio_register_nav: master_users=%s date_from=%s', master_users, date_from)
 
         from poms.instruments.models import PriceHistory
 
@@ -301,10 +302,14 @@ def calculate_portfolio_register_price_history(master_users=None):
 
             for portfolio_register in portfolio_registers:
 
-                first_transaction = \
-                    Transaction.objects.filter(portfolio=portfolio_register.portfolio).order_by('accounting_date')[0]
+                if date_from and isinstance(date_from, str):
+                    format = '%Y-%m-%d'
+                    date_from = datetime.strptime(date_from, format).date()
+                else:
+                    first_transaction = \
+                        Transaction.objects.filter(portfolio=portfolio_register.portfolio).order_by('accounting_date')[0]
+                    date_from = first_transaction.accounting_date
 
-                date_from = first_transaction.accounting_date
                 date_to = timezone_today() - timedelta(days=1)
 
                 _l.info('calculate_portfolio_register_nav0.date_from %s' % date_from)
@@ -356,8 +361,8 @@ def calculate_portfolio_register_price_history(master_users=None):
                             price_history.save()
 
                         except Exception as e:
-                            _l.info('calculate_portfolio_register_price_history.error %s ' % e)
-                            _l.info('date %s' % date)
+                            _l.error('calculate_portfolio_register_price_history.error %s ' % e)
+                            _l.error('date %s' % date)
 
     except Exception as e:
 

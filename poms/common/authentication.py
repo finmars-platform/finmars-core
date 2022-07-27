@@ -24,7 +24,7 @@ class KeycloakAuthentication(TokenAuthentication):
 
     def authenticate(self, request):
 
-        print('KeycloakAuthentication.authenticate')
+        # print('KeycloakAuthentication.authenticate')
 
         auth = get_authorization_header(request).split()
 

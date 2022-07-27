@@ -1,5 +1,6 @@
 import json
 import logging
+import traceback
 from datetime import date, datetime
 
 from django.contrib.contenttypes.models import ContentType
@@ -2139,22 +2140,50 @@ class TransactionTypeProcess(object):
 
     def run_procedures_after_book(self):
 
-        from celery import Celery
+        try:
 
-        _l.info("TransactionTypeProcess.run_procedures_after_book")
+            from celery import Celery
 
-        from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_price_history
+            _l.info("TransactionTypeProcess.run_procedures_after_book. execution_context %s" % self.execution_context)
 
-        if self.execution_context == 'manual':
+            from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_price_history
 
-            # app = Celery('poms_app')
-            # app.config_from_object('django.conf:settings', namespace='CELERY')
-            # app.autodiscover_tasks()
-            #
-            # app.send_task('calculate_portfolio_register_record', [])
-            # app.send_task('calculate_portfolio_register_nav', [])
+            if self.execution_context == 'manual':
 
-            calculate_portfolio_register_record.apply_async(link=[calculate_portfolio_register_price_history.s()])
+                # app = Celery('poms_app')
+                # app.config_from_object('django.conf:settings', namespace='CELERY')
+                # app.autodiscover_tasks()
+                #
+                # app.send_task('calculate_portfolio_register_record', [])
+                # app.send_task('calculate_portfolio_register_nav', [])
+
+                _l.info("TransactionTypeProcess.run_procedures_after_book. recalculate prices %s" % self.complex_transaction.status)
+
+                if self.complex_transaction.status_id == ComplexTransaction.PRODUCTION:
+
+                    date_from = None
+
+                    transactions = self.complex_transaction.transactions.all()
+
+                    for transaction in transactions:
+
+                        _date_from = min(transaction.accounting_date, transaction.cash_date)
+
+                        if date_from is None:
+                            date_from = _date_from
+
+                        if _date_from < date_from:
+                            date_from = _date_from
+
+                    _l.info("TransactionTypeProcess.run_procedures_after_book. recalculating from %s" % date_from)
+
+                    calculate_portfolio_register_record.apply_async(link=[
+                        calculate_portfolio_register_price_history.s(date_from=date_from)
+                    ])
+
+        except Exception as e:
+            _l.error("TransactionTypeProcess.run_procedures_after_book e %s" % e)
+            _l.error("TransactionTypeProcess.run_procedures_after_book traceback %s" % traceback.format_exc())
 
 
 
