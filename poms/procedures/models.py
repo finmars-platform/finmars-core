@@ -356,6 +356,9 @@ class RequestDataFileProcedureInstance(BaseProcedureInstance):
     public_key = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('public key'))
     symmetric_key = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('symmetric key'))
 
+    date_from = models.DateField(null=True, blank=True, verbose_name=gettext_lazy('date from'))
+    date_to = models.DateField(null=True, blank=True, verbose_name=gettext_lazy('date to'))
+
 
     json_request_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 

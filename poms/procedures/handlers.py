@@ -81,7 +81,8 @@ class RequestDataFileProcedureProcess(object):
                                                                                          schedule_instance=self.schedule_instance,
                                                                                          action='request_transaction_file',
                                                                                          provider='universal',
-
+                                                                                         date_from=self.procedure.date_from,
+                                                                                         date_to=self.procedure.date_to,
                                                                                          action_verbose='Request file with Transactions',
                                                                                          provider_verbose='universal'
 

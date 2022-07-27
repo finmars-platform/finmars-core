@@ -3326,12 +3326,21 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
 
                 if celery_task.options_object['execution_context'] and celery_task.options_object['execution_context'][
                     "started_by"] == 'procedure':
+
+                    from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_price_history
                     _l.info('complex_transaction_csv_file_import_parallel_finish send final import message')
 
                     send_system_message(master_user=celery_task.master_user,
                                         source="Transaction Import Service",
                                         text="Import Finished",
                                         file_report_id=result_object['stats_file_report'])
+
+                    if celery_task.options_object['execution_context']['date_from']:
+                        calculate_portfolio_register_record.apply_async(link=[
+                            calculate_portfolio_register_price_history.s(date_from=celery_task.options_object['execution_context']['date_from'])
+                        ])
+
+
 
                 celery_task.result_object = result_object
 
@@ -4522,7 +4531,10 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
             options_object['file_path'] = ''
             options_object['filename'] = ''
             options_object['scheme_id'] = scheme.id
-            options_object['execution_context'] = {'started_by': 'procedure'}
+            options_object['execution_context'] = {'started_by': 'procedure',
+                                                   'date_from': procedure_instance.date_from,
+                                                   'date_to': procedure_instance.date_to,
+                                                   }
 
             celery_task.options_object = options_object
             celery_task.save()
