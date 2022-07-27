@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('transactions', '0108_auto_20220321_1633'),
+        ('transactions', '0109_alter_transactiontypecontextparameter_options_and_more'),
     ]
 
     operations = [
