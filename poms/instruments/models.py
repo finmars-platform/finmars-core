@@ -994,6 +994,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
     def get_accrual_calculation_schedules_all(self):
         accruals = list(self.accrual_calculation_schedules.all())
 
+        _l.info("get_accrual_calculation_schedules_all %s" % accruals)
+
         if not accruals:
             return accruals
 
@@ -1033,6 +1035,9 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
         accruals = self.get_accrual_calculation_schedules_all()
         accrual = None
+
+        _l.debug('find_accrual.accruals %s' % accruals)
+
         for a in accruals:
             if datetime.date(datetime.strptime(a.accrual_start_date, '%Y-%m-%d')) <= d:
                 accrual = a
@@ -1086,10 +1091,11 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             return 0.0
 
         accrual = self.find_accrual(price_date)
+        _l.debug('get_accrual_size.accrual %s' % accrual)
         if accrual is None:
             return 0.0
 
-        return accrual.accrual_size
+        return float(accrual.accrual_size)
 
     def get_future_accrual_payments(self, d0, v0):
 
@@ -1210,15 +1216,23 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             if begin_date >= accrual.accrual_end_date:
                 continue
 
-            prev_d = accrual.accrual_start_date
+            format = '%Y-%m-%d'
+            accrual_start_date_d = datetime.strptime(accrual.accrual_start_date, format).date()
+            first_payment_date_d = datetime.strptime(accrual.first_payment_date, format).date()
+            # accrual_end_date_d = datetime.strptime(accrual.accrual_end_date, format).date() # seems date field
+            accrual_end_date_d = accrual.accrual_end_date
+
+
+
+            prev_d = accrual_start_date_d
             for i in range(0, 3652058):
                 stop = False
                 if i == 0:
-                    d = accrual.first_payment_date
+                    d = first_payment_date_d
                 else:
                     try:
-                        d = accrual.first_payment_date + accrual.periodicity.to_timedelta(
-                            n=accrual.periodicity_n, i=i, same_date=accrual.accrual_start_date)
+                        d = first_payment_date_d + accrual.periodicity.to_timedelta(
+                            n=accrual.periodicity_n, i=i, same_date=accrual_start_date_d)
                     except (OverflowError, ValueError):  # year is out of range
                         break
 
@@ -1226,14 +1240,14 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                     prev_d = d
                     continue
 
-                if d >= accrual.accrual_end_date:
-                    d = accrual.accrual_end_date - timedelta(days=1)
+                if d >= accrual_end_date_d:
+                    d = accrual_end_date_d - timedelta(days=1)
                     stop = True
 
                 val_or_factor = get_coupon(accrual, prev_d, d, maturity_date=self.maturity_date, factor=factor)
                 res.append((d, val_or_factor))
 
-                if stop or d >= accrual.accrual_end_date:
+                if stop or d >= accrual_end_date_d:
                     break
 
                 prev_d = d
@@ -1567,10 +1581,12 @@ class PriceHistory(DataTimeStampedModel):
     def get_instr_ytm_x0(self, dt):
         try:
             accrual_size = self.instrument.get_accrual_size(dt)
+
             return (accrual_size * self.instrument.accrued_multiplier) * \
                    (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) / \
                    (self.principal_price * self.instrument.price_multiplier)
-        except ArithmeticError:
+        except Exception as e:
+            _l.error('get_instr_ytm_x0 %s' % e)
             return 0
 
     def calculate_ytm(self, dt):
@@ -1583,15 +1599,18 @@ class PriceHistory(DataTimeStampedModel):
                 ytm = (accrual_size * self.instrument.accrued_multiplier) * \
                       (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) / \
                       (self.principal_price * self.instrument.price_multiplier)
-            except ArithmeticError:
+
+            except Exception as e:
+                _l.info('calculate_ytm e %s ' % e)
                 ytm = 0
             # _l.debug('get_instr_ytm.1: %s', ytm)
             return ytm
 
         x0 = self.get_instr_ytm_x0(dt)
-        # _l.debug('get_instr_ytm: x0=%s', x0)
+        _l.debug('get_instr_ytm: x0=%s', x0)
 
         data = self.get_instr_ytm_data(dt)
+        _l.debug('get_instr_ytm: data=%s', data)
 
         if data:
             ytm = f_xirr(data, x0=x0)

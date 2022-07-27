@@ -2352,7 +2352,8 @@ def _run_data_procedure(evaluator, user_code, user_context=None, **kwargs):
 
 
     except Exception as e:
-        _l.debug("_run_data_procedure.exception %s" % e)
+        _l.error("_run_data_procedure.exception %s" % e)
+        _l.error("_run_data_procedure.exception traceback %s" % traceback.format_exc())
 
 
 _run_data_procedure.evaluator = True
