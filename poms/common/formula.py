@@ -2338,7 +2338,8 @@ def _run_data_procedure(evaluator, user_code, user_context=None, **kwargs):
         if 'names' not in merged_context:
             merged_context['names'] = {}
 
-        merged_context['names'].update(user_context)
+        if user_context:
+            merged_context['names'].update(user_context)
 
         _l.info('merged_context %s' % merged_context)
 
