@@ -25,4 +25,6 @@ SECRET_KEY=mv83o5mq \
 CBONDS_BROKER_URL=https://data.finmars.com:18443/ \
 SUPERSET_URL=https://superset.finmars.com/ \
 JWT_SECRET_KEY=09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3ab \
+ADMIN_USERNAME=admin \
+ADMIN_PASSWORD=d798nf0rgpp6g8qp \
 BACKEND_ROLES="ALL" python manage.py runserver

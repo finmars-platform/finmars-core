@@ -10,12 +10,6 @@ services:
     tty: true
     ports:
       - "5434:5432"
-#  redis:
-#    image: redis:alpine
-#    ports:
-#      - "6379:6379"
-#    stdin_open: true
-#    tty: true
   rabbitmq:
     image: rabbitmq
     ports:

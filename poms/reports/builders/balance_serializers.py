@@ -1010,6 +1010,7 @@ def serialize_report_item_instrument(item):
         "reference_for_pricing": item.reference_for_pricing,
         "payment_size_detail": item.payment_size_detail_id,
         "maturity_date": item.maturity_date,
+        "maturity_price": item.maturity_price,
         "attributes": attributes,
         "instrument_type": item.instrument_type.id,
         "instrument_type_object": instrument_type
