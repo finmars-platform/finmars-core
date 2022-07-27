@@ -276,7 +276,7 @@ class InstrumentDownloadSchemeInput(models.Model):
     scheme = models.ForeignKey(InstrumentDownloadScheme, related_name='inputs', verbose_name=gettext_lazy('scheme') , on_delete=models.CASCADE)
     name = models.CharField(max_length=32, blank=True, default='', verbose_name=gettext_lazy('name'))
     field = models.CharField(max_length=32, blank=True, default='', verbose_name=gettext_lazy('field'))
-    name_expr = models.CharField(max_length=1000, blank=True, default='', verbose_name=gettext_lazy('name expression'))
+    name_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='', verbose_name=gettext_lazy('name expression'))
 
     class Meta:
         verbose_name = gettext_lazy('instrument download scheme input')
@@ -1063,7 +1063,7 @@ class ComplexTransactionImportSchemeInput(models.Model):
     column = models.SmallIntegerField()
     column_name = models.CharField(max_length=255, blank=True, null=True)
 
-    name_expr = models.CharField(max_length=1000, default='', verbose_name=gettext_lazy('name expression'))
+    name_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='', verbose_name=gettext_lazy('name expression'))
 
     class Meta:
         verbose_name = gettext_lazy('complex transaction import scheme input')
@@ -1082,7 +1082,7 @@ class ComplexTransactionImportSchemeCalculatedInput(models.Model):
     name = models.CharField(max_length=255)
     column = models.SmallIntegerField()
 
-    name_expr = models.CharField(max_length=1000, default='', verbose_name=gettext_lazy('name expression'))
+    name_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='', verbose_name=gettext_lazy('name expression'))
 
     class Meta:
         verbose_name = gettext_lazy('complex transaction import scheme calculated input')
@@ -1144,7 +1144,7 @@ class ComplexTransactionImportSchemeField(models.Model):
     # name = models.CharField(max_length=255, verbose_name=gettext_lazy('name'))
     transaction_type_input = models.ForeignKey('transactions.TransactionTypeInput', on_delete=models.CASCADE,
                                                verbose_name=gettext_lazy('transaction type input'))
-    value_expr = models.CharField(max_length=1000, verbose_name=gettext_lazy('value expression'))
+    value_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=gettext_lazy('value expression'))
 
     class Meta:
         verbose_name = gettext_lazy('complex transaction import scheme field')

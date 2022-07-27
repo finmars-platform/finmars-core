@@ -11,7 +11,7 @@ from poms.common import formula
 
 from django.utils.timezone import now
 
-EXPRESSION_FIELD_LENGTH = 1024
+EXPRESSION_FIELD_LENGTH = 2048
 
 
 class NamedModel(models.Model):

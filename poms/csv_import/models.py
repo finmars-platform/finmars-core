@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import DataTimeStampedModel, NamedModel
+from poms.common.models import DataTimeStampedModel, NamedModel, EXPRESSION_FIELD_LENGTH
 from poms.users.models import MasterUser
 
 
@@ -75,7 +75,7 @@ class CsvImportSchemeCalculatedInput(models.Model):
     name = models.CharField(max_length=255)
     column = models.SmallIntegerField()
 
-    name_expr = models.CharField(max_length=1000, default='', verbose_name=gettext_lazy('name expression'))
+    name_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='', verbose_name=gettext_lazy('name expression'))
 
     class Meta:
         verbose_name = gettext_lazy('csv import scheme calculated input')
@@ -92,7 +92,7 @@ class CsvField(models.Model):
     name = models.CharField(max_length=255, blank=True, default='')
     column_name = models.CharField(max_length=255, blank=True, null=True)
 
-    name_expr = models.CharField(max_length=1000, default='', verbose_name=gettext_lazy('name expression'))
+    name_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='', verbose_name=gettext_lazy('name expression'))
 
     scheme = models.ForeignKey(CsvImportScheme, related_name='csv_fields', on_delete=models.CASCADE)
 
@@ -107,7 +107,7 @@ class CsvField(models.Model):
 
 class EntityField(models.Model):
     name = models.CharField(max_length=255)
-    expression = models.CharField(max_length=255, blank=True, default='')
+    expression = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='')
 
     use_default = models.BooleanField(default=True,  verbose_name=gettext_lazy('use default'))
 
