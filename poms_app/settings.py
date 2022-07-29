@@ -428,6 +428,7 @@ LOGGING = {
     },
     'handlers': {
         'console': {
+            'level': DJANGO_LOG_LEVEL,
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
         },
@@ -436,11 +437,6 @@ LOGGING = {
               'class': 'logging.FileHandler',
               'filename': '/var/log/finmars/django.log',
               'formatter': 'verbose'
-#             'class': 'logging.handlers.RotatingFileHandler',
-#             'filename': '/var/log/finmars/django.log',
-#             'maxBytes': 1024*1024*10, # 10 MB
-#             'formatter': 'verbose',
-#             'backupCount': 5
         }
     },
     'loggers': {
