@@ -1365,8 +1365,7 @@ class FillPricesBrokerCbondsProcess(object):
                 records = PricingProcedureCbondsInstrumentResult.objects.filter(
                     master_user=self.master_user,
                     procedure=self.instance['procedure'],
-                    reference=item['reference'],
-                    instrument_parameters=str(item['parameters'])
+                    reference=item['reference']
                 )
 
                 _l.debug('< fill instrument prices: records for %s len %s' % (item['reference'], len(list(records))))
@@ -1949,8 +1948,7 @@ class FillPricesBrokerFxCbondsProcess(object):
                 records = PricingProcedureCbondsCurrencyResult.objects.filter(
                     master_user=self.master_user,
                     procedure=self.instance['procedure'],
-                    reference=item['reference'],
-                    currency_parameters=str(item['parameters'])
+                    reference=item['reference']
                 )
 
                 _l.debug('< fill currency prices: records for %s len %s' % (item['reference'], len(list(records))))
