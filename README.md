@@ -173,3 +173,9 @@ CELERY
 
 Celery worker 
     Сам не процессить, генерит процессы, поэтому вроде как финмарсу нету смысла иметь больше 1 воркера на проект
+
+
+Apple Silicon
+
+export LIBRARY_PATH=$LIBRARY_PATH:/opt/homebrew/opt/openssl/lib
+pip install -r requirements.txt
