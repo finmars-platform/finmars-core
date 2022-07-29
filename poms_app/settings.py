@@ -576,26 +576,15 @@ GEOIP_CITY = "GeoLite2-City.mmdb"
 CELERY_EAGER_PROPAGATES = True
 CELERY_ALWAYS_EAGER = False
 
-# CELERY_BROKER_URL = 'redis://%s/1' % REDIS_HOST
 CELERY_BROKER_URL = 'amqp://%s' % RABBITMQ_HOST
-# CELERY_RESULT_BACKEND = 'redis://%s/1' % REDIS_HOST
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ENABLE_UTC = True
 CELERY_TIMEZONE = 'UTC'
 
-# CELERY_ACCEPT_CONTENT = ['json', 'json']
-# CELERY_TASK_SERIALIZER = 'json'
-# CELERY_RESULT_SERIALIZER = 'json'
 CELERY_ACCEPT_CONTENT = ['json', 'pickle']
 CELERY_TASK_SERIALIZER = 'pickle'
 CELERY_RESULT_SERIALIZER = 'pickle'
-# CELERY_ACCEPT_CONTENT = ['json', 'pickle-signed']
-# CELERY_TASK_SERIALIZER = 'pickle-signed'
-# CELERY_RESULT_SERIALIZER = 'pickle-signed'
 
-# CELERYD_CONCURRENCY = 4  # Defaults to the number of available CPUs, but I prefer doubling it.
-# CELERYD_TASK_SOFT_TIME_LIMIT = 60 * 20
-# CELERYD_TASK_TIME_LIMIT = 60 * 30  # The worker processing the task will be killed and replaced with a new one when this is exceeded.
 CELERY_SEND_TASK_SENT_EVENT = True
 
 if CELERY_RESULT_BACKEND in ['django-db', ]:
@@ -604,17 +593,13 @@ if CELERY_RESULT_BACKEND in ['django-db', ]:
 else:
     CELERY_RESULT_EXPIRES = 60
     CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = True
-# CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = True
-# CELERY_WORKER_REDIRECT_STDOUTS = False
-# CELERY_WORKER_LOG_COLOR = False
-# CELERY_WORKER_LOG_FORMAT = '[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s'
+
+CELERY_WORKER_LOG_COLOR = True
+CELERY_WORKER_LOG_FORMAT = '[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s'
 try:
     CELERY_WORKER_CONCURRENCY = int(os.environ.get('CELERY_WORKER_CONCURRENCY', '1'))
 except (ValueError, TypeError):
     CELERY_WORKER_CONCURRENCY = 1
-# CELERY_TASK_TRACK_STARTED = True
-# CELERY_SEND_EVENTS = True
-# CELERY_TASK_SEND_SENT_EVENT = True
 
 # FILE STORAGE ----------------------------------------------
 
