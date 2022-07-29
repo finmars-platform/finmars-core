@@ -2542,12 +2542,12 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
         rule_scenarios = scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
                                                                 'fields__transaction_type_input').all()
 
-        _l.info('scheme %s - inputs=%s, rules=%s', scheme,
-                [(i.name, i.column) for i in scheme_inputs],
-                [(r.transaction_type.user_code) for r in rule_scenarios])
-
-        _l.info('scheme %s - column_matcher %s', (scheme, scheme.column_matcher))
-        _l.info('scheme %s - has_header_row %s', (scheme, scheme.has_header_row))
+        # _l.info('scheme %s - inputs=%s, rules=%s', scheme,
+        #         [(i.name, i.column) for i in scheme_inputs],
+        #         [(r.transaction_type.user_code) for r in rule_scenarios])
+        #
+        # _l.info('scheme %s - column_matcher %s', (scheme, scheme.column_matcher))
+        # _l.info('scheme %s - has_header_row %s', (scheme, scheme.has_header_row))
 
         default_rule_scenario = None
 
