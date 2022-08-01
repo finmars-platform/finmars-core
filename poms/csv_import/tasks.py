@@ -2416,109 +2416,111 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
     if 'accrual_calculation_schedules' in source_data:
 
-        if len(source_data['accrual_calculation_schedules']):
+        if source_data['accrual_calculation_schedules']:
 
-            _l.info("Setting up accrual schedules. Init")
+            if len(source_data['accrual_calculation_schedules']):
 
-            if len(object_data['accrual_calculation_schedules']):
+                _l.info("Setting up accrual schedules. Init")
 
-                _l.info("Setting up accrual schedules. Overwrite Existing")
+                if len(object_data['accrual_calculation_schedules']):
 
-                accrual = object_data['accrual_calculation_schedules'][0]
+                    _l.info("Setting up accrual schedules. Overwrite Existing")
 
-                if 'day_count_convention' in source_data:
+                    accrual = object_data['accrual_calculation_schedules'][0]
 
-                    if source_data['day_count_convention'] in accrual_map:
+                    if 'day_count_convention' in source_data:
 
-                        accrual['accrual_calculation_model'] = accrual_map[source_data['day_count_convention']]
+                        if source_data['day_count_convention'] in accrual_map:
 
-                    else:
-                        accrual['accrual_calculation_model'] = AccrualCalculationModel.DEFAULT
+                            accrual['accrual_calculation_model'] = accrual_map[source_data['day_count_convention']]
 
-                if 'accrual_start_date' in source_data['accrual_calculation_schedules'][0]:
-                    accrual['accrual_start_date'] = source_data['accrual_calculation_schedules'][0][
-                        'accrual_start_date']
+                        else:
+                            accrual['accrual_calculation_model'] = AccrualCalculationModel.DEFAULT
 
-                if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
-                    accrual['first_payment_date'] = source_data['accrual_calculation_schedules'][0][
-                        'first_payment_date']
+                    if 'accrual_start_date' in source_data['accrual_calculation_schedules'][0]:
+                        accrual['accrual_start_date'] = source_data['accrual_calculation_schedules'][0][
+                            'accrual_start_date']
 
-                try:
-                    accrual['accrual_size'] = float(source_data['accrual_calculation_schedules'][0]['accrual_size'])
-                except Exception as e:
-                    accrual['accrual_size'] = 0
+                    if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
+                        accrual['first_payment_date'] = source_data['accrual_calculation_schedules'][0][
+                            'first_payment_date']
 
-                try:
-                    accrual['periodicity_n'] = int(source_data['accrual_calculation_schedules'][0]['periodicity_n'])
+                    try:
+                        accrual['accrual_size'] = float(source_data['accrual_calculation_schedules'][0]['accrual_size'])
+                    except Exception as e:
+                        accrual['accrual_size'] = 0
 
-                    if accrual['periodicity_n'] == 1:
-                        accrual['periodicity'] = Periodicity.ANNUALLY
+                    try:
+                        accrual['periodicity_n'] = int(source_data['accrual_calculation_schedules'][0]['periodicity_n'])
 
-                    if accrual['periodicity_n'] == 2:
-                        accrual['periodicity'] = Periodicity.SEMI_ANNUALLY
+                        if accrual['periodicity_n'] == 1:
+                            accrual['periodicity'] = Periodicity.ANNUALLY
 
-                    if accrual['periodicity_n'] == 4:
-                        accrual['periodicity'] = Periodicity.QUARTERLY
+                        if accrual['periodicity_n'] == 2:
+                            accrual['periodicity'] = Periodicity.SEMI_ANNUALLY
 
-                    if accrual['periodicity_n'] == 6:
-                        accrual['periodicity'] = Periodicity.BIMONTHLY
+                        if accrual['periodicity_n'] == 4:
+                            accrual['periodicity'] = Periodicity.QUARTERLY
 
-                    if accrual['periodicity_n'] == 12:
-                        accrual['periodicity'] = Periodicity.MONTHLY
+                        if accrual['periodicity_n'] == 6:
+                            accrual['periodicity'] = Periodicity.BIMONTHLY
 
-                    _l.info('periodicity %s' % accrual['periodicity'])
+                        if accrual['periodicity_n'] == 12:
+                            accrual['periodicity'] = Periodicity.MONTHLY
 
-                    accrual['periodicity_n'] = 0
+                        _l.info('periodicity %s' % accrual['periodicity'])
 
-                except Exception as e:
-                    accrual['periodicity_n'] = 0
+                        accrual['periodicity_n'] = 0
 
-            else:
+                    except Exception as e:
+                        accrual['periodicity_n'] = 0
 
-                _l.info("Setting up accrual schedules. Creating new")
+                else:
 
-                accrual = {}
+                    _l.info("Setting up accrual schedules. Creating new")
 
-                accrual['accrual_calculation_model'] = AccrualCalculationModel.ACT_365
-                accrual['periodicity'] = Periodicity.ANNUALLY
+                    accrual = {}
 
-                if 'accrual_start_date' in source_data['accrual_calculation_schedules'][0]:
-                    accrual['accrual_start_date'] = source_data['accrual_calculation_schedules'][0][
-                        'accrual_start_date']
+                    accrual['accrual_calculation_model'] = AccrualCalculationModel.ACT_365
+                    accrual['periodicity'] = Periodicity.ANNUALLY
 
-                if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
-                    accrual['first_payment_date'] = source_data['accrual_calculation_schedules'][0][
-                        'first_payment_date']
+                    if 'accrual_start_date' in source_data['accrual_calculation_schedules'][0]:
+                        accrual['accrual_start_date'] = source_data['accrual_calculation_schedules'][0][
+                            'accrual_start_date']
 
-                try:
-                    accrual['accrual_size'] = float(source_data['accrual_calculation_schedules'][0]['accrual_size'])
-                except Exception as e:
-                    accrual['accrual_size'] = 0
+                    if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
+                        accrual['first_payment_date'] = source_data['accrual_calculation_schedules'][0][
+                            'first_payment_date']
 
-                try:
-                    accrual['periodicity_n'] = int(source_data['accrual_calculation_schedules'][0]['periodicity_n'])
+                    try:
+                        accrual['accrual_size'] = float(source_data['accrual_calculation_schedules'][0]['accrual_size'])
+                    except Exception as e:
+                        accrual['accrual_size'] = 0
 
-                    if accrual['periodicity_n'] == 1:
-                        accrual['periodicity'] = Periodicity.ANNUALLY
+                    try:
+                        accrual['periodicity_n'] = int(source_data['accrual_calculation_schedules'][0]['periodicity_n'])
 
-                    if accrual['periodicity_n'] == 2:
-                        accrual['periodicity'] = Periodicity.SEMI_ANNUALLY
+                        if accrual['periodicity_n'] == 1:
+                            accrual['periodicity'] = Periodicity.ANNUALLY
 
-                    if accrual['periodicity_n'] == 4:
-                        accrual['periodicity'] = Periodicity.QUARTERLY
+                        if accrual['periodicity_n'] == 2:
+                            accrual['periodicity'] = Periodicity.SEMI_ANNUALLY
 
-                    if accrual['periodicity_n'] == 6:
-                        accrual['periodicity'] = Periodicity.BIMONTHLY
+                        if accrual['periodicity_n'] == 4:
+                            accrual['periodicity'] = Periodicity.QUARTERLY
 
-                    if accrual['periodicity_n'] == 12:
-                        accrual['periodicity'] = Periodicity.MONTHLY
+                        if accrual['periodicity_n'] == 6:
+                            accrual['periodicity'] = Periodicity.BIMONTHLY
 
-                    _l.info('periodicity %s' % accrual['periodicity'])
+                        if accrual['periodicity_n'] == 12:
+                            accrual['periodicity'] = Periodicity.MONTHLY
 
-                except Exception as e:
-                    accrual['periodicity_n'] = 0
+                        _l.info('periodicity %s' % accrual['periodicity'])
 
-                object_data['accrual_calculation_schedules'].append(accrual)
+                    except Exception as e:
+                        accrual['periodicity_n'] = 0
+
+                    object_data['accrual_calculation_schedules'].append(accrual)
     else:
         set_accruals_for_instrument(object_data, source_data, instrument_type)
 
