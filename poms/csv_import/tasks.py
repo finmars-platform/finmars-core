@@ -2321,44 +2321,48 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     for item in object_data['attributes']:
         _tmp_attributes_dict[item['attribute_type']] = item
 
-    if 'attributes' in source_data:
+    try:
+        if 'attributes' in source_data:
 
-        for attribute_type in attribute_types:
+            for attribute_type in attribute_types:
 
-            lower_user_code = attribute_type.user_code.lower()
+                lower_user_code = attribute_type.user_code.lower()
 
-            for key, value in source_data['attributes'].items():
+                for key, value in source_data['attributes'].items():
 
-                _l_key = key.lower()
+                    _l_key = key.lower()
 
-                if _l_key == lower_user_code:
+                    if _l_key == lower_user_code:
 
-                    attribute = {
-                        'attribute_type': attribute_type.id,
-                    }
+                        attribute = {
+                            'attribute_type': attribute_type.id,
+                        }
 
-                    if attribute_type.value_type == 10:
-                        attribute['value_string'] = value
+                        if attribute_type.value_type == 10:
+                            attribute['value_string'] = value
 
-                    if attribute_type.value_type == 20:
-                        attribute['value_float'] = value
+                        if attribute_type.value_type == 20:
+                            attribute['value_float'] = value
 
-                    if attribute_type.value_type == 30:
+                        if attribute_type.value_type == 30:
 
-                        try:
+                            try:
 
-                            classifier = GenericClassifier.objects.get(attribute_type=attribute_type,
-                                                                       name=value)
+                                classifier = GenericClassifier.objects.get(attribute_type=attribute_type,
+                                                                           name=value)
 
-                            attribute['classifier'] = classifier.id
+                                attribute['classifier'] = classifier.id
 
-                        except Exception as e:
-                            attribute['classifier'] = None
+                            except Exception as e:
+                                attribute['classifier'] = None
 
-                    if attribute_type.value_type == 40:
-                        attribute['value_date'] = value
+                        if attribute_type.value_type == 40:
+                            attribute['value_date'] = value
 
-                    _tmp_attributes_dict[attribute['attribute_type']] = attribute
+                        _tmp_attributes_dict[attribute['attribute_type']] = attribute
+    except Exception as e:
+        _l.error("Could not set attributes from finmars database")
+
 
     object_data['attributes'] = []
 
