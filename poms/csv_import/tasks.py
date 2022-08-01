@@ -2385,15 +2385,16 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     _l.info('source_data %s' % source_data)
 
     if 'accrual_calculation_schedules' in source_data:
-        if len(source_data['accrual_calculation_schedules']):
+        if source_data['accrual_calculation_schedules']:
+            if len(source_data['accrual_calculation_schedules']):
 
-            if len(object_data['event_schedules']):
-                # C
-                coupon_event = object_data['event_schedules'][0]
+                if len(object_data['event_schedules']):
+                    # C
+                    coupon_event = object_data['event_schedules'][0]
 
-                if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
-                    coupon_event['effective_date'] = source_data['accrual_calculation_schedules'][0][
-                        'first_payment_date']
+                    if 'first_payment_date' in source_data['accrual_calculation_schedules'][0]:
+                        coupon_event['effective_date'] = source_data['accrual_calculation_schedules'][0][
+                            'first_payment_date']
 
     accrual_map = {
         'Actual/Actual (ICMA)': AccrualCalculationModel.ACT_ACT,
