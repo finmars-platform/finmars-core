@@ -765,7 +765,7 @@ class TransactionImportProcess(object):
                     send_system_message(master_user=self.master_user,
                                         source="Transaction Import Service",
                                         text="Import Finished (JSON Report)",
-                                        file_report_id=self.result.report[1].id)
+                                        file_report_id=self.result.reports[1].id)
 
                     if self.execution_context['date_from']:
                         calculate_portfolio_register_record.apply_async(link=[
