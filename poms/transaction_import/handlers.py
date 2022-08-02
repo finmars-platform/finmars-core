@@ -30,7 +30,7 @@ from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.system_messages.handlers import send_system_message
 from poms.transaction_import.models import ProcessType, TransactionImportResult, ProxyUser, ProxyRequest, \
-    TransactionImportProcessItem, TransactionImportProcessPreprocessItem
+    TransactionImportProcessItem, TransactionImportProcessPreprocessItem, TransactionImportBookedTransaction
 from poms.transaction_import.serializers import TransactionImportResultSerializer
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionTypeInput
@@ -394,7 +394,14 @@ class TransactionImportProcess(object):
                     item.error_message = item.error_message + 'Unique code already exist. Error'
 
                 item.processed_rule_scenarios.append(rule_scenario)
-                item.booked_transactions.append(transaction_type_process_instance.complex_transaction)
+
+                trn = TransactionImportBookedTransaction(
+                    code=transaction_type_process_instance.complex_transaction.code,
+                    text=transaction_type_process_instance.complex_transaction.text,
+                    transaction_unique_code=transaction_type_process_instance.complex_transaction.transaction_unique_code,
+                )
+
+                item.booked_transactions.append(trn)
 
                 item.status = 'success'
                 item.message = "Transaction Booked %s" % transaction_type_process_instance.complex_transaction

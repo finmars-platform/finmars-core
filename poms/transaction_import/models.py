@@ -22,6 +22,16 @@ class ProxyRequest(object):
         self.user = user
 
 
+class TransactionImportBookedTransaction(object):
+
+    def __init__(self,
+                 code=None,
+                 text=None,
+                 transaction_unique_code=None):
+        self.code = code
+        self.text = text
+        self.transaction_unique_code = transaction_unique_code
+
 class TransactionImportProcessPreprocessItem(object):
 
     def __init__(self,
