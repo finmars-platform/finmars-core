@@ -48,7 +48,7 @@ class TransactionImportCeleryTaskSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CeleryTask
-        fields = ['id', 'status', 'type', 'created', 'modified']
+        fields = ['id', 'status', 'type']
 
 
 class TransactionImportSchemeSerializer(serializers.ModelSerializer):
