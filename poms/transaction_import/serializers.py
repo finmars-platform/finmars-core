@@ -50,13 +50,7 @@ class TransactionImportProcessItemSerializer(serializers.Serializer):
 
         for key, value in data['inputs'].items():
 
-            if value:
-                if isinstance(data['inputs'][key], int) or instance(data['inputs'][key], float):
-                   # keep floats and ints as its
-                   pass
-                else:
-                    data['inputs'][key] = str(value)
-
+            data['inputs'][key] = str(value)
 
         return data
 
