@@ -100,6 +100,8 @@ class TransactionImportProcess(object):
 
         self.result = TransactionImportResult()
         self.result.task = self.task
+        self.result.scheme = self.scheme
+
 
         self.process_type = ProcessType.CSV
 
@@ -201,7 +203,7 @@ class TransactionImportProcess(object):
         file_report.master_user = self.master_user
         file_report.name = 'Transaction Import %s (Task %s).csv' % (current_date_time, self.task.id)
         file_report.file_name = file_name
-        file_report.type = type
+        file_report.type = 'transaction_import.import'
         file_report.notes = 'System File'
 
         file_report.save()
@@ -210,6 +212,38 @@ class TransactionImportProcess(object):
         _l.info('TransactionImportProcess.file_report %s' % file_report.file_url)
 
         return file_report
+
+    def generate_json_report(self):
+
+        serializer = TransactionImportResultSerializer(instance=self.result, context=self.context)
+
+        result = serializer.data
+
+        _l.debug('self.result %s' % self.result.__dict__)
+
+        _l.debug('generate_json_report.result %s' % result)
+
+        current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+        file_name = 'file_report_%s_task_%s.json' % (current_date_time, self.task.id)
+
+        file_report = FileReport()
+
+        _l.info('TransactionImportProcess.generate_json_report uploading file')
+
+        file_report.upload_file(file_name=file_name, text=json.dumps(result, indent=4), master_user=self.master_user)
+        file_report.master_user = self.master_user
+        file_report.name = 'Transaction Import %s (Task %s).json' % (current_date_time, self.task.id)
+        file_report.file_name = file_name
+        file_report.type = 'transaction_import.import'
+        file_report.notes = 'System File'
+
+        file_report.save()
+
+        _l.info('TransactionImportProcess.json_report %s' % file_report)
+        _l.info('TransactionImportProcess.json_report %s' % file_report.file_url)
+
+        return file_report
+
 
     def find_process_type(self):
 
@@ -427,6 +461,8 @@ class TransactionImportProcess(object):
 
                                     self.raw_items.append(item)
 
+                            self.result.total_rows = len(self.raw_items)
+
             if self.process_type == ProcessType.EXCEL:
                 # TODO implement excel import
                 pass
@@ -575,7 +611,7 @@ class TransactionImportProcess(object):
 
             try:
 
-                _l.info('TransactionImportProcess.Task %s. ========= process row %s ========' % (self.task, str(item.row_number)))
+                _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ========' % (self.task, str(item.row_number), str(self.result.total_rows)))
 
                 if self.scheme.filter_expression:
 
@@ -599,7 +635,7 @@ class TransactionImportProcess(object):
                 item.processed_rule_scenarios = []
                 item.booked_transactions = []
 
-                _l.info('TransactionImportProcess.Task %s. ========= process row %s ======== %s ' % (self.task, str(item.row_number), rule_value))
+                _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ======== %s ' % (self.task, str(item.row_number), str(self.result.total_rows), rule_value))
 
                 if rule_value:
 
@@ -683,7 +719,6 @@ class TransactionImportProcess(object):
                     'processed_rows': self.result.processed_rows,
                     'total_rows': self.result.total_rows,
                     'file_name': self.result.file_name,
-                    'report': self.result.report,
                     'scheme': self.scheme.id,
                     'scheme_object': {
                         'id': self.scheme.id,
@@ -700,7 +735,11 @@ class TransactionImportProcess(object):
             self.task.status = CeleryTask.STATUS_DONE
             self.task.save()
 
-            self.result.report = self.generate_file_report()
+            self.result.reports = []
+
+            self.result.reports.append(self.generate_file_report())
+            self.result.reports.append(self.generate_json_report())
+
 
             # if JSON IMPORT
             if self.task.options_object and 'items' in self.task.options_object:
@@ -714,7 +753,12 @@ class TransactionImportProcess(object):
                     send_system_message(master_user=self.master_user,
                                         source="Transaction Import Service",
                                         text="Import Finished",
-                                        file_report_id=self.result.report.id)
+                                        file_report_id=self.result.reports[0].id)
+
+                    send_system_message(master_user=self.master_user,
+                                        source="Transaction Import Service",
+                                        text="Import Finished (JSON Report)",
+                                        file_report_id=self.result.report[1].id)
 
                     if self.execution_context['date_from']:
                         calculate_portfolio_register_record.apply_async(link=[
@@ -731,7 +775,12 @@ class TransactionImportProcess(object):
                 send_system_message(master_user=self.master_user,
                                     source="Transaction Import Service",
                                     text="Import Finished",
-                                    file_report_id=self.result.report.id)
+                                    file_report_id=self.result.reports[0].id)
+
+                send_system_message(master_user=self.master_user,
+                                    source="Transaction Import Service",
+                                    text="Import Finished (JSON Report)",
+                                    file_report_id=self.result.reports[1].id)
 
         if self.procedure_instance and self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()

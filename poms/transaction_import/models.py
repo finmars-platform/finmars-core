@@ -60,7 +60,9 @@ class TransactionImportResult(object):
 
     def __init__(self,
                  task=None,
+                 scheme=None,
                  file_name=None,
+                 file_path=None,
 
 
                  total_rows=None,
@@ -70,9 +72,10 @@ class TransactionImportResult(object):
                  items=None,
 
                  error_message=None,
-                 report=None):
+                 reports=None):
 
         self.task = task
+        self.scheme = scheme
         self.file_name = file_name
 
         self.total_rows = total_rows
@@ -81,5 +84,5 @@ class TransactionImportResult(object):
         self.items = items
 
         self.error_message = error_message
-        self.report = report
+        self.reports = reports
 
