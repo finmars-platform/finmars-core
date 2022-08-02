@@ -2,10 +2,26 @@
 from rest_framework import serializers
 
 from poms.celery_tasks.models import CeleryTask
-from poms.celery_tasks.serializers import CeleryTaskSerializer
 from poms.file_reports.serializers import FileReportSerializer
 from poms.integrations.models import ComplexTransactionImportScheme
 from poms.transaction_import.models import TransactionImportResult, TransactionImportProcessItem
+
+class TransactionImportBookedTransactionSerializer(serializers.Serializer):
+
+    code = serializers.IntegerField()
+    text = serializers.CharField()
+    transaction_unique_code = serializers.CharField()
+
+
+class TransactionImportSelectorValueSerializer(serializers.Serializer):
+
+    value = serializers.CharField()
+    notes = serializers.CharField()
+
+class TransactionImportRuleScenarioSerializer(serializers.Serializer):
+
+    name = serializers.CharField()
+    selector_values = TransactionImportSelectorValueSerializer(many=True)
 
 
 class TransactionImportProcessItemSerializer(serializers.Serializer):
@@ -18,9 +34,12 @@ class TransactionImportProcessItemSerializer(serializers.Serializer):
     raw_inputs = serializers.JSONField(allow_null=False)
     inputs = serializers.JSONField(allow_null=False)
 
+    processed_rule_scenarios = TransactionImportRuleScenarioSerializer(many=True)
+    booked_transactions = TransactionImportBookedTransactionSerializer(many=True)
+
     class Meta:
         model = TransactionImportProcessItem
-        fields = ['row_number', 'status', 'error_message', 'message', 'raw_inputs', 'inputs']
+        fields = ['row_number', 'status', 'error_message', 'message', 'raw_inputs', 'inputs', 'processed_rule_scenarios']
 
 
 
