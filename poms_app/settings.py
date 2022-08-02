@@ -109,6 +109,7 @@ INSTALLED_APPS = [
     'poms.reports',
     'poms.api',
     'poms.csv_import',
+    'poms.transaction_import',
     'poms.complex_import',
     'poms.configuration_export',
     'poms.configuration_import',

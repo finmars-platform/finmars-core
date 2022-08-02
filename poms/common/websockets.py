@@ -3,6 +3,8 @@
 import asyncio
 import pathlib
 import ssl
+import traceback
+
 import websockets
 import json
 
@@ -99,7 +101,7 @@ def send_websocket_message(data,  level='system', context=None):
 
             event_loop.run_until_complete(send_message(json_message))
 
-        except Exception as error:
+        except Exception as e:
 
-
-            _l.info("Websocket error %s" % error)
+            _l.error("Websocket Exception %s" % e)
+            _l.error("Websocket Traceback %s" % traceback.format_exc())

@@ -1954,11 +1954,11 @@ class ComplexTransactionCsvFileImport:
                  scheme=None, file_path=None, skip_first_line=None, delimiter=None, quotechar=None, encoding=None,
                  error_handling=None, missing_data_handler=None, error=None, error_message=None, error_row_index=None,
                  error_rows=None,
-                 total_rows=None, processed_rows=None, filename=None, stats_file_report=None):
+                 total_rows=None, processed_rows=None, file_name=None, stats_file_report=None):
         self.task_id = task_id
         self.task_status = task_status
 
-        self.filename = filename
+        self.file_name = file_name
 
         self.master_user = master_user
         self.member = member
@@ -2020,13 +2020,13 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
 
         print('filetmp %s' % filetmp)
 
-        filename = None
+        file_name = None
         if filetmp:
-            filename = filetmp.name
+            file_name = filetmp.name
 
-            print('filename %s' % filename)
+            print('file_name %s' % file_name)
 
-            validated_data['filename'] = filename
+            validated_data['file_name'] = file_name
 
         if validated_data.get('task_id', None):
             validated_data.pop('file', None)

@@ -1356,7 +1356,7 @@ class TransactionTypeProcess(object):
 
     def get_access_to_inputs(self, group):
 
-        _l.debug('get_access_to_inputs: group %s' % group)
+        # _l.debug('get_access_to_inputs: group %s' % group)
 
         result = None
 
@@ -1371,8 +1371,8 @@ class TransactionTypeProcess(object):
             if input.account_id:
                 accounts.append(input.account_id)
 
-        _l.debug('get_access_to_inputs: accounts %s' % accounts)
-        _l.debug('get_access_to_inputs: portfolios %s' % portfolios)
+        # _l.debug('get_access_to_inputs: accounts %s' % accounts)
+        # _l.debug('get_access_to_inputs: portfolios %s' % portfolios)
 
         count = 0
 
@@ -1400,8 +1400,8 @@ class TransactionTypeProcess(object):
             except GenericObjectPermission.DoesNotExist:
                 pass
 
-        _l.debug('get_access_to_inputs: count %s' % count)
-        _l.debug('get_access_to_inputs: len portfolio/accounts %s' % str(len(accounts) + len(portfolios)))
+        # _l.debug('get_access_to_inputs: count %s' % count)
+        # _l.debug('get_access_to_inputs: len portfolio/accounts %s' % str(len(accounts) + len(portfolios)))
 
         if count == 0:
             result = 'no_view'
@@ -1436,13 +1436,13 @@ class TransactionTypeProcess(object):
             if has_access:
                 perms.append({'group': group, 'permission': 'view_transaction'})
 
-        _l.debug("perms %s" % perms)
+        # _l.debug("perms %s" % perms)
 
         assign_perms3(transaction, perms)
 
     def assign_permissions_to_complex_transaction(self):
 
-        _l.debug("assign_permissions_to_complex_transaction: mode %s" % self.process_mode)
+        # _l.debug("assign_permissions_to_complex_transaction: mode %s" % self.process_mode)
 
         groups = Group.objects.filter(master_user=self.transaction_type.master_user)
 
@@ -1496,8 +1496,8 @@ class TransactionTypeProcess(object):
             if not ttype_access and codename is not None:
                 codename = 'view_complextransaction_hide_parameters'
 
-            _l.debug('assign_permissions_to_complex_transaction: inputs_access %s' % inputs_access)
-            _l.debug('assign_permissions_to_complex_transaction: ttype_access %s' % ttype_access)
+            # _l.debug('assign_permissions_to_complex_transaction: inputs_access %s' % inputs_access)
+            # _l.debug('assign_permissions_to_complex_transaction: ttype_access %s' % ttype_access)
 
             if inputs_access == 'partial_view' and permissions_count != 0:
 
@@ -1541,7 +1541,7 @@ class TransactionTypeProcess(object):
             if codename:
                 perms.append({'group': group, 'permission': codename})
 
-        _l.debug("complex transactions pending perms %s" % perms)
+        # _l.debug("complex transactions pending perms %s" % perms)
 
         assign_perms3(self.complex_transaction, perms)
 
@@ -1557,9 +1557,9 @@ class TransactionTypeProcess(object):
 
                 if self.execute_action_condition(action_transaction):
 
-                    _l.debug('process transaction: %s', action_transaction)
-                    _l.debug('process transaction instrument_map: %s', instrument_map)
-                    _l.debug('process transaction id: %s', action_transaction.id)
+                    # _l.debug('process transaction: %s', action_transaction)
+                    # _l.debug('process transaction instrument_map: %s', instrument_map)
+                    # _l.debug('process transaction id: %s', action_transaction.id)
                     if action_transaction.instrument_phantom is not None:
                         _l.debug('process transaction instrument_phantom.order: %s',
                                  action_transaction.instrument_phantom.order)
@@ -1844,7 +1844,7 @@ class TransactionTypeProcess(object):
         for key, value in self.values.items():
             names[key] = value
 
-        _l.debug('execute_user_fields_expressions %s' % names)
+        # _l.debug('execute_user_fields_expressions %s' % names)
 
         fields = [
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
@@ -1880,10 +1880,10 @@ class TransactionTypeProcess(object):
 
                 except Exception as e:
 
-                    _l.debug("User Field Expression Eval error expression %s" % getattr(
+                    _l.error("User Field Expression Eval error expression %s" % getattr(
                         self.complex_transaction.transaction_type, field_key))
-                    _l.debug("User Field Expression Eval error names %s" % names)
-                    _l.debug("User Field Expression Eval error %s" % e)
+                    _l.error("User Field Expression Eval error names %s" % names)
+                    _l.error("User Field Expression Eval error %s" % e)
 
                     try:
                         setattr(self.complex_transaction, field_key, '<InvalidExpression>')

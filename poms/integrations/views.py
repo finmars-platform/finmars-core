@@ -16,6 +16,7 @@ from rest_framework.filters import OrderingFilter
 from django.db import transaction
 from rest_framework.viewsets import ModelViewSet
 
+from poms.transaction_import.tasks import transaction_import
 from poms.common.mixins import UpdateModelMixinExt, DestroyModelFakeMixin, BulkModelMixin
 from poms.common.utils import date_now, datetime_now
 
@@ -947,7 +948,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         # REFACTOR THIS
 
         options_object = {}
-        options_object['filename'] = instance.filename
+        options_object['file_name'] = instance.file_name
         options_object['file_path'] = instance.file_path
         options_object['scheme_id'] = instance.scheme.id
         options_object['execution_context'] = None
@@ -959,27 +960,12 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
 
         _l.info('celery_task %s created ' % celery_task.pk)
 
-        # celery_task.save()
-
         send_system_message(master_user=request.user.master_user,
                             source="Transaction Import Service",
                             text='Member %s started Transaction Import (scheme %s)' % (
                             request.user.member.username, instance.scheme.name))
 
-        complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
-
-        # def oncommit():
-        #
-        #     # res = complex_transaction_csv_file_import_parallel.apply_async(kwargs={'task_id': celery_task.pk})
-        #     complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
-        #
-        #     _l.info('ComplexTransactionCsvFileImportViewSet complex_transaction_csv_file_import_parallel' )
-        #
-        #     # celery_task.celery_task_id = res.id
-        #
-        #     celery_task.save()
-        #
-        # transaction.on_commit(oncommit)
+        transaction_import.apply_async(kwargs={"task_id": celery_task.pk})
 
         _l.info('ComplexTransactionCsvFileImportViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
@@ -1093,7 +1079,7 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
         # REFACTOR THIS
 
         options_object = {}
-        options_object['filename'] = instance.filename
+        options_object['file_name'] = instance.file_name
         options_object['file_path'] = instance.file_path
         options_object['scheme_id'] = instance.scheme.id
         options_object['execution_context'] = None

@@ -264,3 +264,8 @@ def get_list_of_dates_between_two_dates(date_from, date_to):
         result.append(day)
 
     return result
+
+
+def convert_name_to_key(name):
+
+    return name.strip().lower().replace(' ', '_')

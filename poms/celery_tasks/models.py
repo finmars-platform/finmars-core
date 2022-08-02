@@ -45,7 +45,7 @@ class CeleryTask(TimeStampedModel):
         ordering = ['-created']
 
     def __str__(self):
-        return 'Master_user {0.master_user.id} <Task: {0.pk} ({0.status})>'.format(self)
+        return '<Task: {0.pk} ({0.status})>'.format(self)
 
     @property
     def options_object(self):

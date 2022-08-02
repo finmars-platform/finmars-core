@@ -36,7 +36,7 @@ class RequestDataFileProcedureProcess(object):
 
     def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None, member=None, schedule_instance=None, context=None):
 
-        _l.debug('RequestDataFileProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
+        _l.info('RequestDataFileProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
 
         self.master_user = master_user
         self.procedure = procedure
@@ -50,7 +50,7 @@ class RequestDataFileProcedureProcess(object):
         if date_from:
             self.procedure.date_from = date_from
         if date_to:
-            _l.debug("Date To set from user Settings")
+            _l.info("Date To set from user Settings")
             self.procedure.date_to = date_to
 
     def execute_procedure_date_expressions(self):
@@ -59,13 +59,13 @@ class RequestDataFileProcedureProcess(object):
             try:
                 self.procedure.date_from = formula.safe_eval(self.procedure.date_from_expr, names={})
             except formula.InvalidExpression as e:
-                _l.debug("Cant execute date from expression %s " % e)
+                _l.error("Cant execute date from expression %s " % e)
 
         if self.procedure.date_to_expr:
             try:
                 self.procedure.date_to = formula.safe_eval(self.procedure.date_to_expr, names={})
             except formula.InvalidExpression as e:
-                _l.debug("Cant execute date to expression %s " % e)
+                _l.error("Cant execute date to expression %s " % e)
 
     def process(self):
 

@@ -7,7 +7,9 @@ import logging
 import random
 import time
 import uuid
+import math
 from collections import OrderedDict
+import types
 
 from dateutil import relativedelta
 from django.conf import settings
@@ -489,6 +491,22 @@ def _get_current_member(evaluator):
 
 
 _get_current_member.evaluator = True
+
+
+def _transaction_import__find_row(evaluator, **kwargs):
+    context = evaluator.context
+
+    result = {}
+
+    if 'row_number' in kwargs:
+        result = {'row_number': kwargs['row_number']}
+
+
+
+    return result
+
+
+_transaction_import__find_row.evaluator = True
 
 
 def _parse_date(date_string, format=None):
@@ -2827,6 +2845,11 @@ FUNCTIONS = [
     SimpleEval2Def('rebook_transaction', _rebook_transaction),
 
 ]
+
+TRANSACTION_IMPORT_FUNCTIONS = [
+    SimpleEval2Def('find_row', _transaction_import__find_row),
+]
+
 empty = object()
 
 SAFE_TYPES = (bool, int, float, str, list, tuple, dict, OrderedDict,
@@ -2853,10 +2876,14 @@ class SimpleEval2(object):
             _globals['now'] = SimpleEval2Def('now', now)
         elif isinstance(now, datetime.date):
             _globals['now'] = SimpleEval2Def('now', lambda: now)
+
+        _globals['transaction_import'] =  {f.name: f for f in TRANSACTION_IMPORT_FUNCTIONS}
+
         _globals['globals'] = SimpleEval2Def('globals', lambda: _globals)
         _globals['locals'] = SimpleEval2Def('locals', lambda: self._table)
         _globals['true'] = True
         _globals['false'] = False
+
         if names:
             for k, v in names.items():
                 _globals[k] = v
@@ -2910,7 +2937,6 @@ class SimpleEval2(object):
 
     def _check_value(self, val):
         # from django.db import models
-
         if val is None:
             return None
         elif isinstance(val, SAFE_TYPES):
@@ -3211,16 +3237,28 @@ class SimpleEval2(object):
             return None
 
     def _on_ast_Attribute(self, node, val=empty):
+
+        _l.info('_on_ast_Attribute', type(val))
+
         if val is empty:
             val = self._eval(node.value)
         if val is None:
             return None
+
+        _l.info('val %s' % val.items())
+        _l.info('node.attr %s' % node.attr)
+
+        if isinstance(val, types.FunctionType):
+            _l.info("function?")
+            val = self._eval(node.value)
+
         if isinstance(val, (dict, OrderedDict)):
             try:
                 return val[node.attr]
             except (IndexError, KeyError, TypeError):
                 raise AttributeDoesNotExist(node.attr)
         else:
+
             if isinstance(val, datetime.date):
                 if node.attr in ['year', 'month', 'day']:
                     return getattr(val, node.attr)

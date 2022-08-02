@@ -122,18 +122,6 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         master_user = request.user.master_user
         member = request.user.member
 
-        # date_from = None
-        # date_to = None
-        #
-        # if 'user_price_date_from' in request.data:
-        #     if request.data['user_price_date_from']:
-        #         date_from = parse_date_iso(request.data['user_price_date_from'])
-        #
-        # if 'user_price_date_to' in request.data:
-        #     if request.data['user_price_date_to']:
-        #         date_to = parse_date_iso(request.data['user_price_date_to'])
-
-        # instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, date_from=date_from, date_to=date_to)
 
         instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member)
         instance.process()

@@ -66,6 +66,7 @@ from io import BytesIO
 from poms.common.utils import date_now, datetime_now
 
 from .models import ImportConfig
+from poms.transaction_import.tasks import transaction_import
 from ..common.jwt import encode_with_jwt
 from ..common.websockets import send_websocket_message
 
@@ -2494,6 +2495,8 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
         _l.info(traceback.format_exc())
 
 
+
+# DEPRECATED
 @shared_task(name='integrations.complex_transaction_csv_file_import', bind=True)
 def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=None):
     try:
@@ -3152,7 +3155,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                         'parent_total_rows': total_rows,
                         'total_rows': instance.total_rows,
                         'scheme_name': scheme.user_code,
-                        'file_name': instance.filename}
+                        'file_name': instance.file_name}
                 }, level="member",
                     context={"master_user": master_user, "member": member})
 
@@ -3288,7 +3291,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                     'processed_rows': instance.processed_rows,
                     'parent_total_rows': total_rows,
                     'total_rows': instance.total_rows,
-                    'file_name': instance.filename,
+                    'file_name': instance.file_name,
                     'error_rows': instance.error_rows,
                     'stats_file_report': instance.stats_file_report,
                     'scheme': scheme.id,
@@ -3306,7 +3309,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                 'processed_rows': instance.processed_rows,
                 'total_rows': instance.total_rows,
                 'error_row_index': instance.error_row_index,
-                'file_name': instance.filename,
+                'file_name': instance.file_name,
                 'error_rows': instance.error_rows,
                 'stats_file_report': instance.stats_file_report
             }
@@ -3359,6 +3362,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
         _l.info(traceback.format_exc())
 
 
+# DEPRECATED
 # @shared_task(name='integrations.complex_transaction_csv_file_import_parallel', bind=True)
 def complex_transaction_csv_file_import_parallel(task_id):
     try:
@@ -3498,7 +3502,7 @@ def complex_transaction_csv_file_import_parallel(task_id):
         _l.info('Exception occurred %s' % e)
         _l.info(traceback.format_exc())
 
-
+# DEPRECATED
 @shared_task(name="integrations.complex_transaction_csv_file_import_validate_parallel_finish", bind=True)
 def complex_transaction_csv_file_import_validate_parallel_finish(self, task_id):
     try:
@@ -3567,6 +3571,7 @@ def complex_transaction_csv_file_import_validate_parallel_finish(self, task_id):
         _l.info(traceback.format_exc())
 
 
+# DEPRECATED
 @shared_task(name='integrations.complex_transaction_csv_file_import_validate', bind=True)
 def complex_transaction_csv_file_import_validate(self, task_id):
     try:
@@ -4092,7 +4097,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                         'parent_total_rows': parent_celery_task.options_object['total_rows'],
                         'total_rows': instance.total_rows,
                         'scheme_name': scheme.user_code,
-                        'file_name': instance.filename}
+                        'file_name': instance.file_name}
                 }, level="member",
                     context={"master_user": master_user, "member": member})
 
@@ -4180,7 +4185,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                 'processed_rows': instance.processed_rows,
                 'parent_total_rows': parent_celery_task.options_object['total_rows'],
                 'total_rows': instance.total_rows,
-                'file_name': instance.filename,
+                'file_name': instance.file_name,
                 'error_rows': instance.error_rows,
                 'stats_file_report': instance.stats_file_report,
                 'scheme': scheme.id,
@@ -4197,7 +4202,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
         result_object = {
             'processed_rows': instance.processed_rows,
             'total_rows': instance.total_rows,
-            'file_name': instance.filename,
+            'file_name': instance.file_name,
             'error_rows': instance.error_rows,
             'stats_file_report': instance.stats_file_report
         }
@@ -4214,6 +4219,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
         _l.info(traceback.format_exc())
 
 
+# DEPRECATED
 # @shared_task(name='integrations.complex_transaction_csv_file_import_validate_parallel', bind=True)
 def complex_transaction_csv_file_import_validate_parallel(task_id):
     try:
@@ -4472,22 +4478,25 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
                     # transaction.on_commit(
                     #     lambda: complex_transaction_csv_file_import.apply_async(kwargs={'task_id': sub_task.pk}))
 
-                    celery_sub_tasks = []
-
-                    ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
-                    celery_sub_tasks.append(ct)
-
-                    _l.info("Creating %s subtasks" % len(celery_sub_tasks))
-
-                    # chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=celery_task.pk)).apply_async()
-
                     transaction.on_commit(
-                        lambda: chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(
-                            task_id=celery_task.pk)).apply_async())
+                        lambda: transaction_import.apply_async(kwargs={'task_id': sub_task.id}))
+
+                    # celery_sub_tasks = []
+                    #
+                    # ct = complex_transaction_csv_file_import.s(task_id=sub_task.id)
+                    # celery_sub_tasks.append(ct)
+                    #
+                    # _l.info("Creating %s subtasks" % len(celery_sub_tasks))
+                    #
+                    # # chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(task_id=celery_task.pk)).apply_async()
+                    #
+                    # transaction.on_commit(
+                    #     lambda: chord(celery_sub_tasks, complex_transaction_csv_file_import_parallel_finish.si(
+                    #         task_id=celery_task.pk)).apply_async())
 
                 except Exception as e:
 
-                    _l.debug('complex_transaction_csv_file_import_by_procedure decryption error %s' % e)
+                    _l.error('complex_transaction_csv_file_import_by_procedure decryption error %s' % e)
 
         except ComplexTransactionImportScheme.DoesNotExist:
 
@@ -4498,7 +4507,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
                                 source="Data File Procedure Service",
                                 text=text)
 
-            _l.debug(
+            _l.error(
                 'complex_transaction_csv_file_import_by_procedure scheme %s not found' % procedure_instance.procedure.scheme_name)
 
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
@@ -4529,7 +4538,7 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
             options_object = celery_task.options_object
 
             options_object['file_path'] = ''
-            options_object['filename'] = ''
+            options_object['file_name'] = ''
             options_object['scheme_id'] = scheme.id
             options_object['execution_context'] = {'started_by': 'procedure',
                                                    'date_from': procedure_instance.date_from,
@@ -4546,7 +4555,7 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
                                 source="Data File Procedure Service",
                                 text=text)
 
-            transaction.on_commit(lambda: complex_transaction_csv_file_import.apply_async(kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
+            transaction.on_commit(lambda: transaction_import.apply_async(kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
 
 
         except Exception as e:

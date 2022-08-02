@@ -1,3 +1,5 @@
+import traceback
+
 from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -92,6 +94,7 @@ class ExpressionSerializer(serializers.Serializer):
                 attrs['result'] = formula.safe_eval(expression, names, context=self.context)
             except formula.InvalidExpression as e:
                 _l.error("Manual expression error %s" % e)
+                _l.error("Manual expression traceback %s" % traceback.format_exc())
                 raise ValidationError({'expression': gettext_lazy('Invalid expression.'), "error_message": str(e)})
         return attrs
 
