@@ -1,3 +1,4 @@
+import datetime
 
 from rest_framework import serializers
 
@@ -5,6 +6,9 @@ from poms.celery_tasks.models import CeleryTask
 from poms.file_reports.serializers import FileReportSerializer
 from poms.integrations.models import ComplexTransactionImportScheme
 from poms.transaction_import.models import TransactionImportResult, TransactionImportProcessItem
+
+import logging
+_l = logging.getLogger('poms.transaction_import')
 
 class TransactionImportBookedTransactionSerializer(serializers.Serializer):
 
@@ -41,7 +45,20 @@ class TransactionImportProcessItemSerializer(serializers.Serializer):
         model = TransactionImportProcessItem
         fields = ['row_number', 'status', 'error_message', 'message', 'raw_inputs', 'inputs', 'processed_rule_scenarios']
 
+    def to_representation(self, instance):
+        data = super(TransactionImportProcessItemSerializer, self).to_representation(instance)
 
+        for key, value in data['inputs'].items():
+
+            if value:
+                if isinstance(data['inputs'][key], int) or instance(data['inputs'][key], float):
+                   # keep floats and ints as its
+                   pass
+                else:
+                    data['inputs'][key] = str(value)
+
+
+        return data
 
 class TransactionImportCeleryTaskSerializer(serializers.ModelSerializer):
 
