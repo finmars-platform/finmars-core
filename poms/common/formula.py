@@ -3238,18 +3238,12 @@ class SimpleEval2(object):
 
     def _on_ast_Attribute(self, node, val=empty):
 
-        _l.info('_on_ast_Attribute', type(val))
-
         if val is empty:
             val = self._eval(node.value)
         if val is None:
             return None
 
-        _l.info('val %s' % val.items())
-        _l.info('node.attr %s' % node.attr)
-
         if isinstance(val, types.FunctionType):
-            _l.info("function?")
             val = self._eval(node.value)
 
         if isinstance(val, (dict, OrderedDict)):
