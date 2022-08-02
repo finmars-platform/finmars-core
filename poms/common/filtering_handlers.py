@@ -1073,7 +1073,7 @@ def handle_filters(qs, filter_settings, master_user, content_type):
             else:
                 qs = add_filter(qs, filter_config)
 
-    _l.debug("handle_filters done in %s seconds " % "{:3.3f}".format(time.time() - start_time))
+    # _l.debug("handle_filters done in %s seconds " % "{:3.3f}".format(time.time() - start_time))
 
     return qs
 
@@ -1140,6 +1140,6 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
 
     qs = qs.filter(q).distinct()
 
-    _l.debug("handle_global_table_search done in %s seconds " % "{:3.3f}".format(time.time() - start_time))
+    # _l.debug("handle_global_table_search done in %s seconds " % "{:3.3f}".format(time.time() - start_time))
 
     return qs
