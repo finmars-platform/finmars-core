@@ -2,6 +2,7 @@ import os
 import json
 import csv
 import traceback
+import re
 
 import celery
 from django.db import transaction
@@ -13,6 +14,9 @@ from filtration import Expression
 
 from poms.accounts.models import Account
 from poms.celery_tasks.models import CeleryTask
+
+from openpyxl import load_workbook
+from openpyxl.utils import column_index_from_string
 
 
 
@@ -471,20 +475,73 @@ class TransactionImportProcess(object):
                             self.result.total_rows = len(self.raw_items)
 
             if self.process_type == ProcessType.EXCEL:
-                # TODO implement excel import
-                pass
-                # with SFS.open(self.file_path, 'rb') as f:
-                #
-                #     with NamedTemporaryFile() as tmpf:
-                #
-                #         for chunk in f.chunks():
-                #             tmpf.write(chunk)
-                #         tmpf.flush()
-                #
-                #         os.link(tmpf.name, tmpf.name + '.xlsx')
-                #
-                #         with open(tmpf.name, mode='rt', encoding=self.encoding, errors='ignore') as cf:
-                #             self.process_csv_file(cf, f, tmpf.name + '.xlsx')
+
+                with SFS.open(self.file_path, 'rb') as f:
+
+                    with NamedTemporaryFile() as tmpf:
+
+                        for chunk in f.chunks():
+                            tmpf.write(chunk)
+                        tmpf.flush()
+
+                        os.link(tmpf.name, tmpf.name + '.xlsx')
+
+                        wb = load_workbook(filename=tmpf.name)
+
+                        if self.scheme.spreadsheet_active_tab_name and self.scheme.spreadsheet_active_tab_name in wb.sheetnames:
+                            ws = wb[self.scheme.spreadsheet_active_tab_name]
+                        else:
+                            ws = wb.active
+
+                        reader = []
+
+                        if self.scheme.spreadsheet_start_cell == 'A1':
+
+                            for r in ws.rows:
+                                reader.append([cell.value for cell in r])
+
+                        else:
+
+                            start_cell_row_number = int(re.search(r'\d+', self.scheme.spreadsheet_start_cell)[0])
+                            start_cell_letter = self.scheme.spreadsheet_start_cell.split(str(start_cell_row_number))[0]
+
+                            start_cell_column_number = column_index_from_string(start_cell_letter)
+
+                            row_number = 1
+
+                            for r in ws.rows:
+
+                                row_values = []
+
+                                if row_number >= start_cell_row_number:
+
+                                    for cell in r:
+
+                                        if cell.column >= start_cell_column_number:
+                                            row_values.append(cell.value)
+
+                                    reader.append(row_values)
+
+                                row_number = row_number + 1
+
+                        column_row = None
+
+                        for row_index, row in enumerate(reader):
+
+                            if row_index == 0:
+                                column_row = row
+
+                            else:
+
+                                item = {}
+
+                                for column_index, value in enumerate(row):
+                                    key = convert_name_to_key(column_row[column_index])
+                                    item[key] = value
+
+                                self.raw_items.append(item)
+
+                        self.result.total_rows = len(self.raw_items)
 
             _l.info(
                 'TransactionImportProcess.Task %s. fill_with_raw_items %s DONE items %s' % (self.task, self.process_type, len(self.raw_items)))
