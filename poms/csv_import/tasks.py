@@ -2258,8 +2258,17 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     _l.info("Settings defaults for instrument done")
 
     try:
-        object_data['pricing_currency'] = Currency.objects.get(master_user=master_user,
-                                                               user_code=source_data['pricing_currency']).id
+
+        # TODO remove, when finmars.database.com will be deployed
+        if isinstance(source_data['pricing_currency'], str):
+
+            object_data['pricing_currency'] = Currency.objects.get(master_user=master_user,
+                                                                   user_code=source_data['pricing_currency']).id
+        else:
+
+            object_data['pricing_currency'] = Currency.objects.get(master_user=master_user,
+                                                                   user_code=source_data['pricing_currency']['code']).id
+
     except Exception as e:
 
         object_data['pricing_currency'] = ecosystem_default.currency.id
