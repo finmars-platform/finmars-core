@@ -607,9 +607,11 @@ class ImportManager(object):
 
                                         # policy['pricing_scheme'] = None
 
-                                        policy['pricing_scheme'] = InstrumentPricingScheme.objects.get(
-                                            master_user=self.master_user,
-                                            user_code='-').pk  # TODO Add to EcosystemDefaults
+                                        policy['pricing_scheme'] = self.ecosystem_default.instrument_pricing_scheme.pk
+
+                                        # policy['pricing_scheme'] = InstrumentPricingScheme.objects.get(
+                                        #     master_user=self.master_user,
+                                        #     user_code='-').pk  # TODO Add to EcosystemDefaults
 
 
                         if 'instrument_factor_schedule_data' not in content_object:
