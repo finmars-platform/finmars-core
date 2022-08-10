@@ -562,7 +562,9 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
             'mismatch_portfolio', 'mismatch_account',
             'pricing_policy', 'transaction_type',
             'instrument_class', 'accrual_calculation_model', 'pricing_condition',
-            'payment_size_detail', 'periodicity'
+            'payment_size_detail', 'periodicity',
+
+            'instrument_pricing_scheme', 'currency_pricing_scheme'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -584,6 +586,7 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
         from poms.chats.serializers import ThreadGroupViewSerializer
         from poms.transactions.serializers import TransactionTypeViewSerializer
         from poms.instruments.serializers import PricingPolicyViewSerializer
+        from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer
         from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
 
         self.fields['accrual_calculation_model_object'] = AccrualCalculationModelViewSerializer(
@@ -600,6 +603,12 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
 
         self.fields['periodicity_object'] = PeriodicityViewSerializer(
             source='periodicity', read_only=True)
+
+        self.fields['instrument_pricing_scheme_object'] = InstrumentPricingSchemeSerializer(
+            source='instrument_pricing_scheme', read_only=True)
+
+        self.fields['currency_pricing_scheme_object'] = CurrencyPricingSchemeSerializer(
+            source='currency_pricing_scheme', read_only=True)
 
         self.fields['instrument_class_object'] = InstrumentClassViewSerializer(
             source='instrument_class', read_only=True)

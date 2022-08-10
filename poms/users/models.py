@@ -22,7 +22,6 @@ import binascii
 import os
 
 from poms.common.utils import get_content_type_by_name
-from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme
 
 AVAILABLE_APPS = ['accounts', 'counterparties', 'currencies', 'instruments', 'portfolios', 'strategies', 'transactions',
                   'reports', 'users']
@@ -805,6 +804,8 @@ class MasterUser(models.Model):
         from poms.obj_perms.utils import get_change_perms, assign_perms3
         from poms.instruments.models import PricingPolicy
         from poms.instruments.models import PricingCondition
+        from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme
+
 
 
         if not EventScheduleConfig.objects.filter(master_user=self).exists():
