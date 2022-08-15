@@ -2054,7 +2054,8 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type, ecosys
             instrument_object['long_underlying_instrument'] = Instrument.objects.get(master_user=instrument_type.master_user,
                                                                                      user_code=instrument_type.long_underlying_instrument).pk
         except Exception as e:
-            instrument_object['long_underlying_instrument'] = ecosystem_default.instrument
+            _l.info("Could not set long_underlying_instrument, fallback to default")
+            instrument_object['long_underlying_instrument'] = ecosystem_default.instrument.pk
 
         instrument_object['underlying_long_multiplier'] = instrument_type.underlying_long_multiplier
 
@@ -2062,7 +2063,8 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type, ecosys
             instrument_object['short_underlying_instrument'] = Instrument.objects.get(master_user=instrument_type.master_user,
                                                                                       user_code=instrument_type.short_underlying_instrument).pk
         except Exception as e:
-            instrument_object['short_underlying_instrument'] = ecosystem_default.instrument
+            _l.info("Could not set short_underlying_instrument, fallback to default")
+            instrument_object['short_underlying_instrument'] = ecosystem_default.instrument.pk
 
         instrument_object['underlying_short_multiplier'] = instrument_type.underlying_short_multiplier
 
@@ -2073,14 +2075,16 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type, ecosys
             instrument_object['co_directional_exposure_currency'] = Currency.objects.get(master_user=instrument_type.master_user,
                                                                                            user_code=instrument_type.co_directional_exposure_currency).pk
         except Exception as e:
-            instrument_object['co_directional_exposure_currency'] = ecosystem_default.currency
+            _l.info("Could not set co_directional_exposure_currency, fallback to default")
+            instrument_object['co_directional_exposure_currency'] = ecosystem_default.currency.pk
 
         try:
             instrument_object[
                     'counter_directional_exposure_currency'] = Currency.objects.get(master_user=instrument_type.master_user,
                                                                                     user_code=instrument_type.counter_directional_exposure_currency).pk
         except Exception as e:
-            instrument_object['counter_directional_exposure_currency'] = ecosystem_default.currency
+            _l.info("Could not set counter_directional_exposure_currency, fallback to default")
+            instrument_object['counter_directional_exposure_currency'] = ecosystem_default.currency.pk
 
         # Set attributes
         instrument_object['attributes'] = []
