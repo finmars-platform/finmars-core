@@ -8,20 +8,6 @@ class ProcessType(object):
     JSON = 'JSON'
     EXCEL = 'EXCEL'
 
-
-class ProxyUser(object):
-
-    def __init__(self, member, master_user):
-        self.member = member
-        self.master_user = master_user
-
-
-class ProxyRequest(object):
-
-    def __init__(self, user):
-        self.user = user
-
-
 class TransactionImportBookedTransaction(object):
 
     def __init__(self,

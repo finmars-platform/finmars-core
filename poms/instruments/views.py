@@ -30,7 +30,7 @@ from poms.common.mixins import UpdateModelMixinExt
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.utils import date_now
 from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet, AbstractReadOnlyModelViewSet
-from poms.csv_import.tasks import set_defaults_from_instrument_type, handler_instrument_object
+from poms.csv_import.handlers import handler_instrument_object
 from poms.currencies.models import Currency
 from poms.instruments.filters import OwnerByInstrumentFilter, PriceHistoryObjectPermissionFilter, \
     GeneratedEventPermissionFilter, InstrumentSelectSpecialQueryFilter

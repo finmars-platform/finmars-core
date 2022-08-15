@@ -132,3 +132,18 @@ class FakeDeletableModel(models.Model):
             fields_to_update.append('is_active')
 
         self.save(update_fields=fields_to_update)
+
+
+
+# These models need to create custom context, that could be passed to serializers
+class ProxyUser(object):
+
+    def __init__(self, member, master_user):
+        self.member = member
+        self.master_user = master_user
+
+
+class ProxyRequest(object):
+
+    def __init__(self, user):
+        self.user = user

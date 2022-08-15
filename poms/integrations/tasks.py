@@ -40,6 +40,7 @@ from poms.common.crypto.RSACipher import RSACipher
 from poms.common.formula import ExpressionEvalError
 from poms.common.utils import date_now, isclose
 from poms.counterparties.models import Counterparty, Responsible
+from poms.csv_import.handlers import handler_instrument_object
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.file_reports.models import FileReport
 from poms.instruments.models import Instrument, DailyPricingModel, PricingPolicy, PriceHistory, InstrumentType, \
@@ -65,17 +66,17 @@ from io import BytesIO
 
 from poms.common.utils import date_now, datetime_now
 
-from .models import ImportConfig
+from poms.integrations.models import ImportConfig
 from poms.transaction_import.tasks import transaction_import
-from ..common.jwt import encode_with_jwt
-from ..common.websockets import send_websocket_message
+from poms.common.jwt import encode_with_jwt
+from poms.common.models import ProxyUser, ProxyRequest
+from poms.common.websockets import send_websocket_message
 
 import traceback
 
-from ..counterparties.serializers import CounterpartySerializer
-from ..csv_import.tasks import handler_instrument_object
-from ..obj_attrs.models import GenericAttributeType
-from ..procedures.models import RequestDataFileProcedureInstance
+from poms.counterparties.serializers import CounterpartySerializer
+from poms.obj_attrs.models import GenericAttributeType
+from poms.procedures.models import RequestDataFileProcedureInstance
 
 _l = logging.getLogger('poms.integrations')
 
@@ -264,17 +265,6 @@ def download_instrument(instrument_code=None, instrument_download_scheme=None, m
         return task, None, None
 
 
-class ProxyUser(object):
-
-    def __init__(self, member, master_user):
-        self.member = member
-        self.master_user = master_user
-
-
-class ProxyRequest(object):
-
-    def __init__(self, user):
-        self.user = user
 
 def create_instrument_from_finmars_database(data, master_user, member):
 

@@ -6,6 +6,7 @@ from rest_framework.exceptions import ValidationError
 
 from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountTypeSerializer
+from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import get_content_type_by_name
 from poms.complex_import.models import ComplexImportScheme
 from poms.complex_import.serializers import ComplexImportSchemeSerializer
@@ -66,18 +67,6 @@ def dump(obj):
         _l.info("obj.%s = %r" % (attr, getattr(obj, attr)))
 
 
-
-class ProxyUser(object):
-
-    def __init__(self, member, master_user):
-        self.member = member
-        self.master_user = master_user
-
-
-class ProxyRequest(object):
-
-    def __init__(self, user):
-        self.user = user
 
 
 def check_configuration_section(configuration_access_table):

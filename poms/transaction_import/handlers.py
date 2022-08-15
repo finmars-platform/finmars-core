@@ -21,6 +21,7 @@ from openpyxl.utils import column_index_from_string
 
 
 from poms.common import formula
+from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import convert_name_to_key
 from poms.common.websockets import send_websocket_message
 from poms.counterparties.models import Counterparty, Responsible
@@ -33,7 +34,7 @@ from poms.portfolios.models import Portfolio
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.system_messages.handlers import send_system_message
-from poms.transaction_import.models import ProcessType, TransactionImportResult, ProxyUser, ProxyRequest, \
+from poms.transaction_import.models import ProcessType, TransactionImportResult, \
     TransactionImportProcessItem, TransactionImportProcessPreprocessItem, TransactionImportBookedTransaction
 from poms.transaction_import.serializers import TransactionImportResultSerializer
 from poms.transactions.handlers import TransactionTypeProcess
