@@ -85,7 +85,6 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
         return context
 
     def create(self, request, *args, **kwargs):
-
         st = time.perf_counter()
 
         serializer = self.get_serializer(data=request.data)
@@ -111,7 +110,8 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
         send_system_message(master_user=request.user.master_user,
                             source="Simple Import Service",
-                            text='Member %s started Simple Import (scheme %s)' % (request.user.member.username, instance.scheme.name))
+                            text='Member %s started Simple Import (scheme %s)' % (
+                            request.user.member.username, instance.scheme.name))
 
         data_csv_file_import.apply_async(kwargs={'task_id': celery_task.pk})
 
@@ -134,7 +134,6 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
         return context
 
     def create(self, request, *args, **kwargs):
-
         st = time.perf_counter()
 
         serializer = self.get_serializer(data=request.data)
@@ -160,11 +159,10 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
 
         send_system_message(master_user=request.user.master_user,
                             source="Simple Import Service",
-                            text='Member %s started Simple Import (scheme %s)' % (request.user.member.username, instance.scheme.name))
+                            text='Member %s started Simple Import (scheme %s)' % (
+                            request.user.member.username, instance.scheme.name))
 
-        data_csv_file_import_validate.apply_async(kwargs={"task_id":celery_task.pk})
-
-
+        data_csv_file_import_validate.apply_async(kwargs={"task_id": celery_task.pk})
 
         _l.info('CsvDataImportValidateViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
 

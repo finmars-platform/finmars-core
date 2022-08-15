@@ -1321,7 +1321,13 @@ class ImportHandler:
                     instance = serializer.instance
 
                 else:
+
                     _l.info('Serialize is not valid %s' % serializer.errors)
+
+                    error_row['level'] = 'error'
+                    error_row['error_message'] = error_row['error_message'] + str(serializer.errors)
+
+                    raise Exception("Validation failed")
 
             else:
                 instance = Model.objects.create(**result_without_many_to_many)
@@ -2012,7 +2018,7 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
             procedure_instance.save()
 
 
-def set_defaults_from_instrument_type(instrument_object, instrument_type):
+def set_defaults_from_instrument_type(instrument_object, instrument_type, ecosystem_default):
     try:
         # Set system attributes
 
@@ -2044,18 +2050,37 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type):
         else:
             instrument_object['pricing_condition'] = None
 
-        instrument_object['long_underlying_instrument'] = instrument_type.long_underlying_instrument
+        try:
+            instrument_object['long_underlying_instrument'] = Instrument.objects.get(master_user=instrument_type.master_user,
+                                                                                     user_code=instrument_type.long_underlying_instrument).pk
+        except Exception as e:
+            instrument_object['long_underlying_instrument'] = ecosystem_default.instrument
+
         instrument_object['underlying_long_multiplier'] = instrument_type.underlying_long_multiplier
 
-        instrument_object['short_underlying_instrument'] = instrument_type.short_underlying_instrument
+        try:
+            instrument_object['short_underlying_instrument'] = Instrument.objects.get(master_user=instrument_type.master_user,
+                                                                                      user_code=instrument_type.short_underlying_instrument).pk
+        except Exception as e:
+            instrument_object['short_underlying_instrument'] = ecosystem_default.instrument
+
         instrument_object['underlying_short_multiplier'] = instrument_type.underlying_short_multiplier
 
         instrument_object['long_underlying_exposure'] = instrument_type.long_underlying_exposure
         instrument_object['short_underlying_exposure'] = instrument_type.short_underlying_exposure
 
-        instrument_object['co_directional_exposure_currency'] = instrument_type.co_directional_exposure_currency
-        instrument_object[
-            'counter_directional_exposure_currency'] = instrument_type.counter_directional_exposure_currency
+        try:
+            instrument_object['co_directional_exposure_currency'] = Currency.objects.get(master_user=instrument_type.master_user,
+                                                                                           user_code=instrument_type.co_directional_exposure_currency).pk
+        except Exception as e:
+            instrument_object['co_directional_exposure_currency'] = ecosystem_default.currency
+
+        try:
+            instrument_object[
+                    'counter_directional_exposure_currency'] = Currency.objects.get(master_user=instrument_type.master_user,
+                                                                                    user_code=instrument_type.counter_directional_exposure_currency).pk
+        except Exception as e:
+            instrument_object['counter_directional_exposure_currency'] = ecosystem_default.currency
 
         # Set attributes
         instrument_object['attributes'] = []
@@ -2253,7 +2278,7 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
     object_data['instrument_type'] = instrument_type.id
 
-    set_defaults_from_instrument_type(object_data, instrument_type)
+    set_defaults_from_instrument_type(object_data, instrument_type, ecosystem_default)
 
     _l.info("Settings defaults for instrument done")
 
