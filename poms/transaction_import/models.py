@@ -33,8 +33,8 @@ class TransactionImportProcessItem(object):
 
     def __init__(self,
                  status='init',
-                 error_message=None,
-                 message=None,
+                 error_message='',
+                 message='',
                  processed_rule_scenarios=None,
                  booked_transactions=None,
 
