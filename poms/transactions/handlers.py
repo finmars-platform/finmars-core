@@ -533,7 +533,7 @@ class TransactionTypeProcess(object):
 
                             _l.info('set rel instrument.instrument_type %s' % instrument.instrument_type.id)
 
-                            from poms.csv_import.tasks import set_defaults_from_instrument_type
+                            from poms.csv_import.handlers import set_defaults_from_instrument_type
                             set_defaults_from_instrument_type(object_data, instrument.instrument_type)
 
                             self._set_val(errors=errors, values=self.values, default_value='',
