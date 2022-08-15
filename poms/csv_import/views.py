@@ -113,7 +113,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
                             source="Simple Import Service",
                             text='Member %s started Simple Import (scheme %s)' % (request.user.member.username, instance.scheme.name))
 
-        data_csv_file_import.apply_async(task_id=celery_task.pk)
+        data_csv_file_import.apply_async(kwargs={'task_id': celery_task.pk})
 
         _l.info('CsvDataImportViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
