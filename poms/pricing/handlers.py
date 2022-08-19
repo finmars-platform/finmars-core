@@ -1381,7 +1381,8 @@ class FillPricesBrokerCbondsProcess(object):
                         for val_obj in field['values']:
 
                             _l.info('str(record.date) %s' % str(record.date))
-                            _l.info('str(val_obj[date] %s' % str(val_obj['date']))
+                            _l.info('str(val_obj[value]) %s' % str(val_obj['value']))
+
 
                             if str(record.date) == str(val_obj['date']):
 

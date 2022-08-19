@@ -2027,8 +2027,8 @@ class PricingInstrumentHandler(object):
         _l.debug('items_with_missing_parameters %s' % len(items_with_missing_parameters))
         # _l.debug('data %s' % data)
 
-        _l.debug('self.procedure %s' % self.procedure.id)
-        _l.debug('send request %s' % body)
+        # _l.debug('self.procedure %s' % self.procedure.id)
+        # _l.debug('send request %s' % body)
 
         procedure_instance.request_data = body
         procedure_instance.save()

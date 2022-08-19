@@ -339,8 +339,6 @@ class PricingBrokerCbondsHandler(APIView):
 
     def post(self, request):
 
-        _l.info('request.data %s' % request.data)
-
         procedure_id = request.data['procedure']
 
         _l.debug("> handle_callback broker cbonds: procedure_id %s" % procedure_id)
