@@ -7,36 +7,18 @@ Checklist: https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
 
 from __future__ import unicode_literals
 
-import json
-import logging
 import os
 import datetime
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-from celery.schedules import crontab
 from django.utils.translation import gettext_lazy
 
-import base64
-# from botocore.exceptions import ClientError
-
-from io import StringIO
-
-from storages.backends.sftpstorage import SFTPStorage
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 DJANGO_LOG_LEVEL = os.environ.get('DJANGO_LOG_LEVEL', 'INFO')
 
 print('DJANGO_LOG_LEVEL %s' % DJANGO_LOG_LEVEL)
-
-
-class BackendRole:
-    ALL = 'ALL'
-    SIMPLE = 'SIMPLE'
-    REPORTER = 'REPORTER'
-    FILE_IMPORTER = 'FILE_IMPORTER'
-    DATA_PROVIDER = 'DATA_PROVIDER'
-
 
 SECRET_KEY = os.environ.get('SECRET_KEY', None)
 
@@ -60,13 +42,6 @@ if not DEBUG:
 ADMIN = True
 
 ALLOWED_HOSTS = ['*']
-
-BACKEND_ROLES = ['ALL']
-
-if os.environ.get('BACKEND_ROLES'):
-    BACKEND_ROLES = os.environ.get('BACKEND_ROLES').split(', ')
-
-print('BACKEND_ROLES %s' % BACKEND_ROLES)
 
 # Application definition
 
@@ -324,9 +299,6 @@ WEBSOCKET_APP_TOKEN = os.environ.get('WEBSOCKET_APP_TOKEN', '943821230')
 
 print('WEBSOCKET_HOST %s' % WEBSOCKET_HOST)
 
-# REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost:6379')
-# print('REDIS_HOST %s' % REDIS_HOST)
-
 RABBITMQ_HOST = os.environ.get('RABBITMQ_HOST', 'localhost:5672')
 print('RABBITMQ_HOST %s' % RABBITMQ_HOST)
 
@@ -341,73 +313,6 @@ CACHES = {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
-
-# CACHE_VERSION = 1
-# # CACHE_SERIALIZER = "django_redis.serializers.json.JSONSerializer"
-# CACHE_SERIALIZER = "django_redis.serializers.pickle.PickleSerializer"
-# CACHE_COMPRESSOR = 'django_redis.compressors.identity.IdentityCompressor'
-# # CACHE_COMPRESSOR = 'django_redis.compressors.zlib.ZlibCompressor'
-# CACHE_SOCKET_CONNECT_TIMEOUT = 1
-# CACHE_SOCKET_TIMEOUT = 1
-#
-# # 1 -> celery
-# # 2 -> default
-# # 3 -> http_cache, http_session
-# # 4 -> all "poms"
-# CACHES = {
-#     'default': {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://%s/2" % REDIS_HOST,
-#         'KEY_PREFIX': 'default',
-#         'TIMEOUT': 300,
-#         'VERSION': CACHE_VERSION,
-#         'OPTIONS': {
-#             'SERIALIZER': CACHE_SERIALIZER,
-#             'COMPRESSOR': CACHE_COMPRESSOR,
-#             "SOCKET_CONNECT_TIMEOUT": CACHE_SOCKET_CONNECT_TIMEOUT,
-#             "SOCKET_TIMEOUT": CACHE_SOCKET_TIMEOUT,
-#             "PICKLE_VERSION": 2
-#         }
-#     },
-#     'http_session': {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://%s/3" % REDIS_HOST,
-#         'KEY_PREFIX': 'http_session',
-#         'TIMEOUT': 3600,
-#         'VERSION': CACHE_VERSION,
-#         'OPTIONS': {
-#             'SERIALIZER': CACHE_SERIALIZER,
-#             'COMPRESSOR': CACHE_COMPRESSOR,
-#             "SOCKET_CONNECT_TIMEOUT": CACHE_SOCKET_CONNECT_TIMEOUT,
-#             "SOCKET_TIMEOUT": CACHE_SOCKET_TIMEOUT,
-#         }
-#     },
-#     'throttling': {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": "redis://%s/4" % REDIS_HOST,
-#         'KEY_PREFIX': 'throttling',
-#         'TIMEOUT': 300,
-#         'VERSION': CACHE_VERSION,
-#         'OPTIONS': {
-#             'SERIALIZER': CACHE_SERIALIZER,
-#             'COMPRESSOR': CACHE_COMPRESSOR,
-#             "SOCKET_CONNECT_TIMEOUT": CACHE_SOCKET_CONNECT_TIMEOUT,
-#             "SOCKET_TIMEOUT": CACHE_SOCKET_TIMEOUT,
-#         }
-#     },
-#     # 'bloomberg': {
-#     #     "BACKEND": "django_redis.cache.RedisCache",
-#     #     "LOCATION": "redis://%s/4" % REDIS_HOST,
-#     #     'KEY_PREFIX': 'bloomberg',
-#     #     'TIMEOUT': 3600,
-#     #     'OPTIONS': {
-#     #         'SERIALIZER': CACHE_SERIALIZER,
-#     #         'COMPRESSOR': CACHE_COMPRESSOR,
-#     #         "SOCKET_CONNECT_TIMEOUT": CACHE_SOCKET_CONNECT_TIMEOUT,
-#     #         "SOCKET_TIMEOUT": CACHE_SOCKET_TIMEOUT,
-#     #     }
-#     # },
-# }
 
 # SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 SESSION_ENGINE = "poms.http_sessions.backends.cached_db"
@@ -503,13 +408,6 @@ REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] += (
     'rest_framework.renderers.BrowsableAPIRenderer',
     'rest_framework.renderers.AdminRenderer',
 )
-
-# if SERVER_TYPE == 'development' or SERVER_TYPE == 'local':
-#     REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES'] += (
-#         'rest_framework.authentication.SessionAuthentication',
-#     )
-
-# CURRENCY_CODE = 'USD'
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
@@ -643,68 +541,6 @@ SFTP_KNOWN_HOST_FILE = os.path.join(BASE_DIR, '.ssh/known_hosts')
 
 # INTEGRATIONS ------------------------------------------------
 
-
-# DEPRECATED
-# if SERVER_TYPE == 'local':
-#
-#     IMPORT_CONFIG_STORAGE = {
-#         'BACKEND': 'django.core.files.storage.FileSystemStorage',
-#         'KWARGS': {
-#             # 'location': '/opt/finmars-import/config',
-#             'location': '/home/szhitenev/projects/finmars/config',
-#             'base_url': '/api/hidden/'
-#         }
-#     }
-#
-#     IMPORT_FILE_STORAGE = {
-#         'BACKEND': 'django.core.files.storage.FileSystemStorage',
-#         'KWARGS': {
-#             'location': '/home/szhitenev/projects/finmars/files',
-#             'base_url': '/api/import/'
-#         }
-#     }
-#
-#     FILE_REPORTS_STORAGE = {
-#         'BACKEND': 'django.core.files.storage.FileSystemStorage',
-#         'KWARGS': {
-#             'location': '/home/szhitenev/projects/finmars/file_reports',
-#             'base_url': '/api/file-reports/'
-#         }
-#     }
-#
-# else:
-#
-#     IMPORT_CONFIG_STORAGE = {
-#         'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
-#         'KWARGS': {
-#             'acl': 'private',
-#             'bucket': os.environ.get('AWS_STORAGE_CONFIG_BUCKET_NAME', None),
-#             'querystring_expire': 10,
-#             'custom_domain': None
-#         }
-#     }
-#
-#     IMPORT_FILE_STORAGE = {
-#         'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
-#         'KWARGS': {
-#             'acl': 'private',
-#             'bucket': os.environ.get('AWS_STORAGE_IMPORT_FILE_BUCKET_NAME', None),
-#             'querystring_expire': 10,
-#             'custom_domain': None
-#         }
-#     }
-#
-#     FILE_REPORTS_STORAGE = {
-#         'BACKEND': 'storages.backends.s3boto3.S3Boto3Storage',
-#         'KWARGS': {
-#             'acl': 'private',
-#             'bucket': os.environ.get('AWS_STORAGE_FILE_REPORTS_BUCKET_NAME', None),
-#             'querystring_expire': 10,
-#             'custom_domain': None
-#         }
-#     }
-#
-
 BLOOMBERG_WSDL = 'https://service.bloomberg.com/assets/dl/dlws.wsdl'
 BLOOMBERG_RETRY_DELAY = 5
 BLOOMBERG_MAX_RETRIES = 60
@@ -745,10 +581,6 @@ except ImportError:
     pass
 
 
-def show_toolbar(request):
-    return True
-
-
 INTERNAL_IPS = [
     # ...
     '127.0.0.1',
@@ -775,7 +607,6 @@ if SERVER_TYPE == 'local':
     ]
 
     DEBUG_TOOLBAR_CONFIG = {
-        "SHOW_TOOLBAR_CALLBACK": show_toolbar,
         'RESULTS_STORE_SIZE': 100,
     }
 

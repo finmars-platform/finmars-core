@@ -1133,7 +1133,6 @@ class TransactionImportJson(APIView):
     permission_classes = []
 
     def get(self, request):
-        _l.debug("BACKEND_ROLES %s" % settings.BACKEND_ROLES)
 
         return Response({'status': 'ok'})
 
@@ -1163,8 +1162,6 @@ class TransactionFileResultUploadHandler(APIView):
     permission_classes = []
 
     def get(self, request):
-
-        _l.debug("BACKEND_ROLES %s" % settings.BACKEND_ROLES)
 
         return Response({'status': 'ok'})
 
