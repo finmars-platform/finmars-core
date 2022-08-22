@@ -955,7 +955,7 @@ class TransactionViewSet(AbstractWithObjectPermissionViewSet):
     permission_classes = AbstractWithObjectPermissionViewSet.permission_classes + [
         # TransactionObjectPermission,
     ]
-    # filter_class = TransactionFilterSet
+    filter_class = TransactionFilterSet
     ordering_fields = [
         'complex_transaction',
         'complex_transaction__code',
