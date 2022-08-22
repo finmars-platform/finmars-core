@@ -1,12 +1,12 @@
 from django.contrib import admin
-from .models import SystemMessage, SystemMessageAttachment
+from .models import SystemMessage, SystemMessageAttachment, SystemMessageMember
 
 
 class SystemMessageAdmin(admin.ModelAdmin):
     model = SystemMessage
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'created', 'text', 'source']
-    search_fields = ['id', 'text']
+    list_display = ['id', 'master_user', 'created', 'title', 'description', 'performed_by']
+    search_fields = ['id', 'description']
     raw_id_fields = ['master_user', ]
 
 
@@ -21,3 +21,12 @@ class SystemMessageAttachmentAdmin(admin.ModelAdmin):
 
 admin.site.register(SystemMessageAttachment, SystemMessageAttachmentAdmin)
 
+
+class SystemMessageMemberAdmin(admin.ModelAdmin):
+    model = SystemMessageMember
+    list_display = ['id', 'member', 'system_message',  'status']
+    search_fields = ['id']
+    raw_id_fields = ['member', 'system_message']
+
+
+admin.site.register(SystemMessageMember, SystemMessageMemberAdmin)

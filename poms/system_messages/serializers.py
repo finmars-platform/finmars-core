@@ -29,6 +29,12 @@ class SystemMessageSerializer(serializers.ModelSerializer):
     class Meta:
 
         model = SystemMessage
-        fields = ('id', 'master_user', 'level', 'status', 'text', 'created', 'source', 'attachments')
+        fields = ('id', 'master_user',
+                  'section', 'type',
+                  'title', 'description',
+                  'created',
+                  'linked_event',
+                  'performed_by', 'created',
+                  'attachments')
 
 
