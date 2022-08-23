@@ -4,7 +4,7 @@ import django_filters
 from poms.common.filters import CharFilter
 
 from poms.common.views import AbstractModelViewSet
-from poms.system_messages.filters import SystemMessageQueryFilter
+from poms.system_messages.filters import SystemMessageQueryFilter, SystemMessageOnlyNewFilter
 
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -36,11 +36,12 @@ class SystemMessageFilterSet(FilterSet):
 
 
 class MessageViewSet(AbstractModelViewSet):
-    queryset = SystemMessage.objects
+    queryset = SystemMessage.objects.prefetch_related("members")
     serializer_class = SystemMessageSerializer
     filter_class = SystemMessageFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        SystemMessageOnlyNewFilter,
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
 
@@ -49,10 +50,87 @@ class MessageViewSet(AbstractModelViewSet):
         'created', 'section', 'type', 'action_status', 'title'
     ]
 
+    def get_stats_for_section(self, section, only_new, member):
+
+        # SECTION_GENERAL = 0
+        # SECTION_EVENTS = 1
+        # SECTION_TRANSACTIONS = 2
+        # SECTION_INSTRUMENTS = 3
+        # SECTION_DATA = 4
+        # SECTION_PRICES = 5
+        # SECTION_REPORT = 6
+        # SECTION_IMPORT = 7
+        # SECTION_ACTIVITY_LOG = 8
+        # SECTION_SCHEDULES = 9
+
+        section_mapping = {
+            0: 'General',
+            1: 'Events',
+            2: 'Transactions',
+            3: 'Instruments',
+            4: 'Data',
+            5: 'Prices',
+            6: 'Report',
+            7: 'Import',
+            8: 'Activity Log',
+            9: 'Schedules',
+        }
+
+        if only_new:
+
+            stats = {
+                'name':  section_mapping[section],
+                'errors': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_ERROR, members__member=member, members__is_read=False).count(),
+                'warning': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_WARNING, members__member=member, members__is_read=False).count(),
+                'information': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_INFORMATION, members__member=member, members__is_read=False).count(),
+                'success': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_SUCCESS, members__member=member, members__is_read=False).count(),
+            }
+        else:
+
+            stats = {
+                'name':  section_mapping[section],
+                'errors': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_ERROR, members__member=member).count(),
+                'warning': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_WARNING, members__member=member).count(),
+                'information': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_INFORMATION, members__member=member).count(),
+                'success': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_SUCCESS, members__member=member).count(),
+            }
+
+
+        return stats
+
     @action(detail=False, methods=['get'], url_path='stats')
     def stats(self, request, pk=None):
 
         only_new = request.query_params.get('only_new', False)
+
+        if only_new == 'True':
+            only_new = True
+
+        result = []
+
+        member = request.user.member
+
+        # SECTION_GENERAL = 0
+        # SECTION_EVENTS = 1
+        # SECTION_TRANSACTIONS = 2
+        # SECTION_INSTRUMENTS = 3
+        # SECTION_DATA = 4
+        # SECTION_PRICES = 5
+        # SECTION_REPORT = 6
+        # SECTION_IMPORT = 7
+        # SECTION_ACTIVITY_LOG = 8
+        # SECTION_SCHEDULES = 9
+
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_GENERAL, only_new, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_EVENTS, only_new, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_TRANSACTIONS, only_new, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_INSTRUMENTS, only_new, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_DATA, only_new, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_PRICES, only_new, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_REPORT, only_new, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_IMPORT, only_new, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_ACTIVITY_LOG, only_new, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_SCHEDULES, only_new, member))
 
         # [
         #     {
@@ -64,7 +142,10 @@ class MessageViewSet(AbstractModelViewSet):
         #     }
         # ]
 
-        return Response({'status': 'ok'})
+
+
+
+        return Response(result)
 
     @action(detail=False, methods=['get'], url_path='mark-all-as-read')
     def mark_all_as_read(self, request, pk=None):
@@ -87,6 +168,11 @@ class MessageViewSet(AbstractModelViewSet):
 
         ids = request.data['ids']
 
+        print('mark_as_read ids %s' % ids)
+
+        if not isinstance(ids, list):
+            ids = [ids]
+
         messages = SystemMessage.objects.filter(id__in=ids)
 
         for message in messages:
@@ -103,6 +189,9 @@ class MessageViewSet(AbstractModelViewSet):
 
         ids = request.data['ids']
 
+        if not isinstance(ids, list):
+            ids = [ids]
+
         messages = SystemMessage.objects.filter(id__in=ids)
 
         for message in messages:
@@ -118,6 +207,9 @@ class MessageViewSet(AbstractModelViewSet):
 
         ids = request.data['ids']
 
+        if not isinstance(ids, list):
+            ids = [ids]
+
         messages = SystemMessage.objects.filter(id__in=ids)
 
         for message in messages:
@@ -132,6 +224,9 @@ class MessageViewSet(AbstractModelViewSet):
     def pin(self, request, pk=None):
 
         ids = request.data['ids']
+
+        if not isinstance(ids, list):
+            ids = [ids]
 
         messages = SystemMessage.objects.filter(id__in=ids)
 

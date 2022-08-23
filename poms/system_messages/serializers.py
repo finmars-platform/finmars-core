@@ -6,6 +6,7 @@ from rest_framework import serializers
 from poms.users.fields import MasterUserField
 
 from poms.system_messages.models import SystemMessage, SystemMessageAttachment
+from poms.users.utils import get_member_from_context
 
 
 class SystemMessageAttachmentSerializer(serializers.ModelSerializer):
@@ -36,6 +37,28 @@ class SystemMessageSerializer(serializers.ModelSerializer):
                   'linked_event',
                   'performed_by', 'created',
                   'attachments')
+
+    def to_representation(self, instance):
+
+        member = get_member_from_context(self.context)
+
+        result = super(SystemMessageSerializer, self).to_representation(instance)
+
+        for member_message in instance.members.all():
+
+            if member_message.member_id == member.id:
+                result['is_read'] = member_message.is_read
+                result['is_pinned'] = member_message.is_pinned
+
+        if 'is_read' not in result:
+            result['is_read'] = True
+
+        if 'is_pinned' not in result:
+            result['is_pinned'] = False
+
+        # _l.debug('InstrumentLightSerializer done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
+        return result
 
 
 class SystemMessageActionSerializer(serializers.Serializer):
