@@ -30,7 +30,7 @@ class SystemMessageSerializer(serializers.ModelSerializer):
 
         model = SystemMessage
         fields = ('id', 'master_user',
-                  'section', 'type',
+                  'section', 'type', 'action_status',
                   'title', 'description',
                   'created',
                   'linked_event',
@@ -38,3 +38,5 @@ class SystemMessageSerializer(serializers.ModelSerializer):
                   'attachments')
 
 
+class SystemMessageActionSerializer(serializers.Serializer):
+    ids = serializers.PrimaryKeyRelatedField(many=True, queryset=SystemMessage.objects.all())

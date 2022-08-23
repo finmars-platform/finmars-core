@@ -24,7 +24,7 @@ admin.site.register(SystemMessageAttachment, SystemMessageAttachmentAdmin)
 
 class SystemMessageMemberAdmin(admin.ModelAdmin):
     model = SystemMessageMember
-    list_display = ['id', 'member', 'system_message',  'status']
+    list_display = ['id', 'member', 'system_message',  'is_read', 'is_pinned']
     search_fields = ['id']
     raw_id_fields = ['member', 'system_message']
 

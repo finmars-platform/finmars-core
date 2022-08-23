@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.db import models
 from django.utils.translation import gettext_lazy
 
@@ -19,6 +21,7 @@ class SystemMessage(models.Model):
     SECTION_SCHEDULES = 9
 
     SECTION_CHOICES = (
+        (SECTION_GENERAL, gettext_lazy('General')),
         (SECTION_EVENTS, gettext_lazy('Events')),
         (SECTION_TRANSACTIONS, gettext_lazy('Transactions')),
         (SECTION_INSTRUMENTS, gettext_lazy('Instruments')),
@@ -42,6 +45,16 @@ class SystemMessage(models.Model):
         (TYPE_SUCCESS, gettext_lazy('Success'))
     )
 
+    ACTION_STATUS_NOT_REQUIRED = 1
+    ACTION_STATUS_REQUIRED = 2
+    ACTION_STATUS_SOLVED = 3
+
+    ACTION_STATUS_CHOICES = (
+        (ACTION_STATUS_NOT_REQUIRED, gettext_lazy('Not Required')),
+        (ACTION_STATUS_REQUIRED, gettext_lazy('Required')),
+        (ACTION_STATUS_SOLVED, gettext_lazy('Solved'))
+    )
+
     master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
@@ -49,7 +62,10 @@ class SystemMessage(models.Model):
                                             verbose_name=gettext_lazy('section'))
 
     type = models.PositiveSmallIntegerField(default=TYPE_INFORMATION, choices=TYPE_CHOICES,
-                                            verbose_name=gettext_lazy('status'))
+                                            verbose_name=gettext_lazy('type'))
+
+    action_status = models.PositiveSmallIntegerField(default=ACTION_STATUS_NOT_REQUIRED, choices=ACTION_STATUS_CHOICES,
+                                            verbose_name=gettext_lazy('action status'))
 
     title = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('title'))
 
@@ -65,7 +81,21 @@ class SystemMessage(models.Model):
                                      verbose_name=gettext_lazy('linked event'), on_delete=models.SET_NULL)
 
     def __str__(self):
-        return self.title
+
+        result = ''
+
+        pieces = []
+
+        if self.created:
+            pieces.append(self.created.strftime("%Y-%m-%d %H:%M:%S"))
+
+        if self.title:
+            pieces.append(self.title)
+
+        if self.description:
+            pieces.append(self.description[0:30] + '...')
+
+        return ' '.join(pieces)
 
 class SystemMessageAttachment(models.Model):
     system_message = models.ForeignKey(SystemMessage, verbose_name=gettext_lazy('system message'),
@@ -81,25 +111,12 @@ class SystemMessageAttachment(models.Model):
 
 class SystemMessageMember(models.Model):
 
-    # read, new, solved
-
-    STATUS_NEW = 1
-    STATUS_READ = 2
-    STATUS_SOLVED = 3
-
-    STATUS_CHOICES = (
-        (STATUS_NEW, gettext_lazy('New')),
-        (STATUS_READ, gettext_lazy('Read')),
-        (STATUS_SOLVED, gettext_lazy('Solved'))
-    )
-
     system_message = models.ForeignKey(SystemMessage, verbose_name=gettext_lazy('system message'),
                                        on_delete=models.CASCADE, related_name="members")
 
     member = models.ForeignKey(Member, related_name='system_messages',
                                verbose_name=gettext_lazy('member'), on_delete=models.CASCADE)
 
-    status = models.PositiveSmallIntegerField(default=STATUS_NEW, choices=STATUS_CHOICES,
-                                              verbose_name=gettext_lazy('status'))
 
+    is_read = models.BooleanField(default=False, verbose_name=gettext_lazy('is read'))
     is_pinned = models.BooleanField(default=False, verbose_name=gettext_lazy('is pinned'))

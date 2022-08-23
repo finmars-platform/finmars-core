@@ -1,6 +1,9 @@
-from poms.system_messages.models import SystemMessage, SystemMessageAttachment
+from poms.system_messages.models import SystemMessage, SystemMessageAttachment, SystemMessageMember
 
 import logging
+
+from poms.users.models import Member
+
 _l = logging.getLogger('poms.system_messages')
 
 def send_system_message(master_user,  title=None, description=None, file_report_id=None, section=SystemMessage.SECTION_GENERAL, type=SystemMessage.TYPE_INFORMATION, performed_by=None, target=None):
@@ -24,6 +27,13 @@ def send_system_message(master_user,  title=None, description=None, file_report_
             attachment.save()
 
             _l.info('file_report saved %s' % attachment )
+
+        members = Member.objects.all()
+
+        for member in members:
+
+            SystemMessageMember.objects.create(member=member, system_message=system_message)
+
 
     except Exception as e:
         _l.info("Error send system message: %s" % e)
