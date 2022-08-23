@@ -18,8 +18,6 @@ from poms.celery_tasks.models import CeleryTask
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
 
-
-
 from poms.common import formula
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import convert_name_to_key
@@ -48,8 +46,8 @@ from django.core.serializers.json import DjangoJSONEncoder
 SFS = SFTPStorage()
 
 import logging
-_l = logging.getLogger('poms.transaction_import')
 
+_l = logging.getLogger('poms.transaction_import')
 
 props_map = {
     Account: 'account',
@@ -107,7 +105,6 @@ class TransactionImportProcess(object):
         self.result.task = self.task
         self.result.scheme = self.scheme
 
-
         self.process_type = ProcessType.CSV
 
         self.find_process_type()
@@ -122,10 +119,25 @@ class TransactionImportProcess(object):
             'request': self.proxy_request
         }
 
+        import_system_message_performed_by = self.member.username
+        import_system_message_title = 'Transaction import (start)'
+
+        if self.execution_context and self.execution_context["started_by"] == 'procedure':
+            import_system_message_performed_by = 'System'
+            import_system_message_title = 'Transaction import from broker (start)'
+
+        send_system_message(master_user=self.master_user,
+                            performed_by=import_system_message_performed_by,
+                            section='import',
+                            type='success',
+                            title=import_system_message_title,
+                            description=self.member.username + ' started import with scheme ' + self.scheme.name,
+                            )
     def generate_file_report(self):
 
         _l.info('TransactionImportProcess.generate_file_report error_handler %s' % self.scheme.error_handler)
-        _l.info('TransactionImportProcess.generate_file_report missing_data_handler %s' % self.scheme.missing_data_handler)
+        _l.info(
+            'TransactionImportProcess.generate_file_report missing_data_handler %s' % self.scheme.missing_data_handler)
 
         result = []
 
@@ -152,7 +164,6 @@ class TransactionImportProcess(object):
 
             if 'skip' in result_item.status:
                 skip_rows_count = skip_rows_count + 1
-
 
         result.append('Rows total, %s' % self.result.total_rows)
         result.append('Rows success import, %s' % success_rows_count)
@@ -190,7 +201,6 @@ class TransactionImportProcess(object):
                 content_row_list.append('"' + str(item) + '"')
 
             content_row = ','.join(content_row_list)
-
 
             result.append(content_row)
 
@@ -248,7 +258,6 @@ class TransactionImportProcess(object):
         _l.info('TransactionImportProcess.json_report %s' % file_report.file_url)
 
         return file_report
-
 
     def find_process_type(self):
 
@@ -377,8 +386,6 @@ class TransactionImportProcess(object):
             try:
 
                 fields = self.get_fields_for_item(item, rule_scenario)
-
-
 
                 transaction_type_process_instance = TransactionTypeProcess(
                     transaction_type=rule_scenario.transaction_type,
@@ -545,7 +552,8 @@ class TransactionImportProcess(object):
                         self.result.total_rows = len(self.raw_items)
 
             _l.info(
-                'TransactionImportProcess.Task %s. fill_with_raw_items %s DONE items %s' % (self.task, self.process_type, len(self.raw_items)))
+                'TransactionImportProcess.Task %s. fill_with_raw_items %s DONE items %s' % (
+                    self.task, self.process_type, len(self.raw_items)))
 
         except Exception as e:
 
@@ -574,7 +582,6 @@ class TransactionImportProcess(object):
                 row_number = row_number + 1
 
         for preprocess_item in self.preprocessed_items:
-
 
             # CREATE SCHEME INPUTS
 
@@ -619,7 +626,6 @@ class TransactionImportProcess(object):
                             self.task, scheme_input, e))
                         # _l.error('TransactionImportProcess.Task %s. recursive_preprocess conversion %s Traceback %s' % (
                         #     self.task, scheme_input, traceback.format_exc()))
-
 
             # CREATE CALCULATED INPUTS
 
@@ -666,7 +672,8 @@ class TransactionImportProcess(object):
 
             self.items.append(item)
 
-        _l.info('TransactionImportProcess.Task %s. preprocess DONE items %s' % (self.task, len(self.preprocessed_items)))
+        _l.info(
+            'TransactionImportProcess.Task %s. preprocess DONE items %s' % (self.task, len(self.preprocessed_items)))
 
     def process_items(self):
 
@@ -676,7 +683,8 @@ class TransactionImportProcess(object):
 
             try:
 
-                _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ========' % (self.task, str(item.row_number), str(self.result.total_rows)))
+                _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ========' % (
+                    self.task, str(item.row_number), str(self.result.total_rows)))
 
                 if self.scheme.filter_expression:
 
@@ -692,7 +700,8 @@ class TransactionImportProcess(object):
                         item.message = 'Skipped due filter'
 
                         _l.info(
-                            'TransactionImportProcess.Task %s. Row skipped due filter %s' % (self.task, str(item.row_number)))
+                            'TransactionImportProcess.Task %s. Row skipped due filter %s' % (
+                                self.task, str(item.row_number)))
                         continue
 
                 rule_value = self.get_rule_value_for_item(item)
@@ -700,7 +709,8 @@ class TransactionImportProcess(object):
                 item.processed_rule_scenarios = []
                 item.booked_transactions = []
 
-                _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ======== %s ' % (self.task, str(item.row_number), str(self.result.total_rows), rule_value))
+                _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ======== %s ' % (
+                    self.task, str(item.row_number), str(self.result.total_rows), rule_value))
 
                 if rule_value:
 
@@ -725,8 +735,6 @@ class TransactionImportProcess(object):
 
                 self.result.processed_rows = self.result.processed_rows + 1
 
-
-
                 send_websocket_message(data={
                     'type': 'transaction_import_status',
                     'payload': {
@@ -742,9 +750,10 @@ class TransactionImportProcess(object):
 
             except Exception as e:
 
-                _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Exception %s' % (self.task, str(item.row_number), e))
-                _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Traceback %s' % (self.task, str(item.row_number), traceback.format_exc()))
-
+                _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Exception %s' % (
+                    self.task, str(item.row_number), e))
+                _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Traceback %s' % (
+                    self.task, str(item.row_number), traceback.format_exc()))
 
         self.result.items = self.items
 
@@ -795,7 +804,6 @@ class TransactionImportProcess(object):
             }, level="member",
                 context=self.context)
 
-            # self.task.result_object = json.dumps(self.result.__dict__, indent=4, cls=DjangoJSONEncoder)
             self.task.result_object = TransactionImportResultSerializer(instance=self.result, context=self.context).data
             self.task.status = CeleryTask.STATUS_DONE
             self.task.save()
@@ -805,47 +813,45 @@ class TransactionImportProcess(object):
             self.result.reports.append(self.generate_file_report())
             self.result.reports.append(self.generate_json_report())
 
+            system_message_title = 'New transactions (import from file)'
+            system_message_description = 'New transactions created (Import scheme - ' + str(
+                self.scheme.name) + ') - ' + str(len(self.items))
 
-            # if JSON IMPORT
-            if self.task.options_object and 'items' in self.task.options_object:
+            import_system_message_title = 'Transaction import (finished)'
+
+            system_message_performed_by = self.member.username
+
+            if self.process_type == ProcessType.JSON:
 
                 if self.execution_context and self.execution_context["started_by"] == 'procedure':
 
-                    from poms.portfolios.tasks import calculate_portfolio_register_record, \
-                        calculate_portfolio_register_price_history
-                    _l.info('complex_transaction_csv_file_import_parallel_finish send final import message')
+                    system_message_title = 'New transactions (import from broker)'
+                    system_message_performed_by = 'System'
 
-                    send_system_message(master_user=self.master_user,
-                                        performed_by='System',
-                                        description="Import Finished",
-                                        file_report_id=self.result.reports[0].id)
-
-                    send_system_message(master_user=self.master_user,
-                                        performed_by='System',
-                                        description="Import Finished (JSON Report)",
-                                        file_report_id=self.result.reports[1].id)
+                    import_system_message_title = 'Transaction import from broker (finished)'
 
                     if self.execution_context['date_from']:
+                        from poms.portfolios.tasks import calculate_portfolio_register_record, \
+                            calculate_portfolio_register_price_history
+
                         calculate_portfolio_register_record.apply_async(link=[
                             calculate_portfolio_register_price_history.s(date_from=self.execution_context['date_from'])
                         ])
 
-                self.task.result_object = TransactionImportResultSerializer(instance=self.result, context=self.context).data
+        send_system_message(master_user=self.master_user,
+                            performed_by=system_message_performed_by,
+                            section='import',
+                            type='success',
+                            title=import_system_message_title,
+                            attachments=[self.result.reports[0].id, self.result.reports[1].id])
 
-                self.task.status = CeleryTask.STATUS_DONE
-                self.task.save()
-
-            else:
-
-                send_system_message(master_user=self.master_user,
-                                    performed_by='System',
-                                    description="Import Finished",
-                                    file_report_id=self.result.reports[0].id)
-
-                send_system_message(master_user=self.master_user,
-                                    performed_by='System',
-                                    description="Import Finished (JSON Report)",
-                                    file_report_id=self.result.reports[1].id)
+        send_system_message(master_user=self.master_user,
+                            performed_by=system_message_performed_by,
+                            section='transactions',
+                            type='success',
+                            title=system_message_title,
+                            description=system_message_description,
+                            )
 
         if self.procedure_instance and self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()

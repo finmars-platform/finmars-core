@@ -176,7 +176,7 @@ class RequestDataFileProcedureProcess(object):
                     send_system_message(master_user=procedure_instance.master_user,
                                         performed_by='System',
                                         description="universal Broker. Procedure %s. Response Received" % procedure_instance.id,
-                                        file_report_id=file_report.id)
+                                        attachments=[file_report.id])
 
                     procedure_id = response_data['id']
 
@@ -327,6 +327,7 @@ class RequestDataFileProcedureProcess(object):
                 except Exception as error:
                     send_system_message(master_user=self.master_user,
                                         performed_by="System",
+                                        type='error',
                                         description="Can't configure Julius Baer Provider")
 
             if self.procedure.provider.user_code == 'lombard_odier':
@@ -347,11 +348,13 @@ class RequestDataFileProcedureProcess(object):
                     else:
                         send_system_message(master_user=self.master_user,
                                             performed_by='System',
+                                            type='error',
                                             description="Lombard Odier Provider Procedure is not configured")
 
                 except Exception as error:
                     send_system_message(master_user=self.master_user,
                                         performed_by='System',
+                                        type='error',
                                         description="Can't configure Lombard Odier Provider")
 
             if self.procedure.provider.user_code == 'revolut':
@@ -373,6 +376,7 @@ class RequestDataFileProcedureProcess(object):
                 else:
                     send_system_message(master_user=self.master_user,
                                         performed_by='System',
+                                        type='error',
                                         description="Revolut rovider Procedure is not configured")
 
             callback_url = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/api/internal/data/transactions/callback/'
@@ -421,6 +425,7 @@ class RequestDataFileProcedureProcess(object):
 
             send_system_message(master_user=self.master_user,
                                 performed_by='System',
+                                type='error',
                                 description="Data Service is unknown")
 
 

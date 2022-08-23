@@ -2445,13 +2445,13 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
             send_system_message(master_user=celery_task.master_user,
                                 performed_by='System',
                                 description="Import Finished",
-                                file_report_id=result_object['stats_file_report'])
+                                attachments=[result_object['stats_file_report']])
         else:
 
             send_system_message(master_user=celery_task.master_user,
                                 performed_by='System',
                                 description="User %s Transaction Import Finished" % celery_task.member.username,
-                                file_report_id=result_object['stats_file_report'])
+                                attachments=[result_object['stats_file_report']])
 
         # TODO Generate File Report Here
 
@@ -3326,7 +3326,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                     send_system_message(master_user=celery_task.master_user,
                                         performed_by='System',
                                         description="Import Finished",
-                                        file_report_id=result_object['stats_file_report'])
+                                        attachments=[result_object['stats_file_report']])
 
                     if celery_task.options_object['execution_context']['date_from']:
                         calculate_portfolio_register_record.apply_async(link=[
@@ -4424,7 +4424,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
                     send_system_message(master_user=procedure_instance.master_user,
                                         performed_by='System',
                                         description=text,
-                                        file_report_id=file_report.id)
+                                        attachments=[file_report.id])
 
                     options_object = {}
                     options_object['file_path'] = instance.file_path

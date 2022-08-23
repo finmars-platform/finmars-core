@@ -1778,12 +1778,12 @@ class ImportHandler:
                 send_system_message(master_user=instance.master_user,
                                     performed_by="System",
                                     description="Import Finished",
-                                    file_report_id=instance.stats_file_report)
+                                    attachments=[instance.stats_file_report])
             else:
                 send_system_message(master_user=instance.master_user,
                                     performed_by="System",
                                     description="User %s Import Finished" % member.username,
-                                    file_report_id=instance.stats_file_report)
+                                    attachments=[instance.stats_file_report])
 
         if procedure_instance and procedure_instance.schedule_instance:
             procedure_instance.schedule_instance.run_next_procedure()
@@ -1916,7 +1916,7 @@ def data_csv_file_import_by_procedure(self, procedure_instance_id, transaction_f
                         send_system_message(master_user=procedure_instance.master_user,
                                             performed_by='System',
                                             description=text,
-                                            file_report_id=file_report.id)
+                                            attachments=[file_report.id])
 
                         transaction.on_commit(
                             lambda: data_csv_file_import.apply_async(
@@ -2257,12 +2257,12 @@ class UnifiedImportHandler():
                 send_system_message(master_user=self.instance.master_user,
                                     performed_by='System',
                                     description="Import Finished",
-                                    file_report_id=self.instance.stats_file_report)
+                                    attachments=[self.instance.stats_file_report])
             else:
                 send_system_message(master_user=self.instance.master_user,
                                     performed_by='System',
                                     description="User %s Import Finished" % member.username,
-                                    file_report_id=self.instance.stats_file_report)
+                                    attachments=[self.instance.stats_file_report])
 
         return self.instance
 

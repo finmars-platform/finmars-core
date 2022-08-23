@@ -8,6 +8,7 @@ from poms.file_reports.models import FileReport
 from django.utils.timezone import now
 
 from poms.pricing.models import PricingProcedureInstance
+from poms.procedures.models import PricingParentProcedureInstance
 
 _l = logging.getLogger('poms.pricing')
 

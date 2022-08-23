@@ -7,7 +7,9 @@ from rest_framework.serializers import ListSerializer
 
 from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeField
 from poms.common.filters import ClassifierRootFilter
+from poms.system_messages.handlers import send_system_message
 from poms.users.filters import OwnerByMasterUserFilter
+from poms.users.utils import get_member_from_context, get_master_user_from_context
 
 
 class PomsClassSerializer(serializers.ModelSerializer):
@@ -30,7 +32,6 @@ class ModelWithTimeStampSerializer(serializers.ModelSerializer):
         return data
 
 
-
 class ModelWithUserCodeSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(ModelWithUserCodeSerializer, self).__init__(*args, **kwargs)
@@ -48,6 +49,42 @@ class ModelWithUserCodeSerializer(serializers.ModelSerializer):
         #         ret['user_code'] = Truncator(name).chars(25, truncate='')
 
         return ret
+
+    def create(self, validated_data):
+        instance = super(ModelWithUserCodeSerializer, self).create(validated_data)
+
+        member = get_member_from_context(self.context)
+        master_user = get_master_user_from_context(self.context)
+
+        entity_name = self.Meta.model._meta.model_name
+
+        send_system_message(master_user=master_user,
+                            performed_by=member.username,
+                            section='data',
+                            type='success',
+                            title='New ' + entity_name + ' (manual)',
+                            description='New ' + entity_name + ' created (manual) - ' + instance.name,
+                            )
+
+        return instance
+
+    def update(self, instance, validated_data):
+        instance = super(ModelWithUserCodeSerializer, self).update(instance, validated_data)
+
+        member = get_member_from_context(self.context)
+        master_user = get_master_user_from_context(self.context)
+
+        entity_name = self.Meta.model._meta.model_name
+
+        send_system_message(master_user=master_user,
+                            performed_by=member.username,
+                            section='data',
+                            type='warning',
+                            title='Edit ' + entity_name + ' (manual)',
+                            description=entity_name + ' edited (manual) - ' + instance.name,
+                            )
+
+        return instance
 
 
 class AbstractClassifierField(PrimaryKeyRelatedFilteredField):

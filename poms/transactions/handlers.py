@@ -25,6 +25,7 @@ from poms.obj_perms.utils import assign_perms3, get_view_perms
 from poms.portfolios.models import Portfolio
 from poms.reconciliation.models import TransactionTypeReconField
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
+from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import ComplexTransaction, TransactionTypeInput, Transaction, EventClass, \
     NotificationClass, RebookReactionChoice, ComplexTransactionInput, TransactionType
 from poms.users.models import EcosystemDefault, Group
@@ -2218,6 +2219,24 @@ class TransactionTypeProcess(object):
         self.assign_permissions_to_pending_complex_transaction()
 
         self.run_procedures_after_book()
+
+        if self.execution_context == 'manual':
+
+            system_message_title = 'New transactions (manual)'
+            system_message_description = 'New transactions created (manual) - ' + str(self.complex_transaction.text)
+
+            if self.process_mode == self.MODE_REBOOK:
+
+                system_message_title = 'Edit transactions (manual)'
+                system_message_description = 'Edit transaction - ' + str(self.complex_transaction.text)
+
+            send_system_message(master_user=self.transaction_type.master_user,
+                                performed_by=self.member.username,
+                                section='transactions',
+                                type='success',
+                                title=system_message_title,
+                                description=system_message_description,
+                                )
 
     def process(self):
 

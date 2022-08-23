@@ -11,6 +11,8 @@ from poms.common import formula
 
 from django.utils.timezone import now
 
+from poms.common.middleware import get_request
+
 EXPRESSION_FIELD_LENGTH = 4096
 
 
@@ -107,9 +109,14 @@ class FakeDeletableModel(models.Model):
 
     def fake_delete(self):
 
+        from poms.system_messages.handlers import send_system_message
+
+
         self.is_deleted = True
 
         fields_to_update = ['is_deleted']
+
+        member = get_request().user.member
 
         if hasattr(self, 'user_code'):
             self.deleted_user_code = self.user_code
@@ -130,6 +137,16 @@ class FakeDeletableModel(models.Model):
         if hasattr(self, 'is_active'):  # instrument prop
             self.is_active = False
             fields_to_update.append('is_active')
+
+        entity_name = self._meta.model_name
+
+        send_system_message(master_user=self.master_user,
+                            performed_by=member.username,
+                            section='data',
+                            type='warning',
+                            title='Delete ' + entity_name + ' (manual)',
+                            description= entity_name + ' was deleted (manual) - ' + self.name,
+                            )
 
         self.save(update_fields=fields_to_update)
 

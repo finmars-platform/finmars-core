@@ -81,6 +81,7 @@ class ScheduleViewSet(AbstractModelViewSet):
 
                             send_system_message(master_user=master_user,
                                                 performed_by="System",
+                                                section='schedules',
                                                 description="Schedule %s. Start processing step %s/%s" % (schedule.name, schedule_instance.current_processing_procedure_number, total_procedures))
 
 
@@ -100,6 +101,8 @@ class ScheduleViewSet(AbstractModelViewSet):
 
                         send_system_message(master_user=master_user,
                                             performed_by="System",
+                                            type='error',
+                                            section='schedules',
                                             description="Schedule %s. Error occurred" % schedule.name)
 
                         pass

@@ -6,22 +6,52 @@ from poms.users.models import Member
 
 _l = logging.getLogger('poms.system_messages')
 
-def send_system_message(master_user,  title=None, description=None, file_report_id=None, section=SystemMessage.SECTION_GENERAL, type=SystemMessage.TYPE_INFORMATION, performed_by=None, target=None):
+def send_system_message(master_user,  title=None, description=None, attachments=[], section='general', type='info', performed_by=None, target=None):
 
     try:
+
+        type_mapping = {
+            'info': SystemMessage.TYPE_INFORMATION,
+            'warning': SystemMessage.TYPE_WARNING,
+            'error': SystemMessage.TYPE_ERROR,
+            'success': SystemMessage.TYPE_SUCCESS
+        }
+
+        # SECTION_GENERAL = 0
+        # SECTION_EVENTS = 1
+        # SECTION_TRANSACTIONS = 2
+        # SECTION_INSTRUMENTS = 3
+        # SECTION_DATA = 4
+        # SECTION_PRICES = 5
+        # SECTION_REPORT = 6
+        # SECTION_IMPORT = 7
+        # SECTION_ACTIVITY_LOG = 8
+        # SECTION_SCHEDULES = 9
+
+        section_mapping = {
+            'general': SystemMessage.SECTION_GENERAL,
+            'events': SystemMessage.SECTION_EVENTS,
+            'transactions': SystemMessage.SECTION_TRANSACTIONS,
+            'instruments': SystemMessage.SECTION_INSTRUMENTS,
+            'data': SystemMessage.SECTION_DATA,
+            'prices': SystemMessage.SECTION_PRICES,
+            'report': SystemMessage.SECTION_REPORT,
+            'import': SystemMessage.SECTION_IMPORT,
+            'activity_log': SystemMessage.SECTION_ACTIVITY_LOG,
+            'schedules': SystemMessage.SECTION_SCHEDULES,
+        }
 
         system_message = SystemMessage.objects.create(master_user=master_user,
                                      performed_by=performed_by,
                                      target=target,
                                      title=title,
                                      description=description,
-                                     section=section,
-                                     type=type)
+                                     section=section_mapping[section],
+                                     type=type_mapping[type])
 
         _l.info('system_message %s' % system_message)
-        _l.info('file_report %s' % file_report_id)
 
-        if file_report_id is not None:
+        for file_report_id in attachments:
 
             attachment = SystemMessageAttachment.objects.create(system_message=system_message, file_report_id=file_report_id)
             attachment.save()

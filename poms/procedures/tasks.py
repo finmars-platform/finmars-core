@@ -63,6 +63,7 @@ def procedure_request_data_file(self,
 
                     send_system_message(master_user=master_user,
                                         performed_by='System',
+                                        type='error',
                                         description=text)
 
                     procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
@@ -75,6 +76,7 @@ def procedure_request_data_file(self,
 
             send_system_message(master_user=master_user,
                                 performed_by='System',
+                                type='error',
                                 description=text)
 
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
@@ -91,6 +93,7 @@ def procedure_request_data_file(self,
 
         send_system_message(master_user=master_user,
                             performed_by='System',
+                            type='error',
                             description=text)
 
         procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR

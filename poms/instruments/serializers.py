@@ -28,6 +28,7 @@ from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.pricing.models import InstrumentPricingPolicy, InstrumentTypePricingPolicy, PriceHistoryError
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     InstrumentTypePricingPolicySerializer, InstrumentPricingPolicySerializer
+from poms.system_messages.handlers import send_system_message
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField
 from poms.transactions.models import TransactionType
@@ -35,6 +36,9 @@ from poms.users.fields import MasterUserField
 
 import time
 import logging
+
+from poms.users.utils import get_member_from_context, get_master_user_from_context
+
 _l = logging.getLogger('poms.instruments')
 
 
@@ -1554,6 +1558,17 @@ class PriceHistorySerializer(serializers.ModelSerializer):
 
         history_item.save()
 
+        member = get_member_from_context(self.context)
+        master_user = get_master_user_from_context(self.context)
+
+        send_system_message(master_user=master_user,
+                            performed_by=member.username,
+                            section='prices',
+                            type='success',
+                            title='New Price (manual)',
+                            description=instance.instrument.user_code + ' ' + str(instance.date) + ' ' + str(instance.principal_price)
+                            )
+
         return instance
 
     def update(self, instance, validated_data):
@@ -1589,6 +1604,17 @@ class PriceHistorySerializer(serializers.ModelSerializer):
         history_item.pricing_policy = instance.pricing_policy
 
         history_item.save()
+
+        member = get_member_from_context(self.context)
+        master_user = get_master_user_from_context(self.context)
+
+        send_system_message(master_user=master_user,
+                            performed_by=member.username,
+                            section='prices',
+                            type='warning',
+                            title='Edit Price (manual)',
+                            description=instance.instrument.user_code + ' ' + str(instance.date) + ' ' + str(instance.principal_price)
+                            )
 
         return instance
 

@@ -14,8 +14,10 @@ from poms.obj_attrs.serializers import ModelWithAttributesSerializer, ModelWithA
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.pricing.models import CurrencyPricingPolicy, CurrencyHistoryError
 from poms.pricing.serializers import CurrencyPricingPolicySerializer
+from poms.system_messages.handlers import send_system_message
 from poms.tags.serializers import ModelWithTagSerializer
 from poms.users.fields import MasterUserField
+from poms.users.utils import get_member_from_context, get_master_user_from_context
 
 
 def set_currency_pricing_scheme_parameters(pricing_policy, parameters):
@@ -267,6 +269,17 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
 
         history_item.save()
 
+        member = get_member_from_context(self.context)
+        master_user = get_master_user_from_context(self.context)
+
+        send_system_message(master_user=master_user,
+                            performed_by=member.username,
+                            section='prices',
+                            type='success',
+                            title='New FX rate (manual)',
+                            description=instance.currency.user_code + ' ' + str(instance.date) + ' ' + str(instance.fx_rate)
+                            )
+
         return instance
 
     def update(self, instance, validated_data):
@@ -297,5 +310,16 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
             history_item.pricing_policy = instance.pricing_policy
 
         history_item.save()
+
+        member = get_member_from_context(self.context)
+        master_user = get_master_user_from_context(self.context)
+
+        send_system_message(master_user=master_user,
+                            performed_by=member.username,
+                            section='prices',
+                            type='warning',
+                            title='Edit FX rate (manual)',
+                            description=instance.currency.user_code + ' ' + str(instance.date) + ' ' + str(instance.fx_rate)
+                            )
 
         return instance
