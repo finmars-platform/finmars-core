@@ -129,8 +129,8 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         text = "Data File Procedure %s. Start processing" % procedure.name
 
         send_system_message(master_user=master_user,
-                            source="Data File Procedure Service",
-                            text=text)
+                            performed_by='System',
+                            description=text)
 
         serializer = self.get_serializer(instance=instance)
 

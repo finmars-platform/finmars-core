@@ -961,8 +961,8 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         _l.info('celery_task %s created ' % celery_task.pk)
 
         send_system_message(master_user=request.user.master_user,
-                            source="Transaction Import Service",
-                            text='Member %s started Transaction Import (scheme %s)' % (
+                            performed_by='System',
+                            description='Member %s started Transaction Import (scheme %s)' % (
                             request.user.member.username, instance.scheme.name))
 
         transaction_import.apply_async(kwargs={"task_id": celery_task.pk})
@@ -1225,8 +1225,8 @@ class TransactionFileResultUploadHandler(APIView):
                         procedure_instance.procedure.user_code)
 
                     send_system_message(master_user=procedure_instance.master_user,
-                                        source="Data File Procedure Service",
-                                        text=text)
+                                        performed_by='System',
+                                        description=text)
 
                     procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
                     procedure_instance.save()

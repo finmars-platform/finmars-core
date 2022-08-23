@@ -1776,13 +1776,13 @@ class ImportHandler:
 
             if execution_context and execution_context["started_by"] == 'procedure':
                 send_system_message(master_user=instance.master_user,
-                                    source="Simple Import Service",
-                                    text="Import Finished",
+                                    performed_by="System",
+                                    description="Import Finished",
                                     file_report_id=instance.stats_file_report)
             else:
                 send_system_message(master_user=instance.master_user,
-                                    source="Simple Import Service",
-                                    text="User %s Import Finished" % member.username,
+                                    performed_by="System",
+                                    description="User %s Import Finished" % member.username,
                                     file_report_id=instance.stats_file_report)
 
         if procedure_instance and procedure_instance.schedule_instance:
@@ -1833,8 +1833,8 @@ def data_csv_file_import_by_procedure(self, procedure_instance_id, transaction_f
                 procedure_instance.procedure.user_code)
 
             send_system_message(master_user=procedure_instance.master_user,
-                                source="Data File Procedure Service",
-                                text=text)
+                                performed_by='System',
+                                description=text)
 
             with SFS.open(transaction_file_result.file_path, 'rb') as f:
 
@@ -1914,8 +1914,8 @@ def data_csv_file_import_by_procedure(self, procedure_instance_id, transaction_f
                             procedure_instance.procedure.user_code)
 
                         send_system_message(master_user=procedure_instance.master_user,
-                                            source="Data File Procedure Service",
-                                            text=text,
+                                            performed_by='System',
+                                            description=text,
                                             file_report_id=file_report.id)
 
                         transaction.on_commit(
@@ -1935,8 +1935,8 @@ def data_csv_file_import_by_procedure(self, procedure_instance_id, transaction_f
                 procedure_instance.procedure.user_code, procedure_instance.procedure.user_code)
 
             send_system_message(master_user=procedure_instance.master_user,
-                                source="Data File Procedure Service",
-                                text=text)
+                                performed_by='System',
+                                description=text)
 
             _l.debug(
                 'data_csv_file_import_by_procedure scheme %s not found' % procedure_instance.procedure.user_code)
@@ -1981,8 +1981,8 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
                 procedure_instance.procedure.user_code)
 
             send_system_message(master_user=procedure_instance.master_user,
-                                source="Data File Procedure Service",
-                                text=text)
+                                performed_by='System',
+                                description=text)
 
             transaction.on_commit(lambda: data_csv_file_import.apply_async(
                 kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
@@ -1996,8 +1996,8 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
                 procedure_instance.procedure.user_code, e)
 
             send_system_message(master_user=procedure_instance.master_user,
-                                source="Data File Procedure Service",
-                                text=text)
+                                performed_by='System',
+                                description=text)
 
             _l.debug(
                 'data_csv_file_import_by_procedure_json scheme %s not found' % procedure_instance.procedure.scheme_name)
@@ -2255,13 +2255,13 @@ class UnifiedImportHandler():
 
             if self.execution_context and self.execution_context["started_by"] == 'procedure':
                 send_system_message(master_user=self.instance.master_user,
-                                    source="Unified Simple Import Service",
-                                    text="Import Finished",
+                                    performed_by='System',
+                                    description="Import Finished",
                                     file_report_id=self.instance.stats_file_report)
             else:
                 send_system_message(master_user=self.instance.master_user,
-                                    source="Unified  Simple Import Service",
-                                    text="User %s Import Finished" % member.username,
+                                    performed_by='System',
+                                    description="User %s Import Finished" % member.username,
                                     file_report_id=self.instance.stats_file_report)
 
         return self.instance

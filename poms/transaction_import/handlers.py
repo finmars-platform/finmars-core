@@ -765,8 +765,8 @@ class TransactionImportProcess(object):
 
             if self.execution_context and self.execution_context["started_by"] == 'procedure':
                 send_system_message(master_user=self.master_user,
-                                    source="Transaction Import Service",
-                                    text="Can't process file. Exception %s" % e)
+                                    performed_by='System',
+                                    description="Can't process file. Exception %s" % e)
 
         finally:
 
@@ -816,13 +816,13 @@ class TransactionImportProcess(object):
                     _l.info('complex_transaction_csv_file_import_parallel_finish send final import message')
 
                     send_system_message(master_user=self.master_user,
-                                        source="Transaction Import Service",
-                                        text="Import Finished",
+                                        performed_by='System',
+                                        description="Import Finished",
                                         file_report_id=self.result.reports[0].id)
 
                     send_system_message(master_user=self.master_user,
-                                        source="Transaction Import Service",
-                                        text="Import Finished (JSON Report)",
+                                        performed_by='System',
+                                        description="Import Finished (JSON Report)",
                                         file_report_id=self.result.reports[1].id)
 
                     if self.execution_context['date_from']:
@@ -838,13 +838,13 @@ class TransactionImportProcess(object):
             else:
 
                 send_system_message(master_user=self.master_user,
-                                    source="Transaction Import Service",
-                                    text="Import Finished",
+                                    performed_by='System',
+                                    description="Import Finished",
                                     file_report_id=self.result.reports[0].id)
 
                 send_system_message(master_user=self.master_user,
-                                    source="Transaction Import Service",
-                                    text="Import Finished (JSON Report)",
+                                    performed_by='System',
+                                    description="Import Finished (JSON Report)",
                                     file_report_id=self.result.reports[1].id)
 
         if self.procedure_instance and self.procedure_instance.schedule_instance:

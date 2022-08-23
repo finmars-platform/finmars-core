@@ -80,8 +80,8 @@ class ScheduleViewSet(AbstractModelViewSet):
                             schedule_instance.save()
 
                             send_system_message(master_user=master_user,
-                                                source="Schedule Service",
-                                                text="Schedule %s. Start processing step %s/%s" % (schedule.name, schedule_instance.current_processing_procedure_number, total_procedures))
+                                                performed_by="System",
+                                                description="Schedule %s. Start processing step %s/%s" % (schedule.name, schedule_instance.current_processing_procedure_number, total_procedures))
 
 
                             process_procedure_async.apply_async(kwargs={'procedure':procedure, 'master_user':master_user, 'schedule_instance': schedule_instance})
@@ -99,8 +99,8 @@ class ScheduleViewSet(AbstractModelViewSet):
                         _l.info('Schedule: Error %s' % e)
 
                         send_system_message(master_user=master_user,
-                                            source="Schedule Service",
-                                            text="Schedule %s. Error occurred" % schedule.name)
+                                            performed_by="System",
+                                            description="Schedule %s. Error occurred" % schedule.name)
 
                         pass
 

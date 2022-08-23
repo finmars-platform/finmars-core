@@ -109,8 +109,8 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
         # celery_task.save()
 
         send_system_message(master_user=request.user.master_user,
-                            source="Simple Import Service",
-                            text='Member %s started Simple Import (scheme %s)' % (
+                            performed_by='System',
+                            description='Member %s started Simple Import (scheme %s)' % (
                             request.user.member.username, instance.scheme.name))
 
         data_csv_file_import.apply_async(kwargs={'task_id': celery_task.pk})
@@ -158,8 +158,8 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
         # celery_task.save()
 
         send_system_message(master_user=request.user.master_user,
-                            source="Simple Import Service",
-                            text='Member %s started Simple Import (scheme %s)' % (
+                            performed_by='System',
+                            description='Member %s started Simple Import (scheme %s)' % (
                             request.user.member.username, instance.scheme.name))
 
         data_csv_file_import_validate.apply_async(kwargs={"task_id": celery_task.pk})
@@ -272,8 +272,8 @@ class UnifiedCsvDataImportViewSet(AbstractAsyncViewSet):
             celery_task.save()
 
             send_system_message(master_user=request.user.master_user,
-                                source="Simple Import Service",
-                                text='Member %s started Unified Data Import' % (request.user.member.username))
+                                performed_by='System',
+                                description='Member %s started Unified Data Import' % (request.user.member.username))
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)

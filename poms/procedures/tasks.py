@@ -62,8 +62,8 @@ def procedure_request_data_file(self,
                         procedure_instance.procedure.user_code, data['error_message'])
 
                     send_system_message(master_user=master_user,
-                                        source="Data File Procedure Service",
-                                        text=text)
+                                        performed_by='System',
+                                        description=text)
 
                     procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
                     procedure_instance.save()
@@ -74,8 +74,8 @@ def procedure_request_data_file(self,
                 procedure_instance.procedure.user_code)
 
             send_system_message(master_user=master_user,
-                                source="Data File Procedure Service",
-                                text=text)
+                                performed_by='System',
+                                description=text)
 
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
             procedure_instance.save()
@@ -90,8 +90,8 @@ def procedure_request_data_file(self,
             procedure_instance.procedure.user_code)
 
         send_system_message(master_user=master_user,
-                            source="Data File Procedure Service",
-                            text=text)
+                            performed_by='System',
+                            description=text)
 
         procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
         procedure_instance.save()

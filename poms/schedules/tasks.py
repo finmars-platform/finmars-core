@@ -114,8 +114,8 @@ def process(self):
                         schedule_instance.save()
 
                         send_system_message(master_user=master_user,
-                                            source="Schedule Service",
-                                            text="Schedule %s. Start processing step %s/%s" % (
+                                            performed_by='System',
+                                            description="Schedule %s. Start processing step %s/%s" % (
                                                 s.name, schedule_instance.current_processing_procedure_number,
                                                 total_procedures))
 
@@ -133,8 +133,8 @@ def process(self):
                     schedule_instance.save()
 
                     send_system_message(master_user=master_user,
-                                        source="Schedule Service",
-                                        text="Schedule %s. Error occurred" % s.name)
+                                        performed_by='System',
+                                        description="Schedule %s. Error occurred" % s.name)
 
                     _l.info('Schedule: master_user=%s, next_run_at=%s. Error',
                             master_user.id, s.next_run_at)

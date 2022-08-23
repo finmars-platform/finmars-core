@@ -946,8 +946,8 @@ class PricingCurrencyHandler(object):
             procedure_instance.save()
 
             send_system_message(master_user=self.master_user,
-                                source="Pricing Procedure Service",
-                                text="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
+                                performed_by='System',
+                                description="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
 
 
     def process_to_fixer_provider(self, items):
@@ -1081,8 +1081,8 @@ class PricingCurrencyHandler(object):
             procedure_instance.save()
 
             send_system_message(master_user=self.master_user,
-                                source="Pricing Procedure Service",
-                                text="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
+                                performed_by='System',
+                                description="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
 
     def process_to_fx_cbonds_provider(self, items):
 
@@ -1215,8 +1215,8 @@ class PricingCurrencyHandler(object):
             procedure_instance.save()
 
             send_system_message(master_user=self.master_user,
-                                source="Pricing Procedure Service",
-                                text="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
+                                performed_by='System',
+                                description="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
 
     def print_grouped_currencies(self):
 

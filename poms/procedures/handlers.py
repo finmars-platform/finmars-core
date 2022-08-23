@@ -89,8 +89,8 @@ class RequestDataFileProcedureProcess(object):
                                                                                          )
 
                     send_system_message(master_user=self.master_user,
-                                        source="Data File Procedure Service",
-                                        text="universal Broker.  Procedure %s. Start" % procedure_instance.id,
+                                        performed_by='System',
+                                        description="universal Broker.  Procedure %s. Start" % procedure_instance.id,
                                         )
 
                     headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
@@ -174,8 +174,8 @@ class RequestDataFileProcedureProcess(object):
                     file_report.save()
 
                     send_system_message(master_user=procedure_instance.master_user,
-                                        source="Data File Procedure Service",
-                                        text="universal Broker. Procedure %s. Response Received" % procedure_instance.id,
+                                        performed_by='System',
+                                        description="universal Broker. Procedure %s. Response Received" % procedure_instance.id,
                                         file_report_id=file_report.id)
 
                     procedure_id = response_data['id']
@@ -189,8 +189,8 @@ class RequestDataFileProcedureProcess(object):
                     procedure_instance.save()
 
                     send_system_message(master_user=procedure_instance.master_user,
-                                        source="Data File Procedure Service",
-                                        text="universal Broker. Procedure %s. Done, start import" % procedure_instance.id,
+                                        performed_by="System",
+                                        description="universal Broker. Procedure %s. Done, start import" % procedure_instance.id,
                                         )
 
                     celery_task = CeleryTask.objects.create(master_user=master_user,
@@ -226,8 +226,8 @@ class RequestDataFileProcedureProcess(object):
             except Exception as e:
                 _l.error("universal broker error %s" % e)
                 send_system_message(master_user=self.master_user,
-                                    source="Data File Procedure Service",
-                                    text="universal Broker. Procedure is not created.  Something went wrong %s" % e,
+                                    performed_by="System",
+                                    description="universal Broker. Procedure is not created.  Something went wrong %s" % e,
                                     )
 
 
@@ -311,8 +311,8 @@ class RequestDataFileProcedureProcess(object):
                             params['hasNoDelete'] = 'false'
                 else:
                     send_system_message(master_user=self.master_user,
-                                        source="Data File Procedure Service",
-                                        text="Email Provider Procedure is not configured")
+                                        performed_by="System",
+                                        description="Email Provider Procedure is not configured")
 
             if self.procedure.provider.user_code == 'julius_baer':
 
@@ -326,8 +326,8 @@ class RequestDataFileProcedureProcess(object):
 
                 except Exception as error:
                     send_system_message(master_user=self.master_user,
-                                        source="Data File Procedure Service",
-                                        text="Can't configure Julius Baer Provider")
+                                        performed_by="System",
+                                        description="Can't configure Julius Baer Provider")
 
             if self.procedure.provider.user_code == 'lombard_odier':
 
@@ -346,13 +346,13 @@ class RequestDataFileProcedureProcess(object):
 
                     else:
                         send_system_message(master_user=self.master_user,
-                                            source="Data File Procedure Service",
-                                            text="Lombard Odier Provider Procedure is not configured")
+                                            performed_by='System',
+                                            description="Lombard Odier Provider Procedure is not configured")
 
                 except Exception as error:
                     send_system_message(master_user=self.master_user,
-                                        source="Data File Procedure Service",
-                                        text="Can't configure Lombard Odier Provider")
+                                        performed_by='System',
+                                        description="Can't configure Lombard Odier Provider")
 
             if self.procedure.provider.user_code == 'revolut':
 
@@ -372,8 +372,8 @@ class RequestDataFileProcedureProcess(object):
 
                 else:
                     send_system_message(master_user=self.master_user,
-                                        source="Data File Procedure Service",
-                                        text="Revolut rovider Procedure is not configured")
+                                        performed_by='System',
+                                        description="Revolut rovider Procedure is not configured")
 
             callback_url = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/api/internal/data/transactions/callback/'
 
@@ -420,8 +420,8 @@ class RequestDataFileProcedureProcess(object):
             _l.debug('DATA_FILE_SERVICE_URL is not set')
 
             send_system_message(master_user=self.master_user,
-                                source="Data File Procedure Service",
-                                text="Data Service is unknown")
+                                performed_by='System',
+                                description="Data Service is unknown")
 
 
 class ExpressionProcedureProcess(object):
@@ -476,8 +476,8 @@ class ExpressionProcedureProcess(object):
                                                                                  )
 
             send_system_message(master_user=self.master_user,
-                                source="Expression Procedure Service",
-                                text="Procedure %s. Start" % procedure_instance.id,
+                                performed_by='System',
+                                description="Procedure %s. Start" % procedure_instance.id,
                                 )
 
             names = self.procedure.data
@@ -503,8 +503,8 @@ class ExpressionProcedureProcess(object):
 
 
             send_system_message(master_user=self.master_user,
-                                source="Expression Procedure Service",
-                                text="Procedure %s. Done" % procedure_instance.id,
+                                performed_by='System',
+                                description="Procedure %s. Done" % procedure_instance.id,
                                 )
 
             procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE

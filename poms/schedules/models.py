@@ -146,8 +146,8 @@ class ScheduleInstance(DataTimeStampedModel):
         total_procedures = len(self.schedule.procedures.all())
 
         send_system_message(master_user=self.master_user,
-                            source="Schedule Service",
-                            text="Schedule %s. Step  %s/%s finished" % (self.schedule.name, self.current_processing_procedure_number, total_procedures))
+                            performed_by='system',
+                            description="Schedule %s. Step  %s/%s finished" % (self.schedule.name, self.current_processing_procedure_number, total_procedures))
 
         self.current_processing_procedure_number = self.current_processing_procedure_number + 1
 
@@ -164,8 +164,8 @@ class ScheduleInstance(DataTimeStampedModel):
                         self.save()
 
                         send_system_message(master_user=self.master_user,
-                                            source="Schedule Service",
-                                            text="Schedule %s. Start processing step %s/%s " % (self.schedule.name, self.current_processing_procedure_number, total_procedures))
+                                            performed_by='system',
+                                            description="Schedule %s. Start processing step %s/%s " % (self.schedule.name, self.current_processing_procedure_number, total_procedures))
 
                         process_procedure_async.apply_async(kwargs={'procedure':procedure, 'master_user':self.master_user, 'schedule_instance': self})
 
@@ -175,5 +175,5 @@ class ScheduleInstance(DataTimeStampedModel):
                 self.save()
 
                 send_system_message(master_user=self.master_user,
-                                    source="Schedule Service",
-                                    text="Schedule %s. Error occurred at step %s/%s" % (self.schedule.name, self.current_processing_procedure_number, total_procedures))
+                                    performed_by='system',
+                                    description="Schedule %s. Error occurred at step %s/%s" % (self.schedule.name, self.current_processing_procedure_number, total_procedures))

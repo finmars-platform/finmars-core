@@ -2443,14 +2443,14 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
             _l.info('complex_transaction_csv_file_import_parallel_finish send final import message')
 
             send_system_message(master_user=celery_task.master_user,
-                                source="Transaction Import Service",
-                                text="Import Finished",
+                                performed_by='System',
+                                description="Import Finished",
                                 file_report_id=result_object['stats_file_report'])
         else:
 
             send_system_message(master_user=celery_task.master_user,
-                                source="Transaction Import Service",
-                                text="User %s Transaction Import Finished" % celery_task.member.username,
+                                performed_by='System',
+                                description="User %s Transaction Import Finished" % celery_task.member.username,
                                 file_report_id=result_object['stats_file_report'])
 
         # TODO Generate File Report Here
@@ -3235,8 +3235,8 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
 
             if execution_context and execution_context["started_by"] == 'procedure':
                 send_system_message(master_user=instance.master_user,
-                                    source="Transaction Import Service",
-                                    text="Can't process file. Possibly wrong format")
+                                    performed_by='System',
+                                    description="Can't process file. Possibly wrong format")
 
         finally:
             # import_file_storage.delete(instance.file_path)
@@ -3324,8 +3324,8 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                     _l.info('complex_transaction_csv_file_import_parallel_finish send final import message')
 
                     send_system_message(master_user=celery_task.master_user,
-                                        source="Transaction Import Service",
-                                        text="Import Finished",
+                                        performed_by='System',
+                                        description="Import Finished",
                                         file_report_id=result_object['stats_file_report'])
 
                     if celery_task.options_object['execution_context']['date_from']:
@@ -4334,8 +4334,8 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
                 procedure_instance.procedure.user_code)
 
             send_system_message(master_user=procedure_instance.master_user,
-                                source="Data File Procedure Service",
-                                text=text)
+                                performed_by='System',
+                                description=text)
 
             _l.debug('trying to open %s' % transaction_file_result.file_path)
 
@@ -4422,8 +4422,8 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
                         procedure_instance.procedure.user_code)
 
                     send_system_message(master_user=procedure_instance.master_user,
-                                        source="Data File Procedure Service",
-                                        text=text,
+                                        performed_by='System',
+                                        description=text,
                                         file_report_id=file_report.id)
 
                     options_object = {}
@@ -4494,8 +4494,8 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
                 procedure_instance.procedure.user_code, procedure_instance.procedure.scheme_name)
 
             send_system_message(master_user=procedure_instance.master_user,
-                                source="Data File Procedure Service",
-                                text=text)
+                                performed_by='System',
+                                description=text)
 
             _l.error(
                 'complex_transaction_csv_file_import_by_procedure scheme %s not found' % procedure_instance.procedure.scheme_name)
@@ -4542,8 +4542,8 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
                 procedure_instance.procedure.user_code)
 
             send_system_message(master_user=procedure_instance.master_user,
-                                source="Data File Procedure Service",
-                                text=text)
+                                performed_by='System',
+                                description=text)
 
             transaction.on_commit(lambda: transaction_import.apply_async(kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
 
@@ -4556,8 +4556,8 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
                 procedure_instance.procedure.user_code, e)
 
             send_system_message(master_user=procedure_instance.master_user,
-                                source="Data File Procedure Service",
-                                text=text)
+                                performed_by='System',
+                                description=text)
 
             _l.debug(
                 'complex_transaction_csv_file_import_by_procedure scheme %s not found' % procedure_instance.procedure.scheme_name)
