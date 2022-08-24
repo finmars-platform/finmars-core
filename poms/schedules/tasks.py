@@ -74,8 +74,8 @@ def process(self):
     schedule_qs = Schedule.objects.select_related('master_user').filter(
         is_enabled=True, next_run_at__lte=timezone.now()
     )
-
-    _l.info('schedule_qs test %s' % schedule_qs.count())
+    #
+    # _l.info('schedule_qs test %s' % schedule_qs.count())
 
     if schedule_qs.count():
         _l.info('Schedules initialized: %s', schedule_qs.count())

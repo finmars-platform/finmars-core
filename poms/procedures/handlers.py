@@ -222,9 +222,9 @@ class RequestDataFileProcedureProcess(object):
 
                     on_commit(run_tasks)
 
-
             except Exception as e:
                 _l.error("universal broker error %s" % e)
+                _l.error("universal broker traceback %s" % traceback.format_exc())
                 send_system_message(master_user=self.master_user,
                                     performed_by="System",
                                     description="universal Broker. Procedure is not created.  Something went wrong %s" % e,
