@@ -1789,6 +1789,9 @@ class ImportHandler:
         if procedure_instance and procedure_instance.schedule_instance:
             procedure_instance.schedule_instance.run_next_procedure()
 
+        celery_task.status = CeleryTask.STATUS_DONE
+        celery_task.save()
+
         return instance
 
 
@@ -1958,6 +1961,9 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
 
         procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
         celery_task = CeleryTask.objects.get(id=celery_task_id)
+        celery_task.status = CeleryTask.STATUS_PENDING
+        celery_task.celery_task_id = self.request.id
+        celery_task.save()
 
         try:
 
@@ -2005,13 +2011,6 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
 
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
             procedure_instance.save()
-
-
-
-
-
-
-
 
 
 class UnifiedImportHandler():
