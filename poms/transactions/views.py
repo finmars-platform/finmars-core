@@ -17,6 +17,7 @@ from poms.accounts.models import Account, AccountType
 from poms.audit import history
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, ModelExtMultipleChoiceFilter, \
     NoOpFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter, ComplexTransactionStatusFilter
+from poms.common.middleware import get_request
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet, AbstractAsyncViewSet
 from poms.counterparties.models import Responsible, Counterparty, ResponsibleGroup, CounterpartyGroup
@@ -1320,15 +1321,15 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
         ComplexTransaction.objects.get(id=instance.id).delete()
 
-        member = get_member_from_context(self.context)
-        master_user = get_master_user_from_context(self.context)
+        member = get_request().user.member
+        master_user = get_request().user.master_user
 
         send_system_message(master_user=master_user,
                             performed_by=member.username,
                             section='transactions',
                             type='warning',
                             title='Delete Transaction (manual)',
-                            description='Transaction ' + instance.code + ' was deleted'
+                            description='Transaction ' + str(instance.code) + ' was deleted'
                             )
 
 
