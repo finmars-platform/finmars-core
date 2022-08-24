@@ -1,3 +1,7 @@
+import json
+
+from celery.result import AsyncResult
+
 from django_filters.rest_framework import FilterSet, DjangoFilterBackend
 from rest_framework.response import Response
 from rest_framework.viewsets import  ModelViewSet
@@ -7,6 +11,12 @@ from .models import CeleryTask
 from .serializers import CeleryTaskSerializer
 from poms.common.filters import CharFilter
 from poms.users.filters import OwnerByMasterUserFilter
+
+from rest_framework.decorators import action
+
+from logging import getLogger
+
+_l = getLogger('poms.celery_tasks')
 
 
 class CeleryTaskFilterSet(FilterSet):
@@ -32,3 +42,20 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         DjangoFilterBackend,
         OwnerByMasterUserFilter,
     ]
+
+    @action(detail=True, methods=['get'], url_path='status')
+    def status(self, request, pk=None):
+
+        celery_task_id = request.query_params.get('celery_task_id', None)
+        async_result = AsyncResult(celery_task_id)
+
+        result = {
+            "app": str(async_result.app),
+            "id": async_result.id,
+            "state": async_result.state,
+            "result": async_result.result,
+            "date_done": str(async_result.date_done),
+            "traceback": str(async_result.traceback),
+        }
+
+        return Response(result)
