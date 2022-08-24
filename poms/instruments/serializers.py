@@ -268,7 +268,7 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
 
                 try:
                     try:
-                        pricing_policy = CurrencyPricingPolicy.object.get(currency=item, pricing_policy=instance)
+                        pricing_policy = CurrencyPricingPolicy.objects.get(currency=item, pricing_policy=instance)
 
                     except Exception as e:
 
