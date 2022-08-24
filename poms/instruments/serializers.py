@@ -243,7 +243,7 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
 
         for item in currencies:
 
-            try
+            try:
                 pricing_policy = CurrencyPricingPolicy(currency=item, pricing_policy=instance,
                                                        pricing_scheme=instance.default_currency_pricing_scheme)
 
