@@ -208,8 +208,7 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
             try:
                 
                 try:
-                    pricing_policy = InstrumentTypePricingPolicy.objects.get(instrument_type=item, pricing_policy=instance,
-                                                                 pricing_scheme=instance.default_instrument_pricing_scheme)
+                    pricing_policy = InstrumentTypePricingPolicy.objects.get(instrument_type=item, pricing_policy=instance)
                 except Exception as e:
                 
                     pricing_policy = InstrumentTypePricingPolicy(instrument_type=item, pricing_policy=instance,
@@ -232,8 +231,7 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
         for item in instruments:
             try:
                 try:
-                    pricing_policy = InstrumentPricingPolicy.objects.get(instrument=item, pricing_policy=instance,
-                                                                     pricing_scheme=instance.default_instrument_pricing_scheme)
+                    pricing_policy = InstrumentPricingPolicy.objects.get(instrument=item, pricing_policy=instance)
                 except Exception as e:
                     pricing_policy = InstrumentPricingPolicy(instrument=item, pricing_policy=instance,
                                                              pricing_scheme=instance.default_instrument_pricing_scheme)
@@ -256,8 +254,7 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
 
             try:
                 try:
-                    pricing_policy = CurrencyPricingPolicy.object.get(currency=item, pricing_policy=instance,
-                                                           pricing_scheme=instance.default_currency_pricing_scheme)
+                    pricing_policy = CurrencyPricingPolicy.object.get(currency=item, pricing_policy=instance)
 
                 except Exception as e:
                     pricing_policy = CurrencyPricingPolicy(currency=item, pricing_policy=instance,
