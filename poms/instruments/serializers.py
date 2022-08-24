@@ -204,13 +204,17 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
         instrument_types = InstrumentType.objects.filter(master_user=instance.master_user)
 
         for item in instrument_types:
-            pricing_policy = InstrumentTypePricingPolicy(instrument_type=item, pricing_policy=instance,
-                                                     pricing_scheme=instance.default_instrument_pricing_scheme)
 
-            parameters = instance.default_instrument_pricing_scheme.get_parameters()
-            set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
+            try:
+                pricing_policy = InstrumentTypePricingPolicy(instrument_type=item, pricing_policy=instance,
+                                                         pricing_scheme=instance.default_instrument_pricing_scheme)
 
-            pricing_policy.save()
+                parameters = instance.default_instrument_pricing_scheme.get_parameters()
+                set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
+
+                pricing_policy.save()
+            except Exception as e:
+                _l.error("InstrumentTypePricingPolicy create error %s" % e)
 
     def create_instrument_pricing_policies(self, instance):
 
@@ -219,13 +223,16 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
         instruments = Instrument.objects.filter(master_user=instance.master_user)
 
         for item in instruments:
-            pricing_policy = InstrumentPricingPolicy(instrument=item, pricing_policy=instance,
-                                                     pricing_scheme=instance.default_instrument_pricing_scheme)
+            try:
+                pricing_policy = InstrumentPricingPolicy(instrument=item, pricing_policy=instance,
+                                                         pricing_scheme=instance.default_instrument_pricing_scheme)
 
-            parameters = instance.default_instrument_pricing_scheme.get_parameters()
-            set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
+                parameters = instance.default_instrument_pricing_scheme.get_parameters()
+                set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
 
-            pricing_policy.save()
+                pricing_policy.save()
+            except Exception as e:
+                _l.error("InstrumentPricingPolicy create error %s" % e)
 
     def create_currency_pricing_policies(self, instance):
 
@@ -235,17 +242,34 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
         currencies = Currency.objects.filter(master_user=instance.master_user)
 
         for item in currencies:
-            pricing_policy = CurrencyPricingPolicy(currency=item, pricing_policy=instance,
-                                                   pricing_scheme=instance.default_currency_pricing_scheme)
 
-            parameters = instance.default_currency_pricing_scheme.get_parameters()
-            set_currency_pricing_scheme_parameters(pricing_policy, parameters)
+            try
+                pricing_policy = CurrencyPricingPolicy(currency=item, pricing_policy=instance,
+                                                       pricing_scheme=instance.default_currency_pricing_scheme)
 
-            pricing_policy.save()
+                parameters = instance.default_currency_pricing_scheme.get_parameters()
+                set_currency_pricing_scheme_parameters(pricing_policy, parameters)
+
+                pricing_policy.save()
+
+            except Exception as e:
+                _l.error("CurrencyPricingPolicy create error %s" % e)
 
     def create(self, validated_data):
 
         instance = super(PricingPolicySerializer, self).create(validated_data)
+
+        # print("Creating Pricing Policies For Entities")
+
+        self.create_instrument_type_pricing_policies(instance)
+        self.create_instrument_pricing_policies(instance)
+        self.create_currency_pricing_policies(instance)
+
+        return instance
+
+    def update(self, instance, validated_data):
+
+        instance = super(PricingPolicySerializer, self).update(instance, validated_data)
 
         # print("Creating Pricing Policies For Entities")
 
