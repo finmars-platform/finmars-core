@@ -206,13 +206,20 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
         for item in instrument_types:
 
             try:
-                pricing_policy = InstrumentTypePricingPolicy(instrument_type=item, pricing_policy=instance,
-                                                         pricing_scheme=instance.default_instrument_pricing_scheme)
+                
+                try:
+                    pricing_policy = InstrumentTypePricingPolicy.objects.get(instrument_type=item, pricing_policy=instance,
+                                                                 pricing_scheme=instance.default_instrument_pricing_scheme)
+                except Exception as e:
+                
+                    pricing_policy = InstrumentTypePricingPolicy(instrument_type=item, pricing_policy=instance,
+                                                             pricing_scheme=instance.default_instrument_pricing_scheme)
 
-                parameters = instance.default_instrument_pricing_scheme.get_parameters()
-                set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
+                    parameters = instance.default_instrument_pricing_scheme.get_parameters()
+                    set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
 
-                pricing_policy.save()
+                    pricing_policy.save()
+
             except Exception as e:
                 _l.error("InstrumentTypePricingPolicy create error %s" % e)
 
@@ -224,13 +231,17 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
 
         for item in instruments:
             try:
-                pricing_policy = InstrumentPricingPolicy(instrument=item, pricing_policy=instance,
-                                                         pricing_scheme=instance.default_instrument_pricing_scheme)
+                try:
+                    pricing_policy = InstrumentPricingPolicy.objects.get(instrument=item, pricing_policy=instance,
+                                                                     pricing_scheme=instance.default_instrument_pricing_scheme)
+                except Exception as e:
+                    pricing_policy = InstrumentPricingPolicy(instrument=item, pricing_policy=instance,
+                                                             pricing_scheme=instance.default_instrument_pricing_scheme)
 
-                parameters = instance.default_instrument_pricing_scheme.get_parameters()
-                set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
+                    parameters = instance.default_instrument_pricing_scheme.get_parameters()
+                    set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
 
-                pricing_policy.save()
+                    pricing_policy.save()
             except Exception as e:
                 _l.error("InstrumentPricingPolicy create error %s" % e)
 
@@ -244,13 +255,18 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
         for item in currencies:
 
             try:
-                pricing_policy = CurrencyPricingPolicy(currency=item, pricing_policy=instance,
-                                                       pricing_scheme=instance.default_currency_pricing_scheme)
+                try:
+                    pricing_policy = CurrencyPricingPolicy.object.get(currency=item, pricing_policy=instance,
+                                                           pricing_scheme=instance.default_currency_pricing_scheme)
 
-                parameters = instance.default_currency_pricing_scheme.get_parameters()
-                set_currency_pricing_scheme_parameters(pricing_policy, parameters)
+                except Exception as e:
+                    pricing_policy = CurrencyPricingPolicy(currency=item, pricing_policy=instance,
+                                                           pricing_scheme=instance.default_currency_pricing_scheme)
 
-                pricing_policy.save()
+                    parameters = instance.default_currency_pricing_scheme.get_parameters()
+                    set_currency_pricing_scheme_parameters(pricing_policy, parameters)
+
+                    pricing_policy.save()
 
             except Exception as e:
                 _l.error("CurrencyPricingPolicy create error %s" % e)
