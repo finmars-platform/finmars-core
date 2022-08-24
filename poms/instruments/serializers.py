@@ -8,6 +8,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty, ReadOnlyField
 from rest_framework.serializers import ListSerializer
+from django.db import transaction
 
 from poms.common.fields import ExpressionField, FloatEvalField, DateTimeTzAwareField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
@@ -205,22 +206,26 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
 
         for item in instrument_types:
 
-            try:
-                
+            with transaction.atomic():
+
                 try:
-                    pricing_policy = InstrumentTypePricingPolicy.objects.get(instrument_type=item, pricing_policy=instance)
+
+                    try:
+                        pricing_policy = InstrumentTypePricingPolicy.objects.get(instrument_type=item, pricing_policy=instance)
+                    except Exception as e:
+
+                        _l.error("Get error, trying to create new InstrumentTypePricingPolicy %s" % e)
+
+                        pricing_policy = InstrumentTypePricingPolicy(instrument_type=item, pricing_policy=instance,
+                                                                 pricing_scheme=instance.default_instrument_pricing_scheme)
+
+                        parameters = instance.default_instrument_pricing_scheme.get_parameters()
+                        set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
+
+                        pricing_policy.save()
+
                 except Exception as e:
-                
-                    pricing_policy = InstrumentTypePricingPolicy(instrument_type=item, pricing_policy=instance,
-                                                             pricing_scheme=instance.default_instrument_pricing_scheme)
-
-                    parameters = instance.default_instrument_pricing_scheme.get_parameters()
-                    set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
-
-                    pricing_policy.save()
-
-            except Exception as e:
-                _l.error("InstrumentTypePricingPolicy create error %s" % e)
+                    _l.error("InstrumentTypePricingPolicy create error %s" % e)
 
     def create_instrument_pricing_policies(self, instance):
 
@@ -229,19 +234,26 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
         instruments = Instrument.objects.filter(master_user=instance.master_user)
 
         for item in instruments:
-            try:
+
+            with transaction.atomic():
+
                 try:
-                    pricing_policy = InstrumentPricingPolicy.objects.get(instrument=item, pricing_policy=instance)
+
+                    try:
+                        pricing_policy = InstrumentPricingPolicy.objects.get(instrument=item, pricing_policy=instance)
+                    except Exception as e:
+
+                        _l.error("Get error, trying to create new InstrumentPricingPolicy %s" % e)
+
+                        pricing_policy = InstrumentPricingPolicy(instrument=item, pricing_policy=instance,
+                                                                 pricing_scheme=instance.default_instrument_pricing_scheme)
+
+                        parameters = instance.default_instrument_pricing_scheme.get_parameters()
+                        set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
+
+                        pricing_policy.save()
                 except Exception as e:
-                    pricing_policy = InstrumentPricingPolicy(instrument=item, pricing_policy=instance,
-                                                             pricing_scheme=instance.default_instrument_pricing_scheme)
-
-                    parameters = instance.default_instrument_pricing_scheme.get_parameters()
-                    set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
-
-                    pricing_policy.save()
-            except Exception as e:
-                _l.error("InstrumentPricingPolicy create error %s" % e)
+                    _l.error("InstrumentPricingPolicy create error %s" % e)
 
     def create_currency_pricing_policies(self, instance):
 
@@ -252,21 +264,26 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
 
         for item in currencies:
 
-            try:
+            with transaction.atomic():
+
                 try:
-                    pricing_policy = CurrencyPricingPolicy.object.get(currency=item, pricing_policy=instance)
+                    try:
+                        pricing_policy = CurrencyPricingPolicy.object.get(currency=item, pricing_policy=instance)
+
+                    except Exception as e:
+
+                        _l.error("Get error, trying to create new CurrencyPricingPolicy %s" % e)
+
+                        pricing_policy = CurrencyPricingPolicy(currency=item, pricing_policy=instance,
+                                                               pricing_scheme=instance.default_currency_pricing_scheme)
+
+                        parameters = instance.default_currency_pricing_scheme.get_parameters()
+                        set_currency_pricing_scheme_parameters(pricing_policy, parameters)
+
+                        pricing_policy.save()
 
                 except Exception as e:
-                    pricing_policy = CurrencyPricingPolicy(currency=item, pricing_policy=instance,
-                                                           pricing_scheme=instance.default_currency_pricing_scheme)
-
-                    parameters = instance.default_currency_pricing_scheme.get_parameters()
-                    set_currency_pricing_scheme_parameters(pricing_policy, parameters)
-
-                    pricing_policy.save()
-
-            except Exception as e:
-                _l.error("CurrencyPricingPolicy create error %s" % e)
+                    _l.error("CurrencyPricingPolicy create error %s" % e)
 
     def create(self, validated_data):
 
