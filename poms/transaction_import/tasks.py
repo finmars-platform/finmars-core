@@ -1,6 +1,7 @@
 import traceback
 from celery import shared_task
 
+from poms.celery_tasks.models import CeleryTask
 from poms.transaction_import.handlers import TransactionImportProcess
 
 
@@ -15,6 +16,10 @@ _l = logging.getLogger('poms.transaction_import')
 def transaction_import(self, task_id, procedure_instance_id=None):
 
     try:
+
+        celery_task = CeleryTask.objects.get(pk=task_id)
+        celery_task.celery_task_id = self.request.id
+        celery_task.save()
 
         instance = TransactionImportProcess(task_id=task_id, procedure_instance_id=procedure_instance_id)
 

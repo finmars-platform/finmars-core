@@ -878,6 +878,7 @@ def download_instrument_finmars_database(instrument_code=None, instrument_name=N
         task = None
 
         with transaction.atomic():
+            # DEPRECATED, REFACTOR SOON
             task = Task(
                 master_user=master_user,
                 member=member,
@@ -1093,6 +1094,7 @@ def download_unified_data(id=None, entity_type=None, master_user=None, member=No
     try:
 
         with transaction.atomic():
+            # DEPRECATED, REFACTOR SOON
             task = Task(
                 master_user=master_user,
                 member=member,
@@ -1548,7 +1550,7 @@ def download_pricing_async(self, task_id):
             sub_options['price_download_scheme_id'] = price_download_scheme.id
             sub_options['instruments'] = [i.reference_for_pricing for i in instruments0]
             sub_options['instruments_pk'] = [i.id for i in instruments0]
-
+            # DEPRECATED, REFACTOR SOON
             sub_task = Task(
                 master_user=master_user,
                 member=task.member,
@@ -1581,7 +1583,7 @@ def download_pricing_async(self, task_id):
             sub_options['price_download_scheme_id'] = price_download_scheme.id
             sub_options['currencies'] = [i.reference_for_pricing for i in currencies0]
             sub_options['currencies_pk'] = [i.id for i in currencies0]
-
+            # DEPRECATED, REFACTOR SOON
             sub_task = Task(
                 master_user=master_user,
                 member=task.member,
@@ -1983,7 +1985,7 @@ def test_certificate(master_user=None, member=None, task=None):
                 options = {
 
                 }
-
+                # DEPRECATED, REFACTOR SOON
                 task = Task(
                     master_user=master_user,
                     member=member,
@@ -2405,6 +2407,8 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
         _l.info('complex_transaction_csv_file_import_parallel_finish task_id %s ' % task_id)
 
         celery_task = CeleryTask.objects.get(pk=task_id)
+        celery_task.celery_task_id = self.requst.id
+        celery_task.save()
 
         scheme = ComplexTransactionImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
 
@@ -2497,6 +2501,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
         celery_task = CeleryTask.objects.get(pk=task_id)
         parent_celery_task = celery_task.parent
 
+        celery_task.celery_task_id = self.request.id
         celery_task.status = CeleryTask.STATUS_PENDING
         celery_task.save()
 
@@ -3361,6 +3366,7 @@ def complex_transaction_csv_file_import_parallel(task_id):
 
         celery_task = CeleryTask.objects.get(pk=task_id)
 
+        # celery_task.celery_task_id = self.request.id
         celery_task.status = CeleryTask.STATUS_PENDING
         celery_task.save()
 
@@ -4445,7 +4451,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
                     _l.debug(
                         'complex_transaction_csv_file_import_by_procedure total_rows %s' % options_object['total_rows'])
 
-                    celery_task = CeleryTask(master_user=procedure_instance.master_user,
+                    celery_task = CeleryTask.objects.create(master_user=procedure_instance.master_user,
                                              member=procedure_instance.member,
                                              options_object=options_object,
                                              type='transaction_import')
@@ -4516,6 +4522,8 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
 
         procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
         celery_task = CeleryTask.objects.get(id=celery_task_id)
+        celery_task.celery_task_id = self.request.id
+        celery_task.save()
 
         try:
 

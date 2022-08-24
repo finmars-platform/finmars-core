@@ -155,7 +155,7 @@ class ProcessBankFileForReconcileViewSet(AbstractAsyncViewSet):
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                     member=request.user.member,
                                                     started_at=datetime_now(),
-                                                    task_type='process_bank_file_for_reconcile', task_id=res.id)
+                                                    task_type='process_bank_file_for_reconcile', celery_task_id=res.id)
 
             celery_task.save()
 

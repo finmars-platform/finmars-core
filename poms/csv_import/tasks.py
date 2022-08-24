@@ -1553,6 +1553,7 @@ class ImportHandler:
         if scheme.instrument_reference_column:
             user_code = result_item[scheme.instrument_reference_column]
 
+            # DEPRECATED, REFACTOR SOON
             task = Task(
                 master_user=master_user,
                 member=member,
