@@ -73,14 +73,10 @@ def send_system_message(master_user,  title=None, description=None, attachments=
                     'section': system_message.section,
                     'title': system_message.title,
                     'description': system_message.description,
-                    'created': system_message.created
+                    'created': str(system_message.created)
                 }
             }, level="member",
                 context={"master_user": master_user, "member": member})
-
-
-
-
 
     except Exception as e:
         _l.info("Error send system message: %s" % e)
