@@ -1,3 +1,4 @@
+from poms.common.websockets import send_websocket_message
 from poms.system_messages.models import SystemMessage, SystemMessageAttachment, SystemMessageMember
 
 import logging
@@ -63,6 +64,22 @@ def send_system_message(master_user,  title=None, description=None, attachments=
         for member in members:
 
             SystemMessageMember.objects.create(member=member, system_message=system_message)
+
+            send_websocket_message(data={
+                'type': 'new_system_message',
+                'payload': {
+                    'id': system_message.id,
+                    'type': system_message.type,
+                    'section': system_message.section,
+                    'title': system_message.title,
+                    'description': system_message.description,
+                    'created': system_message.created
+                }
+            }, level="member",
+                context={"master_user": master_user, "member": member})
+
+
+
 
 
     except Exception as e:
