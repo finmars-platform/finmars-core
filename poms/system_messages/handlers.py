@@ -1,3 +1,5 @@
+import traceback
+
 from poms.common.websockets import send_websocket_message
 from poms.system_messages.models import SystemMessage, SystemMessageAttachment, SystemMessageMember
 
@@ -79,4 +81,5 @@ def send_system_message(master_user,  title=None, description=None, attachments=
                 context={"master_user": master_user, "member": member})
 
     except Exception as e:
-        _l.info("Error send system message: %s" % e)
+        _l.info("Error send system message: exception %s" % e)
+        _l.info("Error send system message: trace %s" % traceback.format_exc())
