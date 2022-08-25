@@ -490,7 +490,7 @@ def generate_events0(master_user):
                     }
                     generated_event.save()
 
-        process_events0.apply_async(kwargs={'master_user': master_user})
+        process_events0.apply_async(kwargs={'master_user_id': master_user.id})
 
     except Exception as e:
 
@@ -759,7 +759,7 @@ def generate_events_do_not_inform_apply_default0(master_user):
                     }
                     generated_event.save()
 
-        process_events0.apply_async(kwargs={'master_user': master_user})
+        process_events0.apply_async(kwargs={'master_user_id': master_user.id})
 
     except Exception as e:
 
@@ -793,10 +793,12 @@ def generate_events_do_not_inform_apply_default(master_users=None):
 
 @shared_task(name='instruments.process_events_do_not_inform_apply_default0', ignore_result=True)
 @transaction.atomic()
-def process_events_do_not_inform_apply_default0(master_user):
+def process_events_do_not_inform_apply_default0(master_user_id):
     try:
 
         from poms.instruments.handlers import GeneratedEventProcess
+
+        master_user = MasterUser.objects.get(id=master_user_id)
 
         _l.debug('process_events0: master_user=%s', master_user.id)
 
@@ -872,9 +874,11 @@ def process_events_do_not_inform_apply_default0(master_user):
 
 @shared_task(name='instruments.process_events0', ignore_result=True)
 @transaction.atomic()
-def process_events0(master_user):
+def process_events0(master_user_id):
     try:
         from poms.instruments.handlers import GeneratedEventProcess
+
+        master_user = MasterUser.objects.get(id=master_user_id)
 
         _l.debug('process_events0: master_user=%s', master_user.id)
 
@@ -1003,7 +1007,7 @@ def process_events(master_users=None):
         for master_user in master_user_qs:
             _l.debug('process_events: master_user=%s', master_user.id)
 
-            process_events0.apply_async(kwargs={'master_user': master_user})
+            process_events0.apply_async(kwargs={'master_user_id': master_user.id})
 
     except Exception as e:
 
