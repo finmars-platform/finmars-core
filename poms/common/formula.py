@@ -263,44 +263,12 @@ def _send_system_message(evaluator, title=None, description=None, type='info', s
         context = evaluator.context
         from poms.users.utils import get_master_user_from_context
 
-
-        type_mapping = {
-            'info': SystemMessage.TYPE_INFORMATION,
-            'warning': SystemMessage.TYPE_WARNING,
-            'error': SystemMessage.TYPE_ERROR,
-            'success': SystemMessage.TYPE_SUCCESS
-        }
-
-        # SECTION_GENERAL = 0
-        # SECTION_EVENTS = 1
-        # SECTION_TRANSACTIONS = 2
-        # SECTION_INSTRUMENTS = 3
-        # SECTION_DATA = 4
-        # SECTION_PRICES = 5
-        # SECTION_REPORT = 6
-        # SECTION_IMPORT = 7
-        # SECTION_ACTIVITY_LOG = 8
-        # SECTION_SCHEDULES = 9
-
-        section_mapping = {
-            'general': SystemMessage.SECTION_GENERAL,
-            'events': SystemMessage.SECTION_EVENTS,
-            'transactions': SystemMessage.SECTION_TRANSACTIONS,
-            'instruments': SystemMessage.SECTION_INSTRUMENTS,
-            'data': SystemMessage.SECTION_DATA,
-            'prices': SystemMessage.SECTION_PRICES,
-            'report': SystemMessage.SECTION_REPORT,
-            'import': SystemMessage.SECTION_IMPORT,
-            'activity_log': SystemMessage.SECTION_ACTIVITY_LOG,
-            'schedules': SystemMessage.SECTION_SCHEDULES,
-        }
-
         master_user = get_master_user_from_context(context)
 
         send_system_message(master_user=master_user,
                             performed_by=performed_by,
-                            type=type_mapping[type],
-                            section=section_mapping[section],
+                            type=type,
+                            section=section,
                             title=title,
                             description=description)
 
