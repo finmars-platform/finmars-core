@@ -2142,6 +2142,13 @@ class GeneratedEvent(models.Model):
         except formula.InvalidExpression as e:
             return '<InvalidExpression>'
 
+    def save(self, *args, **kwargs):
+
+        super(GeneratedEvent, self).save(*args, **kwargs)
+
+        from poms.system_messages.handlers import send_system_message
+        send_system_message(title='Event', description=self.event_schedule.description, type='info', section='events')
+
 
 class EventScheduleConfig(models.Model):
     master_user = models.OneToOneField('users.MasterUser', related_name='instrument_event_schedule_config',
