@@ -47,8 +47,29 @@ class MessageViewSet(AbstractModelViewSet):
 
     ]
     ordering_fields = [
-        'created', 'section', 'type', 'action_status', 'title'
+        'members__is_pinned', 'created', 'section', 'type', 'action_status', 'title'
     ]
+
+    def list(self, request, *args, **kwargs):
+
+        if not hasattr(request.user, 'master_user'):
+            return Response([])
+
+        queryset = self.filter_queryset(self.get_queryset())
+
+        ordering = request.GET.get('ordering')
+
+        queryset = queryset.order_by(
+            '-members__is_pinned', ordering)
+
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def get_stats_for_section(self, section, only_new, member):
 
@@ -221,7 +242,7 @@ class MessageViewSet(AbstractModelViewSet):
         return Response({'status': 'ok'})
 
     @action(detail=False, methods=['post'], url_path='unpin', serializer_class=SystemMessageActionSerializer)
-    def pin(self, request, pk=None):
+    def unpin(self, request, pk=None):
 
         ids = request.data['ids']
 
