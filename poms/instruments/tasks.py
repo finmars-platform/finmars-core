@@ -238,6 +238,7 @@ def only_generate_events_at_date(master_user_id, date):
 def only_generate_events_at_date_for_single_instrument(master_user_id, date, instrument_id):
     try:
 
+        date = datetime.date(datetime.strptime(date, '%Y-%m-%d'))
         master_user = MasterUser.objects.get(id=master_user_id)
         instrument = Instrument.objects.get(id=instrument_id)
         _l.debug('only_generate_events_at_date_for_single_instrument: master_user=%s, instrument=%s',
