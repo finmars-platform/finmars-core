@@ -26,8 +26,8 @@ class SystemMessageFilterSet(FilterSet):
     created = django_filters.DateFromToRangeFilter()
     query = SystemMessageQueryFilter(label='Query')
 
-    section = django_filters.MultipleChoiceFilter(choices = SystemMessage.SECTION_CHOICES)
-    type = django_filters.MultipleChoiceFilter(choices = SystemMessage.TYPE_CHOICES)
+    # section = django_filters.MultipleChoiceFilter(choices = SystemMessage.SECTION_CHOICES)
+    # type = django_filters.MultipleChoiceFilter(choices = SystemMessage.TYPE_CHOICES)
     action_status = django_filters.MultipleChoiceFilter(choices = SystemMessage.ACTION_STATUS_CHOICES)
 
     class Meta:
@@ -58,9 +58,22 @@ class MessageViewSet(AbstractModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         ordering = request.GET.get('ordering')
+        type = request.GET.get('type', None)
+        section = request.GET.get('section', None)
+
+        if type:
+            type = type.split(',')
+            queryset = queryset.filter(type__in=type)
+
+
+        if section:
+            section = section.split(',')
+            queryset = queryset.filter(section__in=section)
+
 
         queryset = queryset.order_by(
             '-members__is_pinned', ordering)
+
 
         page = self.paginate_queryset(queryset)
 
