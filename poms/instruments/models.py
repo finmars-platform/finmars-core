@@ -2148,8 +2148,14 @@ class GeneratedEvent(models.Model):
 
         try:
 
-            from poms.system_messages.handlers import send_system_message
-            send_system_message(master_user=self.master_user, title='Event', description=self.event_schedule.description, type='info', section='events')
+            if self.status == GeneratedEvent.NEW:
+                from poms.system_messages.handlers import send_system_message
+                send_system_message(master_user=self.master_user,
+                                    title='Event',
+                                    description=self.event_schedule.description,
+                                    type='info',
+                                    section='events',
+                                    linked_event=self)
         except Exception as e:
             _l.error("Could not send system message on generating event %s" % e)
 

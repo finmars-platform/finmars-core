@@ -9,8 +9,9 @@ from poms.users.models import Member
 
 _l = logging.getLogger('poms.system_messages')
 
-def send_system_message(master_user,  title=None, description=None, attachments=[], section='general', type='info', performed_by=None, target=None):
 
+def send_system_message(master_user, title=None, description=None, attachments=[], section='general', type='info',
+                        performed_by=None, target=None, linked_event=None):
     try:
 
         type_mapping = {
@@ -45,26 +46,27 @@ def send_system_message(master_user,  title=None, description=None, attachments=
         }
 
         system_message = SystemMessage.objects.create(master_user=master_user,
-                                     performed_by=performed_by,
-                                     target=target,
-                                     title=title,
-                                     description=description,
-                                     section=section_mapping[section],
-                                     type=type_mapping[type])
+                                                      performed_by=performed_by,
+                                                      target=target,
+                                                      title=title,
+                                                      description=description,
+                                                      section=section_mapping[section],
+                                                      type=type_mapping[type],
+                                                      linked_event=linked_event
+                                                      )
 
         _l.info('system_message %s' % system_message)
 
         for file_report_id in attachments:
-
-            attachment = SystemMessageAttachment.objects.create(system_message=system_message, file_report_id=file_report_id)
+            attachment = SystemMessageAttachment.objects.create(system_message=system_message,
+                                                                file_report_id=file_report_id)
             attachment.save()
 
-            _l.info('file_report saved %s' % attachment )
+            _l.info('file_report saved %s' % attachment)
 
         members = Member.objects.all()
 
         for member in members:
-
             SystemMessageMember.objects.create(member=member, system_message=system_message)
 
             send_websocket_message(data={
