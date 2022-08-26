@@ -80,6 +80,9 @@ class SystemMessage(models.Model):
     linked_event = models.ForeignKey('instruments.GeneratedEvent', null=True, blank=True,
                                      verbose_name=gettext_lazy('linked event'), on_delete=models.SET_NULL)
 
+    class Meta:
+        ordering = ['-created']
+
     def __str__(self):
 
         result = ''

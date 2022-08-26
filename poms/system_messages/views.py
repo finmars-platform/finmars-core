@@ -70,10 +70,12 @@ class MessageViewSet(AbstractModelViewSet):
             section = section.split(',')
             queryset = queryset.filter(section__in=section)
 
-
-        queryset = queryset.order_by(
-            '-members__is_pinned', ordering)
-
+        if ordering:
+            queryset = queryset.order_by(
+                '-members__is_pinned', ordering)
+        else:
+            queryset = queryset.order_by(
+                '-members__is_pinned')
 
         page = self.paginate_queryset(queryset)
 
