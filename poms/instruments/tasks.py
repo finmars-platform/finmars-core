@@ -102,8 +102,11 @@ def fill_parameters_from_instrument(event_schedule, instrument):
 
 
 @shared_task(name='instruments.only_generate_events_at_date', ignore_result=True)
-def only_generate_events_at_date(master_user, date):
+def only_generate_events_at_date(master_user_id, date):
     try:
+
+        master_user = MasterUser.objects.get(id=master_user_id)
+
         _l.info('generate_events0: master_user=%s', master_user.id)
 
         opened_instrument_items = []
@@ -232,8 +235,11 @@ def only_generate_events_at_date(master_user, date):
 
 
 @shared_task(name='instruments.only_generate_events_at_date_for_single_instrument', ignore_result=True)
-def only_generate_events_at_date_for_single_instrument(master_user, date, instrument):
+def only_generate_events_at_date_for_single_instrument(master_user_id, date, instrument_id):
     try:
+
+        master_user = MasterUser.objects.get(id=master_user_id)
+        instrument = Instrument.objects.get(id=instrument_id)
         _l.debug('only_generate_events_at_date_for_single_instrument: master_user=%s, instrument=%s',
                  (master_user.id, instrument))
 
@@ -632,8 +638,10 @@ def generate_events(master_users=None):
 
 
 @shared_task(name='instruments.generate_events_do_not_inform_apply_default0', ignore_result=True)
-def generate_events_do_not_inform_apply_default0(master_user):
+def generate_events_do_not_inform_apply_default0(master_user_id):
     try:
+
+        master_user = MasterUser.objects.get(id=master_user_id)
 
         _l.debug('generate_events0: master_user=%s', master_user.id)
 
@@ -783,7 +791,7 @@ def generate_events_do_not_inform_apply_default(master_users=None):
 
             index = index + 1
             if index < limit:
-                generate_events_do_not_inform_apply_default0.apply_async(kwargs={'master_user': master_user})
+                generate_events_do_not_inform_apply_default0.apply_async(kwargs={'master_user_id': master_user.id})
 
     except Exception as e:
 

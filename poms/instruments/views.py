@@ -628,7 +628,7 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
 
         for dte in dates:
             res = only_generate_events_at_date.apply_async(
-                kwargs={'master_user': request.user.master_user, 'date': dte})
+                kwargs={'master_user_id': request.user.master_user.id, 'date': dte})
             tasks_ids.append(res.id)
 
         return Response({
@@ -675,7 +675,7 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
 
         for dte in dates:
             res = only_generate_events_at_date_for_single_instrument.apply_async(
-                kwargs={'master_user': request.user.master_user, 'date': dte, 'instrument': instrument})
+                kwargs={'master_user_id': request.user.master_user.id, 'date': dte, 'instrument_id': instrument.id})
             tasks_ids.append(res.id)
 
         return Response({
