@@ -161,7 +161,7 @@ class MessageViewSet(AbstractModelViewSet):
         # SECTION_ACTIVITY_LOG = 8
         # SECTION_SCHEDULES = 9
 
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_GENERAL, only_new, member))
+        # result.append(self.get_stats_for_section(SystemMessage.SECTION_GENERAL, only_new, member))
         result.append(self.get_stats_for_section(SystemMessage.SECTION_EVENTS, only_new, member))
         result.append(self.get_stats_for_section(SystemMessage.SECTION_TRANSACTIONS, only_new, member))
         result.append(self.get_stats_for_section(SystemMessage.SECTION_INSTRUMENTS, only_new, member))

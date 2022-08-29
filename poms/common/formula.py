@@ -254,7 +254,7 @@ def _get_list_of_dates_between_two_dates(date_from, date_to):
     return get_list_of_dates_between_two_dates(date_from, date_to)
 
 
-def _send_system_message(evaluator, title=None, description=None, type='info', section='general', performed_by="Expression Engine"):
+def _send_system_message(evaluator, title=None, description=None, type='info', section='other', performed_by="Expression Engine"):
 
     try:
         from poms.system_messages.handlers import send_system_message

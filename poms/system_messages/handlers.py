@@ -10,7 +10,7 @@ from poms.users.models import Member
 _l = logging.getLogger('poms.system_messages')
 
 
-def send_system_message(master_user, title=None, description=None, attachments=[], section='general', type='info',
+def send_system_message(master_user, title=None, description=None, attachments=[], section='other', type='info',
                         performed_by=None, target=None, linked_event=None):
     try:
 
