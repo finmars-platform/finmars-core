@@ -63,3 +63,4 @@ class SystemMessageSerializer(serializers.ModelSerializer):
 
 class SystemMessageActionSerializer(serializers.Serializer):
     ids = serializers.PrimaryKeyRelatedField(many=True, queryset=SystemMessage.objects.all())
+    sections = serializers.MultipleChoiceField(default=SystemMessage.SECTION_OTHER, choices=SystemMessage.SECTION_CHOICES)

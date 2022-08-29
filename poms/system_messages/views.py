@@ -207,21 +207,30 @@ class MessageViewSet(AbstractModelViewSet):
     @action(detail=False, methods=['post'], url_path='mark-as-read', serializer_class=SystemMessageActionSerializer)
     def mark_as_read(self, request, pk=None):
 
-        ids = request.data['ids']
+        ids = request.data.get('ids')
+        sections = request.data.get('sections')
+
+        queryset = SystemMessage.objects.all()
 
         print('mark_as_read ids %s' % ids)
+        if ids:
+            if not isinstance(ids, list):
+                ids = [ids]
 
-        if not isinstance(ids, list):
-            ids = [ids]
+            queryset = queryset.filter(id__in=ids)
 
-        messages = SystemMessage.objects.filter(id__in=ids)
+        print('mark_as_read sections %s' % sections)
+        if sections:
+            if not isinstance(sections, list):
+                sections = [sections]
 
-        for message in messages:
+            queryset = queryset.filter(section__in=sections)
+
+        for message in queryset:
 
             for member_message in message.members.all():
                 member_message.is_read = True
                 member_message.save()
-
 
         return Response({'status': 'ok'})
 
