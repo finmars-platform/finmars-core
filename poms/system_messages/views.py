@@ -87,11 +87,9 @@ class MessageViewSet(AbstractModelViewSet):
             pinned_queryset = self.filter_queryset(self.get_queryset()).filter(members__is_pinned=True)
 
             if type:
-                type = type.split(',')
                 pinned_queryset = pinned_queryset.filter(type__in=type)
 
             if section:
-                section = section.split(',')
                 pinned_queryset = pinned_queryset.filter(section__in=section)
 
             if query:
