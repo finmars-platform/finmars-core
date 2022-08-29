@@ -2,6 +2,7 @@ from django_filters.rest_framework import FilterSet
 from rest_framework.response import Response
 import django_filters
 from poms.common.filters import CharFilter
+from django.db.models import Q
 
 from poms.common.views import AbstractModelViewSet
 from poms.system_messages.filters import SystemMessageQueryFilter, SystemMessageOnlyNewFilter
@@ -13,7 +14,6 @@ from poms.system_messages.serializers import SystemMessageSerializer, SystemMess
 
 from rest_framework.views import APIView
 
-
 from logging import getLogger
 
 _l = getLogger('poms.system_messages')
@@ -24,11 +24,9 @@ class SystemMessageFilterSet(FilterSet):
     title = CharFilter()
     description = CharFilter()
     created = django_filters.DateFromToRangeFilter()
-    query = SystemMessageQueryFilter(label='Query')
-
     # section = django_filters.MultipleChoiceFilter(choices = SystemMessage.SECTION_CHOICES)
     # type = django_filters.MultipleChoiceFilter(choices = SystemMessage.TYPE_CHOICES)
-    action_status = django_filters.MultipleChoiceFilter(choices = SystemMessage.ACTION_STATUS_CHOICES)
+    action_status = django_filters.MultipleChoiceFilter(choices=SystemMessage.ACTION_STATUS_CHOICES)
 
     class Meta:
         model = SystemMessage
@@ -60,11 +58,11 @@ class MessageViewSet(AbstractModelViewSet):
         ordering = request.GET.get('ordering')
         type = request.GET.get('type', None)
         section = request.GET.get('section', None)
+        query = request.GET.get('query', None)
 
         if type:
             type = type.split(',')
             queryset = queryset.filter(type__in=type)
-
 
         if section:
             section = section.split(',')
@@ -77,6 +75,9 @@ class MessageViewSet(AbstractModelViewSet):
             queryset = queryset.order_by(
                 '-members__is_pinned')
 
+        if query:
+            queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
+
         queryset = queryset.distinct()
 
         page = self.paginate_queryset(queryset)
@@ -88,7 +89,7 @@ class MessageViewSet(AbstractModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    def get_stats_for_section(self, section, only_new, member):
+    def get_stats_for_section(self, section, only_new, query, member):
 
         # SECTION_GENERAL = 0
         # SECTION_EVENTS = 1
@@ -116,27 +117,25 @@ class MessageViewSet(AbstractModelViewSet):
             10: 'Other'
         }
 
-        if only_new:
+        def get_count(type, query, only_new):
+            queryset = SystemMessage.objects.filter(section=section, type=type, members__member=member)
 
-            stats = {
-                'id': section,
-                'name':  section_mapping[section],
-                'errors': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_ERROR, members__member=member, members__is_read=False).count(),
-                'warning': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_WARNING, members__member=member, members__is_read=False).count(),
-                'information': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_INFORMATION, members__member=member, members__is_read=False).count(),
-                'success': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_SUCCESS, members__member=member, members__is_read=False).count(),
-            }
-        else:
+            if only_new:
+                queryset = queryset.filter(members__is_read=False)
 
-            stats = {
-                'id': section,
-                'name':  section_mapping[section],
-                'errors': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_ERROR, members__member=member).count(),
-                'warning': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_WARNING, members__member=member).count(),
-                'information': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_INFORMATION, members__member=member).count(),
-                'success': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_SUCCESS, members__member=member).count(),
-            }
+            if query:
+                queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
 
+            return queryset.count()
+
+        stats = {
+            'id': section,
+            'name': section_mapping[section],
+            'errors': get_count(SystemMessage.TYPE_ERROR, query, only_new),
+            'warning': get_count(SystemMessage.TYPE_WARNING, query, only_new),
+            'information': get_count(SystemMessage.TYPE_INFORMATION, query, only_new),
+            'success': get_count(SystemMessage.TYPE_SUCCESS, query, only_new),
+        }
 
         return stats
 
@@ -144,6 +143,7 @@ class MessageViewSet(AbstractModelViewSet):
     def stats(self, request, pk=None):
 
         only_new = request.query_params.get('only_new', False)
+        query = request.query_params.get('query', None)
 
         if only_new == 'True':
             only_new = True
@@ -164,16 +164,16 @@ class MessageViewSet(AbstractModelViewSet):
         # SECTION_SCHEDULES = 9
 
         # result.append(self.get_stats_for_section(SystemMessage.SECTION_GENERAL, only_new, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_EVENTS, only_new, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_TRANSACTIONS, only_new, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_INSTRUMENTS, only_new, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_DATA, only_new, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_PRICES, only_new, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_REPORT, only_new, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_IMPORT, only_new, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_ACTIVITY_LOG, only_new, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_SCHEDULES, only_new, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_OTHER, only_new, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_EVENTS, only_new, query, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_TRANSACTIONS, only_new, query, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_INSTRUMENTS, only_new, query, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_DATA, only_new, query, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_PRICES, only_new, query, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_REPORT, only_new, query, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_IMPORT, only_new, query, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_ACTIVITY_LOG, only_new, query, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_SCHEDULES, only_new, query, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_OTHER, only_new, query, member))
 
         # [
         #     {
@@ -184,9 +184,6 @@ class MessageViewSet(AbstractModelViewSet):
         #         success: 123,
         #     }
         # ]
-
-
-
 
         return Response(result)
 
@@ -247,10 +244,8 @@ class MessageViewSet(AbstractModelViewSet):
         messages = SystemMessage.objects.filter(id__in=ids)
 
         for message in messages:
-
             message.action_status = SystemMessage.ACTION_STATUS_SOLVED
             message.save()
-
 
         return Response({'status': 'ok'})
 
