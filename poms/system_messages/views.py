@@ -5,7 +5,7 @@ from poms.common.filters import CharFilter
 from django.db.models import Q
 
 from poms.common.views import AbstractModelViewSet
-from poms.system_messages.filters import SystemMessageQueryFilter, SystemMessageOnlyNewFilter
+from poms.system_messages.filters import SystemMessageOnlyNewFilter
 
 from poms.users.filters import OwnerByMasterUserFilter
 
