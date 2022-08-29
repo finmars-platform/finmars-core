@@ -85,6 +85,20 @@ class MessageViewSet(AbstractModelViewSet):
         if page is None or page == "1":
 
             pinned_queryset = self.filter_queryset(self.get_queryset()).filter(members__is_pinned=True)
+
+            if type:
+                type = type.split(',')
+                pinned_queryset = pinned_queryset.filter(type__in=type)
+
+            if section:
+                section = section.split(',')
+                pinned_queryset = pinned_queryset.filter(section__in=section)
+
+            if query:
+                pinned_queryset = pinned_queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
+
+            pinned_queryset = pinned_queryset.distinct()
+
             if len(pinned_queryset):
                 queryset = list(chain(pinned_queryset, queryset))
 
