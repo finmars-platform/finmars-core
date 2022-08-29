@@ -171,6 +171,7 @@ class MessageViewSet(AbstractModelViewSet):
         result.append(self.get_stats_for_section(SystemMessage.SECTION_IMPORT, only_new, member))
         result.append(self.get_stats_for_section(SystemMessage.SECTION_ACTIVITY_LOG, only_new, member))
         result.append(self.get_stats_for_section(SystemMessage.SECTION_SCHEDULES, only_new, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_OTHER, only_new, member))
 
         # [
         #     {

@@ -43,6 +43,7 @@ def send_system_message(master_user, title=None, description=None, attachments=[
             'import': SystemMessage.SECTION_IMPORT,
             'activity_log': SystemMessage.SECTION_ACTIVITY_LOG,
             'schedules': SystemMessage.SECTION_SCHEDULES,
+            'other': SystemMessage.SECTION_OTHER,
         }
 
         system_message = SystemMessage.objects.create(master_user=master_user,
