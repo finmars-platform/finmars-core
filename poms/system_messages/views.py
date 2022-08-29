@@ -119,6 +119,7 @@ class MessageViewSet(AbstractModelViewSet):
         if only_new:
 
             stats = {
+                'id': section,
                 'name':  section_mapping[section],
                 'errors': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_ERROR, members__member=member, members__is_read=False).count(),
                 'warning': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_WARNING, members__member=member, members__is_read=False).count(),
@@ -128,6 +129,7 @@ class MessageViewSet(AbstractModelViewSet):
         else:
 
             stats = {
+                'id': section,
                 'name':  section_mapping[section],
                 'errors': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_ERROR, members__member=member).count(),
                 'warning': SystemMessage.objects.filter(section=section, type=SystemMessage.TYPE_WARNING, members__member=member).count(),
