@@ -73,7 +73,7 @@ class MessageViewSet(AbstractModelViewSet):
                 '-members__is_pinned', ordering)
         else:
             queryset = queryset.order_by(
-                '-members__is_pinned')
+                '-members__is_pinned', '-created')
 
         if query:
             queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
