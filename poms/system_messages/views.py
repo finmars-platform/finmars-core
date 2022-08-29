@@ -55,7 +55,7 @@ class MessageViewSet(AbstractModelViewSet):
 
         queryset = self.filter_queryset(self.get_queryset())
 
-        ordering = request.GET.get('ordering')
+        ordering = request.GET.get('ordering', None)
         type = request.GET.get('type', None)
         section = request.GET.get('section', None)
         query = request.GET.get('query', None)
@@ -69,11 +69,9 @@ class MessageViewSet(AbstractModelViewSet):
             queryset = queryset.filter(section__in=section)
 
         if ordering:
-            queryset = queryset.order_by(
-                '-members__is_pinned', ordering)
+            queryset = queryset.order_by(ordering)
         else:
-            queryset = queryset.order_by(
-                '-members__is_pinned', '-created')
+            queryset = queryset.order_by('-created')
 
         if query:
             queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
