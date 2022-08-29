@@ -3,6 +3,7 @@ from rest_framework.response import Response
 import django_filters
 from poms.common.filters import CharFilter
 from django.db.models import Q
+from itertools import chain
 
 from poms.common.views import AbstractModelViewSet
 from poms.system_messages.filters import SystemMessageOnlyNewFilter
@@ -59,6 +60,7 @@ class MessageViewSet(AbstractModelViewSet):
         type = request.GET.get('type', None)
         section = request.GET.get('section', None)
         query = request.GET.get('query', None)
+        page = request.GET.get('page', None)
 
         if type:
             type = type.split(',')
@@ -68,15 +70,23 @@ class MessageViewSet(AbstractModelViewSet):
             section = section.split(',')
             queryset = queryset.filter(section__in=section)
 
+        if query:
+            queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
+
+        queryset = queryset.filter(members__is_pinned=False)
+
+        queryset = queryset.distinct()
+
         if ordering:
             queryset = queryset.order_by(ordering)
         else:
             queryset = queryset.order_by('-created')
 
-        if query:
-            queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
+        if page is None or page == "1":
 
-        queryset = queryset.distinct()
+            pinned_queryset = self.filter_queryset(self.get_queryset()).filter(members__is_pinned=True)
+            if len(pinned_queryset):
+                queryset = list(chain(pinned_queryset, queryset))
 
         page = self.paginate_queryset(queryset)
 
@@ -87,7 +97,7 @@ class MessageViewSet(AbstractModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    def get_stats_for_section(self, section, only_new, query, member):
+    def get_stats_for_section(self, section, only_new, query, created_before, created_after, action_status, member):
 
         # SECTION_GENERAL = 0
         # SECTION_EVENTS = 1
@@ -124,6 +134,15 @@ class MessageViewSet(AbstractModelViewSet):
             if query:
                 queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
 
+            if created_before:
+                queryset = queryset.filter(created__gte=created_before)
+
+            if created_after:
+                queryset = queryset.filter(created__lte=created_after)
+
+            if action_status:
+                queryset = queryset.filter(action_status__in=[action_status])
+
             return queryset.count()
 
         stats = {
@@ -142,6 +161,15 @@ class MessageViewSet(AbstractModelViewSet):
 
         only_new = request.query_params.get('only_new', False)
         query = request.query_params.get('query', None)
+
+        created_before = request.query_params.get('created_before', None)
+        created_after = request.query_params.get('created_after', None)
+
+        action_status = request.query_params.get('action_status', None)
+
+        if action_status:
+            if ',' in action_status:
+                action_status = action_status.split(',')
 
         if only_new == 'True':
             only_new = True
@@ -162,16 +190,33 @@ class MessageViewSet(AbstractModelViewSet):
         # SECTION_SCHEDULES = 9
 
         # result.append(self.get_stats_for_section(SystemMessage.SECTION_GENERAL, only_new, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_EVENTS, only_new, query, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_TRANSACTIONS, only_new, query, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_INSTRUMENTS, only_new, query, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_DATA, only_new, query, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_PRICES, only_new, query, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_REPORT, only_new, query, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_IMPORT, only_new, query, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_ACTIVITY_LOG, only_new, query, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_SCHEDULES, only_new, query, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_OTHER, only_new, query, member))
+        result.append(
+            self.get_stats_for_section(SystemMessage.SECTION_EVENTS, only_new, query, created_before, created_after,
+                                       action_status, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_TRANSACTIONS, only_new, query, created_before,
+                                                 created_after, action_status, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_INSTRUMENTS, only_new, query, created_before,
+                                                 created_after, action_status, member))
+        result.append(
+            self.get_stats_for_section(SystemMessage.SECTION_DATA, only_new, query, created_before, created_after,
+                                       action_status, member))
+        result.append(
+            self.get_stats_for_section(SystemMessage.SECTION_PRICES, only_new, query, created_before, created_after,
+                                       action_status, member))
+        result.append(
+            self.get_stats_for_section(SystemMessage.SECTION_REPORT, only_new, query, created_before, created_after,
+                                       action_status, member))
+        result.append(
+            self.get_stats_for_section(SystemMessage.SECTION_IMPORT, only_new, query, created_before, created_after,
+                                       action_status, member))
+        result.append(self.get_stats_for_section(SystemMessage.SECTION_ACTIVITY_LOG, only_new, query, created_before,
+                                                 created_after, action_status, member))
+        result.append(
+            self.get_stats_for_section(SystemMessage.SECTION_SCHEDULES, only_new, query, created_before, created_after,
+                                       action_status, member))
+        result.append(
+            self.get_stats_for_section(SystemMessage.SECTION_OTHER, only_new, query, created_before, created_after,
+                                       action_status, member))
 
         # [
         #     {
