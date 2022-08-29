@@ -19,6 +19,7 @@ class SystemMessage(models.Model):
     SECTION_IMPORT = 7
     SECTION_ACTIVITY_LOG = 8
     SECTION_SCHEDULES = 9
+    SECTION_OTHER = 10
 
     SECTION_CHOICES = (
         (SECTION_GENERAL, gettext_lazy('General')),
@@ -31,6 +32,7 @@ class SystemMessage(models.Model):
         (SECTION_IMPORT, gettext_lazy('Import')),
         (SECTION_ACTIVITY_LOG, gettext_lazy('Activity Log')),
         (SECTION_SCHEDULES, gettext_lazy('Schedules')),
+        (SECTION_OTHER, gettext_lazy('Other')),
     )
 
     TYPE_INFORMATION = 1

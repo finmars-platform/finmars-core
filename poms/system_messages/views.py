@@ -77,6 +77,8 @@ class MessageViewSet(AbstractModelViewSet):
             queryset = queryset.order_by(
                 '-members__is_pinned')
 
+        queryset = queryset.distinct()
+
         page = self.paginate_queryset(queryset)
 
         if page is not None:
@@ -98,6 +100,7 @@ class MessageViewSet(AbstractModelViewSet):
         # SECTION_IMPORT = 7
         # SECTION_ACTIVITY_LOG = 8
         # SECTION_SCHEDULES = 9
+        # OTHER = 10
 
         section_mapping = {
             0: 'General',
@@ -110,6 +113,7 @@ class MessageViewSet(AbstractModelViewSet):
             7: 'Import',
             8: 'Activity Log',
             9: 'Schedules',
+            10: 'Other'
         }
 
         if only_new:
