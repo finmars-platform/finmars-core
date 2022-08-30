@@ -61,6 +61,15 @@ class MessageViewSet(AbstractModelViewSet):
         section = request.GET.get('section', None)
         query = request.GET.get('query', None)
         page = request.GET.get('page', None)
+        only_new = request.GET.get('only_new', False)
+
+        if only_new == 'true':
+            only_new = True
+        else:
+            only_new = False
+
+        if only_new:
+            queryset = queryset.filter(members__is_read=False)
 
         if type:
             type = type.split(',')
@@ -187,6 +196,8 @@ class MessageViewSet(AbstractModelViewSet):
 
         if only_new == 'true':
             only_new = True
+        else:
+            only_new = False
 
         result = []
 
