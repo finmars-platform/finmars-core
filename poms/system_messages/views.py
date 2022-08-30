@@ -155,6 +155,8 @@ class MessageViewSet(AbstractModelViewSet):
             if action_status:
                 queryset = queryset.filter(action_status__in=[action_status])
 
+            queryset = queryset.distinct()
+
             return queryset.count()
 
         stats = {
