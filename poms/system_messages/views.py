@@ -69,7 +69,7 @@ class MessageViewSet(AbstractModelViewSet):
             only_new = False
 
         if only_new:
-            queryset = queryset.filter(members__is_read=False)
+            queryset = queryset.filter(members__is_read=False, members__member=request.user.member)
 
         if type:
             type = type.split(',')
@@ -152,7 +152,7 @@ class MessageViewSet(AbstractModelViewSet):
             queryset = queryset.filter(members__member=member)
 
             if only_new:
-                queryset = queryset.filter(members__is_read=False)
+                queryset = queryset.filter(members__is_read=False, members__member=member)
 
             if query:
                 queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
