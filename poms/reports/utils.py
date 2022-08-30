@@ -110,6 +110,21 @@ def generate_report_unique_hash(app, action, data, master_user, member):
     if 'strategies3' in _data:
         report_options['strategies3'] = _data['strategies3']
 
+
+    # Performance report field
+
+    if 'calculation_type' in _data:
+        report_options['calculation_type'] = _data['calculation_type']
+
+    if 'segmentation_type' in _data:
+        report_options['segmentation_type'] = _data['segmentation_type']
+
+    if 'calculation_type' in _data:
+        report_options['calculation_type'] = _data['calculation_type']
+
+    if 'registers' in _data:
+        report_options['registers'] = _data['registers']
+
     result = app + '_' + action + '_' + str(master_user.id) + '_' + str(member.id) + '_' + hashlib.md5(
         json.dumps(report_options, sort_keys=True).encode('utf-8')).hexdigest()
 
