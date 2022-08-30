@@ -6,7 +6,9 @@ from poms.accounts.fields import AccountField
 from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.counterparties.fields import ResponsibleField, CounterpartyField
 from poms.currencies.serializers import CurrencyViewSerializer
-from poms.instruments.serializers import InstrumentViewSerializer, PricingPolicySerializer
+from poms.instruments.handlers import InstrumentTypeProcess
+from poms.instruments.models import InstrumentType
+from poms.instruments.serializers import InstrumentViewSerializer, PricingPolicySerializer, InstrumentSerializer
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord
@@ -57,14 +59,14 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
     counterparties = CounterpartyField(many=True, allow_null=True, required=False)
     transaction_types = TransactionTypeField(many=True, allow_null=True, required=False)
 
-    portfolio_registers = PortfolioPortfolioRegisterSerializer(many=True, read_only=True)
+    registers = PortfolioPortfolioRegisterSerializer(many=True, allow_null=True, required=False, read_only=True)
 
     class Meta:
         model = Portfolio
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_default',
             'is_deleted', 'accounts', 'responsibles', 'counterparties', 'transaction_types',
-            'is_enabled', 'portfolio_registers'
+            'is_enabled', 'registers'
 
         ]
 
@@ -118,6 +120,8 @@ class PortfolioGroupSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=256)
 
 
+
+
 class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
                           ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
 
@@ -150,7 +154,51 @@ class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWith
         self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
         self.fields['valuation_pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy", read_only=True)
 
+    def create(self, validated_data):
 
+        instance = super(PortfolioRegisterSerializer, self).create(validated_data)
+
+        new_linked_instrument = self.context['request'].data.get('new_linked_instrument')
+
+        master_user = instance.master_user
+
+        print('new_linked_instrument %s' % new_linked_instrument)
+
+        if 'name' in new_linked_instrument:
+
+            new_instrument = None
+            instrument_type = None
+
+            if isinstance(new_linked_instrument['instrument_type'], int):
+                instrument_type = InstrumentType.objects.get(master_user=master_user, id=new_linked_instrument['instrument_type'])
+            else:
+                instrument_type = InstrumentType.objects.get(master_user=master_user, user_code=new_linked_instrument['instrument_type'])
+
+            process = InstrumentTypeProcess(instrument_type=instrument_type)
+
+            instrument_object = process.instrument
+
+            instrument_object['name'] = new_linked_instrument['name']
+            instrument_object['short_name'] = new_linked_instrument['short_name']
+            instrument_object['user_code'] = new_linked_instrument['user_code']
+            instrument_object['public_name'] = new_linked_instrument['public_name']
+
+            serializer = InstrumentSerializer(data=instrument_object, context=self.context)
+
+            is_valid = serializer.is_valid(raise_exception=True)
+
+            if is_valid:
+                serializer.save()
+
+            new_instrument = serializer.instance
+
+            instance.linked_instrument_id = new_instrument.id
+
+            instance.save()
+
+
+
+        return instance
 
 class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
     master_user = MasterUserField()
@@ -182,6 +230,7 @@ class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWi
         self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
         self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
         self.fields['valuation_pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy", read_only=True)
+
 
 
 

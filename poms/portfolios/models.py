@@ -48,11 +48,11 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='portfolio_registers',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
-    portfolio = models.ForeignKey(Portfolio,
+    portfolio = models.ForeignKey(Portfolio, related_name='registers',
                                   verbose_name=gettext_lazy('portfolio'), on_delete=models.CASCADE)
 
-    linked_instrument = models.ForeignKey(Instrument,
-                                          verbose_name=gettext_lazy('linked instrument'), on_delete=models.CASCADE)
+    linked_instrument = models.ForeignKey(Instrument, null=True, blank=True,
+                                          verbose_name=gettext_lazy('linked instrument'), on_delete=models.SET_NULL)
 
     valuation_pricing_policy = models.ForeignKey(PricingPolicy, on_delete=models.CASCADE, null=True, blank=True,
                                                  verbose_name=gettext_lazy('pricing policy'))

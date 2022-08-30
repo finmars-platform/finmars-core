@@ -298,7 +298,7 @@ class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
             if linked_instrument_id:
 
                 from poms.instruments.models import Instrument
-                Instrument.objects.get(id=linked_instrument_id).delete()
+                Instrument.objects.get(id=linked_instrument_id).fake_delete()
 
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
