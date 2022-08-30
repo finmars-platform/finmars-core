@@ -290,8 +290,15 @@ class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
 
         keep_instrument = request.data.get('keep_instrument')
 
+        linked_instrument_id = instance.linked_instrument_id
+
+        self.perform_destroy(instance)
+
         if keep_instrument != 'true':
-            instance.linked_instrument.delete()
+            if linked_instrument_id:
+
+                from poms.instruments.models import Instrument
+                Instrument.objects.get(id=linked_instrument_id).delete()
 
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
