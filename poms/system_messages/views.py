@@ -146,8 +146,10 @@ class MessageViewSet(AbstractModelViewSet):
             10: 'Other'
         }
 
-        def get_count(type, query, only_new):
-            queryset = SystemMessage.objects.filter(section=section, type=type, members__member=member)
+        def get_count(type):
+            queryset = SystemMessage.objects.filter(section=section, type=type)
+
+            queryset = queryset.filter(members__member=member)
 
             if only_new:
                 queryset = queryset.filter(members__is_read=False)
@@ -171,10 +173,10 @@ class MessageViewSet(AbstractModelViewSet):
         stats = {
             'id': section,
             'name': section_mapping[section],
-            'errors': get_count(SystemMessage.TYPE_ERROR, query, only_new),
-            'warning': get_count(SystemMessage.TYPE_WARNING, query, only_new),
-            'information': get_count(SystemMessage.TYPE_INFORMATION, query, only_new),
-            'success': get_count(SystemMessage.TYPE_SUCCESS, query, only_new),
+            'errors': get_count(SystemMessage.TYPE_ERROR),
+            'warning': get_count(SystemMessage.TYPE_WARNING),
+            'information': get_count(SystemMessage.TYPE_INFORMATION),
+            'success': get_count(SystemMessage.TYPE_SUCCESS),
         }
 
         return stats
@@ -198,6 +200,7 @@ class MessageViewSet(AbstractModelViewSet):
             only_new = True
         else:
             only_new = False
+
 
         result = []
 
