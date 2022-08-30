@@ -183,7 +183,7 @@ class MessageViewSet(AbstractModelViewSet):
             if ',' in action_status:
                 action_status = action_status.split(',')
 
-        if only_new == 'True':
+        if only_new == 'true':
             only_new = True
 
         result = []
