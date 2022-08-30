@@ -4,6 +4,7 @@ import django_filters
 
 from django.db.models import Prefetch
 from django_filters.rest_framework import FilterSet
+from rest_framework import status
 
 from poms.accounts.models import Account, AccountType
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
@@ -287,6 +288,13 @@ class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
 
         return Response({'status': 'ok'})
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        instance.linked_instrument.delete()
+
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class PortfolioRegisterEvViewSet(AbstractWithObjectPermissionViewSet):
     queryset = PortfolioRegister.objects.select_related(

@@ -98,8 +98,11 @@ class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWith
         model = PortfolioRegister
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'is_deleted',  'is_enabled', 'portfolio', 'linked_instrument', 'valuation_pricing_policy', 'valuation_currency',
-            'valuation_currency_object', 'portfolio_object', 'linked_instrument_object', 'valuation_pricing_policy_object',
+            'is_deleted',  'is_enabled',
+            'portfolio', 'portfolio_object',
+            'linked_instrument', 'linked_instrument_object',
+            'valuation_currency',  'valuation_currency_object',
+            'valuation_pricing_policy', 'valuation_pricing_policy_object',
             'default_price'
         ]
 
@@ -110,7 +113,7 @@ class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWith
         self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
         self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
         self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
-        self.fields['pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy", read_only=True)
+        self.fields['valuation_pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy", read_only=True)
 
 
 
@@ -143,7 +146,7 @@ class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWi
         self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
         self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
         self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
-        self.fields['pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy", read_only=True)
+        self.fields['valuation_pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy", read_only=True)
 
 
 
