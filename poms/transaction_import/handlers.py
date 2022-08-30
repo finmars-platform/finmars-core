@@ -220,6 +220,7 @@ class TransactionImportProcess(object):
         file_report.file_name = file_name
         file_report.type = 'transaction_import.import'
         file_report.notes = 'System File'
+        file_report.content_type = 'text/csv'
 
         file_report.save()
 
@@ -251,6 +252,7 @@ class TransactionImportProcess(object):
         file_report.file_name = file_name
         file_report.type = 'transaction_import.import'
         file_report.notes = 'System File'
+        file_report.content_type = 'application/json'
 
         file_report.save()
 

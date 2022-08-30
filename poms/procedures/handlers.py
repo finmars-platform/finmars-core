@@ -170,6 +170,7 @@ class RequestDataFileProcedureProcess(object):
                     file_report.file_name = file_name
                     file_report.type = 'procedure.requestdatafileprocedure'
                     file_report.notes = 'System File'
+                    file_report.content_type = 'application/json'
 
                     file_report.save()
 

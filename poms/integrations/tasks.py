@@ -2239,6 +2239,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
     file_report.file_name = file_name
     file_report.type = type
     file_report.notes = 'System File'
+    file_report.content_type = 'text/csv'
 
     file_report.save()
 
@@ -2392,6 +2393,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
     file_report.file_name = file_name
     file_report.type = type
     file_report.notes = 'System File'
+    file_report.content_type = 'text/csv'
 
     file_report.save()
 
@@ -4419,6 +4421,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
                     file_report.file_name = 'Data Procedure %s (%s).csv' % (current_date_time, file_name_hash)
                     file_report.type = 'transaction_import.import'
                     file_report.notes = 'Transaction Import File. Procedure %s' % procedure_instance.id
+                    file_report.content_type = 'text/csv'
 
                     file_report.save()
 

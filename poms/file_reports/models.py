@@ -28,6 +28,7 @@ class FileReport(models.Model):
     file_url = models.TextField(blank=True, default='', verbose_name=gettext_lazy('File URL'))
     file_name = models.CharField(max_length=255, blank=True, default='')
     notes = models.TextField(blank=True, default='', verbose_name=gettext_lazy('notes'))
+    content_type = models.CharField(max_length=255, blank=True, default='', )
 
     created_at = models.DateTimeField(auto_now_add=True)
 
