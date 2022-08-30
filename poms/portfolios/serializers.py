@@ -15,6 +15,39 @@ from poms.transactions.fields import TransactionTypeField
 from poms.users.fields import MasterUserField
 
 
+
+class PortfolioPortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+                                  ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+
+    master_user = MasterUserField()
+
+    valuation_currency_object = serializers.PrimaryKeyRelatedField(source='valuation_currency', read_only=True)
+    linked_instrument_object = serializers.PrimaryKeyRelatedField(source='linked_instrument', read_only=True)
+    valuation_pricing_policy_object = serializers.PrimaryKeyRelatedField(source='valuation_pricing_policy', read_only=True)
+
+
+    class Meta:
+        model = PortfolioRegister
+        fields = [
+            'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'is_deleted',  'is_enabled',
+            'linked_instrument', 'linked_instrument_object',
+            'valuation_currency',  'valuation_currency_object',
+            'valuation_pricing_policy', 'valuation_pricing_policy_object',
+            'default_price'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(PortfolioPortfolioRegisterSerializer, self).__init__(*args, **kwargs)
+
+        self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
+
+        self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
+        self.fields['valuation_pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy", read_only=True)
+
+
+
+
 class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
                           ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
 
@@ -24,12 +57,14 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
     counterparties = CounterpartyField(many=True, allow_null=True, required=False)
     transaction_types = TransactionTypeField(many=True, allow_null=True, required=False)
 
+    portfolio_registers = PortfolioPortfolioRegisterSerializer(many=True, read_only=True)
+
     class Meta:
         model = Portfolio
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_default',
             'is_deleted', 'accounts', 'responsibles', 'counterparties', 'transaction_types',
-            'is_enabled',
+            'is_enabled', 'portfolio_registers'
 
         ]
 
