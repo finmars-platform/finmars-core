@@ -280,11 +280,20 @@ class MessageViewSet(AbstractModelViewSet):
 
             queryset = queryset.filter(section__in=sections)
 
+        index = 0
+
         for message in queryset:
 
             for member_message in message.members.all():
-                member_message.is_read = True
-                member_message.save()
+
+                if request.user.member.id == member_message.member_id:
+
+                    member_message.is_read = True
+                    member_message.save()
+
+                    index = index + 1
+
+        print('marked as read %s' % index)
 
         return Response({'status': 'ok'})
 
