@@ -147,10 +147,10 @@ class MessageViewSet(AbstractModelViewSet):
                 queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
 
             if created_before:
-                queryset = queryset.filter(created__gte=created_before)
+                queryset = queryset.filter(created__lte=created_before)
 
             if created_after:
-                queryset = queryset.filter(created__lte=created_after)
+                queryset = queryset.filter(created__gte=created_after)
 
             if action_status:
                 queryset = queryset.filter(action_status__in=[action_status])

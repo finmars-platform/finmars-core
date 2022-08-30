@@ -247,9 +247,7 @@ class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
     queryset = PortfolioRegister.objects.select_related(
         'master_user',
     ).prefetch_related(
-
         get_attributes_prefetch(),
-
     )
     serializer_class = PortfolioRegisterSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
@@ -265,7 +263,6 @@ class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
 
     @action(detail=False, methods=['post'], url_path='calculate-records')
     def calculate_records(self, request):
-
 
         _l.debug("Run Calculate Portfolio Registry Records data %s" % request.data)
 
