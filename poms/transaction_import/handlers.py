@@ -591,7 +591,7 @@ class TransactionImportProcess(object):
 
                 try:
 
-                    key_column_name = convert_name_to_key(scheme_input.column_name)
+                    key_column_name = scheme_input.column_name
 
                     preprocess_item.inputs[scheme_input.name] = preprocess_item.raw_inputs[key_column_name]
 
