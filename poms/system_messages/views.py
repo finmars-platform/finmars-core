@@ -104,7 +104,7 @@ class MessageViewSet(AbstractModelViewSet):
 
             if len(pinned_queryset):
                 _l.info("Inject %s pinned messages " % len(pinned_queryset))
-                queryset = list(chain(pinned_queryset, queryset))
+                queryset = pinned_queryset.union(queryset, all=True)
 
         page = self.paginate_queryset(queryset)
 
