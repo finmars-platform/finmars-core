@@ -294,13 +294,21 @@ class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
 
         self.perform_destroy(instance)
 
+        _l.info("Destroy portfolio register linked_instrument_id %s" % linked_instrument_id)
+        _l.info("Destroy portfolio register keep_instrument %s" % keep_instrument)
+
+        self.perform_destroy(instance)
+
         if keep_instrument != 'true':
             if linked_instrument_id:
 
-                from poms.instruments.models import Instrument
-                Instrument.objects.get(id=linked_instrument_id).fake_delete()
+                _l.info("initing fake delete for instrument")
 
-        self.perform_destroy(instance)
+                from poms.instruments.models import Instrument
+                instrument = Instrument.objects.get(id=linked_instrument_id)
+                instrument.fake_delete()
+
+
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 class PortfolioRegisterEvViewSet(AbstractWithObjectPermissionViewSet):

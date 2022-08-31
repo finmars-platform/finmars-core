@@ -164,7 +164,7 @@ class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWith
 
         print('new_linked_instrument %s' % new_linked_instrument)
 
-        if 'name' in new_linked_instrument:
+        if new_linked_instrument and 'name' in new_linked_instrument:
 
             new_instrument = None
             instrument_type = None
