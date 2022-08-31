@@ -171,9 +171,9 @@ class MessageViewSet(AbstractModelViewSet):
             'id': section,
             'name': section_mapping[section],
             'errors': get_count(SystemMessage.TYPE_ERROR) + get_count(SystemMessage.TYPE_ERROR, is_pinned=True),
-            'warning': get_count(SystemMessage.TYPE_WARNING) + get_count(SystemMessage.TYPE_ERROR, is_pinned=True),
-            'information': get_count(SystemMessage.TYPE_INFORMATION) + get_count(SystemMessage.TYPE_ERROR, is_pinned=True),
-            'success': get_count(SystemMessage.TYPE_SUCCESS)  + get_count(SystemMessage.TYPE_ERROR, is_pinned=True)
+            'warning': get_count(SystemMessage.TYPE_WARNING) + get_count(SystemMessage.TYPE_WARNING, is_pinned=True),
+            'information': get_count(SystemMessage.TYPE_INFORMATION) + get_count(SystemMessage.TYPE_INFORMATION, is_pinned=True),
+            'success': get_count(SystemMessage.TYPE_SUCCESS)  + get_count(SystemMessage.TYPE_SUCCESS, is_pinned=True)
         }
 
         return stats
