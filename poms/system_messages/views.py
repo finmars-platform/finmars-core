@@ -71,6 +71,8 @@ class MessageViewSet(AbstractModelViewSet):
         if only_new:
             queryset = queryset.filter(members__is_read=False, members__member=request.user.member)
 
+        queryset = queryset.filter(members__is_pinned=False, members__member=request.user.member)
+
         if type:
             type = type.split(',')
             queryset = queryset.filter(type__in=type)
@@ -82,10 +84,6 @@ class MessageViewSet(AbstractModelViewSet):
         if query:
             queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
 
-        queryset = queryset.filter(members__is_pinned=False)
-
-        queryset = queryset.distinct()
-
         if ordering:
             queryset = queryset.order_by(ordering)
         else:
@@ -93,7 +91,7 @@ class MessageViewSet(AbstractModelViewSet):
 
         if page is None or page == "1":
 
-            pinned_queryset = self.filter_queryset(self.get_queryset()).filter(members__is_pinned=True)
+            pinned_queryset = self.filter_queryset(self.get_queryset()).filter(members__is_pinned=True,  members__is_read=True,  members__member=request.user.member)
 
             if type:
                 pinned_queryset = pinned_queryset.filter(type__in=type)
@@ -104,9 +102,8 @@ class MessageViewSet(AbstractModelViewSet):
             if query:
                 pinned_queryset = pinned_queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
 
-            pinned_queryset = pinned_queryset.distinct()
-
             if len(pinned_queryset):
+                _l.info("Inject %s pinned messages " % len(pinned_queryset))
                 queryset = list(chain(pinned_queryset, queryset))
 
         page = self.paginate_queryset(queryset)

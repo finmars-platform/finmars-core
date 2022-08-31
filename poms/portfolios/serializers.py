@@ -7,7 +7,7 @@ from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeSt
 from poms.counterparties.fields import ResponsibleField, CounterpartyField
 from poms.currencies.serializers import CurrencyViewSerializer
 from poms.instruments.handlers import InstrumentTypeProcess
-from poms.instruments.models import InstrumentType
+from poms.instruments.models import InstrumentType, Instrument
 from poms.instruments.serializers import InstrumentViewSerializer, PricingPolicySerializer, InstrumentSerializer
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
@@ -15,7 +15,11 @@ from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegist
 from poms.transactions.fields import TransactionTypeField
 
 from poms.users.fields import MasterUserField
+from poms.users.models import EcosystemDefault
 
+from logging import getLogger
+
+_l = getLogger('poms.portfolios')
 
 
 class PortfolioPortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
@@ -83,6 +87,67 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
                                                                           read_only=True)
         self.fields['transaction_types_object'] = TransactionTypeViewSerializer(source='transaction_types', many=True,
                                                                                 read_only=True)
+    def create(self, validated_data):
+
+        instance = super(PortfolioSerializer, self).create(validated_data)
+
+        master_user = instance.master_user
+        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+
+        new_instrument = None
+
+        # TODO maybe create new instr instead of existing?
+        try:
+            new_instrument = Instrument.objects.get(master_user=master_user, user_code = instance.user_code)
+        except Exception as e:
+
+            new_linked_instrument = {
+                'name': instance.name,
+                'user_code': instance.user_code,
+                'short_name': instance.short_name,
+                'public_name': instance.public_name,
+                'instrument_type': 'finmars@portfolio'
+            }
+
+            new_instrument = None
+            instrument_type = None
+
+            try:
+                instrument_type = InstrumentType.objects.get(master_user=master_user, user_code=new_linked_instrument['instrument_type'])
+            except Exception as e:
+                instrument_type = ecosystem_default.instrument_type
+
+            process = InstrumentTypeProcess(instrument_type=instrument_type)
+
+            instrument_object = process.instrument
+
+            instrument_object['name'] = new_linked_instrument['name']
+            instrument_object['short_name'] = new_linked_instrument['short_name']
+            instrument_object['user_code'] = new_linked_instrument['user_code']
+            instrument_object['public_name'] = new_linked_instrument['public_name']
+
+            serializer = InstrumentSerializer(data=instrument_object, context=self.context)
+
+            is_valid = serializer.is_valid(raise_exception=True)
+
+            if is_valid:
+                serializer.save()
+
+            new_instrument = serializer.instance
+
+        _l.info("new_instrument %s" % new_instrument)
+
+        portfolio_register = PortfolioRegister.objects.create(
+            master_user=master_user,
+            valuation_pricing_policy=ecosystem_default.pricing_policy,
+            valuation_currency=ecosystem_default.currency,
+            portfolio=instance,
+            linked_instrument=new_instrument,
+            default_price=1
+        )
+
+        return instance
+
 
 
 class PortfolioEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
