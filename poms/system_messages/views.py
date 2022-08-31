@@ -146,8 +146,6 @@ class MessageViewSet(AbstractModelViewSet):
         def get_count(type, is_pinned=False):
             queryset = SystemMessage.objects.filter(section=section, type=type)
 
-            queryset = queryset.filter(members__member=member)
-
             if only_new and not is_pinned:
                 queryset = queryset.filter(members__is_read=False, members__member=member)
 
@@ -165,8 +163,6 @@ class MessageViewSet(AbstractModelViewSet):
 
             if action_status:
                 queryset = queryset.filter(action_status__in=[action_status])
-
-            queryset = queryset.distinct()
 
             return queryset.count()
 
