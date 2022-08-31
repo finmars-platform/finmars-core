@@ -589,9 +589,9 @@ class TransactionImportProcess(object):
 
             for scheme_input in self.scheme.inputs.all():
 
-                try:
+                key_column_name = scheme_input.column_name
 
-                    key_column_name = scheme_input.column_name
+                try:
 
                     preprocess_item.inputs[scheme_input.name] = preprocess_item.raw_inputs[key_column_name]
 
@@ -600,6 +600,9 @@ class TransactionImportProcess(object):
                     preprocess_item.inputs[scheme_input.name] = None
 
                     if current_level == deep:
+                        _l.error('key_column_name %s' % key_column_name)
+                        _l.error('scheme_input.name %s' % scheme_input.name)
+                        _l.error('preprocess_item.raw_inputs %s' % preprocess_item.raw_inputs)
                         _l.error('TransactionImportProcess.Task %s. recursive_preprocess init input %s Exception %s' % (
                             self.task, scheme_input, e))
 
