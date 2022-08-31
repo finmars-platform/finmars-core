@@ -91,7 +91,7 @@ class MessageViewSet(AbstractModelViewSet):
 
         if page is None or page == "1":
 
-            pinned_queryset = self.filter_queryset(self.get_queryset()).filter(members__is_pinned=True,  members__is_read=True,  members__member=request.user.member)
+            pinned_queryset = self.get_queryset().filter(members__is_pinned=True,  members__is_read=True,  members__member=request.user.member)
 
             if type:
                 pinned_queryset = pinned_queryset.filter(type__in=type)
