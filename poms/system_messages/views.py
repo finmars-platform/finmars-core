@@ -146,13 +146,16 @@ class MessageViewSet(AbstractModelViewSet):
             10: 'Other'
         }
 
-        def get_count(type):
+        def get_count(type, is_pinned=False):
             queryset = SystemMessage.objects.filter(section=section, type=type)
 
             queryset = queryset.filter(members__member=member)
 
-            if only_new:
+            if only_new and not is_pinned:
                 queryset = queryset.filter(members__is_read=False, members__member=member)
+
+            if is_pinned:
+                queryset = queryset.filter(members__is_pinned=True, members__member=member)
 
             if query:
                 queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
@@ -173,10 +176,10 @@ class MessageViewSet(AbstractModelViewSet):
         stats = {
             'id': section,
             'name': section_mapping[section],
-            'errors': get_count(SystemMessage.TYPE_ERROR),
-            'warning': get_count(SystemMessage.TYPE_WARNING),
-            'information': get_count(SystemMessage.TYPE_INFORMATION),
-            'success': get_count(SystemMessage.TYPE_SUCCESS),
+            'errors': get_count(SystemMessage.TYPE_ERROR) + get_count(SystemMessage.TYPE_ERROR, is_pinned=True),
+            'warning': get_count(SystemMessage.TYPE_WARNING) + get_count(SystemMessage.TYPE_ERROR, is_pinned=True),
+            'information': get_count(SystemMessage.TYPE_INFORMATION) + get_count(SystemMessage.TYPE_ERROR, is_pinned=True),
+            'success': get_count(SystemMessage.TYPE_SUCCESS)  + get_count(SystemMessage.TYPE_ERROR, is_pinned=True)
         }
 
         return stats
