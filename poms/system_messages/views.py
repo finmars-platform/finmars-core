@@ -6,7 +6,7 @@ from django.db.models import Q
 from itertools import chain
 
 from poms.common.views import AbstractModelViewSet
-from poms.system_messages.filters import SystemMessageOnlyNewFilter
+from poms.system_messages.filters import SystemMessageOnlyNewFilter, OwnerBySystemMessageMember
 
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -40,6 +40,7 @@ class MessageViewSet(AbstractModelViewSet):
     filter_class = SystemMessageFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        OwnerBySystemMessageMember,
         SystemMessageOnlyNewFilter,
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
