@@ -1882,6 +1882,47 @@ def _get_position_size_on_date(evaluator, instrument, date, accounts=None, portf
 _get_position_size_on_date.evaluator = True
 
 
+def _get_market_value_on_date(evaluator, instrument, date, accounts=None, portfolios=None):
+    try:
+        result = 0
+
+        context = evaluator.context
+
+        from poms.users.utils import get_master_user_from_context
+        from poms.transactions.models import Transaction
+        master_user = get_master_user_from_context(context)
+
+        instrument = _safe_get_instrument(evaluator, instrument)
+        date = _parse_date(date)
+
+        transactions = Transaction.objects.filter(master_user=master_user, accounting_date__lte=date, instrument=instrument)
+
+        if accounts:
+            transactions = transactions.filter(account_position__in=accounts)
+
+        # _l.info('portfolios %s' % type(portfolios))
+
+        if portfolios:
+            transactions = transactions.filter(portfolio__in=portfolios)
+
+        # _l.info('transactions %s ' % transactions)
+
+        for trn in transactions:
+
+            result = result + trn.position_size_with_sign
+
+
+        return result
+
+    except Exception as e:
+        _l.error('_get_market_value_on_date exception occurred %s' % e)
+        _l.error(traceback.format_exc())
+        return 0
+
+
+_get_market_value_on_date.evaluator = True
+
+
 
 def _get_instrument_accrual_size(evaluator, instrument, date):
     if instrument is None or date is None:
@@ -2784,6 +2825,7 @@ FUNCTIONS = [
     SimpleEval2Def('get_instrument_accrual_factor', _get_instrument_accrual_factor),
     SimpleEval2Def('calculate_accrued_price', _calculate_accrued_price),
     SimpleEval2Def('get_position_size_on_date', _get_position_size_on_date),
+    SimpleEval2Def('get_market_value_on_date', _get_market_value_on_date),
     SimpleEval2Def('get_instrument_factor', _get_instrument_factor),
     SimpleEval2Def('get_instrument_coupon_factor', _get_instrument_coupon_factor),
     SimpleEval2Def('get_instrument_coupon', _get_instrument_coupon),
