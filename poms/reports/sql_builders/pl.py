@@ -1117,13 +1117,13 @@ class PLReportBuilderSql:
                         
                         case
                              when instrument_class_id = 5
-                                 then (position_size * (instrument_principal_price - principal_cost_price_loc) * price_multiplier * pch_fx_rate) / rep_cur_fx
+                                 then (position_size * (instrument_principal_price - principal_cost_price_loc) * price_multiplier * pch_fx_rate) / rep_cur_fx + mv_carrymv_carry
                              else mv_carry+mv_principal
                          end as market_value,
             
                         case
                              when instrument_class_id = 5
-                                 then (position_size * (instrument_principal_price - principal_cost_price_loc) * price_multiplier)
+                                 then (position_size * (instrument_principal_price - principal_cost_price_loc) * price_multiplier) + mv_carrymv_carry
                              else (mv_carry+mv_principal) * cross_loc_prc_fx
                         end as market_value_loc,
                         
