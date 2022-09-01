@@ -1213,13 +1213,13 @@ class PLReportBuilderSql:
         
                             -- вроде, не используется
                             case
-                                when position_size_opened > 0
+                                when position_size_opened <> 0
                                 then -((principal_opened + overheads_opened) / position_size_opened / i.price_multiplier)
                                 else 0
                             end as net_cost_price,
                             -- испольщуется только эта
                             case
-                                when position_size_opened > 0
+                                when position_size_opened <> 0
                                 then -((principal_opened + overheads_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
                                 else 0
                             end as net_cost_price_loc,
