@@ -1920,12 +1920,18 @@ def _get_instrument_report_data(evaluator, instrument, report_date, report_curre
         report_date_d = datetime.datetime.strptime(report_date, "%Y-%m-%d").date()
 
         from poms.portfolios.models import Portfolio
+        from poms.accounts.models import Account
 
         portfolios_instances = []
+        accounts_instances = []
 
         if portfolios:
             for portfolio in portfolios:
                 portfolios_instances.append(Portfolio.objects.get(master_user=master_user, user_code=portfolio))
+
+        if accounts:
+            for account in accounts:
+                accounts_instances.append(Account.objects.get(master_user=master_user, user_code=account))
 
         instance = Report(
             master_user=master_user,
@@ -1934,6 +1940,7 @@ def _get_instrument_report_data(evaluator, instrument, report_date, report_curre
             report_date=report_date_d,
             cost_method=cost_method,
             portfolios=portfolios_instances,
+            accounts=accounts_instances,
             pricing_policy=pricing_policy,
             custom_fields=[],
             save_report=True
