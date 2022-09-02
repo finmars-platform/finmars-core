@@ -1882,45 +1882,84 @@ def _get_position_size_on_date(evaluator, instrument, date, accounts=None, portf
 _get_position_size_on_date.evaluator = True
 
 
-def _get_market_value_on_date(evaluator, instrument, date, accounts=None, portfolios=None):
+def _get_instrument_report_data(evaluator, instrument, report_date, report_currency=None, pricing_policy=None, cost_method="AVCO", accounts=None, portfolios=None):
     try:
         result = 0
 
         context = evaluator.context
 
-        from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_master_user_from_context, get_member_from_context
         from poms.transactions.models import Transaction
         master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
 
         instrument = _safe_get_instrument(evaluator, instrument)
-        date = _parse_date(date)
 
-        transactions = Transaction.objects.filter(master_user=master_user, accounting_date__lte=date, instrument=instrument)
+        from poms.reports.sql_builders.balance import BalanceReportBuilderSql
+        from poms.reports.builders.balance_serializers import BalanceReportSqlSerializer
+        from poms.reports.builders.balance_item import Report
+        from poms.instruments.models import Instrument
 
-        if accounts:
-            transactions = transactions.filter(account_position__in=accounts)
+        from poms.users.models import EcosystemDefault
+        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
 
-        # _l.info('portfolios %s' % type(portfolios))
+        currency = _safe_get_currency(evaluator, report_currency)
+        if pricing_policy:
+            pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+        else:
+            pricing_policy = ecosystem_default.pricing_policy
+
+        from poms.instruments.models import CostMethod
+        cost_method = CostMethod.objects.get(user_code=cost_method)
+
+        _l.info('_calculate_balance_report master_user %s' % master_user)
+        _l.info('_calculate_balance_report member %s' % member)
+        _l.info('_calculate_balance_report report_date  %s' % report_date)
+        _l.info('_calculate_balance_report currency %s' % currency)
+
+        report_date_d = datetime.datetime.strptime(report_date, "%Y-%m-%d").date()
+
+        from poms.portfolios.models import Portfolio
+
+        portfolios_instances = []
 
         if portfolios:
-            transactions = transactions.filter(portfolio__in=portfolios)
+            for portfolio in portfolios:
+                portfolios_instances.append(Portfolio.objects.get(master_user=master_user, user_code=portfolio))
 
-        # _l.info('transactions %s ' % transactions)
+        instance = Report(
+            master_user=master_user,
+            member=member,
+            report_currency=currency,
+            report_date=report_date_d,
+            cost_method=cost_method,
+            portfolios=portfolios_instances,
+            pricing_policy=pricing_policy,
+            custom_fields=[],
+            save_report=True
+        )
 
-        for trn in transactions:
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
 
-            result = result + trn.position_size_with_sign
+        serializer = BalanceReportSqlSerializer(instance=instance, context=context)
 
+        data = serializer.to_representation(instance)
+
+        for item in data['items']:
+
+            if item['instrument'] == instrument.id:
+                result = item
 
         return result
 
     except Exception as e:
-        _l.error('_get_market_value_on_date exception occurred %s' % e)
+        _l.error('_get_instrument_report_data exception occurred %s' % e)
         _l.error(traceback.format_exc())
         return 0
 
 
-_get_market_value_on_date.evaluator = True
+_get_instrument_report_data.evaluator = True
 
 
 
@@ -2825,7 +2864,7 @@ FUNCTIONS = [
     SimpleEval2Def('get_instrument_accrual_factor', _get_instrument_accrual_factor),
     SimpleEval2Def('calculate_accrued_price', _calculate_accrued_price),
     SimpleEval2Def('get_position_size_on_date', _get_position_size_on_date),
-    SimpleEval2Def('get_market_value_on_date', _get_market_value_on_date),
+    SimpleEval2Def('get_instrument_report_data', _get_instrument_report_data),
     SimpleEval2Def('get_instrument_factor', _get_instrument_factor),
     SimpleEval2Def('get_instrument_coupon_factor', _get_instrument_coupon_factor),
     SimpleEval2Def('get_instrument_coupon', _get_instrument_coupon),
