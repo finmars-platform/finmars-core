@@ -283,11 +283,12 @@ if SERVER_TYPE == "local":
     CORS_ORIGIN_ALLOW_ALL = True
     CORS_ALLOW_CREDENTIALS = True
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/1.9/howto/static-files/
-
 STATIC_URL = '/' + BASE_API_URL + '/api/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
+STATIC_ROOT = os.path.join(BASE_DIR, 'api', 'static')
+
+STATICFILES_DIR = (
+    os.path.join(BASE_DIR, 'api', 'static')
+)
 
 USE_WEBSOCKETS = False
 
