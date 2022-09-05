@@ -203,9 +203,13 @@ router.register(r'portfolios/portfolio-register-ev', portfolios.PortfolioRegiste
 router.register(r'portfolios/portfolio-register-ev-group', portfolios.PortfolioRegisterEvGroupViewSet, 'portfolioregisterevgroup')
 
 
-router.register(r'portfolios/portfolio-register-record', portfolios.PortfolioRegisterRecordViewSet)
-router.register(r'portfolios/portfolio-register-record-ev', portfolios.PortfolioRegisterRecordEvViewSet)
-router.register(r'portfolios/portfolio-register-record-ev-group', portfolios.PortfolioRegisterRecordEvGroupViewSet)
+router.register(r'portfolios/portfolio-register-record', portfolios.PortfolioRegisterRecordViewSet, 'portfolioregisterrecord')
+router.register(r'portfolios/portfolio-register-record-ev', portfolios.PortfolioRegisterRecordEvViewSet, 'portfolioregisterrecordev')
+router.register(r'portfolios/portfolio-register-record-ev-group', portfolios.PortfolioRegisterRecordEvGroupViewSet, 'portfolioregisterrecordgroup')
+
+router.register(r'portfolios/portfolio-bundle', portfolios.PortfolioBundleViewSet, 'portfoliobundle')
+router.register(r'portfolios/portfolio-bundle-ev', portfolios.PortfolioBundleEvViewSet, 'portfoliobundleev')
+router.register(r'portfolios/portfolio-bundle-ev-group', portfolios.PortfolioBundleEvGroupViewSet, 'portfoliobundlevgroup')
 
 
 router.register(r'strategies/1/group-ev-group', strategies.Strategy1GroupEvGroupViewSet, 'strategy1groupevgroup')

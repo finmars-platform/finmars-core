@@ -15,6 +15,8 @@ from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser
 
+from logging import getLogger
+_l = getLogger('poms.portfolios')
 
 class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='portfolios', verbose_name=gettext_lazy('master user'),
@@ -75,6 +77,17 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             self.linked_instrument.has_linked_with_portfolio = True
             self.linked_instrument.save()
 
+        try:
+
+            bundle = PortfolioBundle.objects.get(master_user=self.master_user, user_code = self.user_code)
+            _l.info("Bundle already exists")
+
+        except Exception as e:
+
+            bundle = PortfolioBundle.objects.create(master_user=self.master_user, user_code = self.user_code)
+            bundle.registers.set([self])
+
+            bundle.save()
 
 class PortfolioRegisterRecord(DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='portfolio_register_records',
@@ -181,3 +194,21 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
     #         self.dealing_price_valuation_currency = self.portfolio.default_price
     #
     #     super(PortfolioRegisterRecord, self).save(*args, **kwargs)
+
+
+class PortfolioBundle(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+    master_user = models.ForeignKey(MasterUser, related_name='portfolio_bundles',
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+
+    registers = models.ManyToManyField(
+        PortfolioRegister,
+        verbose_name=gettext_lazy("registers"),
+        blank=True,
+        related_name="portfolio_bundles",
+        related_query_name="bundle",
+    )
+    class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
+        verbose_name = gettext_lazy('portfolio bundle')
+        verbose_name_plural = gettext_lazy('portfolio bundles')
+
+

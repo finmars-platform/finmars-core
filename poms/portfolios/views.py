@@ -20,10 +20,11 @@ from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissio
 from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
-from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord
+from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord, PortfolioBundle
 from poms.portfolios.serializers import PortfolioSerializer, PortfolioLightSerializer, PortfolioEvSerializer, \
     PortfolioRegisterSerializer, PortfolioRegisterEvSerializer, PortfolioRegisterRecordSerializer, \
-    PortfolioRegisterRecordEvSerializer, CalculateRecordsSerializer
+    PortfolioRegisterRecordEvSerializer, CalculateRecordsSerializer, PortfolioBundleSerializer, \
+    PortfolioBundleEvSerializer
 from poms.transactions.models import TransactionType, TransactionTypeGroup
 from poms.users.filters import OwnerByMasterUserFilter
 from rest_framework.decorators import action
@@ -402,6 +403,65 @@ class PortfolioRegisterRecordEvGroupViewSet(AbstractEvGroupWithObjectPermissionV
     serializer_class = PortfolioRegisterRecordSerializer
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
     filter_class = PortfolioRegisterRecordFilterSet
+
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter
+    ]
+
+
+class PortfolioBundleFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    class Meta:
+        model = PortfolioBundle
+        fields = []
+
+
+
+class PortfolioBundleEvFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    class Meta:
+        model = PortfolioBundle
+        fields = []
+
+
+class PortfolioBundleViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = PortfolioBundle.objects.select_related(
+        'master_user',
+    )
+    serializer_class = PortfolioBundleSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter
+    ]
+    filter_class = PortfolioBundleFilterSet
+    ordering_fields = [
+    ]
+
+
+
+
+class PortfolioBundleEvViewSet(AbstractWithObjectPermissionViewSet):
+    queryset = PortfolioRegisterRecord.objects.select_related(
+        'master_user',
+    )
+    serializer_class = PortfolioBundleEvSerializer
+    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+        OwnerByMasterUserFilter
+    ]
+    filter_class = PortfolioBundleEvFilterSet
+    ordering_fields = [
+    ]
+
+
+class PortfolioBundleEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
+    queryset = PortfolioBundle.objects.select_related(
+        'master_user',
+    )
+
+    serializer_class = PortfolioBundleSerializer
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+    filter_class = PortfolioBundleFilterSet
 
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter

@@ -5,7 +5,7 @@ from django.contrib import admin
 from poms.common.admin import AbstractModelAdmin
 from poms.obj_attrs.admin import GenericAttributeInline
 from poms.obj_perms.admin import GenericObjectPermissionInline
-from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord
+from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord, PortfolioBundle
 
 
 class PortfolioAdmin(AbstractModelAdmin):
@@ -63,3 +63,16 @@ class PortfolioRegisterRecordAdmin(AbstractModelAdmin):
 
 
 admin.site.register(PortfolioRegisterRecord, PortfolioRegisterRecordAdmin)
+
+
+class PortfolioBundleAdmin(AbstractModelAdmin):
+    model = PortfolioBundle
+    master_user_path = 'master_user'
+    list_display = ['id', 'master_user', 'name']
+    raw_id_fields = ['master_user']
+
+    filter_horizontal = ('registers',)
+
+
+
+admin.site.register(PortfolioBundle, PortfolioBundleAdmin)

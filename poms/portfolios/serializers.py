@@ -11,7 +11,7 @@ from poms.instruments.models import InstrumentType, Instrument
 from poms.instruments.serializers import InstrumentViewSerializer, PricingPolicySerializer, InstrumentSerializer
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
-from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord
+from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord, PortfolioBundle
 from poms.transactions.fields import TransactionTypeField
 
 from poms.users.fields import MasterUserField
@@ -358,3 +358,37 @@ class CalculateRecordsSerializer(serializers.Serializer):
 
     portfolio_register_ids = serializers.CharField(allow_blank=False)
 
+
+
+class PortfolioBundleSerializer(ModelWithObjectPermissionSerializer, ModelWithTimeStampSerializer):
+
+    master_user = MasterUserField()
+
+    class Meta:
+        model = PortfolioBundle
+        fields = [
+            'id', 'master_user',
+
+            'name', 'short_name', 'user_code', 'public_name', 'notes', 'registers'
+
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(PortfolioBundleSerializer, self).__init__(*args, **kwargs)
+
+
+
+class PortfolioBundleEvSerializer(ModelWithObjectPermissionSerializer, ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = PortfolioBundle
+        fields = [
+            'id', 'master_user',
+
+            'name', 'short_name', 'user_code', 'public_name', 'notes', 'registers'
+
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super(PortfolioBundleEvSerializer, self).__init__(*args, **kwargs)
