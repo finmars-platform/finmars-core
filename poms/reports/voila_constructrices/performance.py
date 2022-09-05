@@ -592,10 +592,12 @@ class PerformanceReportBuilder:
                     nav = 0
 
                 previous_nav = 0
-                previous_nav_date = None
-                if previous_date:
-                    previous_nav = previous_date['portfolios'][_key]['nav']
-                    previous_nav_date = previous_date['portfolios'][_key]['transaction_date']
+
+                try:
+                    if previous_date:
+                        previous_nav = previous_date['portfolios'][_key]['nav']
+                except Exception as e:
+                    previous_nav = 0
 
                 cash_flow = 0
                 cash_inflow = 0
