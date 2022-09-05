@@ -2437,6 +2437,7 @@ def _run_data_procedure(evaluator, user_code, user_context=None, **kwargs):
         from poms.users.utils import get_member_from_context
         from poms.procedures.models import RequestDataFileProcedure
         from poms.procedures.handlers import RequestDataFileProcedureProcess
+        from poms.common.tasks import run_data_procedure_from_formula
 
         context = evaluator.context
 
@@ -2445,24 +2446,32 @@ def _run_data_procedure(evaluator, user_code, user_context=None, **kwargs):
 
         _l.info('_run_data_procedure.context %s' % context)
 
-        merged_context = {}
-        merged_context.update(context)
+        run_data_procedure_from_formula.apply_async(kwargs={
+            'master_user_id': master_user.id,
+            'member_id': member.id,
+            'user_code': user_code,
+            'user_context': user_context
+        })
 
-        if 'names' not in merged_context:
-            merged_context['names'] = {}
-
-        if user_context:
-            merged_context['names'].update(user_context)
-
-        _l.info('merged_context %s' % merged_context)
-
-        procedure = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=user_code)
-
-        kwargs.pop('user_context', None)
-
-        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member,
-                                                   context=merged_context, **kwargs)
-        instance.process()
+        #
+        # merged_context = {}
+        # merged_context.update(context)
+        #
+        # if 'names' not in merged_context:
+        #     merged_context['names'] = {}
+        #
+        # if user_context:
+        #     merged_context['names'].update(user_context)
+        #
+        # _l.info('merged_context %s' % merged_context)
+        #
+        # procedure = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=user_code)
+        #
+        # kwargs.pop('user_context', None)
+        #
+        # instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member,
+        #                                            context=merged_context, **kwargs)
+        # instance.process()
 
 
     except Exception as e:
