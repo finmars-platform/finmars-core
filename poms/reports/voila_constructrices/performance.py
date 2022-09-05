@@ -657,8 +657,15 @@ class PerformanceReportBuilder:
                 else:
                     item['cash_flow'] = cash_flow
 
-                item['cash_inflow'] = cash_inflow
-                item['cash_outflow'] = cash_outflow
+                if item['transaction_date_str'] == date_from_str:
+                    item['cash_inflow'] = 0
+                else:
+                    item['cash_inflow'] = cash_inflow
+
+                if item['transaction_date_str'] == date_from_str:
+                    item['cash_outflow'] = 0
+                else:
+                    item['cash_outflow'] = cash_outflow
 
                 item['previous_nav'] = previous_nav
 
@@ -1029,8 +1036,15 @@ class PerformanceReportBuilder:
                     else:
                         item['cash_flow'] = cash_flow
 
-                    item['cash_inflow'] = cash_inflow
-                    item['cash_outflow'] = cash_outflow
+                    if item['transaction_date_str'] == date_from_str:
+                        item['cash_inflow'] = 0
+                    else:
+                        item['cash_inflow'] = cash_inflow
+
+                    if item['transaction_date_str'] == date_from_str:
+                        item['cash_outflow'] = 0
+                    else:
+                        item['cash_outflow'] = cash_outflow
 
                     item['cash_flow_weighted'] = cash_flow * time_weight
                     item['nav'] = nav
