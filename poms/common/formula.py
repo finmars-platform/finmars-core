@@ -3736,7 +3736,7 @@ DATE format string (also used in parse):
 if __name__ == "__main__":
     import os
 
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "poms_app.settings_dev_ai")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "poms_app.settings")
     import django
 
     django.setup()

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-#export DJANGO_SETTINGS_MODULE=poms_app.settings_dev_ai
 export DJANGO_SETTINGS_MODULE=poms_app.settings
 DB_NAME=finmars_dev \
 DB_USER=postgres \

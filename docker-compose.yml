@@ -3,7 +3,7 @@ services:
   app:
     image: finmars
     environment:
-      DJANGO_SETTINGS_MODULE: poms_app.settings_standalone
+      DJANGO_SETTINGS_MODULE: poms_app.settings
       DB_NAME: finmars_dev
       DB_USER: postgres
       DB_PASSWORD: postgres
