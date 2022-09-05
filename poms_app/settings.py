@@ -284,10 +284,10 @@ if SERVER_TYPE == "local":
     CORS_ALLOW_CREDENTIALS = True
 
 STATIC_URL = '/' + BASE_API_URL + '/api/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'api', 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'poms', 'api', 'static')
 
 STATICFILES_DIR = (
-    os.path.join(BASE_DIR, 'api', 'static')
+    os.path.join(BASE_DIR,  'poms', 'api', 'static')
 )
 
 USE_WEBSOCKETS = False

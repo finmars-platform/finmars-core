@@ -23,13 +23,6 @@ from django.views.decorators.cache import never_cache
 from django.http import HttpResponse, JsonResponse
 
 
-def index(request):
-    if request.user.is_authenticated:
-        return render(request, 'index.html')
-    else:
-        return render(request, 'portal.html')
-
-
 @lru_cache()
 def _get_timezones(locale, now):
     locale = Locale(locale)
