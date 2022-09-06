@@ -104,7 +104,7 @@ def procedure_request_data_file(self,
 
 
 @shared_task(name='procedures.run_data_procedure_from_formula', bind=True)
-def run_data_procedure_from_formula(self, master_user_id, member_id, user_code,user_context,  **kwargs):
+def run_data_procedure_from_formula(self, master_user_id, member_id, user_code, user_context,  **kwargs):
 
     _l.info('run_data_procedure_from_formula init')
 
@@ -116,7 +116,7 @@ def run_data_procedure_from_formula(self, master_user_id, member_id, user_code,u
 
     member = Member.objects.get(id=member_id)
 
-    proxy_user = ProxyUser(self.member, self.master_user)
+    proxy_user = ProxyUser(member, master_user)
     proxy_request = ProxyRequest(proxy_user)
 
     context = {
