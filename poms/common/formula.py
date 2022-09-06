@@ -2446,12 +2446,16 @@ def _run_data_procedure(evaluator, user_code, user_context=None, **kwargs):
 
         _l.info('_run_data_procedure.context %s' % context)
 
-        run_data_procedure_from_formula.apply_async(kwargs={
+        procedure_kwargs = {
             'master_user_id': master_user.id,
             'member_id': member.id,
             'user_code': user_code,
-            'user_context': user_context
-        })
+            'user_context': user_context,
+
+        }
+        procedure_kwargs.update(kwargs)
+
+        run_data_procedure_from_formula.apply_async(kwargs=procedure_kwargs)
 
         #
         # merged_context = {}
