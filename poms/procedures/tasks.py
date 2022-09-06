@@ -127,6 +127,9 @@ def run_data_procedure_from_formula(self, master_user_id, member_id, user_code, 
     merged_context.update(context)
 
     if user_context:
+        if 'names' not in merged_context:
+            merged_context['names'] = {}
+
         merged_context['names'].update(user_context)
 
 
