@@ -2437,7 +2437,7 @@ def _run_data_procedure(evaluator, user_code, user_context=None, **kwargs):
         from poms.users.utils import get_member_from_context
         from poms.procedures.models import RequestDataFileProcedure
         from poms.procedures.handlers import RequestDataFileProcedureProcess
-        from poms.common.tasks import run_data_procedure_from_formula
+        from poms.procedures.tasks import run_data_procedure_from_formula
 
         context = evaluator.context
 
