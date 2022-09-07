@@ -59,3 +59,11 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         }
 
         return Response(result)
+
+    @action(detail=True, methods=['get'], url_path='revoke')
+    def revoke(self, request, pk=None):
+
+        celery_task_id = request.query_params.get('celery_task_id', None)
+        async_result = AsyncResult(celery_task_id).revoke()
+
+        return Response({'status': 'ok'})
