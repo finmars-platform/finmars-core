@@ -7,16 +7,20 @@ import logging
 from poms.pricing.handlers import PricingProcedureProcess
 from poms.procedures.handlers import RequestDataFileProcedureProcess
 from poms.procedures.models import RequestDataFileProcedure, PricingProcedure
-from poms.schedules.models import Schedule, ScheduleInstance
+from poms.schedules.models import Schedule, ScheduleInstance, ScheduleProcedure
 from poms.system_messages.handlers import send_system_message
-from poms.users.models import Member
+from poms.users.models import Member, MasterUser
 
 _l = logging.getLogger('poms.schedules')
 
 
 @shared_task(name='schedules.process_procedure_async', bind=True, ignore_result=True)
-def process_procedure_async(self, procedure, master_user, schedule_instance):
-    _l.info("Schedule: Subprocess process. Master User: %s. Procedure: %s" % (master_user, procedure.type))
+def process_procedure_async(self, procedure_id, master_user_id, schedule_instance_id):
+    _l.info("Schedule: Subprocess process. Master User: %s. Procedure: %s" % (master_user_id, procedure_id))
+
+    procedure = ScheduleProcedure.ojbects.get(id=procedure_id)
+    master_user = MasterUser.objects.get(id=master_user_id)
+    schedule_instance = ScheduleInstance.objects.get(id=schedule_instance_id)
 
     schedule = Schedule.objects.get(id=schedule_instance.schedule_id)
 
@@ -120,8 +124,8 @@ def process(self):
                                                 s.name, schedule_instance.current_processing_procedure_number,
                                                 total_procedures))
 
-                        process_procedure_async.apply_async(kwargs={'procedure': procedure, 'master_user': master_user,
-                                                                    'schedule_instance': schedule_instance})
+                        process_procedure_async.apply_async(kwargs={'procedure_id': procedure.id, 'master_user_id': master_user.id,
+                                                                    'schedule_instance_id': schedule_instance.id})
 
                         _l.info('Schedule: Process first procedure master_user=%s, next_run_at=%s', master_user.id,
                                 s.next_run_at)
