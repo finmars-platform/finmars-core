@@ -79,7 +79,7 @@ class ScheduleViewSet(AbstractModelViewSet):
 
                             schedule_instance.current_processing_procedure_number = 0
                             schedule_instance.status = ScheduleInstance.STATUS_PENDING
-                            schedule_instance = schedule_instance.save()
+                            schedule_instance.save()
 
                             send_system_message(master_user=master_user,
                                                 performed_by="System",
