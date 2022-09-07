@@ -1,3 +1,5 @@
+import traceback
+
 from celery import shared_task
 from django.utils import timezone
 from django.conf import settings
@@ -16,64 +18,69 @@ _l = logging.getLogger('poms.schedules')
 
 @shared_task(name='schedules.process_procedure_async', bind=True)
 def process_procedure_async(self, procedure_id, master_user_id, schedule_instance_id):
-    _l.info("Schedule: Subprocess process. Master User: %s. Procedure: %s" % (master_user_id, procedure_id))
 
-    procedure = ScheduleProcedure.ojbects.get(id=procedure_id)
+    try:
+        _l.info("Schedule: Subprocess process. Master User: %s. Procedure: %s" % (master_user_id, procedure_id))
 
-    _l.info("Schedule: Subprocess process.  Procedure type: %s" % (procedure.type))
-    master_user = MasterUser.objects.get(id=master_user_id)
-    schedule_instance = ScheduleInstance.objects.get(id=schedule_instance_id)
+        procedure = ScheduleProcedure.objects.get(id=procedure_id)
 
-    schedule = Schedule.objects.get(id=schedule_instance.schedule_id)
+        _l.info("Schedule: Subprocess process.  Procedure type: %s" % (procedure.type))
+        master_user = MasterUser.objects.get(id=master_user_id)
+        schedule_instance = ScheduleInstance.objects.get(id=schedule_instance_id)
 
-    owner_member = Member.objects.filter(master_user=master_user, is_owner=True)[0]
+        schedule = Schedule.objects.get(id=schedule_instance.schedule_id)
 
-    if procedure.type == 'pricing':
+        owner_member = Member.objects.filter(master_user=master_user, is_owner=True)[0]
 
-        try:
+        if procedure.type == 'pricing':
 
-            item = PricingProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
+            try:
 
-            date_from = None
-            date_to = None
+                item = PricingProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
 
-            if schedule.data:
-                if 'pl_first_date' in schedule.data:
-                    date_from = schedule.data['date_from']
-                    if 'report_date' in schedule.data:
+                date_from = None
+                date_to = None
+
+                if schedule.data:
+                    if 'pl_first_date' in schedule.data:
+                        date_from = schedule.data['date_from']
+                        if 'report_date' in schedule.data:
+                            date_to = schedule.data['report_date']
+                    elif 'report_date' in schedule_instance.data:
+                        date_from = schedule.data['report_date']
                         date_to = schedule.data['report_date']
-                elif 'report_date' in schedule_instance.data:
-                    date_from = schedule.data['report_date']
-                    date_to = schedule.data['report_date']
-                elif 'begin_date' in schedule.data:
-                    date_from = schedule.data['begin_date']
-                    if 'end_date' in schedule.data:
-                        date_to = schedule.data['end_date']
+                    elif 'begin_date' in schedule.data:
+                        date_from = schedule.data['begin_date']
+                        if 'end_date' in schedule.data:
+                            date_to = schedule.data['end_date']
 
-            instance = PricingProcedureProcess(procedure=item, master_user=master_user, member=owner_member,
-                                               schedule_instance=schedule_instance, date_from=date_from, date_to=date_to)
-            instance.process()
+                instance = PricingProcedureProcess(procedure=item, master_user=master_user, member=owner_member,
+                                                   schedule_instance=schedule_instance, date_from=date_from, date_to=date_to)
+                instance.process()
 
-        except Exception as e:
+            except Exception as e:
 
-            _l.info("Can't find Pricing Procedure error %s" % e)
-            _l.info("Can't find Pricing Procedure  user_code %s" % procedure.user_code)
+                _l.info("Can't find Pricing Procedure error %s" % e)
+                _l.info("Can't find Pricing Procedure  user_code %s" % procedure.user_code)
 
-    if procedure.type == 'data_provider':
+        if procedure.type == 'data_provider':
 
-        try:
+            try:
 
-            item = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
+                item = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
 
-            instance = RequestDataFileProcedureProcess(procedure=item, master_user=master_user,
-                                                       member=owner_member,
-                                                       schedule_instance=schedule_instance)
-            instance.process()
+                instance = RequestDataFileProcedureProcess(procedure=item, master_user=master_user,
+                                                           member=owner_member,
+                                                           schedule_instance=schedule_instance)
+                instance.process()
 
-        except RequestDataFileProcedure.DoesNotExist:
+            except RequestDataFileProcedure.DoesNotExist:
 
-            _l.info("Can't find Request Data File Procedure %s" % procedure.user_code)
+                _l.info("Can't find Request Data File Procedure %s" % procedure.user_code)
 
+    except Exception as e:
+        _l.error('process_procedure_async e %s' % e)
+        _l.error('process_procedure_async traceback %s' % traceback.format_exc())
 
 @shared_task(name='schedules.process', bind=True)
 def process(self):
