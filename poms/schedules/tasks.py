@@ -14,11 +14,13 @@ from poms.users.models import Member, MasterUser
 _l = logging.getLogger('poms.schedules')
 
 
-@shared_task(name='schedules.process_procedure_async', bind=True, ignore_result=True)
+@shared_task(name='schedules.process_procedure_async', bind=True)
 def process_procedure_async(self, procedure_id, master_user_id, schedule_instance_id):
     _l.info("Schedule: Subprocess process. Master User: %s. Procedure: %s" % (master_user_id, procedure_id))
 
     procedure = ScheduleProcedure.ojbects.get(id=procedure_id)
+
+    _l.info("Schedule: Subprocess process.  Procedure type: %s" % (procedure.type))
     master_user = MasterUser.objects.get(id=master_user_id)
     schedule_instance = ScheduleInstance.objects.get(id=schedule_instance_id)
 
@@ -73,7 +75,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
             _l.info("Can't find Request Data File Procedure %s" % procedure.user_code)
 
 
-@shared_task(name='schedules.process', bind=True, ignore_result=True)
+@shared_task(name='schedules.process', bind=True)
 def process(self):
     schedule_qs = Schedule.objects.select_related('master_user').filter(
         is_enabled=True, next_run_at__lte=timezone.now()
@@ -115,7 +117,7 @@ def process(self):
 
                         schedule_instance.current_processing_procedure_number = 0
                         schedule_instance.status = ScheduleInstance.STATUS_PENDING
-                        schedule_instance.save()
+                        schedule_instance = schedule_instance.save()
 
                         send_system_message(master_user=master_user,
                                             performed_by='System',
