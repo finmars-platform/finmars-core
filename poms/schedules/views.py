@@ -1,3 +1,5 @@
+import traceback
+
 from django_filters import FilterSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -110,10 +112,11 @@ class ScheduleViewSet(AbstractModelViewSet):
             schedule.last_run_at = timezone.now()
             schedule.save(update_fields=['last_run_at'])
 
-            serializer = self.get_serializer(instance=schedule)
-
-            return Response(serializer.data)
+            return Response({"status": "ok"})
 
         except Exception as e:
+
+            _l.error("Exception e %s" % e)
+            _l.error("Exception traceback %s" % traceback.format_exc())
 
             return Response(e)
