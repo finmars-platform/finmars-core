@@ -85,7 +85,7 @@ class ScheduleViewSet(AbstractModelViewSet):
                                                 description="Schedule %s. Start processing step %s/%s" % (schedule.name, schedule_instance.current_processing_procedure_number, total_procedures))
 
 
-                            process_procedure_async.apply_async(kwargs={'procedure':procedure, 'master_user':master_user, 'schedule_instance': schedule_instance})
+                            process_procedure_async.apply_async(kwargs={'procedure_id':procedure.id, 'master_user_id':master_user.id, 'schedule_instance_id': schedule_instance.id})
 
                             _l.info('Schedule: Process first procedure master_user=%s, next_run_at=%s', master_user.id, schedule.next_run_at)
 

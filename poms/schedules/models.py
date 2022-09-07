@@ -169,7 +169,7 @@ class ScheduleInstance(DataTimeStampedModel):
                                             section='schedules',
                                             description="Schedule %s. Start processing step %s/%s " % (self.schedule.name, self.current_processing_procedure_number, total_procedures))
 
-                        process_procedure_async.apply_async(kwargs={'procedure':procedure, 'master_user':self.master_user, 'schedule_instance': self})
+                        process_procedure_async.apply_async(kwargs={'procedure_id':procedure.id, 'master_user_id':self.master_user.id, 'schedule_instance_id': self.id})
 
             except Exception as e:
 
