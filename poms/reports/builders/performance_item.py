@@ -500,6 +500,7 @@ class PerformanceReport(BaseReport):
                  calculation_type=None,
                  segmentation_type=None,
                  registers=None,
+                 bundle=None,
                  master_user=None,
                  member=None,
                  begin_date=None,
@@ -537,6 +538,7 @@ class PerformanceReport(BaseReport):
         self.calculation_type = calculation_type
         self.segmentation_type = segmentation_type
         self.registers = registers
+        self.bundle = bundle
         self.periods = periods
         self.name = name
         self.report_instance_name = report_instance_name
