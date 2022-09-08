@@ -48,7 +48,10 @@ class PerformanceReportBuilder:
     def get_first_transaction(self):
 
         if self.instance.bundle:
-            self.instance.bunch_portfolios = self.instance.bundle.registers.all()
+            self.instance.bunch_portfolios = []
+            for item in self.instance.bundle.registers.all():
+                if item.linked_instrument_id:
+                    self.instance.bunch_portfolios.append(item.linked_instrument_id)
         else:
             self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
 
@@ -419,7 +422,10 @@ class PerformanceReportBuilder:
         result = []
 
         if self.instance.bundle:
-            self.instance.bunch_portfolios = self.instance.bundle.registers.all()
+            self.instance.bunch_portfolios = []
+            for item in self.instance.bundle.registers.all():
+                if item.linked_instrument_id:
+                    self.instance.bunch_portfolios.append(item.linked_instrument_id)
         else:
             self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
 
@@ -720,7 +726,10 @@ class PerformanceReportBuilder:
         dates_map = self.get_dict_of_dates_between_two_dates_with_order(date_from, date_to)
 
         if self.instance.bundle:
-            self.instance.bunch_portfolios = self.instance.bundle.registers.all()
+            self.instance.bunch_portfolios = []
+            for item in self.instance.bundle.registers.all():
+                if item.linked_instrument_id:
+                    self.instance.bunch_portfolios.append(item.linked_instrument_id)
         else:
             self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
 
