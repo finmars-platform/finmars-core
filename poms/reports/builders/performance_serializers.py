@@ -13,7 +13,7 @@ from poms.common import formula
 from poms.common.fields import ExpressionField
 from poms.common.utils import date_now
 from poms.currencies.fields import CurrencyField, SystemCurrencyDefault
-from poms.instruments.fields import PricingPolicyField, InstrumentField, RegisterField
+from poms.instruments.fields import PricingPolicyField, InstrumentField, RegisterField, BundleField
 from poms.instruments.models import CostMethod
 from poms.portfolios.fields import PortfolioField
 from poms.portfolios.serializers import PortfolioViewSerializer
@@ -95,6 +95,7 @@ class PerformanceReportSerializer(serializers.Serializer):
                                                 choices=PerformanceReport.SEGMENTATION_TYPE_CHOICES, allow_blank=True,
                                                 required=False)
     registers = RegisterField(many=True, required=False, allow_null=True, allow_empty=True)
+    bundle = BundleField(required=False, allow_null=True, allow_empty=True)
     # periods = ExpressionField(required=False, allow_blank=True, allow_null=True, default='',
     #                           initial='date_group(transaction.accounting_date, [[None,None,timedelta(months=1),["[","%Y-%m-%d","/","","%Y-%m-%d","]"]]], "Err")')
     report_currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())

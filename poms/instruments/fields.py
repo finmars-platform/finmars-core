@@ -4,6 +4,7 @@ from poms.common.fields import PrimaryKeyRelatedFilteredField
 from poms.instruments.models import Instrument, InstrumentType, PricingPolicy, AccrualCalculationModel, Periodicity, \
     EventSchedule
 from poms.obj_perms.fields import PrimaryKeyRelatedFilteredWithObjectPermissionField
+from poms.portfolios.models import PortfolioBundle
 from poms.transactions.models import NotificationClass, EventClass, TransactionTypeInputSettings, TransactionTypeInput
 from poms.users.filters import OwnerByMasterUserFilter, LinkedWithPortfolioFilter
 
@@ -57,6 +58,13 @@ class RegisterField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
         OwnerByMasterUserFilter,
         LinkedWithPortfolioFilter
     ]
+
+class BundleField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+    queryset = PortfolioBundle.objects
+    filter_backends = [
+        OwnerByMasterUserFilter
+    ]
+
 
 
 class PricingPolicyField(PrimaryKeyRelatedFilteredField):

@@ -47,7 +47,10 @@ class PerformanceReportBuilder:
 
     def get_first_transaction(self):
 
-        self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
+        if self.instance.bundle:
+            self.instance.bunch_portfolios = self.instance.bundle.registers
+        else:
+            self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
 
         portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
                                                                linked_instrument__in=self.instance.bunch_portfolios)
@@ -415,7 +418,10 @@ class PerformanceReportBuilder:
 
         result = []
 
-        self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
+        if self.instance.bundle:
+            self.instance.bunch_portfolios = self.instance.bundle.registers
+        else:
+            self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
 
         portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
                                                                linked_instrument__in=self.instance.bunch_portfolios)
@@ -713,7 +719,10 @@ class PerformanceReportBuilder:
 
         dates_map = self.get_dict_of_dates_between_two_dates_with_order(date_from, date_to)
 
-        self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
+        if self.instance.bundle:
+            self.instance.bunch_portfolios = self.instance.bundle.registers
+        else:
+            self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
 
         portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
                                                                linked_instrument__in=self.instance.bunch_portfolios)
