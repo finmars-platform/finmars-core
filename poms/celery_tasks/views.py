@@ -64,7 +64,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         return Response(result)
 
-    @action(detail=True, methods=['get'], url_path='cancel')
+    @action(detail=True, methods=['PUT'], url_path='cancel')
     def cancel(self, request, pk=None):
 
         celery_task_id = request.query_params.get('celery_task_id', None)
@@ -72,8 +72,8 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         return Response({'status': 'ok'})
 
-    @action(detail=True, methods=['get'], url_path='abort-import')
-    def abort_import(self, request, pk=None):
+    @action(detail=True, methods=['PUT'], url_path='abort-transaction-import')
+    def abort_transaction_import(self, request, pk=None):
 
         task = CeleryTask.objects.get(pk=pk)
 
