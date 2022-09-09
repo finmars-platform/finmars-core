@@ -78,7 +78,8 @@ class TransactionTypeProcess(object):
                  context_values=None,  # context_values = CONTEXT VARIABLES
                  uniqueness_reaction=None,
                  execution_context='manual',
-                 member=None):
+                 member=None,
+                 linked_import_task=None): # if book from import
 
         self.transaction_type = transaction_type
 
@@ -87,6 +88,7 @@ class TransactionTypeProcess(object):
 
         self.process_mode = process_mode
         self.execution_context = execution_context
+        self.linked_import_task = linked_import_task
 
         if self.process_mode is None:
             self.process_mode = TransactionTypeProcess.MODE_BOOK
@@ -155,6 +157,7 @@ class TransactionTypeProcess(object):
 
             for i in range(10):
                 self.values['phantom_instrument_%s' % i] = None
+
 
     @property
     def is_book(self):
@@ -2212,6 +2215,9 @@ class TransactionTypeProcess(object):
 
         self.execute_user_fields_expressions()
 
+        if self.linked_import_task:
+            self.complex_transaction.linked_import_task = self.linked_import_task
+
         self.complex_transaction.save()
 
         self._save_inputs()
@@ -2329,6 +2335,9 @@ class TransactionTypeProcess(object):
         self.execute_recon_fields_expressions()
 
         self.execute_uniqueness_expression()
+
+        if self.linked_import_task:
+            self.complex_transaction.linked_import_task = self.linked_import_task
 
         self.complex_transaction.save()  # save executed text and date expression
 

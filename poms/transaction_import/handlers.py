@@ -390,6 +390,7 @@ class TransactionImportProcess(object):
                 fields = self.get_fields_for_item(item, rule_scenario)
 
                 transaction_type_process_instance = TransactionTypeProcess(
+                    linked_import_task=self.task,
                     transaction_type=rule_scenario.transaction_type,
                     default_values=fields,
                     context=self.context,

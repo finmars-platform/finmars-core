@@ -1454,6 +1454,10 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
+    linked_import_task = models.ForeignKey('celery_tasks.CeleryTask', on_delete=models.PROTECT,
+                               null=True, blank=True,
+                               verbose_name=gettext_lazy("linked import task"))
+
     class Meta:
         verbose_name = gettext_lazy('complex transaction')
         verbose_name_plural = gettext_lazy('complex transactions')
