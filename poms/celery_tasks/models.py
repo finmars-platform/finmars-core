@@ -15,6 +15,7 @@ class CeleryTask(TimeStampedModel):
     STATUS_ERROR = 'E'
     STATUS_TIMEOUT = 'T'
     STATUS_CANCELED = 'C'
+    STATUS_TRANSACTIONS_ABORTED = 'X'
 
     STATUS_CHOICES = (
         (STATUS_INIT, 'INIT'),
@@ -23,6 +24,7 @@ class CeleryTask(TimeStampedModel):
         (STATUS_ERROR, 'ERROR'),
         (STATUS_TIMEOUT, 'TIMEOUT'),
         (STATUS_CANCELED, 'CANCELED'),
+        (STATUS_TRANSACTIONS_ABORTED, 'TRANSACTIONS_ABORTED'),
     )
 
     master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)

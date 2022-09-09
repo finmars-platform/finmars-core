@@ -96,6 +96,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         task.notes = '%s Transactions were aborted \n' % count
 
         task.notes = task.notes  + (', '.join(str(x) for x in codes))
+        task.status = CeleryTask.STATUS_TRANSACTIONS_ABORTED
 
         task.save()
 
