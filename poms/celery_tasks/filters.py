@@ -11,6 +11,6 @@ class CeleryTaskQueryFilter(BaseFilterBackend):
 
         if query:
             member = request.user.member
-            return queryset.filter(Q(type__icontains=query) | Q(created__icontains=query) | Q(id__exact=query) | Q(member__username__icontains=query) | Q(celery_task_id__icontains=query) )
+            return queryset.filter(Q(type__icontains=query) | Q(created__icontains=query) | Q(id__icontains=query) | Q(member__username__icontains=query) | Q(celery_task_id__icontains=query) )
 
         return queryset
