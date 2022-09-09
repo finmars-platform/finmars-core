@@ -70,6 +70,12 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         celery_task_id = request.query_params.get('celery_task_id', None)
         async_result = AsyncResult(celery_task_id).revoke()
 
+        task = CeleryTask.objects.get(pk=pk)
+
+        task.status = CeleryTask.STATUS_CANCELED
+
+        task.save()
+
         return Response({'status': 'ok'})
 
     @action(detail=True, methods=['PUT'], url_path='abort-transaction-import')
@@ -81,8 +87,16 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         count = ComplexTransaction.objects.filter(linked_import_task=pk).count()
 
+        codes = ComplexTransaction.objects.filter(linked_import_task=pk).values_list('code', flat=True)
+
         complex_transactions = ComplexTransaction.objects.filter(linked_import_task=pk).delete()
 
         _l.info("%s complex transactions were deleted" % count)
+
+        task.notes = '%s Transactions were aborted \n' % count
+
+        task.notes = task.notes  + (', '.join(str(x) for x in codes))
+
+        task.save()
 
         return Response({'status': 'ok'})
