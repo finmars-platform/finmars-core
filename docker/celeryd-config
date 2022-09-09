@@ -13,7 +13,7 @@ CELERYD_CHDIR="/var/app/"
 #CELERYD_OPTS="--time-limit=3000 --autoscale=4,2 --without-gossip --without-mingle --without-heartbeat "
 
 #CELERYD_OPTS="--autoscale=4,2 -Ofair -c 4"
-CELERYD_OPTS="--time-limit=3000 --concurrency=2"
+CELERYD_OPTS="--time-limit=3000 --concurrency=1"
 
 CELERYD_LOG_LEVEL="INFO"
 
