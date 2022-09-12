@@ -28,12 +28,16 @@ from poms.reports.tasks import balance_report, pl_report, transaction_report, ca
     performance_report
 from poms.reports.utils import generate_report_unique_hash
 from poms.reports.voila_constructrices.performance import PerformanceReportBuilder
+from poms.transactions.models import Transaction
 from poms.users.filters import OwnerByMasterUserFilter
 
 from rest_framework.response import Response
 from rest_framework import permissions, status
 
 from django.core.cache import cache
+
+from rest_framework.decorators import action
+
 
 _l = logging.getLogger('poms.reports')
 import time
@@ -365,6 +369,37 @@ class PriceHistoryCheckSqlSyncViewSet(AbstractViewSet):
 class PerformanceReportViewSet(AbstractViewSet):
     serializer_class = PerformanceReportSerializer
 
+    @action(detail=False, methods=['get'], url_path='first-transaction-date')
+    def filtered_list(self, request, *args, **kwargs):
+
+        portfolios = request.query_params.get('portfolios', None)
+
+
+
+
+        result = {}
+
+        transactions = Transaction.objects.all()
+
+        if portfolios:
+            portfolios = portfolios.split(',')
+            transactions = transactions.filter(portfolio_id__in=portfolios)
+
+        transactions = transactions.order_by('accounting_date')
+
+        if (len(transactions)):
+
+            result['code'] = str(transactions[0].complex_transaction.code)
+            result['transaction_date'] = str(transactions[0].transaction_date)
+            result['accounting_date'] = str(transactions[0].accounting_date)
+            result['cash_date'] = str(transactions[0].cash_date)
+            result['portfolio'] = {
+                'id': transactions[0].portfolio.id,
+                'name': transactions[0].portfolio.name,
+                'user_code': transactions[0].portfolio.user_code
+            }
+
+        return Response(result)
 
     def create(self, request, *args, **kwargs):
 
