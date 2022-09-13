@@ -15,6 +15,7 @@ from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.balance_pl import ReportBuilder
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
+from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import Transaction, TransactionClass
 from poms.users.models import MasterUser, EcosystemDefault
 
@@ -111,6 +112,14 @@ def calculate_portfolio_register_record(master_users=None):
 
         for master_user in master_user_qs:
 
+            send_system_message(master_user=master_user,
+                                performed_by='system',
+                                section='schedules',
+                                type='info',
+                                title='Calculating Portfolio Register Records',
+                                description=''
+                                )
+
             _l.info("calculate_portfolio_register_record0 master_user %s" % master_user)
 
             portfolio_registers = PortfolioRegister.objects.filter(master_user_id=master_user)
@@ -134,6 +143,8 @@ def calculate_portfolio_register_record(master_users=None):
             transactions_dict = {}
 
             PortfolioRegisterRecord.objects.filter(master_user=master_user).delete()
+
+            count = 0
 
             for item in transactions:
 
@@ -270,8 +281,17 @@ def calculate_portfolio_register_record(master_users=None):
                     record.previous_date_record = previous_date_record
                     record.save()
 
+                    count = count + 1
+
                     previous_record = record
 
+            send_system_message(master_user=master_user,
+                                performed_by='system',
+                                section='schedules',
+                                type='info',
+                                title='Portfolio Register Records calculation finish',
+                                description='Record created: %s ' % count
+                                )
 
     except Exception as e:
 
@@ -281,6 +301,7 @@ def calculate_portfolio_register_record(master_users=None):
 
 @shared_task(name='portfolios.calculate_portfolio_register_price_history', ignore_result=True)
 def calculate_portfolio_register_price_history(master_users=None, date_from=None):
+
 
     try:
 
@@ -295,10 +316,21 @@ def calculate_portfolio_register_price_history(master_users=None, date_from=None
             master_user_qs = master_user_qs.filter(pk__in=master_users)
 
         for master_user in master_user_qs:
+
+            send_system_message(master_user=master_user,
+                                performed_by='system',
+                                section='schedules',
+                                type='info',
+                                title='Start portfolio price recalculation',
+                                description='Starting from date %s' % date_from,
+                                )
+
             _l.debug('calculate_portfolio_register_nav: master_user=%s', master_user.id)
 
             portfolio_registers = PortfolioRegister.objects.filter(master_user=master_user)
             pricing_policies = PricingPolicy.objects.filter(master_user=master_user)
+
+            count = 0
 
             for portfolio_register in portfolio_registers:
 
@@ -360,9 +392,19 @@ def calculate_portfolio_register_price_history(master_users=None, date_from=None
 
                             price_history.save()
 
+                            count = count + 1
+
                         except Exception as e:
                             _l.error('calculate_portfolio_register_price_history.error %s ' % e)
                             _l.error('date %s' % date)
+
+            send_system_message(master_user=master_user,
+                                performed_by='system',
+                                section='schedules',
+                                type='success',
+                                title='Portfolio price recalculation finish',
+                                description='Calculated %s prices' % count,
+                                )
 
     except Exception as e:
 
