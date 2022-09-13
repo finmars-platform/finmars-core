@@ -372,17 +372,23 @@ class PerformanceReportViewSet(AbstractViewSet):
     @action(detail=False, methods=['get'], url_path='first-transaction-date')
     def filtered_list(self, request, *args, **kwargs):
 
-        portfolios = request.query_params.get('portfolios', None)
-
-
-
+        bundle = request.query_params.get('bundle', None)
 
         result = {}
 
         transactions = Transaction.objects.all()
 
-        if portfolios:
-            portfolios = portfolios.split(',')
+        if bundle:
+
+            from poms.portfolios.models import PortfolioBundle
+            bundle_instance = PortfolioBundle.objects.get(id=bundle)
+
+            portfolios = []
+
+            for item in bundle_instance.registers.all():
+
+                portfolios.append(item.portfolio_id)
+
             transactions = transactions.filter(portfolio_id__in=portfolios)
 
         transactions = transactions.order_by('accounting_date')
