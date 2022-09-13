@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import traceback
+
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, transaction
@@ -50,6 +52,8 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
         attributes = validated_data.pop('attributes', empty)
 
         instance = super(ModelWithAttributesSerializer, self).update(instance, validated_data)
+
+        # _l.info('attributes %s' % attributes)
 
         self.create_attributes_if_not_exists(instance)
 
@@ -178,43 +182,19 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                 attr.save()
 
     def save_attributes(self, instance, attributes, created):
-        member = get_member_from_context(self.context)
-        attributes = attributes or []
+        try:
+            member = get_member_from_context(self.context)
+            attributes = attributes or []
 
-        ctype = ContentType.objects.get_for_model(instance)
-        # if hasattr(instance, 'attributes'):
-        #     attrs_qs = instance.attributes.all()
-        # else:
-        attrs_qs = GenericAttribute.objects.filter(content_type=ctype, object_id=instance.id)
+            ctype = ContentType.objects.get_for_model(instance)
 
-        read_attrs_qs = attrs_qs.select_related('attribute_type').prefetch_related(
-            *get_permissions_prefetch_lookups(
-                ('attribute_type', GenericAttributeType),
-            )
-        )
-        protected = {a.attribute_type_id for a in read_attrs_qs if not has_view_perms(member, instance)}
-        existed = {a.attribute_type_id: a for a in read_attrs_qs if has_view_perms(member, instance)}
+            for attr in attributes:
 
-        processed = set()
-        for attr in attributes:
-            attribute_type = attr['attribute_type']
+                attribute_type = attr['attribute_type']
 
-            if attribute_type.content_type_id != ctype.id:
-                raise ValidationError(
-                    {'attribute_type': gettext_lazy('Invalid pk "%(pk)s" - object does not exist.') % {
-                        'pk': attribute_type.id}})
+                # _l.info('save_attributes.attr %s' % attr)
 
-            if has_view_perms(member, attribute_type):
-                if attribute_type.id in processed:
-                    raise ValidationError("Duplicated attribute type %s" % attribute_type.id)
-                processed.add(attribute_type.id)
-
-                try:
-                    oattr = existed[attribute_type.id]
-                except KeyError:
-                    oattr = GenericAttribute(**attr)
-                    oattr.content_object = instance
-                    oattr.attribute_type = attribute_type
+                oattr = GenericAttribute.objects.get(content_type=ctype, object_id=instance.id, attribute_type_id=attribute_type.id)
 
                 if 'value_string' in attr:
 
@@ -237,14 +217,12 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                         oattr.classifier = None
                     else:
                         oattr.classifier = attr['classifier']
+
                 oattr.save()
-            else:
-                # perms error...
-                pass
 
-        processed.update(protected)
-
-        # attrs_qs.exclude(attribute_type_id__in=processed).delete()
+        except Exception as e:
+            _l.error("Attribute save error %s " % e)
+            _l.error("Attribute save traceback %s " % traceback.format_exc())
 
 
 
@@ -600,7 +578,7 @@ class GenericAttributeTypeViewSerializer(ModelWithObjectPermissionSerializer):
 
     class Meta:
         model = GenericAttributeType
-        fields = ['id', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+        fields = ['id', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'can_recalculate',
                   'value_type', 'order', 'is_hidden', 'kind']
 
 
