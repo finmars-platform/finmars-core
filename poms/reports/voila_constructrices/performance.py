@@ -440,6 +440,8 @@ class PerformanceReportBuilder:
             portfolios.append(portfolio_register.portfolio_id)
             portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
 
+        _l.info('build_time_weighted.result portfolios %s ' % portfolios)
+
         # transactions = Transaction.objects.filter(portfolio__in=portfolios,
         #                                           transaction_date__gte=date_from,
         #                                           transaction_date__lte=date_to,
@@ -743,6 +745,8 @@ class PerformanceReportBuilder:
         for portfolio_register in portfolio_registers:
             portfolios.append(portfolio_register.portfolio_id)
             portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
+
+        _l.info('build_time_weighted.result portfolios %s ' % portfolios)
 
         # transactions = Transaction.objects.filter(portfolio__in=portfolios,
         #                                           transaction_date__gte=date_from,
