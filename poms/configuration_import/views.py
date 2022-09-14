@@ -102,7 +102,7 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
                 'mode': request.data['mode']
             }
 
-            _l.info('options_object %s' % options_object)
+            # _l.info('options_object %s' % options_object)
 
             celery_task.options_object = options_object
             celery_task.save()

@@ -3105,7 +3105,7 @@ def configuration_import_as_json(self, task_id):
                                              master_user=task.master_user,
                                              member=task.member)
 
-        _l.info('instance %s' % instance)
+        # _l.info('instance %s' % instance)
         _l.info('instance.mode %s' % instance.mode)
         # _l.info('instance.data %s' % instance.data)
 
