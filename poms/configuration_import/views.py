@@ -28,7 +28,6 @@ def dump(obj):
 
 
 class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
-
     serializer_class = ConfigurationImportAsJsonSerializer
     celery_task = configuration_import_as_json
 
@@ -53,10 +52,8 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
 
         if task_id:
 
-            res = AsyncResult(signer.unsign(task_id))
-
             try:
-                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, celery_task_id=task_id)
+                celery_task = CeleryTask.objects.get(id=task_id)
             except CeleryTask.DoesNotExist:
                 celery_task = None
                 _l.debug("Cant create Celery Task")
@@ -65,37 +62,19 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
 
             st = time.perf_counter()
 
-            if res.ready():
 
-                instance = res.result
+
+            if celery_task.status == CeleryTask.STATUS_DONE:
+
+                instance.task_status = 'SUCCESS'
 
                 if celery_task:
                     celery_task.finished_at = datetime_now()
 
-            else:
-
-                if res.result:
-
-                    try:
-                        if 'processed_rows' in res.result:
-                            instance.processed_rows = res.result['processed_rows']
-                        if 'total_rows' in res.result:
-                            instance.total_rows = res.result['total_rows']
-
-                        if celery_task:
-                            celery_task.data = {
-                                "total_rows": res.result['total_rows'],
-                                "processed_rows": res.result['processed_rows']
-                            }
-                    except TypeError:
-                        _l.debug('Type erro')
-
-                # _l.debug('TASK ITEMS LEN %s' % len(res.result.items))
 
             _l.debug('AsyncResult res.ready: %s' % (time.perf_counter() - st))
 
             _l.debug('instance %s' % instance)
-            _l.debug('res.status %s' % res.status)
             _l.debug('celery_task %s' % celery_task)
 
             _l.debug('request.user %s' % request.user)
@@ -106,30 +85,30 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
 
-
             instance.task_id = task_id
-            instance.task_status = res.status
 
-            if celery_task:
-                celery_task.task_status = res.status
-                celery_task.save()
 
             serializer = self.get_serializer(instance=instance, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         else:
 
-            res = self.celery_task.apply_async(kwargs={'instance': instance})
-            instance.task_id = signer.sign('%s' % res.id)
-
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                     member=request.user.member,
-                                                    type='configuration_import', celery_task_id=res.id)
+                                                    type='configuration_import')
 
+            options_object = {
+                'data': request.data['data'],
+                'mode': request.data['mode']
+            }
+
+            _l.info('options_object %s' % options_object)
+
+            celery_task.options_object = options_object
             celery_task.save()
 
-
-            _l.debug('celery_task.task_status %s ' % celery_task.status)
+            res = configuration_import_as_json.apply_async(kwargs={'task_id': celery_task.id})
+            instance.task_id = celery_task.id
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
@@ -161,7 +140,6 @@ class GenerateConfigurationEntityArchetypeViewSet(AbstractAsyncViewSet):
             st = time.perf_counter()
 
             if res.ready():
-
                 instance = res.result
 
             _l.debug('AsyncResult res.ready: %s' % (time.perf_counter() - st))
@@ -188,4 +166,3 @@ class GenerateConfigurationEntityArchetypeViewSet(AbstractAsyncViewSet):
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
             return Response(serializer.data, status=status.HTTP_200_OK)
-

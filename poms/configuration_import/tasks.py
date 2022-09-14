@@ -6,12 +6,14 @@ from rest_framework.exceptions import ValidationError
 
 from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountTypeSerializer
+from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import get_content_type_by_name
 from poms.complex_import.models import ComplexImportScheme
 from poms.complex_import.serializers import ComplexImportSchemeSerializer
 from poms.configuration_import.handlers import ConfigurationEntityArchetypeGenerateHandler
 from poms.configuration_import.recovery import ConfigurationRecoveryHandler
+from poms.configuration_import.serializers import ConfigurationImportAsJson
 from poms.configuration_sharing.models import SharedConfigurationFile
 from poms.counterparties.models import Responsible, Counterparty
 from poms.csv_import.models import CsvImportScheme
@@ -45,6 +47,7 @@ from poms.reports.serializers import BalanceReportCustomFieldSerializer, PLRepor
 from poms.schedules.models import Schedule
 from poms.schedules.serializers import ScheduleSerializer
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
+from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import TransactionClass, TransactionTypeGroup, TransactionType, TransactionTypeInput
 from poms.transactions.serializers import TransactionTypeGroupSerializer, TransactionTypeSerializer
 from poms.ui.models import ListLayout, InstrumentUserFieldModel, TransactionUserFieldModel, DashboardLayout, EditLayout, \
@@ -65,8 +68,6 @@ _l = getLogger('poms.configuration_import')
 def dump(obj):
     for attr in dir(obj):
         _l.info("obj.%s = %r" % (attr, getattr(obj, attr)))
-
-
 
 
 def check_configuration_section(configuration_access_table):
@@ -570,7 +571,6 @@ class ImportManager(object):
                         content_object['one_off_event'] = self.ecosystem_default.transaction_type.pk
                         content_object['regular_event'] = self.ecosystem_default.transaction_type.pk
 
-
                         if 'pricing_policies' in content_object:
 
                             for policy in content_object['pricing_policies']:
@@ -602,10 +602,8 @@ class ImportManager(object):
                                         #     master_user=self.master_user,
                                         #     user_code='-').pk  # TODO Add to EcosystemDefaults
 
-
                         if 'instrument_factor_schedule_data' not in content_object:
                             content_object['instrument_factor_schedule_data'] = {}
-
 
                         serializer = InstrumentTypeSerializer(data=content_object,
                                                               context=self.get_serializer_context())
@@ -929,7 +927,8 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Custom Columns Balance Report done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info(
+            'Import Configuration Custom Columns Balance Report done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_custom_columns_pl_report(self, configuration_section):
 
@@ -1038,7 +1037,8 @@ class ImportManager(object):
 
                         self.update_progress()
 
-        _l.info('Import Configuration Custom Columns Transaction Report done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info('Import Configuration Custom Columns Transaction Report done %s' % "{:3.3f}".format(
+            time.perf_counter() - st))
 
     def import_edit_layouts(self, configuration_section):
 
@@ -1081,13 +1081,15 @@ class ImportManager(object):
 
                                     if 'user_code' in content_object:
 
-                                        instance = EditLayout.objects.get(member=self.member, user_code=content_object['user_code'],
-                                                                        content_type=content_type)
+                                        instance = EditLayout.objects.get(member=self.member,
+                                                                          user_code=content_object['user_code'],
+                                                                          content_type=content_type)
 
                                     else:
 
-                                        instance = EditLayout.objects.get(member=self.member, name=content_object['name'],
-                                                                        content_type=content_type)
+                                        instance = EditLayout.objects.get(member=self.member,
+                                                                          name=content_object['name'],
+                                                                          content_type=content_type)
 
                                     serializer = EditLayoutSerializer(data=content_object,
                                                                       instance=instance,
@@ -1135,7 +1137,8 @@ class ImportManager(object):
                         if 'sourced_from_global_layout' in content_object:
 
                             try:
-                                config_file = SharedConfigurationFile.objects.get(pk=content_object['sourced_from_global_layout'])
+                                config_file = SharedConfigurationFile.objects.get(
+                                    pk=content_object['sourced_from_global_layout'])
 
                                 content_object['json_data'] = config_file.json_data
                             except Exception as e:
@@ -1185,7 +1188,6 @@ class ImportManager(object):
                             'status': 'info'
                         }
 
-
                         try:
                             serializer.is_valid(raise_exception=True)
 
@@ -1205,7 +1207,8 @@ class ImportManager(object):
 
                                     if 'user_code' in content_object:  # TODO Remove Later (will be set to '' in recovery as default)
 
-                                        layout = ListLayout.objects.get(member=self.member, user_code=content_object['user_code'],
+                                        layout = ListLayout.objects.get(member=self.member,
+                                                                        user_code=content_object['user_code'],
                                                                         content_type=content_type)
 
                                     else:
@@ -1220,7 +1223,8 @@ class ImportManager(object):
                                 except Exception as error:
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite List Layout for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite List Layout for %s' % content_object[
+                                        'name']
                             else:
 
                                 stats['status'] = 'error'
@@ -1248,9 +1252,8 @@ class ImportManager(object):
 
                         content_object['member'] = self.member.pk
 
-
                         serializer = ContextMenuLayoutSerializer(data=content_object,
-                                                          context=self.get_serializer_context())
+                                                                 context=self.get_serializer_context())
 
                         stats = {
                             'content_type': item['entity'],
@@ -1261,7 +1264,6 @@ class ImportManager(object):
                             },
                             'status': 'info'
                         }
-
 
                         try:
                             serializer.is_valid(raise_exception=True)
@@ -1277,11 +1279,13 @@ class ImportManager(object):
 
                                     if 'user_code' in content_object:  # TODO Remove Later (will be set to '' in recovery as default)
 
-                                        layout = ContextMenuLayout.objects.get(member=self.member, user_code=content_object['user_code'],
-                                                                        type=content_object['type'])
+                                        layout = ContextMenuLayout.objects.get(member=self.member,
+                                                                               user_code=content_object['user_code'],
+                                                                               type=content_object['type'])
 
                                     else:
-                                        layout = ContextMenuLayout.objects.get(member=self.member, name=content_object['name'],
+                                        layout = ContextMenuLayout.objects.get(member=self.member,
+                                                                               name=content_object['name'],
                                                                                type=content_object['type'])
 
                                     layout.data = content_object['data']
@@ -1291,11 +1295,13 @@ class ImportManager(object):
                                 except Exception as error:
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Context Menu Layout for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Context Menu Layout for %s' % \
+                                                     content_object['name']
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Context Menu Layout %s already exists' % content_object['name']
+                                stats['error']['message'] = 'Context Menu Layout %s already exists' % content_object[
+                                    'name']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -1318,7 +1324,7 @@ class ImportManager(object):
                     for content_object in item['content']:
 
                         serializer = ReferenceTableSerializer(data=content_object,
-                                                                 context=self.get_serializer_context())
+                                                              context=self.get_serializer_context())
 
                         stats = {
                             'content_type': item['entity'],
@@ -1329,7 +1335,6 @@ class ImportManager(object):
                             },
                             'status': 'info'
                         }
-
 
                         try:
                             serializer.is_valid(raise_exception=True)
@@ -1347,15 +1352,16 @@ class ImportManager(object):
                                                                           name=content_object['name'])
 
                                     serializer = ReferenceTableSerializer(data=content_object,
-                                                                               instance=instance,
-                                                                               context=self.get_serializer_context())
+                                                                          instance=instance,
+                                                                          context=self.get_serializer_context())
                                     serializer.is_valid(raise_exception=True)
                                     serializer.save()
 
                                 except Exception as error:
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Reference Table Layout for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Reference Table Layout for %s' % \
+                                                     content_object['name']
                             else:
 
                                 stats['status'] = 'error'
@@ -1384,7 +1390,7 @@ class ImportManager(object):
                         content_object['member'] = self.member.pk
 
                         serializer = TemplateLayoutSerializer(data=content_object,
-                                                          context=self.get_serializer_context())
+                                                              context=self.get_serializer_context())
 
                         stats = {
                             'content_type': item['entity'],
@@ -1395,7 +1401,6 @@ class ImportManager(object):
                             },
                             'status': 'info'
                         }
-
 
                         try:
                             serializer.is_valid(raise_exception=True)
@@ -1409,16 +1414,17 @@ class ImportManager(object):
 
                                 try:
 
-                                    if 'user_code' in content_object: # TODO Remove Later (will be set to '' in recovery as default)
+                                    if 'user_code' in content_object:  # TODO Remove Later (will be set to '' in recovery as default)
 
-                                        layout = TemplateLayout.objects.get(member=self.member, user_code=content_object['user_code'],
+                                        layout = TemplateLayout.objects.get(member=self.member,
+                                                                            user_code=content_object['user_code'],
                                                                             type=content_object['type'])
 
                                     else:
 
-                                        layout = TemplateLayout.objects.get(member=self.member, name=content_object['name'],
+                                        layout = TemplateLayout.objects.get(member=self.member,
+                                                                            name=content_object['name'],
                                                                             type=content_object['type'])
-
 
                                     layout.data = content_object['data']
 
@@ -1427,7 +1433,8 @@ class ImportManager(object):
                                 except Exception as error:
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Template Layout for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Template Layout for %s' % content_object[
+                                        'name']
                             else:
 
                                 stats['status'] = 'error'
@@ -1487,7 +1494,6 @@ class ImportManager(object):
                         if 'sourced_from_global_layout' in content_object:
                             content_object.pop('sourced_from_global_layout')
 
-
                         if 'data' in content_object:
 
                             if 'components_types' in content_object['data']:
@@ -1546,11 +1552,13 @@ class ImportManager(object):
                                 except Exception as error:
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Dashboard Layout for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Dashboard Layout for %s' % content_object[
+                                        'name']
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Dashboard Layout %s already exists' % content_object['name']
+                                stats['error']['message'] = 'Dashboard Layout %s already exists' % content_object[
+                                    'name']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -1574,9 +1582,8 @@ class ImportManager(object):
 
                         content_object['member'] = self.member.pk
 
-
                         serializer = ColumnSortDataSerializer(data=content_object,
-                                                                 context=self.get_serializer_context())
+                                                              context=self.get_serializer_context())
 
                         stats = {
                             'content_type': item['entity'],
@@ -1587,7 +1594,6 @@ class ImportManager(object):
                             },
                             'status': 'info'
                         }
-
 
                         try:
                             serializer.is_valid(raise_exception=True)
@@ -1601,10 +1607,9 @@ class ImportManager(object):
 
                                 try:
 
-
-                                    layout = ColumnSortData.objects.get(member=self.member, user_code=content_object['user_code'],
-                                                                               type=content_object['type'])
-
+                                    layout = ColumnSortData.objects.get(member=self.member,
+                                                                        user_code=content_object['user_code'],
+                                                                        type=content_object['type'])
 
                                     layout.data = content_object['data']
 
@@ -1613,18 +1618,19 @@ class ImportManager(object):
                                 except Exception as error:
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Column Sort Data Layout for %s' % content_object['user_code']
+                                        'message'] = 'Error. Can\'t Overwrite Column Sort Data Layout for %s' % \
+                                                     content_object['user_code']
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Column Sort Data Layout %s already exists' % content_object['user_code']
+                                stats['error']['message'] = 'Column Sort Data Layout %s already exists' % \
+                                                            content_object['user_code']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
         _l.info('Import Configuration Column Sort Data done %s' % "{:3.3f}".format(time.perf_counter() - st))
-
 
     def import_cross_entity_attribute_extension(self, configuration_section):
 
@@ -1640,9 +1646,8 @@ class ImportManager(object):
 
                     for content_object in item['content']:
 
-
                         serializer = CrossEntityAttributeExtensionSerializer(data=content_object,
-                                                              context=self.get_serializer_context())
+                                                                             context=self.get_serializer_context())
 
                         stats = {
                             'content_type': item['entity'],
@@ -1653,7 +1658,6 @@ class ImportManager(object):
                             },
                             'status': 'info'
                         }
-
 
                         try:
                             serializer.is_valid(raise_exception=True)
@@ -1667,37 +1671,41 @@ class ImportManager(object):
 
                                 try:
 
-
                                     instance = CrossEntityAttributeExtension.objects.get(master_user=self.master_user,
-                                                                                         context_content_type=content_object[
+                                                                                         context_content_type=
+                                                                                         content_object[
                                                                                              'context_content_type'],
-                                                                                         content_type_from=content_object[
-                                                                                            'content_type_from'],
+                                                                                         content_type_from=
+                                                                                         content_object[
+                                                                                             'content_type_from'],
                                                                                          key_from=content_object[
                                                                                              'key_from'],
                                                                                          )
 
                                     serializer = CrossEntityAttributeExtensionSerializer(data=content_object,
-                                                                                        instance=instance,
-                                                                                        context=self.get_serializer_context())
+                                                                                         instance=instance,
+                                                                                         context=self.get_serializer_context())
                                     serializer.is_valid(raise_exception=True)
                                     serializer.save()
 
                                 except Exception as error:
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Cross Entity Attribute Extension Layout for %s' % content_object['user_code']
+                                        'message'] = 'Error. Can\'t Overwrite Cross Entity Attribute Extension Layout for %s' % \
+                                                     content_object['user_code']
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Cross Entity Attribute Extension Layout %s already exists' % content_object['user_code']
+                                stats['error'][
+                                    'message'] = 'Cross Entity Attribute Extension Layout %s already exists' % \
+                                                 content_object['user_code']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress()
 
-        _l.info('Import Configuration Cross Entity Attribute Extension done %s' % "{:3.3f}".format(time.perf_counter() - st))
-
+        _l.info('Import Configuration Cross Entity Attribute Extension done %s' % "{:3.3f}".format(
+            time.perf_counter() - st))
 
     def import_download_instrument_schemes(self, configuration_section):
 
@@ -1716,7 +1724,7 @@ class ImportManager(object):
                         # _l.info('content_object %s '  % content_object )
 
                         serializer = InstrumentDownloadSchemeSerializer(data=content_object,
-                                                                              context=self.get_serializer_context())
+                                                                        context=self.get_serializer_context())
                         stats = {
                             'content_type': item['entity'],
                             'mode': self.instance.mode,
@@ -1737,12 +1745,12 @@ class ImportManager(object):
                                 try:
 
                                     instance = InstrumentDownloadScheme.objects.get(master_user=self.master_user,
-                                                                                          user_code=content_object[
-                                                                                              'user_code'])
+                                                                                    user_code=content_object[
+                                                                                        'user_code'])
 
                                     serializer = InstrumentDownloadSchemeSerializer(data=content_object,
-                                                                                          instance=instance,
-                                                                                          context=self.get_serializer_context())
+                                                                                    instance=instance,
+                                                                                    context=self.get_serializer_context())
                                     serializer.is_valid(raise_exception=True)
                                     serializer.save()
 
@@ -1752,12 +1760,14 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Instrument Download Scheme for %s' % content_object['user_code']
+                                        'message'] = 'Error. Can\'t Overwrite Instrument Download Scheme for %s' % \
+                                                     content_object['user_code']
 
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Transaction Instrument Download %s already exists' % content_object['user_code']
+                                stats['error']['message'] = 'Transaction Instrument Download %s already exists' % \
+                                                            content_object['user_code']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -1768,7 +1778,6 @@ class ImportManager(object):
     def import_transaction_import_schemes(self, configuration_section):
 
         st = time.perf_counter()
-
 
         for item in configuration_section['items']:
 
@@ -1792,7 +1801,6 @@ class ImportManager(object):
                             'status': 'info'
                         }
 
-
                         if 'rule_scenarios' in content_object:
 
                             for rule in content_object['rule_scenarios']:
@@ -1804,7 +1812,8 @@ class ImportManager(object):
                                                                                            user_code=rule[
                                                                                                '___transaction_type__user_code']).pk
                                 except TransactionType.DoesNotExist:
-                                    _l.info('Cant find Transaction Type form %s for %s' % (rule['___transaction_type__user_code'], content_object['user_code']))
+                                    _l.info('Cant find Transaction Type form %s for %s' % (
+                                    rule['___transaction_type__user_code'], content_object['user_code']))
                                     rule['transaction_type'] = self.ecosystem_default.transaction_type_id
                                     tt_found = False
                                     # stats['status'] = 'error'
@@ -1823,7 +1832,8 @@ class ImportManager(object):
                                             _l.info('Cant find Input %s' % field['___input__name'])
                                             stats['status'] = 'error'
                                             stats['error'][
-                                                'message'] = 'Error. Can\'t Import Transaction Import Scheme for %s. Input %s is missing.' % (content_object['user_code'], field['___input__name'])
+                                                'message'] = 'Error. Can\'t Import Transaction Import Scheme for %s. Input %s is missing.' % (
+                                            content_object['user_code'], field['___input__name'])
                                             continue
 
                         if stats['status'] == 'error':
@@ -1845,14 +1855,14 @@ class ImportManager(object):
 
                                 try:
 
-
                                     instance = ComplexTransactionImportScheme.objects.get(master_user=self.master_user,
                                                                                           user_code=content_object[
                                                                                               'user_code'])
 
-                                    serializer = ComplexTransactionImportSchemeSerializer(data=copy.deepcopy(content_object),
-                                                                                          instance=instance,
-                                                                                          context=self.get_serializer_context())
+                                    serializer = ComplexTransactionImportSchemeSerializer(
+                                        data=copy.deepcopy(content_object),
+                                        instance=instance,
+                                        context=self.get_serializer_context())
                                     serializer.is_valid(raise_exception=True)
                                     serializer.save()
 
@@ -1862,12 +1872,14 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Transaction Import Scheme for %s' % content_object['user_code']
+                                        'message'] = 'Error. Can\'t Overwrite Transaction Import Scheme for %s' % \
+                                                     content_object['user_code']
 
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Transaction Import Scheme %s already exists' % content_object['user_code']
+                                stats['error']['message'] = 'Transaction Import Scheme %s already exists' % \
+                                                            content_object['user_code']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -1952,12 +1964,14 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Simple Import Scheme for %s' % content_object['user_code']
+                                        'message'] = 'Error. Can\'t Overwrite Simple Import Scheme for %s' % \
+                                                     content_object['user_code']
 
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Simple Import Scheme %s already exists' % content_object['user_code']
+                                stats['error']['message'] = 'Simple Import Scheme %s already exists' % content_object[
+                                    'user_code']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -2036,12 +2050,14 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Complex Import Scheme for %s' % content_object['user_code']
+                                        'message'] = 'Error. Can\'t Overwrite Complex Import Scheme for %s' % \
+                                                     content_object['user_code']
 
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Complex Import Scheme %s already exists' % content_object['user_code']
+                                stats['error']['message'] = 'Complex Import Scheme %s already exists' % content_object[
+                                    'user_code']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -2095,8 +2111,6 @@ class ImportManager(object):
                                             user_code='-').pk  # TODO Add to EcosystemDefaults
 
                         # _l.info('content_object %s' % content_object)
-
-
 
                         serializer = CurrencySerializer(data=content_object,
                                                         context=self.get_serializer_context())
@@ -2166,12 +2180,12 @@ class ImportManager(object):
 
                     for content_object in item['content']:
 
-
                         if '__default_instrument_pricing_scheme__user_code' in content_object:
 
                             try:
 
-                                content_object['default_instrument_pricing_scheme'] = InstrumentPricingScheme.objects.get(
+                                content_object[
+                                    'default_instrument_pricing_scheme'] = InstrumentPricingScheme.objects.get(
                                     master_user=self.master_user,
                                     user_code=content_object['__default_instrument_pricing_scheme__user_code']).pk
 
@@ -2188,7 +2202,6 @@ class ImportManager(object):
 
                             except Exception as e:
                                 _l.info("Cant map default currency pricing scheme. Error: %s" % e)
-
 
                         serializer = PricingPolicySerializer(data=content_object,
                                                              context=self.get_serializer_context())
@@ -2227,7 +2240,8 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Pricing Policy %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Pricing Policy %s' % content_object[
+                                        'name']
 
                             else:
 
@@ -2255,7 +2269,7 @@ class ImportManager(object):
                     for content_object in item['content']:
 
                         serializer = EntityTooltipSerializer(data=content_object,
-                                                                    context=self.get_serializer_context())
+                                                             context=self.get_serializer_context())
 
                         stats = {
                             'content_type': item['entity'],
@@ -2306,7 +2320,7 @@ class ImportManager(object):
                     for content_object in item['content']:
 
                         serializer = ColorPaletteSerializer(data=content_object,
-                                                             context=self.get_serializer_context())
+                                                            context=self.get_serializer_context())
 
                         stats = {
                             'content_type': item['entity'],
@@ -2339,14 +2353,15 @@ class ImportManager(object):
                                         master_user=self.master_user, user_code=content_object['user_code'])
 
                                     serializer = ColorPaletteSerializer(data=content_object,
-                                                                               instance=instance,
-                                                                               context=self.get_serializer_context())
+                                                                        instance=instance,
+                                                                        context=self.get_serializer_context())
                                     serializer.is_valid(raise_exception=True)
                                     serializer.save()
 
                                 except Exception as error:
                                     stats['status'] = 'error'
-                                    stats['error']['message'] = 'Can\'t overwrite Color Palette Field %s ' % content_object['name']
+                                    stats['error']['message'] = 'Can\'t overwrite Color Palette Field %s ' % \
+                                                                content_object['name']
 
                             else:
 
@@ -2405,12 +2420,14 @@ class ImportManager(object):
 
                                 except Exception as error:
                                     stats['status'] = 'error'
-                                    stats['error']['message'] = 'Can\'t overwrite Instrument User Field %s ' % content_object['name']
+                                    stats['error']['message'] = 'Can\'t overwrite Instrument User Field %s ' % \
+                                                                content_object['name']
 
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Instrument User Field %s already exists' % content_object['name']
+                                stats['error']['message'] = 'Instrument User Field %s already exists' % content_object[
+                                    'name']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -2432,7 +2449,6 @@ class ImportManager(object):
 
                     for content_object in item['content']:
 
-
                         stats = {
                             'content_type': item['entity'],
                             'mode': self.instance.mode,
@@ -2444,7 +2460,6 @@ class ImportManager(object):
                         }
 
                         try:
-
 
                             try:
                                 instance = TransactionUserFieldModel.objects.get(
@@ -2461,7 +2476,8 @@ class ImportManager(object):
 
                         except Exception as error:
                             stats['status'] = 'error'
-                            stats['error']['message'] = 'Transaction User Field %s already exists' % content_object['name']
+                            stats['error']['message'] = 'Transaction User Field %s already exists' % content_object[
+                                'name']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -2484,7 +2500,7 @@ class ImportManager(object):
                     for content_object in item['content']:
 
                         serializer = InstrumentPricingSchemeSerializer(data=content_object,
-                                                               context=self.get_serializer_context())
+                                                                       context=self.get_serializer_context())
 
                         stats = {
                             'content_type': item['entity'],
@@ -2506,26 +2522,28 @@ class ImportManager(object):
                                 try:
 
                                     instance = InstrumentPricingScheme.objects.get(master_user=self.master_user,
-                                                                           name=content_object['name'])
+                                                                                   name=content_object['name'])
 
                                     serializer = InstrumentPricingSchemeSerializer(data=content_object,
-                                                                           instance=instance,
-                                                                           context=self.get_serializer_context())
+                                                                                   instance=instance,
+                                                                                   context=self.get_serializer_context())
                                     serializer.is_valid(raise_exception=True)
                                     serializer.save()
 
                                 except Exception as error:
 
-                                    _l.info('erro %s' % error )
+                                    _l.info('erro %s' % error)
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Instrument Pricing Scheme for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Instrument Pricing Scheme for %s' % \
+                                                     content_object['name']
 
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Instrument Pricing Scheme %s already exists' % content_object['name']
+                                stats['error']['message'] = 'Instrument Pricing Scheme %s already exists' % \
+                                                            content_object['name']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -2548,7 +2566,7 @@ class ImportManager(object):
                     for content_object in item['content']:
 
                         serializer = CurrencyPricingSchemeSerializer(data=content_object,
-                                                                       context=self.get_serializer_context())
+                                                                     context=self.get_serializer_context())
 
                         stats = {
                             'content_type': item['entity'],
@@ -2570,11 +2588,11 @@ class ImportManager(object):
                                 try:
 
                                     instance = CurrencyPricingScheme.objects.get(master_user=self.master_user,
-                                                                                   name=content_object['name'])
+                                                                                 name=content_object['name'])
 
                                     serializer = CurrencyPricingSchemeSerializer(data=content_object,
-                                                                                   instance=instance,
-                                                                                   context=self.get_serializer_context())
+                                                                                 instance=instance,
+                                                                                 context=self.get_serializer_context())
                                     serializer.is_valid(raise_exception=True)
                                     serializer.save()
 
@@ -2582,12 +2600,14 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Currency Pricing Scheme for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Currency Pricing Scheme for %s' % \
+                                                     content_object['name']
 
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Currency Pricing Scheme %s already exists' % content_object['name']
+                                stats['error']['message'] = 'Currency Pricing Scheme %s already exists' % \
+                                                            content_object['name']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -2610,7 +2630,7 @@ class ImportManager(object):
                     for content_object in item['content']:
 
                         serializer = ScheduleSerializer(data=content_object,
-                                                                     context=self.get_serializer_context())
+                                                        context=self.get_serializer_context())
 
                         stats = {
                             'content_type': item['entity'],
@@ -2632,11 +2652,11 @@ class ImportManager(object):
                                 try:
 
                                     instance = Schedule.objects.get(master_user=self.master_user,
-                                                                                 name=content_object['name'])
+                                                                    name=content_object['name'])
 
                                     serializer = ScheduleSerializer(data=content_object,
-                                                                                 instance=instance,
-                                                                                 context=self.get_serializer_context())
+                                                                    instance=instance,
+                                                                    context=self.get_serializer_context())
                                     serializer.is_valid(raise_exception=True)
                                     serializer.save()
 
@@ -2674,7 +2694,7 @@ class ImportManager(object):
                         if content_object['type'] == 1:
 
                             serializer = PricingProcedureSerializer(data=content_object,
-                                                                         context=self.get_serializer_context())
+                                                                    context=self.get_serializer_context())
 
                             stats = {
                                 'content_type': item['entity'],
@@ -2699,11 +2719,11 @@ class ImportManager(object):
                                     try:
 
                                         instance = PricingProcedure.objects.get(master_user=self.master_user,
-                                                                                     user_code=content_object['user_code'])
+                                                                                user_code=content_object['user_code'])
 
                                         serializer = PricingProcedureSerializer(data=content_object,
-                                                                                       instance=instance,
-                                                                                       context=self.get_serializer_context())
+                                                                                instance=instance,
+                                                                                context=self.get_serializer_context())
                                         serializer.is_valid(raise_exception=True)
                                         serializer.save()
 
@@ -2714,12 +2734,14 @@ class ImportManager(object):
 
                                         stats['status'] = 'error'
                                         stats['error'][
-                                            'message'] = 'Error. Can\'t Overwrite Pricing Procedure for %s' % content_object['name']
+                                            'message'] = 'Error. Can\'t Overwrite Pricing Procedure for %s' % \
+                                                         content_object['name']
 
                                 else:
 
                                     stats['status'] = 'error'
-                                    stats['error']['message'] = 'Pricing Procedure %s already exists' % content_object['name']
+                                    stats['error']['message'] = 'Pricing Procedure %s already exists' % content_object[
+                                        'name']
 
                             self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -2742,7 +2764,7 @@ class ImportManager(object):
                     for content_object in item['content']:
 
                         serializer = RequestDataFileProcedureSerializer(data=content_object,
-                                                                context=self.get_serializer_context())
+                                                                        context=self.get_serializer_context())
 
                         stats = {
                             'content_type': item['entity'],
@@ -2764,11 +2786,11 @@ class ImportManager(object):
                                 try:
 
                                     instance = RequestDataFileProcedure.objects.get(master_user=self.master_user,
-                                                                            name=content_object['name'])
+                                                                                    name=content_object['name'])
 
                                     serializer = RequestDataFileProcedureSerializer(data=content_object,
-                                                                            instance=instance,
-                                                                            context=self.get_serializer_context())
+                                                                                    instance=instance,
+                                                                                    context=self.get_serializer_context())
                                     serializer.is_valid(raise_exception=True)
                                     serializer.save()
 
@@ -2776,7 +2798,8 @@ class ImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Data Procedure for %s' % content_object['name']
+                                        'message'] = 'Error. Can\'t Overwrite Data Procedure for %s' % content_object[
+                                        'name']
 
                             else:
 
@@ -2794,7 +2817,6 @@ class ImportManager(object):
     def print_entities_in_file(self, configuration_section):
 
         for item in configuration_section['items']:
-
             _l.info("In file: %s" % item['entity'])
 
     def import_configuration(self, configuration_section):
@@ -2818,7 +2840,6 @@ class ImportManager(object):
             # Import order matters
             #
 
-
             for item in configuration_section['items']:
 
                 if 'content' in item:
@@ -2833,7 +2854,6 @@ class ImportManager(object):
             # Import Pricing
 
             if can_import:
-
                 self.import_instrument_pricing_schemes(configuration_section)
                 self.import_currency_pricing_schemes(configuration_section)
                 self.import_pricing_procedures(configuration_section)
@@ -2974,22 +2994,25 @@ class ImportManager(object):
 
                                 try:
 
-                                    if entity_object['entity'] in ['integrations.accounttypemapping', 'integrations.instrumenttypemapping', 'integrations.pricingpolicymapping']:
-                                        content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
+                                    if entity_object['entity'] in ['integrations.accounttypemapping',
+                                                                   'integrations.instrumenttypemapping',
+                                                                   'integrations.pricingpolicymapping']:
+                                        content_object['content_object'] = map_to_model[
+                                            entity_object['entity']].objects.get(
                                             master_user=self.master_user, user_code=content_object['___user_code']).pk
                                     else:
 
-                                        content_object['content_object'] = map_to_model[entity_object['entity']].objects.get(
+                                        content_object['content_object'] = map_to_model[
+                                            entity_object['entity']].objects.get(
                                             user_code=content_object['___user_code']).pk
 
                                 except map_to_model[entity_object['entity']].DoesNotExist:
                                     error = True
 
-        
                             if error == False:
 
                                 content_object['provider'] = 1
-                            
+
                                 serializer = map_to_serializer[entity_object['entity']](data=content_object,
                                                                                         context=self.get_serializer_context())
 
@@ -3003,9 +3026,10 @@ class ImportManager(object):
                                         try:
 
                                             instance = map_to_mapping[entity_object['entity']].objects.get(
-                                                    value=content_object['value'],
-                                                    provider=1,
-                                                    master_user=self.master_user, content_object=content_object['content_object'])
+                                                value=content_object['value'],
+                                                provider=1,
+                                                master_user=self.master_user,
+                                                content_object=content_object['content_object'])
 
                                             serializer = map_to_serializer[entity_object['entity']](data=content_object,
                                                                                                     instance=instance,
@@ -3025,19 +3049,23 @@ class ImportManager(object):
                                             stats['status'] = 'error'
 
                                             if '___user_code' in content_object:
-                                                stats['error']['message'] = 'Error. Can\'t Overwrite  Mapping %s' % content_object['___user_code']
+                                                stats['error']['message'] = 'Error. Can\'t Overwrite  Mapping %s' % \
+                                                                            content_object['___user_code']
 
                                             if '___user_code' in content_object:
-                                                stats['error']['message'] = 'Error. Can\'t Overwrite  Mapping %s' % content_object['___user_code']
+                                                stats['error']['message'] = 'Error. Can\'t Overwrite  Mapping %s' % \
+                                                                            content_object['___user_code']
 
                                     else:
                                         stats['status'] = 'error'
 
                                         if '___user_code' in content_object:
-                                            stats['error']['message'] = 'Mapping %s already exists' % content_object['___user_code']
+                                            stats['error']['message'] = 'Mapping %s already exists' % content_object[
+                                                '___user_code']
 
                                         if '___user_code' in content_object:
-                                            stats['error']['message'] = 'Mapping %s already exists' % content_object['___user_code']
+                                            stats['error']['message'] = 'Mapping %s already exists' % content_object[
+                                                '___user_code']
 
                             self.instance.stats['mappings'][entity_object['entity']].append(stats)
 
@@ -3052,10 +3080,30 @@ class ImportManager(object):
             _l.info('Import Mappings Error %s' % error)
             _l.info(traceback.format_exc())
 
-@shared_task(name='configuration_import.configuration_import_as_json', bind=True)
-def configuration_import_as_json(self, instance):
 
+@shared_task(name='configuration_import.configuration_import_as_json', bind=True)
+def configuration_import_as_json(self, task_id):
     try:
+
+        _l.info("Start configuration_import_as_json task_id %s" % task_id)
+
+        task = CeleryTask.objects.get(id=task_id)
+
+        task.celery_task_id=self.request.id
+        task.save()
+
+        send_system_message(master_user=task.master_user,
+                            performed_by=task.member.username,
+                            section='import',
+                            type='info',
+                            title='New Configuration Import (manual)',
+                            description=''
+                            )
+
+        instance = ConfigurationImportAsJson(data=task.options_object['data'],
+                                             mode=task.options_object['mode'],
+                                             master_user=task.master_user,
+                                             member=task.member)
 
         _l.info('instance %s' % instance)
         _l.info('instance.mode %s' % instance.mode)
@@ -3083,30 +3131,31 @@ def configuration_import_as_json(self, instance):
         import_manager.count_progress_total()
 
         if configuration_section:
-
             _l.info('Importing configuration')
 
             import_manager.import_configuration(configuration_section)
 
         if mappings_section:
-
             _l.info('Importing mappings')
 
             import_manager.import_mappings(mappings_section)
 
         _l.info('Import done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
+
+        task.status = CeleryTask.STATUS_DONE
+        task.save()
+
     except Exception as e:
 
-        _l.info("Error occurred %s" % e)
-        _l.info(traceback.format_exc())
+        _l.error("configuration_import_as_json. Error occurred %s" % e)
+        _l.error("configuration_import_as_json %s" % traceback.format_exc())
 
-    return instance
+    return task
 
 
 @shared_task(name='configuration_import.generate_configuration_entity_archetype', bind=True)
 def generate_configuration_entity_archetype(self, instance):
-
     _l.info('generate_configuration_entity_archetype init')
 
     handler = ConfigurationEntityArchetypeGenerateHandler()
