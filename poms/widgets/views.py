@@ -142,6 +142,12 @@ class CollectHistoryViewSet(AbstractViewSet):
         pricing_policy_id = request.data.get('pricing_policy', None)
         cost_method_id = request.data.get('cost_method', CostMethod.AVCO)
 
+        if portfolios and isinstance(portfolios, str):
+            portfolios = portfolios.split(',')
+
+        if accounts and isinstance(accounts, str):
+            accounts = accounts.split(',')
+
         ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
 
         if not report_currency_id:
