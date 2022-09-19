@@ -2,7 +2,7 @@ import traceback
 
 from celery import shared_task
 
-import logging
+
 
 from poms.accounts.models import Account
 from poms.celery_tasks.models import CeleryTask
@@ -17,6 +17,7 @@ from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.system_messages.handlers import send_system_message
 from poms.widgets.models import BalanceReportHistory, BalanceReportHistoryItem
 
+import logging
 _l = logging.getLogger('poms.widgets')
 
 

@@ -14,6 +14,8 @@ from poms.widgets.models import BalanceReportHistory
 from poms.widgets.serializers import CollectHistorySerializer
 from poms.widgets.tasks import collect_balance_report_history
 
+import logging
+_l = logging.getLogger('poms.widgets')
 
 class HistoryNavViewSet(AbstractViewSet):
 
@@ -29,10 +31,13 @@ class HistoryNavViewSet(AbstractViewSet):
         segmentation_type = request.query_params.get('segmentation_type', None)
 
         if not date_from:
-            raise ValidationError({"error_message": "Date from is not set"})
+           date_from = str(datetime.datetime.now().year) + "-01-01"
 
         if not date_to:
-            raise ValidationError({"error_message": "Date to is not set"})
+            date_to = datetime.datetime.now().strftime("%Y-%m-%d")
+
+        _l.info('date_from %s ' % date_from)
+        _l.info('date_to %s ' % date_to)
 
         ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
 
@@ -116,14 +121,14 @@ class HistoryNavViewSet(AbstractViewSet):
 
                 for category in result_item['categories']:
 
-                    if item.category == category.name:
+                    if item.category == category['name']:
                         category['items'].append({
                             'name': item.name,
                             'key': item.key,
                             'value': item.value
                         })
 
-            items.append(history_item)
+            items.append(result_item)
 
         result = {
 
