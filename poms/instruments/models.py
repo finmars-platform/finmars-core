@@ -389,6 +389,21 @@ class CostMethod(AbstractClassModel):
         verbose_name_plural = gettext_lazy('cost methods')
 
 
+class Country(DataTimeStampedModel):
+
+   name = models.CharField(max_length=255, verbose_name=gettext_lazy('name'))
+
+   alpha_2 = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('alpha 2'))
+   alpha_3 = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('alpha 3'))
+   country_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('country code'))
+   iso_3166_2 = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('iso_3166_2'))
+   region = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('region'))
+   sub_region = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('sub region'))
+   intermediate_region = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('intermediate region'))
+   region_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('region code'))
+   sub_region_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('sub region code'))
+   intermediate_region_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('intermediate region code'))
+
 
 class PricingPolicy(NamedModel, DataTimeStampedModel):
     # DISABLED = 0
@@ -798,6 +813,10 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
     position_reporting = models.PositiveSmallIntegerField(choices=VALUE_TYPES, default=DIRECT_POSITION,
                                                           verbose_name=gettext_lazy('position reporting'))
+
+    country = models.ForeignKey(Country, null=True, blank=True,
+                                verbose_name=gettext_lazy('country'),
+                                on_delete=models.SET_NULL)
 
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):

@@ -20,7 +20,7 @@ from poms.widgets.models import BalanceReportHistory, BalanceReportHistoryItem
 
 
 from poms.widgets.utils import find_next_date_to_process, collect_asset_type_category, collect_currency_category, \
-    collect_country_category, collect_sector_category
+    collect_country_category, collect_sector_category, collect_region_category
 
 import logging
 _l = logging.getLogger('poms.widgets')
@@ -168,6 +168,11 @@ def collect_balance_report_history(self, task_id):
             collect_country_category(instance_serialized, balance_report_history)
         except Exception as e:
             _l.error("collect_balance_report_history. Could not collect country category")
+
+        try:
+            collect_region_category(instance_serialized, balance_report_history)
+        except Exception as e:
+            _l.error("collect_balance_report_history. Could not collect region category")
 
         try:
             collect_sector_category(instance_serialized, balance_report_history)

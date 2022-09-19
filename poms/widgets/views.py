@@ -20,6 +20,7 @@ from poms.widgets.tasks import collect_balance_report_history
 import logging
 _l = logging.getLogger('poms.widgets')
 
+
 class HistoryNavViewSet(AbstractViewSet):
 
     def list(self, request):

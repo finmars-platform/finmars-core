@@ -22,7 +22,7 @@ from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, D
     ManualPricingFormula, AccrualCalculationSchedule, InstrumentFactorSchedule, EventSchedule, \
     PricingPolicy, EventScheduleAction, EventScheduleConfig, GeneratedEvent, PricingCondition, InstrumentTypeAccrual, \
     InstrumentTypeEvent, InstrumentTypeInstrumentAttribute, InstrumentTypeInstrumentFactorSchedule, \
-    ExposureCalculationModel, LongUnderlyingExposure, ShortUnderlyingExposure
+    ExposureCalculationModel, LongUnderlyingExposure, ShortUnderlyingExposure, Country
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, ModelWithAttributesOnlySerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
@@ -96,6 +96,13 @@ class PricingConditionSerializer(PomsClassSerializer):
     class Meta(PomsClassSerializer.Meta):
         model = PricingCondition
 
+
+class CountrySerializer(serializers.ModelSerializer):
+    class Meta(PomsClassSerializer.Meta):
+        fields = ['id', 'name', 'country_code',
+                  'region', 'region_code',
+                  'sub_region', 'sub_region_code']
+        model = Country
 
 class ExposureCalculationModelSerializer(PomsClassSerializer):
     class Meta(PomsClassSerializer.Meta):
@@ -916,6 +923,8 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
     factor_schedules = serializers.PrimaryKeyRelatedField(many=True, required=False, allow_null=True, read_only=True)
     event_schedules = serializers.PrimaryKeyRelatedField(many=True, required=False, allow_null=True, read_only=True)
 
+    country_object = CountrySerializer(source='country', read_only=True)
+
     # attributes = InstrumentAttributeSerializer(many=True, required=False, allow_null=True)
 
     # tags = TagField(many=True, required=False, allow_null=True)
@@ -955,6 +964,8 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
             'long_underlying_exposure', 'short_underlying_exposure',
 
             'position_reporting'
+            
+            'country', 'country_object'
 
             # 'attributes',
             # 'tags', 'tags_object'

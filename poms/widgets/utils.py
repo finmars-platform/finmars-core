@@ -116,23 +116,73 @@ def collect_sector_category(instance_serialized, balance_report_history):
 
 
 def collect_country_category(instance_serialized, balance_report_history):
-    asset_types_attribute_type = GenericAttributeType.objects.get(master_user_id=instance_serialized['master_user'],
-                                                                  user_code='country')
 
-    asset_types = GenericClassifier.objects.get(attribute_type=asset_types_attribute_type).values_list('name',
-                                                                                                       flat=True)
+    countries = []
 
-    for asset_type in asset_types:
+    for _item in instance_serialized['items']:
+
+        if _item['instrument_object']:
+
+            if _item['instrument_object']['country_object']:
+
+                if _item['instrument_object']['country_object']['name'] not in countries:
+                    countries.append(_item['instrument_object']['country_object']['name'])
+
+    for country in countries:
         item = BalanceReportHistoryItem()
         item.balance_report_history = balance_report_history
         item.category = 'Country'
         item.key = 'nav'
-        item.name = asset_type
+        item.name = country
 
-        asset_type_items = filter_report_items_by_instrument_attribute_type(asset_types_attribute_type.id, asset_type,
-                                                                            instance_serialized)
+        country_items = []
 
-        item.value = get_total_from_report_items('market_value', asset_type_items)
+        for _item in instance_serialized['items']:
+
+            if _item['instrument_object']:
+
+                if _item['instrument_object']['country_object']:
+
+                    if _item['instrument_object']['country_object']['name'] == country:
+                        country_items.append(_item)
+
+        item.value = get_total_from_report_items('market_value', country_items)
+
+        item.save()
+
+
+def collect_region_category(instance_serialized, balance_report_history):
+
+    regions = []
+
+    for _item in instance_serialized['items']:
+
+        if _item['instrument_object']:
+
+            if _item['instrument_object']['country_object']:
+
+                if _item['instrument_object']['country_object']['region'] not in regions:
+                    regions.append(_item['instrument_object']['country_object']['region'])
+
+    for region in regions:
+        item = BalanceReportHistoryItem()
+        item.balance_report_history = balance_report_history
+        item.category = 'Region'
+        item.key = 'nav'
+        item.name = region
+
+        region_items = []
+
+        for _item in instance_serialized['items']:
+
+            if _item['instrument_object']:
+
+                if _item['instrument_object']['country_object']:
+
+                    if _item['instrument_object']['country_object']['region'] == region:
+                        region_items.append(_item)
+
+        item.value = get_total_from_report_items('market_value', region_items)
 
         item.save()
 

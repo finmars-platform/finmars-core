@@ -146,6 +146,7 @@ router.register(r'instruments/daily-pricing-model', instruments.DailyPricingMode
 router.register(r'instruments/accrual-calculation-model', instruments.AccrualCalculationModelClassViewSet)
 router.register(r'instruments/payment-size-detail', instruments.PaymentSizeDetailViewSet)
 router.register(r'instruments/pricing-condition', instruments.PricingConditionViewSet)
+router.register(r'instruments/country', instruments.CountryViewSet)
 router.register(r'instruments/exposure-calculation-model', instruments.ExposureCalculationModelViewSet)
 router.register(r'instruments/long-underlying-exposure', instruments.LongUnderlyingExposureViewSet)
 router.register(r'instruments/short-underlying-exposure', instruments.ShortUnderlyingExposureViewSet)
@@ -496,8 +497,8 @@ router.register(r'recovery/layout', layout_recovery.FixLayoutViewSet, 'recovery_
 
 
 
-router.register(r'widgets/history/nav', csrf_exempt(widgets.HistoryNavViewSet), 'widgets_history_nav')
-router.register(r'widgets/stats', csrf_exempt(widgets.StatsViewSet), 'widgets_stats')
+router.register(r'widgets/history/nav', widgets.HistoryNavViewSet, 'widgets_history_nav')
+router.register(r'widgets/stats', widgets.StatsViewSet, 'widgets_stats')
 router.register(r'widgets/collect-history', widgets.CollectHistoryViewSet, 'widgets_collect_history')
 
 
