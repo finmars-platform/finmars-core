@@ -95,8 +95,8 @@ class HistoryNavViewSet(AbstractViewSet):
 
             result_item = {}
 
-            result_item['date'] = str(history_item['date'])
-            result_item['nav'] = history_item['nav']
+            result_item['date'] = str(history_item.date)
+            result_item['nav'] = history_item.nav
 
             categories = []
 
