@@ -116,11 +116,11 @@ class HistoryNavViewSet(AbstractViewSet):
 
                 for category in result_item['categories']:
 
-                    if item.category == category['name']:
+                    if item.category == category.name:
                         category['items'].append({
-                            'name': item['name'],
-                            'key': item['key'],
-                            'value': item['value']
+                            'name': item.name,
+                            'key': item.key,
+                            'value': item.value
                         })
 
             items.append(history_item)
