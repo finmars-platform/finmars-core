@@ -1,5 +1,6 @@
 import datetime
 
+from poms.accounts.models import Account
 from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_list_of_dates_between_two_dates, check_if_last_day_of_month
 from poms.common.views import AbstractViewSet
@@ -7,7 +8,9 @@ from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from django.db import transaction
 
-from poms.instruments.models import CostMethod
+from poms.currencies.models import Currency
+from poms.instruments.models import CostMethod, PricingPolicy
+from poms.portfolios.models import Portfolio
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import EcosystemDefault
 from poms.widgets.models import BalanceReportHistory
@@ -26,8 +29,8 @@ class HistoryNavViewSet(AbstractViewSet):
         currency = request.query_params.get('currency', None)
         pricing_policy = request.query_params.get('pricing_policy', None)
         cost_method = request.query_params.get('cost_method', None)
-        portfolios = request.query_params.get('portfolios', None)
-        accounts = request.query_params.get('accounts', None)
+        portfolios = request.query_params.get('portfolios', [])
+        accounts = request.query_params.get('accounts', [])
         segmentation_type = request.query_params.get('segmentation_type', None)
 
         if not date_from:
@@ -130,7 +133,56 @@ class HistoryNavViewSet(AbstractViewSet):
 
             items.append(result_item)
 
+        currency_object = Currency.objects.get(id=currency)
+        pricing_policy_object = PricingPolicy.objects.get(id=pricing_policy)
+        cost_method_object = CostMethod.objects.get(id=cost_method)
+
+        portfolios_objects = Portfolio.objects.filter(id__in=portfolios)
+        accounts_objects = Account.objects.filter(id__in=accounts)
+
+        portfolios_objects_json = []
+        accounts_objects_json = []
+
+        for _item in portfolios_objects:
+            portfolios_objects_json.append({
+                "id": _item.id,
+                "name": _item.name,
+                "user_code": _item.user_code
+            })
+
+        for _item in accounts_objects:
+            accounts_objects_json.append({
+                "id": _item.id,
+                "name": _item.name,
+                "user_code": _item.user_code
+            })
+
         result = {
+            "date_from": str(date_from),
+            "date_to": str(date_to),
+            "segmentation_type": segmentation_type,
+            "currency": currency,
+            "currency_object": {
+                "id": currency_object.id,
+                "name": currency_object.name,
+                "user_code": currency_object.user_code
+            },
+            "pricing_policy": pricing_policy,
+            "pricing_policy_object": {
+                "id": pricing_policy_object.id,
+                "name": pricing_policy_object.name,
+                "user_code": pricing_policy_object.user_code
+            },
+            "cost_method": cost_method,
+            "cost_method_object": {
+                "id": cost_method_object.id,
+                "name": cost_method_object.name,
+                "user_code": cost_method_object.user_code
+            },
+            "portfolios": portfolios,
+            "accounts": accounts,
+            "item_portfolios": portfolios_objects_json,
+            "item_accounts": accounts_objects_json,
 
             "items": items
 
