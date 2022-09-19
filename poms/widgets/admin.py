@@ -1,0 +1,27 @@
+from django.contrib import admin
+
+from poms.common.admin import AbstractModelAdmin
+from poms.widgets.models import BalanceReportHistory, BalanceReportHistoryItem
+
+
+class BalanceReportHistoryAdmin(AbstractModelAdmin):
+    model = BalanceReportHistory
+    list_display = ['id', 'master_user', 'date', 'nav']
+    list_select_related = ['master_user']
+    search_fields = ['id', 'date']
+    raw_id_fields = ['master_user']
+
+
+admin.site.register(BalanceReportHistory, BalanceReportHistoryAdmin)
+
+
+
+class BalanceReportHistoryItemAdmin(AbstractModelAdmin):
+    model = BalanceReportHistoryItem
+    list_display = ['id', 'balance_report_history', 'category', 'name', 'key']
+    list_select_related = ['balance_report_history']
+    search_fields = ['id', 'category', 'name', 'key']
+    raw_id_fields = ['balance_report_history']
+
+
+admin.site.register(BalanceReportHistoryItem, BalanceReportHistoryItemAdmin)

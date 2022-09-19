@@ -246,7 +246,7 @@ def get_content_type_by_name(name):
     return content_type
 
 
-def get_list_of_dates_between_two_dates(date_from, date_to):
+def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
 
     result = []
     format = '%Y-%m-%d'
@@ -261,7 +261,10 @@ def get_list_of_dates_between_two_dates(date_from, date_to):
 
     for i in range(diff.days + 1):
         day = date_from + timedelta(days=i)
-        result.append(day)
+        if to_string:
+            result.append(str(day))
+        else:
+            result.append(day)
 
     return result
 
@@ -269,3 +272,11 @@ def get_list_of_dates_between_two_dates(date_from, date_to):
 def convert_name_to_key(name):
 
     return name.strip().lower().replace(' ', '_')
+
+
+def check_if_last_day_of_month(to_date):
+    delta = datetime.timedelta(days=1)
+    next_day = to_date + delta
+    if to_date.month != next_day.month:
+        return True
+    return False

@@ -1954,7 +1954,8 @@ class ComplexTransactionCsvFileImport:
                  scheme=None, file_path=None, skip_first_line=None, delimiter=None, quotechar=None, encoding=None,
                  error_handling=None, missing_data_handler=None, error=None, error_message=None, error_row_index=None,
                  error_rows=None,
-                 total_rows=None, processed_rows=None, file_name=None, stats_file_report=None):
+                 total_rows=None, processed_rows=None, file_name=None, stats_file_report=None,
+                 json_data=None):
         self.task_id = task_id
         self.task_status = task_status
 
@@ -1962,6 +1963,8 @@ class ComplexTransactionCsvFileImport:
 
         self.master_user = master_user
         self.member = member
+
+        self.json_data = json_data
 
         self.scheme = scheme
         self.file_path = file_path
@@ -2001,6 +2004,7 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
 
     scheme = ComplexTransactionImportSchemeRestField(required=False)
     file = serializers.FileField(required=False, allow_null=True)
+    json_data = serializers.JSONField(required=False, allow_null=True)
 
     stats_file_report = serializers.ReadOnlyField()
 
@@ -2016,31 +2020,38 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
 
         _l.debug('validated_data %s' % validated_data)
 
-        filetmp = file = validated_data.get('file', None)
+        filetmp = validated_data.get('file', None)
+        json_data = validated_data.get('json_data', None)
 
         print('filetmp %s' % filetmp)
 
-        file_name = None
-        if filetmp:
-            file_name = filetmp.name
 
-            print('file_name %s' % file_name)
-
-            validated_data['file_name'] = file_name
-
-        if validated_data.get('task_id', None):
-            validated_data.pop('file', None)
+        if json_data:
+            # maybe useless
+            validated_data['json_data'] = validated_data['json_data']
         else:
-            file = validated_data.pop('file', None)
-            if file:
-                master_user = validated_data['master_user']
-                file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
-                file_path = self._get_path(master_user, file.name)
 
-                SFS.save(file_path, file)
-                validated_data['file_path'] = file_path
+            file_name = None
+            if filetmp:
+                file_name = filetmp.name
+
+                print('file_name %s' % file_name)
+
+                validated_data['file_name'] = file_name
+
+            if validated_data.get('task_id', None):
+                validated_data.pop('file', None)
             else:
-                raise serializers.ValidationError({'file': gettext_lazy('Required field.')})
+                file = validated_data.pop('file', None)
+                if file:
+                    master_user = validated_data['master_user']
+                    file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
+                    file_path = self._get_path(master_user, file.name)
+
+                    SFS.save(file_path, file)
+                    validated_data['file_path'] = file_path
+                else:
+                    raise serializers.ValidationError({'file': gettext_lazy('Required field.')})
 
         return ComplexTransactionCsvFileImport(**validated_data)
 

@@ -44,6 +44,7 @@ class CeleryTask(TimeStampedModel):
     result = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('result'))
 
     notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
+    error_message = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('error message'))
 
     file_report = models.ForeignKey('file_reports.FileReport',null=True, blank=True, verbose_name=gettext_lazy('file report'), on_delete=models.SET_NULL)
 

@@ -44,6 +44,8 @@ import poms.credentials.views as credentials
 import poms.system_messages.views as system_messages
 import poms.layout_recovery.views as layout_recovery
 
+import poms.widgets.views as widgets
+
 import poms.common.views as common
 from poms.auth_tokens.views import ObtainAuthToken, SetAuthToken, CreateUser, CreateMasterUser, CreateMember, \
     DeleteMember, RenameMasterUser, MasterUserChangeOwner
@@ -493,13 +495,18 @@ router.register(r'recovery/generate-layout-archetype', layout_recovery.GenerateL
 router.register(r'recovery/layout', layout_recovery.FixLayoutViewSet, 'recovery_layout')
 
 
+
+router.register(r'widgets/history/nav', widgets.HistoryNavViewSet, 'widgets_history_nav')
+router.register(r'widgets/stats', widgets.StatsViewSet, 'widgets_stats')
+router.register(r'widgets/collect-history', widgets.CollectHistoryViewSet, 'widgets_collect_history')
+
+
 # router.register(r'pricing/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view()), 'pricing_broker_bloomberg')
 
 
 
 urlpatterns = [
     re_path(r'^v1/', include(router.urls)),
-
 
     # external callbacks
 
@@ -526,6 +533,9 @@ urlpatterns = [
     re_path(r'^authorizer/create-member/', CreateMember.as_view(), name='create-member'),
     re_path(r'^authorizer/delete-member/', DeleteMember.as_view(), name='delete-member'),
     re_path(r'^authorizer/master-user-change-owner/', MasterUserChangeOwner.as_view(), name='master-user-change-owner'),
+
+
+
 
 
 ]

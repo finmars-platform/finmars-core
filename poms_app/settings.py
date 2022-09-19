@@ -104,6 +104,7 @@ INSTALLED_APPS = [
     'poms.layout_recovery',
 
     'poms.auth_tokens',
+    'poms.widgets',
 
     'django.contrib.admin',
     'django.contrib.admindocs',
