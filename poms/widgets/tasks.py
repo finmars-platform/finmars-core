@@ -231,12 +231,21 @@ def collect_balance_report_history(self, task_id):
 
         _l.info('task.options_object %s' % task.options_object)
 
-        report_currency = Currency.objects.get(id=task.options_object['report_currency_id'])
+        report_currency = Currency.objects.get(id=task.options_object.get('report_currency_id', None))
         report_date = task.options_object['report_date']
-        cost_method = CostMethod.objects.get(id=task.options_object['cost_method_id'])
-        pricing_policy = PricingPolicy.objects.get(id=task.options_object['pricing_policy_id'])
-        portfolios = list(Portfolio.objects.filter(id__in=task.options_object['portfolios']))
-        accounts = list(Account.objects.filter(id__in=task.options_object['accounts']))
+        cost_method = CostMethod.objects.get(id=task.options_object.get('cost_method_id', None))
+        pricing_policy = PricingPolicy.objects.get(id=task.options_object.get('pricing_policy_id', None))
+
+        portfolios_ids = task.options_object.get('portfolios')
+        if not portfolios_ids:
+            portfolios_ids = []
+
+        accounts_ids = task.options_object.get('accounts')
+        if not accounts_ids:
+            accounts_ids = []
+
+        portfolios = list(Portfolio.objects.filter(id__in=portfolios_ids))
+        accounts = list(Account.objects.filter(id__in=accounts_ids))
 
         proxy_user = ProxyUser(task.member, task.master_user)
         proxy_request = ProxyRequest(proxy_user)
