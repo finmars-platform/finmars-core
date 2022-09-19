@@ -992,6 +992,23 @@ def serialize_report_item_instrument(item):
         "short_name": item.instrument_type.short_name
     }
 
+    country = None
+    country_id = None
+
+    if item.country:
+        country_id = item.country.id
+        country = {
+            "id": item.country.id,
+            "name": item.country.name,
+            "user_code": item.country.user_code,
+            "country_code": item.country.country_code,
+            "region": item.country.region,
+            "region_code": item.country.region_code,
+            "sub_region": item.country.sub_region,
+            "sub_region_code": item.country.sub_region_code,
+        }
+
+
     result = {
         "id": item.id,
         "name": item.name,
@@ -1013,7 +1030,9 @@ def serialize_report_item_instrument(item):
         "maturity_price": item.maturity_price,
         "attributes": attributes,
         "instrument_type": item.instrument_type.id,
-        "instrument_type_object": instrument_type
+        "instrument_type_object": instrument_type,
+        "country": country_id,
+        "country_object": country
     }
 
     return result
