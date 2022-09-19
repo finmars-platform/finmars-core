@@ -286,7 +286,7 @@ def collect_balance_report_history(self, task_id):
 
         balance_report_history.save()
 
-        _l.info('instance_serialized %s' % instance_serialized)
+        # _l.info('instance_serialized %s' % instance_serialized)
 
         nav = 0
         for item in instance_serialized['items']:

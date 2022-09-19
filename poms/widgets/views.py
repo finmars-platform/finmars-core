@@ -34,6 +34,20 @@ class HistoryNavViewSet(AbstractViewSet):
         if not date_to:
             raise ValidationError({"error_message": "Date to is not set"})
 
+        ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
+
+        if not currency:
+            currency = ecosystem_default.currency_id
+
+        if not pricing_policy:
+            pricing_policy = ecosystem_default.pricing_policy_id
+
+        if not cost_method:
+            cost_method = CostMethod.AVCO
+
+        if not segmentation_type:
+            segmentation_type = 'months'
+
         balance_report_histories = BalanceReportHistory.objects.filter(
             master_user=request.user.master_user,
             cost_method=cost_method,
