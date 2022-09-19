@@ -40,6 +40,12 @@ class InstrumentsConfig(AppConfig):
         for country in countries:
             item, created = Country.objects.get_or_create(name=country['name'])
 
+
+            item.name = country['name']
+            item.user_code = country['name']
+            item.short_name = country['name']
+            item.description = country['name']
+
             item.alpha_2 = country['alpha-2']
             item.alpha_3 = country['alpha-3']
             item.country_code = country['country-code']

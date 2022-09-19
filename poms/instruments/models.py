@@ -392,6 +392,9 @@ class CostMethod(AbstractClassModel):
 class Country(DataTimeStampedModel):
 
    name = models.CharField(max_length=255, verbose_name=gettext_lazy('name'))
+   user_code = models.CharField(max_length=255, blank=True, default='',  verbose_name=gettext_lazy('user code'))
+   short_name = models.CharField(max_length=255, blank=True, default='', verbose_name=gettext_lazy('short name'))
+   description = models.TextField(blank=True, default='', verbose_name=gettext_lazy('description'))
 
    alpha_2 = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('alpha 2'))
    alpha_3 = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('alpha 3'))

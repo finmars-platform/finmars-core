@@ -99,7 +99,7 @@ class PricingConditionSerializer(PomsClassSerializer):
 
 class CountrySerializer(serializers.ModelSerializer):
     class Meta(PomsClassSerializer.Meta):
-        fields = ['id', 'name', 'country_code',
+        fields = ['id', 'name', 'user_code', 'country_code',
                   'region', 'region_code',
                   'sub_region', 'sub_region_code']
         model = Country
@@ -963,7 +963,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
 
             'long_underlying_exposure', 'short_underlying_exposure',
 
-            'position_reporting'
+            'position_reporting',
             
             'country', 'country_object'
 
@@ -1328,6 +1328,7 @@ class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttri
 
     pricing_condition_object = PricingConditionSerializer(source='pricing_condition', read_only=True)
     payment_size_detail_object = PaymentSizeDetailSerializer(source='payment_size_detail', read_only=True)
+    country_object = CountrySerializer(source='country', read_only=True)
 
     class Meta:
         model = Instrument
@@ -1352,7 +1353,9 @@ class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttri
             'reference_for_pricing',
             'maturity_date', 'maturity_price',
             'price_multiplier', 'accrued_multiplier',
-            'default_price', 'default_accrued'
+            'default_price', 'default_accrued',
+
+            'country', 'country_object'
 
         ]
 
