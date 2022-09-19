@@ -5,6 +5,7 @@ from poms.common.utils import get_list_of_dates_between_two_dates, check_if_last
 from poms.common.views import AbstractViewSet
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
+from django.db import transaction
 
 from poms.instruments.models import CostMethod
 from poms.system_messages.handlers import send_system_message
@@ -199,7 +200,7 @@ class CollectHistoryViewSet(AbstractViewSet):
 
         celery_task.save()
 
-        collect_balance_report_history.apply_async(kwargs={'task_id': celery_task.id})
+        transaction.on_commit(lambda: collect_balance_report_history.apply_async(kwargs={'task_id': celery_task.id}))
 
         send_system_message(master_user=parent_task.master_user,
                             performed_by=parent_task.member.username,
