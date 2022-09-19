@@ -100,7 +100,7 @@ class HistoryNavViewSet(AbstractViewSet):
 
             categories = []
 
-            for item in history_item.items:
+            for item in history_item.items.all():
 
                 if item.category not in categories:
                     categories.append(item.category)
@@ -112,7 +112,7 @@ class HistoryNavViewSet(AbstractViewSet):
                     "items": []
                 })
 
-            for item in history_item.items:
+            for item in history_item.items.all():
 
                 for category in result_item['categories']:
 
