@@ -345,9 +345,9 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
         object_data['maturity_date'] = '2999-01-01'
 
     try:
-        if 'country_code_alpha_3' in source_data:
+        if 'country' in source_data:
 
-            country = Country.objects.get(alpha_3=source_data['country_code_alpha_3'])
+            country = Country.objects.get(alpha_2=source_data['country']['code'])
 
             object_data['country'] = country.id
 
