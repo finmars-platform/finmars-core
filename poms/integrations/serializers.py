@@ -16,6 +16,7 @@ from rest_framework.validators import UniqueTogetherValidator
 import uuid
 
 from poms.accounts.fields import AccountField, AccountTypeField
+from poms.celery_tasks.models import CeleryTask
 from poms.common.fields import ExpressionField, DateTimeTzAwareField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
@@ -1209,15 +1210,35 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
                     task_result_overrides = validated_data.get('task_result_overrides', None)
                     instance = ImportInstrumentEntry(**validated_data)
 
-                    task, errors = download_instrument_finmars_database(
-                        instrument_code=instance.instrument_code,
-                        instrument_name=instance.instrument_name,
-                        instrument_type_code=instance.instrument_type_code,
+                    # instrument_code=instance.instrument_code,
+                    # instrument_name=instance.instrument_name,
+                    # instrument_type_code=instance.instrument_type_code,
+                    # master_user=instance.master_user,
+                    # member=instance.member
+
+                    task = CeleryTask.objects.create(
                         master_user=instance.master_user,
-                        member=instance.member
+                        member=instance.member,
+                        type='download_instrument_from_finmars_database'
                     )
+
+                    options = {
+                        'reference': instance.instrument_code,
+                        'instrument_name': instance.instrument_name,
+                        'instrument_type_user_code': instance.instrument_type_code
+                    }
+
+                    task.options_object = options
+
+                    task.save()
+
                     instance.task_object = task
-                    instance.errors = errors
+
+                    _l.info("ImportInstrumentCbondsSerializer create task id %s" % task.id)
+
+                    download_instrument_finmars_database(task.id)
+
+                    task = CeleryTask.objects.get(id=task.id)
 
                     if task and task.result_object:
                         instance.result_id = task.result_object['instrument_id']

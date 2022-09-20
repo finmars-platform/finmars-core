@@ -254,8 +254,8 @@ def _get_list_of_dates_between_two_dates(date_from, date_to):
     return get_list_of_dates_between_two_dates(date_from, date_to)
 
 
-def _send_system_message(evaluator, title=None, description=None, type='info', section='other', performed_by="Expression Engine"):
-
+def _send_system_message(evaluator, title=None, description=None, type='info', section='other',
+                         performed_by="Expression Engine"):
     try:
         from poms.system_messages.handlers import send_system_message
         from poms.system_messages.models import SystemMessage
@@ -508,8 +508,6 @@ def _transaction_import__find_row(evaluator, **kwargs):
 
     if 'row_number' in kwargs:
         result = {'row_number': kwargs['row_number']}
-
-
 
     return result
 
@@ -1841,6 +1839,7 @@ def _calculate_accrued_price(evaluator, instrument, date):
 
 _calculate_accrued_price.evaluator = True
 
+
 def _get_position_size_on_date(evaluator, instrument, date, accounts=None, portfolios=None):
     try:
         result = 0
@@ -1854,7 +1853,8 @@ def _get_position_size_on_date(evaluator, instrument, date, accounts=None, portf
         instrument = _safe_get_instrument(evaluator, instrument)
         date = _parse_date(date)
 
-        transactions = Transaction.objects.filter(master_user=master_user, accounting_date__lte=date, instrument=instrument)
+        transactions = Transaction.objects.filter(master_user=master_user, accounting_date__lte=date,
+                                                  instrument=instrument)
 
         if accounts:
             transactions = transactions.filter(account_position__in=accounts)
@@ -1867,9 +1867,7 @@ def _get_position_size_on_date(evaluator, instrument, date, accounts=None, portf
         # _l.info('transactions %s ' % transactions)
 
         for trn in transactions:
-
             result = result + trn.position_size_with_sign
-
 
         return result
 
@@ -1882,7 +1880,8 @@ def _get_position_size_on_date(evaluator, instrument, date, accounts=None, portf
 _get_position_size_on_date.evaluator = True
 
 
-def _get_instrument_report_data(evaluator, instrument, report_date, report_currency=None, pricing_policy=None, cost_method="AVCO", accounts=None, portfolios=None):
+def _get_instrument_report_data(evaluator, instrument, report_date, report_currency=None, pricing_policy=None,
+                                cost_method="AVCO", accounts=None, portfolios=None):
     try:
         result = 0
 
@@ -1967,7 +1966,6 @@ def _get_instrument_report_data(evaluator, instrument, report_date, report_curre
 
 
 _get_instrument_report_data.evaluator = True
-
 
 
 def _get_instrument_accrual_size(evaluator, instrument, date):
@@ -2522,7 +2520,6 @@ def _rebook_transaction(evaluator, code, values=None, user_context=None, **kwarg
 
             _l.debug('_rebook_transaction.get complex transaction %s' % complex_transaction)
 
-
             instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                               process_mode='rebook',
                                               complex_transaction=complex_transaction,
@@ -2533,7 +2530,6 @@ def _rebook_transaction(evaluator, code, values=None, user_context=None, **kwarg
             data = serializer.data
 
             # _l.debug('_rebook_transaction.get data to fill rebook processor %s' % data)
-
 
             instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                               process_mode='rebook',
@@ -2572,6 +2568,50 @@ def _rebook_transaction(evaluator, code, values=None, user_context=None, **kwarg
 _rebook_transaction.evaluator = True
 
 
+def _download_instrument_from_finmars_database(evaluator, reference, instrument_name=None, instrument_type_user_code=None):
+    _l.info('_download_instrument_from_finmars_database formula')
+
+    try:
+
+        from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_member_from_context
+        from poms.integrations.tasks import download_instrument_finmars_database_async
+        from poms.celery_tasks.models import CeleryTask
+
+        context = evaluator.context
+
+        master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
+
+        task = CeleryTask.objects.create(
+            master_user=master_user,
+            member=member,
+            type='download_instrument_from_finmars_database'
+        )
+
+        options = {
+            'reference': reference,
+        }
+
+        if instrument_name:
+            options['instrument_name'] = instrument_name
+
+        if instrument_type_user_code:
+            options['instrument_type_user_code'] = instrument_type_user_code
+
+        task.options_object = options
+        task.save()
+
+        _l.info('_download_instrument_from_finmars_database. task created init a process')
+
+        download_instrument_finmars_database_async.apply_async(kwargs={'task_id': task.id})
+
+    except Exception as e:
+        _l.error("_download_instrument_from_finmars_database. general exception %s" % e)
+        _l.error("_download_instrument_from_finmars_database. general exception traceback %s" % traceback.format_exc())
+
+
+_download_instrument_from_finmars_database.evaluator = True
 
 
 def _simple_group(val, ranges, default=None):
@@ -2952,6 +2992,7 @@ FUNCTIONS = [
     SimpleEval2Def('run_pricing_procedure', _run_pricing_procedure),
     SimpleEval2Def('run_data_procedure', _run_data_procedure),
     SimpleEval2Def('rebook_transaction', _rebook_transaction),
+    SimpleEval2Def('download_instrument_from_finmars_database', _download_instrument_from_finmars_database),
 
 ]
 
@@ -2986,7 +3027,7 @@ class SimpleEval2(object):
         elif isinstance(now, datetime.date):
             _globals['now'] = SimpleEval2Def('now', lambda: now)
 
-        _globals['transaction_import'] =  {f.name: f for f in TRANSACTION_IMPORT_FUNCTIONS}
+        _globals['transaction_import'] = {f.name: f for f in TRANSACTION_IMPORT_FUNCTIONS}
 
         _globals['globals'] = SimpleEval2Def('globals', lambda: _globals)
         _globals['locals'] = SimpleEval2Def('locals', lambda: self._table)
