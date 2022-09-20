@@ -25,7 +25,7 @@ def _is_accept(model):
     from poms.integrations.models import Task
 
     app_label = getattr(model._meta, 'app_label', None)
-    if app_label not in ['users', 'chats', 'tags', 'accounts', 'counterparties', 'currencies', 'instruments',
+    if app_label not in ['users', 'chats', 'accounts', 'counterparties', 'currencies', 'instruments',
                          'integrations', 'portfolios', 'strategies', 'transactions', ]:
         return False
     if issubclass(model, (AbstractClassModel, Task, ObjectHistory4Entry)):

@@ -11,7 +11,6 @@ from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.currencies.models import Currency
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
-from poms.tags.models import TagLink
 from poms.users.models import MasterUser, Member
 
 
@@ -25,7 +24,6 @@ class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('account type')
@@ -49,7 +47,6 @@ class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('account')

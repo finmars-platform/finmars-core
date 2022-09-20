@@ -49,7 +49,6 @@ from poms.reports.models import BalanceReportCustomField, PLReportCustomField, T
 from poms.schedules.models import Schedule
 from poms.schedules.serializers import ScheduleSerializer
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
-from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import TransactionType, TransactionTypeInput, TransactionTypeAction, \
     TransactionTypeActionInstrument, TransactionTypeActionTransaction, TransactionTypeGroup, \
     TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \

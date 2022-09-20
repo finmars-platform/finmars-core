@@ -72,10 +72,6 @@ class ManyRelatedWithObjectPermissionField(serializers.ManyRelatedField):
 
 
 class PrimaryKeyRelatedFilteredWithObjectPermissionField(PrimaryKeyRelatedFilteredField):
-    # queryset = Tag.objects
-    # filter_backends = [
-    #     OwnerByMasterUserFilter,
-    # ]
 
     def __new__(cls, *args, **kwargs):
         if kwargs.pop('many', False):

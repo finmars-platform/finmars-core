@@ -51,7 +51,6 @@ from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField
 from poms.portfolios.models import Portfolio
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
-from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField, TransactionTypeInputField
 from poms.users.fields import MasterUserField, MemberField, HiddenMemberField
 
@@ -977,8 +976,6 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
         # self.fields.pop('accrual_calculation_schedules')
         # self.fields.pop('factor_schedules')
         self.fields.pop('event_schedules')
-        # self.fields.pop('tags')
-        # self.fields.pop('tags_object')
         # self.fields.pop('attributes')
 
     def get_accrual_calculation_schedules(self, obj):

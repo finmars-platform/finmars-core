@@ -23,8 +23,6 @@ from poms.obj_attrs.views import GenericAttributeTypeViewSet
 from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractEvGroupWithObjectPermissionViewSet, AbstractWithObjectPermissionViewSet
-from poms.tags.filters import TagFilter
-from poms.tags.utils import get_tag_prefetch
 from poms.users.filters import OwnerByMasterUserFilter
 from rest_framework.response import Response
 

@@ -22,7 +22,6 @@
 # from poms.portfolios.models import Portfolio
 # from poms.strategies.models import Strategy3Group, Strategy2Group, Strategy1Group, Strategy1Subgroup, Strategy2Subgroup, \
 #     Strategy3Subgroup, Strategy1, Strategy2, Strategy3
-# from poms.tags.models import Tag, TagLink
 # from poms.transactions.models import TransactionTypeGroup, TransactionType
 # from poms.users.models import MasterUser, Member, Group
 # 
@@ -344,16 +343,7 @@
 #         else:
 #             raise ValueError('invalid strategy code')
 #         return model.objects.get(name=name, master_user__name=master_user)
-# 
-#     def create_tag(self, name, master_user, content_types=None):
-#         master_user = self.get_master_user(master_user)
-#         tag = Tag.objects.create(master_user=master_user, name=name)
-#         if content_types:
-#             tag.content_types = [ContentType.objects.get_for_model(model) for model in content_types]
-#         return tag
-# 
-#     def get_tag(self, name, master_user):
-#         return Tag.objects.get(name=name, master_user__name=master_user)
+#
 # 
 #     def create_transaction_type_group(self, name, master_user):
 #         master_user = self.get_master_user(master_user)
@@ -440,12 +430,7 @@
 #                         'permission': perm
 #                     })
 #         assign_perms3(obj, perms=perms_l)
-# 
-#     def assign_tags(self, obj, tags, master_user):
-#         for tag in tags:
-#             if isinstance(tag, str):
-#                 tag = self.get_tag(tag, master_user)
-#             TagLink.objects.create(content_object=obj, tag=tag)
+#
 # 
 #     def _dump(self, data):
 #         # pprint.pprint(data, width=40)
@@ -860,124 +845,7 @@
 #         # response = self._delete(self._a2, obj.id)
 #         # self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 # 
-# 
-# class BaseApiWithTagsTestCase(BaseApiTestCase):
-#     def setUp(self):
-#         super(BaseApiWithTagsTestCase, self).setUp()
-# 
-#         if self.model == Account:
-#             self.model2 = AccountType
-#         else:
-#             self.model2 = Account
-# 
-#         self._tag1 = self.create_tag(self.create_name(), self._a, [self.model])
-# 
-#         self._tag2_a1 = self.create_tag(self.create_name(), self._a, [self.model])
-#         self.assign_perms(self._tag2_a1, self._a, users=[self._a1], perms=get_all_perms(self._tag2_a1))
-# 
-#         self._tag3_g2 = self.create_tag(self.create_name(), self._a, [self.model])
-#         self.assign_perms(self._tag3_g2, self._a, groups=['g2'], perms=get_all_perms(self._tag3_g2))
-# 
-#         self._tag4_ctype2 = self.create_tag(self.create_name(), self._a, [self.model2])
-#         self.assign_perms(self._tag4_ctype2, self._a, users=[self._a1], groups=['g2'], perms=get_all_perms(self._tag4_ctype2))
-# 
-#     def test_tags_list(self):
-#         obj = self._create_obj()
-#         self.assign_perms(obj, self._a, users=[self._a1], groups=['g2'])
-#         self.assign_tags(obj, [self._tag1, self._tag2_a1, self._tag3_g2], self._a)
-# 
-#         response = self._list(self._a)
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         # self.assertEqual(response.data['count'], 2 if self.has_dash_obj else 1)
-#         for obj_j in response.data['results']:
-#             if obj_j['id'] == obj.id:
-#                 self.assertEqual(set(obj_j['tags']), {self._tag1.id, self._tag2_a1.id, self._tag3_g2.id, })
-# 
-#         response = self._list(self._a0)
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         # self.assertEqual(response.data['count'], 2 if self.has_dash_obj else 1)
-#         for obj_j in response.data['results']:
-#             if obj_j['id'] == obj.id:
-#                 self.assertEqual(set(obj_j['tags']), {self._tag1.id, self._tag2_a1.id, self._tag3_g2.id, })
-# 
-#         response = self._list(self._a1)
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         # self.assertEqual(response.data['count'], 2 if self.has_dash_obj else 1)
-#         for obj_j in response.data['results']:
-#             if obj_j['id'] == obj.id:
-#                 self.assertEqual(set(obj_j['tags']), {self._tag2_a1.id})
-# 
-#         response = self._list(self._a2)
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         # self.assertEqual(response.data['count'], 2 if self.has_dash_obj else 1)
-#         for obj_j in response.data['results']:
-#             if obj_j['id'] == obj.id:
-#                 self.assertEqual(set(obj_j['tags']), {self._tag3_g2.id, })
-# 
-#     def test_tags_get(self):
-#         obj = self._create_obj()
-#         self.assign_perms(obj, self._a, users=[self._a1], groups=['g2'])
-#         self.assign_tags(obj, [self._tag1, self._tag2_a1, self._tag3_g2], self._a)
-# 
-#         response = self._get(self._a, obj.id)
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         self.assertEqual(set(response.data['tags']), {self._tag1.id, self._tag2_a1.id, self._tag3_g2.id, })
-# 
-#         response = self._get(self._a0, obj.id)
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         self.assertEqual(set(response.data['tags']), {self._tag1.id, self._tag2_a1.id, self._tag3_g2.id, })
-# 
-#         response = self._get(self._a1, obj.id)
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         self.assertEqual(set(response.data['tags']), {self._tag2_a1.id, })
-# 
-#         response = self._get(self._a2, obj.id)
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         self.assertEqual(set(response.data['tags']), {self._tag3_g2.id, })
-# 
-#     def test_tags_update(self):
-#         data = self._make_new_data(tags=[self._tag1.id])
-#         response = self._add(self._a, data)
-#         data = response.data.copy()
-#         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-#         self.assertEqual(set(response.data['tags']), {self._tag1.id})
-# 
-#         udata = data.copy()
-#         udata['tags'] = {self._tag1.id, self._tag2_a1.id, self._tag3_g2.id, }
-#         response = self._update(self._a, data['id'], udata)
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         self.assertEqual(set(response.data['tags']), {self._tag1.id, self._tag2_a1.id, self._tag3_g2.id, })
-# 
-#         self.assign_perms(self.model.objects.get(id=data['id']), self._a, users=[self._a1], groups=['g2'],
-#                           perms=self.all_permissions)
-#         response = self._get(self._a1, data['id'])
-#         udata = response.data.copy()
-#         udata['tags'] = []
-#         response = self._update(self._a1, data['id'], udata)
-#         self.assertEqual(response.status_code, status.HTTP_200_OK, response.data)
-#         self.assertEqual(len(response.data['tags']), 0)
-# 
-#         response = self._get(self._a0, data['id'])
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#         self.assertEqual(set(response.data['tags']), {self._tag1.id, self._tag3_g2.id, })
-# 
-#     def test_tags_with_incorrect_ctype(self):
-#         data_tags = {self._tag4_ctype2.id}
-#         data = self._make_new_data(tags=data_tags)
-#         response = self._add(self._a, data)
-#         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-# 
-#         data = self._make_new_data(tags={self._tag1.id})
-#         response = self._add(self._a, data)
-#         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-#         data = response.data.copy()
-#         data['tags'] = {self._tag4_ctype2.id}
-#         response = self._update(self._a, data['id'], data)
-#         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-# 
-#     def test_tags_filter(self):
-#         pass
-# 
+
 # 
 # class BaseAttributeTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase):
 #     model = GenericAttributeType
@@ -1329,5 +1197,4 @@
 # ABSTRACT_TESTS.append(BaseNamedModelTestCase)
 # ABSTRACT_TESTS.append(BaseApiWithPermissionTestCase)
 # ABSTRACT_TESTS.append(BaseApiWithAttributesTestCase)
-# ABSTRACT_TESTS.append(BaseApiWithTagsTestCase)
 # ABSTRACT_TESTS.append(BaseAttributeTypeApiTestCase)

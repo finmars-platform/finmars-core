@@ -23,8 +23,6 @@ from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
-from poms.tags.filters import TagFilter
-from poms.tags.utils import get_tag_prefetch
 from poms.users.filters import OwnerByMasterUserFilter
 
 
@@ -48,7 +46,6 @@ class CounterpartyGroupFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
-    tag = TagFilter(model=CounterpartyGroup)
     member = ObjectPermissionMemberFilter(object_permission_model=CounterpartyGroup)
     member_group = ObjectPermissionGroupFilter(object_permission_model=CounterpartyGroup)
     permission = ObjectPermissionPermissionFilter(object_permission_model=CounterpartyGroup)
@@ -62,7 +59,6 @@ class CounterpartyGroupViewSet(AbstractWithObjectPermissionViewSet):
     queryset = CounterpartyGroup.objects.select_related(
         'master_user'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, CounterpartyGroup),
         )
@@ -89,7 +85,6 @@ class CounterpartyGroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet
     queryset = CounterpartyGroup.objects.select_related(
         'master_user'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, CounterpartyGroup),
         )
@@ -114,7 +109,6 @@ class CounterpartyFilterSet(FilterSet):
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
     group = ModelExtWithPermissionMultipleChoiceFilter(model=CounterpartyGroup)
     portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio, field_name='portfolios')
-    tag = TagFilter(model=Counterparty)
     member = ObjectPermissionMemberFilter(object_permission_model=Counterparty)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Counterparty)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Counterparty)
@@ -132,7 +126,6 @@ class CounterpartyViewSet(AbstractWithObjectPermissionViewSet):
         'portfolios',
         # Prefetch('attributes', queryset=CounterpartyAttribute.objects.select_related('attribute_type', 'classifier')),
         get_attributes_prefetch(),
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Counterparty),
             ('group', CounterpartyGroup),
@@ -236,7 +229,6 @@ class CounterpartyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cus
         'portfolios',
         # Prefetch('attributes', queryset=CounterpartyAttribute.objects.select_related('attribute_type', 'classifier')),
         get_attributes_prefetch(),
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Counterparty),
             ('group', CounterpartyGroup),
@@ -274,7 +266,6 @@ class ResponsibleGroupFilterSet(FilterSet):
     user_code = CharFilter()
     name = CharFilter()
     short_name = CharFilter()
-    tag = TagFilter(model=ResponsibleGroup)
     member = ObjectPermissionMemberFilter(object_permission_model=ResponsibleGroup)
     member_group = ObjectPermissionGroupFilter(object_permission_model=ResponsibleGroup)
     permission = ObjectPermissionPermissionFilter(object_permission_model=ResponsibleGroup)
@@ -288,7 +279,6 @@ class ResponsibleGroupViewSet(AbstractWithObjectPermissionViewSet):
     queryset = ResponsibleGroup.objects.select_related(
         'master_user'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, ResponsibleGroup),
         )
@@ -316,7 +306,6 @@ class ResponsibleGroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet,
     queryset = ResponsibleGroup.objects.select_related(
         'master_user'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, ResponsibleGroup),
         )
@@ -342,7 +331,6 @@ class ResponsibleFilterSet(FilterSet):
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
     group = ModelExtWithPermissionMultipleChoiceFilter(model=CounterpartyGroup)
     portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio, field_name='portfolios')
-    tag = TagFilter(model=Responsible)
     member = ObjectPermissionMemberFilter(object_permission_model=Responsible)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Responsible)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Responsible)
@@ -359,7 +347,6 @@ class ResponsibleViewSet(AbstractWithObjectPermissionViewSet):
     ).prefetch_related(
         'portfolios',
         get_attributes_prefetch(),
-        get_tag_prefetch(),
         # Prefetch('attributes', queryset=ResponsibleAttribute.objects.select_related('attribute_type', 'classifier')),
         *get_permissions_prefetch_lookups(
             (None, Responsible),
@@ -469,7 +456,6 @@ class ResponsibleEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cust
     ).prefetch_related(
         'portfolios',
         get_attributes_prefetch(),
-        get_tag_prefetch(),
         # Prefetch('attributes', queryset=ResponsibleAttribute.objects.select_related('attribute_type', 'classifier')),
         *get_permissions_prefetch_lookups(
             (None, Responsible),

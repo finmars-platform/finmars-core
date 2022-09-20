@@ -22,7 +22,6 @@ from poms.obj_perms.utils import assign_perms3, get_all_perms, get_perms_codenam
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy3Group, Strategy2Group, Strategy1Group, Strategy1Subgroup, Strategy2Subgroup, \
     Strategy3Subgroup, Strategy1, Strategy2, Strategy3
-from poms.tags.models import Tag, TagLink
 from poms.transactions.models import TransactionTypeGroup, TransactionType
 from poms.users.models import MasterUser, Member, Group
 
@@ -350,16 +349,6 @@ class BaseApiTestCase(APITestCase):
             raise ValueError('invalid strategy code')
         return model.objects.get(name=name, master_user__name=master_user)
 
-    def create_tag(self, name, master_user, content_types=None):
-        master_user = self.get_master_user(master_user)
-        tag = Tag.objects.create(master_user=master_user, name=name)
-        if content_types:
-            tag.content_types = [ContentType.objects.get_for_model(model) for model in content_types]
-        return tag
-
-    def get_tag(self, name, master_user):
-        return Tag.objects.get(name=name, master_user__name=master_user)
-
     def create_transaction_type_group(self, name, master_user):
         master_user = self.get_master_user(master_user)
         transaction_type_group = TransactionTypeGroup.objects.create(master_user=master_user, name=name)
@@ -445,12 +434,6 @@ class BaseApiTestCase(APITestCase):
                         'permission': perm
                     })
         assign_perms3(obj, perms=perms_l)
-
-    def assign_tags(self, obj, tags, master_user):
-        for tag in tags:
-            if isinstance(tag, str):
-                tag = self.get_tag(tag, master_user)
-            TagLink.objects.create(content_object=obj, tag=tag)
 
     def _dump(self, data):
         # pprint.pprint(data, width=40)
@@ -603,11 +586,6 @@ class BaseApiWithPermissionTestCase(BaseApiTestCase):
 
         if self.__class__ is BaseApiWithPermissionTestCase:
             raise unittest.SkipTest("Base class")
-
-
-# DELETE SOON
-class BaseApiWithTagsTestCase(BaseApiTestCase):
-    pass
 
 
 class BaseAttributeTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase):
@@ -972,5 +950,4 @@ ABSTRACT_TESTS.append(BaseApiTestCase)
 ABSTRACT_TESTS.append(BaseNamedModelTestCase)
 ABSTRACT_TESTS.append(BaseApiWithPermissionTestCase)
 ABSTRACT_TESTS.append(BaseApiWithAttributesTestCase)
-ABSTRACT_TESTS.append(BaseApiWithTagsTestCase)
 ABSTRACT_TESTS.append(BaseAttributeTypeApiTestCase)

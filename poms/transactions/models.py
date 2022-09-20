@@ -22,7 +22,6 @@ from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
-from poms.tags.models import TagLink
 from poms.transactions.utils import calc_cash_for_contract_for_difference
 from poms.users.models import MasterUser, Member, FakeSequence
 
@@ -303,7 +302,6 @@ class TransactionTypeGroup(NamedModel, FakeDeletableModel):
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('transaction type group')
@@ -545,7 +543,6 @@ class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
                                    verbose_name=gettext_lazy('user date 5'))
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('transaction type')

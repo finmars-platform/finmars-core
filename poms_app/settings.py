@@ -72,7 +72,6 @@ INSTALLED_APPS = [
     'poms.obj_perms',
     'poms.chats',
     'poms.ui',
-    'poms.tags',
     'poms.accounts',
     'poms.counterparties',
     'poms.currencies',

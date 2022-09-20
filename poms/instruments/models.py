@@ -29,7 +29,6 @@ from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.obj_perms.models import GenericObjectPermission
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, CurrencyPricingPolicy, \
     InstrumentTypePricingPolicy, InstrumentPricingPolicy
-from poms.tags.models import TagLink
 from poms.users.models import MasterUser, Member
 from math import isnan, copysign
 from django.core.cache import cache
@@ -796,7 +795,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     co_directional_exposure_currency = models.ForeignKey('currencies.Currency', related_name='co_directional_exposure_currency', on_delete=models.SET_NULL, null=True, blank=True,
                                          verbose_name=gettext_lazy('co directional exposure currency'))

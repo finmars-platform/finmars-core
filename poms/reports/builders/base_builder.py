@@ -20,7 +20,6 @@ from poms.portfolios.models import Portfolio
 from poms.reports.models import BalanceReportCustomField
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2, Strategy2Subgroup, \
     Strategy2Group, Strategy3, Strategy3Subgroup, Strategy3Group
-from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import ComplexTransaction, TransactionClass, TransactionType, TransactionTypeGroup
 
 from poms.accounts.models import Account
@@ -539,7 +538,6 @@ class BaseReportBuilder:
         #     'price_download_scheme',
         #     'price_download_scheme__provider',
         #     get_attributes_prefetch(),
-        #     get_tag_prefetch(),
         #     *get_permissions_prefetch_lookups(
         #         (None, Instrument),
         #         ('instrument_type', InstrumentType),
@@ -563,7 +561,6 @@ class BaseReportBuilder:
                 # 'price_download_scheme',
                 # 'price_download_scheme__provider',
                 get_attributes_prefetch(),
-                # get_tag_prefetch(),
                 *get_permissions_prefetch_lookups(
                     (None, Instrument),
                     ('instrument_type', InstrumentType),

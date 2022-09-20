@@ -8,19 +8,15 @@ from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeSt
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField
-from poms.tags.serializers import ModelWithTagSerializer
 from poms.users.fields import MasterUserField
 
 
 class AccountTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                            ModelWithTagSerializer, ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
+                            ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     transaction_details_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                                allow_null=True, default='""')
 
-    # tags = TagField(many=True, required=False, allow_null=True)
-    # # tags_object = ReadonlyNamedModelWithObjectPermissionSerializer(source='tags', many=True)
-    # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = AccountType
@@ -28,7 +24,6 @@ class AccountTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCo
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
             'show_transaction_details', 'transaction_details_expr', 'is_default', 'is_deleted',
             'is_enabled'
-            # 'tags', 'tags_object'
         ]
 
 
@@ -59,7 +54,7 @@ class AccountTypeViewSerializer(ModelWithObjectPermissionSerializer):
 
 
 class AccountSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
-                        ModelWithUserCodeSerializer, ModelWithTagSerializer, ModelWithTimeStampSerializer):
+                        ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     type = AccountTypeField(default=AccountTypeDefault())
     portfolios = PortfolioField(many=True, required=False, allow_null=True)
@@ -69,9 +64,6 @@ class AccountSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributes
 
     # attributes = AccountAttributeSerializer(many=True, required=False, allow_null=True)
 
-    # tags = TagField(many=True, required=False, allow_null=True)
-    # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
-
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = Account
         fields = [
@@ -79,8 +71,7 @@ class AccountSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributes
             'notes', 'is_default', 'is_valid_for_all_portfolios', 'is_deleted', 'portfolios',
             'is_enabled'
             # 'type_object',  'portfolios_object',
-            # 'attributes',
-            # 'tags', 'tags_object',
+            # 'attributes'
         ]
 
     def __init__(self, *args, **kwargs):

@@ -15,7 +15,6 @@ from poms.common.utils import date_now
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
-from poms.tags.models import TagLink
 from poms.users.models import MasterUser
 from django.core.cache import cache
 
@@ -48,7 +47,6 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
                                             verbose_name=gettext_lazy('pricing condition'), on_delete=models.CASCADE)
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
-    # tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     default_fx_rate = models.FloatField(default=1, verbose_name=gettext_lazy('default fx rate'))
 

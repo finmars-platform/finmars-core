@@ -6,23 +6,18 @@ from poms.chats.fields import ThreadField, ThreadGroupField, ThreadGroupDefault
 from poms.chats.models import Thread, Message, DirectMessage, ThreadGroup
 from poms.common.fields import DateTimeTzAwareField
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
-from poms.tags.serializers import ModelWithTagSerializer
 from poms.users.fields import MasterUserField, HiddenMemberField, MemberField
 from poms.users.serializers import MemberViewSerializer
 
 
-class ThreadGroupSerializer(ModelWithTagSerializer):
+class ThreadGroupSerializer(serializers.ModelSerializer):
     # url = serializers.HyperlinkedIdentityField(view_name='chatthreadgroup-detail')
     master_user = MasterUserField()
-
-    # tags = TagField(many=True, required=False, allow_null=True)
-    # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
     class Meta:
         model = ThreadGroup
         fields = [
-            'id', 'master_user', 'name', 'is_deleted',
-            # 'tags', 'tags_object'
+            'id', 'master_user', 'name', 'is_deleted'
         ]
 
 
@@ -48,7 +43,7 @@ class MessageSerializer(serializers.ModelSerializer):
         read_only_fields = ['created', 'modified']
 
 
-class ThreadSerializer(ModelWithObjectPermissionSerializer, ModelWithTagSerializer):
+class ThreadSerializer(ModelWithObjectPermissionSerializer):
     # url = serializers.HyperlinkedIdentityField(view_name='chatthread-detail')
     master_user = MasterUserField()
     thread_group = ThreadGroupField(default=ThreadGroupDefault())
@@ -57,8 +52,6 @@ class ThreadSerializer(ModelWithObjectPermissionSerializer, ModelWithTagSerializ
     created = DateTimeTzAwareField(read_only=True)
     modified = DateTimeTzAwareField(read_only=True)
     closed = DateTimeTzAwareField(read_only=True)
-    # tags = TagField(many=True, required=False, allow_null=True)
-    # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
     messages_count = serializers.IntegerField(read_only=True)
     messages_last = MessageSerializer(read_only=True, many=True)
 
@@ -68,7 +61,6 @@ class ThreadSerializer(ModelWithObjectPermissionSerializer, ModelWithTagSerializ
             'id', 'master_user', 'thread_group', 'thread_group_object',
             'subject', 'is_closed', 'is_deleted', 'created', 'modified', 'closed',
             'messages_count', 'messages_last'
-            # 'tags', 'tags_object',
         ]
         read_only_fields = ['is_closed', 'created', 'modified', 'closed']
 

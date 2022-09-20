@@ -42,7 +42,6 @@ from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Fiel
     Strategy3Default
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
-from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeInputContentTypeField, \
     TransactionTypeGroupField, ReadOnlyContentTypeField, TransactionTypeField, TransactionTypeInputField
 from poms.transactions.handlers import TransactionTypeProcess
@@ -85,19 +84,14 @@ class ComplexTransactionStatusSerializer(PomsClassSerializer):
         model = ComplexTransactionStatus
 
 
-class TransactionTypeGroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                                     ModelWithTagSerializer):
+class TransactionTypeGroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
     master_user = MasterUserField()
-
-    # tags = TagField(many=True, required=False, allow_null=True)
-    # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
     class Meta:
         model = TransactionTypeGroup
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_deleted',
             'is_enabled'
-            # 'tags', 'tags_object',
         ]
 
 
@@ -1414,8 +1408,7 @@ class TransactionTypeLightSerializerWithInputs(TransactionTypeLightSerializer):
         ]
 
 
-class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                                ModelWithTagSerializer, ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
+class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer, ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     group = TransactionTypeGroupField(required=False, allow_null=False)
     date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -1544,8 +1537,6 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
     instrument_types = InstrumentTypeField(required=False, allow_null=True, many=True)
     portfolios = PortfolioField(required=False, allow_null=True, many=True)
-    # tags = TagField(required=False, many=True, allow_null=True)
-    # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
     inputs = TransactionTypeInputSerializer(required=False, many=True)
     recon_fields = TransactionTypeReconFieldSerializer(required=False, many=True)
     context_parameters = TransactionTypeContextParameterSerializer(required=False, many=True)

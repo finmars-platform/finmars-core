@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
 from poms.common.tests import BaseApiWithPermissionTestCase, BaseApiWithAttributesTestCase, \
-    BaseAttributeTypeApiTestCase, BaseApiWithTagsTestCase, BaseNamedModelTestCase
+    BaseAttributeTypeApiTestCase, BaseNamedModelTestCase
 from poms.counterparties.models import Counterparty, Responsible, CounterpartyGroup, ResponsibleGroup
 
 

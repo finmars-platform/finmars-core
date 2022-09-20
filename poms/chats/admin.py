@@ -5,8 +5,6 @@ from django.contrib import admin
 from poms.chats.models import Thread, Message, DirectMessage, ThreadGroup
 from poms.common.admin import AbstractModelAdmin
 from poms.obj_perms.admin import GenericObjectPermissionInline
-from poms.tags.admin import GenericTagLinkInline
-
 
 class ThreadGroupAdmin(AbstractModelAdmin):
     model = ThreadGroup
@@ -17,7 +15,6 @@ class ThreadGroupAdmin(AbstractModelAdmin):
     list_filter = ['is_deleted', ]
     raw_id_fields = ['master_user', ]
     inlines = [
-        GenericTagLinkInline,
         GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline
@@ -37,7 +34,6 @@ class ThreadAdmin(AbstractModelAdmin):
     date_hierarchy = 'created'
     raw_id_fields = ['master_user', 'thread_group', ]
     inlines = [
-        GenericTagLinkInline,
         GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline

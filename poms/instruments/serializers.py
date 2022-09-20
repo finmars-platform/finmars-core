@@ -30,7 +30,6 @@ from poms.pricing.models import InstrumentPricingPolicy, InstrumentTypePricingPo
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     InstrumentTypePricingPolicySerializer, InstrumentPricingPolicySerializer
 from poms.system_messages.handlers import send_system_message
-from poms.tags.serializers import ModelWithTagSerializer
 from poms.transactions.fields import TransactionTypeField
 from poms.transactions.models import TransactionType
 from poms.users.fields import MasterUserField
@@ -371,7 +370,7 @@ class InstrumentTypeEventSerializer(serializers.ModelSerializer):
 
 
 class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                               ModelWithTagSerializer, ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
+                                 ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)
     one_off_event = TransactionTypeField(allow_null=True, required=False)
@@ -897,7 +896,7 @@ class InstrumentTypeViewSerializer(ModelWithObjectPermissionSerializer, ModelWit
 
 
 class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermissionSerializer,
-                           ModelWithUserCodeSerializer, ModelWithTagSerializer, ModelWithTimeStampSerializer):
+                           ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
     instrument_type_object = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
@@ -926,11 +925,6 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
     country_object = CountrySerializer(source='country', read_only=True)
 
     # attributes = InstrumentAttributeSerializer(many=True, required=False, allow_null=True)
-
-    # tags = TagField(many=True, required=False, allow_null=True)
-    # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
-
-
 
     class Meta:
         model = Instrument
@@ -967,8 +961,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
             
             'country', 'country_object'
 
-            # 'attributes',
-            # 'tags', 'tags_object'
+            # 'attributes'
         ]
 
     def __init__(self, *args, **kwargs):

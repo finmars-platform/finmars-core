@@ -20,9 +20,6 @@ from poms.strategies.serializers import Strategy1GroupSerializer, Strategy1Seria
     Strategy2SubgroupSerializer, Strategy2Serializer, Strategy1SubgroupSerializer, Strategy3GroupSerializer, \
     Strategy3SubgroupSerializer, Strategy3Serializer, Strategy1LightSerializer, Strategy2LightSerializer, \
     Strategy3LightSerializer, Strategy1EvSerializer, Strategy2EvSerializer, Strategy3EvSerializer
-from poms.tags.filters import TagFilter
-from poms.tags.models import Tag
-from poms.tags.utils import get_tag_prefetch
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.obj_attrs.utils import get_attributes_prefetch
 
@@ -34,7 +31,6 @@ class Strategy1GroupFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
-    tag = TagFilter(model=Strategy1Group)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy1Group)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy1Group)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy1Group)
@@ -48,7 +44,6 @@ class Strategy1GroupViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Strategy1Group.objects.select_related(
         'master_user'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy1Group),
         )
@@ -69,7 +64,6 @@ class Strategy1GroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, C
     queryset = Strategy1Group.objects.select_related(
         'master_user'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy1Group),
         )
@@ -92,7 +86,6 @@ class Strategy1SubgroupFilterSet(FilterSet):
     short_name = CharFilter()
     public_name = CharFilter()
     group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy1Group)
-    tag = TagFilter(model=Strategy1Subgroup)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy1Subgroup)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy1Subgroup)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy1Subgroup)
@@ -107,7 +100,6 @@ class Strategy1SubgroupViewSet(AbstractWithObjectPermissionViewSet):
         'master_user',
         'group'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy1Subgroup),
             ('group', Strategy1Group),
@@ -134,7 +126,6 @@ class Strategy1SubgroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet
         'master_user',
         'group'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy1Subgroup),
             ('group', Strategy1Group),
@@ -159,7 +150,6 @@ class Strategy1FilterSet(FilterSet):
     public_name = CharFilter()
     subgroup__group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy1Group)
     subgroup = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy1Subgroup)
-    tag = TagFilter(model=Strategy1)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy1)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy1)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy1)
@@ -184,7 +174,6 @@ class Strategy1ViewSet(AbstractWithObjectPermissionViewSet):
         'subgroup',
         'subgroup__group'
     ).prefetch_related(
-        get_tag_prefetch(),
         get_attributes_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy1),
@@ -295,7 +284,6 @@ class Strategy1EvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custom
         'subgroup',
         'subgroup__group'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy1),
             ('subgroup', Strategy1Subgroup),
@@ -316,7 +304,6 @@ class Strategy1EvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custom
 
 
 class Strategy2GroupFilterSet(Strategy1GroupFilterSet):
-    tag = TagFilter(model=Strategy2Group)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy2Group)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy2Group)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy2Group)
@@ -329,7 +316,6 @@ class Strategy2GroupViewSet(Strategy1GroupViewSet):
     queryset = Strategy2Group.objects.select_related(
         'master_user'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy2Group),
         )
@@ -347,7 +333,6 @@ class Strategy2GroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, C
     queryset = Strategy2Group.objects.select_related(
         'master_user'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy2Group),
         )
@@ -363,7 +348,6 @@ class Strategy2GroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, C
 
 
 class Strategy2SubgroupFilterSet(Strategy1SubgroupFilterSet):
-    tag = TagFilter(model=Strategy2Subgroup)
     group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy2Group)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy2Subgroup)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy2Subgroup)
@@ -378,7 +362,6 @@ class Strategy2SubgroupViewSet(Strategy1SubgroupViewSet):
         'master_user',
         'group'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy2Subgroup),
             ('group', Strategy2Group),
@@ -398,7 +381,6 @@ class Strategy2SubgroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet
         'master_user',
         'group'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy2Subgroup),
             ('group', Strategy2Group),
@@ -424,7 +406,6 @@ class Strategy2AttributeTypeViewSet(GenericAttributeTypeViewSet):
 
 
 class Strategy2FilterSet(Strategy1FilterSet):
-    tag = TagFilter(model=Strategy2)
     subgroup__group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy2Group)
     subgroup = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy2Subgroup)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy2)
@@ -442,7 +423,6 @@ class Strategy2ViewSet(Strategy1ViewSet):
         'subgroup',
         'subgroup__group'
     ).prefetch_related(
-        get_tag_prefetch(),
         get_attributes_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy2),
@@ -461,7 +441,6 @@ class Strategy2ViewSet(Strategy1ViewSet):
 
 
 class Strategy2EvFilterSet(Strategy1FilterSet):
-    tag = TagFilter(model=Strategy2)
     subgroup__group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy2Group)
     subgroup = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy2Subgroup)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy2)
@@ -530,7 +509,6 @@ class Strategy2EvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custom
         'subgroup',
         'subgroup__group'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy2),
             ('subgroup', Strategy2Subgroup),
@@ -551,7 +529,6 @@ class Strategy2EvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custom
 
 
 class Strategy3GroupFilterSet(Strategy1GroupFilterSet):
-    tag = TagFilter(model=Strategy3Group)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy3Group)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy3Group)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy3Group)
@@ -562,7 +539,6 @@ class Strategy3GroupFilterSet(Strategy1GroupFilterSet):
 
 class Strategy3GroupViewSet(Strategy1GroupViewSet):
     queryset = Strategy3Group.objects.prefetch_related('master_user').prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy3Group),
         )
@@ -578,7 +554,6 @@ class Strategy3GroupViewSet(Strategy1GroupViewSet):
 
 class Strategy3GroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Strategy3Group.objects.prefetch_related('master_user').prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy3Group),
         )
@@ -594,7 +569,6 @@ class Strategy3GroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, C
 
 
 class Strategy3SubgroupFilterSet(Strategy1SubgroupFilterSet):
-    tag = TagFilter(model=Strategy3Subgroup)
     group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy3Group)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy3Subgroup)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy3Subgroup)
@@ -609,7 +583,6 @@ class Strategy3SubgroupViewSet(Strategy1SubgroupViewSet):
         'master_user',
         'group'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy3Subgroup),
             ('group', Strategy3Group),
@@ -629,7 +602,6 @@ class Strategy3SubgroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet
         'master_user',
         'group'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy3Subgroup),
             ('group', Strategy3Group),
@@ -655,7 +627,6 @@ class Strategy3AttributeTypeViewSet(GenericAttributeTypeViewSet):
 
 
 class Strategy3FilterSet(Strategy1FilterSet):
-    tag = TagFilter(model=Strategy3)
     subgroup__group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy3Group)
     subgroup = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy3Subgroup)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy3)
@@ -673,7 +644,6 @@ class Strategy3ViewSet(Strategy1ViewSet):
         'subgroup',
         'subgroup__group'
     ).prefetch_related(
-        get_tag_prefetch(),
         get_attributes_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy3),
@@ -761,7 +731,6 @@ class Strategy3EvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custom
         'subgroup',
         'subgroup__group'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Strategy3),
             ('subgroup', Strategy3Subgroup),

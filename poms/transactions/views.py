@@ -36,8 +36,6 @@ from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3, Strategy1Subgroup, Strategy1Group, \
     Strategy2Subgroup, Strategy2Group, Strategy3Subgroup, Strategy3Group
 from poms.system_messages.handlers import send_system_message
-from poms.tags.filters import TagFilter
-from poms.tags.utils import get_tag_prefetch
 from poms.transactions.filters import TransactionObjectPermissionFilter, ComplexTransactionPermissionFilter, \
     TransactionObjectPermissionMemberFilter, TransactionObjectPermissionGroupFilter, \
     TransactionObjectPermissionPermissionFilter, ComplexTransactionSpecificFilter
@@ -86,7 +84,6 @@ class TransactionTypeGroupFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
-    tag = TagFilter(model=Account)
     member = ObjectPermissionMemberFilter(object_permission_model=TransactionTypeGroup)
     member_group = ObjectPermissionGroupFilter(object_permission_model=TransactionTypeGroup)
     permission = ObjectPermissionPermissionFilter(object_permission_model=TransactionTypeGroup)
@@ -98,7 +95,6 @@ class TransactionTypeGroupFilterSet(FilterSet):
 
 class TransactionTypeGroupViewSet(AbstractWithObjectPermissionViewSet):
     queryset = TransactionTypeGroup.objects.prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, TransactionTypeGroup),
         )
@@ -123,7 +119,6 @@ class TransactionTypeGroupViewSet(AbstractWithObjectPermissionViewSet):
 
 class TransactionTypeGroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = TransactionTypeGroup.objects.prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, TransactionTypeGroup),
         )
@@ -206,7 +201,6 @@ class TransactionTypeFilterSet(FilterSet):
                                                                all_field_name='is_valid_for_all_instruments')
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
     is_valid_for_all_instruments = django_filters.BooleanFilter()
-    tag = TagFilter(model=TransactionType)
     member = ObjectPermissionMemberFilter(object_permission_model=TransactionType)
     member_group = ObjectPermissionGroupFilter(object_permission_model=TransactionType)
     permission = ObjectPermissionPermissionFilter(object_permission_model=TransactionType)
@@ -283,7 +277,6 @@ class TransactionTypeLightViewSet(AbstractWithObjectPermissionViewSet):
         'portfolios',
         'instrument_types',
         get_attributes_prefetch(),
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, TransactionType),
             ('group', TransactionTypeGroup),
@@ -315,7 +308,6 @@ class TransactionTypeLightWithInputsViewSet(AbstractWithObjectPermissionViewSet)
         'inputs',
         'context_parameters',
         get_attributes_prefetch(),
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, TransactionType),
             ('group', TransactionTypeGroup),
@@ -347,7 +339,6 @@ class TransactionTypeLightEvGroupViewSet(AbstractEvGroupWithObjectPermissionView
         'group'
     ).prefetch_related(
         'portfolios',
-        get_tag_prefetch(),
         Prefetch(
             'instrument_types',
             queryset=InstrumentType.objects.select_related('instrument_class')
@@ -707,7 +698,6 @@ class TransactionTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, 
         'group'
     ).prefetch_related(
         'portfolios',
-        get_tag_prefetch(),
         Prefetch(
             'instrument_types',
             queryset=InstrumentType.objects.select_related('instrument_class')

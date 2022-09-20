@@ -17,7 +17,6 @@ from poms.obj_perms.utils import obj_perms_filter_objects_for_view, obj_perms_pr
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, Strategy2Subgroup, \
     Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
-from poms.tags.models import Tag
 from poms.transactions.models import TransactionType, TransactionTypeGroup
 
 

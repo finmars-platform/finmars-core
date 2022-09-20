@@ -8,23 +8,17 @@ from poms.strategies.fields import Strategy1GroupField, Strategy1SubgroupField, 
     Strategy2GroupDefault, Strategy2SubgroupDefault, Strategy3GroupDefault, Strategy3SubgroupDefault
 from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, Strategy2Subgroup, \
     Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
-from poms.tags.serializers import ModelWithTagSerializer
 from poms.users.fields import MasterUserField
 
 
-class Strategy1GroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                               ModelWithTagSerializer):
+class Strategy1GroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
     master_user = MasterUserField()
-
-    # tags = TagField(many=True, required=False, allow_null=True)
-    # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
     class Meta:
         model = Strategy1Group
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_deleted',
             'is_enabled'
-            # 'tags', 'tags_object'
         ]
 
 
@@ -36,21 +30,16 @@ class Strategy1GroupViewSerializer(ModelWithObjectPermissionSerializer):
         ]
 
 
-class Strategy1SubgroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                                  ModelWithTagSerializer):
+class Strategy1SubgroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
     master_user = MasterUserField()
     group = Strategy1GroupField(default=Strategy1GroupDefault())
     group_object = Strategy1GroupViewSerializer(source='group', read_only=True)
-
-    # tags = TagField(many=True, required=False, allow_null=True)
-    # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
     class Meta:
         model = Strategy1Subgroup
         fields = [
             'id', 'master_user', 'group', 'user_code', 'name', 'short_name', 'public_name', 'is_deleted', 'notes',
             'group_object', 'is_enabled'
-            # 'tags', 'tags_object',
         ]
 
 
@@ -66,20 +55,16 @@ class Strategy1SubgroupViewSerializer(ModelWithObjectPermissionSerializer):
 
 
 class Strategy1Serializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                          ModelWithTagSerializer, ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
+                          ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     subgroup = Strategy1SubgroupField(default=Strategy1SubgroupDefault())
     subgroup_object = Strategy1SubgroupViewSerializer(source='subgroup', read_only=True)
-
-    # tags = TagField(many=True, required=False, allow_null=True)
-    # tags_object = TagViewSerializer(source='tags', many=True, read_only=True)
 
     class Meta:
         model = Strategy1
         fields = [
             'id', 'master_user', 'subgroup', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_deleted',
             'subgroup_object', 'is_enabled'
-            # 'tags', 'tags_object'
         ]
 
 

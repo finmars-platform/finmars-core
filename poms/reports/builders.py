@@ -29,7 +29,6 @@ from poms.portfolios.models import Portfolio
 from poms.reports.utils import sprint_table
 from poms.strategies.models import Strategy1, Strategy2, Strategy3, Strategy1Subgroup, Strategy1Group, \
     Strategy2Subgroup, Strategy2Group, Strategy3Subgroup, Strategy3Group
-from poms.tags.utils import get_tag_prefetch
 from poms.transactions.models import TransactionClass, Transaction, ComplexTransaction
 
 _l = logging.getLogger('poms.reports')
@@ -3590,7 +3589,6 @@ class ReportBuilder(object):
             # 'price_download_scheme',
             # 'price_download_scheme__provider',
             get_attributes_prefetch(),
-            get_tag_prefetch(),
             # *get_permissions_prefetch_lookups(
             #     (None, Instrument),
             #     ('instrument_type', InstrumentType),
@@ -3603,15 +3601,13 @@ class ReportBuilder(object):
             'daily_pricing_model',
             # 'price_download_scheme',
             # 'price_download_scheme__provider',
-            get_attributes_prefetch(),
-            get_tag_prefetch()
+            get_attributes_prefetch()
         ).in_bulk(ccys)
         _l.debug('ccys: %s', sorted(ccys.keys()))
 
         prtfls = Portfolio.objects.filter(master_user=self.instance.master_user).prefetch_related(
             'master_user',
-            get_attributes_prefetch(),
-            get_tag_prefetch(),
+            get_attributes_prefetch()
             # *get_permissions_prefetch_lookups(
             #     (None, Portfolio),
             # )
@@ -3621,8 +3617,7 @@ class ReportBuilder(object):
         accs = Account.objects.filter(master_user=self.instance.master_user).prefetch_related(
             'master_user',
             'type',
-            get_attributes_prefetch(),
-            get_tag_prefetch(),
+            get_attributes_prefetch()
             # *get_permissions_prefetch_lookups(
             #     (None, Account),
             #     ('type', AccountType),
@@ -3634,7 +3629,6 @@ class ReportBuilder(object):
             'master_user',
             'subgroup',
             'subgroup__group',
-            get_tag_prefetch(),
             # *get_permissions_prefetch_lookups(
             #     (None, Strategy1),
             #     ('subgroup', Strategy1Subgroup),
@@ -3647,7 +3641,6 @@ class ReportBuilder(object):
             'master_user',
             'subgroup',
             'subgroup__group',
-            get_tag_prefetch(),
             # *get_permissions_prefetch_lookups(
             #     (None, Strategy2),
             #     ('subgroup', Strategy2Subgroup),
@@ -3660,7 +3653,6 @@ class ReportBuilder(object):
             'master_user',
             'subgroup',
             'subgroup__group',
-            get_tag_prefetch(),
             # *get_permissions_prefetch_lookups(
             #     (None, Strategy3),
             #     ('subgroup', Strategy3Subgroup),

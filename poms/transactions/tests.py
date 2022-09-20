@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from poms.common.tests import BaseApiWithPermissionTestCase, BaseAttributeTypeApiTestCase, BaseApiWithTagsTestCase, \
+from poms.common.tests import BaseApiWithPermissionTestCase, BaseAttributeTypeApiTestCase, \
     BaseNamedModelTestCase
 from poms.obj_perms.utils import get_perms_codename
 from poms.transactions.models import TransactionType, TransactionTypeGroup, Transaction
@@ -28,7 +28,7 @@ class TransactionTypeGroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermiss
         return self.get_transaction_type_group(name, self._a_master_user)
 
 
-class TransactionTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase):
+class TransactionTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase):
     model = TransactionType
 
     def setUp(self):
@@ -77,7 +77,7 @@ class TransactionAttributeTypeApiTestCase(BaseAttributeTypeApiTestCase):
         self._url_object = '/api/v1/transactions/transaction-attribute-type/%s/'
         # self._change_permission = 'change_transactionattributetype'
 
-# class TransactionApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase,
+# class TransactionApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase,
 #                             BaseApiWithAttributesTestCase):
 #     model = Transaction
 #     attribute_type_model = TransactionAttributeType

@@ -8,7 +8,6 @@ from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedMo
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
-from poms.tags.models import TagLink
 from poms.users.models import MasterUser, Member
 
 
@@ -17,7 +16,6 @@ class CounterpartyGroup(NamedModel, FakeDeletableModel):
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('counterparty group')
@@ -42,7 +40,6 @@ class Counterparty(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMod
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('counterparty')
@@ -63,7 +60,6 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('responsible group')
@@ -87,7 +83,6 @@ class Responsible(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMode
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('responsible')

@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from poms.common.tests import BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase, BaseNamedModelTestCase, \
+from poms.common.tests import BaseApiWithPermissionTestCase, BaseNamedModelTestCase, \
     ABSTRACT_TESTS
 from poms.strategies.models import Strategy1, Strategy1Group, Strategy1Subgroup, Strategy2Group, Strategy2Subgroup, \
     Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
@@ -11,7 +11,7 @@ def load_tests(loader, standard_tests, pattern):
     return t(loader, standard_tests, pattern)
 
 
-class BaseStrategyGroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase):
+class BaseStrategyGroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase):
     model = None
     strategy_code = None
 
@@ -29,7 +29,7 @@ class BaseStrategyGroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermission
         return self.get_strategy_group(self.strategy_code, name, self._a_master_user)
 
 
-class BaseStrategySubgroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase):
+class BaseStrategySubgroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase):
     model = None
     strategy_code = None
 
@@ -52,7 +52,7 @@ class BaseStrategySubgroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermiss
         return data
 
 
-class BaseStrategyApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase):
+class BaseStrategyApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase):
     model = None
     strategy_code = None
 

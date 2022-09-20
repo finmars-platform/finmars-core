@@ -20,9 +20,6 @@ from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissio
     ObjectPermissionPermissionFilter
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
-from poms.tags.filters import TagFilter
-from poms.tags.models import Tag, TagLink
-from poms.tags.utils import get_tag_prefetch
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import Member
 from poms.users.permissions import SuperUserOrReadOnly, SuperUserOnly
@@ -32,7 +29,6 @@ class ThreadGroupFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
     name = CharFilter()
-    tag = TagFilter(model=ThreadGroup)
 
     class Meta:
         model = ThreadGroup
@@ -43,7 +39,6 @@ class ThreadGroupViewSet(AbstractModelViewSet):
     queryset = ThreadGroup.objects.select_related(
         'master_user'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, ThreadGroup),
         )
@@ -70,7 +65,6 @@ class ThreadFilterSet(FilterSet):
     modified = django_filters.DateFromToRangeFilter()
     closed = django_filters.DateFromToRangeFilter()
     thread_group = ModelExtWithPermissionMultipleChoiceFilter(model=ThreadGroup)
-    tag = TagFilter(model=Thread)
     member = ObjectPermissionMemberFilter(object_permission_model=Thread)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Thread)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Thread)
@@ -95,7 +89,6 @@ class ThreadViewSet(AbstractWithObjectPermissionViewSet):
                     values_list('id', flat=True))
 
         ),
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Thread),
             ('thread_group', ThreadGroup),

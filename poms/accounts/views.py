@@ -18,8 +18,6 @@ from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
-from poms.tags.filters import TagFilter
-from poms.tags.utils import get_tag_prefetch
 from poms.users.filters import OwnerByMasterUserFilter
 
 from rest_framework.response import Response
@@ -41,7 +39,6 @@ class AccountTypeFilterSet(FilterSet):
     short_name = CharFilter()
     public_name = CharFilter()
     show_transaction_details = django_filters.BooleanFilter()
-    tag = TagFilter(model=AccountType)
     member = ObjectPermissionMemberFilter(object_permission_model=AccountType)
     member_group = ObjectPermissionGroupFilter(object_permission_model=AccountType)
     permission = ObjectPermissionPermissionFilter(object_permission_model=AccountType)
@@ -55,7 +52,6 @@ class AccountTypeViewSet(AbstractWithObjectPermissionViewSet):
     queryset = AccountType.objects.select_related(
         'master_user'
     ).prefetch_related(
-        get_tag_prefetch(),
         get_attributes_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, AccountType),
@@ -67,7 +63,6 @@ class AccountTypeViewSet(AbstractWithObjectPermissionViewSet):
         AttributeFilter,
         GroupsAttributeFilter,
         EntitySpecificFilter
-        # TagFilterBackend,
     ]
     filter_class = AccountTypeFilterSet
     ordering_fields = [
@@ -83,7 +78,6 @@ class AccountTypeEvFilterSet(FilterSet):
     short_name = CharFilter()
     public_name = CharFilter()
     show_transaction_details = django_filters.BooleanFilter()
-    tag = TagFilter(model=AccountType)
     member = ObjectPermissionMemberFilter(object_permission_model=AccountType)
     member_group = ObjectPermissionGroupFilter(object_permission_model=AccountType)
     permission = ObjectPermissionPermissionFilter(object_permission_model=AccountType)
@@ -110,7 +104,6 @@ class AccountTypeEvViewSet(AbstractWithObjectPermissionViewSet):
         AttributeFilter,
         GroupsAttributeFilter,
         EntitySpecificFilter
-        # TagFilterBackend,
     ]
     filter_class = AccountTypeEvFilterSet
     ordering_fields = [
@@ -123,7 +116,6 @@ class AccountTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Cust
     queryset = AccountType.objects.select_related(
         'master_user'
     ).prefetch_related(
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, AccountType),
         )
@@ -162,7 +154,6 @@ class AccountFilterSet(FilterSet):
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
     type = ModelExtWithPermissionMultipleChoiceFilter(model=AccountType)
     portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio, field_name='portfolios')
-    tag = TagFilter(model=Account)
     member = ObjectPermissionMemberFilter(object_permission_model=Account)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Account)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Account)
@@ -186,7 +177,6 @@ class AccountViewSet(AbstractWithObjectPermissionViewSet):
         #     'attribute_type__options'
         # )),
         get_attributes_prefetch(),
-        # get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Account),
             ('type', AccountType),
@@ -204,7 +194,6 @@ class AccountViewSet(AbstractWithObjectPermissionViewSet):
         OwnerByMasterUserFilter,
         GroupsAttributeFilter,
         AttributeFilter
-        # TagFilterBackend,
     ]
     filter_class = AccountFilterSet
     ordering_fields = [
@@ -223,7 +212,6 @@ class AccountEvFilterSet(FilterSet):
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
     type = ModelExtWithPermissionMultipleChoiceFilter(model=AccountType)
     portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio, field_name='portfolios')
-    tag = TagFilter(model=Account)
     member = ObjectPermissionMemberFilter(object_permission_model=Account)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Account)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Account)
@@ -299,7 +287,6 @@ class AccountEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPa
     ).prefetch_related(
         'portfolios',
         get_attributes_prefetch(),
-        get_tag_prefetch(),
         *get_permissions_prefetch_lookups(
             (None, Account),
             ('type', AccountType),

@@ -17,14 +17,13 @@ class LayoutContentTypeFilter(BaseFilterBackend):
             Strategy2Subgroup, Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
         from poms.portfolios.models import Portfolio
         from poms.transactions.models import TransactionTypeGroup, TransactionType, Transaction, ComplexTransaction
-        from poms.tags.models import Tag
         from poms.ui.models import Dashboard
 
         models = [AccountType, Account, Currency, InstrumentType, Instrument,
                   PriceHistory, CurrencyHistory,
                   PriceHistoryError, CurrencyHistoryError,
                   PricingPolicy, CounterpartyGroup, Counterparty, Responsible, ResponsibleGroup, Portfolio, PortfolioRegister, PortfolioRegisterRecord,
-                  TransactionTypeGroup, TransactionType, Transaction, ComplexTransaction, Tag,
+                  TransactionTypeGroup, TransactionType, Transaction, ComplexTransaction,
                   Strategy1Group, Strategy1Subgroup, Strategy1,
                   Strategy2Group, Strategy2Subgroup, Strategy2,
                   Strategy3Group, Strategy3Subgroup, Strategy3,

@@ -2025,7 +2025,6 @@ class ReportBuilder(BaseReportBuilder):
         #     'price_download_scheme',
         #     'price_download_scheme__provider',
         #     get_attributes_prefetch(),
-        #     get_tag_prefetch(),
         #     *get_permissions_prefetch_lookups(
         #         (None, Instrument),
         #         ('instrument_type', InstrumentType),
@@ -2039,14 +2038,12 @@ class ReportBuilder(BaseReportBuilder):
         #     'price_download_scheme',
         #     'price_download_scheme__provider',
         #     get_attributes_prefetch(),
-        #     get_tag_prefetch()
         # ).in_bulk(ccys)
         # _l.debug('ccys: %s', sorted(ccys.keys()))
         #
         # prtfls = Portfolio.objects.filter(master_user=self.instance.master_user).prefetch_related(
         #     'master_user',
         #     get_attributes_prefetch(),
-        #     get_tag_prefetch(),
         #     *get_permissions_prefetch_lookups(
         #         (None, Portfolio),
         #     )
@@ -2057,7 +2054,6 @@ class ReportBuilder(BaseReportBuilder):
         #     'master_user',
         #     'type',
         #     get_attributes_prefetch(),
-        #     get_tag_prefetch(),
         #     *get_permissions_prefetch_lookups(
         #         (None, Account),
         #         ('type', AccountType),
@@ -2069,7 +2065,6 @@ class ReportBuilder(BaseReportBuilder):
         #     'master_user',
         #     'subgroup',
         #     'subgroup__group',
-        #     get_tag_prefetch(),
         #     *get_permissions_prefetch_lookups(
         #         (None, Strategy1),
         #         ('subgroup', Strategy1Subgroup),
@@ -2082,7 +2077,6 @@ class ReportBuilder(BaseReportBuilder):
         #     'master_user',
         #     'subgroup',
         #     'subgroup__group',
-        #     get_tag_prefetch(),
         #     *get_permissions_prefetch_lookups(
         #         (None, Strategy2),
         #         ('subgroup', Strategy2Subgroup),
@@ -2095,7 +2089,6 @@ class ReportBuilder(BaseReportBuilder):
         #     'master_user',
         #     'subgroup',
         #     'subgroup__group',
-        #     get_tag_prefetch(),
         #     *get_permissions_prefetch_lookups(
         #         (None, Strategy3),
         #         ('subgroup', Strategy3Subgroup),

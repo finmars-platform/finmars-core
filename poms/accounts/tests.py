@@ -4,7 +4,7 @@ from rest_framework import status
 
 from poms.accounts.models import Account, AccountType
 from poms.common.tests import BaseApiWithPermissionTestCase, BaseApiWithAttributesTestCase, \
-    BaseAttributeTypeApiTestCase, BaseApiWithTagsTestCase, BaseNamedModelTestCase
+    BaseAttributeTypeApiTestCase, BaseNamedModelTestCase
 from poms.obj_perms.utils import get_perms_codename
 
 
@@ -13,7 +13,7 @@ def load_tests(loader, standard_tests, pattern):
     return t(loader, standard_tests, pattern)
 
 
-class AccountTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase):
+class AccountTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase):
     model = AccountType
 
     def setUp(self):
@@ -40,7 +40,7 @@ class AccountAttributeTypeApiTestCase(BaseAttributeTypeApiTestCase):
         self._url_object = '/api/v1/accounts/account-attribute-type/%s/'
 
 
-class AccountApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase,
+class AccountApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase,
                          BaseApiWithAttributesTestCase):
     model = Account
 

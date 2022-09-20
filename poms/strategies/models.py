@@ -9,7 +9,6 @@ from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedMo
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
-from poms.tags.models import TagLink
 from poms.users.models import MasterUser
 
 
@@ -21,7 +20,6 @@ class Strategy1Group(NamedModel, FakeDeletableModel):
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy1 group')
@@ -46,7 +44,6 @@ class Strategy1Subgroup(NamedModel, FakeDeletableModel):
     group = models.ForeignKey(Strategy1Group, null=True, blank=True, on_delete=models.PROTECT, related_name='subgroups')
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy1 subgroup')
@@ -71,7 +68,6 @@ class Strategy1(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
                                  related_name='strategies')
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
@@ -100,7 +96,6 @@ class Strategy2Group(NamedModel, FakeDeletableModel):
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy2 group')
@@ -125,7 +120,6 @@ class Strategy2Subgroup(NamedModel, FakeDeletableModel):
     group = models.ForeignKey(Strategy2Group, null=True, blank=True, on_delete=models.PROTECT, related_name='subgroups')
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy2 subgroup')
@@ -150,7 +144,6 @@ class Strategy2(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
                                  related_name='strategies')
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
@@ -179,7 +172,6 @@ class Strategy3Group(NamedModel, FakeDeletableModel):
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy3 group')
@@ -204,7 +196,6 @@ class Strategy3Subgroup(NamedModel, FakeDeletableModel):
     group = models.ForeignKey(Strategy3Group, null=True, blank=True, on_delete=models.PROTECT, related_name='subgroups')
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy3 subgroup')
@@ -229,7 +220,6 @@ class Strategy3(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
                                  related_name='strategies')
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-    tags = GenericRelation(TagLink, verbose_name=gettext_lazy('tags'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 

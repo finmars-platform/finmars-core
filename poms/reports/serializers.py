@@ -103,8 +103,6 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 #         # self.fields.pop('group_object_permissions')
 #         # self.fields.pop('object _permissions')
 #
-#         self.fields.pop('tags')
-#         self.fields.pop('tags_object')
 #
 #         self.fields.pop('payment_size_detail')
 #         self.fields.pop('payment_size_detail_object')
@@ -142,8 +140,6 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 #
 #         self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
 #
-#         self.fields.pop('tags')
-#         self.fields.pop('tags_object')
 #
 #         self.fields.pop('price_download_scheme')
 #         self.fields.pop('price_download_scheme_object')
@@ -187,8 +183,6 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 #         # self.fields.pop('group_object_permissions')
 #         # self.fields.pop('object_permissions')
 #
-#         self.fields.pop('tags')
-#         self.fields.pop('tags_object')
 #
 #         self.fields.pop('is_default')
 #
@@ -208,8 +202,6 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 #         # self.fields.pop('group_object_permissions')
 #         # self.fields.pop('object_permissions')
 #
-#         self.fields.pop('tags')
-#         self.fields.pop('tags_object')
 #
 #         self.fields.pop('is_default')
 #
@@ -224,8 +216,6 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 #         # self.fields.pop('group_object_permissions')
 #         # self.fields.pop('object_permissions')
 #
-#         self.fields.pop('tags')
-#         self.fields.pop('tags_object')
 #
 #         # self.fields.pop('is_default')
 #
@@ -240,8 +230,6 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 #         # self.fields.pop('group_object_permissions')
 #         # self.fields.pop('object_permissions')
 #
-#         self.fields.pop('tags')
-#         self.fields.pop('tags_object')
 #
 #         # self.fields.pop('is_default')
 #
@@ -256,8 +244,6 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 #         # self.fields.pop('group_object_permissions')
 #         # self.fields.pop('object_permissions')
 #
-#         self.fields.pop('tags')
-#         self.fields.pop('tags_object')
 #
 #         # self.fields.pop('is_default')
 #
@@ -277,8 +263,6 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 #         # self.fields.pop('group_object_permissions')
 #         # self.fields.pop('object_permissions')
 #
-#         self.fields.pop('tags')
-#         self.fields.pop('tags_object')
 #
 #         self.fields.pop('is_default')
 #
@@ -298,8 +282,6 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 #         # self.fields.pop('group_object_permissions')
 #         # self.fields.pop('object_permissions')
 #
-#         self.fields.pop('tags')
-#         self.fields.pop('tags_object')
 #
 #         self.fields.pop('is_default')
 #

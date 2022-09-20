@@ -6,8 +6,6 @@ from poms.accounts.models import Account, AccountType
 from poms.common.admin import AbstractModelAdmin
 from poms.obj_attrs.admin import GenericAttributeInline
 from poms.obj_perms.admin import GenericObjectPermissionInline
-from poms.tags.admin import GenericTagLinkInline
-
 
 class AccountTypeAdmin(AbstractModelAdmin):
     model = AccountType
@@ -18,7 +16,6 @@ class AccountTypeAdmin(AbstractModelAdmin):
     search_fields = ['id', 'user_code', 'name']
     raw_id_fields = ['master_user']
     inlines = [
-        GenericTagLinkInline,
         GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline,
@@ -39,7 +36,6 @@ class AccountAdmin(AbstractModelAdmin):
     inlines = [
         # AbstractAttributeInline,
         GenericAttributeInline,
-        GenericTagLinkInline,
         GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline,

@@ -44,10 +44,8 @@ from poms.pricing.models import InstrumentPricingSchemeType, CurrencyPricingSche
 from poms.reconciliation.models import TransactionTypeReconField, ReconciliationBankFileField, \
     ReconciliationNewBankFileField, ReconciliationComplexTransactionField
 from poms.reference_tables.models import ReferenceTable, ReferenceTableRow
-from poms.schedules.models import PricingSchedule
 from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, Strategy2Subgroup, \
     Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
-from poms.tags.models import Tag
 from poms.transactions.models import TransactionClass, ActionClass, EventClass, NotificationClass, TransactionTypeGroup, \
     TransactionType, TransactionTypeInput, TransactionTypeActionInstrument, TransactionTypeActionTransaction, \
     TransactionTypeInputSettings, TransactionTypeActionInstrumentFactorSchedule, \
@@ -175,7 +173,6 @@ class FullDataCloner(object):
 
         self._ecosystem_defaults()
 
-        # self._tags()
         self._ui()
         self._ui_for_members()
         self._reference_tables()
@@ -725,18 +722,6 @@ class FullDataCloner(object):
 
         self._simple_list_clone(ReconciliationComplexTransactionField, None, 'master_user', 'complex_transaction', 'reference_name', 'description',
                                 'value_string', 'value_float', 'value_date', 'status', 'match_date', 'notes')
-
-
-    def _tags(self):
-            # self._simple_list_clone(Tag, None, 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
-            #                         'content_types', 'account_types', 'accounts', 'currencies', 'instrument_types',
-            #                         'instruments', 'counterparty_groups', 'counterparties', 'responsible_groups',
-            #                         'responsibles', 'portfolios', 'transaction_type_groups', 'transaction_types',
-            #                         'strategy1_groups', 'strategy1_subgroups', 'strategies1', 'strategy2_groups',
-            #                         'strategy2_subgroups', 'strategies2', 'strategy3_groups', 'strategy3_subgroups',
-            #                         'strategies3', 'thread_groups', )
-            self._simple_list_clone(Tag, 'master_user', 'master_user', 'user_code', 'name', 'short_name', 'public_name',
-                                    'notes', 'content_types')
 
     def _ui_for_members(self):
 

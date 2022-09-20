@@ -6,8 +6,6 @@ from poms.common.admin import AbstractModelAdmin
 from poms.obj_perms.admin import GenericObjectPermissionInline
 from poms.strategies.models import Strategy1Group, Strategy2Subgroup, Strategy3, Strategy1Subgroup, Strategy1, \
     Strategy2Group, Strategy2, Strategy3Group, Strategy3Subgroup
-from poms.tags.admin import GenericTagLinkInline
-
 
 class Strategy1GroupAdmin(AbstractModelAdmin):
     model = Strategy1Group
@@ -18,7 +16,6 @@ class Strategy1GroupAdmin(AbstractModelAdmin):
     search_fields = ['id', 'user_code', 'name']
     raw_id_fields = ['master_user']
     inlines = [
-        GenericTagLinkInline,
         GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline,
@@ -37,7 +34,6 @@ class Strategy1SubgroupAdmin(AbstractModelAdmin):
     search_fields = ['id', 'user_code', 'name']
     raw_id_fields = ['master_user', 'group']
     inlines = [
-        GenericTagLinkInline,
         GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline,
@@ -56,7 +52,6 @@ class Strategy1Admin(AbstractModelAdmin):
     search_fields = ['id', 'user_code', 'name']
     raw_id_fields = ['master_user', 'subgroup']
     inlines = [
-        GenericTagLinkInline,
         GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline,

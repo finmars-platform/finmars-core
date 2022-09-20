@@ -65,7 +65,6 @@ from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEv
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2, Strategy2Subgroup, \
     Strategy2Group, Strategy3, Strategy3Subgroup, Strategy3Group
-from poms.tags.filters import TagFilter
 from poms.transactions.models import TransactionType, TransactionTypeGroup, NotificationClass
 from poms.transactions.serializers import TransactionTypeProcessSerializer
 from poms.users.filters import OwnerByMasterUserFilter
@@ -216,7 +215,6 @@ class InstrumentTypeFilterSet(FilterSet):
     factor_same = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType)
     factor_up = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType)
     factor_down = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType)
-    tag = TagFilter(model=InstrumentType)
     member = ObjectPermissionMemberFilter(object_permission_model=InstrumentType)
     member_group = ObjectPermissionGroupFilter(object_permission_model=InstrumentType)
     permission = ObjectPermissionPermissionFilter(object_permission_model=InstrumentType)
@@ -499,7 +497,6 @@ class InstrumentFilterSet(FilterSet):
     daily_pricing_model = django_filters.ModelMultipleChoiceFilter(queryset=DailyPricingModel.objects)
     # price_download_scheme = ModelExtMultipleChoiceFilter(model=PriceDownloadScheme, field_name='scheme_name')
     maturity_date = django_filters.DateFromToRangeFilter()
-    tag = TagFilter(model=Instrument)
     member = ObjectPermissionMemberFilter(object_permission_model=Instrument)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Instrument)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Instrument)

@@ -15,7 +15,6 @@ from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.pricing.models import CurrencyPricingPolicy, CurrencyHistoryError
 from poms.pricing.serializers import CurrencyPricingPolicySerializer
 from poms.system_messages.handlers import send_system_message
-from poms.tags.serializers import ModelWithTagSerializer
 from poms.users.fields import MasterUserField
 from poms.users.utils import get_member_from_context, get_master_user_from_context
 
@@ -37,7 +36,7 @@ def set_currency_pricing_scheme_parameters(pricing_policy, parameters):
 
 
 class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                         ModelWithAttributesSerializer, ModelWithTagSerializer, ModelWithTimeStampSerializer):
+                         ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
     pricing_policies = CurrencyPricingPolicySerializer(allow_null=True, many=True, required=False)

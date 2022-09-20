@@ -18,7 +18,6 @@ import poms.notifications.views as notifications
 import poms.portfolios.views as portfolios
 import poms.reports.views as reports
 import poms.strategies.views as strategies
-import poms.tags.views as tags
 import poms.transactions.views as transactions
 import poms.ui.views as ui
 import poms.users.views as users
@@ -256,8 +255,6 @@ router.register(r'strategies/3/strategy-ev', strategies.Strategy3EvViewSet)
 router.register(r'strategies/3/strategy-light', strategies.Strategy3LightViewSet)
 
 router.register(r'strategies/3/strategy-attribute-type', strategies.Strategy3AttributeTypeViewSet)
-
-router.register(r'tags/tag', tags.TagViewSet)
 
 router.register(r'reference-tables/reference-table', reference_table.ReferenceTableViewSet, 'reference_table')
 router.register(r'active_processes/active_processes', celery_tasks.CeleryTaskViewSet, 'celery_tasks')

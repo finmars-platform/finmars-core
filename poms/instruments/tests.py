@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from rest_framework import status
 
 from poms.common.tests import BaseApiWithPermissionTestCase, BaseApiWithAttributesTestCase, \
-    BaseAttributeTypeApiTestCase, BaseApiWithTagsTestCase, BaseNamedModelTestCase
+    BaseAttributeTypeApiTestCase,BaseNamedModelTestCase
 from poms.instruments.models import InstrumentType, Instrument, InstrumentClass
 from poms.obj_perms.utils import get_perms_codename
 
@@ -13,7 +13,7 @@ def load_tests(loader, standard_tests, pattern):
     return t(loader, standard_tests, pattern)
 
 
-class InstrumentTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase):
+class InstrumentTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase):
     model = InstrumentType
 
     def setUp(self):
@@ -49,7 +49,7 @@ class InstrumentAttributeTypeApiTestCase(BaseAttributeTypeApiTestCase):
         # self._change_permission = 'change_instrumentattributetype'
 
 
-class InstrumentApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase, BaseApiWithTagsTestCase,
+class InstrumentApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase,
                             BaseApiWithAttributesTestCase):
     model = Instrument
 
