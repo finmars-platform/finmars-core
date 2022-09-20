@@ -1,7 +1,7 @@
 
 
 from poms.currencies.models import Currency
-from poms.instruments.models import Instrument, PaymentSizeDetail, AccrualCalculationModel, Periodicity
+from poms.instruments.models import Instrument, PaymentSizeDetail, AccrualCalculationModel, Periodicity, Country
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 
 
@@ -343,6 +343,16 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
             object_data['maturity_date'] = source_data['maturity_date']
     else:
         object_data['maturity_date'] = '2999-01-01'
+
+    try:
+        if 'country_code_alpha_3' in source_data:
+
+            country = Country.objects.get(alpha_3=source_data['country_code_alpha_3'])
+
+            object_data['country'] = country.id
+
+    except Exception as e:
+        _l.error("Could not set country")
 
     # object_data['attributes'] = []
 

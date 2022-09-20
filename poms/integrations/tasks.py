@@ -345,6 +345,8 @@ def create_instrument_from_finmars_database(data, master_user, member):
 
         object_data['short_name'] = object_data['name'] + ' (' + object_data['user_code'] + ')'
 
+
+
         try:
 
             instance = Instrument.objects.get(master_user=master_user, user_code=object_data['user_code'])
