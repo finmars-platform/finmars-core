@@ -354,6 +354,30 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     except Exception as e:
         _l.error("Could not set country")
 
+    try:
+        if 'sector' in source_data:
+
+            sector_attribute = GenericAttributeType.objects.get(user_code='sector')
+
+            attribute = {}
+            exist = False
+
+            for attribute in object_data['attributes']:
+                if attribute['attribute_type'] == sector_attribute.id:
+                    exist = True
+                    attribute['value_string'] = source_data['sector']
+
+            if not exist:
+
+                attribute['attribute_type'] = sector_attribute.id
+                attribute['value_string'] = source_data['sector']
+
+                object_data['attributes'].append(attribute)
+
+
+    except Exception as e:
+        _l.error("Could not set sector")
+
     # object_data['attributes'] = []
 
     _l.info("Settings attributes for instrument done attribute_types %s " % attribute_types)
@@ -403,7 +427,8 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
                         _tmp_attributes_dict[attribute['attribute_type']] = attribute
     except Exception as e:
-        _l.error("Could not set attributes from finmars database")
+        _l.error("Could not set attributes from finmars database. Error %s"  % e )
+        _l.error("Could not set attributes from finmars database. Traceback %s"  % traceback.format_exc())
 
 
     object_data['attributes'] = []
@@ -424,7 +449,7 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     set_events_for_instrument(object_data, source_data, instrument_type)
     _l.info("Settings events for instrument done")
 
-    _l.info('source_data %s' % source_data)
+    # _l.info('source_data %s' % source_data)
 
     if 'accrual_calculation_schedules' in source_data:
         if source_data['accrual_calculation_schedules']:
