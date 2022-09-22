@@ -220,11 +220,13 @@ class StatsHandler():
                 'lowest': lowest
             })
 
+        _l.info('get_max_annualized_drawdown.results %s' % results)
+
         for result in results:
 
             lowest = result['lowest']
 
-            if grand_lowest < lowest:
+            if lowest < grand_lowest:
                 grand_lowest = lowest
 
         # got 120 monthes [...]
@@ -267,7 +269,10 @@ class StatsHandler():
 
         prices = PriceHistory.objects.filter(instrument__user_code=self.benchmark, date__in=months)
 
-        for i in range(1, len(prices)):
+        if len(months) != len(prices):
+            _l.error("Not enough Prices for benchmark_returns")
+
+        for i in range(1, len(months)):
             results.append((prices[i].principal_price - prices[i - 1].principal_price) / prices[i - 1].principal_price)
 
         return results
@@ -295,7 +300,7 @@ class StatsHandler():
         # cov(portfoio, bench) / var(bench)
         # MINDBLOWING WITH SP500
 
-        _l.info('self.performance_report.periods %s' % self.performance_report.periods)
+        # _l.info('self.performance_report.periods %s' % self.performance_report.periods)
 
         try:
             betta = numpy.cov(portfolio_returns, benchmarks_returns) / statistics.variance(benchmarks_returns)
