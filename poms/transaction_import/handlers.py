@@ -265,6 +265,8 @@ class TransactionImportProcess(object):
 
         if self.task.options_object and 'items' in self.task.options_object:
             self.process_type = ProcessType.JSON
+        elif '.json' in self.file_path:
+            self.process_type = ProcessType.JSON
         elif '.xlsx' in self.file_path:
             self.process_type = ProcessType.EXCEL
         elif '.csv' in self.file_path:
@@ -441,11 +443,19 @@ class TransactionImportProcess(object):
         try:
 
             if self.process_type == ProcessType.JSON:
-                items = self.task.options_object['items']
+                try:
+                    _l.info("Trying to get json items from task object options")
+                    items = self.task.options_object['items']
 
-                self.result.total_rows = len(items)
+                    self.result.total_rows = len(items)
 
-                self.raw_items = items
+                    self.raw_items = items
+                except Exception as e:
+                    _l.info("Trying to get json items from file")
+
+                    with SFS.open(self.file_path, 'rb') as f:
+
+                        self.raw_items = json.loads(f.read())
 
             if self.process_type == ProcessType.CSV:
 

@@ -18,7 +18,11 @@ class StatsHandler():
         self.member = member
 
         if not date:
-            self.date_str = datetime.datetime.now().strftime("%Y-%m-%d")
+
+            yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
+
+            self.date_str = yesterday.strftime("%Y-%m-%d")
+
         else:
             self.date_str = date
 
