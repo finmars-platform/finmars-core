@@ -164,20 +164,28 @@ class StatsHandler():
 
         return instance
 
+    def get_date_or_yesterday(self, date):
+
+        now = datetime.datetime.now().date()
+
+        if date == now:
+            d = now - datetime.timedelta(days=1) # set yesterday
+        elif date > now - datetime.timedelta(days=1):
+            d = now - datetime.timedelta(days=1) # set yesterday
+        else:
+            d = date
+
+        return d
+
+
+
     def get_max_annualized_drawdown(self):
 
         first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
 
         grand_date_from = first_transaction.accounting_date
 
-        now = datetime.datetime.now().date()
-
-        grand_date_to = self.date
-
-        if self.date != now:
-            grand_date_to = self.date
-        else:
-            grand_date_to = now - datetime.timedelta(days=1)
+        grand_date_to = self.get_date_or_yesterday(self.date)
 
         months = get_list_of_months_between_two_dates(grand_date_from, grand_date_to)
 
@@ -192,6 +200,8 @@ class StatsHandler():
 
             date_from = month
             date_to = date_from + datetime.timedelta(days=365)
+
+            date_to = self.get_date_or_yesterday(date_to)
 
             performance_report = self.generate_performance_report(date_from, date_to)
 
@@ -264,7 +274,7 @@ class StatsHandler():
 
         date_from = first_transaction.accounting_date
 
-        date_to = self.date
+        date_to = self.get_date_or_yesterday(self.date)
 
         # from inception
         # end of month
