@@ -288,6 +288,8 @@ class StatsHandler():
         # cov(portfoio, bench) / var(bench)
         # MINDBLOWING WITH SP500
 
+        _l.info('self.performance_report.periods %s' % self.performance_report.periods)
+
         try:
             betta = numpy.cov(portfolio_returns, benchmarks_returns) / statistics.variance(benchmarks_returns)
         except Exception as e:

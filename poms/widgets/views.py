@@ -235,6 +235,8 @@ class StatsViewSet(AbstractViewSet):
             "correlation": stats_handler.get_correlation()
         }
 
+        _l.info('result %s' % result)
+
         return Response(result)
 
 
