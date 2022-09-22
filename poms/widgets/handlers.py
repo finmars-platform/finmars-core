@@ -27,16 +27,11 @@ class StatsHandler():
         self.master_user = master_user
         self.member = member
 
-        if not date:
+        _l.info('StatsHandler requested date %s ' % date)
 
-            yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
+        self.date = self.get_date_or_yesterday(datetime.datetime.strptime(date, "%Y-%m-%d").date())
 
-            self.date_str = yesterday.strftime("%Y-%m-%d")
-
-        else:
-            self.date_str = date
-
-        self.date = datetime.datetime.strptime(self.date_str, "%Y-%m-%d").date()
+        _l.info('StatsHandler date or yesterday %s ' % self.date)
 
         self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
 
@@ -64,10 +59,13 @@ class StatsHandler():
 
     def get_performance_report(self):
 
+        first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
+
         instance = PerformanceReport(
             master_user=self.master_user,
             member=self.member,
             report_currency=self.currency,
+            begin_date=first_transaction.accounting_date,
             end_date=self.date,
             calculation_type='time_weighted',
             segmentation_type='months',
@@ -169,15 +167,13 @@ class StatsHandler():
         now = datetime.datetime.now().date()
 
         if date == now:
-            d = now - datetime.timedelta(days=1) # set yesterday
+            d = now - datetime.timedelta(days=1)  # set yesterday
         elif date > now - datetime.timedelta(days=1):
-            d = now - datetime.timedelta(days=1) # set yesterday
+            d = now - datetime.timedelta(days=1)  # set yesterday
         else:
             d = date
 
         return d
-
-
 
     def get_max_annualized_drawdown(self):
 
