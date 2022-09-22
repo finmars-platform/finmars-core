@@ -499,24 +499,34 @@ class ExpressionProcedureProcess(object):
             _l.info('ExpressionProcedureProcess.names %s' % names)
             _l.info('ExpressionProcedureProcess.context %s' % self.context)
 
-            result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
+            try:
 
-            _l.debug('ExpressionProcedureProcess.result %s' % result)
+                result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
 
-            if result:
+                _l.debug('ExpressionProcedureProcess.result %s' % result)
 
-                procedure_instance.result = result
+                if result:
+                    procedure_instance.result = result
+
+                procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE
+
+                procedure_instance.save()
+
+            except Exception as e:
+
+                procedure_instance.status = ExpressionProcedureInstance.STATUS_ERROR
+
+                procedure_instance.error_message = str(e)
+                procedure_instance.save()
+
+                _l.error("ExpressionProcedureProcess.safe_eval error %s" % e)
+                _l.error("ExpressionProcedureProcess.safe_eval traceback %s" % traceback.print_exc())
 
 
             send_system_message(master_user=self.master_user,
                                 performed_by='System',
                                 description="Procedure %s. Done" % procedure_instance.id,
                                 )
-
-            procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE
-
-
-            procedure_instance.save()
 
         except Exception as e:
             _l.error("ExpressionProcedureProcess.process error %s" % e)
