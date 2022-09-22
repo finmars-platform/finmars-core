@@ -1,8 +1,10 @@
 import datetime
+import statistics
+import math
 
 from poms.accounts.models import Account
 from poms.celery_tasks.models import CeleryTask
-from poms.common.utils import get_list_of_dates_between_two_dates, check_if_last_day_of_month
+from poms.common.utils import get_list_of_dates_between_two_dates, check_if_last_day_of_month, get_first_transaction
 from poms.common.views import AbstractViewSet
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
@@ -10,14 +12,17 @@ from django.db import transaction
 
 from poms.currencies.models import Currency
 from poms.instruments.models import CostMethod, PricingPolicy
-from poms.portfolios.models import Portfolio
+from poms.portfolios.models import Portfolio, PortfolioBundle
+from poms.reports.voila_constructrices.performance import PerformanceReportBuilder
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import EcosystemDefault
-from poms.widgets.models import BalanceReportHistory
+from poms.widgets.handlers import StatsHandler
+from poms.widgets.models import BalanceReportHistory, PLReportHistory
 from poms.widgets.serializers import CollectHistorySerializer
-from poms.widgets.tasks import collect_balance_report_history
+from poms.widgets.tasks import collect_balance_report_history, collect_pl_report_history
 
 import logging
+
 _l = logging.getLogger('poms.widgets')
 
 
@@ -35,7 +40,7 @@ class HistoryNavViewSet(AbstractViewSet):
         segmentation_type = request.query_params.get('segmentation_type', None)
 
         if not date_from:
-           date_from = str(datetime.datetime.now().year) + "-01-01"
+            date_from = str(datetime.datetime.now().year) + "-01-01"
 
         if not date_to:
             date_to = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -195,8 +200,37 @@ class HistoryNavViewSet(AbstractViewSet):
 class StatsViewSet(AbstractViewSet):
 
     def list(self, request):
-        result = {
+        date = request.query_params.get('date', None)
+        portfolio = request.query_params.get('portfolio', None)
 
+        currency = request.query_params.get('currency', None)
+
+        if not portfolio:
+            raise ValidationError("Portfolio is required")
+
+        _l.info("StatsViewSet.date %s" % date)
+        _l.info("StatsViewSet.portfolio %s" % portfolio)
+
+        stats_handler = StatsHandler(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            date=date,
+            currency_id=currency,
+            portfolio_id=portfolio
+        )
+
+        result = {
+            "nav": stats_handler.get_balance_nav(),  # done
+            "total": stats_handler.get_pl_total(),  # done
+            "cumulative_return": stats_handler.get_cumulative_return(),  # done
+            "annualized_return": stats_handler.get_annualized_return(),  # done
+            "portfolio_volatility": stats_handler.get_portfolio_volatility(),
+            "annualized_portfolio_volatility": stats_handler.get_annualized_portfolio_volatility(),
+            "sharpe_ratio": stats_handler.get_sharpe_ratio(),
+            "max_annualized_drawdown": stats_handler.get_max_annualized_drawdown(),
+            "betta": stats_handler.get_betta(),
+            "alpha": stats_handler.get_alpha(),
+            "correlation": stats_handler.get_correlation()
         }
 
         return Response(result)
@@ -205,28 +239,8 @@ class StatsViewSet(AbstractViewSet):
 class CollectHistoryViewSet(AbstractViewSet):
     serializer_class = CollectHistorySerializer
 
-    def create(self, request):
-
-        date_from = request.data.get('date_from', None)
-        date_to = request.data.get('date_to', None)
-        portfolios = request.data.get('portfolios', None)
-        accounts = request.data.get('accounts', None)
-        report_currency_id = request.data.get('report_currency', None)
-        pricing_policy_id = request.data.get('pricing_policy', None)
-        cost_method_id = request.data.get('cost_method', CostMethod.AVCO)
-
-        if portfolios and isinstance(portfolios, str):
-            portfolios = portfolios.split(',')
-
-        if accounts and isinstance(accounts, str):
-            accounts = accounts.split(',')
-
-        ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
-
-        if not report_currency_id:
-            report_currency_id = ecosystem_default.currency_id
-        if not pricing_policy_id:
-            pricing_policy_id = ecosystem_default.pricing_policy_id
+    def collect_balance_history(self, request, date_from, date_to, dates, portfolio_id, report_currency_id,
+                                cost_method_id, pricing_policy_id):
 
         parent_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
@@ -234,13 +248,10 @@ class CollectHistoryViewSet(AbstractViewSet):
             type='collect_history_chain',
         )
 
-        dates = get_list_of_dates_between_two_dates(date_from, date_to, to_string=True)
-
         parent_task_options_object = {
             'date_from': date_from,
             'date_to': date_to,
-            'portfolios': portfolios,
-            'accounts': accounts,
+            'portfolio_id': portfolio_id,
             'report_currency_id': report_currency_id,
             'cost_method_id': cost_method_id,
             'pricing_policy_id': pricing_policy_id,
@@ -261,8 +272,7 @@ class CollectHistoryViewSet(AbstractViewSet):
 
         options_object = {
             "report_date": date_from,
-            "accounts": accounts,
-            "portfolios": portfolios,
+            "portfolio_id": portfolio_id,
             "report_currency_id": report_currency_id,
             'cost_method_id': cost_method_id,
             'pricing_policy_id': pricing_policy_id,
@@ -280,8 +290,89 @@ class CollectHistoryViewSet(AbstractViewSet):
                             type='info',
                             title='Balance History is start collecting',
                             description='Balance History from %s to %s will be soon available' % (
-                            parent_task_options_object['date_from'], parent_task_options_object['date_to']),
+                                parent_task_options_object['date_from'], parent_task_options_object['date_to']),
                             )
+
+    def collect_pl_history(self, request, date_from, date_to, dates, portfolio_id, report_currency_id, cost_method_id,
+                           pricing_policy_id):
+
+        parent_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            type='collect_history_chain',
+        )
+
+        pl_first_date = str(get_first_transaction(portfolio_id).accounting_date)
+
+        parent_task_options_object = {
+            'pl_first_date': pl_first_date,
+            'date_from': date_from,
+            'date_to': date_to,
+            'portfolio_id': portfolio_id,
+            'report_currency_id': report_currency_id,
+            'cost_method_id': cost_method_id,
+            'pricing_policy_id': pricing_policy_id,
+            'dates_to_process': dates,
+            'error_dates': [],
+            'processed_dates': []
+        }
+
+        parent_task.options_object = parent_task_options_object
+        parent_task.save()
+
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            type='collect_history',
+            parent=parent_task
+        )
+
+        options_object = {
+            'pl_first_date': pl_first_date,
+            'report_date': date_from,
+            'portfolio_id': portfolio_id,
+            'report_currency_id': report_currency_id,
+            'cost_method_id': cost_method_id,
+            'pricing_policy_id': pricing_policy_id,
+        }
+
+        celery_task.options_object = options_object
+
+        celery_task.save()
+
+        transaction.on_commit(lambda: collect_pl_report_history.apply_async(kwargs={'task_id': celery_task.id}))
+
+        send_system_message(master_user=parent_task.master_user,
+                            performed_by=parent_task.member.username,
+                            section='schedules',
+                            type='info',
+                            title='PL History is start collecting',
+                            description='PL History from %s to %s will be soon available' % (
+                                parent_task_options_object['date_from'], parent_task_options_object['date_to']),
+                            )
+
+    def create(self, request):
+
+        date_from = request.data.get('date_from', None)
+        date_to = request.data.get('date_to', None)
+        portfolio_id = request.data.get('portfolio', None)
+        report_currency_id = request.data.get('report_currency', None)
+        pricing_policy_id = request.data.get('pricing_policy', None)
+        cost_method_id = request.data.get('cost_method', CostMethod.AVCO)
+
+        ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
+
+        if not report_currency_id:
+            report_currency_id = ecosystem_default.currency_id
+        if not pricing_policy_id:
+            pricing_policy_id = ecosystem_default.pricing_policy_id
+
+        dates = get_list_of_dates_between_two_dates(date_from, date_to, to_string=True)
+
+        self.collect_balance_history(request, date_from, date_to, dates, portfolio_id, report_currency_id,
+                                     cost_method_id, pricing_policy_id)
+        self.collect_pl_history(request, date_from, date_to, dates, portfolio_id, report_currency_id, cost_method_id,
+                                pricing_policy_id)
 
         return Response({
             'status': 'ok'

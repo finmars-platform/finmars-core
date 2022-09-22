@@ -11,5 +11,4 @@ class CollectHistorySerializer(serializers.Serializer):
 
     date_to = serializers.DateField(required=False, allow_null=True, default=date_now,)
 
-    portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
-    accounts = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
+    portfolio = PortfolioField(required=False, allow_null=True, allow_empty=True)

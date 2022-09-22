@@ -15,8 +15,11 @@ from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser
 
+
 from logging import getLogger
+
 _l = getLogger('poms.portfolios')
+
 
 class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='portfolios', verbose_name=gettext_lazy('master user'),
@@ -73,21 +76,31 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     def save(self, *args, **kwargs):
         super(PortfolioRegister, self).save(*args, **kwargs)
 
+        from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_price_history
+
+
         if self.linked_instrument:
             self.linked_instrument.has_linked_with_portfolio = True
             self.linked_instrument.save()
 
+        calculate_portfolio_register_record.apply_async(
+            link=[
+                calculate_portfolio_register_price_history.s()
+            ],
+            kwargs={'portfolio_register_ids': [self.id], 'master_users': [self.master_user.id]})
+
         try:
 
-            bundle = PortfolioBundle.objects.get(master_user=self.master_user, user_code = self.user_code)
+            bundle = PortfolioBundle.objects.get(master_user=self.master_user, user_code=self.user_code)
             _l.info("Bundle already exists")
 
         except Exception as e:
 
-            bundle = PortfolioBundle.objects.create(master_user=self.master_user, user_code = self.user_code)
+            bundle = PortfolioBundle.objects.create(master_user=self.master_user, user_code=self.user_code)
             bundle.registers.set([self])
 
             bundle.save()
+
 
 class PortfolioRegisterRecord(DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='portfolio_register_records',
@@ -100,9 +113,9 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
                                    verbose_name=gettext_lazy('instrument'), on_delete=models.CASCADE)
 
     transaction_class = models.ForeignKey('transactions.TransactionClass',
-                                            related_name="register_record_transaction_class",
-                                            on_delete=models.CASCADE,
-                                            verbose_name=gettext_lazy('transaction class'))
+                                          related_name="register_record_transaction_class",
+                                          on_delete=models.CASCADE,
+                                          verbose_name=gettext_lazy('transaction class'))
 
     transaction_code = models.IntegerField(default=0, verbose_name=gettext_lazy('transaction code'))
 
@@ -141,7 +154,7 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
     rolling_shares_of_the_day = models.FloatField(default=0.0, verbose_name=gettext_lazy("rolling shares  of the day"))
 
     previous_date_record = models.ForeignKey('portfolios.PortfolioRegisterRecord', null=True, on_delete=models.SET_NULL,
-                                    verbose_name=gettext_lazy('previous date record'))
+                                             verbose_name=gettext_lazy('previous date record'))
 
     transaction = models.ForeignKey('transactions.Transaction', on_delete=models.CASCADE,
                                     related_name="register_record_transaction",
@@ -207,8 +220,7 @@ class PortfolioBundle(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         related_name="portfolio_bundles",
         related_query_name="bundle",
     )
+
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('portfolio bundle')
         verbose_name_plural = gettext_lazy('portfolio bundles')
-
-

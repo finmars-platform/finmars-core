@@ -280,3 +280,10 @@ def check_if_last_day_of_month(to_date):
     if to_date.month != next_day.month:
         return True
     return False
+
+
+def get_first_transaction(portfolio_id):
+
+    from poms.transactions.models import Transaction
+    transaction = Transaction.objects.filter(portfolio_id=portfolio_id).order_by('accounting_date')[0]
+    return transaction

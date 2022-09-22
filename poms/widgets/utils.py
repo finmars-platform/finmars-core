@@ -35,7 +35,7 @@ def filter_report_items_by_instrument_attribute_type(attribute_type_id, value, i
     return results
 
 
-def collect_asset_type_category(instance_serialized, balance_report_history):
+def collect_asset_type_category(instance_serialized, balance_report_history, key='market_value'):
     asset_types_attribute_type = GenericAttributeType.objects.get(master_user_id=instance_serialized['master_user'],
                                                                   user_code='asset_types')
 
@@ -46,13 +46,13 @@ def collect_asset_type_category(instance_serialized, balance_report_history):
         item = BalanceReportHistoryItem()
         item.balance_report_history = balance_report_history
         item.category = 'Asset Types'
-        item.key = 'nav'
+        item.key = key
         item.name = asset_type
 
         asset_type_items = filter_report_items_by_instrument_attribute_type(asset_types_attribute_type.id, asset_type,
                                                                             instance_serialized)
 
-        item.value = get_total_from_report_items('market_value', asset_type_items)
+        item.value = get_total_from_report_items(key, asset_type_items)
 
         item.save()
 
@@ -61,7 +61,7 @@ def collect_asset_type_category(instance_serialized, balance_report_history):
     item = BalanceReportHistoryItem()
     item.balance_report_history = balance_report_history
     item.category = 'Asset Types'
-    item.key = 'nav'
+    item.key = key
     item.name = 'Cash & Equivalents'
 
     asset_type_items = []
@@ -70,12 +70,12 @@ def collect_asset_type_category(instance_serialized, balance_report_history):
         if _item['item_type'] == 2:
             asset_type_items.append(_item)
 
-    item.value = get_total_from_report_items('market_value', asset_type_items)
+    item.value = get_total_from_report_items(key, asset_type_items)
 
     item.save()
 
 
-def collect_sector_category(instance_serialized, balance_report_history):
+def collect_sector_category(instance_serialized, balance_report_history, key='market_value'):
     sector_attribute_type = GenericAttributeType.objects.get(master_user_id=instance_serialized['master_user'],
                                                                   user_code='sector')
 
@@ -96,7 +96,7 @@ def collect_sector_category(instance_serialized, balance_report_history):
         item = BalanceReportHistoryItem()
         item.balance_report_history = balance_report_history
         item.category = 'Sector'
-        item.key = 'nav'
+        item.key = key
         item.name = sector
 
         sector_items = []
@@ -110,12 +110,12 @@ def collect_sector_category(instance_serialized, balance_report_history):
                         if sector == attribute['value_string']:
                             sector_items.append(_item)
 
-        item.value = get_total_from_report_items('market_value', sector_items)
+        item.value = get_total_from_report_items(key, sector_items)
 
         item.save()
 
 
-def collect_country_category(instance_serialized, balance_report_history):
+def collect_country_category(instance_serialized, balance_report_history, key='market_value'):
 
     countries = []
 
@@ -132,7 +132,7 @@ def collect_country_category(instance_serialized, balance_report_history):
         item = BalanceReportHistoryItem()
         item.balance_report_history = balance_report_history
         item.category = 'Country'
-        item.key = 'nav'
+        item.key = key
         item.name = country
 
         country_items = []
@@ -146,12 +146,12 @@ def collect_country_category(instance_serialized, balance_report_history):
                     if _item['instrument_object']['country_object']['name'] == country:
                         country_items.append(_item)
 
-        item.value = get_total_from_report_items('market_value', country_items)
+        item.value = get_total_from_report_items(key, country_items)
 
         item.save()
 
 
-def collect_region_category(instance_serialized, balance_report_history):
+def collect_region_category(instance_serialized, balance_report_history, key='market_value'):
 
     regions = []
 
@@ -168,7 +168,7 @@ def collect_region_category(instance_serialized, balance_report_history):
         item = BalanceReportHistoryItem()
         item.balance_report_history = balance_report_history
         item.category = 'Region'
-        item.key = 'nav'
+        item.key = key
         item.name = region
 
         region_items = []
@@ -182,12 +182,12 @@ def collect_region_category(instance_serialized, balance_report_history):
                     if _item['instrument_object']['country_object']['region'] == region:
                         region_items.append(_item)
 
-        item.value = get_total_from_report_items('market_value', region_items)
+        item.value = get_total_from_report_items(key, region_items)
 
         item.save()
 
 
-def collect_currency_category(instance_serialized, balance_report_history):
+def collect_currency_category(instance_serialized, balance_report_history, key='market_value'):
     currencies_ids = []
     currencies = []
 
@@ -207,7 +207,7 @@ def collect_currency_category(instance_serialized, balance_report_history):
         item = BalanceReportHistoryItem()
         item.balance_report_history = balance_report_history
         item.category = 'Currency'
-        item.key = 'nav'
+        item.key = key
         item.name = currency['name']
 
         currency_items = []
@@ -217,7 +217,7 @@ def collect_currency_category(instance_serialized, balance_report_history):
             if _item['exposure_currency'] == currency['id']:
                 currency_items.append(_item)
 
-        item.value = get_total_from_report_items('market_value', currency_items)
+        item.value = get_total_from_report_items(key, currency_items)
 
         item.save()
 
