@@ -655,6 +655,8 @@ def _reverse(items):
 
     return items
 
+def _split(text, delimeter):
+    return text.split(delimeter)
 
 def _parse_bool(a):
     if isinstance(a, (bool)):
@@ -2908,6 +2910,7 @@ FUNCTIONS = [
     SimpleEval2Def('parse_number', _parse_number),
     SimpleEval2Def('join', _join),
     SimpleEval2Def('reverse', _reverse),
+    SimpleEval2Def('split', _split),
 
     SimpleEval2Def('simple_price', _simple_price),
 
