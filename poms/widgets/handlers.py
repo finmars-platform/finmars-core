@@ -105,7 +105,12 @@ class StatsHandler():
 
         cumulative_return = self.get_cumulative_return()
 
-        annualized_return = cumulative_return ** (1 / years_from_first_transaction)
+        sign = 1
+
+        if cumulative_return < 0:
+            sign = - 1
+
+        annualized_return = (abs(cumulative_return) ** (1 / years_from_first_transaction)) * sign
 
         return annualized_return
 
@@ -249,12 +254,16 @@ class StatsHandler():
 
         results = []
 
+
+
         months = get_list_of_months_between_two_dates(date_from, date_to)
 
         if date_from.day != 1:
             months.insert(0, date_from)
 
-        print('months %s' % months)
+        _l.info('get_benchmark_returns.date_from %s' % date_from)
+        _l.info('get_benchmark_returns.date_to %s' % date_to)
+        _l.info('get_benchmark_returns.month %s' % months)
 
         prices = PriceHistory.objects.filter(instrument__user_code=self.benchmark, date__in=months)
 
@@ -272,7 +281,7 @@ class StatsHandler():
 
         date_from = first_transaction.accounting_date
 
-        date_to = self.get_date_or_yesterday(self.date)
+        date_to = self.date
 
         # from inception
         # end of month
