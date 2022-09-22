@@ -256,8 +256,6 @@ class StatsHandler():
 
         results = []
 
-
-
         months = get_list_of_months_between_two_dates(date_from, date_to)
 
         if date_from.day != 1:
@@ -271,9 +269,9 @@ class StatsHandler():
 
         if len(months) != len(prices):
             _l.error("Not enough Prices for benchmark_returns")
-
-        for i in range(1, len(months)):
-            results.append((prices[i].principal_price - prices[i - 1].principal_price) / prices[i - 1].principal_price)
+        else:
+            for i in range(1, len(months)):
+                results.append((prices[i].principal_price - prices[i - 1].principal_price) / prices[i - 1].principal_price)
 
         return results
 
