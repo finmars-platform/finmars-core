@@ -10,9 +10,9 @@ from poms.common.utils import get_first_transaction, get_list_of_months_between_
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioBundle
+from poms.reports.builders.performance_item import PerformanceReport
 from poms.reports.voila_constructrices.performance import PerformanceReportBuilder
 from poms.users.models import EcosystemDefault
-from poms.reports.builders.performance_item import PerformanceReport
 from poms.widgets.models import BalanceReportHistory, PLReportHistory
 
 import logging
@@ -60,6 +60,8 @@ class StatsHandler():
     def get_performance_report(self):
 
         first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
+
+
 
         instance = PerformanceReport(
             master_user=self.master_user,

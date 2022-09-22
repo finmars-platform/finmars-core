@@ -533,6 +533,8 @@ class PerformanceReport(BaseReport):
         self.begin_date = begin_date or date(d.year, 1, 1)
         # self.begin_date = date.min
         self.end_date = end_date or d
+
+
         self.report_currency = report_currency or master_user.system_currency
         self.pricing_policy = pricing_policy
         self.calculation_type = calculation_type

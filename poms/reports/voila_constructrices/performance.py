@@ -43,7 +43,8 @@ class PerformanceReportBuilder:
         self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self.instance.master_user)
 
         _l.info('self.instance master_user %s' % self.instance.master_user)
-        _l.info('self.instance report_date %s' % self.instance.report_date)
+        _l.info('self.instance begin_date %s' % self.instance.begin_date)
+        _l.info('self.instance end_date %s' % self.instance.end_date)
 
     def get_first_transaction(self):
 
