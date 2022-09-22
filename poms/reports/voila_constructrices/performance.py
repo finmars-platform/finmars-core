@@ -108,7 +108,7 @@ class PerformanceReportBuilder:
         if end_date < begin_date:
             end_date = begin_date
 
-            self.instance.periods = self.get_periods(begin_date, end_date, self.instance.segmentation_type)
+        self.instance.periods = self.get_periods(begin_date, end_date, self.instance.segmentation_type)
 
         cumulative_return = 0
         for period in self.instance.periods:
