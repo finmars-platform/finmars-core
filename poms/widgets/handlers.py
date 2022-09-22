@@ -250,9 +250,7 @@ class StatsHandler():
 
         prices = PriceHistory.objects.filter(instrument__user_code=self.benchmark, date__in=months)
 
-        i = 1
-
-        for i in range(len(prices)):
+        for i in range(1, len(prices)):
             results.append(prices[i] - prices[i - 1] / prices[i - 1])
 
         return results
