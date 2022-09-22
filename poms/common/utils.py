@@ -269,6 +269,33 @@ def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
     return result
 
 
+def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
+
+    result = []
+    format = '%Y-%m-%d'
+
+    if not isinstance(date_from, datetime.date):
+        date_from = datetime.datetime.strptime(date_from, format).date()
+
+    if not isinstance(date_to, datetime.date):
+        date_to = datetime.datetime.strptime(date_to, format).date()
+
+    diff = date_to - date_from
+
+    for i in range(diff.days + 1):
+        day = date_from + timedelta(days=i)
+
+        if day.day == 1:
+
+            if to_string:
+                result.append(str(day))
+            else:
+                result.append(day)
+
+    return result
+
+
+
 def convert_name_to_key(name):
 
     return name.strip().lower().replace(' ', '_')

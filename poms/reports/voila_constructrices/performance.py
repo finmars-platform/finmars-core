@@ -47,35 +47,41 @@ class PerformanceReportBuilder:
 
     def get_first_transaction(self):
 
-        if self.instance.bundle:
-            self.instance.bunch_portfolios = []
-            for item in self.instance.bundle.registers.all():
-                if item.linked_instrument_id:
-                    self.instance.bunch_portfolios.append(item.linked_instrument_id)
-        else:
-            self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
+        try:
 
-        portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
-                                                               linked_instrument__in=self.instance.bunch_portfolios)
+            if self.instance.bundle:
+                self.instance.bunch_portfolios = []
+                for item in self.instance.bundle.registers.all():
+                    if item.linked_instrument_id:
+                        self.instance.bunch_portfolios.append(item.linked_instrument_id)
+            else:
+                self.instance.bunch_portfolios = self.instance.registers  # instruments #debug szhitenev fund
 
-        portfolio_registers_map = {}
+            portfolio_registers = PortfolioRegister.objects.filter(master_user=self.instance.master_user,
+                                                                   linked_instrument__in=self.instance.bunch_portfolios)
 
-        portfolios = []
+            portfolio_registers_map = {}
 
-        for portfolio_register in portfolio_registers:
-            portfolios.append(portfolio_register.portfolio_id)
-            portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
+            portfolios = []
 
-        _l.info('get_first_transaction.portfolios %s ' % portfolios)
+            for portfolio_register in portfolio_registers:
+                portfolios.append(portfolio_register.portfolio_id)
+                portfolio_registers_map[portfolio_register.portfolio_id] = portfolio_register
 
-        transaction = Transaction.objects.filter(portfolio__in=portfolios,
-                                                 transaction_class__in=[TransactionClass.CASH_INFLOW,
-                                                                        TransactionClass.CASH_OUTFLOW,
-                                                                        TransactionClass.INJECTION,
-                                                                        TransactionClass.DISTRIBUTION]).order_by(
-            'transaction_date').first()
+            _l.info('get_first_transaction.portfolios %s ' % portfolios)
 
-        return transaction.transaction_date
+            transaction = Transaction.objects.filter(portfolio__in=portfolios,
+                                                     transaction_class__in=[TransactionClass.CASH_INFLOW,
+                                                                            TransactionClass.CASH_OUTFLOW,
+                                                                            TransactionClass.INJECTION,
+                                                                            TransactionClass.DISTRIBUTION]).order_by(
+                'transaction_date').first()
+
+            return transaction.transaction_date
+
+        except Exception as e:
+            _l.error("Could not find first transaction date")
+            return None
 
     def build_report(self):
         st = time.perf_counter()
@@ -88,7 +94,7 @@ class PerformanceReportBuilder:
             # end_date = timezone_today() - timedelta(days=1)
             end_date = timezone_today()
 
-        # first_transaction_date = self.get_first_transaction()
+        self.instance.first_transaction_date = self.get_first_transaction()
 
         begin_date = self.instance.begin_date
 

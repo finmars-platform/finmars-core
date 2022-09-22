@@ -2,17 +2,27 @@ import datetime
 import math
 import statistics
 
+import numpy
+
+from dateutil.relativedelta import relativedelta
+
+from poms.common.utils import get_first_transaction, get_list_of_months_between_two_dates
 from poms.currencies.models import Currency
+from poms.instruments.models import PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioBundle
 from poms.reports.voila_constructrices.performance import PerformanceReportBuilder
 from poms.users.models import EcosystemDefault
 from poms.reports.builders.performance_item import PerformanceReport
 from poms.widgets.models import BalanceReportHistory, PLReportHistory
 
+import logging
+
+_l = logging.getLogger('poms.widgets')
+
 
 class StatsHandler():
 
-    def __init__(self, master_user, member, date=None, currency_id=None, portfolio_id=None):
+    def __init__(self, master_user, member, date=None, currency_id=None, portfolio_id=None, benchmark=None):
 
         self.master_user = master_user
         self.member = member
@@ -38,6 +48,7 @@ class StatsHandler():
         self.portfolio = Portfolio.objects.get(id=portfolio_id)
 
         self.bundle = PortfolioBundle.objects.get(user_code=self.portfolio.user_code)  # may cause un error
+        self.benchmark = benchmark
 
         try:
             self.balance_history = BalanceReportHistory.objects.get(date=date, portfolio=self.portfolio)
@@ -78,10 +89,19 @@ class StatsHandler():
     def get_cumulative_return(self):
         return self.performance_report.grand_return
 
-    # TODO do get_annualized_return
     def get_annualized_return(self):
 
-        years_from_first_transaction = 1  # count years from first transaction date
+        first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
+        now = datetime.datetime.now()
+
+        _l.info('get_annualized_return.first_transaction.accounting_date %s' % first_transaction.accounting_date)
+
+        years_from_first_transaction = relativedelta(now, first_transaction.accounting_date).years
+
+        if years_from_first_transaction == 0:
+            years_from_first_transaction = 1
+
+        _l.info('get_annualized_return.years_from_first_transaction %s' % years_from_first_transaction)
 
         cumulative_return = self.get_cumulative_return()
 
@@ -89,10 +109,12 @@ class StatsHandler():
 
         return annualized_return
 
-    # TODO do get_portfolio_volatility
     def get_portfolio_volatility(self):
 
         performance_monthly_returns_list = []
+
+        for period in self.performance_report.periods:
+            performance_monthly_returns_list.append(period['total_return'])
 
         portfolio_volatility = 0
 
@@ -101,7 +123,6 @@ class StatsHandler():
 
         return portfolio_volatility
 
-    # TODO get_annualized_portfolio_volatility
     def get_annualized_portfolio_volatility(self):
 
         portfolio_volatility = self.get_portfolio_volatility()
@@ -112,7 +133,6 @@ class StatsHandler():
 
         return annualized_portfolio_volatility
 
-    # TODO get_sharpe_ratio
     def get_sharpe_ratio(self):
 
         cumulative_return = self.get_cumulative_return()
@@ -125,8 +145,84 @@ class StatsHandler():
 
         return sharpe_ratio
 
-    # TODO get_max_annualized_drawdown
+    def generate_performance_report(self, date_from, date_to):
+
+        instance = PerformanceReport(
+            master_user=self.master_user,
+            member=self.member,
+            report_currency=self.currency,
+            begin_date=date_from,
+            end_date=date_to,
+            calculation_type='time_weighted',
+            segmentation_type='months',
+            bundle=self.bundle,
+            save_report=True
+        )
+
+        builder = PerformanceReportBuilder(instance=instance)
+        instance = builder.build_report()
+
+        return instance
+
     def get_max_annualized_drawdown(self):
+
+        first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
+
+        grand_date_from = first_transaction.accounting_date
+
+        now = datetime.datetime.now().date()
+
+        grand_date_to = self.date
+
+        if self.date != now:
+            grand_date_to = self.date
+        else:
+            grand_date_to = now - datetime.timedelta(days=1)
+
+        months = get_list_of_months_between_two_dates(grand_date_from, grand_date_to)
+
+        if grand_date_from.day != 1:
+            months.insert(0, grand_date_from)
+
+        grand_lowest = 0
+
+        results = []
+
+        for month in months:
+
+            date_from = month
+            date_to = date_from + datetime.timedelta(days=365)
+
+            performance_report = self.generate_performance_report(date_from, date_to)
+
+            lowest = 0
+
+            for period in performance_report.periods:
+
+                if period['cumulative_return'] < lowest:
+                    lowest = period['cumulative_return']
+
+            results.append({
+                'month': month,
+                'lowest': lowest
+            })
+
+        for result in results:
+
+            lowest = result['lowest']
+
+            if grand_lowest < lowest:
+                grand_lowest = lowest
+
+        # got 120 monthes [...]
+        # for each month
+        # generate performance report from month start + 12 months
+        # took cumulative_return from every period
+        # look for  values and find -10 -50 -100 - took -100
+        # and find minimum
+        # 1 month result = 1 minimum
+        # in end of algo we got 120 minimum
+        # find mininum from all these 120 values
 
         # calculate performance reports since inception
         # get totals
@@ -137,14 +233,60 @@ class StatsHandler():
         # from december to january
         # stop on date now
 
-        max_annualized_drawdown = 0
+        max_annualized_drawdown = grand_lowest
 
         return max_annualized_drawdown
 
-    # TODO get_betta
+    def get_benchmark_returns(self, date_from, date_to):
+
+        results = []
+
+        months = get_list_of_months_between_two_dates(date_from, date_to)
+
+        if date_from.day != 1:
+            months.insert(0, date_from)
+
+        print('months %s' % months)
+
+        prices = PriceHistory.objects.filter(instrument__user_code=self.benchmark, date__in=months)
+
+        i = 1
+
+        for i in range(len(prices)):
+            results.append(prices[i] - prices[i - 1] / prices[i - 1])
+
+        return results
+
     def get_betta(self):
 
-        betta = 0  # MINDBLOWING WITH SP500
+        portfolio_returns = []
+        benchmarks_returns = []
+
+        first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
+
+        date_from = first_transaction.accounting_date
+
+        date_to = self.date
+
+        # from inception
+        # end of month
+        # (p1 - p0) / p0 = result %
+
+        for period in self.performance_report.periods:
+            portfolio_returns.append(period['total_return'])
+
+        benchmarks_returns = self.get_benchmark_returns(date_from, date_to)
+
+        # cov(portfoio, bench) / var(bench)
+        # MINDBLOWING WITH SP500
+
+        try:
+            betta = numpy.cov(portfolio_returns, benchmarks_returns) / statistics.variance(benchmarks_returns)
+        except Exception as e:
+            _l.error('portfolio_returns len %s' % len(portfolio_returns))
+            _l.error('benchmarks_returns len %s' % len(benchmarks_returns))
+            _l.error('StatsHandler.get betta error %s' % e)
+            betta = 0
 
         return betta
 

@@ -202,6 +202,7 @@ class StatsViewSet(AbstractViewSet):
     def list(self, request):
         date = request.query_params.get('date', None)
         portfolio = request.query_params.get('portfolio', None)
+        benchmark = request.query_params.get('benchmark', 'sp_500')
 
         currency = request.query_params.get('currency', None)
 
@@ -216,7 +217,8 @@ class StatsViewSet(AbstractViewSet):
             member=request.user.member,
             date=date,
             currency_id=currency,
-            portfolio_id=portfolio
+            portfolio_id=portfolio,
+            benchmark=benchmark
         )
 
         result = {
@@ -224,9 +226,9 @@ class StatsViewSet(AbstractViewSet):
             "total": stats_handler.get_pl_total(),  # done
             "cumulative_return": stats_handler.get_cumulative_return(),  # done
             "annualized_return": stats_handler.get_annualized_return(),  # done
-            "portfolio_volatility": stats_handler.get_portfolio_volatility(),
-            "annualized_portfolio_volatility": stats_handler.get_annualized_portfolio_volatility(),
-            "sharpe_ratio": stats_handler.get_sharpe_ratio(),
+            "portfolio_volatility": stats_handler.get_portfolio_volatility(), # done
+            "annualized_portfolio_volatility": stats_handler.get_annualized_portfolio_volatility(), # done
+            "sharpe_ratio": stats_handler.get_sharpe_ratio(), # done
             "max_annualized_drawdown": stats_handler.get_max_annualized_drawdown(),
             "betta": stats_handler.get_betta(),
             "alpha": stats_handler.get_alpha(),
