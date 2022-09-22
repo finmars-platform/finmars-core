@@ -351,15 +351,33 @@ def calculate_portfolio_register_price_history(master_users=None, date_from=None
                 _l.info('calculate_portfolio_register_nav0.dates %s ' % len(dates))
 
 
-                for pricing_policy in pricing_policies:
+                true_pricing_policy = portfolio_register.valuation_pricing_policy
 
-                    for date in dates:
+                for date in dates:
 
-                        try:
+                    try:
 
-                            price_history = None
-                            registry_record = PortfolioRegisterRecord.objects.filter(instrument=portfolio_register.linked_instrument, transaction_date__lte=date).order_by('-transaction_date', '-transaction_code')[0]
+                        price_history = None
+                        registry_record = PortfolioRegisterRecord.objects.filter(instrument=portfolio_register.linked_instrument, transaction_date__lte=date).order_by('-transaction_date', '-transaction_code')[0]
 
+                        balance_report = calculate_simple_balance_report(date, portfolio_register, true_pricing_policy)
+
+                        nav = 0
+                        cash_flow = 0
+
+                        for item in balance_report.items:
+
+                            if item['market_value']:
+                                nav = nav + item['market_value']
+
+                        cash_flow = calculate_cash_flow(master_user, date, pricing_policy, portfolio_register)
+
+
+                        # principal_price = nav / (registry_record.n_shares_previous_day + registry_record.n_shares_added)
+                        principal_price = nav / registry_record.rolling_shares_of_the_day
+
+
+                        for pricing_policy in pricing_policies:
                             try:
 
                                 price_history = PriceHistory.objects.get(instrument=portfolio_register.linked_instrument, date=date,
@@ -369,34 +387,18 @@ def calculate_portfolio_register_price_history(master_users=None, date_from=None
                                                              pricing_policy=pricing_policy)
 
 
-                            balance_report = calculate_simple_balance_report(date, portfolio_register, pricing_policy)
-
-                            nav = 0
-                            cash_flow = 0
-
-                            for item in balance_report.items:
-
-                                if item['market_value']:
-                                    nav = nav + item['market_value']
-
-                            cash_flow = calculate_cash_flow(master_user, date, pricing_policy, portfolio_register)
-
-
-                            # principal_price = nav / (registry_record.n_shares_previous_day + registry_record.n_shares_added)
-                            principal_price = nav / registry_record.rolling_shares_of_the_day
-
-
                             price_history.nav = nav
                             price_history.cash_flow = cash_flow
                             price_history.principal_price = principal_price
 
                             price_history.save()
 
-                            count = count + 1
+                        count = count + 1
 
-                        except Exception as e:
-                            _l.error('calculate_portfolio_register_price_history.error %s ' % e)
-                            _l.error('date %s' % date)
+                    except Exception as e:
+                        _l.error('calculate_portfolio_register_price_history.error %s ' % e)
+                        _l.error('date %s' % date)
+
 
             send_system_message(master_user=master_user,
                                 performed_by='system',
