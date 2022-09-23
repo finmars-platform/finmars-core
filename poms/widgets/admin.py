@@ -1,7 +1,8 @@
 from django.contrib import admin
 
 from poms.common.admin import AbstractModelAdmin
-from poms.widgets.models import BalanceReportHistory, BalanceReportHistoryItem, PLReportHistory, PLReportHistoryItem
+from poms.widgets.models import BalanceReportHistory, BalanceReportHistoryItem, PLReportHistory, PLReportHistoryItem, \
+    WidgetStats
 
 
 class BalanceReportHistoryAdmin(AbstractModelAdmin):
@@ -48,3 +49,14 @@ class PLReportHistoryItemAdmin(AbstractModelAdmin):
 
 
 admin.site.register(PLReportHistoryItem, PLReportHistoryItemAdmin)
+
+
+class WidgetStatsAdmin(AbstractModelAdmin):
+    model = WidgetStats
+    list_display = ['id', 'master_user', 'date', 'portfolio', 'nav']
+    list_select_related = ['master_user', 'portfolio']
+    search_fields = ['id', 'date', 'portfolio']
+    raw_id_fields = ['master_user', 'portfolio']
+
+
+admin.site.register(WidgetStats, WidgetStatsAdmin)

@@ -17,9 +17,9 @@ from poms.reports.voila_constructrices.performance import PerformanceReportBuild
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import EcosystemDefault
 from poms.widgets.handlers import StatsHandler
-from poms.widgets.models import BalanceReportHistory, PLReportHistory
-from poms.widgets.serializers import CollectHistorySerializer
-from poms.widgets.tasks import collect_balance_report_history, collect_pl_report_history
+from poms.widgets.models import BalanceReportHistory, PLReportHistory, WidgetStats
+from poms.widgets.serializers import CollectHistorySerializer, CollectStatsSerializer, WidgetStatsSerializer
+from poms.widgets.tasks import collect_balance_report_history, collect_pl_report_history, collect_stats
 
 import logging
 
@@ -197,6 +197,178 @@ class HistoryNavViewSet(AbstractViewSet):
         return Response(result)
 
 
+class HistoryPlViewSet(AbstractViewSet):
+
+    def list(self, request):
+
+        date_from = request.query_params.get('date_from', None)
+        date_to = request.query_params.get('date_to', None)
+        currency = request.query_params.get('currency', None)
+        pricing_policy = request.query_params.get('pricing_policy', None)
+        cost_method = request.query_params.get('cost_method', None)
+        portfolios = request.query_params.get('portfolios', [])
+        accounts = request.query_params.get('accounts', [])
+        segmentation_type = request.query_params.get('segmentation_type', None)
+
+        if not date_from:
+            date_from = str(datetime.datetime.now().year) + "-01-01"
+
+        if not date_to:
+            date_to = datetime.datetime.now().strftime("%Y-%m-%d")
+
+        _l.info('date_from %s ' % date_from)
+        _l.info('date_to %s ' % date_to)
+
+        ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
+
+        if not currency:
+            currency = ecosystem_default.currency_id
+
+        if not pricing_policy:
+            pricing_policy = ecosystem_default.pricing_policy_id
+
+        if not cost_method:
+            cost_method = CostMethod.AVCO
+
+        if not segmentation_type:
+            segmentation_type = 'months'
+
+        pl_report_histories = PLReportHistory.objects.filter(
+            master_user=request.user.master_user,
+            cost_method=cost_method,
+            pricing_policy=pricing_policy,
+            report_currency=currency
+        )
+
+        if portfolios:
+            portfolios = portfolios.split(',')
+
+            pl_report_histories = pl_report_histories.filter(portfolios__in=portfolios)
+
+        if accounts:
+            accounts = accounts.split(',')
+
+            pl_report_histories = pl_report_histories.filter(accounts__in=accounts)
+
+        if segmentation_type == 'days':
+            pl_report_histories = pl_report_histories.filter(
+                date__gte=date_from,
+                date__lte=date_to
+            )
+
+        if segmentation_type == 'months':
+            end_of_months = []
+
+            dates = get_list_of_dates_between_two_dates(date_from, date_to, to_string=True)
+
+            for date in dates:
+
+                d = datetime.datetime.strptime(date_from, "%Y-%m-%d").date()
+
+                if check_if_last_day_of_month(d):
+                    end_of_months.append(date)
+
+            pl_report_histories = pl_report_histories.filter(
+                date__in=end_of_months
+            )
+
+        pl_report_histories = pl_report_histories.prefetch_related('items')
+
+        items = []
+
+        for history_item in pl_report_histories:
+
+            result_item = {}
+
+            result_item['date'] = str(history_item.date)
+            result_item['total'] = history_item.total
+
+            categories = []
+
+            for item in history_item.items.all():
+
+                if item.category not in categories:
+                    categories.append(item.category)
+
+            result_item['categories'] = []
+            for category in categories:
+                result_item['categories'].append({
+                    "name": category,
+                    "items": []
+                })
+
+            for item in history_item.items.all():
+
+                for category in result_item['categories']:
+
+                    if item.category == category['name']:
+                        category['items'].append({
+                            'name': item.name,
+                            'key': item.key,
+                            'value': item.value
+                        })
+
+            items.append(result_item)
+
+        currency_object = Currency.objects.get(id=currency)
+        pricing_policy_object = PricingPolicy.objects.get(id=pricing_policy)
+        cost_method_object = CostMethod.objects.get(id=cost_method)
+
+        portfolios_objects = Portfolio.objects.filter(id__in=portfolios)
+        accounts_objects = Account.objects.filter(id__in=accounts)
+
+        portfolios_objects_json = []
+        accounts_objects_json = []
+
+        for _item in portfolios_objects:
+            portfolios_objects_json.append({
+                "id": _item.id,
+                "name": _item.name,
+                "user_code": _item.user_code
+            })
+
+        for _item in accounts_objects:
+            accounts_objects_json.append({
+                "id": _item.id,
+                "name": _item.name,
+                "user_code": _item.user_code
+            })
+
+        result = {
+            "date_from": str(date_from),
+            "date_to": str(date_to),
+            "segmentation_type": segmentation_type,
+            "currency": currency,
+            "currency_object": {
+                "id": currency_object.id,
+                "name": currency_object.name,
+                "user_code": currency_object.user_code
+            },
+            "pricing_policy": pricing_policy,
+            "pricing_policy_object": {
+                "id": pricing_policy_object.id,
+                "name": pricing_policy_object.name,
+                "user_code": pricing_policy_object.user_code
+            },
+            "cost_method": cost_method,
+            "cost_method_object": {
+                "id": cost_method_object.id,
+                "name": cost_method_object.name,
+                "user_code": cost_method_object.user_code
+            },
+            "portfolios": portfolios,
+            "accounts": accounts,
+            "item_portfolios": portfolios_objects_json,
+            "item_accounts": accounts_objects_json,
+
+            "items": items
+
+        }
+
+        return Response(result)
+
+
+
 class StatsViewSet(AbstractViewSet):
 
     def list(self, request):
@@ -204,40 +376,18 @@ class StatsViewSet(AbstractViewSet):
         portfolio = request.query_params.get('portfolio', None)
         benchmark = request.query_params.get('benchmark', 'sp_500')
 
-        currency = request.query_params.get('currency', None)
-
         if not portfolio:
             raise ValidationError("Portfolio is required")
 
         _l.info("StatsViewSet.date %s" % date)
         _l.info("StatsViewSet.portfolio %s" % portfolio)
 
-        stats_handler = StatsHandler(
-            master_user=request.user.master_user,
-            member=request.user.member,
-            date=date,
-            currency_id=currency,
-            portfolio_id=portfolio,
-            benchmark=benchmark
-        )
 
-        result = {
-            "nav": stats_handler.get_balance_nav(),  # done
-            "total": stats_handler.get_pl_total(),  # done
-            "cumulative_return": stats_handler.get_cumulative_return(),  # done
-            "annualized_return": stats_handler.get_annualized_return(),  # done
-            "portfolio_volatility": stats_handler.get_portfolio_volatility(), # done
-            "annualized_portfolio_volatility": stats_handler.get_annualized_portfolio_volatility(), # done
-            "sharpe_ratio": stats_handler.get_sharpe_ratio(), # done
-            "max_annualized_drawdown": stats_handler.get_max_annualized_drawdown(),
-            "betta": stats_handler.get_betta(),
-            "alpha": stats_handler.get_alpha(),
-            "correlation": stats_handler.get_correlation()
-        }
+        widget = WidgetStats.objects.get(date=date, portfolio_id=portfolio, benchmark=benchmark)
 
-        _l.info('result %s' % result)
+        serializer = WidgetStatsSerializer(instance=widget)
 
-        return Response(result)
+        return Response(serializer.data)
 
 
 class CollectHistoryViewSet(AbstractViewSet):
@@ -377,6 +527,67 @@ class CollectHistoryViewSet(AbstractViewSet):
                                      cost_method_id, pricing_policy_id)
         self.collect_pl_history(request, date_from, date_to, dates, portfolio_id, report_currency_id, cost_method_id,
                                 pricing_policy_id)
+
+        return Response({
+            'status': 'ok'
+        })
+
+
+class CollectStatsViewSet(AbstractViewSet):
+    serializer_class = CollectStatsSerializer
+
+    def create(self, request):
+
+        date_from = request.data.get('date_from', None)
+        date_to = request.data.get('date_to', None)
+        portfolio_id = request.data.get('portfolio', None)
+        benchmark = request.data.get('benchmark', 'sp_500')
+
+        dates = get_list_of_dates_between_two_dates(date_from, date_to, to_string=True)
+
+        if len(dates) > 365:
+            raise ValidationError("Date range exceeded max limit of 365 days")
+
+        parent_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            type='collect_stats_chain'
+        )
+
+        parent_options_object = {
+            'date_from': date_from,
+            'date_to': date_to,
+            'portfolio_id': portfolio_id,
+            'benchmark': benchmark,
+            'dates_to_process': dates,
+            'error_dates': [],
+            'processed_dates': []
+        }
+
+        parent_task.options_object = parent_options_object
+
+        parent_task.save()
+
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            parent=parent_task,
+            type='collect_stats'
+        )
+
+        options_object = {
+
+            'portfolio_id': portfolio_id,
+            'benchmark': benchmark,
+            'date': str(dates[0])
+
+        }
+
+        celery_task.options_object = options_object
+
+        celery_task.save()
+
+        transaction.on_commit(lambda: collect_stats.apply_async(kwargs={'task_id': celery_task.id}))
 
         return Response({
             'status': 'ok'

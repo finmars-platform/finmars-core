@@ -15,7 +15,8 @@ from poms.reports.builders.balance_item import Report
 from poms.reports.builders.balance_serializers import BalanceReportSqlSerializer, PLReportSqlSerializer
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql, PLReportBuilderSql
 from poms.system_messages.handlers import send_system_message
-from poms.widgets.models import BalanceReportHistory, BalanceReportHistoryItem, PLReportHistory
+from poms.widgets.handlers import StatsHandler
+from poms.widgets.models import BalanceReportHistory, BalanceReportHistoryItem, PLReportHistory, WidgetStats
 
 from poms.widgets.utils import find_next_date_to_process, collect_asset_type_category, collect_currency_category, \
     collect_country_category, collect_sector_category, collect_region_category
@@ -403,3 +404,143 @@ def collect_pl_report_history(self, task_id):
         task.save()
 
         start_new_pl_history_collect(task)
+
+
+
+def start_new_collect_stats(task):
+
+    parent_task = CeleryTask.objects.get(id=task.parent_id)
+    parent_options_object = parent_task.options_object
+
+    if (len(parent_options_object['processed_dates']) + len(parent_options_object['error_dates'])) != len(parent_options_object['dates_to_process']):
+        new_celery_task = CeleryTask.objects.create(
+            master_user=task.master_user,
+            member=task.member,
+            type='collect_stats',
+            parent=parent_task
+        )
+
+        date = find_next_date_to_process(parent_task)
+
+        options_object = {
+
+            'portfolio_id': parent_options_object['portfolio_id'],
+            'benchmark': parent_options_object['benchmark'],
+            'date': date
+        }
+
+        new_celery_task.options_object = options_object
+
+        new_celery_task.save()
+
+        collect_stats.apply_async(kwargs={'task_id': new_celery_task.id})
+
+    else:
+
+        send_system_message(master_user=parent_task.master_user,
+                            performed_by=parent_task.member.username,
+                            section='schedules',
+                            type='success',
+                            title='Stats Collected',
+                            description='Stats from %s to %s are available for widgets' % (parent_options_object['date_from'], parent_options_object['date_to']),
+                            )
+
+        parent_task.status = CeleryTask.STATUS_DONE
+        parent_task.save()
+
+
+
+@shared_task(name='widgets.collect_stats', bind=True)
+def collect_stats(self, task_id):
+
+    task = CeleryTask.objects.get(id=task_id)
+    parent_task = task.parent
+
+    try:
+
+        stats_handler = StatsHandler(
+            master_user=task.master_user,
+            member=task.member,
+            date=task.options_object['date'],
+            portfolio_id=task.options_object['portfolio_id'],
+            benchmark=task.options_object['benchmark']
+        )
+
+        result = {
+            "nav": stats_handler.get_balance_nav(),  # done
+            "total": stats_handler.get_pl_total(),  # done
+            "cumulative_return": stats_handler.get_cumulative_return(),  # done
+            "annualized_return": stats_handler.get_annualized_return(),  # done
+            "portfolio_volatility": stats_handler.get_portfolio_volatility(), # done
+            "annualized_portfolio_volatility": stats_handler.get_annualized_portfolio_volatility(), # done
+            "sharpe_ratio": stats_handler.get_sharpe_ratio(), # done
+            "max_annualized_drawdown": stats_handler.get_max_annualized_drawdown(),
+            "betta": stats_handler.get_betta(),
+            "alpha": stats_handler.get_alpha(),
+            "correlation": stats_handler.get_correlation()
+        }
+
+        widget_stats_instance = None
+
+        try:
+            widget_stats_instance = WidgetStats.objects.get(master_user=task.master_user,
+                                                             date=task.options_object['date'],
+                                                             portfolio_id=task.options_object['portfolio_id'],
+                                                             benchmark=task.options_object['benchmark'])
+        except Exception as e:
+
+            widget_stats_instance =WidgetStats.objects.create(
+                master_user=task.master_user,
+                date=task.options_object['date'],
+                portfolio_id=task.options_object['portfolio_id'],
+                benchmark=task.options_object['benchmark'])
+
+
+        widget_stats_instance.nav = result['nav']
+        widget_stats_instance.total = result['total']
+        widget_stats_instance.cumulative_return = result['cumulative_return']
+        widget_stats_instance.annualized_return = result['annualized_return']
+        widget_stats_instance.portfolio_volatility = result['portfolio_volatility']
+        widget_stats_instance.annualized_portfolio_volatility = result['annualized_portfolio_volatility']
+        widget_stats_instance.sharpe_ratio = result['sharpe_ratio']
+        widget_stats_instance.max_annualized_drawdown = result['max_annualized_drawdown']
+        widget_stats_instance.betta = result['betta']
+        widget_stats_instance.alpha = result['alpha']
+        widget_stats_instance.correlation = result['correlation']
+
+        widget_stats_instance.save()
+
+
+
+
+        task.result_object = result
+
+        task.status = CeleryTask.STATUS_DONE
+        task.save()
+
+        parent_options_object = parent_task.options_object
+
+        parent_options_object['processed_dates'].append(task.options_object['date'])
+
+        parent_task.options_object = parent_options_object
+        parent_task.save()
+
+        start_new_collect_stats(task)
+
+    except Exception as e:
+
+        _l.error("collect_stats.error %s" % e)
+        _l.error("collect_stats.traceback %s" % traceback)
+
+        parent_options_object = parent_task.options_object
+
+        parent_options_object['error_dates'].append(task.options_object['date'])
+
+        parent_task.options_object = parent_options_object
+        parent_task.save()
+
+        task.status = CeleryTask.STATUS_ERROR
+        task.error_message = str(e)
+        task.save()
+
+        start_new_collect_stats(task)

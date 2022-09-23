@@ -2470,10 +2470,11 @@ class TransactionTypeProcess(object):
                 value = validator(value)
         else:
             value = default_value
-        setattr(target, target_attr_name, value)
 
-        if object_data:
+        if object_data: # set default from instrument type?
             object_data[target_attr_name] = value
+
+        setattr(target, target_attr_name, value) # set computed value
 
     def _set_rel(self, errors, values, default_value, target, target_attr_name, source, source_attr_name, model,
                  object_data=None):
