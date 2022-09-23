@@ -61,8 +61,8 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type, ecosys
 
         instrument_object['underlying_short_multiplier'] = instrument_type.underlying_short_multiplier
 
-        instrument_object['long_underlying_exposure'] = instrument_type.long_underlying_exposure
-        instrument_object['short_underlying_exposure'] = instrument_type.short_underlying_exposure
+        instrument_object['long_underlying_exposure'] = instrument_type.long_underlying_exposure_id
+        instrument_object['short_underlying_exposure'] = instrument_type.short_underlying_exposure_id
 
         try:
             instrument_object['co_directional_exposure_currency'] = Currency.objects.get(master_user=instrument_type.master_user,
