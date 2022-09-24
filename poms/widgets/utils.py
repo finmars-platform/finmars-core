@@ -1,5 +1,6 @@
 import logging
-from email._header_value_parser import ContentType
+
+from django.contrib.contenttypes.models import ContentType
 
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.widgets.models import BalanceReportHistoryItem
@@ -37,10 +38,15 @@ def filter_report_items_by_instrument_attribute_type(attribute_type_id, value, i
 
 
 def collect_asset_type_category(master_user, instance_serialized, balance_report_history, key='market_value'):
+
+
+    instrument_content_type = ContentType.objects.get(app_label="instruments", model='instrument')
+
     asset_types_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
+                                                                  content_type=instrument_content_type,
                                                                   user_code='asset_types')
 
-    asset_types = GenericClassifier.objects.get(attribute_type=asset_types_attribute_type).values_list('name',
+    asset_types = GenericClassifier.objects.filter(attribute_type=asset_types_attribute_type).values_list('name',
                                                                                                        flat=True)
 
     for asset_type in asset_types:
