@@ -30,6 +30,9 @@ class BalanceReportHistory(DataTimeStampedModel):
 
     nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('nav'))
 
+    def __str__(self):
+
+        return str(self.date) + ' ' + self.portfolio.name + ' ' + self.report_currency.name
 
 class BalanceReportHistoryItem(models.Model):
     balance_report_history = models.ForeignKey(BalanceReportHistory, related_name='items',
@@ -65,6 +68,10 @@ class PLReportHistory(DataTimeStampedModel):
     report_settings_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('report settings data'))
 
     total = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('total'))
+
+    def __str__(self):
+
+        return str(self.date) + ' ' + self.portfolio.name + ' ' + self.report_currency.name
 
 
 class PLReportHistoryItem(models.Model):
