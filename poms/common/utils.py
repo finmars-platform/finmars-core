@@ -4,10 +4,11 @@ import datetime
 
 from datetime import timedelta
 
+import pandas as pd
 from django.contrib.contenttypes.models import ContentType
 from django.views.generic.dates import timezone_today
 from django.utils.timezone import now
-
+import calendar
 
 import copy
 
@@ -314,3 +315,9 @@ def get_first_transaction(portfolio_id):
     from poms.transactions.models import Transaction
     transaction = Transaction.objects.filter(portfolio_id=portfolio_id).order_by('accounting_date')[0]
     return transaction
+
+
+def last_business_day_in_month(year: int, month: int):
+    day =  max(calendar.monthcalendar(year, month)[-1:][0][:5])
+
+    return datetime.datetime(year, month, day).strftime('%Y-%m-%d')

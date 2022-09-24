@@ -1,10 +1,12 @@
 import datetime
 import statistics
 import math
+from django.db.models import Q
 
 from poms.accounts.models import Account
 from poms.celery_tasks.models import CeleryTask
-from poms.common.utils import get_list_of_dates_between_two_dates, check_if_last_day_of_month, get_first_transaction
+from poms.common.utils import get_list_of_dates_between_two_dates, check_if_last_day_of_month, get_first_transaction, \
+    last_business_day_in_month, get_list_of_months_between_two_dates
 from poms.common.views import AbstractViewSet
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
@@ -44,6 +46,10 @@ class HistoryNavViewSet(AbstractViewSet):
         if not date_to:
             date_to = datetime.datetime.now().strftime("%Y-%m-%d")
 
+        if not portfolio:
+            raise ValidationError("Portfolio is no set")
+
+
         _l.info('date_from %s ' % date_from)
         _l.info('date_to %s ' % date_to)
 
@@ -68,11 +74,9 @@ class HistoryNavViewSet(AbstractViewSet):
             report_currency=currency
         )
 
-        if not portfolio:
-            raise ValidationError("Portfolio is no set")
-
-
         balance_report_histories = balance_report_histories.filter(portfolio_id=portfolio)
+
+        _l.info('balance_report_histories %s' % len(list(balance_report_histories)))
 
         if segmentation_type == 'days':
             balance_report_histories = balance_report_histories.filter(
@@ -81,20 +85,25 @@ class HistoryNavViewSet(AbstractViewSet):
             )
 
         if segmentation_type == 'months':
+
+            months = get_list_of_months_between_two_dates(date_from, date_to)
             end_of_months = []
 
-            dates = get_list_of_dates_between_two_dates(date_from, date_to, to_string=True)
+            for month in months:
+                end_of_months.append(last_business_day_in_month(month.year, month.month))
 
-            for date in dates:
+            _l.info('end_of_months %s' % end_of_months)
 
-                d = datetime.datetime.strptime(date_from, "%Y-%m-%d").date()
+            q = Q()
 
-                if check_if_last_day_of_month(d):
-                    end_of_months.append(date)
+            for date in end_of_months:
+                query = Q(**{'date': date})
 
-            balance_report_histories = balance_report_histories.filter(
-                date__in=end_of_months
-            )
+                q = q | query
+
+            balance_report_histories = balance_report_histories.filter(q)
+
+            _l.info('balance_report_histories %s' % balance_report_histories.count())
 
         balance_report_histories = balance_report_histories.prefetch_related('items')
 
@@ -239,19 +248,24 @@ class HistoryPlViewSet(AbstractViewSet):
             )
 
         if segmentation_type == 'months':
+
+            months = get_list_of_months_between_two_dates(date_from, date_to)
             end_of_months = []
 
-            dates = get_list_of_dates_between_two_dates(date_from, date_to, to_string=True)
+            for month in months:
+                end_of_months.append(last_business_day_in_month(month.year, month.month))
 
-            for date in dates:
+            _l.info('end_of_months %s' % end_of_months)
 
-                d = datetime.datetime.strptime(date_from, "%Y-%m-%d").date()
+            q = Q()
 
-                if check_if_last_day_of_month(d):
-                    end_of_months.append(date)
+            for date in end_of_months:
+                query = Q(**{'date': date})
+
+                q = q | query
 
             pl_report_histories = pl_report_histories.filter(
-                date__in=end_of_months
+                q
             )
 
         pl_report_histories = pl_report_histories.prefetch_related('items')
