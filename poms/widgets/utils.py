@@ -1,4 +1,5 @@
 import logging
+from email._header_value_parser import ContentType
 
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.widgets.models import BalanceReportHistoryItem
@@ -35,8 +36,8 @@ def filter_report_items_by_instrument_attribute_type(attribute_type_id, value, i
     return results
 
 
-def collect_asset_type_category(instance_serialized, balance_report_history, key='market_value'):
-    asset_types_attribute_type = GenericAttributeType.objects.get(master_user_id=instance_serialized['master_user'],
+def collect_asset_type_category(master_user, instance_serialized, balance_report_history, key='market_value'):
+    asset_types_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
                                                                   user_code='asset_types')
 
     asset_types = GenericClassifier.objects.get(attribute_type=asset_types_attribute_type).values_list('name',
@@ -75,8 +76,12 @@ def collect_asset_type_category(instance_serialized, balance_report_history, key
     item.save()
 
 
-def collect_sector_category(instance_serialized, balance_report_history, key='market_value'):
-    sector_attribute_type = GenericAttributeType.objects.get(master_user_id=instance_serialized['master_user'],
+def collect_sector_category(master_user, instance_serialized, balance_report_history, key='market_value'):
+
+    instrument_content_type = ContentType.objects.get(app_label="instruments", model='instrument')
+
+    sector_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
+                                                             content_type=instrument_content_type,
                                                                   user_code='sector')
 
     sectors = []
@@ -115,15 +120,15 @@ def collect_sector_category(instance_serialized, balance_report_history, key='ma
         item.save()
 
 
-def collect_country_category(instance_serialized, balance_report_history, key='market_value'):
+def collect_country_category(master_user, instance_serialized, balance_report_history, key='market_value'):
 
     countries = []
 
     for _item in instance_serialized['items']:
 
-        if _item['instrument_object']:
+        if _item.get('instrument_object'):
 
-            if _item['instrument_object']['country_object']:
+            if _item['instrument_object'].get('country_object'):
 
                 if _item['instrument_object']['country_object']['name'] not in countries:
                     countries.append(_item['instrument_object']['country_object']['name'])
@@ -139,9 +144,9 @@ def collect_country_category(instance_serialized, balance_report_history, key='m
 
         for _item in instance_serialized['items']:
 
-            if _item['instrument_object']:
+            if _item.get('instrument_object'):
 
-                if _item['instrument_object']['country_object']:
+                if _item['instrument_object'].get('country_object'):
 
                     if _item['instrument_object']['country_object']['name'] == country:
                         country_items.append(_item)
@@ -151,15 +156,15 @@ def collect_country_category(instance_serialized, balance_report_history, key='m
         item.save()
 
 
-def collect_region_category(instance_serialized, balance_report_history, key='market_value'):
+def collect_region_category(master_user, instance_serialized, balance_report_history, key='market_value'):
 
     regions = []
 
     for _item in instance_serialized['items']:
 
-        if _item['instrument_object']:
+        if _item.get('instrument_object'):
 
-            if _item['instrument_object']['country_object']:
+            if _item['instrument_object'].get('country_object'):
 
                 if _item['instrument_object']['country_object']['region'] not in regions:
                     regions.append(_item['instrument_object']['country_object']['region'])
@@ -175,9 +180,9 @@ def collect_region_category(instance_serialized, balance_report_history, key='ma
 
         for _item in instance_serialized['items']:
 
-            if _item['instrument_object']:
+            if _item.get('instrument_object'):
 
-                if _item['instrument_object']['country_object']:
+                if _item['instrument_object'].get('country_object'):
 
                     if _item['instrument_object']['country_object']['region'] == region:
                         region_items.append(_item)
@@ -187,7 +192,7 @@ def collect_region_category(instance_serialized, balance_report_history, key='ma
         item.save()
 
 
-def collect_currency_category(instance_serialized, balance_report_history, key='market_value'):
+def collect_currency_category(master_user, instance_serialized, balance_report_history, key='market_value'):
     currencies_ids = []
     currencies = []
 
