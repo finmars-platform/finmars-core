@@ -1,7 +1,8 @@
 from __future__ import unicode_literals
 
-
+import json
 from collections import OrderedDict
+from os.path import getsize
 
 from celery.result import AsyncResult
 from django.conf import settings
@@ -38,6 +39,8 @@ from django.db import models
 
 import logging
 _l = logging.getLogger('poms.common')
+
+from django.http import HttpResponse, Http404
 
 
 class AbstractApiView(APIView):
@@ -595,3 +598,50 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
             return Response({
                 "results": results
             })
+
+
+class DebugLogViewSet(AbstractViewSet):
+
+    def iter_json(self, context):
+        yield '{"starts": "%d",' \
+              '"data": "' % context['starts']
+
+        while True:
+            line = context['log'].readline()
+            if line:
+                yield json.dumps(line).strip(u'"')
+            else:
+                yield '", "ends": "%d"}' % context['log'].tell()
+                context['log'].close()
+                return
+
+    def list(self, request):
+
+        log_file = '/var/log/finmars/django.log'
+
+        seek_to = request.query_params.get('seek_to', 0 )
+
+        seek_to = int(seek_to)
+
+        try:
+            file_length = getsize(log_file)
+        except Exception as e:
+            raise Http404('Cannot access file')
+
+        context = {}
+
+        if seek_to > file_length:
+            seek_to = file_length
+
+        try:
+            context['log'] = open(log_file, 'r')
+            context['log'].seek(seek_to)
+            context['starts'] = seek_to
+        except IOError:
+            raise Http404('Cannot access file')
+
+
+        return HttpResponse(
+            self.iter_json(context),
+            content_type='application/json'
+        )

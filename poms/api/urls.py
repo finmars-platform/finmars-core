@@ -497,10 +497,12 @@ router.register(r'recovery/layout', layout_recovery.FixLayoutViewSet, 'recovery_
 
 router.register(r'widgets/history/nav', widgets.HistoryNavViewSet, 'widgets_history_nav')
 router.register(r'widgets/history/pl', widgets.HistoryPlViewSet, 'widgets_history_pl')
+
 router.register(r'widgets/stats', widgets.StatsViewSet, 'widgets_stats')
 router.register(r'widgets/collect-history', widgets.CollectHistoryViewSet, 'widgets_collect_history')
 router.register(r'widgets/collect-stats', widgets.CollectStatsViewSet, 'widgets_collect_stats')
 
+router.register(r'debug/logs', common.DebugLogViewSet, 'debug_log')
 
 # router.register(r'pricing/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view()), 'pricing_broker_bloomberg')
 
