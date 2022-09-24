@@ -3,7 +3,7 @@ import logging
 from django.contrib.contenttypes.models import ContentType
 
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
-from poms.widgets.models import BalanceReportHistoryItem
+from poms.widgets.models import BalanceReportHistoryItem, PLReportHistoryItem
 
 _l = logging.getLogger('poms.widgets')
 
@@ -18,7 +18,7 @@ def get_total_from_report_items(key, report_instance_items):
 
     return result
 
-def collect_asset_type_category(master_user, instance_serialized, balance_report_history, key='market_value'):
+def collect_asset_type_category(report_type, master_user, instance_serialized, history, key='market_value'):
 
 
     instrument_content_type = ContentType.objects.get(app_label="instruments", model='instrument')
@@ -30,9 +30,16 @@ def collect_asset_type_category(master_user, instance_serialized, balance_report
     asset_types = GenericClassifier.objects.filter(attribute_type=asset_types_attribute_type).values_list('name',
                                                                                                        flat=True)
 
+
     for asset_type in asset_types:
-        item = BalanceReportHistoryItem()
-        item.balance_report_history = balance_report_history
+        if report_type == 'balance':
+            item = BalanceReportHistoryItem()
+            item.balance_report_history = history
+
+        if report_type == 'pl':
+            item = PLReportHistoryItem()
+            item.balance_report_history = history
+
         item.category = 'Asset Types'
         item.key = key
         item.name = asset_type
@@ -57,8 +64,15 @@ def collect_asset_type_category(master_user, instance_serialized, balance_report
 
     # Do the Null asset type separately
 
-    item = BalanceReportHistoryItem()
-    item.balance_report_history = balance_report_history
+    if report_type == 'balance':
+        item = BalanceReportHistoryItem()
+        item.balance_report_history = history
+
+    if report_type == 'pl':
+        item = PLReportHistoryItem()
+        item.balance_report_history = history
+
+
     item.category = 'Asset Types'
     item.key = key
     item.name = 'Other'
@@ -82,8 +96,15 @@ def collect_asset_type_category(master_user, instance_serialized, balance_report
 
     # Do the CASH & Equivalents separately from user attributes
 
-    item = BalanceReportHistoryItem()
-    item.balance_report_history = balance_report_history
+    if report_type == 'balance':
+        item = BalanceReportHistoryItem()
+        item.balance_report_history = history
+
+    if report_type == 'pl':
+        item = PLReportHistoryItem()
+        item.balance_report_history = history
+
+
     item.category = 'Asset Types'
     item.key = key
     item.name = 'Cash & Equivalents'
@@ -99,7 +120,7 @@ def collect_asset_type_category(master_user, instance_serialized, balance_report
     item.save()
 
 
-def collect_sector_category(master_user, instance_serialized, balance_report_history, key='market_value'):
+def collect_sector_category(report_type, master_user, instance_serialized, history, key='market_value'):
 
     instrument_content_type = ContentType.objects.get(app_label="instruments", model='instrument')
 
@@ -122,8 +143,14 @@ def collect_sector_category(master_user, instance_serialized, balance_report_his
 
 
     for sector in sectors:
-        item = BalanceReportHistoryItem()
-        item.balance_report_history = balance_report_history
+        if report_type == 'balance':
+            item = BalanceReportHistoryItem()
+            item.balance_report_history = history
+
+        if report_type == 'pl':
+            item = PLReportHistoryItem()
+            item.balance_report_history = history
+
         item.category = 'Sector'
         item.key = key
         item.name = sector
@@ -144,7 +171,7 @@ def collect_sector_category(master_user, instance_serialized, balance_report_his
         item.save()
 
 
-def collect_country_category(master_user, instance_serialized, balance_report_history, key='market_value'):
+def collect_country_category(report_type, master_user, instance_serialized, history, key='market_value'):
 
     countries = []
 
@@ -158,8 +185,14 @@ def collect_country_category(master_user, instance_serialized, balance_report_hi
                     countries.append(_item['instrument_object']['country_object']['name'])
 
     for country in countries:
-        item = BalanceReportHistoryItem()
-        item.balance_report_history = balance_report_history
+        if report_type == 'balance':
+            item = BalanceReportHistoryItem()
+            item.balance_report_history = history
+
+        if report_type == 'pl':
+            item = PLReportHistoryItem()
+            item.balance_report_history = history
+
         item.category = 'Country'
         item.key = key
         item.name = country
@@ -180,7 +213,7 @@ def collect_country_category(master_user, instance_serialized, balance_report_hi
         item.save()
 
 
-def collect_region_category(master_user, instance_serialized, balance_report_history, key='market_value'):
+def collect_region_category(report_type, master_user, instance_serialized, history, key='market_value'):
 
     regions = []
 
@@ -194,8 +227,14 @@ def collect_region_category(master_user, instance_serialized, balance_report_his
                     regions.append(_item['instrument_object']['country_object']['region'])
 
     for region in regions:
-        item = BalanceReportHistoryItem()
-        item.balance_report_history = balance_report_history
+        if report_type == 'balance':
+            item = BalanceReportHistoryItem()
+            item.balance_report_history = history
+
+        if report_type == 'pl':
+            item = PLReportHistoryItem()
+            item.balance_report_history = history
+
         item.category = 'Region'
         item.key = key
         item.name = region
@@ -216,7 +255,7 @@ def collect_region_category(master_user, instance_serialized, balance_report_his
         item.save()
 
 
-def collect_currency_category(master_user, instance_serialized, balance_report_history, key='market_value'):
+def collect_currency_category(report_type, master_user, instance_serialized, history, key='market_value'):
     currencies_ids = []
     currencies = []
 
@@ -233,8 +272,14 @@ def collect_currency_category(master_user, instance_serialized, balance_report_h
 
     for currency in currencies:
 
-        item = BalanceReportHistoryItem()
-        item.balance_report_history = balance_report_history
+        if report_type == 'balance':
+            item = BalanceReportHistoryItem()
+            item.balance_report_history = history
+
+        if report_type == 'pl':
+            item = PLReportHistoryItem()
+            item.balance_report_history = history
+
         item.category = 'Currency'
         item.key = key
         item.name = currency['name']

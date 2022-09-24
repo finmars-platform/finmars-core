@@ -16,7 +16,8 @@ from poms.reports.builders.balance_serializers import BalanceReportSqlSerializer
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql, PLReportBuilderSql
 from poms.system_messages.handlers import send_system_message
 from poms.widgets.handlers import StatsHandler
-from poms.widgets.models import BalanceReportHistory, BalanceReportHistoryItem, PLReportHistory, WidgetStats
+from poms.widgets.models import BalanceReportHistory, BalanceReportHistoryItem, PLReportHistory, WidgetStats, \
+    PLReportHistoryItem
 
 from poms.widgets.utils import find_next_date_to_process, collect_asset_type_category, collect_currency_category, \
     collect_country_category, collect_sector_category, collect_region_category
@@ -138,9 +139,12 @@ def collect_balance_report_history(self, task_id):
             )
 
 
+
         balance_report_history.report_settings_data = task.options_object
 
         balance_report_history.save()
+
+        BalanceReportHistoryItem.objects.filter(balance_report_history=balance_report_history).delete()
 
         # _l.info('instance_serialized %s' % instance_serialized)
 
@@ -160,25 +164,25 @@ def collect_balance_report_history(self, task_id):
                     _item['instrument_object'] = instrument
 
         try:
-            collect_asset_type_category(task.master_user, instance_serialized, balance_report_history, 'market_value')
+            collect_asset_type_category('balance', task.master_user, instance_serialized, balance_report_history, 'market_value')
         except Exception as e:
             _l.error("collect_balance_report_history. Could not collect asset type category %s" % e)
         try:
-            collect_currency_category(task.master_user, instance_serialized, balance_report_history, 'market_value')
+            collect_currency_category('balance', task.master_user, instance_serialized, balance_report_history, 'market_value')
         except Exception as e:
             _l.error("collect_balance_report_history. Could not collect currency category %s" % e)
         try:
-            collect_country_category(task.master_user, instance_serialized, balance_report_history, 'market_value')
+            collect_country_category('balance', task.master_user, instance_serialized, balance_report_history, 'market_value')
         except Exception as e:
             _l.error("collect_balance_report_history. Could not collect country category %s" % e)
 
         try:
-            collect_region_category(task.master_user, instance_serialized, balance_report_history, 'market_value')
+            collect_region_category('balance', task.master_user, instance_serialized, balance_report_history, 'market_value')
         except Exception as e:
             _l.error("collect_balance_report_history. Could not collect region category %s" % e)
 
         try:
-            collect_sector_category(task.master_user, instance_serialized, balance_report_history, 'market_value')
+            collect_sector_category('balance', task.master_user, instance_serialized, balance_report_history, 'market_value')
         except Exception as e:
             _l.error("collect_balance_report_history. Could not collect sector category %s" % e)
 
@@ -335,6 +339,8 @@ def collect_pl_report_history(self, task_id):
 
         pl_report_history.save()
 
+        PLReportHistoryItem.objects.filter(pl_report_history=pl_report_history).delete()
+
         # _l.info('instance_serialized %s' % instance_serialized)
 
         total = 0
@@ -353,25 +359,25 @@ def collect_pl_report_history(self, task_id):
                     _item['instrument_object'] = instrument
 
         try:
-            collect_asset_type_category(task.master_user, instance_serialized, pl_report_history, 'total')
+            collect_asset_type_category('pl', task.master_user, instance_serialized, pl_report_history, 'total')
         except Exception as e:
             _l.error("collect_pl_report_history. Could not collect asset type category %s" %e)
         try:
-            collect_currency_category(task.master_user, instance_serialized, pl_report_history, 'total')
+            collect_currency_category('pl', task.master_user, instance_serialized, pl_report_history, 'total')
         except Exception as e:
             _l.error("collect_pl_report_history. Could not collect currency category %s" %e)
         try:
-            collect_country_category(task.master_user, instance_serialized, pl_report_history, 'total')
+            collect_country_category('pl', task.master_user, instance_serialized, pl_report_history, 'total')
         except Exception as e:
             _l.error("collect_pl_report_history. Could not collect country category %s" %e)
 
         try:
-            collect_region_category(task.master_user, instance_serialized, pl_report_history, 'total')
+            collect_region_category('pl', task.master_user, instance_serialized, pl_report_history, 'total')
         except Exception as e:
             _l.error("collect_pl_report_history. Could not collect region category %s" %e)
 
         try:
-            collect_sector_category(task.master_user, instance_serialized, pl_report_history, 'total')
+            collect_sector_category('pl', task.master_user, instance_serialized, pl_report_history, 'total')
         except Exception as e:
             _l.error("collect_pl_report_history. Could not collect sector category %s" %e)
 
