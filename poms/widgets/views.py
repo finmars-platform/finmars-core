@@ -35,8 +35,7 @@ class HistoryNavViewSet(AbstractViewSet):
         currency = request.query_params.get('currency', None)
         pricing_policy = request.query_params.get('pricing_policy', None)
         cost_method = request.query_params.get('cost_method', None)
-        portfolios = request.query_params.get('portfolios', [])
-        accounts = request.query_params.get('accounts', [])
+        portfolio = request.query_params.get('portfolio', None)
         segmentation_type = request.query_params.get('segmentation_type', None)
 
         if not date_from:
@@ -69,15 +68,11 @@ class HistoryNavViewSet(AbstractViewSet):
             report_currency=currency
         )
 
-        if portfolios:
-            portfolios = portfolios.split(',')
+        if not portfolio:
+            raise ValidationError("Portfolio is no set")
 
-            balance_report_histories = balance_report_histories.filter(portfolios__in=portfolios)
 
-        if accounts:
-            accounts = accounts.split(',')
-
-            balance_report_histories = balance_report_histories.filter(accounts__in=accounts)
+        balance_report_histories = balance_report_histories.filter(portfolio_id=portfolio)
 
         if segmentation_type == 'days':
             balance_report_histories = balance_report_histories.filter(
@@ -143,25 +138,14 @@ class HistoryNavViewSet(AbstractViewSet):
         pricing_policy_object = PricingPolicy.objects.get(id=pricing_policy)
         cost_method_object = CostMethod.objects.get(id=cost_method)
 
-        portfolios_objects = Portfolio.objects.filter(id__in=portfolios)
-        accounts_objects = Account.objects.filter(id__in=accounts)
+        portfolio_instance = Portfolio.objects.filter(id__in=portfolio)
 
-        portfolios_objects_json = []
-        accounts_objects_json = []
 
-        for _item in portfolios_objects:
-            portfolios_objects_json.append({
-                "id": _item.id,
-                "name": _item.name,
-                "user_code": _item.user_code
-            })
-
-        for _item in accounts_objects:
-            accounts_objects_json.append({
-                "id": _item.id,
-                "name": _item.name,
-                "user_code": _item.user_code
-            })
+        portfolio_instance_json ={
+            "id": portfolio_instance.id,
+            "name": portfolio_instance.name,
+            "user_code": portfolio_instance.user_code
+        }
 
         result = {
             "date_from": str(date_from),
@@ -185,10 +169,8 @@ class HistoryNavViewSet(AbstractViewSet):
                 "name": cost_method_object.name,
                 "user_code": cost_method_object.user_code
             },
-            "portfolios": portfolios,
-            "accounts": accounts,
-            "item_portfolios": portfolios_objects_json,
-            "item_accounts": accounts_objects_json,
+            "portfolio": portfolio,
+            "portfolio_object": portfolio_instance_json,
 
             "items": items
 
@@ -206,7 +188,7 @@ class HistoryPlViewSet(AbstractViewSet):
         currency = request.query_params.get('currency', None)
         pricing_policy = request.query_params.get('pricing_policy', None)
         cost_method = request.query_params.get('cost_method', None)
-        portfolios = request.query_params.get('portfolios', [])
+        portfolio = request.query_params.get('portfolio', None)
         accounts = request.query_params.get('accounts', [])
         segmentation_type = request.query_params.get('segmentation_type', None)
 
@@ -240,10 +222,10 @@ class HistoryPlViewSet(AbstractViewSet):
             report_currency=currency
         )
 
-        if portfolios:
-            portfolios = portfolios.split(',')
+        if not portfolio:
+            raise ValidationError("Portfolio is not set")
 
-            pl_report_histories = pl_report_histories.filter(portfolios__in=portfolios)
+        pl_report_histories = pl_report_histories.filter(portfolio=portfolio)
 
         if accounts:
             accounts = accounts.split(',')
@@ -314,25 +296,15 @@ class HistoryPlViewSet(AbstractViewSet):
         pricing_policy_object = PricingPolicy.objects.get(id=pricing_policy)
         cost_method_object = CostMethod.objects.get(id=cost_method)
 
-        portfolios_objects = Portfolio.objects.filter(id__in=portfolios)
-        accounts_objects = Account.objects.filter(id__in=accounts)
+        portfolio_instance = Portfolio.objects.filter(id__in=portfolio)
 
-        portfolios_objects_json = []
-        accounts_objects_json = []
 
-        for _item in portfolios_objects:
-            portfolios_objects_json.append({
-                "id": _item.id,
-                "name": _item.name,
-                "user_code": _item.user_code
-            })
+        portfolio_instance_json ={
+            "id": portfolio_instance.id,
+            "name": portfolio_instance.name,
+            "user_code": portfolio_instance.user_code
+        }
 
-        for _item in accounts_objects:
-            accounts_objects_json.append({
-                "id": _item.id,
-                "name": _item.name,
-                "user_code": _item.user_code
-            })
 
         result = {
             "date_from": str(date_from),
@@ -356,10 +328,8 @@ class HistoryPlViewSet(AbstractViewSet):
                 "name": cost_method_object.name,
                 "user_code": cost_method_object.user_code
             },
-            "portfolios": portfolios,
-            "accounts": accounts,
-            "item_portfolios": portfolios_objects_json,
-            "item_accounts": accounts_objects_json,
+            "portfolio": portfolio_instance,
+            "portfolio_object": portfolio_instance_json,
 
             "items": items
 
