@@ -353,25 +353,25 @@ def collect_pl_report_history(self, task_id):
                     _item['instrument_object'] = instrument
 
         try:
-            collect_asset_type_category(instance_serialized, pl_report_history, 'total')
+            collect_asset_type_category(task.master_user, instance_serialized, pl_report_history, 'total')
         except Exception as e:
             _l.error("collect_pl_report_history. Could not collect asset type category")
         try:
-            collect_currency_category(instance_serialized, pl_report_history, 'total')
+            collect_currency_category(task.master_user, instance_serialized, pl_report_history, 'total')
         except Exception as e:
             _l.error("collect_pl_report_history. Could not collect currency category")
         try:
-            collect_country_category(instance_serialized, pl_report_history, 'total')
+            collect_country_category(task.master_user, instance_serialized, pl_report_history, 'total')
         except Exception as e:
             _l.error("collect_pl_report_history. Could not collect country category")
 
         try:
-            collect_region_category(instance_serialized, pl_report_history, 'total')
+            collect_region_category(task.master_user, instance_serialized, pl_report_history, 'total')
         except Exception as e:
             _l.error("collect_pl_report_history. Could not collect region category")
 
         try:
-            collect_sector_category(instance_serialized, pl_report_history, 'total')
+            collect_sector_category(task.master_user, instance_serialized, pl_report_history, 'total')
         except Exception as e:
             _l.error("collect_pl_report_history. Could not collect sector category")
 
@@ -489,7 +489,7 @@ def collect_stats(self, task_id):
                                                              benchmark=task.options_object['benchmark'])
         except Exception as e:
 
-            widget_stats_instance =WidgetStats.objects.create(
+            widget_stats_instance = WidgetStats.objects.create(
                 master_user=task.master_user,
                 date=task.options_object['date'],
                 portfolio_id=task.options_object['portfolio_id'],
@@ -530,7 +530,7 @@ def collect_stats(self, task_id):
     except Exception as e:
 
         _l.error("collect_stats.error %s" % e)
-        _l.error("collect_stats.traceback %s" % traceback)
+        _l.error("collect_stats.traceback %s" % traceback.format_exc())
 
         parent_options_object = parent_task.options_object
 
