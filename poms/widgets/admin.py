@@ -17,7 +17,7 @@ class BalanceReportHistoryAdmin(AbstractModelAdmin):
     search_fields = ['id', 'date']
     raw_id_fields = ['master_user']
     inlines = [
-        BalanceReportHistoryItem
+        BalanceReportHistoryItemInline
     ]
 
 
