@@ -5,16 +5,23 @@ from poms.widgets.models import BalanceReportHistory, BalanceReportHistoryItem, 
     WidgetStats
 
 
+class BalanceReportHistoryItemInline(admin.TabularInline):
+    model = BalanceReportHistoryItem
+    extra = 0
+
+
 class BalanceReportHistoryAdmin(AbstractModelAdmin):
     model = BalanceReportHistory
     list_display = ['id', 'master_user', 'date', 'nav']
     list_select_related = ['master_user']
     search_fields = ['id', 'date']
     raw_id_fields = ['master_user']
+    inlines = [
+        BalanceReportHistoryItem
+    ]
 
 
 admin.site.register(BalanceReportHistory, BalanceReportHistoryAdmin)
-
 
 
 class BalanceReportHistoryItemAdmin(AbstractModelAdmin):
@@ -28,16 +35,22 @@ class BalanceReportHistoryItemAdmin(AbstractModelAdmin):
 admin.site.register(BalanceReportHistoryItem, BalanceReportHistoryItemAdmin)
 
 
+class PLReportHistoryItemInline(admin.TabularInline):
+    model = PLReportHistoryItem
+    extra = 0
+
+
 class PLReportHistoryAdmin(AbstractModelAdmin):
     model = PLReportHistory
     list_display = ['id', 'master_user', 'date', 'total']
     list_select_related = ['master_user']
     search_fields = ['id', 'date']
     raw_id_fields = ['master_user']
+    inlines = [PLReportHistoryItemInline
+               ]
 
 
 admin.site.register(PLReportHistory, PLReportHistoryAdmin)
-
 
 
 class PLReportHistoryItemAdmin(AbstractModelAdmin):

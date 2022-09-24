@@ -355,25 +355,25 @@ def collect_pl_report_history(self, task_id):
         try:
             collect_asset_type_category(task.master_user, instance_serialized, pl_report_history, 'total')
         except Exception as e:
-            _l.error("collect_pl_report_history. Could not collect asset type category")
+            _l.error("collect_pl_report_history. Could not collect asset type category %s" %e)
         try:
             collect_currency_category(task.master_user, instance_serialized, pl_report_history, 'total')
         except Exception as e:
-            _l.error("collect_pl_report_history. Could not collect currency category")
+            _l.error("collect_pl_report_history. Could not collect currency category %s" %e)
         try:
             collect_country_category(task.master_user, instance_serialized, pl_report_history, 'total')
         except Exception as e:
-            _l.error("collect_pl_report_history. Could not collect country category")
+            _l.error("collect_pl_report_history. Could not collect country category %s" %e)
 
         try:
             collect_region_category(task.master_user, instance_serialized, pl_report_history, 'total')
         except Exception as e:
-            _l.error("collect_pl_report_history. Could not collect region category")
+            _l.error("collect_pl_report_history. Could not collect region category %s" %e)
 
         try:
             collect_sector_category(task.master_user, instance_serialized, pl_report_history, 'total')
         except Exception as e:
-            _l.error("collect_pl_report_history. Could not collect sector category")
+            _l.error("collect_pl_report_history. Could not collect sector category %s" %e)
 
         parent_options_object = parent_task.options_object
 
