@@ -94,7 +94,8 @@ def collect_sector_category(master_user, instance_serialized, balance_report_his
 
     for _item in instance_serialized['items']:
 
-        if _item['instrument_object']:
+        if _item.get('instrument_object'):
+
             for attribute in _item['instrument_object']['attributes']:
 
                 if attribute['attribute_type'] == sector_attribute_type.id:
@@ -114,7 +115,7 @@ def collect_sector_category(master_user, instance_serialized, balance_report_his
 
         for _item in instance_serialized['items']:
 
-            if _item['instrument_object']:
+            if _item.get('instrument_object'):
                 for attribute in _item['instrument_object']['attributes']:
 
                     if attribute['attribute_type'] == sector_attribute_type.id:
