@@ -18,25 +18,6 @@ def get_total_from_report_items(key, report_instance_items):
 
     return result
 
-
-def filter_report_items_by_instrument_attribute_type(attribute_type_id, value, instance_serialized):
-    results = []
-
-    for _item in instance_serialized['items']:
-
-        if _item.get('instrument_object'):
-
-            for attribute in _item['instrument_object']['attributes']:
-
-                if attribute['attribute_type'] == attribute_type_id:
-
-                    if attribute['classifier_object']:
-                        if attribute['classifier_object'] == value:
-                            results.append(_item)
-
-    return results
-
-
 def collect_asset_type_category(master_user, instance_serialized, balance_report_history, key='market_value'):
 
 
@@ -56,12 +37,48 @@ def collect_asset_type_category(master_user, instance_serialized, balance_report
         item.key = key
         item.name = asset_type
 
-        asset_type_items = filter_report_items_by_instrument_attribute_type(asset_types_attribute_type.id, asset_type,
-                                                                            instance_serialized)
+        asset_type_items = []
+
+        for _item in instance_serialized['items']:
+
+            if _item.get('instrument_object'):
+
+                for attribute in _item['instrument_object']['attributes']:
+
+                    if attribute['attribute_type'] == asset_types_attribute_type.id:
+
+                        if attribute['classifier_object']:
+                            if attribute['classifier_object']['name'] == asset_type:
+                                asset_type_items.append(_item)
 
         item.value = get_total_from_report_items(key, asset_type_items)
 
         item.save()
+
+    # Do the Null asset type separately
+
+    item = BalanceReportHistoryItem()
+    item.balance_report_history = balance_report_history
+    item.category = 'Asset Types'
+    item.key = key
+    item.name = 'Other'
+
+    null_asset_type_items = []
+
+    for _item in instance_serialized['items']:
+
+        if _item.get('instrument_object'):
+
+            for attribute in _item['instrument_object']['attributes']:
+
+                if attribute['attribute_type'] == asset_types_attribute_type.id:
+
+                    if not attribute.get('classifier_object'):
+                        null_asset_type_items.append(_item)
+
+    item.value = get_total_from_report_items(key, null_asset_type_items)
+
+    item.save()
 
     # Do the CASH & Equivalents separately from user attributes
 
