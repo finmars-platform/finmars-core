@@ -14,6 +14,8 @@ class CollectHistorySerializer(serializers.Serializer):
 
     portfolio = PortfolioField(required=False, allow_null=True, allow_empty=True)
 
+    segmentation_type = serializers.CharField(required=False, allow_null=True, initial='months', default='months')
+
 
 class CollectStatsSerializer(serializers.Serializer):
 
