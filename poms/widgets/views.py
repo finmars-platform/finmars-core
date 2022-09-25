@@ -6,7 +6,8 @@ from django.db.models import Q
 from poms.accounts.models import Account
 from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_list_of_dates_between_two_dates, check_if_last_day_of_month, get_first_transaction, \
-    last_business_day_in_month, get_list_of_months_between_two_dates
+    last_business_day_in_month, get_list_of_months_between_two_dates, get_list_of_business_days_between_two_dates, \
+    get_last_bdays_of_months_between_two_dates
 from poms.common.views import AbstractViewSet
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
@@ -86,13 +87,7 @@ class HistoryNavViewSet(AbstractViewSet):
 
         if segmentation_type == 'months':
 
-            months = get_list_of_months_between_two_dates(date_from, date_to)
-            end_of_months = []
-
-            for month in months:
-                end_of_months.append(last_business_day_in_month(month.year, month.month))
-
-            _l.info('end_of_months %s' % end_of_months)
+            end_of_months = get_last_bdays_of_months_between_two_dates(date_from, date_to)
 
             q = Q()
 
@@ -249,13 +244,7 @@ class HistoryPlViewSet(AbstractViewSet):
 
         if segmentation_type == 'months':
 
-            months = get_list_of_months_between_two_dates(date_from, date_to)
-            end_of_months = []
-
-            for month in months:
-                end_of_months.append(last_business_day_in_month(month.year, month.month))
-
-            _l.info('end_of_months %s' % end_of_months)
+            end_of_months = get_last_bdays_of_months_between_two_dates(date_from, date_to)
 
             q = Q()
 
@@ -377,7 +366,7 @@ class StatsViewSet(AbstractViewSet):
 class CollectHistoryViewSet(AbstractViewSet):
     serializer_class = CollectHistorySerializer
 
-    def collect_balance_history(self, request, date_from, date_to, dates, portfolio_id, report_currency_id,
+    def collect_balance_history(self, request, date_from, date_to, dates, segmentation_type, portfolio_id, report_currency_id,
                                 cost_method_id, pricing_policy_id):
 
         parent_task = CeleryTask.objects.create(
@@ -390,6 +379,7 @@ class CollectHistoryViewSet(AbstractViewSet):
             'date_from': date_from,
             'date_to': date_to,
             'portfolio_id': portfolio_id,
+            'segmentation_type': segmentation_type,
             'report_currency_id': report_currency_id,
             'cost_method_id': cost_method_id,
             'pricing_policy_id': pricing_policy_id,
@@ -409,7 +399,7 @@ class CollectHistoryViewSet(AbstractViewSet):
         )
 
         options_object = {
-            "report_date": date_from,
+            "report_date": dates[0],
             "portfolio_id": portfolio_id,
             "report_currency_id": report_currency_id,
             'cost_method_id': cost_method_id,
@@ -431,7 +421,7 @@ class CollectHistoryViewSet(AbstractViewSet):
                                 parent_task_options_object['date_from'], parent_task_options_object['date_to']),
                             )
 
-    def collect_pl_history(self, request, date_from, date_to, dates, portfolio_id, report_currency_id, cost_method_id,
+    def collect_pl_history(self, request, date_from, date_to, dates, segmentation_type, portfolio_id, report_currency_id, cost_method_id,
                            pricing_policy_id):
 
         parent_task = CeleryTask.objects.create(
@@ -446,6 +436,7 @@ class CollectHistoryViewSet(AbstractViewSet):
             'pl_first_date': pl_first_date,
             'date_from': date_from,
             'date_to': date_to,
+            'segmentation_type': segmentation_type,
             'portfolio_id': portfolio_id,
             'report_currency_id': report_currency_id,
             'cost_method_id': cost_method_id,
@@ -467,7 +458,7 @@ class CollectHistoryViewSet(AbstractViewSet):
 
         options_object = {
             'pl_first_date': pl_first_date,
-            'report_date': date_from,
+            'report_date': dates[0],
             'portfolio_id': portfolio_id,
             'report_currency_id': report_currency_id,
             'cost_method_id': cost_method_id,
@@ -497,6 +488,7 @@ class CollectHistoryViewSet(AbstractViewSet):
         report_currency_id = request.data.get('report_currency', None)
         pricing_policy_id = request.data.get('pricing_policy', None)
         cost_method_id = request.data.get('cost_method', CostMethod.AVCO)
+        segmentation_type = request.query_params.get('segmentation_type', 'months')
 
         ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
 
@@ -505,11 +497,23 @@ class CollectHistoryViewSet(AbstractViewSet):
         if not pricing_policy_id:
             pricing_policy_id = ecosystem_default.pricing_policy_id
 
-        dates = get_list_of_dates_between_two_dates(date_from, date_to, to_string=True)
+        dates = []
 
-        self.collect_balance_history(request, date_from, date_to, dates, portfolio_id, report_currency_id,
+        if segmentation_type == 'days':
+            dates = get_list_of_business_days_between_two_dates(date_from, date_to, to_string=True)
+
+        if segmentation_type == 'months':
+            dates = get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=True)
+            _l.info('CollectHistoryViewSet.create: dates %s' % dates)
+
+        if not len(dates):
+            raise ValidationError("No buisness days in range %s to %s" % (date_from, date_to))
+
+
+
+        self.collect_balance_history(request, date_from, date_to, dates, segmentation_type, portfolio_id, report_currency_id,
                                      cost_method_id, pricing_policy_id)
-        self.collect_pl_history(request, date_from, date_to, dates, portfolio_id, report_currency_id, cost_method_id,
+        self.collect_pl_history(request, date_from, date_to, dates, segmentation_type, portfolio_id, report_currency_id, cost_method_id,
                                 pricing_policy_id)
 
         return Response({
@@ -527,7 +531,7 @@ class CollectStatsViewSet(AbstractViewSet):
         portfolio_id = request.data.get('portfolio', None)
         benchmark = request.data.get('benchmark', 'sp_500')
 
-        dates = get_list_of_dates_between_two_dates(date_from, date_to, to_string=True)
+        dates = get_list_of_business_days_between_two_dates(date_from, date_to, to_string=True)
 
         if len(dates) > 365:
             raise ValidationError("Date range exceeded max limit of 365 days")
@@ -563,7 +567,7 @@ class CollectStatsViewSet(AbstractViewSet):
 
             'portfolio_id': portfolio_id,
             'benchmark': benchmark,
-            'date': str(dates[0])
+            'date': dates[0]
 
         }
 

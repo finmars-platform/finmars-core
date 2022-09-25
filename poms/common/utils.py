@@ -246,6 +246,9 @@ def get_content_type_by_name(name):
 
     return content_type
 
+def is_business_day(date):
+    return bool(len(pd.bdate_range(date, date)))
+
 
 def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
 
@@ -266,6 +269,32 @@ def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
             result.append(str(day))
         else:
             result.append(day)
+
+    return result
+
+
+def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=False):
+
+    result = []
+    format = '%Y-%m-%d'
+
+    if not isinstance(date_from, datetime.date):
+        date_from = datetime.datetime.strptime(date_from, format).date()
+
+    if not isinstance(date_to, datetime.date):
+        date_to = datetime.datetime.strptime(date_to, format).date()
+
+    diff = date_to - date_from
+
+    for i in range(diff.days + 1):
+        day = date_from + timedelta(days=i)
+
+        if is_business_day(day):
+
+            if to_string:
+                result.append(str(day))
+            else:
+                result.append(day)
 
     return result
 
@@ -317,7 +346,23 @@ def get_first_transaction(portfolio_id):
     return transaction
 
 
-def last_business_day_in_month(year: int, month: int):
+def last_business_day_in_month(year: int, month: int, to_string=False):
     day =  max(calendar.monthcalendar(year, month)[-1:][0][:5])
 
-    return datetime.datetime(year, month, day).strftime('%Y-%m-%d')
+    d = datetime.datetime(year, month, day)
+
+    if to_string:
+        return d.strftime('%Y-%m-%d')
+
+    return d
+
+
+def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=False):
+
+    months = get_list_of_months_between_two_dates(date_from, date_to)
+    end_of_months = []
+
+    for month in months:
+        end_of_months.append(last_business_day_in_month(month.year, month.month, to_string))
+
+    return end_of_months
