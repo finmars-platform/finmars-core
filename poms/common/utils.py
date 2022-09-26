@@ -387,8 +387,9 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
     return end_of_months
 
 
-def str_to_date(date_str):
+def str_to_date(d):
 
-    date = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+    if not isinstance(d, datetime.date):
+        date = datetime.datetime.strptime(d, "%Y-%m-%d").date()
 
-    return date
+    return d
