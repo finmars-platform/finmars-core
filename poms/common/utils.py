@@ -385,3 +385,10 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
         end_of_months.append(last_business_day_in_month(month.year, month.month, to_string))
 
     return end_of_months
+
+
+def str_to_date(date_str):
+
+    date = datetime.strptime(date_str, "%Y-%m-%d").date()
+
+    return date

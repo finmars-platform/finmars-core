@@ -7,7 +7,7 @@ from django.db.models import Q
 from dateutil.relativedelta import relativedelta
 
 from poms.common.utils import get_first_transaction, get_list_of_months_between_two_dates, \
-    get_last_bdays_of_months_between_two_dates, get_last_business_day
+    get_last_bdays_of_months_between_two_dates, get_last_business_day, str_to_date
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioBundle
@@ -315,15 +315,18 @@ class StatsHandler():
         # end of month
         # (p1 - p0) / p0 = result %
 
-        portfolio_months = []
+        # portfolio_months = []
 
         for period in self.performance_report.periods:
-            portfolio_returns.append(period['total_return'])
-            portfolio_months.append(period['date_to'])
+
+            if str_to_date(period['date_to']) >= date_from: # TODO some mystery
+
+                portfolio_returns.append(period['total_return'])
+                # portfolio_months.append(period['date_to'])
 
         benchmarks_returns = self.get_benchmark_returns(date_from, date_to)
 
-        _l.info('portfolio_months %s' % portfolio_months)
+        # _l.info('portfolio_months %s' % portfolio_months)
 
         # cov(portfoio, bench) / var(bench)
         # MINDBLOWING WITH SP500
@@ -363,7 +366,8 @@ class StatsHandler():
         # (p1 - p0) / p0 = result %
 
         for period in self.performance_report.periods:
-            portfolio_returns.append(period['total_return'])
+            if str_to_date(period['date_to']) >= date_from: # TODO some mystery
+                portfolio_returns.append(period['total_return'])
 
         benchmarks_returns = self.get_benchmark_returns(date_from, date_to)
 
