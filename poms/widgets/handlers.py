@@ -7,7 +7,7 @@ from django.db.models import Q
 from dateutil.relativedelta import relativedelta
 
 from poms.common.utils import get_first_transaction, get_list_of_months_between_two_dates, \
-    get_last_bdays_of_months_between_two_dates
+    get_last_bdays_of_months_between_two_dates, get_last_business_day
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioBundle
@@ -263,9 +263,16 @@ class StatsHandler():
         _l.info('get_benchmark_returns.date_to %s' % date_to)
         _l.info('get_benchmark_returns.end_of_months %s' % end_of_months)
 
+        _l.info('get_benchmark_returns.end_of_months before len %s' % len(end_of_months))
+
         q = Q()
 
-        end_of_months.insert(0, end_of_months[0] - + datetime.timedelta(days=1)) # get previous day of start end of month
+        previos_bday_of_date_from = get_last_business_day(end_of_months[0] - + datetime.timedelta(days=1))
+
+        end_of_months.insert(0, previos_bday_of_date_from) # get previous day of start end of month
+        _l.info('previos_bday_of_date_from %s' % previos_bday_of_date_from)
+
+        _l.info('get_benchmark_returns.end_of_months after len %s' % len(end_of_months))
 
         for date in end_of_months:
             query = Q(**{'date': date})
@@ -331,9 +338,34 @@ class StatsHandler():
 
         return alpha
 
-    # TODO get_correlation
     def get_correlation(self):
 
+        portfolio_returns = []
+        benchmarks_returns = []
+
+        first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
+
+        date_from = first_transaction.accounting_date
+
+        date_to = self.date
+
+        # from inception
+        # end of month
+        # (p1 - p0) / p0 = result %
+
+        for period in self.performance_report.periods:
+            portfolio_returns.append(period['total_return'])
+
+        benchmarks_returns = self.get_benchmark_returns(date_from, date_to)
+
         correlation = 0
+
+        try:
+            correlation = numpy.correlate(portfolio_returns, benchmarks_returns)
+        except Exception as e:
+            _l.error('portfolio_returns len %s' % len(portfolio_returns))
+            _l.error('benchmarks_returns len %s' % len(benchmarks_returns))
+            _l.error('StatsHandler.get betta error %s' % e)
+            correlation = 0
 
         return correlation
