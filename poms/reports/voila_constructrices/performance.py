@@ -333,7 +333,7 @@ class PerformanceReportBuilder:
 
         dates = get_list_of_business_days_between_two_dates(date_from, date_to)
 
-        _l.info('dates %s' % dates)
+        # _l.info('dates %s' % dates)
 
         if segmentation_type == 'days':
 

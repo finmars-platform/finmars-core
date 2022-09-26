@@ -220,12 +220,15 @@ class StatsHandler():
 
         _l.info('get_max_annualized_drawdown.results %s' % results)
 
+        grand_lowest_month = None
+
         for result in results:
 
             lowest = result['lowest']
 
             if lowest < grand_lowest:
                 grand_lowest = lowest
+                grand_lowest_month = result['month']
 
         # got 120 monthes [...]
         # for each month
@@ -248,7 +251,7 @@ class StatsHandler():
 
         max_annualized_drawdown = grand_lowest
 
-        return max_annualized_drawdown
+        return max_annualized_drawdown, grand_lowest_month
 
     def get_benchmark_returns(self, date_from, date_to):
 
@@ -262,6 +265,8 @@ class StatsHandler():
 
         q = Q()
 
+        end_of_months.insert(0, end_of_months[0] - + datetime.timedelta(days=1)) # get previous day of start end of month
+
         for date in end_of_months:
             query = Q(**{'date': date})
 
@@ -274,7 +279,7 @@ class StatsHandler():
         if len(end_of_months) != len(prices):
             _l.error("Not enough Prices for benchmark_returns")
         else:
-            for i in range(1, len(end_of_months)):
+            for i in range(1, len(end_of_months) + 1):
                 results.append((prices[i].principal_price - prices[i - 1].principal_price) / prices[i - 1].principal_price)
 
         return results
