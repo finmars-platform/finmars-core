@@ -380,8 +380,8 @@ class PerformanceReportBuilder:
             # month_end = datetime.date(year, month, calendar.monthrange(year, month)[1])
             month_end = last_business_day_in_month(year, month)
 
-            if month_end >= timezone_today().date():
-                month_end = timezone_today().date() - timedelta(days=1)
+            if month_end >= timezone_today():
+                month_end = timezone_today() - timedelta(days=1)
 
                 if not is_business_day(month_end):
                     month_end = get_last_business_day(month_end)
