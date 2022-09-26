@@ -11,7 +11,8 @@ from django.views.generic.dates import timezone_today
 from rest_framework.exceptions import APIException
 
 from poms.accounts.models import Account
-from poms.common.utils import get_list_of_dates_between_two_dates
+from poms.common.utils import get_list_of_dates_between_two_dates, get_list_of_business_days_between_two_dates, \
+    last_business_day_in_month
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, InstrumentType, LongUnderlyingExposure, ShortUnderlyingExposure, \
     ExposureCalculationModel, PriceHistory
@@ -330,7 +331,7 @@ class PerformanceReportBuilder:
 
         result = []
 
-        dates = get_list_of_dates_between_two_dates(date_from, date_to)
+        dates = get_list_of_business_days_between_two_dates(date_from, date_to)
 
         if segmentation_type == 'days':
             result = self.format_to_days(dates)
@@ -364,7 +365,8 @@ class PerformanceReportBuilder:
 
             year_month = str(year) + '-' + str(month)
 
-            month_end = datetime.date(year, month, calendar.monthrange(year, month)[1])
+            # month_end = datetime.date(year, month, calendar.monthrange(year, month)[1])
+            month_end = last_business_day_in_month(year, month)
 
             if month_end > timezone_today():
                 month_end = timezone_today() - timedelta(days=1)
@@ -374,8 +376,10 @@ class PerformanceReportBuilder:
             begin_date_year = begin_date.year
             begin_date_month = begin_date.month
 
-            previous_end_of_month_of_begin_date = datetime.date(begin_date_year, begin_date_month, 1) - timedelta(
-                days=1)
+            # previous_end_of_month_of_begin_date = datetime.date(begin_date_year, begin_date_month, 1) - timedelta(
+            #     days=1)
+
+            previous_end_of_month_of_begin_date = last_business_day_in_month(begin_date_year, begin_date_month)
 
             if month_start < previous_end_of_month_of_begin_date:
                 month_start = previous_end_of_month_of_begin_date
