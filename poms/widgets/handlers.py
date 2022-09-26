@@ -334,7 +334,7 @@ class StatsHandler():
         # _l.info('self.performance_report.periods %s' % self.performance_report.periods)
 
         try:
-            betta = numpy.cov(portfolio_returns, benchmarks_returns) / statistics.variance(benchmarks_returns)
+            betta = numpy.cov(portfolio_returns, benchmarks_returns)[0][1] / statistics.variance(benchmarks_returns)
         except Exception as e:
             _l.error('portfolio_returns len %s' % len(portfolio_returns))
             _l.error('benchmarks_returns len %s' % len(benchmarks_returns))
