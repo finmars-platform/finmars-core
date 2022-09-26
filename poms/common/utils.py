@@ -349,7 +349,7 @@ def get_first_transaction(portfolio_id):
 def last_business_day_in_month(year: int, month: int, to_string=False):
     day =  max(calendar.monthcalendar(year, month)[-1:][0][:5])
 
-    d = datetime.datetime(year, month, day)
+    d = datetime.datetime(year, month, day).date()
 
     if to_string:
         return d.strftime('%Y-%m-%d')
