@@ -381,7 +381,9 @@ class PerformanceReportBuilder:
             # previous_end_of_month_of_begin_date = datetime.date(begin_date_year, begin_date_month, 1) - timedelta(
             #     days=1)
 
-            previous_end_of_month_of_begin_date = last_business_day_in_month(begin_date_year, begin_date_month)
+            # TODO check?
+            previous_end_of_month_of_begin_date = last_business_day_in_month(begin_date_year, begin_date_month) - timedelta(
+                 days=1)
 
             if month_start < previous_end_of_month_of_begin_date:
                 month_start = previous_end_of_month_of_begin_date
