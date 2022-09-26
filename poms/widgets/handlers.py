@@ -279,8 +279,13 @@ class StatsHandler():
         if len(end_of_months) != len(prices):
             _l.error("Not enough Prices for benchmark_returns")
         else:
-            for i in range(1, len(end_of_months) + 1):
+            # for i in range(1, len(end_of_months) + 1):
+            _l.info('get_benchmark_returns.end_of_months end_of_months len %s' % len(end_of_months))
+            _l.info('get_benchmark_returns.end_of_months prices len %s' % len(prices))
+            i = 1
+            while i < len(end_of_months):
                 results.append((prices[i].principal_price - prices[i - 1].principal_price) / prices[i - 1].principal_price)
+                i = i + 1
 
         return results
 
