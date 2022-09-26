@@ -274,6 +274,9 @@ class StatsHandler():
 
         _l.info('get_benchmark_returns.end_of_months after len %s' % len(end_of_months))
 
+        if end_of_months[-1] > datetime.datetime.today():
+            end_of_months[-1] = self.get_date_or_yesterday(end_of_months[-1])
+
         for date in end_of_months:
             query = Q(**{'date': date})
 
@@ -361,7 +364,7 @@ class StatsHandler():
         correlation = 0
 
         try:
-            correlation = numpy.correlate(portfolio_returns, benchmarks_returns)
+            correlation = numpy.corrcoef(portfolio_returns, benchmarks_returns)[0, 1]
         except Exception as e:
             _l.error('portfolio_returns len %s' % len(portfolio_returns))
             _l.error('benchmarks_returns len %s' % len(benchmarks_returns))
