@@ -3,10 +3,11 @@ import math
 import statistics
 
 import numpy
-
+from django.db.models import Q
 from dateutil.relativedelta import relativedelta
 
-from poms.common.utils import get_first_transaction, get_list_of_months_between_two_dates
+from poms.common.utils import get_first_transaction, get_list_of_months_between_two_dates, \
+    get_last_bdays_of_months_between_two_dates
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioBundle
@@ -190,16 +191,13 @@ class StatsHandler():
 
         grand_date_to = self.get_date_or_yesterday(self.date)
 
-        months = get_list_of_months_between_two_dates(grand_date_from, grand_date_to)
-
-        if grand_date_from.day != 1:
-            months.insert(0, grand_date_from)
+        end_of_months = get_last_bdays_of_months_between_two_dates(grand_date_from, grand_date_to)
 
         grand_lowest = 0
 
         results = []
 
-        for month in months:
+        for month in end_of_months:
 
             date_from = month
             date_to = date_from + datetime.timedelta(days=365)
@@ -256,21 +254,27 @@ class StatsHandler():
 
         results = []
 
-        months = get_list_of_months_between_two_dates(date_from, date_to)
-
-        if date_from.day != 1:
-            months.insert(0, date_from)
+        end_of_months = get_last_bdays_of_months_between_two_dates(date_from, date_to)
 
         _l.info('get_benchmark_returns.date_from %s' % date_from)
         _l.info('get_benchmark_returns.date_to %s' % date_to)
-        _l.info('get_benchmark_returns.month %s' % months)
+        _l.info('get_benchmark_returns.end_of_months %s' % end_of_months)
 
-        prices = PriceHistory.objects.filter(instrument__user_code=self.benchmark, date__in=months)
+        q = Q()
 
-        if len(months) != len(prices):
+        for date in end_of_months:
+            query = Q(**{'date': date})
+
+            q = q | query
+
+        q = q & Q(**{'instrument__user_code': self.benchmark})
+
+        prices = PriceHistory.objects.filter(q)
+
+        if len(end_of_months) != len(prices):
             _l.error("Not enough Prices for benchmark_returns")
         else:
-            for i in range(1, len(months)):
+            for i in range(1, len(end_of_months)):
                 results.append((prices[i].principal_price - prices[i - 1].principal_price) / prices[i - 1].principal_price)
 
         return results
