@@ -12,7 +12,7 @@ from rest_framework.exceptions import APIException
 
 from poms.accounts.models import Account
 from poms.common.utils import get_list_of_dates_between_two_dates, get_list_of_business_days_between_two_dates, \
-    last_business_day_in_month
+    last_business_day_in_month, is_business_day, get_last_business_day
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, InstrumentType, LongUnderlyingExposure, ShortUnderlyingExposure, \
     ExposureCalculationModel, PriceHistory
@@ -336,7 +336,17 @@ class PerformanceReportBuilder:
         _l.info('dates %s' % dates)
 
         if segmentation_type == 'days':
-            result = self.format_to_days(dates)
+
+            if date_from == date_to and is_business_day(date_from):
+
+                result = self.format_to_days(dates)
+
+            else:
+
+                dates = [get_last_business_day(date_from)]
+
+                result = self.format_to_days(dates)
+
 
         if segmentation_type == 'months':
             result = self.format_to_months(dates)

@@ -249,6 +249,21 @@ def get_content_type_by_name(name):
 def is_business_day(date):
     return bool(len(pd.bdate_range(date, date)))
 
+def get_last_business_day(date, to_string=False):
+
+    format = '%Y-%m-%d'
+
+    if not isinstance(date, datetime.date):
+        date = datetime.datetime.strptime(date, format).date()
+
+    weekday = datetime.date.weekday(date)
+    if weekday > 4:      #if it's Saturday or Sunday
+        date = date - datetime.timedelta(days = weekday-4)
+
+    if to_string:
+        return str(date)
+    return date
+
 
 def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
 
