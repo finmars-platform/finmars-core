@@ -274,7 +274,7 @@ class StatsHandler():
 
         _l.info('get_benchmark_returns.end_of_months after len %s' % len(end_of_months))
 
-        if end_of_months[-1] > datetime.datetime.today():
+        if end_of_months[-1] > datetime.datetime.now().date():
             end_of_months[-1] = self.get_date_or_yesterday(end_of_months[-1])
 
         for date in end_of_months:
