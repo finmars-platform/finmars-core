@@ -488,7 +488,7 @@ class CollectHistoryViewSet(AbstractViewSet):
         report_currency_id = request.data.get('report_currency', None)
         pricing_policy_id = request.data.get('pricing_policy', None)
         cost_method_id = request.data.get('cost_method', CostMethod.AVCO)
-        segmentation_type = request.query_params.get('segmentation_type', 'months')
+        segmentation_type = request.data.get('segmentation_type', None)
 
         ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
 
@@ -497,7 +497,15 @@ class CollectHistoryViewSet(AbstractViewSet):
         if not pricing_policy_id:
             pricing_policy_id = ecosystem_default.pricing_policy_id
 
+        _l.info('CollectHistoryViewSet.segmentation_type %s' % segmentation_type)
+        if not segmentation_type:
+            segmentation_type = 'months'
+
         dates = []
+
+
+        _l.info('CollectHistoryViewSet.date_from %s' % date_from)
+        _l.info('CollectHistoryViewSet.date_to %s' % date_to)
 
         if segmentation_type == 'days':
             dates = get_list_of_business_days_between_two_dates(date_from, date_to, to_string=True)
@@ -506,7 +514,7 @@ class CollectHistoryViewSet(AbstractViewSet):
             dates = get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=True)
             _l.info('CollectHistoryViewSet.create: dates %s' % dates)
 
-        if not len(dates):
+        if len(dates) == 0:
             raise ValidationError("No buisness days in range %s to %s" % (date_from, date_to))
 
 

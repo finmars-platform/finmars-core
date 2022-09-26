@@ -12,6 +12,10 @@ import calendar
 
 import copy
 
+import logging
+_l = logging.getLogger('poms.common')
+
+
 
 def force_qs_evaluation(qs):
     list(qs)
