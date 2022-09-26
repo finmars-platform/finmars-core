@@ -315,10 +315,15 @@ class StatsHandler():
         # end of month
         # (p1 - p0) / p0 = result %
 
+        portfolio_months = []
+
         for period in self.performance_report.periods:
             portfolio_returns.append(period['total_return'])
+            portfolio_months.append(period['date_to'])
 
         benchmarks_returns = self.get_benchmark_returns(date_from, date_to)
+
+        _l.info('portfolio_months %s' % portfolio_months)
 
         # cov(portfoio, bench) / var(bench)
         # MINDBLOWING WITH SP500
