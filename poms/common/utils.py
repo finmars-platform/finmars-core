@@ -333,9 +333,9 @@ def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
 
     if date_from.day != 1:
         if to_string:
-            result.append(str(date_from.day))
+            result.append(str(date_from))
         else:
-            result.append(date_from.day)
+            result.append(date_from)
 
     for i in range(diff.days + 1):
         day = date_from + timedelta(days=i)
