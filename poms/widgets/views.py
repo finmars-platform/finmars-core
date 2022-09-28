@@ -41,14 +41,17 @@ class HistoryNavViewSet(AbstractViewSet):
         portfolio = request.query_params.get('portfolio', None)
         segmentation_type = request.query_params.get('segmentation_type', None)
 
+        if not portfolio:
+            raise ValidationError("Portfolio is no set")
+
         if not date_from:
-            date_from = str(datetime.datetime.now().year) + "-01-01"
+            #date_from = str(datetime.datetime.now().year) + "-01-01"
+            date_from = get_first_transaction(portfolio).accounting_date.strftime("%Y-%m-%d")
 
         if not date_to:
             date_to = datetime.datetime.now().strftime("%Y-%m-%d")
 
-        if not portfolio:
-            raise ValidationError("Portfolio is no set")
+
 
 
         _l.info('date_from %s ' % date_from)
