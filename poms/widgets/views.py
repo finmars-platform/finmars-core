@@ -51,9 +51,6 @@ class HistoryNavViewSet(AbstractViewSet):
         if not date_to:
             date_to = datetime.datetime.now().strftime("%Y-%m-%d")
 
-
-
-
         _l.info('date_from %s ' % date_from)
         _l.info('date_to %s ' % date_to)
 
@@ -106,6 +103,8 @@ class HistoryNavViewSet(AbstractViewSet):
         balance_report_histories = balance_report_histories.prefetch_related('items')
 
         items = []
+
+        balance_report_histories = balance_report_histories.order_by('date')
 
         for history_item in balance_report_histories:
 
