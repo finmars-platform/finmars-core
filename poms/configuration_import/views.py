@@ -1,7 +1,7 @@
 from celery.result import AsyncResult
 from django.core.signing import TimestampSigner
 from rest_framework import status
-
+from django.db import transaction
 from rest_framework.response import Response
 
 from poms.celery_tasks.models import CeleryTask
@@ -46,50 +46,14 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
-        task_id = instance.task_id
+        if instance.task_id:
 
-        signer = TimestampSigner()
-
-        if task_id:
-
-            try:
-                celery_task = CeleryTask.objects.get(id=task_id)
-            except CeleryTask.DoesNotExist:
-                celery_task = None
-                _l.debug("Cant create Celery Task")
-
-            _l.debug('celery_task %s' % celery_task)
-
-            st = time.perf_counter()
-
-
+            celery_task = CeleryTask.objects.get(id=instance.task_id)
 
             if celery_task.status == CeleryTask.STATUS_DONE:
 
+                instance.stats = celery_task.result_object
                 instance.task_status = 'SUCCESS'
-
-                if celery_task:
-                    celery_task.finished_at = datetime_now()
-
-
-            _l.debug('AsyncResult res.ready: %s' % (time.perf_counter() - st))
-
-            _l.debug('instance %s' % instance)
-            _l.debug('celery_task %s' % celery_task)
-
-            _l.debug('request.user %s' % request.user)
-            _l.debug('request.user.master_user %s' % request.user.master_user)
-
-            _l.debug('instance.master_user %s' % instance.master_user)
-
-            if instance.master_user.id != request.user.master_user.id:
-                raise PermissionDenied()
-
-            instance.task_id = task_id
-
-
-            serializer = self.get_serializer(instance=instance, many=False)
-            return Response(serializer.data, status=status.HTTP_200_OK)
 
         else:
 
@@ -102,19 +66,19 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
                 'mode': request.data['mode']
             }
 
-            # _l.info('options_object %s' % options_object)
-
             celery_task.options_object = options_object
             celery_task.save()
 
-            res = configuration_import_as_json.apply_async(kwargs={'task_id': celery_task.id})
             instance.task_id = celery_task.id
 
-            instance.task_status = res.status
-            serializer = self.get_serializer(instance=instance, many=False)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            transaction.on_commit(
+                lambda: configuration_import_as_json.apply_async(kwargs={'task_id': celery_task.id}))
+
+        serializer = self.get_serializer(instance=instance, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# DEPRECATED
 class GenerateConfigurationEntityArchetypeViewSet(AbstractAsyncViewSet):
     serializer_class = GenerateConfigurationEntityArchetypeSerializer
     celery_task = generate_configuration_entity_archetype

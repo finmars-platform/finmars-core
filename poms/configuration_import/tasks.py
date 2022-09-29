@@ -3,12 +3,14 @@ import time
 from celery import shared_task
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.exceptions import ValidationError
+from django.db import transaction
 
 from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountTypeSerializer
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import get_content_type_by_name
+from poms.common.websockets import send_websocket_message
 from poms.complex_import.models import ComplexImportScheme
 from poms.complex_import.serializers import ComplexImportSchemeSerializer
 from poms.configuration_import.handlers import ConfigurationEntityArchetypeGenerateHandler
@@ -164,7 +166,7 @@ def get_configuration_access_table(member):
 
 class ImportManager(object):
 
-    def __init__(self, instance, update_state):
+    def __init__(self, instance):
 
         # _l.info('master_user %s ' % instance.master_user)
         # _l.info('class instance %s' % instance.master_user.__class__.__name__)
@@ -173,7 +175,6 @@ class ImportManager(object):
         self.member = instance.member
         self.ecosystem_default = EcosystemDefault.objects.get(master_user=self.master_user)
 
-        self.update_task_state = update_state
         self.instance = instance
 
         self.instance.stats = {}
@@ -220,9 +221,14 @@ class ImportManager(object):
 
         self.instance.total_rows = total_rows
 
-        self.update_task_state(task_id=self.instance.task_id, state=Task.STATUS_PENDING,
-                               meta={'total_rows': self.instance.total_rows,
-                                     'processed_rows': self.instance.processed_rows})
+        send_websocket_message(data={
+            'type': 'configuration_import_status',
+            'payload': {'task_id': self.instance.task_id,
+                        'state': Task.STATUS_PENDING,
+                        'processed_rows': self.instance.processed_rows,
+                        'total_rows': self.instance.total_rows}
+        }, level="member",
+            context={"master_user": self.master_user, "member": self.member})
 
     def update_progress(self):
 
@@ -231,9 +237,14 @@ class ImportManager(object):
         if self.instance.processed_rows > self.instance.total_rows:  # TODO  Somehow processed rows become bigger then total total rows, check for duplicate
             self.instance.processed_rows = self.instance.total_rows
 
-        self.update_task_state(task_id=self.instance.task_id, state=Task.STATUS_PENDING,
-                               meta={'total_rows': self.instance.total_rows,
-                                     'processed_rows': self.instance.processed_rows})
+        send_websocket_message(data={
+            'type': 'configuration_import_status',
+            'payload': {'task_id': self.instance.task_id,
+                        'state': Task.STATUS_PENDING,
+                        'processed_rows': self.instance.processed_rows,
+                        'total_rows': self.instance.total_rows}
+        }, level="member",
+            context={"master_user": self.master_user, "member": self.member})
 
     def get_serializer_context(self):
 
@@ -3092,6 +3103,10 @@ def configuration_import_as_json(self, task_id):
         task.celery_task_id=self.request.id
         task.save()
 
+        with transaction.atomic():
+            task.status = CeleryTask.STATUS_PENDING
+            task.save()
+
         send_system_message(master_user=task.master_user,
                             performed_by=task.member.username,
                             section='import',
@@ -3109,7 +3124,7 @@ def configuration_import_as_json(self, task_id):
         _l.info('instance.mode %s' % instance.mode)
         # _l.info('instance.data %s' % instance.data)
 
-        import_manager = ImportManager(instance, self.update_state)
+        import_manager = ImportManager(instance)
 
         configuration_section = None
         mappings_section = None
@@ -3142,6 +3157,7 @@ def configuration_import_as_json(self, task_id):
 
         _l.info('Import done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
+        task.result_object = instance.stats
 
         task.status = CeleryTask.STATUS_DONE
         task.save()
