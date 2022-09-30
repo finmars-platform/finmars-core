@@ -333,7 +333,7 @@ class HistoryPlViewSet(AbstractViewSet):
                 "name": cost_method_object.name,
                 "user_code": cost_method_object.user_code
             },
-            "portfolio": portfolio_instance,
+            "portfolio": portfolio_instance.id,
             "portfolio_object": portfolio_instance_json,
 
             "items": items
