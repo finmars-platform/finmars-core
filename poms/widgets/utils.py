@@ -38,7 +38,7 @@ def collect_asset_type_category(report_type, master_user, instance_serialized, h
 
         if report_type == 'pl':
             item = PLReportHistoryItem()
-            item.balance_report_history = history
+            item.pl_report_history = history
 
         item.category = 'Asset Types'
         item.key = key
@@ -70,7 +70,7 @@ def collect_asset_type_category(report_type, master_user, instance_serialized, h
 
     if report_type == 'pl':
         item = PLReportHistoryItem()
-        item.balance_report_history = history
+        item.pl_report_history = history
 
 
     item.category = 'Asset Types'
@@ -102,7 +102,7 @@ def collect_asset_type_category(report_type, master_user, instance_serialized, h
 
     if report_type == 'pl':
         item = PLReportHistoryItem()
-        item.balance_report_history = history
+        item.pl_report_history = history
 
 
     item.category = 'Asset Types'
@@ -149,7 +149,7 @@ def collect_sector_category(report_type, master_user, instance_serialized, histo
 
         if report_type == 'pl':
             item = PLReportHistoryItem()
-            item.balance_report_history = history
+            item.pl_report_history = history
 
         item.category = 'Sector'
         item.key = key
@@ -191,7 +191,7 @@ def collect_country_category(report_type, master_user, instance_serialized, hist
 
         if report_type == 'pl':
             item = PLReportHistoryItem()
-            item.balance_report_history = history
+            item.pl_report_history = history
 
         item.category = 'Country'
         item.key = key
@@ -233,7 +233,7 @@ def collect_region_category(report_type, master_user, instance_serialized, histo
 
         if report_type == 'pl':
             item = PLReportHistoryItem()
-            item.balance_report_history = history
+            item.pl_report_history = history
 
         item.category = 'Region'
         item.key = key
@@ -278,7 +278,7 @@ def collect_currency_category(report_type, master_user, instance_serialized, his
 
         if report_type == 'pl':
             item = PLReportHistoryItem()
-            item.balance_report_history = history
+            item.pl_report_history = history
 
         item.category = 'Currency'
         item.key = key
