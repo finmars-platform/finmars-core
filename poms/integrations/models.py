@@ -1033,6 +1033,9 @@ class ComplexTransactionImportScheme(NamedModel, DataTimeStampedModel):
     filter_expression = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('filter expression'))
     has_header_row = models.BooleanField(default=True, verbose_name=gettext_lazy("has header row"))
 
+    data_preprocess_expression = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                  verbose_name=gettext_lazy('data preprocess expression'))
+
     @property
     def recon_layout(self):
         try:

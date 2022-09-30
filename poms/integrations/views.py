@@ -7,15 +7,16 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.signing import TimestampSigner
 from django.db.models import Prefetch
 from django_filters.rest_framework import FilterSet, DjangoFilterBackend
-from rest_framework.exceptions import MethodNotAllowed
+from rest_framework.exceptions import MethodNotAllowed, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.filters import OrderingFilter
-
+from django.http import HttpResponse
 from django.db import transaction
 from rest_framework.viewsets import ModelViewSet
 
+from poms.transaction_import.handlers import TransactionImportProcess
 from poms.transaction_import.tasks import transaction_import
 from poms.common.mixins import UpdateModelMixinExt, DestroyModelFakeMixin, BulkModelMixin
 from poms.common.utils import date_now, datetime_now
@@ -846,6 +847,52 @@ class ComplexTransactionImportSchemeLightViewSet(AbstractModelViewSet):
     ]
 
 
+class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
+    serializer_class = ComplexTransactionCsvFileImportSerializer
+
+    permission_classes = AbstractModelViewSet.permission_classes + [
+        PomsFunctionPermission
+    ]
+
+    def get_serializer_context(self):
+        context = super(AbstractAsyncViewSet, self).get_serializer_context()
+        context['show_object_permissions'] = False
+        return context
+
+    def create(self, request, *args, **kwargs):
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        if not instance.scheme.data_preprocess_expression:
+            raise ValidationError({'data_preprocess_expression': 'data_preprocess_expression is required to preprocess file'})
+
+        options_object = {}
+        options_object['file_name'] = instance.file_name
+        options_object['file_path'] = instance.file_path
+        options_object['scheme_id'] = instance.scheme.id
+        options_object['preprocess_file'] = True
+        options_object['execution_context'] = None
+
+        celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                member=request.user.member,
+                                                options_object=options_object,
+                                                type='transaction_import')
+
+
+        transaction_import_process = TransactionImportProcess(task_id=celery_task.id)
+
+        transaction_import_process.fill_with_raw_items()
+        new_raw_items = transaction_import_process.whole_file_preprocess()
+
+        filename_without_ext = instance.file_name.split('.')[0]
+
+        response = HttpResponse(new_raw_items, content_type='application/force-download')
+        response['Content-Disposition'] = 'attachment; filename=%s' % 'preprocessed_'+ filename_without_ext + '.json'
+
+        return response
+
 class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
 
@@ -950,6 +997,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         options_object = {}
         options_object['file_name'] = instance.file_name
         options_object['file_path'] = instance.file_path
+        options_object['preprocess_file'] = instance.preprocess_file
         options_object['scheme_id'] = instance.scheme.id
         options_object['execution_context'] = None
 

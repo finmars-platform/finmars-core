@@ -3369,6 +3369,13 @@ class SimpleEval2(object):
 
         f_args = [self._eval(a) for a in node.args]
         f_kwargs = {k.arg: self._eval(k.value) for k in node.keywords}
+
+        try:
+            if node.func.attr in ['append', 'pop', 'remove']:
+                return f(*f_args)
+        except Exception as e:
+            _l.error("append do not work %s" % e)
+
         return f(self, *f_args, **f_kwargs)
 
     def _on_ast_Return(self, node):
@@ -3404,6 +3411,14 @@ class SimpleEval2(object):
                 return val[node.attr]
             except (IndexError, KeyError, TypeError):
                 raise AttributeDoesNotExist(node.attr)
+
+        elif isinstance(val, list):
+            _l.debug("list here? %s" % val )
+            _l.debug("list here? node.value %s" % node.value )
+            _l.debug("list here? node.attr %s" % node.attr )
+            if node.attr in ['append', 'pop', 'remove']:
+
+                return getattr(val, node.attr)
         else:
 
             if isinstance(val, datetime.date):

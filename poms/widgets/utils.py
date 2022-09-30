@@ -112,7 +112,7 @@ def collect_asset_type_category(report_type, master_user, instance_serialized, h
     asset_type_items = []
 
     for _item in instance_serialized['items']:
-        if _item['item_type'] == 2:
+        if _item['item_type'] != 2:
             asset_type_items.append(_item)
 
     item.value = get_total_from_report_items(key, asset_type_items)
@@ -170,6 +170,17 @@ def collect_sector_category(report_type, master_user, instance_serialized, histo
 
         item.save()
 
+    item.category = 'Sector'
+    item.key = key
+    item.name = 'Cash & Equivalents'
+
+    asset_type_items = []
+
+    for _item in instance_serialized['items']:
+        if _item['item_type'] != 2:
+            asset_type_items.append(_item)
+
+    item.value = get_total_from_report_items(key, asset_type_items)
 
 def collect_country_category(report_type, master_user, instance_serialized, history, key='market_value'):
 
@@ -212,6 +223,17 @@ def collect_country_category(report_type, master_user, instance_serialized, hist
 
         item.save()
 
+    item.category = 'Country'
+    item.key = key
+    item.name = 'Cash & Equivalents'
+
+    asset_type_items = []
+
+    for _item in instance_serialized['items']:
+        if _item['item_type'] != 2:
+            asset_type_items.append(_item)
+
+    item.value = get_total_from_report_items(key, asset_type_items)
 
 def collect_region_category(report_type, master_user, instance_serialized, history, key='market_value'):
 
@@ -254,6 +276,17 @@ def collect_region_category(report_type, master_user, instance_serialized, histo
 
         item.save()
 
+    item.category = 'Region'
+    item.key = key
+    item.name = 'Cash & Equivalents'
+
+    asset_type_items = []
+
+    for _item in instance_serialized['items']:
+        if _item['item_type'] != 2:
+            asset_type_items.append(_item)
+
+    item.value = get_total_from_report_items(key, asset_type_items)
 
 def collect_currency_category(report_type, master_user, instance_serialized, history, key='market_value'):
     currencies_ids = []

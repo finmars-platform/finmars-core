@@ -69,7 +69,7 @@ props_map = {
 
 class TransactionImportProcess(object):
 
-    def __init__(self, task_id, procedure_instance_id):
+    def __init__(self, task_id, procedure_instance_id=None):
 
         self.task = CeleryTask.objects.get(pk=task_id)
         self.parent_task = self.task.parent
@@ -873,3 +873,27 @@ class TransactionImportProcess(object):
             self.procedure_instance.schedule_instance.run_next_procedure()
 
         return self.result
+
+
+    def whole_file_preprocess(self):
+
+        if self.scheme.data_preprocess_expression and self.task.options_object['preprocess_file']:
+
+            names = {}
+
+            names['data'] = self.raw_items
+
+            try:
+
+
+                _l.info("whole_file_preprocess  names %s" %  names)
+
+                self.raw_items = formula.safe_eval(self.scheme.data_preprocess_expression, names=names)
+
+                _l.info("whole_file_preprocess  self.raw_items %s" %  self.raw_items)
+
+            except Exception as e:
+
+                _l.error("Could not execute preoprocess expression. Error %s" % e)
+
+        return self.raw_items

@@ -1680,6 +1680,7 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     rule_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
+    data_preprocess_expression = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False)
 
     inputs = ComplexTransactionImportSchemeInputSerializer(many=True, read_only=False)
     calculated_inputs = ComplexTransactionImportSchemeCalculatedInputSerializer(many=True, read_only=False,
@@ -1705,7 +1706,9 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
                   'recon_scenarios', 'recon_layout',
 
                   'delimiter', 'error_handler', 'missing_data_handler', 'column_matcher',
-                  'filter_expression', 'has_header_row'
+                  'filter_expression', 'has_header_row',
+
+                  'data_preprocess_expression'
 
                   ]
 
@@ -1972,7 +1975,7 @@ class ComplexTransactionCsvFileImport:
                  scheme=None, file_path=None, skip_first_line=None, delimiter=None, quotechar=None, encoding=None,
                  error_handling=None, missing_data_handler=None, error=None, error_message=None, error_row_index=None,
                  error_rows=None,
-                 total_rows=None, processed_rows=None, file_name=None, stats_file_report=None):
+                 total_rows=None, processed_rows=None, file_name=None, stats_file_report=None, preprocess_file=True):
         self.task_id = task_id
         self.task_status = task_status
 
@@ -1997,6 +2000,7 @@ class ComplexTransactionCsvFileImport:
         self.total_rows = total_rows
         self.processed_rows = processed_rows
         self.stats_file_report = stats_file_report
+        self.preprocess_file = preprocess_file
 
     def __str__(self):
         return '%s-%s:%s' % (getattr(self.master_user, 'id', None), getattr(self.member, 'id', None), self.file_path)
@@ -2013,6 +2017,8 @@ class ComplexTransactionCsvFileImport:
 class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
     task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     task_status = serializers.ReadOnlyField()
+
+    preprocess_file = serializers.BooleanField(required=False, allow_null=True)
 
     master_user = MasterUserField()
     member = HiddenMemberField()
@@ -2060,6 +2066,7 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
 
                 SFS.save(file_path, file)
                 validated_data['file_path'] = file_path
+                validated_data['file_name'] = filetmp.name
             else:
                 raise serializers.ValidationError({'file': gettext_lazy('Required field.')})
 
