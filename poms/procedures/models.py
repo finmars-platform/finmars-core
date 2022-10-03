@@ -430,6 +430,7 @@ class ExpressionProcedureInstance(BaseProcedureInstance):
     calculated_options_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('calculated options'))
 
     result = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('result'))
+    log = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('log'))
 
     class Meta:
         ordering = ['-created']

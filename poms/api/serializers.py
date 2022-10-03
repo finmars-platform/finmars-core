@@ -63,6 +63,7 @@ class ExpressionSerializer(serializers.Serializer):
     names = serializers.ReadOnlyField()
     is_eval = serializers.BooleanField()
     result = serializers.ReadOnlyField()
+    log = serializers.ReadOnlyField()
     # help_raw = serializers.SerializerMethodField()
     # help = serializers.SerializerMethodField()
 
@@ -91,7 +92,7 @@ class ExpressionSerializer(serializers.Serializer):
                 names.update(names2)
             attrs['names'] = names
             try:
-                attrs['result'] = formula.safe_eval(expression, names, context=self.context)
+                attrs['result'], attrs['log']  = formula.safe_eval_with_logs(expression, names, context=self.context)
             except formula.InvalidExpression as e:
                 _l.error("Manual expression error %s" % e)
                 _l.error("Manual expression traceback %s" % traceback.format_exc())

@@ -501,12 +501,15 @@ class ExpressionProcedureProcess(object):
 
             try:
 
-                result = formula.safe_eval(self.procedure.code, names=names,  context=self.context)
+                result, log = formula.safe_eval_with_logs(self.procedure.code, names=names,  context=self.context)
 
                 _l.debug('ExpressionProcedureProcess.result %s' % result)
 
                 if result:
                     procedure_instance.result = result
+
+                if log:
+                    procedure_instance.log = log
 
                 procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE
 

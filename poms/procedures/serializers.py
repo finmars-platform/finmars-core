@@ -244,5 +244,5 @@ class ExpressionProcedureInstanceSerializer(serializers.ModelSerializer):
         model = ExpressionProcedureInstance
         fields = ('master_user', 'id', 'request_data',
                   'status', 'error_code', 'error_message',
-                  'created', 'modified', 'result',
+                  'created', 'modified', 'result', 'log',
                   'procedure', 'procedure_object')

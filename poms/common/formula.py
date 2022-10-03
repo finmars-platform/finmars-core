@@ -28,6 +28,8 @@ from datetime import date
 from django.forms.models import model_to_dict
 import traceback
 
+
+
 _l = logging.getLogger('poms.formula')
 
 MAX_STR_LEN = 20000
@@ -2429,7 +2431,7 @@ def _run_pricing_procedure(evaluator, user_code, **kwargs):
 _run_pricing_procedure.evaluator = True
 
 
-def _run_data_procedure(evaluator, user_code, user_context=None, **kwargs):
+def _run_data_procedure(evaluator, user_code, user_context=None, linked_task_kwargs=None, **kwargs):
     _l.info('_run_data_procedure')
 
     try:
@@ -2455,7 +2457,12 @@ def _run_data_procedure(evaluator, user_code, user_context=None, **kwargs):
         }
         procedure_kwargs.update(kwargs)
 
-        run_data_procedure_from_formula.apply_async(kwargs=procedure_kwargs)
+        link = []
+
+        if linked_task_kwargs:
+            link = [run_data_procedure_from_formula.apply_async(kwargs=linked_task_kwargs)]
+
+        run_data_procedure_from_formula.apply_async(kwargs=procedure_kwargs, link=link)
 
         #
         # merged_context = {}
@@ -2484,6 +2491,50 @@ def _run_data_procedure(evaluator, user_code, user_context=None, **kwargs):
 
 
 _run_data_procedure.evaluator = True
+
+
+def _run_data_procedure_sync(evaluator, user_code, user_context=None, **kwargs):
+    _l.info('_run_data_procedure_sync')
+
+    try:
+        from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_member_from_context
+        from poms.procedures.models import RequestDataFileProcedure
+        from poms.procedures.handlers import RequestDataFileProcedureProcess
+        from poms.procedures.tasks import run_data_procedure_from_formula
+
+        context = evaluator.context
+
+        master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
+
+        merged_context = {}
+        merged_context.update(context)
+
+        if 'names' not in merged_context:
+            merged_context['names'] = {}
+
+        if user_context:
+            merged_context['names'].update(user_context)
+
+        _l.info('merged_context %s' % merged_context)
+
+        procedure = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=user_code)
+
+        kwargs.pop('user_context', None)
+
+        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member,
+                                                   context=merged_context, **kwargs)
+        instance.process()
+
+
+    except Exception as e:
+        _l.error("_run_data_procedure_sync.exception %s" % e)
+        _l.error("_run_data_procedure_sync.exception traceback %s" % traceback.format_exc())
+
+
+_run_data_procedure_sync.evaluator = True
+
 
 
 def _rebook_transaction(evaluator, code, values=None, user_context=None, **kwargs):
@@ -2616,6 +2667,65 @@ def _download_instrument_from_finmars_database(evaluator, reference, instrument_
 _download_instrument_from_finmars_database.evaluator = True
 
 
+def _create_workflow(evaluator, name=None):
+
+    from poms.workflows.models import Workflow, WorkflowStep
+
+    from poms.users.utils import get_master_user_from_context
+    from poms.users.utils import get_member_from_context
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+    member = get_member_from_context(context)
+
+    if not name:
+        name = 'Workflow ' + str((Workflow.objects.all().count() + 1))
+
+    workflow = Workflow.objects.create(name=name, master_user=master_user, member=member, current_step=1)
+
+    return workflow.id
+
+
+_create_workflow.evaluator = True
+
+
+def _register_workflow_step(evaluator, workflow_id, code, name=None):
+
+    from poms.workflows.models import Workflow, WorkflowStep
+    import inspect
+
+    workflow = Workflow.objects.get(id=workflow_id)
+
+    order = WorkflowStep.objects.filter(workflow_id=workflow_id).count() + 1
+
+    if not name:
+        name = workflow.name + ' step ' + str((order))
+
+
+    code_txt = ast.unparse(code.node)
+
+    workflow_step = WorkflowStep.objects.create(workflow_id=workflow_id, code=code_txt, name=name, order=order)
+
+    return workflow_step.id
+
+
+_register_workflow_step.evaluator = True
+
+
+def _run_workflow(evaluator, workflow_id):
+
+    from poms.workflows.models import Workflow, WorkflowStep
+    from poms.workflows.tasks import run_workflow_step
+
+    workflow = Workflow.objects.get(id=workflow_id)
+
+    run_workflow_step.apply_async(kwargs={"workflow_id": workflow.id})
+
+
+_run_workflow.evaluator = True
+
+
 def _simple_group(val, ranges, default=None):
     for begin, end, text in ranges:
         if begin is None:
@@ -2727,6 +2837,21 @@ def _random():
 
 def _uuid():
     return str(uuid.uuid4())
+
+def _print_message(evaluator, text):
+
+    context = evaluator.context
+
+    if 'log' not in context:
+        context['log'] = ''
+
+    context['log'] = context['log'] + text + '\n'
+
+    _l.info("CONTEXT %s" % context)
+
+
+
+_print_message.evaluator = True
 
 
 def _print(message, *args, **kwargs):
@@ -2875,6 +3000,7 @@ FUNCTIONS = [
     SimpleEval2Def('min', _min),
     SimpleEval2Def('max', _max),
     SimpleEval2Def('uuid', _uuid),
+    SimpleEval2Def('print_message', _print_message),
 
     SimpleEval2Def('iff', _iff),
     SimpleEval2Def('len', _len),
@@ -2911,6 +3037,7 @@ FUNCTIONS = [
     SimpleEval2Def('join', _join),
     SimpleEval2Def('reverse', _reverse),
     SimpleEval2Def('split', _split),
+
 
     SimpleEval2Def('simple_price', _simple_price),
 
@@ -2994,8 +3121,14 @@ FUNCTIONS = [
     SimpleEval2Def('run_task', _run_task),
     SimpleEval2Def('run_pricing_procedure', _run_pricing_procedure),
     SimpleEval2Def('run_data_procedure', _run_data_procedure),
+    SimpleEval2Def('run_data_procedure_sync', _run_data_procedure_sync),
     SimpleEval2Def('rebook_transaction', _rebook_transaction),
     SimpleEval2Def('download_instrument_from_finmars_database', _download_instrument_from_finmars_database),
+
+
+    SimpleEval2Def('create_workflow', _create_workflow),
+    SimpleEval2Def('register_workflow_step', _register_workflow_step),
+    SimpleEval2Def('run_workflow', _run_workflow),
 
 ]
 
@@ -3465,6 +3598,15 @@ def safe_eval(s, names=None, max_time=None, add_print=False, allow_assign=True, 
     e = SimpleEval2(names=names, max_time=max_time, add_print=add_print, allow_assign=allow_assign, now=now,
                     context=context)
     return e.eval(s)
+
+
+def safe_eval_with_logs(s, names=None, max_time=None, add_print=False, allow_assign=True, now=None, context=None):
+    e = SimpleEval2(names=names, max_time=max_time, add_print=add_print, allow_assign=allow_assign, now=now,
+                    context=context)
+    if "log" not in context:
+        context["log"] = ""
+
+    return e.eval(s), context["log"]
 
 
 def validate_date(val):
