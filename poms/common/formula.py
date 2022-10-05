@@ -2726,9 +2726,10 @@ def _run_workflow(evaluator, workflow_id):
     from poms.workflows.models import Workflow, WorkflowStep
     from poms.workflows.tasks import run_workflow_step
 
-    workflow = Workflow.objects.get(id=workflow_id)
+    # workflow = Workflow.objects.get(id=workflow_id)
+    from django.db import IntegrityError, transaction
 
-    run_workflow_step.apply_async(kwargs={"workflow_id": workflow.id})
+    transaction.on_commit(lambda: run_workflow_step.apply_async(kwargs={"workflow_id": workflow_id}))
 
 
 _run_workflow.evaluator = True
