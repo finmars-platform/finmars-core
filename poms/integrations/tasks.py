@@ -80,9 +80,8 @@ from poms.procedures.models import RequestDataFileProcedureInstance
 
 _l = logging.getLogger('poms.integrations')
 
-from storages.backends.sftpstorage import SFTPStorage
-
-SFS = SFTPStorage()
+from poms.common.storage import get_storage
+storage = get_storage()
 
 
 @shared_task(name='integrations.health_check')
@@ -3211,7 +3210,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
 
                 _l.info("Open file %s" % instance.file_path)
                 # with import_file_storage.open(instance.file_path, 'rb') as f:
-                with SFS.open(instance.file_path, 'rb') as f:
+                with storage.open(instance.file_path, 'rb') as f:
 
                     with NamedTemporaryFile() as tmpf:
 
@@ -3254,7 +3253,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
             if celery_task.options_object and 'items' in celery_task.options_object:
                 pass
             else:
-                SFS.delete(instance.file_path)
+                storage.delete(instance.file_path)
 
             instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(
                 instance.error_rows)
@@ -3408,11 +3407,11 @@ def complex_transaction_csv_file_import_parallel(task_id):
             header_line = None
 
             def _get_path(master_user, file_name, ext):
-                return '%s/transaction_import_files/%s.%s' % (master_user.token, file_name, ext)
+                return '%s/public/%s.%s' % (settings.BASE_API_URL, file_name, ext)
 
             chunk = None
 
-            with SFS.open(celery_task.options_object['file_path'], 'rb') as f:
+            with storage.open(celery_task.options_object['file_path'], 'rb') as f:
 
                 _l.info("Start reading file to split it into chunks")
 
@@ -3430,7 +3429,7 @@ def complex_transaction_csv_file_import_parallel(task_id):
 
                         if chunk is not None:
                             # _l.info("Saving chunk %s" % chunk)
-                            SFS.save(chunk_path, chunk)  # save working chunk before creating new one
+                            storage.save(chunk_path, chunk)  # save working chunk before creating new one
 
                         chunk_filename = '%s_chunk_file_%s' % (
                         celery_task.id, str(lineno) + '_' + str(lineno + lines_per_file))
@@ -3460,7 +3459,7 @@ def complex_transaction_csv_file_import_parallel(task_id):
                     chunk.write(line)
 
                 _l.info("Saving last chunk")
-                SFS.save(chunk_path, chunk)  # save working chunk before creating new one
+                storage.save(chunk_path, chunk)  # save working chunk before creating new one
 
             _l.info('sub_tasks created %s' % len(sub_tasks))
             _l.info('original file total rows %s' % lineno)
@@ -4139,7 +4138,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
             # with import_file_storage.open(instance.file_path, 'rb') as f:
 
             _l.info('Trying to open %s' % instance.file_path)
-            with SFS.open(instance.file_path, 'rb') as f:
+            with storage.open(instance.file_path, 'rb') as f:
                 with NamedTemporaryFile() as tmpf:
                     for chunk in f.chunks():
                         tmpf.write(chunk)
@@ -4167,7 +4166,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
             instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
         finally:
             # import_file_storage.delete(instance.file_path)
-            SFS.delete(instance.file_path)
+            storage.delete(instance.file_path)
 
         _l.info("transaction import validation completed")
 
@@ -4240,11 +4239,11 @@ def complex_transaction_csv_file_import_validate_parallel(task_id):
         header_line = None
 
         def _get_path(master_user, file_name, ext):
-            return '%s/transaction_import_files/%s.%s' % (master_user.token, file_name, ext)
+            return '%s/public/%s.%s' % (settings.BASE_API_URL, file_name, ext)
 
         chunk = None
 
-        with SFS.open(celery_task.options_object['file_path'], 'rb') as f:
+        with storage.open(celery_task.options_object['file_path'], 'rb') as f:
 
             _l.info("Start reading file to split it into chunks")
             _l.debug("Start reading file to split it into chunks options %s" % celery_task.options_object)
@@ -4263,7 +4262,7 @@ def complex_transaction_csv_file_import_validate_parallel(task_id):
 
                     if chunk is not None:
                         # _l.info("Saving chunk %s" % chunk)
-                        SFS.save(chunk_path, chunk)  # save working chunk before creating new one
+                        storage.save(chunk_path, chunk)  # save working chunk before creating new one
 
                     chunk_filename = '%s_chunk_file_%s' % (
                     celery_task.id, str(lineno) + '_' + str(lineno + lines_per_file))
@@ -4293,7 +4292,7 @@ def complex_transaction_csv_file_import_validate_parallel(task_id):
                 chunk.write(line)
 
             _l.info("Saving last chunk")
-            SFS.save(chunk_path, chunk)  # save working chunk before creating new one
+            storage.save(chunk_path, chunk)  # save working chunk before creating new one
 
         _l.info('sub_tasks created %s' % len(sub_tasks))
         _l.info('original file total rows %s' % lineno)
@@ -4350,7 +4349,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
 
             _l.debug('trying to open %s' % transaction_file_result.file_path)
 
-            with SFS.open(transaction_file_result.file_path, 'rb') as f:
+            with storage.open(transaction_file_result.file_path, 'rb') as f:
 
                 try:
 
@@ -4392,9 +4391,9 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
                         tmpf.flush()
 
                         file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
-                        file_path = '%s/data_files/%s.csv' % (procedure_instance.master_user.token, file_name)
+                        file_path = '%s/public/%s.csv' % (settings.BASE_API_URL, file_name)
 
-                        SFS.save(file_path, tmpf)
+                        storage.save(file_path, tmpf)
 
                         _l.debug('complex_transaction_csv_file_import_by_procedure tmp file filled')
 
@@ -4445,7 +4444,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
 
                     total_rows = 0
 
-                    with SFS.open(options_object['file_path'], 'rb') as f1:
+                    with storage.open(options_object['file_path'], 'rb') as f1:
 
                         _l.info("Start reading file to split it into chunks")
 

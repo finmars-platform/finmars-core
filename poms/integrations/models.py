@@ -20,11 +20,9 @@ from poms.obj_attrs.models import GenericClassifier, GenericAttributeType
 
 _l = getLogger('poms.integrations')
 
-from storages.backends.sftpstorage import SFTPStorage
-SFS = SFTPStorage()
+from poms.common.storage import get_storage
+storage = get_storage()
 
-# SFS._connect()
-# print(SFS.sftp)
 
 
 class ProviderClass(AbstractClassModel):
@@ -79,7 +77,7 @@ class BloombergDataProviderCredential(TimeStampedModel):
 
     is_valid = models.BooleanField(default=False, verbose_name=gettext_lazy('is valid'))
 
-    p12cert = models.FileField(null=True, blank=True, upload_to=bloomberg_cert_upload_to, storage=SFS,
+    p12cert = models.FileField(null=True, blank=True, upload_to=bloomberg_cert_upload_to, storage=storage,
                                verbose_name=gettext_lazy('p12cert'))
 
     password = models.CharField(max_length=64, null=True, blank=True, verbose_name=gettext_lazy('password'))

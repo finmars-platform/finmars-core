@@ -2,14 +2,16 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy
 
+
 from poms.file_reports.storage import file_reports_storage
 from poms.users.models import MasterUser
 
 import io
 
+from poms.common.storage import get_storage
+from poms_app import settings
 
-from storages.backends.sftpstorage import SFTPStorage
-SFS = SFTPStorage()
+storage = get_storage()
 
 
 from logging import getLogger
@@ -58,7 +60,7 @@ class FileReport(models.Model):
 
                 _l.debug(tmpfile)
 
-                SFS.save(file_url, tmpfile)
+                storage.save(file_url, tmpfile)
 
         except Exception as e:
             _l.debug('Exception %s' % e)
@@ -74,7 +76,7 @@ class FileReport(models.Model):
         print('get_file self.file_url %s' % self.file_url)
 
         try:
-            with SFS.open(self.file_url, 'rb') as f:
+            with storage.open(self.file_url, 'rb') as f:
 
                 result = f.read()
 
@@ -84,4 +86,4 @@ class FileReport(models.Model):
         return result
 
     def _get_path(self, master_user, file_name):
-        return '%s/file_reports/%s' % (master_user.token, file_name)
+        return '%s/.system/file_reports/%s' % (settings.BASE_API_URL, file_name)

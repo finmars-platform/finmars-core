@@ -39,11 +39,10 @@ from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionTypeInput
 from poms.users.models import EcosystemDefault
 
-from storages.backends.sftpstorage import SFTPStorage
-
 from django.core.serializers.json import DjangoJSONEncoder
 
-SFS = SFTPStorage()
+from poms.common.storage import get_storage
+storage = get_storage()
 
 import logging
 
@@ -453,7 +452,7 @@ class TransactionImportProcess(object):
                 except Exception as e:
                     _l.info("Trying to get json items from file")
 
-                    with SFS.open(self.file_path, 'rb') as f:
+                    with storage.open(self.file_path, 'rb') as f:
 
                         self.raw_items = json.loads(f.read())
 
@@ -461,7 +460,7 @@ class TransactionImportProcess(object):
 
                 _l.info('ProcessType.CSV self.file_path %s' % self.file_path)
 
-                with SFS.open(self.file_path, 'rb') as f:
+                with storage.open(self.file_path, 'rb') as f:
 
                     with NamedTemporaryFile() as tmpf:
 
@@ -497,7 +496,7 @@ class TransactionImportProcess(object):
 
             if self.process_type == ProcessType.EXCEL:
 
-                with SFS.open(self.file_path, 'rb') as f:
+                with storage.open(self.file_path, 'rb') as f:
 
                     with NamedTemporaryFile() as tmpf:
 
@@ -798,7 +797,7 @@ class TransactionImportProcess(object):
             if self.task.options_object and 'items' in self.task.options_object:
                 pass
             else:
-                SFS.delete(self.file_path)
+                storage.delete(self.file_path)
 
             send_websocket_message(data={
                 'type': 'transaction_import_status',

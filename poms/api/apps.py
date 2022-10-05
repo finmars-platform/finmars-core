@@ -24,6 +24,7 @@ class ApiConfig(AppConfig):
 
         post_migrate.connect(self.add_view_and_manage_permissions, sender=self)
         post_migrate.connect(self.register_at_authorizer_service, sender=self)
+        post_migrate.connect(self.create_base_folders, sender=self)
 
     def add_view_and_manage_permissions(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
         from poms.common.utils import add_view_and_manage_permissions
@@ -56,3 +57,60 @@ class ApiConfig(AppConfig):
 
         else:
             _l.info('settings.AUTHORIZER_URL is not set')
+
+    def create_base_folders(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
+
+        from poms.common.storage import get_storage
+        from tempfile import NamedTemporaryFile
+        storage = get_storage()
+        from poms_app import settings
+        from poms.users.models import Member
+
+        _l.info("create base folders if not exists")
+
+        _l.info('storage %s' % storage)
+
+        if not storage.exists(settings.BASE_API_URL + '/.system/.init'):
+            path = settings.BASE_API_URL + '/.system/.init'
+
+            with NamedTemporaryFile() as tmpf:
+                tmpf.write(b'')
+                tmpf.flush()
+                storage.save(path, tmpf)
+
+                _l.info("create .system folder")
+
+        if not storage.exists(settings.BASE_API_URL + '/public/.init'):
+            path = settings.BASE_API_URL + '/public/.init'
+
+            with NamedTemporaryFile() as tmpf:
+                tmpf.write(b'')
+                tmpf.flush()
+                storage.save(path, tmpf)
+
+                _l.info("create public folder")
+
+
+        if not storage.exists(settings.BASE_API_URL + '/import/.init'):
+            path = settings.BASE_API_URL + '/import/.init'
+
+            with NamedTemporaryFile() as tmpf:
+                tmpf.write(b'')
+                tmpf.flush()
+                storage.save(path, tmpf)
+
+                _l.info("create import folder")
+
+        members = Member.objects.all()
+
+        for member in members:
+
+            if not storage.exists(settings.BASE_API_URL + '/' + member.username + '/.init'):
+
+                path = settings.BASE_API_URL + '/' + member.username + '/.init'
+
+                with NamedTemporaryFile() as tmpf:
+
+                    tmpf.write(b'')
+                    tmpf.flush()
+                    storage.save(path, tmpf)

@@ -44,6 +44,7 @@ import poms.system_messages.views as system_messages
 import poms.layout_recovery.views as layout_recovery
 
 import poms.widgets.views as widgets
+import poms.explorer.views as explorer
 
 import poms.common.views as common
 from poms.auth_tokens.views import ObtainAuthToken, SetAuthToken, CreateUser, CreateMasterUser, CreateMember, \
@@ -506,6 +507,12 @@ router.register(r'widgets/history/pl', widgets.HistoryPlViewSet, 'widgets_histor
 router.register(r'widgets/stats', widgets.StatsViewSet, 'widgets_stats')
 router.register(r'widgets/collect-history', widgets.CollectHistoryViewSet, 'widgets_collect_history')
 router.register(r'widgets/collect-stats', widgets.CollectStatsViewSet, 'widgets_collect_stats')
+
+router.register(r'explorer/explorer', explorer.ExplorerViewSet, 'explorer')
+router.register(r'explorer/view', explorer.ExplorerViewFileViewSet, 'explorer_view')
+router.register(r'explorer/upload', explorer.ExplorerUploadViewSet, 'explorer_upload')
+router.register(r'explorer/delete', explorer.ExplorerDeleteViewSet, 'explorer_delete')
+router.register(r'explorer/create_folder', explorer.ExplorerCreateFolderViewSet, 'explorer_create_folder')
 
 router.register(r'debug/logs', common.DebugLogViewSet, 'debug_log')
 

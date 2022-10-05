@@ -18,8 +18,8 @@ from poms.reconciliation.serializers import ReconciliationNewBankFileFieldSerial
 _l = logging.getLogger('poms.reconciliation')
 
 
-from storages.backends.sftpstorage import SFTPStorage
-SFS = SFTPStorage()
+from poms.common.storage import get_storage
+storage = get_storage()
 
 
 
@@ -292,7 +292,7 @@ def process_bank_file_for_reconcile(self, instance):
 
     instance.error_rows = []
     try:
-        with SFS.open(instance.file_path, 'rb') as f:
+        with storage.open(instance.file_path, 'rb') as f:
             with NamedTemporaryFile() as tmpf:
                 _l.debug('tmpf')
                 _l.debug(tmpf)
@@ -313,7 +313,7 @@ def process_bank_file_for_reconcile(self, instance):
         _l.debug('Can\'t process file', exc_info=True)
         instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
     finally:
-        SFS.delete(instance.file_path)
+        storage.delete(instance.file_path)
 
     instance.error = bool(instance.error_message) or (instance.error_row_index is not None) or bool(instance.error_rows)
 

@@ -4,10 +4,6 @@ from celery import shared_task
 from poms.celery_tasks.models import CeleryTask
 from poms.transaction_import.handlers import TransactionImportProcess
 
-
-from storages.backends.sftpstorage import SFTPStorage
-SFS = SFTPStorage()
-
 import logging
 _l = logging.getLogger('poms.transaction_import')
 

@@ -62,9 +62,8 @@ from poms_app import settings
 
 _l = getLogger('poms.integrations')
 
-from storages.backends.sftpstorage import SFTPStorage
-
-SFS = SFTPStorage()
+from poms.common.storage import get_storage
+storage = get_storage()
 
 
 class ProviderClassSerializer(PomsClassSerializer):
@@ -2061,10 +2060,10 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
             file = validated_data.pop('file', None)
             if file:
                 master_user = validated_data['master_user']
-                file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
+
                 file_path = self._get_path(master_user, file.name)
 
-                SFS.save(file_path, file)
+                storage.save(file_path, file)
                 validated_data['file_path'] = file_path
                 validated_data['file_name'] = filetmp.name
             else:
@@ -2073,7 +2072,7 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
         return ComplexTransactionCsvFileImport(**validated_data)
 
     def _get_path(self, master_user, file_name):
-        return '%s/transaction_import_files/%s' % (master_user.token, file_name)
+        return '%s/public/%s' % (settings.BASE_API_URL, file_name)
 
 
 # class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
@@ -2143,7 +2142,7 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
 #                 file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
 #                 file_path = self._get_path(master_user, file_name)
 #
-#                 SFS.save(file_path, file)
+#                 storage.save(file_path, file)
 #                 validated_data['file_path'] = file_path
 #             else:
 #                 raise serializers.ValidationError({'file': gettext_lazy('Required field.')})

@@ -40,6 +40,7 @@ from poms.common import formula
 from django.core.exceptions import ValidationError as CoreValidationError
 from rest_framework.exceptions import ValidationError
 
+from poms_app import settings
 from .filters import SchemeContentTypeFilter
 from .handlers import handler_instrument_object
 from .models import CsvDataImport, CsvImportScheme
@@ -62,9 +63,8 @@ _l = getLogger('poms.csv_import')
 
 import csv
 
-from storages.backends.sftpstorage import SFTPStorage
-
-SFS = SFTPStorage()
+from poms.common.storage import get_storage
+storage = get_storage()
 
 from tempfile import NamedTemporaryFile
 
@@ -1103,7 +1103,7 @@ class ValidateHandler:
         execution_context = celery_task.options_object['execution_context']
 
         try:
-            with SFS.open(instance.file_path, 'rb') as f:
+            with storage.open(instance.file_path, 'rb') as f:
 
                 _l.info('ValidateHandler.proces nstance.file_path %s' % instance.file_path)
                 _l.info('ValidateHandler.proces f %s' % f)
@@ -1169,7 +1169,7 @@ class ValidateHandler:
             instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
         finally:
             # import_file_storage.delete(instance.file_path)
-            SFS.delete(instance.file_path)
+            storage.delete(instance.file_path)
 
         if instance.stats and len(instance.stats):
             instance.stats_file_report = generate_file_report(instance, master_user, scheme, 'csv_import.validate',
@@ -1679,7 +1679,7 @@ class ImportHandler:
 
             else:
 
-                with SFS.open(instance.file_path, 'rb') as f:
+                with storage.open(instance.file_path, 'rb') as f:
 
                     with NamedTemporaryFile() as tmpf:
                         for chunk in f.chunks():
@@ -1743,7 +1743,7 @@ class ImportHandler:
         finally:
             # import_file_storage.delete(instance.file_path)
             if instance.file_path:
-                SFS.delete(instance.file_path)
+                storage.delete(instance.file_path)
 
         if instance.stats and len(instance.stats):
             instance.stats_file_report = generate_file_report(instance, master_user, scheme, 'csv_import.import',
@@ -1842,7 +1842,7 @@ def data_csv_file_import_by_procedure(self, procedure_instance_id, transaction_f
                                 performed_by='System',
                                 description=text)
 
-            with SFS.open(transaction_file_result.file_path, 'rb') as f:
+            with storage.open(transaction_file_result.file_path, 'rb') as f:
 
                 try:
 
@@ -1876,9 +1876,9 @@ def data_csv_file_import_by_procedure(self, procedure_instance_id, transaction_f
                         tmpf.flush()
 
                         file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
-                        file_path = '%s/data_files/%s.dat' % (procedure_instance.master_user.token, file_name)
+                        file_path = '%s/public/%s.csv' % (settings.BASE_API_URL, file_name)
 
-                        SFS.save(file_path, tmpf)
+                        storage.save(file_path, tmpf)
 
                         _l.debug('data_csv_file_import_by_procedure tmp file filled')
 
@@ -2199,7 +2199,7 @@ class UnifiedImportHandler():
         _l.debug('UnifiedImportHandler.mode %s' % mode)
 
         try:
-            with SFS.open(self.instance.file_path, 'rb') as f:
+            with storage.open(self.instance.file_path, 'rb') as f:
                 with NamedTemporaryFile() as tmpf:
                     for chunk in f.chunks():
                         tmpf.write(chunk)
@@ -2226,7 +2226,7 @@ class UnifiedImportHandler():
             self.instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
         finally:
             # import_file_storage.delete(instance.file_path)
-            SFS.delete(self.instance.file_path)
+            storage.delete(self.instance.file_path)
 
         _l.info("Import here? %s" % len(self.instance.items))
 

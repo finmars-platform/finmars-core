@@ -27,6 +27,8 @@ RUN rm -rf /var/app
 COPY requirements.txt /var/app/requirements.txt
 RUN python3 -m venv /var/app-venv
 RUN /var/app-venv/bin/pip install -U pip wheel uwsgitop
+RUN /var/app-venv/bin/pip install -U pip boto3
+RUN /var/app-venv/bin/pip install -U pip azure-storage-blob
 RUN /var/app-venv/bin/pip install -r /var/app/requirements.txt
 RUN /var/app-venv/bin/pip install -U pip flower
 

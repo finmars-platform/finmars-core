@@ -12,14 +12,15 @@ from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithTimeStampSerializer, ModelWithUserCodeSerializer
 from poms.users.fields import MasterUserField, HiddenMemberField
+from poms_app import settings
 from .models import CsvField, EntityField, CsvDataImport, CsvImportScheme, CsvImportSchemeCalculatedInput
 from .fields import CsvImportContentTypeField, CsvImportSchemeField
 
 
 from django.utils import timezone
 
-from storages.backends.sftpstorage import SFTPStorage
-SFS = SFTPStorage()
+from poms.common.storage import get_storage
+storage = get_storage()
 
 
 class CsvDataFileImport:
@@ -413,7 +414,7 @@ class CsvDataImportSerializer(serializers.Serializer):
 
                 file_path = self._get_path(master_user, filename)
 
-                SFS.save(file_path, file)
+                storage.save(file_path, file)
                 validated_data['file_path'] = file_path
             else:
                 raise serializers.ValidationError({'file': 'Required field.'})
@@ -422,4 +423,4 @@ class CsvDataImportSerializer(serializers.Serializer):
         return CsvDataFileImport(**validated_data)
 
     def _get_path(self, master_user, file_name):
-        return '%s/simple_import_files/%s' % (master_user.token, file_name)
+        return '%s/public/%s' % (settings.BASE_API_URL, file_name)

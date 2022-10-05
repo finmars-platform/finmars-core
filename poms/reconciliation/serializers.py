@@ -15,8 +15,10 @@ from django.utils import timezone
 
 import uuid
 
-from storages.backends.sftpstorage import SFTPStorage
-SFS = SFTPStorage()
+from poms.common.storage import get_storage
+from poms_app import settings
+
+storage = get_storage()
 
 
 class TransactionTypeReconFieldSerializer(serializers.ModelSerializer):
@@ -180,14 +182,14 @@ class ProcessBankFileForReconcileSerializer(serializers.Serializer):
             file = validated_data.pop('file', None)
             if file:
                 master_user = validated_data['master_user']
-                file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
-                file_path = self._get_path(master_user, file_name)
+                # file_name = '%s-%s' % (timezone.now().strftime('%Y%m%d%H%M%S'), uuid.uuid4().hex)
+                file_path = self._get_path(master_user, file.name)
                 # import_file_storage.save(file_path, file)
-                SFS.save(file_path, file)
+                storage.save(file_path, file)
                 validated_data['file_path'] = file_path
             else:
                 raise serializers.ValidationError({'file': gettext_lazy('Required field.')})
         return ProcessBankFileForReconcile(**validated_data)
 
     def _get_path(self, owner, file_name):
-        return '%s/%s.dat' % (owner.pk, file_name)
+        return '%s/public/%s' % (settings.BASE_API_URL, file_name)

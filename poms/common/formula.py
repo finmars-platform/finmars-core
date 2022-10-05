@@ -2726,6 +2726,133 @@ def _run_workflow(evaluator, workflow_id):
 _run_workflow.evaluator = True
 
 
+def _get_filenames_from_storage(evaluator, pattern=None, path_to_folder=None):
+
+    # pattern \.txt$
+
+    from poms.workflows.models import Workflow, WorkflowStep
+
+    from poms.users.utils import get_master_user_from_context
+    from poms.users.utils import get_member_from_context
+    from poms.common.storage import get_storage
+    storage = get_storage()
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+    member = get_member_from_context(context)
+
+    # TODO check that file could be placed either in public or member home folder
+
+    if not path_to_folder:
+        path_to_folder = settings.BASE_API_URL
+    else:
+
+        if path_to_folder[0] == '/':
+            path_to_folder = settings.BASE_API_URL + path_to_folder
+        else:
+            path_to_folder = settings.BASE_API_URL + '/' + path_to_folder
+
+    print('path_to_folder %s' % path_to_folder)
+
+    items = storage.listdir(path_to_folder)
+
+    results = []
+
+    for file in items[1]:
+
+        if pattern:
+            if re.search(pattern, file):
+                results.append(file)
+        else:
+            results.append(file)
+
+
+    return results
+
+
+_get_filenames_from_storage.evaluator = True
+
+
+def _delete_file_from_storage(evaluator, path):
+
+    # pattern \.txt$
+
+    from poms.workflows.models import Workflow, WorkflowStep
+
+    from poms.users.utils import get_master_user_from_context
+    from poms.users.utils import get_member_from_context
+    from poms.common.storage import get_storage
+    storage = get_storage()
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+    member = get_member_from_context(context)
+
+    # TODO check that file could be placed either in public or member home folder
+
+    if not path:
+        path = settings.BASE_API_URL
+    else:
+
+        if path[0] == '/':
+            path = settings.BASE_API_URL + path
+        else:
+            path = settings.BASE_API_URL + '/' + path
+
+    try:
+        storage.delete(path)
+        return True
+    except Exception as e:
+        _l.error("_delete_file_from_storage %s" % e)
+        return False
+
+
+_delete_file_from_storage.evaluator = True
+
+
+def _put_file_to_storage(evaluator, path, content):
+
+    # pattern \.txt$
+
+    from poms.workflows.models import Workflow, WorkflowStep
+
+    from poms.users.utils import get_master_user_from_context
+    from poms.users.utils import get_member_from_context
+    from poms.common.storage import get_storage
+    storage = get_storage()
+
+    context = evaluator.context
+
+    master_user = get_master_user_from_context(context)
+    member = get_member_from_context(context)
+
+    # TODO check that file could be placed either in public or member home folder
+
+    if not path:
+        path = settings.BASE_API_URL
+    else:
+
+        if path[0] == '/':
+            path = settings.BASE_API_URL + path
+        else:
+            path = settings.BASE_API_URL + '/' + path
+
+    try:
+        from django.core.files.base import ContentFile
+        storage.save(path, ContentFile(content.encode('utf-8')))
+        return True
+    except Exception as e:
+        _l.error("_put_file_to_storage %s" % e)
+        return False
+
+
+_put_file_to_storage.evaluator = True
+
+
+
+
 def _simple_group(val, ranges, default=None):
     for begin, end, text in ranges:
         if begin is None:
@@ -2847,7 +2974,7 @@ def _print_message(evaluator, text):
 
     context['log'] = context['log'] + text + '\n'
 
-    _l.info("CONTEXT %s" % context)
+    # _l.info("CONTEXT %s" % context)
 
 
 
@@ -3129,6 +3256,9 @@ FUNCTIONS = [
     SimpleEval2Def('create_workflow', _create_workflow),
     SimpleEval2Def('register_workflow_step', _register_workflow_step),
     SimpleEval2Def('run_workflow', _run_workflow),
+    SimpleEval2Def('get_filenames_from_storage', _get_filenames_from_storage),
+    SimpleEval2Def('delete_file_from_storage', _delete_file_from_storage),
+    SimpleEval2Def('put_file_to_storage', _put_file_to_storage),
 
 ]
 

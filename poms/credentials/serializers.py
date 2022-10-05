@@ -3,8 +3,8 @@ from poms.credentials.models import Credentials
 from poms.users.fields import MasterUserField
 from rest_framework import serializers
 
-from storages.backends.sftpstorage import SFTPStorage
-SFS = SFTPStorage()
+from poms.common.storage import get_storage
+storage = get_storage()
 
 class CredentialsSerializer(ModelWithTimeStampSerializer):
 
@@ -36,7 +36,7 @@ class CredentialsSerializer(ModelWithTimeStampSerializer):
             # public_file_path = 'banks/%s/keys/%s/%s' % (credentials.provider.user_code, credentials.master_user.token, path_to_public_key.name)
             public_file_path = 'banks/keys/%s/%s' % (credentials.master_user.token, path_to_public_key.name)
 
-            SFS.save(public_file_path, path_to_public_key)
+            storage.save(public_file_path, path_to_public_key)
             credentials.path_to_public_key = public_file_path
 
         if path_to_private_key:
@@ -45,7 +45,7 @@ class CredentialsSerializer(ModelWithTimeStampSerializer):
             # private_file_path = 'banks/%s/keys/%s/%s' % (credentials.provider.user_code, credentials.master_user.token, path_to_private_key.name)
             private_file_path = 'banks/keys/%s/%s' % (credentials.master_user.token, path_to_private_key.name)
 
-            SFS.save(private_file_path, path_to_private_key)
+            storage.save(private_file_path, path_to_private_key)
             credentials.path_to_private_key = private_file_path
 
         credentials.save()
@@ -70,13 +70,13 @@ class CredentialsSerializer(ModelWithTimeStampSerializer):
         if path_to_public_key:
             public_file_path = 'banks/%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_public_key.name)
 
-            SFS.save(public_file_path, path_to_public_key)
+            storage.save(public_file_path, path_to_public_key)
             credentials.path_to_public_key = public_file_path
 
         if path_to_private_key:
             private_file_path = 'banks/%s/data_providers/%s/%s' % (credentials.master_user.token, credentials.provider.user_code, path_to_private_key.name)
 
-            SFS.save(private_file_path, path_to_private_key)
+            storage.save(private_file_path, path_to_private_key)
             credentials.path_to_private_key = private_file_path
 
         credentials.save()
