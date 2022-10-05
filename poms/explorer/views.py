@@ -33,10 +33,10 @@ class ExplorerViewSet(AbstractViewSet):
         path = request.query_params.get('path')
 
         if not path:
-            path = settings.BASE_API_URL
+            path = settings.BASE_API_URL + '/'
         else:
             if path[0] == '/':
-                path = settings.BASE_API_URL  + path
+                path = settings.BASE_API_URL + path
             else:
                 path = settings.BASE_API_URL + '/' + path
 
@@ -46,7 +46,7 @@ class ExplorerViewSet(AbstractViewSet):
 
         for dir in items[0]:
 
-            if path == settings.BASE_API_URL:
+            if path == settings.BASE_API_URL + '/':
 
                 members_usernames = Member.objects.exclude(user=request.user).values_list('user__username', flat=True)
 
