@@ -644,7 +644,7 @@ class TransactionImportProcess(object):
 
                 try:
 
-                    preprocess_item.inputs[scheme_input.name] = preprocess_item.raw_inputs[key_column_name]
+                    preprocess_item.inputs[scheme_input.name] = preprocess_item.conversion_inputs[key_column_name]
 
                 except Exception as e:
 
@@ -653,7 +653,7 @@ class TransactionImportProcess(object):
                     if current_level == deep:
                         _l.error('key_column_name %s' % key_column_name)
                         _l.error('scheme_input.name %s' % scheme_input.name)
-                        _l.error('preprocess_item.raw_inputs %s' % preprocess_item.raw_inputs)
+                        _l.error('preprocess_item.raw_inputs %s' % preprocess_item.conversion_inputs)
                         _l.error('TransactionImportProcess.Task %s. recursive_preprocess init input %s Exception %s' % (
                             self.task, scheme_input, e))
 
