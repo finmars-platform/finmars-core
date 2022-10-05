@@ -630,6 +630,12 @@ class DebugLogViewSet(AbstractViewSet):
 
         context = {}
 
+        if seek_to == 0:
+            seek_to = file_length - 1000
+
+            if seek_to < 0:
+                seek_to = 0
+
         if seek_to > file_length:
             seek_to = file_length
 
