@@ -1,16 +1,22 @@
-FROM ubuntu:22.04
+FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get  install -y ca-certificates
+# install python3.9
+
+RUN apt update
+RUN apt install -y software-properties-common
+RUN add-apt-repository ppa:deadsnakes/ppa
+RUN apt install -y python3.9
+
 RUN apt-get update && \
     apt-get install -y apt-utils && \
     apt-get upgrade -y && \
     apt-get install -y \
-        htop curl wget \
+        wget htop curl \
         build-essential \
         openssl libssl-dev \
-        python3-dev python3-pip python3-venv python3-setuptools python3-wheel \
+        python3.9-dev python3-pip python3.9-venv python3-setuptools python3-wheel \
         libpq-dev libgdal-dev libgeos-dev libproj-dev \
         libtiff5-dev libjpeg-turbo8-dev libzip-dev zlib1g-dev libffi-dev git \
         libgeoip-dev geoip-bin geoip-database \
@@ -24,10 +30,12 @@ RUN echo "deb https://artifacts.elastic.co/packages/oss-8.x/apt stable main" | t
 RUN apt-get update && apt-get install filebeat
 
 
+RUN apt-get update && apt-get install ca-certificates
+
 
 RUN rm -rf /var/app
 COPY requirements.txt /var/app/requirements.txt
-RUN python3 -m venv /var/app-venv
+RUN python3.9 -m venv /var/app-venv
 RUN /var/app-venv/bin/pip install "setuptools<58.0.0"
 RUN /var/app-venv/bin/pip install -U pip wheel uwsgitop
 RUN /var/app-venv/bin/pip install -U pip boto3
