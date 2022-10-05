@@ -1,3 +1,4 @@
+import json
 from tempfile import NamedTemporaryFile
 
 from poms.common.views import AbstractViewSet
@@ -12,6 +13,8 @@ from rest_framework.exceptions import ValidationError, PermissionDenied
 import logging
 
 from poms.explorer.serializers import ExplorerSerializer
+from poms.procedures.handlers import ExpressionProcedureProcess
+from poms.procedures.models import ExpressionProcedure
 from poms.users.models import Member
 from poms_app import settings
 
@@ -151,7 +154,7 @@ class ExplorerUploadViewSet(AbstractViewSet):
             path = settings.BASE_API_URL
         else:
             if path[0] == '/':
-                path = settings.BASE_API_URL  + path
+                path = settings.BASE_API_URL + path
             else:
                 path = settings.BASE_API_URL + '/' + path
 
@@ -166,6 +169,32 @@ class ExplorerUploadViewSet(AbstractViewSet):
             _l.info('going to save %s' % filepath)
 
             storage.save(filepath, file)
+
+        _l.info('path %s' % path)
+
+        if path == settings.BASE_API_URL + '/import':
+
+            try:
+
+                settings_path = settings.BASE_API_URL + '/import/.settings.json'
+
+                with storage.open(settings_path) as file:
+
+                    import_settings = json.loads(file.read())
+
+                    procedures = import_settings['on_create']['expression_procedure']
+
+                    for item in procedures:
+
+                        _l.info("Trying to execute %s" % item)
+
+                        procedure = ExpressionProcedure.objects.get(user_code=item)
+
+                        instance = ExpressionProcedureProcess(procedure=procedure, master_user=request.user.master_user, member=request.user.member)
+                        instance.process()
+
+            except Exception as e:
+                _l.error("Could not import anything %s" % e)
 
 
         return Response({

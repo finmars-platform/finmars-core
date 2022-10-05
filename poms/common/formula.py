@@ -2839,16 +2839,141 @@ def _put_file_to_storage(evaluator, path, content):
         else:
             path = settings.BASE_API_URL + '/' + path
 
-    try:
-        from django.core.files.base import ContentFile
-        storage.save(path, ContentFile(content.encode('utf-8')))
-        return True
-    except Exception as e:
-        _l.error("_put_file_to_storage %s" % e)
+    if settings.BASE_API_URL + '/import/' not in path:
+
+        try:
+            from django.core.files.base import ContentFile
+            storage.save(path, ContentFile(content.encode('utf-8')))
+            return True
+        except Exception as e:
+            _l.error("_put_file_to_storage %s" % e)
+            return False
+
+    else:
+        _l.error("_put_file_to_storage could not put files in import folder" )
         return False
 
 
 _put_file_to_storage.evaluator = True
+
+
+def _run_data_import(evaluator, filepath, scheme):
+
+    try:
+
+        _l.info('_run_data_import %s' % filepath)
+
+        if filepath[0] == '/':
+            filepath = settings.BASE_API_URL + filepath
+        else:
+            filepath = settings.BASE_API_URL + '/' + filepath
+
+        from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_member_from_context
+        from poms.csv_import.models import CsvImportScheme
+        from poms.celery_tasks.models import CeleryTask
+        from poms.csv_import.tasks import data_csv_file_import
+
+        context = evaluator.context
+
+        master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
+
+        celery_task = CeleryTask.objects.create(master_user=master_user, member=member, type='simple_import')
+        celery_task.status = CeleryTask.STATUS_DONE
+
+
+        scheme = CsvImportScheme.objects.get(master_user=master_user,
+                                             user_code=scheme)
+
+        options_object = {}
+
+        options_object['file_path'] = filepath
+        options_object['filename'] = ''
+        options_object['scheme_id'] = scheme.id
+        options_object['execution_context'] = None
+
+        celery_task.options_object = options_object
+        celery_task.save()
+
+        data_csv_file_import.apply(kwargs={'task_id': celery_task.id})
+
+        return None
+
+    except Exception as e:
+        _l.error("_run_data_import. general exception %s" % e)
+        _l.error("_run_data_import. general exception traceback %s" % traceback.format_exc())
+
+
+
+
+_run_data_import.evaluator = True
+
+
+def _run_transaction_import(evaluator, filepath, scheme):
+
+    try:
+
+        _l.info('_run_transaction_import %s' % filepath)
+
+        if filepath[0] == '/':
+            filepath = settings.BASE_API_URL + filepath
+        else:
+            filepath = settings.BASE_API_URL + '/' + filepath
+
+        # pattern \.txt$
+
+        from poms.workflows.models import Workflow, WorkflowStep
+
+        from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_member_from_context
+        from poms.common.storage import get_storage
+        storage = get_storage()
+
+        context = evaluator.context
+
+        master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
+
+        from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_member_from_context
+        from poms.integrations.models import ComplexTransactionImportScheme
+        from poms.celery_tasks.models import CeleryTask
+        from poms.transaction_import.tasks import transaction_import
+
+        context = evaluator.context
+
+        master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
+
+        celery_task = CeleryTask.objects.create(master_user=master_user, member=member, type='transaction_import')
+        celery_task.status = CeleryTask.STATUS_DONE
+
+
+        scheme = ComplexTransactionImportScheme.objects.get(master_user=master_user,
+                                             user_code=scheme)
+
+        options_object = {}
+
+        options_object['file_path'] = filepath
+        options_object['filename'] = ''
+        options_object['scheme_id'] = scheme.id
+        options_object['execution_context'] = None
+
+        celery_task.options_object = options_object
+        celery_task.save()
+
+        transaction_import.apply(kwargs={'task_id': celery_task.id})
+
+        return None
+
+    except Exception as e:
+        _l.error("_run_transaction_import. general exception %s" % e)
+        _l.error("_run_transaction_import. general exception traceback %s" % traceback.format_exc())
+
+
+_run_transaction_import.evaluator = True
+
 
 
 
@@ -3260,6 +3385,9 @@ FUNCTIONS = [
     SimpleEval2Def('delete_file_from_storage', _delete_file_from_storage),
     SimpleEval2Def('put_file_to_storage', _put_file_to_storage),
 
+    SimpleEval2Def('run_data_import', _run_data_import),
+    SimpleEval2Def('run_transaction_import', _run_transaction_import),
+
 ]
 
 TRANSACTION_IMPORT_FUNCTIONS = [
@@ -3637,7 +3765,9 @@ class SimpleEval2(object):
             if node.func.attr in ['append', 'pop', 'remove']:
                 return f(*f_args)
         except Exception as e:
-            _l.error("append do not work %s" % e)
+            pass
+            # TODO check why error is occuring
+            # _l.error("append do not work %s" % e)
 
         return f(self, *f_args, **f_kwargs)
 

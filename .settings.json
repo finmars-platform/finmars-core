@@ -1,0 +1,9 @@
+{
+  "on_create":{
+
+    "expression_procedure": [
+      "parse_file_from_storage"
+    ]
+
+  }
+}
