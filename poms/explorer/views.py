@@ -40,6 +40,9 @@ class ExplorerViewSet(AbstractViewSet):
             else:
                 path = settings.BASE_API_URL + '/' + path
 
+        if path[-1] != '/':
+            path = path + '/'
+
         items = storage.listdir(path)
 
         results = []
@@ -93,6 +96,9 @@ class ExplorerViewFileViewSet(AbstractViewSet):
                 path = settings.BASE_API_URL  + path
             else:
                 path = settings.BASE_API_URL + '/' + path
+
+        if path[-1] != '/':
+            path = path + '/'
 
         # TODO validate path that eiher public/import/system or user home folder
 
@@ -223,7 +229,7 @@ class ExplorerDeleteViewSet(AbstractViewSet):
         else:
             path = settings.BASE_API_URL + '/' + path
 
-        if path == settings.BASE_API_URL + '/.system':
+        if path == settings.BASE_API_URL + '/.system/':
             raise PermissionDenied('Could not remove .system folder')
 
         try:
