@@ -1,13 +1,13 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+RUN apt-get update && apt-get  install -y ca-certificates
 RUN apt-get update && \
     apt-get install -y apt-utils && \
     apt-get upgrade -y && \
     apt-get install -y \
-        htop \
-        curl \
+        htop curl wget \
         build-essential \
         openssl libssl-dev \
         python3-dev python3-pip python3-venv python3-setuptools python3-wheel \
@@ -15,17 +15,20 @@ RUN apt-get update && \
         libtiff5-dev libjpeg-turbo8-dev libzip-dev zlib1g-dev libffi-dev git \
         libgeoip-dev geoip-bin geoip-database \
         uwsgi uwsgi-plugin-python3 uwsgi-plugin-asyncio-python3 uwsgi-plugin-router-access \
-        supervisor && \
-    rm -rf /var/lib/apt/lists/*  && \
-    curl -L -O https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.6.2-amd64.deb && \
-    dpkg -i filebeat-7.6.2-amd64.deb
+        supervisor
 
-RUN apt-get update && apt-get install ca-certificates
+RUN rm -rf /var/lib/apt/lists/*
+# Filebeat
+RUN wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
+RUN echo "deb https://artifacts.elastic.co/packages/oss-8.x/apt stable main" | tee -a /etc/apt/sources.list.d/elastic-8.x.list
+RUN apt-get update && apt-get install filebeat
+
 
 
 RUN rm -rf /var/app
 COPY requirements.txt /var/app/requirements.txt
 RUN python3 -m venv /var/app-venv
+RUN /var/app-venv/bin/pip install "setuptools<58.0.0"
 RUN /var/app-venv/bin/pip install -U pip wheel uwsgitop
 RUN /var/app-venv/bin/pip install -U pip boto3
 RUN /var/app-venv/bin/pip install -U pip azure-storage-blob
