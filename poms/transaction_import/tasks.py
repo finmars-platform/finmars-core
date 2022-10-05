@@ -20,6 +20,7 @@ def transaction_import(self, task_id, procedure_instance_id=None):
         instance = TransactionImportProcess(task_id=task_id, procedure_instance_id=procedure_instance_id)
 
         instance.fill_with_raw_items()
+        instance.apply_conversion_to_raw_items()
         instance.preprocess()
         instance.process()
 

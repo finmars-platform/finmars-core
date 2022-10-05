@@ -36,6 +36,7 @@ class TransactionImportProcessItemSerializer(serializers.Serializer):
     message = serializers.CharField()
 
     raw_inputs = serializers.JSONField(allow_null=False)
+    conversion_inputs = serializers.JSONField(allow_null=False)
     inputs = serializers.JSONField(allow_null=False)
 
     processed_rule_scenarios = TransactionImportRuleScenarioSerializer(many=True)

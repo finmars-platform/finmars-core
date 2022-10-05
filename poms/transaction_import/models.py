@@ -18,13 +18,26 @@ class TransactionImportBookedTransaction(object):
         self.text = text
         self.transaction_unique_code = transaction_unique_code
 
+
+class TransactionImportConversionItem(object):
+
+    def __init__(self,
+                 raw_inputs=None,
+                 conversion_inputs=None,
+                 row_number=None):
+        self.raw_inputs = raw_inputs
+        self.conversion_inputs = conversion_inputs
+        self.row_number = row_number
+
 class TransactionImportProcessPreprocessItem(object):
 
     def __init__(self,
                  raw_inputs=None,
+                 conversion_inputs=None,
                  inputs=None,
                  row_number=None):
         self.raw_inputs = raw_inputs
+        self.conversion_inputs = conversion_inputs
         self.inputs = inputs
         self.row_number = row_number
 

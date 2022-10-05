@@ -33,7 +33,8 @@ from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.system_messages.handlers import send_system_message
 from poms.transaction_import.models import ProcessType, TransactionImportResult, \
-    TransactionImportProcessItem, TransactionImportProcessPreprocessItem, TransactionImportBookedTransaction
+    TransactionImportProcessItem, TransactionImportProcessPreprocessItem, TransactionImportBookedTransaction, \
+    TransactionImportConversionItem
 from poms.transaction_import.serializers import TransactionImportResultSerializer
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionTypeInput
@@ -109,7 +110,8 @@ class TransactionImportProcess(object):
         self.find_process_type()
 
         self.raw_items = []  # items from provider  (json, csv, excel)
-        self.preprocessed_items = []  # items with all conversions, calculated variables applied
+        self.conversion_items = []  # items with applied converions
+        self.preprocessed_items = []  # items with calculated variables applied
         self.items = []  # result items that will be passed to TransactionTypeProcess
 
         self.context = {
@@ -574,6 +576,44 @@ class TransactionImportProcess(object):
             _l.error('TransactionImportProcess.Task %s. fill_with_raw_items %s Traceback %s' % (
                 self.task, self.process_type, traceback.format_exc()))
 
+    def apply_conversion_to_raw_items(self):
+
+        # EXECUTE CONVERSIONS ON SCHEME INPUTS
+
+        row_number = 1
+        for raw_item in self.raw_items:
+
+            conversion_item = TransactionImportConversionItem()
+            conversion_item.raw_inputs = raw_item
+            conversion_item.conversion_inputs = {}
+            conversion_item.row_number = row_number
+
+            for scheme_input in self.scheme.inputs.all():
+
+
+                try:
+
+
+                    names = raw_item
+
+                    key = convert_name_to_key(scheme_input.name)
+
+                    conversion_item.conversion_inputs[key] = formula.safe_eval(scheme_input.name_expr, names=names,
+                                                                                  context={
+                                                                                      "master_user": self.master_user,
+                                                                                      "member": self.member
+                                                                                  })
+                except Exception as e:
+
+                    key = convert_name_to_key(scheme_input.name)
+
+                    conversion_item.conversion_inputs[key] = None
+
+            self.conversion_items.append(conversion_item)
+
+            row_number = row_number + 1
+
+
     # We have formulas that lookup for rows
     # e.g. transaction_import.find_row
     # so it means, in first iterations we will got errors in that inputs
@@ -583,9 +623,10 @@ class TransactionImportProcess(object):
 
             row_number = 1
 
-            for raw_item in self.raw_items:
+            for conversion_item in self.conversion_items:
                 preprocess_item = TransactionImportProcessPreprocessItem()
-                preprocess_item.raw_inputs = raw_item
+                preprocess_item.raw_inputs = conversion_item.raw_inputs
+                preprocess_item.conversion_inputs = conversion_item.conversion_inputs
                 preprocess_item.row_number = row_number
                 preprocess_item.inputs = {}
 
@@ -615,32 +656,6 @@ class TransactionImportProcess(object):
                         _l.error('preprocess_item.raw_inputs %s' % preprocess_item.raw_inputs)
                         _l.error('TransactionImportProcess.Task %s. recursive_preprocess init input %s Exception %s' % (
                             self.task, scheme_input, e))
-
-            # EXECUTE CONVERSIONS ON SCHEME INPUTS
-
-            for scheme_input in self.scheme.inputs.all():
-
-                try:
-
-                    # TODO maybe we need here detailed dict with all rows and preprocessed data
-                    names = preprocess_item.inputs
-
-                    preprocess_item.inputs[scheme_input.name] = formula.safe_eval(scheme_input.name_expr, names=names,
-                                                                                  context={
-                                                                                      "master_user": self.master_user,
-                                                                                      "member": self.member,
-                                                                                      "transaction_import": {
-                                                                                          "items": self.preprocessed_items
-                                                                                      }})
-                except Exception as e:
-
-                    preprocess_item.inputs[scheme_input.name] = None
-
-                    if current_level == deep:
-                        _l.error('TransactionImportProcess.Task %s. recursive_preprocess conversion %s Exception %s' % (
-                            self.task, scheme_input, e))
-                        # _l.error('TransactionImportProcess.Task %s. recursive_preprocess conversion %s Traceback %s' % (
-                        #     self.task, scheme_input, traceback.format_exc()))
 
             # CREATE CALCULATED INPUTS
 
@@ -683,6 +698,7 @@ class TransactionImportProcess(object):
             item = TransactionImportProcessItem()
             item.row_number = preprocessed_item.row_number
             item.raw_inputs = preprocessed_item.raw_inputs
+            item.conversion_inputs = preprocessed_item.conversion_inputs
             item.inputs = preprocessed_item.inputs
 
             self.items.append(item)
