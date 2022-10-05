@@ -2669,22 +2669,26 @@ _download_instrument_from_finmars_database.evaluator = True
 
 def _create_workflow(evaluator, name=None):
 
-    from poms.workflows.models import Workflow, WorkflowStep
+    from django.db import IntegrityError, transaction
 
-    from poms.users.utils import get_master_user_from_context
-    from poms.users.utils import get_member_from_context
+    with transaction.atomic():
 
-    context = evaluator.context
+        from poms.workflows.models import Workflow, WorkflowStep
 
-    master_user = get_master_user_from_context(context)
-    member = get_member_from_context(context)
+        from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_member_from_context
 
-    if not name:
-        name = 'Workflow ' + str((Workflow.objects.all().count() + 1))
+        context = evaluator.context
 
-    workflow = Workflow.objects.create(name=name, master_user=master_user, member=member, current_step=1)
+        master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
 
-    return workflow.id
+        if not name:
+            name = 'Workflow ' + str((Workflow.objects.all().count() + 1))
+
+        workflow = Workflow.objects.create(name=name, master_user=master_user, member=member, current_step=1)
+
+        return workflow.id
 
 
 _create_workflow.evaluator = True
@@ -2692,22 +2696,26 @@ _create_workflow.evaluator = True
 
 def _register_workflow_step(evaluator, workflow_id, code, name=None):
 
-    from poms.workflows.models import Workflow, WorkflowStep
-    import inspect
+    from django.db import IntegrityError, transaction
 
-    workflow = Workflow.objects.get(id=workflow_id)
+    with transaction.atomic():
 
-    order = WorkflowStep.objects.filter(workflow_id=workflow_id).count() + 1
+        from poms.workflows.models import Workflow, WorkflowStep
+        import inspect
 
-    if not name:
-        name = workflow.name + ' step ' + str((order))
+        workflow = Workflow.objects.get(id=workflow_id)
+
+        order = WorkflowStep.objects.filter(workflow_id=workflow_id).count() + 1
+
+        if not name:
+            name = workflow.name + ' step ' + str((order))
 
 
-    code_txt = ast.unparse(code.node)
+        code_txt = ast.unparse(code.node)
 
-    workflow_step = WorkflowStep.objects.create(workflow_id=workflow_id, code=code_txt, name=name, order=order)
+        workflow_step = WorkflowStep.objects.create(workflow_id=workflow_id, code=code_txt, name=name, order=order)
 
-    return workflow_step.id
+        return workflow_step.id
 
 
 _register_workflow_step.evaluator = True
