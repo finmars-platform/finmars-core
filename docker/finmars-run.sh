@@ -92,6 +92,6 @@ echo "Create admin user"
 
 echo "Run uwsgi"
 
-/usr/bin/uwsgi /etc/uwsgi/apps-enabled/finmars.ini
+/usr/local/bin/uwsgi /etc/uwsgi/apps-enabled/finmars.ini
 
 echo "Initialized"

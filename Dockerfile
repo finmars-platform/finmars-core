@@ -20,7 +20,6 @@ RUN apt-get update && \
         libpq-dev libgdal-dev libgeos-dev libproj-dev \
         libtiff5-dev libjpeg-turbo8-dev libzip-dev zlib1g-dev libffi-dev git \
         libgeoip-dev geoip-bin geoip-database \
-        uwsgi uwsgi-plugin-python3 uwsgi-plugin-asyncio-python3 uwsgi-plugin-router-access \
         supervisor
 
 RUN rm -rf /var/lib/apt/lists/*
@@ -42,6 +41,8 @@ RUN /var/app-venv/bin/pip install -U pip boto3
 RUN /var/app-venv/bin/pip install -U pip azure-storage-blob
 RUN /var/app-venv/bin/pip install -r /var/app/requirements.txt
 RUN /var/app-venv/bin/pip install -U pip flower
+RUN /var/app-venv/bin/pip install -U pip uwsgi
+
 
 COPY docker/finmars-run.sh /var/app/docker/finmars-run.sh
 COPY data/ /var/app/data/
