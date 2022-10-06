@@ -2024,8 +2024,8 @@ class TransactionTypeProcess(object):
             trns = formula.value_prepare(self.complex_transaction.transactions.all())
 
             names = {
-                'complex_transaction': ctrn,
-                'transactions': trns
+                'complex_transaction': json.loads(json.dumps(ctrn, default=str)),
+                'transactions': json.loads(json.dumps(trns, default=str)),
             }
 
             for key, value in self.values.items():
