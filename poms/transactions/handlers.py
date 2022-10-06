@@ -2031,6 +2031,8 @@ class TransactionTypeProcess(object):
 
             try:
 
+                _l.info('names %s' % names)
+
                 self.complex_transaction.transaction_unique_code = formula.safe_eval(
                     self.complex_transaction.transaction_type.transaction_unique_code_expr, names=names,
                     context=self._context)
@@ -2038,6 +2040,8 @@ class TransactionTypeProcess(object):
             except Exception as e:
 
                 _l.error('execute_uniqueness_expression.e %s ' % e)
+                _l.info('execute_uniqueness_expression.names %s' % names)
+                _l.info('execute_uniqueness_expression.names %s' % traceback.format_exc())
 
                 self.complex_transaction.transaction_unique_code = None
 
@@ -2097,7 +2101,7 @@ class TransactionTypeProcess(object):
                     and not self.complex_transaction.is_canceled:
 
                 ctrn = formula.value_prepare(self.complex_transaction)
-                trns = self.complex_transaction.transactions.all()
+                trns = formula.value_prepare(self.complex_transaction.transactions.all())
 
                 names = {
                     'complex_transaction': ctrn,
