@@ -1,3 +1,4 @@
+import copy
 import os
 import json
 import csv
@@ -656,7 +657,7 @@ class TransactionImportProcess(object):
                 preprocess_item.raw_inputs = conversion_item.raw_inputs
                 preprocess_item.conversion_inputs = conversion_item.conversion_inputs
                 preprocess_item.row_number = row_number
-                preprocess_item.inputs = conversion_item.conversion_inputs
+                preprocess_item.inputs = {}
 
                 self.preprocessed_items.append(preprocess_item)
 
@@ -672,7 +673,7 @@ class TransactionImportProcess(object):
 
                 try:
 
-                    preprocess_item.inputs[scheme_input.name] = preprocess_item.conversion_inputs[key_column_name]
+                    preprocess_item.inputs[scheme_input.name] = preprocess_item.conversion_inputs[scheme_input.name]
 
                 except Exception as e:
 
