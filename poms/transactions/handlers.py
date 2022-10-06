@@ -2021,12 +2021,12 @@ class TransactionTypeProcess(object):
         if self.uniqueness_reaction:
 
             ctrn = formula.value_prepare(self.complex_transaction)
-            trns = self.complex_transaction.transactions.all()
+            trns = formula.value_prepare(self.complex_transaction.transactions.all())
 
             names = {
                 'complex_transaction': ctrn,
                 'transactions': trns,
-                'inputs': self.inputs
+                'inputs': formula.value_prepare(self.inputs)
             }
 
             try:
