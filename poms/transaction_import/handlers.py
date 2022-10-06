@@ -656,7 +656,7 @@ class TransactionImportProcess(object):
                 preprocess_item.raw_inputs = conversion_item.raw_inputs
                 preprocess_item.conversion_inputs = conversion_item.conversion_inputs
                 preprocess_item.row_number = row_number
-                preprocess_item.inputs = {}
+                preprocess_item.inputs = conversion_item.conversion_inputs
 
                 self.preprocessed_items.append(preprocess_item)
 
