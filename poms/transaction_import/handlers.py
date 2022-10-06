@@ -43,6 +43,7 @@ from poms.users.models import EcosystemDefault
 from django.core.serializers.json import DjangoJSONEncoder
 
 from poms.common.storage import get_storage
+
 storage = get_storage()
 
 import logging
@@ -109,6 +110,7 @@ class TransactionImportProcess(object):
 
         self.find_process_type()
 
+        self.file_items = []  # items from provider  (json, csv, excel)
         self.raw_items = []  # items from provider  (json, csv, excel)
         self.conversion_items = []  # items with applied converions
         self.preprocessed_items = []  # items with calculated variables applied
@@ -134,6 +136,7 @@ class TransactionImportProcess(object):
                             title=import_system_message_title,
                             description=self.member.username + ' started import with scheme ' + self.scheme.name,
                             )
+
     def generate_file_report(self):
 
         _l.info('TransactionImportProcess.generate_file_report error_handler %s' % self.scheme.error_handler)
@@ -247,7 +250,8 @@ class TransactionImportProcess(object):
 
         _l.info('TransactionImportProcess.generate_json_report uploading file')
 
-        file_report.upload_file(file_name=file_name, text=json.dumps(result, indent=4, default=str), master_user=self.master_user)
+        file_report.upload_file(file_name=file_name, text=json.dumps(result, indent=4, default=str),
+                                master_user=self.master_user)
         file_report.master_user = self.master_user
         file_report.name = 'Transaction Import %s (Task %s).json' % (current_date_time, self.task.id)
         file_report.file_name = file_name
@@ -456,7 +460,18 @@ class TransactionImportProcess(object):
 
                     with storage.open(self.file_path, 'rb') as f:
 
-                        self.raw_items = json.loads(f.read())
+                        self.file_items = json.loads(f.read())
+                        self.raw_items = []
+
+                        for file_item in self.file_items:
+
+                            item = {}
+
+                            for scheme_input in self.scheme.inputs.all():
+
+                                item[scheme_input.name] = file_item[scheme_input.column_name]
+
+                            self.raw_items.append(item)
 
             if self.process_type == ProcessType.CSV:
 
@@ -486,12 +501,19 @@ class TransactionImportProcess(object):
 
                                 else:
 
+                                    file_item = {}
                                     item = {}
 
                                     for column_index, value in enumerate(row):
-                                        key = convert_name_to_key(column_row[column_index])
-                                        item[key] = value
+                                        key = column_row[column_index]
+                                        file_item[key] = value
 
+                                        for scheme_input in self.scheme.inputs.all():
+
+                                            if scheme_input.column - 1 == column_index:
+                                                item[scheme_input.name] = value
+
+                                    self.file_items.append(file_item)
                                     self.raw_items.append(item)
 
                             self.result.total_rows = len(self.raw_items)
@@ -558,12 +580,19 @@ class TransactionImportProcess(object):
 
                             else:
 
+                                file_item = {}
                                 item = {}
 
                                 for column_index, value in enumerate(row):
-                                    key = convert_name_to_key(column_row[column_index])
-                                    item[key] = value
+                                    key = column_row[column_index]
+                                    file_item[key] = value
 
+                                    for scheme_input in self.scheme.inputs.all():
+
+                                        if scheme_input.column - 1 == column_index:
+                                            item[scheme_input.name] = value
+
+                                self.file_items.append(file_item)
                                 self.raw_items.append(item)
 
                         self.result.total_rows = len(self.raw_items)
@@ -587,35 +616,30 @@ class TransactionImportProcess(object):
         for raw_item in self.raw_items:
 
             conversion_item = TransactionImportConversionItem()
+            conversion_item.file_inputs = self.file_items[row_number - 1]
             conversion_item.raw_inputs = raw_item
             conversion_item.conversion_inputs = {}
             conversion_item.row_number = row_number
 
             for scheme_input in self.scheme.inputs.all():
 
-
                 try:
-
 
                     names = raw_item
 
-                    key = convert_name_to_key(scheme_input.column_name)
-
-                    conversion_item.conversion_inputs[key] = formula.safe_eval(scheme_input.name_expr, names=names,
-                                                                                  context={
-                                                                                      "master_user": self.master_user,
-                                                                                      "member": self.member
-                                                                                  })
+                    conversion_item.conversion_inputs[scheme_input.name] = formula.safe_eval(scheme_input.name_expr,
+                                                                                             names=names,
+                                                                                             context={
+                                                                                                 "master_user": self.master_user,
+                                                                                                 "member": self.member
+                                                                                             })
                 except Exception as e:
 
-                    key = convert_name_to_key(scheme_input.column_name)
-
-                    conversion_item.conversion_inputs[key] = None
+                    conversion_item.conversion_inputs[scheme_input.name] = None
 
             self.conversion_items.append(conversion_item)
 
             row_number = row_number + 1
-
 
     # We have formulas that lookup for rows
     # e.g. transaction_import.find_row
@@ -628,6 +652,7 @@ class TransactionImportProcess(object):
 
             for conversion_item in self.conversion_items:
                 preprocess_item = TransactionImportProcessPreprocessItem()
+                preprocess_item.file_inputs = conversion_item.file_inputs
                 preprocess_item.raw_inputs = conversion_item.raw_inputs
                 preprocess_item.conversion_inputs = conversion_item.conversion_inputs
                 preprocess_item.row_number = row_number
@@ -700,6 +725,7 @@ class TransactionImportProcess(object):
         for preprocessed_item in self.preprocessed_items:
             item = TransactionImportProcessItem()
             item.row_number = preprocessed_item.row_number
+            item.file_inputs = preprocessed_item.file_inputs
             item.raw_inputs = preprocessed_item.raw_inputs
             item.conversion_inputs = preprocessed_item.conversion_inputs
             item.inputs = preprocessed_item.inputs
@@ -892,7 +918,6 @@ class TransactionImportProcess(object):
 
         return self.result
 
-
     def whole_file_preprocess(self):
 
         if self.scheme.data_preprocess_expression and self.task.options_object['preprocess_file']:
@@ -903,12 +928,11 @@ class TransactionImportProcess(object):
 
             try:
 
-
-                _l.info("whole_file_preprocess  names %s" %  names)
+                _l.info("whole_file_preprocess  names %s" % names)
 
                 self.raw_items = formula.safe_eval(self.scheme.data_preprocess_expression, names=names)
 
-                _l.info("whole_file_preprocess  self.raw_items %s" %  self.raw_items)
+                _l.info("whole_file_preprocess  self.raw_items %s" % self.raw_items)
 
             except Exception as e:
 

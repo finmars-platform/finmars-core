@@ -35,6 +35,7 @@ class TransactionImportProcessItemSerializer(serializers.Serializer):
     error_message = serializers.CharField()
     message = serializers.CharField()
 
+    file_inputs = serializers.JSONField(allow_null=False)
     raw_inputs = serializers.JSONField(allow_null=False)
     conversion_inputs = serializers.JSONField(allow_null=False)
     inputs = serializers.JSONField(allow_null=False)

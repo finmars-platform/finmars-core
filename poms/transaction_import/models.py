@@ -22,9 +22,11 @@ class TransactionImportBookedTransaction(object):
 class TransactionImportConversionItem(object):
 
     def __init__(self,
+                 file_inputs=None,
                  raw_inputs=None,
                  conversion_inputs=None,
                  row_number=None):
+        self.file_inputs = file_inputs
         self.raw_inputs = raw_inputs
         self.conversion_inputs = conversion_inputs
         self.row_number = row_number
@@ -32,10 +34,12 @@ class TransactionImportConversionItem(object):
 class TransactionImportProcessPreprocessItem(object):
 
     def __init__(self,
+                 file_inputs=None,
                  raw_inputs=None,
                  conversion_inputs=None,
                  inputs=None,
                  row_number=None):
+        self.file_inputs = file_inputs
         self.raw_inputs = raw_inputs
         self.conversion_inputs = conversion_inputs
         self.inputs = inputs
@@ -50,10 +54,11 @@ class TransactionImportProcessItem(object):
                  message='',
                  processed_rule_scenarios=None,
                  booked_transactions=None,
-
+                 file_inputs=None,
                  raw_inputs=None,
                  inputs=None,
                  row_number=None):
+        self.file_inputs = file_inputs
         self.raw_inputs = raw_inputs
         self.inputs = inputs
         self.row_number = row_number
