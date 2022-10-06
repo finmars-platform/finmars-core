@@ -2026,6 +2026,7 @@ class TransactionTypeProcess(object):
             names = {
                 'complex_transaction': ctrn,
                 'transactions': trns,
+                'inputs': self.inputs
             }
 
             try:
@@ -2035,6 +2036,8 @@ class TransactionTypeProcess(object):
                     context=self._context)
 
             except Exception as e:
+
+                _l.error('execute_uniqueness_expression.e %s ' % e)
 
                 self.complex_transaction.transaction_unique_code = None
 
