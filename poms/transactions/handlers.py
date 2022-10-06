@@ -2025,13 +2025,18 @@ class TransactionTypeProcess(object):
 
             names = {
                 'complex_transaction': ctrn,
-                'transactions': trns,
-                'inputs': formula.value_prepare(self.inputs)
+                'transactions': trns
             }
+
+            for key, value in self.values.items():
+                names[key] = value
 
             try:
 
                 _l.info('names %s' % names)
+                _l.info('self._context %s' % self._context)
+
+
 
                 self.complex_transaction.transaction_unique_code = formula.safe_eval(
                     self.complex_transaction.transaction_type.transaction_unique_code_expr, names=names,
