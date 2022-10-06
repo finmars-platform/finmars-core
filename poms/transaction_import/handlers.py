@@ -508,6 +508,9 @@ class TransactionImportProcess(object):
 
                         os.link(tmpf.name, tmpf.name + '.xlsx')
 
+                        _l.info('self.file_path %s' % self.file_path)
+                        _l.info('tmpf.name %s' % tmpf.name)
+
                         wb = load_workbook(filename=tmpf.name)
 
                         if self.scheme.spreadsheet_active_tab_name and self.scheme.spreadsheet_active_tab_name in wb.sheetnames:
