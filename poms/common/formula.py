@@ -3957,7 +3957,7 @@ def value_prepare(orig):
                     elif val_t == GenericAttributeType.NUMBER:
                         ret[k][attr_n] = attr['value_float']
                     elif val_t == GenericAttributeType.DATE:
-                        ret[k][attr_n] = attr['value_date']
+                        ret[k][attr_n] = str(attr['value_date'])
                     elif val_t == GenericAttributeType.STRING:
                         ret[k][attr_n] = attr['value_string']
                     else:

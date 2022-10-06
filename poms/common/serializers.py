@@ -21,7 +21,7 @@ class ModelWithTimeStampSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super(ModelWithTimeStampSerializer, self).__init__(*args, **kwargs)
-        self.fields['modified'] = serializers.DateTimeField(required=False, allow_null=True)
+        self.fields['modified'] = serializers.DateTimeField(required=False, allow_null=True, format="%Y-%m-%d")
 
     def validate(self, data):
 
