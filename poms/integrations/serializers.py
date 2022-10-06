@@ -1679,7 +1679,7 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     rule_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
-    data_preprocess_expression = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False)
+    data_preprocess_expression = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default='', allow_blank=True, allow_null=True)
 
     inputs = ComplexTransactionImportSchemeInputSerializer(many=True, read_only=False)
     calculated_inputs = ComplexTransactionImportSchemeCalculatedInputSerializer(many=True, read_only=False,
