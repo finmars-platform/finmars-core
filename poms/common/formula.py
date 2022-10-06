@@ -3984,6 +3984,8 @@ def value_prepare(orig):
     def _value(data):
         if data is None:
             return None
+        elif isinstance(data, (datetime.date, datetime.datetime)):
+            return str(data)
         elif isinstance(data, Promise):
             return str(data)
         elif isinstance(data, (dict, OrderedDict)):
