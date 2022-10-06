@@ -247,7 +247,7 @@ class TransactionImportProcess(object):
 
         _l.info('TransactionImportProcess.generate_json_report uploading file')
 
-        file_report.upload_file(file_name=file_name, text=json.dumps(result, indent=4), master_user=self.master_user)
+        file_report.upload_file(file_name=file_name, text=json.dumps(result, indent=4, default=str), master_user=self.master_user)
         file_report.master_user = self.master_user
         file_report.name = 'Transaction Import %s (Task %s).json' % (current_date_time, self.task.id)
         file_report.file_name = file_name
