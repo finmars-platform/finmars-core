@@ -599,7 +599,7 @@ class TransactionImportProcess(object):
 
                     names = raw_item
 
-                    key = convert_name_to_key(scheme_input.name)
+                    key = convert_name_to_key(scheme_input.column_name)
 
                     conversion_item.conversion_inputs[key] = formula.safe_eval(scheme_input.name_expr, names=names,
                                                                                   context={
@@ -608,7 +608,7 @@ class TransactionImportProcess(object):
                                                                                   })
                 except Exception as e:
 
-                    key = convert_name_to_key(scheme_input.name)
+                    key = convert_name_to_key(scheme_input.column_name)
 
                     conversion_item.conversion_inputs[key] = None
 
