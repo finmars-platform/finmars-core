@@ -455,7 +455,19 @@ class TransactionImportProcess(object):
 
                     self.result.total_rows = len(items)
 
-                    self.raw_items = items
+                    self.file_items = items
+                    self.raw_items = []
+
+                    for file_item in self.file_items:
+
+                        item = {}
+
+                        for scheme_input in self.scheme.inputs.all():
+
+                            item[scheme_input.name] = file_item[scheme_input.column_name]
+
+                        self.raw_items.append(item)
+
                 except Exception as e:
                     _l.info("Trying to get json items from file")
 
