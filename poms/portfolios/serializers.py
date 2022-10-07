@@ -87,9 +87,8 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
                                                                           read_only=True)
         self.fields['transaction_types_object'] = TransactionTypeViewSerializer(source='transaction_types', many=True,
                                                                                 read_only=True)
-    def create(self, validated_data):
 
-        instance = super(PortfolioSerializer, self).create(validated_data)
+    def create_register_if_not_exists(self, instance):
 
         master_user = instance.master_user
         ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
@@ -142,12 +141,27 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
             valuation_pricing_policy=ecosystem_default.pricing_policy,
             valuation_currency=ecosystem_default.currency,
             portfolio=instance,
+            user_code=instance.user_code,
             linked_instrument=new_instrument,
             default_price=1
         )
 
+    def create(self, validated_data):
+
+        instance = super(PortfolioSerializer, self).create(validated_data)
+
+        self.create_register_if_not_exists(instance)
+
         return instance
 
+
+    def update(self, instance, validated_data):
+
+        instance = super(PortfolioSerializer, self).update(validated_data)
+
+        self.create_register_if_not_exists(instance)
+
+        return instance
 
 
 class PortfolioEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):

@@ -83,11 +83,18 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             self.linked_instrument.has_linked_with_portfolio = True
             self.linked_instrument.save()
 
+        # calculate_portfolio_register_record.apply_async(
+        #     link=[
+        #         calculate_portfolio_register_price_history.s()
+        #     ],
+        #     kwargs={'portfolio_register_ids': [self.id], 'master_users': [self.master_user.id]})
+
         calculate_portfolio_register_record.apply_async(
             link=[
                 calculate_portfolio_register_price_history.s()
             ],
-            kwargs={'portfolio_register_ids': [self.id], 'master_users': [self.master_user.id]})
+            kwargs={'master_users': [self.master_user.id]})
+
 
         try:
 
