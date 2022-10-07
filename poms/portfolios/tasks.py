@@ -248,14 +248,17 @@ def calculate_portfolio_register_record(master_users=None):
 
                     # dealing_price_valuation_currency here
 
-                    if trn.trade_price:
-                        record.dealing_price_valuation_currency = trn.trade_price
-                    else:
-                        if previous_date_record:
-                            # let's MOVE block NAV here
-                            record.dealing_price_valuation_currency = record.nav_previous_day_valuation_currency / record.n_shares_previous_day
+                    try:
+                        if trn.trade_price:
+                            record.dealing_price_valuation_currency = trn.trade_price
                         else:
-                            record.dealing_price_valuation_currency = portfolio_register.default_price
+                            if previous_date_record:
+                                # let's MOVE block NAV here
+                                record.dealing_price_valuation_currency = record.nav_previous_day_valuation_currency / record.n_shares_previous_day
+                            else:
+                                record.dealing_price_valuation_currency = portfolio_register.default_price
+                    except Exception as e:
+                        record.dealing_price_valuation_currency = portfolio_register.default_price
 
                     if trn.position_size_with_sign:
                         record.n_shares_added = trn.position_size_with_sign
