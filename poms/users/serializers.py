@@ -46,7 +46,7 @@ class PingSerializer(serializers.Serializer):
     current_member_id = serializers.IntegerField(required=False, allow_null=True)
     is_authenticated = serializers.BooleanField(read_only=True)
     is_anonymous = serializers.BooleanField(read_only=True)
-    now = serializers.DateTimeField(read_only=True, format="%Y-%m-%d")
+    now = serializers.DateTimeField(read_only=True)
 
 
 class LoginSerializer(AuthTokenSerializer):
