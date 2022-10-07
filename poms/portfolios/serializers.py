@@ -157,7 +157,7 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
 
     def update(self, instance, validated_data):
 
-        instance = super(PortfolioSerializer, self).update(validated_data)
+        instance = super(PortfolioSerializer, self).update(instance, validated_data)
 
         self.create_register_if_not_exists(instance)
 
