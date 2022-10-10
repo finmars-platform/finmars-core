@@ -665,6 +665,7 @@ class PLReportBuilderSql:
             instrument_id,
             {consolidation_columns}
         
+            co_directional_exposure_currency_id,
             pricing_currency_id,
             instrument_pricing_currency_fx_rate,
             instrument_accrued_currency_fx_rate,    
@@ -781,6 +782,7 @@ class PLReportBuilderSql:
             instrument_id,
             {consolidation_columns}
             
+            co_directional_exposure_currency_id,
             pricing_currency_id,
             instrument_pricing_currency_fx_rate,
             instrument_accrued_currency_fx_rate,    
@@ -898,6 +900,7 @@ class PLReportBuilderSql:
                     {consolidation_columns}
                     
                     
+                    co_directional_exposure_currency_id,
                     pricing_currency_id,
                     instrument_pricing_currency_fx_rate,
                     instrument_accrued_currency_fx_rate,    
@@ -1018,6 +1021,7 @@ class PLReportBuilderSql:
                         name,
                         short_name,
                         user_code,
+                        co_directional_exposure_currency_id,
                         pricing_currency_id,
                         price_multiplier,
                         accrued_multiplier,
@@ -1146,6 +1150,7 @@ class PLReportBuilderSql:
                             i.short_name,
                             i.user_code,
                             i.pricing_currency_id,
+                            i.co_directional_exposure_currency_id,
                             i.price_multiplier,
                             i.accrued_multiplier,
                             i.accrual_size,
@@ -1554,6 +1559,7 @@ class PLReportBuilderSql:
             instrument_id,
             {consolidation_columns}
 
+            co_directional_exposure_currency_id,
             pricing_currency_id,
             instrument_pricing_currency_fx_rate,
             instrument_accrued_currency_fx_rate,    
@@ -1671,6 +1677,7 @@ class PLReportBuilderSql:
                 instrument_id,
                 {consolidation_columns}
               
+                (-1) as co_directional_exposure_currency_id,
                 (-1) as pricing_currency_id,
                 (0) as instrument_pricing_currency_fx_rate,
                 (0) as instrument_accrued_currency_fx_rate,    
@@ -1897,6 +1904,7 @@ class PLReportBuilderSql:
             instrument_id,
             {consolidation_columns}
 
+            co_directional_exposure_currency_id,
             pricing_currency_id,
             instrument_pricing_currency_fx_rate,
             instrument_accrued_currency_fx_rate,    
@@ -2014,7 +2022,8 @@ class PLReportBuilderSql:
                 currency_id,
                 instrument_id,
                 {consolidation_columns}
-
+                
+                (-1) as co_directional_exposure_currency_id,
                 (-1) as pricing_currency_id,
                 (0) as instrument_pricing_currency_fx_rate,
                 (0) as instrument_accrued_currency_fx_rate,    
@@ -2200,6 +2209,7 @@ class PLReportBuilderSql:
             instrument_id,
             {consolidation_columns}
           
+            co_directional_exposure_currency_id,
             pricing_currency_id,
             instrument_pricing_currency_fx_rate,
             instrument_accrued_currency_fx_rate,    
@@ -2317,6 +2327,7 @@ class PLReportBuilderSql:
                 instrument_id,
                 {consolidation_columns}
 
+                (-1) as co_directional_exposure_currency_id,
                 (-1) as pricing_currency_id,
                 (0) as instrument_pricing_currency_fx_rate,
                 (0) as instrument_accrued_currency_fx_rate,    
@@ -2499,6 +2510,7 @@ class PLReportBuilderSql:
             instrument_id,
             {consolidation_columns}
 
+            co_directional_exposure_currency_id,
             pricing_currency_id,
             instrument_pricing_currency_fx_rate,
             instrument_accrued_currency_fx_rate,    
@@ -2616,6 +2628,7 @@ class PLReportBuilderSql:
                 instrument_id,
                 {consolidation_columns}
 
+                (-1) as co_directional_exposure_currency_id,
                 (-1) as pricing_currency_id,
                 (0) as instrument_pricing_currency_fx_rate,
                 (0) as instrument_accrued_currency_fx_rate,    
@@ -2912,6 +2925,7 @@ class PLReportBuilderSql:
                             
                             (q2.instrument_id) as instrument_id,
                             (q2.currency_id) as currency_id,
+                            (q2.co_directional_exposure_currency_id) as co_directional_exposure_currency_id,
                             
                             {final_consolidation_columns}
                             
@@ -3163,6 +3177,7 @@ class PLReportBuilderSql:
                     result_item_opened["item_group_name"] = "Mismatch"
 
 
+                result_item_opened["exposure_currency_id"] = item["co_directional_exposure_currency_id"]
                 result_item_opened["pricing_currency_id"] = item["pricing_currency_id"]
                 result_item_opened["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
                 result_item_opened["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
@@ -3349,6 +3364,7 @@ class PLReportBuilderSql:
                     result_item_closed["item_group_code"] = "CLOSED"
                     result_item_closed["item_group_name"] = "Closed"
 
+                    result_item_closed["exposure_currency_id"] = item["co_directional_exposure_currency_id"]
                     result_item_closed["pricing_currency_id"] = item["pricing_currency_id"]
                     result_item_closed["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
                     result_item_closed["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]

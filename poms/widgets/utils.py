@@ -12,7 +12,9 @@ def get_total_from_report_items(key, report_instance_items):
     result = 0
     try:
         for item in report_instance_items:
-            result = result + item[key]
+
+            if key in item:
+                result = result + item[key]
     except Exception as e:
         _l.error("Could not collect total for %s" % key)
 
