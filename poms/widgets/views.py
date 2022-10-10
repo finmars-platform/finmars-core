@@ -89,6 +89,8 @@ class HistoryNavViewSet(AbstractViewSet):
 
             end_of_months = get_last_bdays_of_months_between_two_dates(date_from, date_to)
 
+            # _l.info(end_of_months)
+
             q = Q()
 
             for date in end_of_months:

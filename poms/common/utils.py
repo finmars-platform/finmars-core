@@ -394,7 +394,10 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
 
     for month in months:
 
-        if month > d_date_to:
+        # _l.info(month)
+        # _l.info(d_date_to)
+
+        if last_business_day_in_month(month.year, month.month) > d_date_to:
 
             if to_string:
                 end_of_months.append(d_date_to.strftime('%Y-%m-%d'))
