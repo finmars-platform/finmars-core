@@ -387,7 +387,17 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
     months = get_list_of_months_between_two_dates(date_from, date_to)
     end_of_months = []
 
+    if not isinstance(date_to, datetime.date):
+        d_date_to = datetime.datetime.strptime(date_to, '%Y-%m-%d').date()
+    else:
+        d_date_to = date_to
+
     for month in months:
+
+        if month > d_date_to:
+
+            month = get_last_business_day(d_date_to - timedelta(days=1))
+
         end_of_months.append(last_business_day_in_month(month.year, month.month, to_string))
 
     return end_of_months
