@@ -7,7 +7,7 @@ from poms.accounts.models import Account
 from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_list_of_dates_between_two_dates, check_if_last_day_of_month, get_first_transaction, \
     last_business_day_in_month, get_list_of_months_between_two_dates, get_list_of_business_days_between_two_dates, \
-    get_last_bdays_of_months_between_two_dates
+    get_last_bdays_of_months_between_two_dates, get_closest_bday_of_yesterday
 from poms.common.views import AbstractViewSet
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
@@ -49,7 +49,7 @@ class HistoryNavViewSet(AbstractViewSet):
             date_from = get_first_transaction(portfolio).accounting_date.strftime("%Y-%m-%d")
 
         if not date_to:
-            date_to = datetime.datetime.now().strftime("%Y-%m-%d")
+            date_to = get_closest_bday_of_yesterday(to_string=True)
 
         _l.info('date_from %s ' % date_from)
         _l.info('date_to %s ' % date_to)
@@ -199,10 +199,10 @@ class HistoryPlViewSet(AbstractViewSet):
         segmentation_type = request.query_params.get('segmentation_type', None)
 
         if not date_from:
-            date_from = str(datetime.datetime.now().year) + "-01-01"
+            date_from = get_first_transaction(portfolio).accounting_date.strftime("%Y-%m-%d")
 
         if not date_to:
-            date_to = datetime.datetime.now().strftime("%Y-%m-%d")
+            date_to = get_closest_bday_of_yesterday(to_string=True)
 
         _l.info('date_from %s ' % date_from)
         _l.info('date_to %s ' % date_to)

@@ -265,7 +265,7 @@ def get_last_business_day(date, to_string=False):
         date = date - datetime.timedelta(days = weekday-4)
 
     if to_string:
-        return str(date)
+        return date.strftime("%Y-%m-%d")
     return date
 
 
@@ -396,9 +396,12 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
 
         if month > d_date_to:
 
-            month = get_last_business_day(d_date_to - timedelta(days=1))
-
-        end_of_months.append(last_business_day_in_month(month.year, month.month, to_string))
+            if to_string:
+                end_of_months.append(d_date_to.strftime('%Y-%m-%d'))
+            else:
+                end_of_months.append(d_date_to)
+        else:
+            end_of_months.append(last_business_day_in_month(month.year, month.month, to_string))
 
     return end_of_months
 
@@ -409,3 +412,8 @@ def str_to_date(d):
         d = datetime.datetime.strptime(d, "%Y-%m-%d").date()
 
     return d
+
+
+def get_closest_bday_of_yesterday(to_string=False):
+    yesterday = datetime.datetime.now() - timedelta(days=1)
+    return get_last_business_day(yesterday, to_string=to_string)
