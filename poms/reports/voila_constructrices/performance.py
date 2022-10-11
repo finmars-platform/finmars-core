@@ -387,21 +387,20 @@ class PerformanceReportBuilder:
                     month_end = get_last_business_day(month_end)
 
 
-            #month_start = datetime.date(year, month, 1) - timedelta(days=1) #2022-10-01 - 2022-09-30
+            month_start = get_last_business_day(datetime.date(year, month, 1) - timedelta(days=1)) #2022-10-01 - 2022-09-30
 
-            begin_date_year = begin_date.year
-            begin_date_month = begin_date.month
+            #begin_date_year = begin_date.year
+            #begin_date_month = begin_date.month
 
             # previous_end_of_month_of_begin_date = datetime.date(begin_date_year, begin_date_month, 1) - timedelta(
             #     days=1)
 
             # TODO check?
-            previous_end_of_month_of_begin_date = last_business_day_in_month(begin_date_year, begin_date_month) - timedelta(
-                 days=1)
+            #previous_end_of_month_of_begin_date = last_business_day_in_month(begin_date_year, begin_date_month) - timedelta(days=1)
 
-            #if month_start < previous_end_of_month_of_begin_date:
+            if begin_date > month_start:
 
-            month_start = previous_end_of_month_of_begin_date
+                month_start = begin_date
 
             if year_month not in result_obj:
                 result_obj[year_month] = {
