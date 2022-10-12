@@ -435,7 +435,7 @@ class TransactionImportProcess(object):
             except Exception as e:
 
                 item.status = 'error'
-                item.error_message = item.error_message + ' Exception: ' + str(e)
+                item.error_message = item.error_message + 'Book Exception: ' + str(e)
 
                 _l.error("TransactionImportProcess.Task %s. book Exception %s " % (self.task, e))
                 _l.error("TransactionImportProcess.Task %s. book Traceback %s " % (self.task, traceback.format_exc()))
@@ -521,10 +521,9 @@ class TransactionImportProcess(object):
                                         key = column_row[column_index]
                                         file_item[key] = value
 
-                                        for scheme_input in self.scheme.inputs.all():
+                                    for scheme_input in self.scheme.inputs.all():
 
-                                            if scheme_input.column - 1 == column_index:
-                                                item[scheme_input.name] = value
+                                        item[scheme_input.name] = file_item[scheme_input.column_name]
 
                                     self.file_items.append(file_item)
                                     self.raw_items.append(item)
@@ -600,10 +599,9 @@ class TransactionImportProcess(object):
                                     key = column_row[column_index]
                                     file_item[key] = value
 
-                                    for scheme_input in self.scheme.inputs.all():
+                                for scheme_input in self.scheme.inputs.all():
 
-                                        if scheme_input.column - 1 == column_index:
-                                            item[scheme_input.name] = value
+                                    item[scheme_input.name] = file_item[scheme_input.column_name]
 
                                 self.file_items.append(file_item)
                                 self.raw_items.append(item)
