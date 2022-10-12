@@ -49,12 +49,14 @@ class StatsHandler():
         try:
             self.balance_history = BalanceReportHistory.objects.get(date=date, portfolio=self.portfolio)
         except Exception as e:
-            raise Exception("Balance History is not collected")
+            self.balance_history = None
+            _l.error("Balance history is not calcualated for %s of %s" % (date, self.portfolio))
 
         try:
             self.pl_history = PLReportHistory.objects.get(date=date, portfolio=self.portfolio)
         except Exception as e:
-            raise Exception("PL History is not collected")
+            self.pl_history = None
+            _l.error("PL history is not calcualated for %s of %s" % (date, self.portfolio))
 
         self.performance_report = self.get_performance_report()
 
@@ -82,10 +84,14 @@ class StatsHandler():
         return instance
 
     def get_balance_nav(self):
-        return self.balance_history.nav
+        if self.balance_history:
+            return self.balance_history.nav
+        return 0
 
     def get_pl_total(self):
-        return self.pl_history.total
+        if self.pl_history:
+            return self.pl_history.total
+        return 0
 
     def get_cumulative_return(self):
         return self.performance_report.grand_return
