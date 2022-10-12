@@ -1,21 +1,39 @@
 # Getting started (Local) 
 
-**Works for python 3.5.0**
+**Works for python 3.9.0**
 
 * Install NPM
-* Install Python 3
+* Install Python 3.9
 * Install Docker and Docker Compose
+
+* Install ubuntu applications
+
+`apt-get update && apt-get install -y apt-utils && apt-get upgrade -y && apt-get install -y wget htop curl build-essential openssl libssl-dev python3.9-dev python3-pip python3.9-venv python3-setuptools python3-wheel libpq-dev libgdal-dev libgeos-dev libproj-dev libtiff5-dev libjpeg-turbo8-dev libzip-dev zlib1g-dev libffi-dev git libgeoip-dev geoip-bin geoip-database supervisor`
 
 * Create Virtual Environment (VENV)
 
-`python3 -m venv venv`
+`python3.9 -m venv venv`
+
 * Activate VENV
 
 `source venv/bin/activate`
 
 * Install Dependencies
 
-`pip install -r requirements.txt`
+`pip install "setuptools<58.0.0"
+pip install -U pip wheel uwsgitop
+pip install -U pip boto3
+pip install -U pip azure-storage-blob
+pip install -r requirements.txt
+pip install -U pip flower
+pip install -U pip uwsgi`
+
+* Create file for logs
+
+`mkdir -p /var/log/finmars
+chmod 777 /var/log/finmars/
+touch /var/log/finmars/django.log
+chmod 777 /var/log/finmars/django.log`
 
 * Install Celery
 

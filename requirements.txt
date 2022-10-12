@@ -84,7 +84,7 @@ phonenumbers==8.12.43
 prompt-toolkit==3.0.22
 psutil==5.7.0
 psycopg2==2.8.4
-psycopg2-binary==2.8.3
+psycopg2-binary==2.8.4
 pyasn1==0.2.3
 pycountry==17.1.8
 pycparser==2.17
