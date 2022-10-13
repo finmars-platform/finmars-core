@@ -71,10 +71,10 @@ How to run django app
 3) Execute following command to build
 
    `REDIS_HOST=localhost DB_NAME=finmars_dev DB_USER=postgres DB_PASSWORD=postgres DB_HOST=localhost DB_PORT=5434 python3 -m PyInstaller backend.spec -y --debug --log-level TRACE`
-    
-4) Execute following command to runserver
 
-   `REDIS_HOST=localhost DB_NAME=finmars_dev DB_USER=postgres DB_PASSWORD=postgres DB_HOST=localhost DB_PORT=5434 dist/backend/backend manage.py runserver 8080`
+4) Execute following script to runserver
+
+   `./local-develoment/run_server.sh`
    
 Profile uWSGI server 
 1) Activate venv  
