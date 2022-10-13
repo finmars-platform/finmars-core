@@ -73,6 +73,8 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
         attribute_types = GenericAttributeType.objects.filter(content_type=content_type,
                                                               master_user=master_user)
 
+        attributes_to_create = []
+
         for attribute_type in attribute_types:
 
             try:
@@ -85,8 +87,14 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                 _l.debug("create_attributes_if_not_exists.exception %s" % e)
                 _l.info("Creating empty attribute %s for %s" %(attribute_type, instance))
 
-                GenericAttribute.objects.create(attribute_type=attribute_type, content_type=content_type,
-                                                      object_id=instance.id)
+                attributes_to_create.append(GenericAttribute(attribute_type=attribute_type, content_type=content_type,
+                                                      object_id=instance.id))
+
+        if len(attributes_to_create):
+
+            GenericAttribute.objects.bulk_create(attributes_to_create)
+            _l.info('attributes_to_create %s ' % len(attributes_to_create))
+
 
     def recursive_calculation(self, attribute_types, executed_expressions, eval_data, current_index, limit):
 
