@@ -30,10 +30,10 @@ pip install -U pip uwsgi`
 
 * Create file for logs
 
-`mkdir -p /var/log/finmars
-chmod 777 /var/log/finmars/
-touch /var/log/finmars/django.log
-chmod 777 /var/log/finmars/django.log`
+`mkdir -p /var/log/finmars`
+`chmod 777 /var/log/finmars/`
+`touch /var/log/finmars/django.log`
+`chmod 777 /var/log/finmars/django.log`
 
 * Install Celery
 
