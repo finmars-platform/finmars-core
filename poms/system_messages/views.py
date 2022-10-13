@@ -35,7 +35,7 @@ class SystemMessageFilterSet(FilterSet):
 
 
 class MessageViewSet(AbstractModelViewSet):
-    queryset = SystemMessage.objects.prefetch_related("members")
+    queryset = SystemMessage.objects
     serializer_class = SystemMessageSerializer
     filter_class = SystemMessageFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
