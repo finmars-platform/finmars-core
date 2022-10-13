@@ -85,10 +85,8 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                 _l.debug("create_attributes_if_not_exists.exception %s" % e)
                 _l.info("Creating empty attribute %s for %s" %(attribute_type, instance))
 
-                obj = GenericAttribute.objects.create(attribute_type=attribute_type, content_type=content_type,
+                GenericAttribute.objects.create(attribute_type=attribute_type, content_type=content_type,
                                                       object_id=instance.id)
-
-                obj.save()
 
     def recursive_calculation(self, attribute_types, executed_expressions, eval_data, current_index, limit):
 

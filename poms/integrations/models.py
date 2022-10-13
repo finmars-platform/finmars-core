@@ -77,8 +77,10 @@ class BloombergDataProviderCredential(TimeStampedModel):
 
     is_valid = models.BooleanField(default=False, verbose_name=gettext_lazy('is valid'))
 
-    p12cert = models.FileField(null=True, blank=True, upload_to=bloomberg_cert_upload_to, storage=storage,
-                               verbose_name=gettext_lazy('p12cert'))
+    p12cert = models.TextField(blank=True, default='', verbose_name=gettext_lazy('File URL'))
+
+    # p12cert = models.FileField(null=True, blank=True, upload_to=bloomberg_cert_upload_to, storage=storage,
+    #                            verbose_name=gettext_lazy('p12cert'))
 
     password = models.CharField(max_length=64, null=True, blank=True, verbose_name=gettext_lazy('password'))
 
@@ -112,7 +114,12 @@ class BloombergDataProviderCredential(TimeStampedModel):
         if self.p12cert:
             try:
                 from poms.integrations.providers.bloomberg import get_certs
-                return get_certs(self.p12cert.read(), self.password, is_base64=False)
+
+                with storage.open(self.p12cert, 'rb') as f:
+
+                    file_data = f.read()
+
+                    return get_certs(file_data, self.password, is_base64=False)
             except FileNotFoundError:
                 raise ValueError(gettext_lazy("Can't read cert file"))
         return None, None
