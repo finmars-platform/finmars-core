@@ -117,10 +117,9 @@ class SystemMessageAttachment(models.Model):
 class SystemMessageMember(models.Model):
 
     system_message = models.ForeignKey(SystemMessage, verbose_name=gettext_lazy('system message'),
-                                       on_delete=models.CASCADE, related_name="members")
+                                       on_delete=models.CASCADE)
 
-    member = models.ForeignKey(Member, related_name='system_messages',
-                               verbose_name=gettext_lazy('member'), on_delete=models.CASCADE)
+    member = models.ForeignKey(Member, verbose_name=gettext_lazy('member'), on_delete=models.CASCADE)
 
 
     is_read = models.BooleanField(default=False, verbose_name=gettext_lazy('is read'))

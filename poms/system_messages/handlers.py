@@ -67,6 +67,7 @@ def send_system_message(master_user, title=None, description=None, attachments=[
                                                                 file_report_id=file_report_id))
         if len(system_message_attachments):
             SystemMessageAttachment.objects.bulk_create(system_message_attachments)
+            _l.info("Saved %s attachments " % len(system_message_attachments))
 
 
 
@@ -79,6 +80,8 @@ def send_system_message(master_user, title=None, description=None, attachments=[
 
         if len(system_message_members):
             SystemMessageMember.objects.bulk_create(system_message_members)
+
+            _l.info("Send message to %s members " % len(system_message_members))
 
             for member in members:
 
