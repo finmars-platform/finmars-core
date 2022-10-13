@@ -10,7 +10,11 @@ from poms.users.models import Member, Group
 
 
 class CurrentMasterUserDefault(object):
+
+    requires_context = True
+
     def set_context(self, serializer_field):
+
         request = serializer_field.context['request']
         master_user = None
         if 'master_user' in serializer_field.context:
@@ -19,7 +23,10 @@ class CurrentMasterUserDefault(object):
             master_user = request.user.master_user
         self._master_user = master_user
 
-    def __call__(self):
+    def __call__(self, serializer_field):
+
+        self.set_context(serializer_field)
+
         return self._master_user
 
 
