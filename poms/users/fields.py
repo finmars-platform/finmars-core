@@ -47,19 +47,26 @@ class MasterUserField(serializers.HiddenField):
 
 
 class CurrentUserField(serializers.HiddenField):
+
     def __init__(self, **kwargs):
         kwargs['default'] = CurrentUserDefaultLocal()
         super(CurrentUserField, self).__init__(**kwargs)
 
 
 class CurrentMemberDefault(object):
+
+    requires_context = True
+
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         # member = get_member(request)
         member = request.user.member
         self._member = member
 
-    def __call__(self):
+    def __call__(self, serializer_field):
+
+        self.set_context(serializer_field)
+
         # return self._member
         return getattr(self, '_member', None)
 
