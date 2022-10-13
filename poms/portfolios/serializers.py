@@ -91,60 +91,69 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
     def create_register_if_not_exists(self, instance):
 
         master_user = instance.master_user
-        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
 
-        new_instrument = None
-
-        # TODO maybe create new instr instead of existing?
         try:
-            new_instrument = Instrument.objects.get(master_user=master_user, user_code = instance.user_code)
+            portfolio_register = PortfolioRegister.objects.get(
+                master_user=master_user,
+                portfolio=instance,
+                user_code=instance.user_code,
+)
         except Exception as e:
 
-            new_linked_instrument = {
-                'name': instance.name,
-                'user_code': instance.user_code,
-                'short_name': instance.short_name,
-                'public_name': instance.public_name,
-                'instrument_type': 'finmars@portfolio'
-            }
+            ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
 
             new_instrument = None
-            instrument_type = None
 
+            # TODO maybe create new instr instead of existing?
             try:
-                instrument_type = InstrumentType.objects.get(master_user=master_user, user_code=new_linked_instrument['instrument_type'])
+                new_instrument = Instrument.objects.get(master_user=master_user, user_code = instance.user_code)
             except Exception as e:
-                instrument_type = ecosystem_default.instrument_type
 
-            process = InstrumentTypeProcess(instrument_type=instrument_type)
+                new_linked_instrument = {
+                    'name': instance.name,
+                    'user_code': instance.user_code,
+                    'short_name': instance.short_name,
+                    'public_name': instance.public_name,
+                    'instrument_type': 'finmars@portfolio'
+                }
 
-            instrument_object = process.instrument
+                new_instrument = None
+                instrument_type = None
 
-            instrument_object['name'] = new_linked_instrument['name']
-            instrument_object['short_name'] = new_linked_instrument['short_name']
-            instrument_object['user_code'] = new_linked_instrument['user_code']
-            instrument_object['public_name'] = new_linked_instrument['public_name']
+                try:
+                    instrument_type = InstrumentType.objects.get(master_user=master_user, user_code=new_linked_instrument['instrument_type'])
+                except Exception as e:
+                    instrument_type = ecosystem_default.instrument_type
 
-            serializer = InstrumentSerializer(data=instrument_object, context=self.context)
+                process = InstrumentTypeProcess(instrument_type=instrument_type)
 
-            is_valid = serializer.is_valid(raise_exception=True)
+                instrument_object = process.instrument
 
-            if is_valid:
-                serializer.save()
+                instrument_object['name'] = new_linked_instrument['name']
+                instrument_object['short_name'] = new_linked_instrument['short_name']
+                instrument_object['user_code'] = new_linked_instrument['user_code']
+                instrument_object['public_name'] = new_linked_instrument['public_name']
 
-            new_instrument = serializer.instance
+                serializer = InstrumentSerializer(data=instrument_object, context=self.context)
 
-        _l.info("new_instrument %s" % new_instrument)
+                is_valid = serializer.is_valid(raise_exception=True)
 
-        portfolio_register = PortfolioRegister.objects.create(
-            master_user=master_user,
-            valuation_pricing_policy=ecosystem_default.pricing_policy,
-            valuation_currency=ecosystem_default.currency,
-            portfolio=instance,
-            user_code=instance.user_code,
-            linked_instrument=new_instrument,
-            default_price=1
-        )
+                if is_valid:
+                    serializer.save()
+
+                new_instrument = serializer.instance
+
+            _l.info("new_instrument %s" % new_instrument)
+
+            portfolio_register = PortfolioRegister.objects.create(
+                master_user=master_user,
+                valuation_pricing_policy=ecosystem_default.pricing_policy,
+                valuation_currency=ecosystem_default.currency,
+                portfolio=instance,
+                user_code=instance.user_code,
+                linked_instrument=new_instrument,
+                default_price=1
+            )
 
     def create(self, validated_data):
 

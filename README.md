@@ -197,3 +197,9 @@ Apple Silicon
 
 export LIBRARY_PATH=$LIBRARY_PATH:/opt/homebrew/opt/openssl/lib
 pip install -r requirements.txt
+
+Reset sequence
+
+python manage.py sqlsequencereset app_label | python manage.py dbshell
+e.g.
+python manage.py sqlsequencereset portfolios | python manage.py dbshell
