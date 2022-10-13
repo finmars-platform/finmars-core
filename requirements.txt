@@ -48,7 +48,7 @@ django-storages==1.13.1
 django-storages-azure==1.6.8
 django-timezone-field==5.0
 django-tinymce==3.4.0
-djangorestframework==3.12.4
+djangorestframework==3.14.0
 djangorestframework-simplejwt==5.0.0
 docutils==0.13.1
 ecdsa==0.17.0
@@ -83,8 +83,8 @@ paramiko==2.7.1
 phonenumbers==8.12.43
 prompt-toolkit==3.0.22
 psutil==5.7.0
-psycopg2==2.8.4
-psycopg2-binary==2.8.4
+psycopg2==2.9.4
+psycopg2-binary==2.9.4
 pyasn1==0.2.3
 pycountry==17.1.8
 pycparser==2.17
