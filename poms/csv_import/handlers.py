@@ -390,42 +390,44 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
     try:
         if 'attributes' in source_data:
 
-            for attribute_type in attribute_types:
+            if isinstance(source_data['attributes'], dict):
 
-                lower_user_code = attribute_type.user_code.lower()
+                for attribute_type in attribute_types:
 
-                for key, value in source_data['attributes'].items():
+                    lower_user_code = attribute_type.user_code.lower()
 
-                    _l_key = key.lower()
+                    for key, value in source_data['attributes'].items():
 
-                    if _l_key == lower_user_code:
+                        _l_key = key.lower()
 
-                        attribute = {
-                            'attribute_type': attribute_type.id,
-                        }
+                        if _l_key == lower_user_code:
 
-                        if attribute_type.value_type == 10:
-                            attribute['value_string'] = value
+                            attribute = {
+                                'attribute_type': attribute_type.id,
+                            }
 
-                        if attribute_type.value_type == 20:
-                            attribute['value_float'] = value
+                            if attribute_type.value_type == 10:
+                                attribute['value_string'] = value
 
-                        if attribute_type.value_type == 30:
+                            if attribute_type.value_type == 20:
+                                attribute['value_float'] = value
 
-                            try:
+                            if attribute_type.value_type == 30:
 
-                                classifier = GenericClassifier.objects.get(attribute_type=attribute_type,
-                                                                           name=value)
+                                try:
 
-                                attribute['classifier'] = classifier.id
+                                    classifier = GenericClassifier.objects.get(attribute_type=attribute_type,
+                                                                               name=value)
 
-                            except Exception as e:
-                                attribute['classifier'] = None
+                                    attribute['classifier'] = classifier.id
 
-                        if attribute_type.value_type == 40:
-                            attribute['value_date'] = value
+                                except Exception as e:
+                                    attribute['classifier'] = None
 
-                        _tmp_attributes_dict[attribute['attribute_type']] = attribute
+                            if attribute_type.value_type == 40:
+                                attribute['value_date'] = value
+
+                            _tmp_attributes_dict[attribute['attribute_type']] = attribute
     except Exception as e:
         _l.error("Could not set attributes from finmars database. Error %s"  % e )
         _l.error("Could not set attributes from finmars database. Traceback %s"  % traceback.format_exc())
