@@ -117,6 +117,7 @@ class SystemMessageAttachment(models.Model):
 class SystemMessageMember(models.Model):
 
     system_message = models.ForeignKey(SystemMessage, verbose_name=gettext_lazy('system message'),
+                                       related_name='members',
                                        on_delete=models.CASCADE)
 
     member = models.ForeignKey(Member, verbose_name=gettext_lazy('member'), on_delete=models.CASCADE)
