@@ -81,7 +81,7 @@ def send_system_message(master_user, title=None, description=None, attachments=[
         if len(system_message_members):
             SystemMessageMember.objects.bulk_create(system_message_members)
 
-            _l.info("Send message to %s members " % len(system_message_members))
+            _l.debug("Send message to %s members " % len(system_message_members))
 
             for member in members:
 
