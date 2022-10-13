@@ -36,7 +36,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
 
-        attributes = validated_data.pop('attributes', None)
+        attributes = validated_data.pop('attributes', empty)
         instance = super(ModelWithAttributesSerializer, self).create(validated_data)
 
         self.create_attributes_if_not_exists(instance)
@@ -80,7 +80,10 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                 exists = GenericAttribute.objects.get(attribute_type=attribute_type, content_type=content_type,
                                                       object_id=instance.id)
 
-            except (GenericAttribute.DoesNotExist, KeyError):
+            except Exception as e:
+
+                _l.debug("create_attributes_if_not_exists.exception %s" % e)
+                _l.info("Creating empty attribute %s for %s" %(attribute_type, instance))
 
                 obj = GenericAttribute.objects.create(attribute_type=attribute_type, content_type=content_type,
                                                       object_id=instance.id)
@@ -286,7 +289,7 @@ class GenericClassifierNodeSerializer(serializers.ModelSerializer):
         fields = ['id', 'attribute_type', 'level', 'parent', 'name', ]
 
     def create(self, validated_data):
-        print('Create classifier node')
+        # print('Create classifier node')
 
         return GenericClassifier(**validated_data)
 
