@@ -85,6 +85,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
             except Exception as e:
 
                 _l.debug("create_attributes_if_not_exists.exception %s" % e)
+                _l.info("Creating empty attribute %s for %s" %(attribute_type, instance.id))
                 _l.info("Creating empty attribute %s for %s" %(attribute_type, instance))
 
                 attributes_to_create.append(GenericAttribute(attribute_type=attribute_type, content_type=content_type,
