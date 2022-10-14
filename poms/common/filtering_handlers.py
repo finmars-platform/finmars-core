@@ -4,7 +4,7 @@ from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from django.db.models import Count, Sum, F, Value, Aggregate
 from django.db.models.functions import Lower
 
-from django.db.models import CharField, Case, When, DateField, FloatField, ForeignKey
+from django.db.models import CharField, Case, When, DateField, FloatField, ForeignKey, TextField
 from django.db.models.functions import Coalesce
 from django.contrib.contenttypes.models import ContentType
 
@@ -1115,6 +1115,16 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
     char_queries = [Q(**{f.name + '__icontains': global_table_search}) for f in char_fields]
 
     for query in char_queries:
+        q = q | query
+
+
+    text_fields = [f for f in model._meta.fields if isinstance(f, TextField)]
+
+    _l.info('text_fields %s' % text_fields)
+
+    text_queries = [Q(**{f.name + '__icontains': global_table_search}) for f in text_fields]
+
+    for query in text_queries:
         q = q | query
 
     date_fields = [f for f in model._meta.fields if isinstance(f, DateField)]

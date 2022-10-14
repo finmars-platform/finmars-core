@@ -1,21 +1,39 @@
 # Getting started (Local) 
 
-**Works for python 3.5.0**
+**Works for python 3.9.0**
 
 * Install NPM
-* Install Python 3
+* Install Python 3.9
 * Install Docker and Docker Compose
+
+* Install ubuntu applications
+
+`apt-get update && apt-get install -y apt-utils && apt-get upgrade -y && apt-get install -y wget htop curl build-essential openssl libssl-dev python3.9-dev python3-pip python3.9-venv python3-setuptools python3-wheel libpq-dev libgdal-dev libgeos-dev libproj-dev libtiff5-dev libjpeg-turbo8-dev libzip-dev zlib1g-dev libffi-dev git libgeoip-dev geoip-bin geoip-database supervisor`
 
 * Create Virtual Environment (VENV)
 
-`python3 -m venv venv`
+`python3.9 -m venv venv`
+
 * Activate VENV
 
 `source venv/bin/activate`
 
 * Install Dependencies
 
-`pip install -r requirements.txt`
+`pip install "setuptools<58.0.0"
+pip install -U pip wheel uwsgitop
+pip install -U pip boto3
+pip install -U pip azure-storage-blob
+pip install -r requirements.txt
+pip install -U pip flower
+pip install -U pip uwsgi`
+
+* Create file for logs
+
+`mkdir -p /var/log/finmars`
+`chmod 777 /var/log/finmars/`
+`touch /var/log/finmars/django.log`
+`chmod 777 /var/log/finmars/django.log`
 
 * Install Celery
 
@@ -53,10 +71,10 @@ How to run django app
 3) Execute following command to build
 
    `REDIS_HOST=localhost DB_NAME=finmars_dev DB_USER=postgres DB_PASSWORD=postgres DB_HOST=localhost DB_PORT=5434 python3 -m PyInstaller backend.spec -y --debug --log-level TRACE`
-    
-4) Execute following command to runserver
 
-   `REDIS_HOST=localhost DB_NAME=finmars_dev DB_USER=postgres DB_PASSWORD=postgres DB_HOST=localhost DB_PORT=5434 dist/backend/backend manage.py runserver 8080`
+4) Execute following script to runserver
+
+   `./local-develoment/run_server.sh`
    
 Profile uWSGI server 
 1) Activate venv  
@@ -179,3 +197,9 @@ Apple Silicon
 
 export LIBRARY_PATH=$LIBRARY_PATH:/opt/homebrew/opt/openssl/lib
 pip install -r requirements.txt
+
+Reset sequence
+
+python manage.py sqlsequencereset app_label | python manage.py dbshell
+e.g.
+python manage.py sqlsequencereset portfolios | python manage.py dbshell

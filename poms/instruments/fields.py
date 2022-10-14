@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 
 from poms.common.fields import PrimaryKeyRelatedFilteredField
 from poms.instruments.models import Instrument, InstrumentType, PricingPolicy, AccrualCalculationModel, Periodicity, \
-    EventSchedule
+    EventSchedule, CostMethod
 from poms.obj_perms.fields import PrimaryKeyRelatedFilteredWithObjectPermissionField
 from poms.portfolios.models import PortfolioBundle
 from poms.transactions.models import NotificationClass, EventClass, TransactionTypeInputSettings, TransactionTypeInput
@@ -72,6 +72,10 @@ class PricingPolicyField(PrimaryKeyRelatedFilteredField):
     filter_backends = [
         OwnerByMasterUserFilter,
     ]
+
+
+class CostMethodField(PrimaryKeyRelatedFilteredField):
+    queryset = CostMethod.objects
 
 
 class TransactionTypeInputField(PrimaryKeyRelatedFilteredField):

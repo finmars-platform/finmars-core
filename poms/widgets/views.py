@@ -489,7 +489,7 @@ class CollectHistoryViewSet(AbstractViewSet):
         date_from = request.data.get('date_from', None)
         date_to = request.data.get('date_to', None)
         portfolio_id = request.data.get('portfolio', None)
-        report_currency_id = request.data.get('report_currency', None)
+        report_currency_id = request.data.get('currency', None)
         pricing_policy_id = request.data.get('pricing_policy', None)
         cost_method_id = request.data.get('cost_method', CostMethod.AVCO)
         segmentation_type = request.data.get('segmentation_type', None)
