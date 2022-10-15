@@ -1,4 +1,7 @@
 from __future__ import unicode_literals
+
+from datetime import timedelta
+
 from django.shortcuts import render
 from functools import lru_cache
 
@@ -15,7 +18,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer
+from poms.common.utils import get_list_of_business_days_between_two_dates, date_now, get_closest_bday_of_yesterday, \
+    get_list_of_dates_between_two_dates
 from poms.common.views import AbstractViewSet, AbstractApiView
+from poms.instruments.models import PriceHistory
 
 _languages = [Language(code, name) for code, name in settings.LANGUAGES]
 
@@ -89,3 +95,306 @@ if 'rest_framework_swagger' in settings.INSTALLED_APPS:
         def get(self, request):
             generator = schemas.SchemaGenerator(title='FinMars API')
             return response.Response(generator.get_schema(request=request))
+
+
+class StatsViewSet(AbstractViewSet):
+
+    items_to_fill = 0
+    filled_items = 0
+
+    def get_first_transaction_date(self):
+
+        from poms.transactions.models import Transaction
+        trns = Transaction.objects.all().order_by('accounting_date')
+
+        if len(trns):
+            return trns[0].accounting_date
+
+        return None
+
+    def get_general_section(self):
+
+        from poms.instruments.models import Instrument
+
+        from poms.transactions.models import ComplexTransaction
+        from poms.transactions.models import Transaction
+        from poms.portfolios.models import Portfolio
+        from poms.accounts.models import Account
+        from poms.currencies.models import Currency
+
+        result = {
+            'total_instruments': Instrument.objects.count(),
+            'total_complex_transactions': ComplexTransaction.objects.count(),
+            'total_base_transactions': Transaction.objects.count(),
+            'total_portfolios': Portfolio.objects.count(),
+            'total_accounts': Account.objects.count(),
+            'total_currencies': Currency.objects.count(),
+            'first_transaction_date': self.first_transaction_date,
+            'days_from_first_transaction': len(self.days_from_first_transaction),
+            'bdays_from_first_transaction': len(self.bdays_from_first_transaction),
+        }
+
+        if self.items_to_fill:
+            result['filled_percent'] = round(self.filled_items / (self.items_to_fill / 100))
+
+        return result
+
+    def get_price_history_section(self):
+
+
+        from poms.instruments.models import Instrument
+
+
+        total_instruments = Instrument.objects.count()
+        total_prices = PriceHistory.objects.count()
+
+        result = {
+            'total_instruments': total_instruments,
+            'total_prices': total_prices,
+            'first_transaction_date': self.first_transaction_date,
+            'days_from_first_transaction': len(self.days_from_first_transaction),
+            'bdays_from_first_transaction': len(self.bdays_from_first_transaction),
+            'expecting_total_prices': total_instruments * len(self.days_from_first_transaction),
+            'expecting_total_bdays_prices': total_instruments * len(self.bdays_from_first_transaction),
+            'filled_percent': round(total_prices / (total_instruments * len(self.bdays_from_first_transaction) / 100))
+        }
+
+        self.filled_items = self.filled_items + total_prices
+        self.items_to_fill = self.items_to_fill + (total_instruments * len(self.bdays_from_first_transaction))
+
+        instruments = []
+
+        for instrument in Instrument.objects.all():
+
+            instrument_result = {}
+
+            instrument_result['instrument'] = {
+                'id': instrument.id,
+                'user_code': instrument.user_code,
+                'name': instrument.name
+            }
+            instrument_result['expecting_prices'] = len(self.days_from_first_transaction)
+            instrument_result['expecting_bdays_prices'] = len(self.bdays_from_first_transaction)
+            instrument_result['prices'] = PriceHistory.objects.filter(instrument=instrument).count()
+
+            try:
+                instrument_result['last_price_date'] = PriceHistory.objects.filter(instrument=instrument).order_by('-date')[0].date
+            except Exception as e:
+                instrument_result['last_price_date'] = None
+
+            instruments.append(instrument_result)
+
+        result['instruments'] = instruments
+
+        return result
+
+    def get_currency_history_section(self):
+
+        from poms.currencies.models import Currency
+        from poms.currencies.models import CurrencyHistory
+
+        total_currencies = Currency.objects.count()
+
+        total_fxrates = CurrencyHistory.objects.count()
+
+        result = {
+            'total_currencies': total_currencies,
+            'total_fxrates': total_fxrates,
+            'first_transaction_date': self.first_transaction_date,
+            'days_from_first_transaction': len(self.days_from_first_transaction),
+            'bdays_from_first_transaction': len(self.bdays_from_first_transaction),
+            'expecting_total_fxrates': total_currencies * len(self.days_from_first_transaction),
+            'expecting_total_bdays_fxrates': total_currencies * len(self.bdays_from_first_transaction),
+            'filled_percent': round(total_fxrates / (total_currencies * len(self.bdays_from_first_transaction) / 100))
+        }
+
+        self.filled_items = self.filled_items + total_fxrates
+        self.items_to_fill = self.items_to_fill + (total_currencies * len(self.bdays_from_first_transaction))
+
+        currencies = []
+
+        for currency in Currency.objects.all():
+
+            currency_result = {}
+
+            currency_result['currency'] = {
+                'id': currency.id,
+                'user_code': currency.user_code,
+                'name': currency.name
+            }
+            currency_result['expecting_fxrates'] = len(self.days_from_first_transaction)
+            currency_result['expecting_bdays_fxrates'] = len(self.bdays_from_first_transaction)
+            currency_result['fxrates'] = CurrencyHistory.objects.filter(currency=currency).count()
+
+            try:
+                currency_result['last_fxrate_date'] = CurrencyHistory.objects.filter(currency=currency).order_by('-date')[0].date
+            except Exception as e:
+                currency_result['last_fxrate_date'] = None
+
+            currencies.append(currency_result)
+
+        result['currencies'] = currencies
+
+        return result
+
+    def get_nav_history_section(self):
+
+        from poms.widgets.models import BalanceReportHistory
+        total_nav_history = BalanceReportHistory.objects.count()
+
+        from poms.portfolios.models import Portfolio
+        portfolios_count = Portfolio.objects.count()
+
+        result = {
+            'total_nav_histories': total_nav_history,
+            'expecting_histories': len(self.days_from_first_transaction) * portfolios_count,
+            'expecting_bdays_histories': len(self.bdays_from_first_transaction) * portfolios_count,
+            'filled_percent': round(total_nav_history / (len(self.bdays_from_first_transaction) * portfolios_count / 100))
+        }
+
+        self.filled_items = self.filled_items + total_nav_history
+        self.items_to_fill = self.items_to_fill + (len(self.bdays_from_first_transaction) * portfolios_count)
+
+        portfolios = []
+
+        for portfolio in Portfolio.objects.all():
+
+            portfolio_result = {}
+
+            portfolio_result['portfolio'] = {
+                'id': portfolio.id,
+                'user_code': portfolio.user_code,
+                'name': portfolio.name
+            }
+            portfolio_result['expecting_nav_histories'] = len(self.days_from_first_transaction)
+            portfolio_result['expecting_bdays_nav_histories'] = len(self.bdays_from_first_transaction)
+            portfolio_result['nav_histories'] = BalanceReportHistory.objects.filter(portfolio=portfolio).count()
+
+            try:
+                portfolio_result['last_nav_history_date'] = BalanceReportHistory.objects.filter(portfolio=portfolio).order_by('-date')[0].date
+            except Exception as e:
+                portfolio_result['last_nav_history_date'] = None
+
+            portfolios.append(portfolio_result)
+
+        result['portfolios'] = portfolios
+
+        return result
+
+    def get_pl_history_section(self):
+
+
+        from poms.widgets.models import PLReportHistory
+        total_pl_history = PLReportHistory.objects.count()
+
+        from poms.portfolios.models import Portfolio
+        portfolios_count = Portfolio.objects.count()
+
+        result = {
+
+            'total_pl_histories': total_pl_history,
+            'expecting_pl_histories': len(self.days_from_first_transaction) * portfolios_count,
+            'expecting_pl_bdays_histories': len(self.bdays_from_first_transaction) * portfolios_count,
+            'filled_percent': round(total_pl_history / (len(self.bdays_from_first_transaction) * portfolios_count / 100))
+        }
+
+        self.filled_items = self.filled_items + total_pl_history
+        self.items_to_fill = self.items_to_fill + (len(self.bdays_from_first_transaction) * portfolios_count)
+
+        portfolios = []
+
+        for portfolio in Portfolio.objects.all():
+
+            portfolio_result = {}
+
+            portfolio_result['portfolio'] = {
+                'id': portfolio.id,
+                'user_code': portfolio.user_code,
+                'name': portfolio.name
+            }
+            portfolio_result['expecting_pl_histories'] = len(self.days_from_first_transaction)
+            portfolio_result['expecting_bdays_pl_histories'] = len(self.bdays_from_first_transaction)
+            portfolio_result['pl_histories'] = PLReportHistory.objects.filter(portfolio=portfolio).count()
+
+            try:
+                portfolio_result['last_pl_history_date'] = PLReportHistory.objects.filter(portfolio=portfolio).order_by('-date')[0].date
+            except Exception as e:
+                portfolio_result['last_pl_history_date'] = None
+
+            portfolios.append(portfolio_result)
+
+        result['portfolios'] = portfolios
+
+        return result
+
+    def get_widget_stats_history_section(self):
+
+        from poms.widgets.models import WidgetStats
+        total_widget_stats = WidgetStats.objects.count()
+
+        from poms.portfolios.models import Portfolio
+        portfolios_count = Portfolio.objects.count()
+
+        result = {
+
+            'total_widget_stats': total_widget_stats,
+            'expecting_widget_stats': len(self.days_from_first_transaction) * portfolios_count,
+            'expecting_bdays_widget_stats': len(self.bdays_from_first_transaction) * portfolios_count,
+            'filled_percent': round(total_widget_stats / (len(self.bdays_from_first_transaction) * portfolios_count / 100))
+        }
+
+        self.filled_items = self.filled_items + total_widget_stats
+        self.items_to_fill = self.items_to_fill + (len(self.bdays_from_first_transaction) * portfolios_count)
+
+        portfolios = []
+
+        for portfolio in Portfolio.objects.all():
+
+            portfolio_result = {}
+
+            portfolio_result['portfolio'] = {
+                'id': portfolio.id,
+                'user_code': portfolio.user_code,
+                'name': portfolio.name
+            }
+            portfolio_result['expecting_widget_stats'] = len(self.days_from_first_transaction)
+            portfolio_result['expecting_bdays_widget_stats'] = len(self.bdays_from_first_transaction)
+            portfolio_result['widget_stats'] = WidgetStats.objects.filter(portfolio=portfolio).count()
+
+            try:
+                portfolio_result['last_widget_stats_date'] = WidgetStats.objects.filter(portfolio=portfolio).order_by('-date')[0].date
+            except Exception as e:
+                portfolio_result['last_widget_stats_date'] = None
+
+            portfolios.append(portfolio_result)
+
+        result['portfolios'] = portfolios
+
+        return result
+
+    def list(self, request, *args, **kwargs):
+
+        result = {}
+
+        first_transaction_date = self.get_first_transaction_date()
+        bday_yesterday = get_closest_bday_of_yesterday()
+
+        if first_transaction_date:
+
+            self.first_transaction_date = self.get_first_transaction_date()
+            self.days_from_first_transaction = get_list_of_dates_between_two_dates(first_transaction_date, bday_yesterday)
+            self.bdays_from_first_transaction = get_list_of_business_days_between_two_dates(first_transaction_date, bday_yesterday)
+
+            result['price_history'] = self.get_price_history_section()
+            result['currency_history'] = self.get_currency_history_section()
+            result['nav_history'] = self.get_nav_history_section()
+            result['pl_history'] = self.get_pl_history_section()
+            result['widget_stats_history'] = self.get_widget_stats_history_section()
+            # important to be after other section to calc overall percent
+            result['general'] = self.get_general_section()
+
+
+        else:
+            result['error_message'] = 'No Transactions'
+
+        return Response(result)
