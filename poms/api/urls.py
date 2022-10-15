@@ -427,6 +427,7 @@ router.register(r'import/complex-transaction-csv-file-import-validate',
                 'complextransactioncsvfileimportvalidate')
 
 router.register(r'utils/expression', api.ExpressionViewSet, 'expression')
+router.register(r'utils/stats', api.StatsViewSet, 'expression')
 
 router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
 router.register(r'import/csv/scheme-light', csv_import.SchemeLightViewSet, 'import_csv_scheme_light')
