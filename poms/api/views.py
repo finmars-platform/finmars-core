@@ -21,7 +21,7 @@ from poms.api.serializers import LanguageSerializer, Language, TimezoneSerialize
 from poms.common.utils import get_list_of_business_days_between_two_dates, date_now, get_closest_bday_of_yesterday, \
     get_list_of_dates_between_two_dates
 from poms.common.views import AbstractViewSet, AbstractApiView
-from poms.instruments.models import PriceHistory
+from poms.instruments.models import PriceHistory, PricingPolicy
 
 _languages = [Language(code, name) for code, name in settings.LANGUAGES]
 
@@ -129,6 +129,7 @@ class StatsViewSet(AbstractViewSet):
             'total_portfolios': Portfolio.objects.count(),
             'total_accounts': Account.objects.count(),
             'total_currencies': Currency.objects.count(),
+            'total_pricing_policies': PricingPolicy.objects.count(),
             'first_transaction_date': self.first_transaction_date,
             'days_from_first_transaction': len(self.days_from_first_transaction),
             'bdays_from_first_transaction': len(self.bdays_from_first_transaction),
@@ -146,17 +147,19 @@ class StatsViewSet(AbstractViewSet):
 
 
         total_instruments = Instrument.objects.count()
+        total_pricing_policies = PricingPolicy.objects.count()
         total_prices = PriceHistory.objects.count()
 
         result = {
             'total_instruments': total_instruments,
+            'total_pricing_policies': total_pricing_policies,
             'total_prices': total_prices,
             'first_transaction_date': self.first_transaction_date,
             'days_from_first_transaction': len(self.days_from_first_transaction),
             'bdays_from_first_transaction': len(self.bdays_from_first_transaction),
-            'expecting_total_prices': total_instruments * len(self.days_from_first_transaction),
-            'expecting_total_bdays_prices': total_instruments * len(self.bdays_from_first_transaction),
-            'filled_percent': round(total_prices / (total_instruments * len(self.bdays_from_first_transaction) / 100))
+            'expecting_total_prices': total_instruments * total_pricing_policies * len(self.days_from_first_transaction),
+            'expecting_total_bdays_prices': total_instruments * total_pricing_policies * len(self.bdays_from_first_transaction),
+            'filled_percent': round(total_prices / (total_instruments * total_pricing_policies * len(self.bdays_from_first_transaction) / 100))
         }
 
         self.filled_items = self.filled_items + total_prices
@@ -173,8 +176,8 @@ class StatsViewSet(AbstractViewSet):
                 'user_code': instrument.user_code,
                 'name': instrument.name
             }
-            instrument_result['expecting_prices'] = len(self.days_from_first_transaction)
-            instrument_result['expecting_bdays_prices'] = len(self.bdays_from_first_transaction)
+            instrument_result['expecting_prices'] = total_pricing_policies * len(self.days_from_first_transaction)
+            instrument_result['expecting_bdays_prices'] = total_pricing_policies * len(self.bdays_from_first_transaction)
             instrument_result['prices'] = PriceHistory.objects.filter(instrument=instrument).count()
 
             try:
@@ -194,18 +197,19 @@ class StatsViewSet(AbstractViewSet):
         from poms.currencies.models import CurrencyHistory
 
         total_currencies = Currency.objects.count()
-
+        total_pricing_policies = PricingPolicy.objects.count()
         total_fxrates = CurrencyHistory.objects.count()
 
         result = {
             'total_currencies': total_currencies,
+            'total_pricing_policies': total_pricing_policies,
             'total_fxrates': total_fxrates,
             'first_transaction_date': self.first_transaction_date,
             'days_from_first_transaction': len(self.days_from_first_transaction),
             'bdays_from_first_transaction': len(self.bdays_from_first_transaction),
-            'expecting_total_fxrates': total_currencies * len(self.days_from_first_transaction),
-            'expecting_total_bdays_fxrates': total_currencies * len(self.bdays_from_first_transaction),
-            'filled_percent': round(total_fxrates / (total_currencies * len(self.bdays_from_first_transaction) / 100))
+            'expecting_total_fxrates': total_currencies * total_pricing_policies * len(self.days_from_first_transaction),
+            'expecting_total_bdays_fxrates': total_currencies * total_pricing_policies* len(self.bdays_from_first_transaction),
+            'filled_percent': round(total_fxrates / (total_currencies * total_pricing_policies* len(self.bdays_from_first_transaction) / 100))
         }
 
         self.filled_items = self.filled_items + total_fxrates
@@ -222,8 +226,8 @@ class StatsViewSet(AbstractViewSet):
                 'user_code': currency.user_code,
                 'name': currency.name
             }
-            currency_result['expecting_fxrates'] = len(self.days_from_first_transaction)
-            currency_result['expecting_bdays_fxrates'] = len(self.bdays_from_first_transaction)
+            currency_result['expecting_fxrates'] = total_pricing_policies * len(self.days_from_first_transaction)
+            currency_result['expecting_bdays_fxrates'] = total_pricing_policies * len(self.bdays_from_first_transaction)
             currency_result['fxrates'] = CurrencyHistory.objects.filter(currency=currency).count()
 
             try:
