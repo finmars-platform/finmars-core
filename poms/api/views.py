@@ -164,7 +164,7 @@ class StatsViewSet(AbstractViewSet):
         }
 
         self.filled_items = self.filled_items + total_prices
-        self.items_to_fill = self.items_to_fill + (total_instruments * len(self.bdays_from_first_transaction))
+        self.items_to_fill = self.items_to_fill + (total_instruments * total_pricing_policies* len(self.bdays_from_first_transaction))
 
         instruments = []
 
@@ -219,7 +219,7 @@ class StatsViewSet(AbstractViewSet):
         }
 
         self.filled_items = self.filled_items + total_fxrates
-        self.items_to_fill = self.items_to_fill + (total_currencies * len(self.bdays_from_first_transaction))
+        self.items_to_fill = self.items_to_fill + (total_currencies * total_pricing_policies * len(self.bdays_from_first_transaction))
 
         currencies = []
 
