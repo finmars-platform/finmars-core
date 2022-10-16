@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from datetime import timedelta
+from datetime import timedelta, date
 
 from django.shortcuts import render
 from functools import lru_cache
@@ -98,7 +98,6 @@ if 'rest_framework_swagger' in settings.INSTALLED_APPS:
 
 
 class StatsViewSet(AbstractViewSet):
-
     items_to_fill = 0
     filled_items = 0
 
@@ -122,10 +121,11 @@ class StatsViewSet(AbstractViewSet):
         from poms.accounts.models import Account
         from poms.currencies.models import Currency
 
+
         result = {
             'total_instruments': Instrument.objects.count(),
-            'total_complex_transactions': ComplexTransaction.objects.count(),
-            'total_base_transactions': Transaction.objects.count(),
+            'total_complex_transactions': ComplexTransaction.objects.filter(transactions__accounting_date__gte=self.date_from).count(),
+            'total_base_transactions': Transaction.objects.filter(accounting_date__gte=self.date_from).count(),
             'total_portfolios': Portfolio.objects.count(),
             'total_accounts': Account.objects.count(),
             'total_currencies': Currency.objects.count(),
@@ -142,13 +142,11 @@ class StatsViewSet(AbstractViewSet):
 
     def get_price_history_section(self):
 
-
         from poms.instruments.models import Instrument
-
 
         total_instruments = Instrument.objects.count()
         total_pricing_policies = PricingPolicy.objects.count()
-        total_prices = PriceHistory.objects.count()
+        total_prices = PriceHistory.objects.filter(date__gte=self.date_from).count()
 
         result = {
             'total_instruments': total_instruments,
@@ -157,9 +155,12 @@ class StatsViewSet(AbstractViewSet):
             'first_transaction_date': self.first_transaction_date,
             'days_from_first_transaction': len(self.days_from_first_transaction),
             'bdays_from_first_transaction': len(self.bdays_from_first_transaction),
-            'expecting_total_prices': total_instruments * total_pricing_policies * len(self.days_from_first_transaction),
-            'expecting_total_bdays_prices': total_instruments * total_pricing_policies * len(self.bdays_from_first_transaction),
-            'filled_percent': round(total_prices / (total_instruments * total_pricing_policies * len(self.bdays_from_first_transaction) / 100))
+            'expecting_total_prices': total_instruments * total_pricing_policies * len(
+                self.days_from_first_transaction),
+            'expecting_total_bdays_prices': total_instruments * total_pricing_policies * len(
+                self.bdays_from_first_transaction),
+            'filled_percent': round(total_prices / (
+                        total_instruments * total_pricing_policies * len(self.bdays_from_first_transaction) / 100))
         }
 
         self.filled_items = self.filled_items + total_prices
@@ -177,11 +178,13 @@ class StatsViewSet(AbstractViewSet):
                 'name': instrument.name
             }
             instrument_result['expecting_prices'] = total_pricing_policies * len(self.days_from_first_transaction)
-            instrument_result['expecting_bdays_prices'] = total_pricing_policies * len(self.bdays_from_first_transaction)
-            instrument_result['prices'] = PriceHistory.objects.filter(instrument=instrument).count()
+            instrument_result['expecting_bdays_prices'] = total_pricing_policies * len(
+                self.bdays_from_first_transaction)
+            instrument_result['prices'] = PriceHistory.objects.filter(instrument=instrument, date__gte=self.date_from).count()
 
             try:
-                instrument_result['last_price_date'] = PriceHistory.objects.filter(instrument=instrument).order_by('-date')[0].date
+                instrument_result['last_price_date'] = \
+                PriceHistory.objects.filter(instrument=instrument, date__gte=self.date_from).order_by('-date')[0].date
             except Exception as e:
                 instrument_result['last_price_date'] = None
 
@@ -198,7 +201,7 @@ class StatsViewSet(AbstractViewSet):
 
         total_currencies = Currency.objects.count()
         total_pricing_policies = PricingPolicy.objects.count()
-        total_fxrates = CurrencyHistory.objects.count()
+        total_fxrates = CurrencyHistory.objects.filter(date__gte=self.date_from).count()
 
         result = {
             'total_currencies': total_currencies,
@@ -207,9 +210,12 @@ class StatsViewSet(AbstractViewSet):
             'first_transaction_date': self.first_transaction_date,
             'days_from_first_transaction': len(self.days_from_first_transaction),
             'bdays_from_first_transaction': len(self.bdays_from_first_transaction),
-            'expecting_total_fxrates': total_currencies * total_pricing_policies * len(self.days_from_first_transaction),
-            'expecting_total_bdays_fxrates': total_currencies * total_pricing_policies* len(self.bdays_from_first_transaction),
-            'filled_percent': round(total_fxrates / (total_currencies * total_pricing_policies* len(self.bdays_from_first_transaction) / 100))
+            'expecting_total_fxrates': total_currencies * total_pricing_policies * len(
+                self.days_from_first_transaction),
+            'expecting_total_bdays_fxrates': total_currencies * total_pricing_policies * len(
+                self.bdays_from_first_transaction),
+            'filled_percent': round(total_fxrates / (
+                        total_currencies * total_pricing_policies * len(self.bdays_from_first_transaction) / 100))
         }
 
         self.filled_items = self.filled_items + total_fxrates
@@ -228,10 +234,11 @@ class StatsViewSet(AbstractViewSet):
             }
             currency_result['expecting_fxrates'] = total_pricing_policies * len(self.days_from_first_transaction)
             currency_result['expecting_bdays_fxrates'] = total_pricing_policies * len(self.bdays_from_first_transaction)
-            currency_result['fxrates'] = CurrencyHistory.objects.filter(currency=currency).count()
+            currency_result['fxrates'] = CurrencyHistory.objects.filter(currency=currency, date__gte=self.date_from).count()
 
             try:
-                currency_result['last_fxrate_date'] = CurrencyHistory.objects.filter(currency=currency).order_by('-date')[0].date
+                currency_result['last_fxrate_date'] = \
+                CurrencyHistory.objects.filter(currency=currency, date__gte=self.date_from).order_by('-date')[0].date
             except Exception as e:
                 currency_result['last_fxrate_date'] = None
 
@@ -244,7 +251,7 @@ class StatsViewSet(AbstractViewSet):
     def get_nav_history_section(self):
 
         from poms.widgets.models import BalanceReportHistory
-        total_nav_history = BalanceReportHistory.objects.count()
+        total_nav_history = BalanceReportHistory.objects.filter(date__gte=self.date_from).count()
 
         from poms.portfolios.models import Portfolio
         portfolios_count = Portfolio.objects.count()
@@ -253,7 +260,9 @@ class StatsViewSet(AbstractViewSet):
             'total_nav_histories': total_nav_history,
             'expecting_histories': len(self.days_from_first_transaction) * portfolios_count,
             'expecting_bdays_histories': len(self.bdays_from_first_transaction) * portfolios_count,
-            'filled_percent': round(total_nav_history / (len(self.bdays_from_first_transaction) * portfolios_count / 100))
+            'filled_percent': round(
+                total_nav_history / (len(self.bdays_from_first_transaction) * portfolios_count / 100)),
+            'total_portfolios': Portfolio.objects.count()
         }
 
         self.filled_items = self.filled_items + total_nav_history
@@ -272,10 +281,11 @@ class StatsViewSet(AbstractViewSet):
             }
             portfolio_result['expecting_nav_histories'] = len(self.days_from_first_transaction)
             portfolio_result['expecting_bdays_nav_histories'] = len(self.bdays_from_first_transaction)
-            portfolio_result['nav_histories'] = BalanceReportHistory.objects.filter(portfolio=portfolio).count()
+            portfolio_result['nav_histories'] = BalanceReportHistory.objects.filter(portfolio=portfolio, date__gte=self.date_from).count()
 
             try:
-                portfolio_result['last_nav_history_date'] = BalanceReportHistory.objects.filter(portfolio=portfolio).order_by('-date')[0].date
+                portfolio_result['last_nav_history_date'] = \
+                BalanceReportHistory.objects.filter(portfolio=portfolio, date__gte=self.date_from).order_by('-date')[0].date
             except Exception as e:
                 portfolio_result['last_nav_history_date'] = None
 
@@ -287,9 +297,8 @@ class StatsViewSet(AbstractViewSet):
 
     def get_pl_history_section(self):
 
-
         from poms.widgets.models import PLReportHistory
-        total_pl_history = PLReportHistory.objects.count()
+        total_pl_history = PLReportHistory.objects.filter(date__gte=self.date_from).count()
 
         from poms.portfolios.models import Portfolio
         portfolios_count = Portfolio.objects.count()
@@ -299,7 +308,9 @@ class StatsViewSet(AbstractViewSet):
             'total_pl_histories': total_pl_history,
             'expecting_pl_histories': len(self.days_from_first_transaction) * portfolios_count,
             'expecting_pl_bdays_histories': len(self.bdays_from_first_transaction) * portfolios_count,
-            'filled_percent': round(total_pl_history / (len(self.bdays_from_first_transaction) * portfolios_count / 100))
+            'filled_percent': round(
+                total_pl_history / (len(self.bdays_from_first_transaction) * portfolios_count / 100)),
+            'total_portfolios': Portfolio.objects.count()
         }
 
         self.filled_items = self.filled_items + total_pl_history
@@ -318,10 +329,11 @@ class StatsViewSet(AbstractViewSet):
             }
             portfolio_result['expecting_pl_histories'] = len(self.days_from_first_transaction)
             portfolio_result['expecting_bdays_pl_histories'] = len(self.bdays_from_first_transaction)
-            portfolio_result['pl_histories'] = PLReportHistory.objects.filter(portfolio=portfolio).count()
+            portfolio_result['pl_histories'] = PLReportHistory.objects.filter(portfolio=portfolio, date__gte=self.date_from).count()
 
             try:
-                portfolio_result['last_pl_history_date'] = PLReportHistory.objects.filter(portfolio=portfolio).order_by('-date')[0].date
+                portfolio_result['last_pl_history_date'] = \
+                PLReportHistory.objects.filter(portfolio=portfolio, date__gte=self.date_from).order_by('-date')[0].date
             except Exception as e:
                 portfolio_result['last_pl_history_date'] = None
 
@@ -334,7 +346,7 @@ class StatsViewSet(AbstractViewSet):
     def get_widget_stats_history_section(self):
 
         from poms.widgets.models import WidgetStats
-        total_widget_stats = WidgetStats.objects.count()
+        total_widget_stats = WidgetStats.objects.filter(date__gte=self.date_from).count()
 
         from poms.portfolios.models import Portfolio
         portfolios_count = Portfolio.objects.count()
@@ -344,7 +356,9 @@ class StatsViewSet(AbstractViewSet):
             'total_widget_stats': total_widget_stats,
             'expecting_widget_stats': len(self.days_from_first_transaction) * portfolios_count,
             'expecting_bdays_widget_stats': len(self.bdays_from_first_transaction) * portfolios_count,
-            'filled_percent': round(total_widget_stats / (len(self.bdays_from_first_transaction) * portfolios_count / 100))
+            'filled_percent': round(
+                total_widget_stats / (len(self.bdays_from_first_transaction) * portfolios_count / 100)),
+            'total_portfolios': Portfolio.objects.count()
         }
 
         self.filled_items = self.filled_items + total_widget_stats
@@ -363,10 +377,11 @@ class StatsViewSet(AbstractViewSet):
             }
             portfolio_result['expecting_widget_stats'] = len(self.days_from_first_transaction)
             portfolio_result['expecting_bdays_widget_stats'] = len(self.bdays_from_first_transaction)
-            portfolio_result['widget_stats'] = WidgetStats.objects.filter(portfolio=portfolio).count()
+            portfolio_result['widget_stats'] = WidgetStats.objects.filter(portfolio=portfolio, date__gte=self.date_from).count()
 
             try:
-                portfolio_result['last_widget_stats_date'] = WidgetStats.objects.filter(portfolio=portfolio).order_by('-date')[0].date
+                portfolio_result['last_widget_stats_date'] = \
+                WidgetStats.objects.filter(portfolio=portfolio, date__gte=self.date_from).order_by('-date')[0].date
             except Exception as e:
                 portfolio_result['last_widget_stats_date'] = None
 
@@ -380,14 +395,33 @@ class StatsViewSet(AbstractViewSet):
 
         result = {}
 
+        self.period = request.query_params.get('period', 'this_year')
+
         first_transaction_date = self.get_first_transaction_date()
         bday_yesterday = get_closest_bday_of_yesterday()
+
+        self.date_to = bday_yesterday
 
         if first_transaction_date:
 
             self.first_transaction_date = self.get_first_transaction_date()
-            self.days_from_first_transaction = get_list_of_dates_between_two_dates(first_transaction_date, bday_yesterday)
-            self.bdays_from_first_transaction = get_list_of_business_days_between_two_dates(first_transaction_date, bday_yesterday)
+
+            self.date_from = self.first_transaction_date
+
+            if self.period == 'since_inception':
+                self.date_from = self.first_transaction_date
+
+            if self.period == 'this_year':
+                self.date_from = date(date.today().year, 1, 1)
+
+            if self.period == 'last_year':
+                self.date_from = date(date.today().year - 1, 1, 1)
+
+            if self.date_from < self.first_transaction_date:
+                self.date_from = self.first_transaction_date
+
+            self.days_from_first_transaction = get_list_of_dates_between_two_dates(self.date_from, self.date_to)
+            self.bdays_from_first_transaction = get_list_of_business_days_between_two_dates(self.date_from, self.date_to)
 
             result['price_history'] = self.get_price_history_section()
             result['currency_history'] = self.get_currency_history_section()
@@ -396,6 +430,8 @@ class StatsViewSet(AbstractViewSet):
             result['widget_stats_history'] = self.get_widget_stats_history_section()
             # important to be after other section to calc overall percent
             result['general'] = self.get_general_section()
+            result['date_from'] = self.date_from
+            result['date_to'] = self.date_to
 
 
         else:
