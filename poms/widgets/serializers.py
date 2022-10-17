@@ -32,6 +32,8 @@ class CollectStatsSerializer(serializers.Serializer):
 
     benchmark = serializers.CharField(required=False, allow_null=True, initial='sp_500', default='sp_500')
 
+    segmentation_type = serializers.CharField(required=False, allow_null=True, initial='months', default='months')
+
 
 class WidgetStatsSerializer(serializers.ModelSerializer):
 
