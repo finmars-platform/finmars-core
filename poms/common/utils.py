@@ -266,6 +266,7 @@ def get_last_business_day(date, to_string=False):
 
     if to_string:
         return date.strftime("%Y-%m-%d")
+
     return date
 
 
@@ -418,5 +419,5 @@ def str_to_date(d):
 
 
 def get_closest_bday_of_yesterday(to_string=False):
-    yesterday = datetime.datetime.now() - timedelta(days=1)
+    yesterday = datetime.date.today() - timedelta(days=1)
     return get_last_business_day(yesterday, to_string=to_string)

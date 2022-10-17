@@ -5,6 +5,7 @@ from celery import shared_task
 from poms.accounts.models import Account
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyUser, ProxyRequest
+from poms.common.utils import get_closest_bday_of_yesterday
 from poms.currencies.models import Currency
 from poms.instruments.models import CostMethod, PricingPolicy
 from poms.obj_attrs.models import GenericClassifier, GenericAttributeType
@@ -13,12 +14,14 @@ from poms.reports.builders.balance_item import Report
 from poms.reports.builders.balance_serializers import BalanceReportSqlSerializer, PLReportSqlSerializer
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql, PLReportBuilderSql
 from poms.system_messages.handlers import send_system_message
+from poms.users.models import EcosystemDefault, Member
 from poms.widgets.handlers import StatsHandler
 from poms.widgets.models import BalanceReportHistory, BalanceReportHistoryItem, PLReportHistory, WidgetStats, \
     PLReportHistoryItem
 
 from poms.widgets.utils import find_next_date_to_process, collect_asset_type_category, collect_currency_category, \
-    collect_country_category, collect_sector_category, collect_region_category
+    collect_country_category, collect_sector_category, collect_region_category, collect_pl_history, \
+    collect_balance_history, collect_widget_stats
 
 import logging
 
@@ -62,7 +65,7 @@ def start_new_balance_history_collect(task):
                             type='success',
                             title='Balance History Collected',
                             description='Balances from %s to %s are available for widgets' % (
-                            parent_options_object['date_from'], parent_options_object['date_to']),
+                                parent_options_object['date_from'], parent_options_object['date_to']),
                             )
 
         parent_task.status = CeleryTask.STATUS_DONE
@@ -255,7 +258,7 @@ def start_new_pl_history_collect(task):
                             type='success',
                             title='PL History Collected',
                             description='PL History from %s to %s are available for widgets' % (
-                            parent_options_object['date_from'], parent_options_object['date_to']),
+                                parent_options_object['date_from'], parent_options_object['date_to']),
                             )
 
         parent_task.status = CeleryTask.STATUS_DONE
@@ -445,7 +448,7 @@ def start_new_collect_stats(task):
                             type='success',
                             title='Stats Collected',
                             description='Stats from %s to %s are available for widgets' % (
-                            parent_options_object['date_from'], parent_options_object['date_to']),
+                                parent_options_object['date_from'], parent_options_object['date_to']),
                             )
 
         parent_task.status = CeleryTask.STATUS_DONE
@@ -544,3 +547,90 @@ def collect_stats(self, task_id):
         task.save()
 
         start_new_collect_stats(task)
+
+
+@shared_task(name='widgets.calculate_historical', bind=True)
+def calculate_historical(self):
+    try:
+
+        from poms.transactions.models import Transaction
+
+        portfolios = Portfolio.objects.all()
+
+        bday_yesterday = get_closest_bday_of_yesterday()
+
+        _l.info("calculate_historical for %s portfolios for %s" % (len(portfolios), bday_yesterday))
+
+        date_from = bday_yesterday
+        date_to = bday_yesterday
+        dates = [bday_yesterday]
+
+        member = Member.objects.get(is_owner=True)
+        master_user = member.master_user
+
+        ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+
+        report_currency_id = ecosystem_default.currency_id
+        pricing_policy_id = ecosystem_default.pricing_policy_id
+        cost_method_id = CostMethod.AVCO
+        segmentation_type = 'days'
+
+        # Widget Stats settings
+        benchmark = 'sp_500'
+
+        sync = True
+
+        index = 0
+
+        for portfolio in portfolios:
+
+            # Run Collect History
+
+            has_transaction = False
+
+
+            if Transaction.objects.filter(portfolio=portfolio).count():
+                has_transaction = True
+
+            if has_transaction:
+
+                try:
+
+                    collect_balance_history(master_user,
+                                            member,
+                                            date_from,
+                                            date_to,
+                                            dates,
+                                            segmentation_type, portfolio.id, report_currency_id,
+                                            cost_method_id, pricing_policy_id, sync)
+
+                    collect_pl_history(master_user,
+                                       member,
+                                       date_from,
+                                       date_to,
+                                       dates,
+                                       segmentation_type,
+                                       portfolio.id, report_currency_id, cost_method_id,
+                                       pricing_policy_id, sync)
+
+                    # Run Collect Widget Stats
+
+                    collect_widget_stats(master_user,
+                                       member,
+                                       date_from,
+                                       date_to,
+                                       dates,
+                                       segmentation_type,
+                                       portfolio.id, benchmark, sync)
+
+                    index = index + 1
+                except Exception as e:
+
+                    _l.error("Portfolio %s index %s widget calculation error %s" % (portfolio.name, index, e))
+                    _l.error(traceback.format_exc())
+                    pass
+
+    except Exception as e:
+
+        _l.error("widgets.calculate_historical %s" % e)
+        _l.error("widgets.calculate_historical %s" % traceback.format_exc())
