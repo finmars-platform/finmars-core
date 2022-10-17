@@ -473,6 +473,7 @@ class CollectStatsViewSet(AbstractViewSet):
                              date_from,
                              date_to,
                              dates,
+                             segmentation_type,
                              portfolio_id, benchmark)
 
         return Response({
