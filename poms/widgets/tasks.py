@@ -553,11 +553,13 @@ def collect_stats(self, task_id):
 def calculate_historical(self):
     try:
 
+        from poms.transactions.models import Transaction
+
         portfolios = Portfolio.objects.all()
 
-        _l.info("calculate_historical for %s portfolios" % len(portfolios))
-
         bday_yesterday = get_closest_bday_of_yesterday()
+
+        _l.info("calculate_historical for %s portfolios for %s" % (len(portfolios), bday_yesterday))
 
         date_from = bday_yesterday
         date_to = bday_yesterday
@@ -576,36 +578,57 @@ def calculate_historical(self):
         # Widget Stats settings
         benchmark = 'sp_500'
 
+        sync = True
+
+        index = 0
+
         for portfolio in portfolios:
 
             # Run Collect History
 
-            collect_balance_history(master_user,
-                                    member,
-                                    date_from,
-                                    date_to,
-                                    dates,
-                                    segmentation_type, portfolio.id, report_currency_id,
-                                    cost_method_id, pricing_policy_id)
+            has_transaction = False
 
-            collect_pl_history(master_user,
-                               member,
-                               date_from,
-                               date_to,
-                               dates,
-                               segmentation_type,
-                               portfolio.id, report_currency_id, cost_method_id,
-                               pricing_policy_id)
 
-            # Run Collect Widget Stats
+            if Transaction.objects.filter(portfolio=portfolio).count():
+                has_transaction = True
 
-            collect_widget_stats(master_user,
-                               member,
-                               date_from,
-                               date_to,
-                               dates,
-                               segmentation_type,
-                               portfolio.id, benchmark)
+            if has_transaction:
+
+                try:
+
+                    collect_balance_history(master_user,
+                                            member,
+                                            date_from,
+                                            date_to,
+                                            dates,
+                                            segmentation_type, portfolio.id, report_currency_id,
+                                            cost_method_id, pricing_policy_id, sync)
+
+                    collect_pl_history(master_user,
+                                       member,
+                                       date_from,
+                                       date_to,
+                                       dates,
+                                       segmentation_type,
+                                       portfolio.id, report_currency_id, cost_method_id,
+                                       pricing_policy_id, sync)
+
+                    # Run Collect Widget Stats
+
+                    collect_widget_stats(master_user,
+                                       member,
+                                       date_from,
+                                       date_to,
+                                       dates,
+                                       segmentation_type,
+                                       portfolio.id, benchmark, sync)
+
+                    index = index + 1
+                except Exception as e:
+
+                    _l.error("Portfolio %s index %s widget calculation error %s" % (portfolio.name, index, e))
+                    _l.error(traceback.format_exc())
+                    pass
 
     except Exception as e:
 
