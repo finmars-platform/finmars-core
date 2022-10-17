@@ -69,7 +69,13 @@ class SchedulesConfig(AppConfig):
                 "name": "Calculate Portfolio Register navs",
                 "task": 'portfolios.calculate_portfolio_register_price_history',
                 "crontab": crontabs['daily_noon']
-            }
+            },
+            {
+                "id": 5,
+                "name": "Calculate Historical Metrics",
+                "task": 'widgets.calculate_historical',
+                "crontab": crontabs['daily_morning']
+            },
         ]
 
         periodic_tasks_exists = PeriodicTask.objects.values_list('pk', flat=True)

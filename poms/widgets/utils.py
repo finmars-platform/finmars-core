@@ -1,8 +1,14 @@
 import logging
+import traceback
+from django.db import transaction
+
 
 from django.contrib.contenttypes.models import ContentType
 
+from poms.celery_tasks.models import CeleryTask
+from poms.common.utils import get_first_transaction
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
+from poms.system_messages.handlers import send_system_message
 from poms.widgets.models import BalanceReportHistoryItem, PLReportHistoryItem
 
 _l = logging.getLogger('poms.widgets')
@@ -14,9 +20,12 @@ def get_total_from_report_items(key, report_instance_items):
         for item in report_instance_items:
 
             if key in item:
-                result = result + item[key]
+
+                if item[key] or item[key] == 0:
+                    result = result + item[key]
     except Exception as e:
-        _l.error("Could not collect total for %s" % key)
+        _l.error("Could not collect total for %s e %s" % (key, e))
+        _l.error(traceback.format_exc())
 
     return result
 
@@ -32,7 +41,7 @@ def collect_asset_type_category(report_type, master_user, instance_serialized, h
     asset_types = GenericClassifier.objects.filter(attribute_type=asset_types_attribute_type).values_list('name',
                                                                                                        flat=True)
 
-
+    # _l.info('collect_asset_type_category.asset_types %s' % asset_types)
     for asset_type in asset_types:
         if report_type == 'balance':
             item = BalanceReportHistoryItem()
@@ -56,7 +65,7 @@ def collect_asset_type_category(report_type, master_user, instance_serialized, h
 
                     if attribute['attribute_type'] == asset_types_attribute_type.id:
 
-                        if attribute['classifier_object']:
+                        if attribute.get('classifier_object'):
                             if attribute['classifier_object']['name'] == asset_type:
                                 asset_type_items.append(_item)
 
@@ -122,13 +131,13 @@ def collect_asset_type_category(report_type, master_user, instance_serialized, h
     item.save()
 
 
-def collect_sector_category(report_type, master_user, instance_serialized, history, key='market_value'):
+def get_unique_sectors(instance_serialized, master_user):
 
     instrument_content_type = ContentType.objects.get(app_label="instruments", model='instrument')
 
     sector_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
                                                              content_type=instrument_content_type,
-                                                                  user_code='sector')
+                                                             user_code='sector')
 
     sectors = []
 
@@ -140,9 +149,23 @@ def collect_sector_category(report_type, master_user, instance_serialized, histo
 
                 if attribute['attribute_type'] == sector_attribute_type.id:
 
-                    if attribute['value_string'] not in sectors:
-                        sectors.append(attribute['value_string'])
+                    if attribute['value_string']:
+                        if attribute['value_string'] not in sectors:
+                            sectors.append(attribute['value_string'])
 
+    return sectors
+
+def collect_sector_category(report_type, master_user, instance_serialized, history, key='market_value'):
+
+    instrument_content_type = ContentType.objects.get(app_label="instruments", model='instrument')
+
+    sector_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
+                                                             content_type=instrument_content_type,
+                                                                  user_code='sector')
+
+    sectors = get_unique_sectors(instance_serialized, master_user)
+
+    # _l.info('collect_sector_category.sectors %s ' % sectors)
 
     for sector in sectors:
         if report_type == 'balance':
@@ -172,6 +195,47 @@ def collect_sector_category(report_type, master_user, instance_serialized, histo
 
         item.save()
 
+
+    # Get value for No category items
+
+    if report_type == 'balance':
+        item = BalanceReportHistoryItem()
+        item.balance_report_history = history
+
+    if report_type == 'pl':
+        item = PLReportHistoryItem()
+        item.pl_report_history = history
+
+    item.category = 'Sector'
+    item.key = key
+    item.name = 'No category'
+
+    no_category_items = []
+
+    for _item in instance_serialized['items']:
+
+        if _item.get('instrument_object'):
+
+            for attribute in _item['instrument_object']['attributes']:
+
+                if attribute['attribute_type'] == sector_attribute_type.id:
+                    if not attribute['value_string']:
+                        no_category_items.append(_item)
+
+    item.value = get_total_from_report_items(key, no_category_items)
+
+    item.save()
+
+    # Get value for Cash items (No instruments items)
+
+    if report_type == 'balance':
+        item = BalanceReportHistoryItem()
+        item.balance_report_history = history
+
+    if report_type == 'pl':
+        item = PLReportHistoryItem()
+        item.pl_report_history = history
+
     item.category = 'Sector'
     item.key = key
     item.name = 'Cash & Equivalents'
@@ -184,7 +248,9 @@ def collect_sector_category(report_type, master_user, instance_serialized, histo
 
     item.value = get_total_from_report_items(key, asset_type_items)
 
-def collect_country_category(report_type, master_user, instance_serialized, history, key='market_value'):
+    item.save()
+
+def get_unique_countries(instance_serialized):
 
     countries = []
 
@@ -196,6 +262,12 @@ def collect_country_category(report_type, master_user, instance_serialized, hist
 
                 if _item['instrument_object']['country_object']['name'] not in countries:
                     countries.append(_item['instrument_object']['country_object']['name'])
+
+    return countries
+
+def collect_country_category(report_type, master_user, instance_serialized, history, key='market_value'):
+
+    countries = get_unique_countries(instance_serialized)
 
     for country in countries:
         if report_type == 'balance':
@@ -225,6 +297,44 @@ def collect_country_category(report_type, master_user, instance_serialized, hist
 
         item.save()
 
+    # Get value for No category items
+
+    if report_type == 'balance':
+        item = BalanceReportHistoryItem()
+        item.balance_report_history = history
+
+    if report_type == 'pl':
+        item = PLReportHistoryItem()
+        item.pl_report_history = history
+
+    item.category = 'Country'
+    item.key = key
+    item.name = 'No category'
+
+    no_category_items = []
+
+    for _item in instance_serialized['items']:
+
+        if _item.get('instrument_object'):
+
+            if not _item['instrument_object'].get('country_object'):
+
+                no_category_items.append(_item)
+
+    item.value = get_total_from_report_items(key, no_category_items)
+
+    item.save()
+
+    # Get value for Cash items (No instruments items)
+
+    if report_type == 'balance':
+        item = BalanceReportHistoryItem()
+        item.balance_report_history = history
+
+    if report_type == 'pl':
+        item = PLReportHistoryItem()
+        item.pl_report_history = history
+
     item.category = 'Country'
     item.key = key
     item.name = 'Cash & Equivalents'
@@ -236,8 +346,10 @@ def collect_country_category(report_type, master_user, instance_serialized, hist
             asset_type_items.append(_item)
 
     item.value = get_total_from_report_items(key, asset_type_items)
+    item.save()
 
-def collect_region_category(report_type, master_user, instance_serialized, history, key='market_value'):
+
+def get_unique_regions(instance_serialized):
 
     regions = []
 
@@ -249,6 +361,14 @@ def collect_region_category(report_type, master_user, instance_serialized, histo
 
                 if _item['instrument_object']['country_object']['region'] not in regions:
                     regions.append(_item['instrument_object']['country_object']['region'])
+
+    return regions
+
+def collect_region_category(report_type, master_user, instance_serialized, history, key='market_value'):
+
+    # Get values for instrument categorized by region
+
+    regions = get_unique_regions(instance_serialized)
 
     for region in regions:
         if report_type == 'balance':
@@ -278,6 +398,44 @@ def collect_region_category(report_type, master_user, instance_serialized, histo
 
         item.save()
 
+    # Get value for No Category items
+
+    if report_type == 'balance':
+        item = BalanceReportHistoryItem()
+        item.balance_report_history = history
+
+    if report_type == 'pl':
+        item = PLReportHistoryItem()
+        item.pl_report_history = history
+
+    item.category = 'Region'
+    item.key = key
+    item.name = 'No Category'
+
+    no_category_items = []
+
+    for _item in instance_serialized['items']:
+
+        if _item.get('instrument_object'):
+
+            if not _item['instrument_object'].get('country_object'):
+
+                no_category_items.append(_item)
+
+    item.value = get_total_from_report_items(key, no_category_items)
+
+    item.save()
+
+    # Get value for Cash items (No instruments items)
+
+    if report_type == 'balance':
+        item = BalanceReportHistoryItem()
+        item.balance_report_history = history
+
+    if report_type == 'pl':
+        item = PLReportHistoryItem()
+        item.pl_report_history = history
+
     item.category = 'Region'
     item.key = key
     item.name = 'Cash & Equivalents'
@@ -289,6 +447,7 @@ def collect_region_category(report_type, master_user, instance_serialized, histo
             asset_type_items.append(_item)
 
     item.value = get_total_from_report_items(key, asset_type_items)
+    item.save()
 
 def collect_currency_category(report_type, master_user, instance_serialized, history, key='market_value'):
     currencies_ids = []
@@ -323,12 +482,38 @@ def collect_currency_category(report_type, master_user, instance_serialized, his
 
         for _item in instance_serialized['items']:
 
-            if _item['exposure_currency'] == currency['id']:
+            if _item.get('exposure_currency') == currency['id']:
                 currency_items.append(_item)
 
         item.value = get_total_from_report_items(key, currency_items)
 
         item.save()
+
+    # Get value for No Category items
+
+    if report_type == 'balance':
+        item = BalanceReportHistoryItem()
+        item.balance_report_history = history
+
+    if report_type == 'pl':
+        item = PLReportHistoryItem()
+        item.pl_report_history = history
+
+    item.category = 'Currency'
+    item.key = key
+    item.name = 'No Category'
+
+    no_category_items = []
+
+    for _item in instance_serialized['items']:
+
+            if not _item.get('exposure_currency'):
+
+                no_category_items.append(_item)
+
+    item.value = get_total_from_report_items(key, no_category_items)
+
+    item.save()
 
 def find_next_date_to_process(parent_task):
 
@@ -357,3 +542,169 @@ def find_next_date_to_process(parent_task):
                 found = False
 
     return result
+
+
+
+def collect_balance_history(master_user, member, date_from, date_to, dates, segmentation_type, portfolio_id, report_currency_id,
+                            cost_method_id, pricing_policy_id):
+
+    from poms.widgets.tasks import collect_balance_report_history
+
+    parent_task = CeleryTask.objects.create(
+        master_user=master_user,
+        member=member,
+        type='collect_history_chain',
+    )
+
+    parent_task_options_object = {
+        'date_from': date_from,
+        'date_to': date_to,
+        'portfolio_id': portfolio_id,
+        'segmentation_type': segmentation_type,
+        'report_currency_id': report_currency_id,
+        'cost_method_id': cost_method_id,
+        'pricing_policy_id': pricing_policy_id,
+        'dates_to_process': dates,
+        'error_dates': [],
+        'processed_dates': []
+    }
+
+    parent_task.options_object = parent_task_options_object
+    parent_task.save()
+
+    celery_task = CeleryTask.objects.create(
+        master_user=master_user,
+        member=member,
+        type='collect_history',
+        parent=parent_task
+    )
+
+    options_object = {
+        "report_date": dates[0],
+        "portfolio_id": portfolio_id,
+        "report_currency_id": report_currency_id,
+        'cost_method_id': cost_method_id,
+        'pricing_policy_id': pricing_policy_id,
+    }
+
+    celery_task.options_object = options_object
+
+    celery_task.save()
+
+    transaction.on_commit(lambda: collect_balance_report_history.apply_async(kwargs={'task_id': celery_task.id}))
+
+    send_system_message(master_user=parent_task.master_user,
+                        performed_by=parent_task.member.username,
+                        section='schedules',
+                        type='info',
+                        title='Balance History is start collecting',
+                        description='Balance History from %s to %s will be soon available' % (
+                            parent_task_options_object['date_from'], parent_task_options_object['date_to']),
+                        )
+
+def collect_pl_history(master_user, member, date_from, date_to, dates, segmentation_type, portfolio_id, report_currency_id, cost_method_id,
+                       pricing_policy_id):
+
+    from poms.widgets.tasks import collect_pl_report_history
+
+    parent_task = CeleryTask.objects.create(
+        master_user=master_user,
+        member=member,
+        type='collect_history_chain',
+    )
+
+    pl_first_date = str(get_first_transaction(portfolio_id).accounting_date)
+
+    parent_task_options_object = {
+        'pl_first_date': pl_first_date,
+        'date_from': date_from,
+        'date_to': date_to,
+        'segmentation_type': segmentation_type,
+        'portfolio_id': portfolio_id,
+        'report_currency_id': report_currency_id,
+        'cost_method_id': cost_method_id,
+        'pricing_policy_id': pricing_policy_id,
+        'dates_to_process': dates,
+        'error_dates': [],
+        'processed_dates': []
+    }
+
+    parent_task.options_object = parent_task_options_object
+    parent_task.save()
+
+    celery_task = CeleryTask.objects.create(
+        master_user=master_user,
+        member=member,
+        type='collect_history',
+        parent=parent_task
+    )
+
+    options_object = {
+        'pl_first_date': pl_first_date,
+        'report_date': dates[0],
+        'portfolio_id': portfolio_id,
+        'report_currency_id': report_currency_id,
+        'cost_method_id': cost_method_id,
+        'pricing_policy_id': pricing_policy_id,
+    }
+
+    celery_task.options_object = options_object
+
+    celery_task.save()
+
+    transaction.on_commit(lambda: collect_pl_report_history.apply_async(kwargs={'task_id': celery_task.id}))
+
+    send_system_message(master_user=parent_task.master_user,
+                        performed_by=parent_task.member.username,
+                        section='schedules',
+                        type='info',
+                        title='PL History is start collecting',
+                        description='PL History from %s to %s will be soon available' % (
+                            parent_task_options_object['date_from'], parent_task_options_object['date_to']),
+                        )
+
+def collect_widget_stats(master_user, member, date_from, date_to, dates, segmentation_type, portfolio_id, benchmark):
+
+    from poms.widgets.tasks import collect_stats
+
+    parent_task = CeleryTask.objects.create(
+        master_user=master_user,
+        member=member,
+        type='collect_stats_chain'
+    )
+
+    parent_options_object = {
+        'date_from': date_from,
+        'date_to': date_to,
+        'segmentation_type': segmentation_type,
+        'portfolio_id': portfolio_id,
+        'benchmark': benchmark,
+        'dates_to_process': dates,
+        'error_dates': [],
+        'processed_dates': []
+    }
+
+    parent_task.options_object = parent_options_object
+
+    parent_task.save()
+
+    celery_task = CeleryTask.objects.create(
+        master_user=master_user,
+        member=member,
+        parent=parent_task,
+        type='collect_stats'
+    )
+
+    options_object = {
+
+        'portfolio_id': portfolio_id,
+        'benchmark': benchmark,
+        'date': dates[0]
+
+    }
+
+    celery_task.options_object = options_object
+
+    celery_task.save()
+
+    transaction.on_commit(lambda: collect_stats.apply_async(kwargs={'task_id': celery_task.id}))

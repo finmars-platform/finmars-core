@@ -26,6 +26,8 @@ from poms.widgets.tasks import collect_balance_report_history, collect_pl_report
 
 import logging
 
+from poms.widgets.utils import collect_balance_history, collect_pl_history, collect_widget_stats
+
 _l = logging.getLogger('poms.widgets')
 
 
@@ -45,7 +47,7 @@ class HistoryNavViewSet(AbstractViewSet):
             raise ValidationError("Portfolio is no set")
 
         if not date_from:
-            #date_from = str(datetime.datetime.now().year) + "-01-01"
+            # date_from = str(datetime.datetime.now().year) + "-01-01"
             date_from = get_first_transaction(portfolio).accounting_date.strftime("%Y-%m-%d")
 
         if not date_to:
@@ -148,8 +150,7 @@ class HistoryNavViewSet(AbstractViewSet):
 
         portfolio_instance = Portfolio.objects.get(id__in=portfolio)
 
-
-        portfolio_instance_json ={
+        portfolio_instance_json = {
             "id": portfolio_instance.id,
             "name": portfolio_instance.name,
             "user_code": portfolio_instance.user_code
@@ -305,13 +306,11 @@ class HistoryPlViewSet(AbstractViewSet):
 
         portfolio_instance = Portfolio.objects.get(id__in=portfolio)
 
-
-        portfolio_instance_json ={
+        portfolio_instance_json = {
             "id": portfolio_instance.id,
             "name": portfolio_instance.name,
             "user_code": portfolio_instance.user_code
         }
-
 
         result = {
             "date_from": str(date_from),
@@ -345,7 +344,6 @@ class HistoryPlViewSet(AbstractViewSet):
         return Response(result)
 
 
-
 class StatsViewSet(AbstractViewSet):
 
     def list(self, request):
@@ -359,7 +357,6 @@ class StatsViewSet(AbstractViewSet):
         _l.info("StatsViewSet.date %s" % date)
         _l.info("StatsViewSet.portfolio %s" % portfolio)
 
-
         widget = WidgetStats.objects.get(date=date, portfolio_id=portfolio, benchmark=benchmark)
 
         serializer = WidgetStatsSerializer(instance=widget)
@@ -370,120 +367,6 @@ class StatsViewSet(AbstractViewSet):
 class CollectHistoryViewSet(AbstractViewSet):
     serializer_class = CollectHistorySerializer
 
-    def collect_balance_history(self, request, date_from, date_to, dates, segmentation_type, portfolio_id, report_currency_id,
-                                cost_method_id, pricing_policy_id):
-
-        parent_task = CeleryTask.objects.create(
-            master_user=request.user.master_user,
-            member=request.user.member,
-            type='collect_history_chain',
-        )
-
-        parent_task_options_object = {
-            'date_from': date_from,
-            'date_to': date_to,
-            'portfolio_id': portfolio_id,
-            'segmentation_type': segmentation_type,
-            'report_currency_id': report_currency_id,
-            'cost_method_id': cost_method_id,
-            'pricing_policy_id': pricing_policy_id,
-            'dates_to_process': dates,
-            'error_dates': [],
-            'processed_dates': []
-        }
-
-        parent_task.options_object = parent_task_options_object
-        parent_task.save()
-
-        celery_task = CeleryTask.objects.create(
-            master_user=request.user.master_user,
-            member=request.user.member,
-            type='collect_history',
-            parent=parent_task
-        )
-
-        options_object = {
-            "report_date": dates[0],
-            "portfolio_id": portfolio_id,
-            "report_currency_id": report_currency_id,
-            'cost_method_id': cost_method_id,
-            'pricing_policy_id': pricing_policy_id,
-        }
-
-        celery_task.options_object = options_object
-
-        celery_task.save()
-
-        transaction.on_commit(lambda: collect_balance_report_history.apply_async(kwargs={'task_id': celery_task.id}))
-
-        send_system_message(master_user=parent_task.master_user,
-                            performed_by=parent_task.member.username,
-                            section='schedules',
-                            type='info',
-                            title='Balance History is start collecting',
-                            description='Balance History from %s to %s will be soon available' % (
-                                parent_task_options_object['date_from'], parent_task_options_object['date_to']),
-                            )
-
-    def collect_pl_history(self, request, date_from, date_to, dates, segmentation_type, portfolio_id, report_currency_id, cost_method_id,
-                           pricing_policy_id):
-
-        parent_task = CeleryTask.objects.create(
-            master_user=request.user.master_user,
-            member=request.user.member,
-            type='collect_history_chain',
-        )
-
-        pl_first_date = str(get_first_transaction(portfolio_id).accounting_date)
-
-        parent_task_options_object = {
-            'pl_first_date': pl_first_date,
-            'date_from': date_from,
-            'date_to': date_to,
-            'segmentation_type': segmentation_type,
-            'portfolio_id': portfolio_id,
-            'report_currency_id': report_currency_id,
-            'cost_method_id': cost_method_id,
-            'pricing_policy_id': pricing_policy_id,
-            'dates_to_process': dates,
-            'error_dates': [],
-            'processed_dates': []
-        }
-
-        parent_task.options_object = parent_task_options_object
-        parent_task.save()
-
-        celery_task = CeleryTask.objects.create(
-            master_user=request.user.master_user,
-            member=request.user.member,
-            type='collect_history',
-            parent=parent_task
-        )
-
-        options_object = {
-            'pl_first_date': pl_first_date,
-            'report_date': dates[0],
-            'portfolio_id': portfolio_id,
-            'report_currency_id': report_currency_id,
-            'cost_method_id': cost_method_id,
-            'pricing_policy_id': pricing_policy_id,
-        }
-
-        celery_task.options_object = options_object
-
-        celery_task.save()
-
-        transaction.on_commit(lambda: collect_pl_report_history.apply_async(kwargs={'task_id': celery_task.id}))
-
-        send_system_message(master_user=parent_task.master_user,
-                            performed_by=parent_task.member.username,
-                            section='schedules',
-                            type='info',
-                            title='PL History is start collecting',
-                            description='PL History from %s to %s will be soon available' % (
-                                parent_task_options_object['date_from'], parent_task_options_object['date_to']),
-                            )
-
     def create(self, request):
 
         date_from = request.data.get('date_from', None)
@@ -491,7 +374,7 @@ class CollectHistoryViewSet(AbstractViewSet):
         portfolio_id = request.data.get('portfolio', None)
         report_currency_id = request.data.get('currency', None)
         pricing_policy_id = request.data.get('pricing_policy', None)
-        cost_method_id = request.data.get('cost_method', CostMethod.AVCO)
+        cost_method_id = request.data.get('cost_method', None)
         segmentation_type = request.data.get('segmentation_type', None)
 
         ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
@@ -501,12 +384,14 @@ class CollectHistoryViewSet(AbstractViewSet):
         if not pricing_policy_id:
             pricing_policy_id = ecosystem_default.pricing_policy_id
 
+        if not cost_method_id:
+            cost_method_id = CostMethod.AVCO
+
         _l.info('CollectHistoryViewSet.segmentation_type %s' % segmentation_type)
         if not segmentation_type:
             segmentation_type = 'months'
 
         dates = []
-
 
         _l.info('CollectHistoryViewSet.date_from %s' % date_from)
         _l.info('CollectHistoryViewSet.date_to %s' % date_to)
@@ -521,12 +406,24 @@ class CollectHistoryViewSet(AbstractViewSet):
         if len(dates) == 0:
             raise ValidationError("No buisness days in range %s to %s" % (date_from, date_to))
 
+        if len(dates) > 365:
+            raise ValidationError("Date range exceeded max limit of 365 days")
 
-
-        self.collect_balance_history(request, date_from, date_to, dates, segmentation_type, portfolio_id, report_currency_id,
-                                     cost_method_id, pricing_policy_id)
-        self.collect_pl_history(request, date_from, date_to, dates, segmentation_type, portfolio_id, report_currency_id, cost_method_id,
-                                pricing_policy_id)
+        collect_balance_history(request.user.master_user,
+                                request.user.member,
+                                date_from,
+                                date_to,
+                                dates,
+                                segmentation_type, portfolio_id, report_currency_id,
+                                cost_method_id, pricing_policy_id)
+        collect_pl_history(request.user.master_user,
+                           request.user.member,
+                           date_from,
+                           date_to,
+                           dates,
+                           segmentation_type,
+                           portfolio_id, report_currency_id, cost_method_id,
+                           pricing_policy_id)
 
         return Response({
             'status': 'ok'
@@ -537,57 +434,46 @@ class CollectStatsViewSet(AbstractViewSet):
     serializer_class = CollectStatsSerializer
 
     def create(self, request):
-
         date_from = request.data.get('date_from', None)
         date_to = request.data.get('date_to', None)
         portfolio_id = request.data.get('portfolio', None)
-        benchmark = request.data.get('benchmark', 'sp_500')
+        benchmark = request.data.get('benchmark', None)
+        segmentation_type = request.data.get('segmentation_type', None)
 
-        dates = get_list_of_business_days_between_two_dates(date_from, date_to, to_string=True)
+        if not segmentation_type:
+            segmentation_type = 'months'
+
+
+        if not portfolio_id:
+            raise ValidationError("Portfolio is not set")
+
+        if not benchmark:
+            benchmark = 'sp_500'
+
+        dates = []
+
+        _l.info('CollectHistoryViewSet.date_from %s' % date_from)
+        _l.info('CollectHistoryViewSet.date_to %s' % date_to)
+
+        if segmentation_type == 'days':
+            dates = get_list_of_business_days_between_two_dates(date_from, date_to, to_string=True)
+
+        if segmentation_type == 'months':
+            dates = get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=True)
+            _l.info('CollectHistoryViewSet.create: dates %s' % dates)
+
+        if len(dates) == 0:
+            raise ValidationError("No buisness days in range %s to %s" % (date_from, date_to))
 
         if len(dates) > 365:
             raise ValidationError("Date range exceeded max limit of 365 days")
 
-        parent_task = CeleryTask.objects.create(
-            master_user=request.user.master_user,
-            member=request.user.member,
-            type='collect_stats_chain'
-        )
-
-        parent_options_object = {
-            'date_from': date_from,
-            'date_to': date_to,
-            'portfolio_id': portfolio_id,
-            'benchmark': benchmark,
-            'dates_to_process': dates,
-            'error_dates': [],
-            'processed_dates': []
-        }
-
-        parent_task.options_object = parent_options_object
-
-        parent_task.save()
-
-        celery_task = CeleryTask.objects.create(
-            master_user=request.user.master_user,
-            member=request.user.member,
-            parent=parent_task,
-            type='collect_stats'
-        )
-
-        options_object = {
-
-            'portfolio_id': portfolio_id,
-            'benchmark': benchmark,
-            'date': dates[0]
-
-        }
-
-        celery_task.options_object = options_object
-
-        celery_task.save()
-
-        transaction.on_commit(lambda: collect_stats.apply_async(kwargs={'task_id': celery_task.id}))
+        collect_widget_stats(request.user.master_user,
+                             request.user.member,
+                             date_from,
+                             date_to,
+                             dates,
+                             portfolio_id, benchmark)
 
         return Response({
             'status': 'ok'
