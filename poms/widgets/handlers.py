@@ -366,7 +366,7 @@ class StatsHandler():
         betta = self.get_betta()
 
         try:
-            alpha = cumulative_return - betta * benchmarks_returns
+            alpha = cumulative_return - betta * statistics.variance(benchmarks_returns)
         except Exception as e:
             _l.error('get_alpha error %s ' % e)
             _l.error('get_alpha error  betta %s ' % betta)
