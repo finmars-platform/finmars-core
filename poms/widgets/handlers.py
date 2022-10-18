@@ -1,6 +1,7 @@
 import datetime
 import math
 import statistics
+import traceback
 
 import numpy
 from django.db.models import Q
@@ -353,6 +354,7 @@ class StatsHandler():
 
         alpha = 0
         # alpha = Retrurn_portfolio - Betta * Return_benchmark
+        benchmarks_returns = []
         first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
 
         date_from = first_transaction.accounting_date
@@ -366,6 +368,11 @@ class StatsHandler():
         try:
             alpha = cumulative_return - betta * benchmarks_returns
         except Exception as e:
+            _l.error('get_alpha error %s ' % e)
+            _l.error('get_alpha error  betta %s ' % betta)
+            _l.error('get_alpha error  benchmarks_returns %s ' % benchmarks_returns)
+            _l.error('get_alpha error  cumulative_return %s ' % cumulative_return)
+            _l.error('get_alpha traceback %s ' % traceback.format_exc())
             alpha = 0
 
         return alpha
