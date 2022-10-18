@@ -339,7 +339,7 @@ def calculate_portfolio_register_price_history(master_users=None, date_from=None
 
                 if date_from and isinstance(date_from, str):
                     format = '%Y-%m-%d'
-                    date_from = datetime.strptime(date_from, format)
+                    date_from = datetime.strptime(date_from, format).date()
                 else:
                     first_transaction = \
                         Transaction.objects.filter(portfolio=portfolio_register.portfolio).order_by('accounting_date')[0]
