@@ -19,11 +19,17 @@ from poms.users.filters import OwnerByMasterUserFilter
 
 
 class AccountTypeDefault(object):
+
+    requires_context = True
+
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         self._master_user = request.user.master_user
 
-    def __call__(self):
+    def __call__(self, serializer_field):
+
+        self.set_context(serializer_field)
+
         return self._master_user.account_type
 
 
@@ -35,11 +41,15 @@ class AccountTypeField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
 
 
 class AccountDefault(object):
+
+    requires_context = True
+
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         self._master_user = request.user.master_user
 
-    def __call__(self):
+    def __call__(self, serializer_field):
+        self.set_context(serializer_field)
         return self._master_user.account
 
 

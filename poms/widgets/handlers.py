@@ -349,10 +349,24 @@ class StatsHandler():
 
         return betta
 
-    # TODO get_alpha
     def get_alpha(self):
 
         alpha = 0
+        # alpha = Retrurn_portfolio - Betta * Return_benchmark
+        first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
+
+        date_from = first_transaction.accounting_date
+
+        date_to = self.date
+
+        cumulative_return = self.get_cumulative_return()
+        benchmarks_returns = self.get_benchmark_returns(date_from, date_to)
+        betta = self.get_betta()
+
+        try:
+            alpha = cumulative_return - betta * benchmarks_returns
+        except Exception as e:
+            alpha = 0
 
         return alpha
 
