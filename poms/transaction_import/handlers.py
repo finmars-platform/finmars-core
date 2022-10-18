@@ -464,7 +464,10 @@ class TransactionImportProcess(object):
 
                         for scheme_input in self.scheme.inputs.all():
 
-                            item[scheme_input.name] = file_item[scheme_input.column_name]
+                            try:
+                                item[scheme_input.name] = file_item[scheme_input.column_name]
+                            except Exception as e:
+                                item[scheme_input.name] = None
 
                         self.raw_items.append(item)
 
