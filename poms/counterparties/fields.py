@@ -18,11 +18,15 @@ from poms.users.filters import OwnerByMasterUserFilter
 
 
 class CounterpartyGroupDefault(object):
+
+    requires_context = True
+
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         self._master_user = request.user.master_user
 
-    def __call__(self):
+    def __call__(self, serializer_field):
+        self.set_context(serializer_field)
         return self._master_user.counterparty_group
 
 
@@ -34,11 +38,13 @@ class CounterpartyGroupField(PrimaryKeyRelatedFilteredWithObjectPermissionField)
 
 
 class CounterpartyDefault(object):
+    requires_context = True
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         self._master_user = request.user.master_user
 
-    def __call__(self):
+    def __call__(self, serializer_field):
+        self.set_context(serializer_field)
         return self._master_user.counterparty
 
 
@@ -62,11 +68,13 @@ class CounterpartyField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
 
 
 class ResponsibleGroupDefault(object):
+    requires_context = True
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         self._master_user = request.user.master_user
 
-    def __call__(self):
+    def __call__(self, serializer_field):
+        self.set_context(serializer_field)
         return self._master_user.responsible_group
 
 
@@ -78,11 +86,13 @@ class ResponsibleGroupField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
 
 
 class ResponsibleDefault(object):
+    requires_context = True
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         self._master_user = request.user.master_user
 
-    def __call__(self):
+    def __call__(self, serializer_field):
+        self.set_context(serializer_field)
         return self._master_user.responsible
 
 
