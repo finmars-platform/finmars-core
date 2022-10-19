@@ -649,7 +649,8 @@ class CalendarEventsViewSet(AbstractViewSet):
 
             title = '[' + str(instance.id) + ']'
 
-            title = title + ' ' + instance.action
+            if instance.action:
+                title = title + ' ' + instance.action
             if instance.member:
                 title = title + ' ' + instance.member.username
 
@@ -690,7 +691,8 @@ class CalendarEventsViewSet(AbstractViewSet):
 
             title = '[' + str(instance.id) + ']'
 
-            title = title + ' ' + instance.action
+            if instance.action:
+                title = title + ' ' + instance.action
             if instance.member:
                 title = title + ' ' + instance.member.username
 
@@ -733,8 +735,8 @@ class CalendarEventsViewSet(AbstractViewSet):
 
 
             title = '[' + str(instance.id) + ']'
-
-            title = title + ' ' + instance.action
+            if instance.action:
+                title = title + ' ' + instance.action
             if instance.member:
                 title = title + ' ' + instance.member.username
 
@@ -772,7 +774,9 @@ class CalendarEventsViewSet(AbstractViewSet):
 
             title = '[' + str(task.id) + ']'
 
-            title = title + ' ' + task.type
+            if task.type:
+                title = title + ' ' + task.type
+
             if task.member:
                 title = title + ' ' + task.member.username
 
