@@ -6,11 +6,11 @@ from poms.integrations.providers.base import parse_date_iso
 from poms.pricing.handlers import PricingProcedureProcess
 from poms.procedures.handlers import RequestDataFileProcedureProcess, ExpressionProcedureProcess
 from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, PricingParentProcedureInstance, \
-    RequestDataFileProcedureInstance, ExpressionProcedure, ExpressionProcedureInstance
+    RequestDataFileProcedureInstance, ExpressionProcedure, ExpressionProcedureInstance, PricingProcedureInstance
 from poms.procedures.serializers import RequestDataFileProcedureSerializer, RunRequestDataFileProcedureSerializer, \
     PricingProcedureSerializer, RunProcedureSerializer, PricingParentProcedureInstanceSerializer, \
     RequestDataFileProcedureInstanceSerializer, ExpressionProcedureSerializer, RunExpressionProcedureSerializer, \
-    ExpressionProcedureInstanceSerializer
+    ExpressionProcedureInstanceSerializer, PricingProcedureInstanceSerializer
 from poms.system_messages.handlers import send_system_message
 
 from poms.users.filters import OwnerByMasterUserFilter
@@ -88,6 +88,25 @@ class PricingParentProcedureInstanceViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
     ]
     filter_class = PricingParentProcedureInstanceFilterSet
+
+class PricingProcedureInstanceFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    class Meta:
+        model = PricingProcedureInstance
+        fields = []
+
+class PricingProcedureInstanceViewSet(AbstractModelViewSet):
+    queryset = PricingProcedureInstance.objects.select_related(
+        'master_user',
+    )
+    serializer_class = PricingProcedureInstanceSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = PricingProcedureInstanceFilterSet
+
+
 
 
 

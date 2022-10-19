@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 
-from datetime import timedelta, date
+import calendar
+import croniter
+from datetime import timedelta, date, datetime
 
 from django.shortcuts import render
 from functools import lru_cache
@@ -19,7 +21,7 @@ from rest_framework.views import APIView
 
 from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer
 from poms.common.utils import get_list_of_business_days_between_two_dates, date_now, get_closest_bday_of_yesterday, \
-    get_list_of_dates_between_two_dates
+    get_list_of_dates_between_two_dates, last_day_of_month
 from poms.common.views import AbstractViewSet, AbstractApiView
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory, PricingPolicy, Instrument
@@ -28,6 +30,10 @@ _languages = [Language(code, name) for code, name in settings.LANGUAGES]
 
 from django.views.decorators.cache import never_cache
 from django.http import HttpResponse, JsonResponse
+
+import logging
+
+_l = logging.getLogger('poms.api')
 
 
 @lru_cache()
@@ -156,11 +162,15 @@ class StatsViewSet(AbstractViewSet):
             pricing_policy_result = {
                 'expecting_histories': len(self.days_from_first_transaction) * instruments_count,
                 'expecting_bdays_histories': len(self.bdays_from_first_transaction) * instruments_count,
-                'price_histories': PriceHistory.objects.filter(date__gte=self.date_from, pricing_policy=pricing_policy, instrument_id__in=instruments_ids).count(),
+                'price_histories': PriceHistory.objects.filter(date__gte=self.date_from, pricing_policy=pricing_policy,
+                                                               instrument_id__in=instruments_ids).count(),
             }
 
             try:
-                pricing_policy_result['filled_percent'] = round(PriceHistory.objects.filter(date__gte=self.date_from, pricing_policy=pricing_policy, instrument_id__in=instruments_ids).count() / (len(self.bdays_from_first_transaction) * instruments_count / 100))
+                pricing_policy_result['filled_percent'] = round(
+                    PriceHistory.objects.filter(date__gte=self.date_from, pricing_policy=pricing_policy,
+                                                instrument_id__in=instruments_ids).count() / (
+                            len(self.bdays_from_first_transaction) * instruments_count / 100))
             except Exception as e:
                 pricing_policy_result['filled_percent'] = 0
 
@@ -202,25 +212,22 @@ class StatsViewSet(AbstractViewSet):
             # Price History stats
 
             result['filled_items'] = result['filled_items'] + pricing_policy_result['price_histories']
-            result['items_to_fill'] = result['items_to_fill'] + (len(self.bdays_from_first_transaction) * instruments_count)
-
+            result['items_to_fill'] = result['items_to_fill'] + (
+                    len(self.bdays_from_first_transaction) * instruments_count)
 
             # Portfolio stats
 
             portfolio_stats['filled_items'] = portfolio_stats['filled_items'] + pricing_policy_result['price_histories']
-            portfolio_stats['items_to_fill'] = portfolio_stats['items_to_fill'] + (len(self.bdays_from_first_transaction) * instruments_count)
-
+            portfolio_stats['items_to_fill'] = portfolio_stats['items_to_fill'] + (
+                    len(self.bdays_from_first_transaction) * instruments_count)
 
             pricing_policies.append(pricing_policy_result)
-
-
 
         result['pricing_policies'] = pricing_policies
         try:
             result['filled_percent'] = round(result['filled_items'] / (result['items_to_fill'] / 100))
         except Exception as e:
             result['filled_percent'] = 0
-
 
         return result
 
@@ -245,11 +252,16 @@ class StatsViewSet(AbstractViewSet):
             pricing_policy_result = {
                 'expecting_histories': len(self.days_from_first_transaction) * currencies_count,
                 'expecting_bdays_histories': len(self.bdays_from_first_transaction) * currencies_count,
-                'currency_histories': CurrencyHistory.objects.filter(date__gte=self.date_from, pricing_policy=pricing_policy, currency_id__in=currencies_ids).count(),
+                'currency_histories': CurrencyHistory.objects.filter(date__gte=self.date_from,
+                                                                     pricing_policy=pricing_policy,
+                                                                     currency_id__in=currencies_ids).count(),
             }
 
             try:
-                pricing_policy_result['filled_percent'] = round(CurrencyHistory.objects.filter(date__gte=self.date_from, pricing_policy=pricing_policy, currency_id__in=currencies_ids).count() / (len(self.bdays_from_first_transaction) * currencies_count / 100))
+                pricing_policy_result['filled_percent'] = round(
+                    CurrencyHistory.objects.filter(date__gte=self.date_from, pricing_policy=pricing_policy,
+                                                   currency_id__in=currencies_ids).count() / (
+                            len(self.bdays_from_first_transaction) * currencies_count / 100))
             except Exception as e:
                 pricing_policy_result['filled_percent'] = 0
 
@@ -289,12 +301,15 @@ class StatsViewSet(AbstractViewSet):
             # Currency history stat
 
             result['filled_items'] = result['filled_items'] + pricing_policy_result['currency_histories']
-            result['items_to_fill'] = result['items_to_fill'] + (len(self.bdays_from_first_transaction) * currencies_count)
+            result['items_to_fill'] = result['items_to_fill'] + (
+                    len(self.bdays_from_first_transaction) * currencies_count)
 
             # Portfolio stat
 
-            portfolio_stats['filled_items'] = portfolio_stats['filled_items'] + pricing_policy_result['currency_histories']
-            portfolio_stats['items_to_fill'] = portfolio_stats['items_to_fill'] + (len(self.bdays_from_first_transaction) * currencies_count)
+            portfolio_stats['filled_items'] = portfolio_stats['filled_items'] + pricing_policy_result[
+                'currency_histories']
+            portfolio_stats['items_to_fill'] = portfolio_stats['items_to_fill'] + (
+                    len(self.bdays_from_first_transaction) * currencies_count)
 
             pricing_policies.append(pricing_policy_result)
 
@@ -434,36 +449,44 @@ class StatsViewSet(AbstractViewSet):
 
                 portfolio_item['complex_transactions'] = ComplexTransaction.objects.filter(
                     transactions__portfolio=portfolio, transactions__accounting_date__gte=self.date_from).count()
-                portfolio_item['transactions'] = Transaction.objects.filter(portfolio=portfolio, accounting_date__gte=self.date_from).count()
+                portfolio_item['transactions'] = Transaction.objects.filter(portfolio=portfolio,
+                                                                            accounting_date__gte=self.date_from).count()
 
-                instruments_ids = list(Transaction.objects.filter(portfolio=portfolio).values_list('instrument', flat=True))
-                instruments_ids = instruments_ids + list(Transaction.objects.filter(portfolio=portfolio).values_list('linked_instrument', flat=True))
-                instruments_ids = instruments_ids + list(Transaction.objects.filter(portfolio=portfolio).values_list('allocation_balance', flat=True))
-                instruments_ids = instruments_ids + list(Transaction.objects.filter(portfolio=portfolio).values_list('allocation_pl', flat=True))
+                instruments_ids = list(
+                    Transaction.objects.filter(portfolio=portfolio).values_list('instrument', flat=True))
+                instruments_ids = instruments_ids + list(
+                    Transaction.objects.filter(portfolio=portfolio).values_list('linked_instrument', flat=True))
+                instruments_ids = instruments_ids + list(
+                    Transaction.objects.filter(portfolio=portfolio).values_list('allocation_balance', flat=True))
+                instruments_ids = instruments_ids + list(
+                    Transaction.objects.filter(portfolio=portfolio).values_list('allocation_pl', flat=True))
 
                 portfolio_item['related_instruments'] = Instrument.objects.filter(id__in=instruments_ids).count()
 
-                currency_ids = list(Transaction.objects.filter(portfolio=portfolio).values_list('transaction_currency', flat=True))
-                currency_ids = currency_ids + list(Transaction.objects.filter(portfolio=portfolio).values_list('settlement_currency', flat=True))
+                currency_ids = list(
+                    Transaction.objects.filter(portfolio=portfolio).values_list('transaction_currency', flat=True))
+                currency_ids = currency_ids + list(
+                    Transaction.objects.filter(portfolio=portfolio).values_list('settlement_currency', flat=True))
 
                 portfolio_item['related_currencies'] = Currency.objects.filter(id__in=currency_ids).count()
 
-                portfolio_item['price_history'] = self.get_price_history_section(portfolio, portfolio_stats, instruments_ids)
-                portfolio_item['currency_history'] = self.get_currency_history_section(portfolio, portfolio_stats, currency_ids)
+                portfolio_item['price_history'] = self.get_price_history_section(portfolio, portfolio_stats,
+                                                                                 instruments_ids)
+                portfolio_item['currency_history'] = self.get_currency_history_section(portfolio, portfolio_stats,
+                                                                                       currency_ids)
                 portfolio_item['nav_history'] = self.get_nav_history_section(portfolio, portfolio_stats)
                 portfolio_item['pl_history'] = self.get_pl_history_section(portfolio, portfolio_stats)
-                portfolio_item['widget_stats_history'] = self.get_widget_stats_history_section(portfolio, portfolio_stats)
+                portfolio_item['widget_stats_history'] = self.get_widget_stats_history_section(portfolio,
+                                                                                               portfolio_stats)
 
                 portfolio_item['portfolio_stats'] = portfolio_stats
-                portfolio_item['filled_percent'] = round(portfolio_item['portfolio_stats']['filled_items'] / (portfolio_item['portfolio_stats']['items_to_fill'] / 100))
+                portfolio_item['filled_percent'] = round(portfolio_item['portfolio_stats']['filled_items'] / (
+                        portfolio_item['portfolio_stats']['items_to_fill'] / 100))
 
                 trns = Transaction.objects.filter(portfolio=portfolio).order_by('accounting_date')
                 portfolio_item['first_transaction_date'] = []
                 if len(trns):
                     portfolio_item['first_transaction_date'] = trns[0].accounting_date
-
-
-
 
                 portfolios.append(portfolio_item)
 
@@ -474,7 +497,6 @@ class StatsViewSet(AbstractViewSet):
             result['date_to'] = self.date_to
 
             for item in result['portfolios']:
-
                 items_to_fill = 0
                 filled_items = 0
 
@@ -488,3 +510,301 @@ class StatsViewSet(AbstractViewSet):
             result['error_message'] = 'No Transactions'
 
         return Response(result)
+
+
+class CalendarEventsViewSet(AbstractViewSet):
+
+    def list(self, request, *args, **kwargs):
+
+        from poms.schedules.models import Schedule
+        from poms.celery_tasks.models import CeleryTask
+        from django_celery_beat.models import CrontabSchedule, PeriodicTask
+        from poms.procedures.models import ExpressionProcedureInstance
+        from poms.procedures.models import BaseProcedureInstance
+        from poms.procedures.models import PricingProcedureInstance
+        from poms.procedures.models import RequestDataFileProcedureInstance
+        from poms.system_messages.models import SystemMessage
+        def cronexp(field):
+            """Representation of cron expression."""
+            return field and str(field).replace(' ', '') or '*'
+
+        date_from = request.query_params.get('date_from', None)
+        date_to = request.query_params.get('date_to', None)
+
+        if not date_from:
+            date_from = datetime.today().replace(day=1)
+        else:
+            date_from = datetime.strptime(date_from, '%Y-%m-%d')
+
+        if not date_to:
+            date_to = last_day_of_month(date_from)
+        else:
+            date_to = datetime.strptime(date_to, '%Y-%m-%d')
+
+        _l.info('date_from %s' % date_from)
+        _l.info('date_to %s' % date_to)
+
+        dates = get_list_of_dates_between_two_dates(date_from, date_to)
+
+        results = []
+        # Format for Date Calendar
+        # {
+        #     title  : 'event2',
+        #     start  : '2010-01-05',
+        #     end    : '2010-01-07'
+        # },
+
+        # Collect System Schedule
+
+        periodic_tasks = PeriodicTask.objects.exclude(name='Shedules Process')
+
+        for task in periodic_tasks:
+
+            # print('task.crontab.shedule %s' % task.crontab)
+            expr = '{0} {1} {2} {3} {4}'.format(cronexp(task.crontab.minute),
+                                                cronexp(task.crontab.hour),
+                                                cronexp(task.crontab.day_of_month),
+                                                cronexp(task.crontab.month_of_year),
+                                                cronexp(task.crontab.day_of_week))
+
+            # print('expr %s' % expr)
+
+            cron = croniter.croniter(expr, date_from)
+
+            lookup = True
+            while lookup:
+                nextdate = cron.get_next(datetime)
+
+                item = {
+                    'title': task.name,
+                    'start': str(nextdate),
+                    'classNames': ['system'],
+                    'backgroundColor': '#ddd',
+                    'extendedProps': {
+                        'type': 'system_schedule',
+                    }
+                }
+
+                results.append(item)
+
+                if nextdate > date_to:
+                    lookup = False
+
+        # Collect User Schedules
+
+        schedules = Schedule.objects.all()
+
+        for schedule in schedules:
+            cron = croniter.croniter(schedule.cron_expr, date_from)
+
+            lookup = True
+            while lookup:
+                nextdate = cron.get_next(datetime)
+
+                item = {
+                    'title': schedule.name,
+                    'start': str(nextdate),
+                    'classNames': ['user'],
+                    'backgroundColor': 'lightgrey',
+                    'extendedProps': {
+                        'type': 'schedule',
+                    }
+                }
+
+                results.append(item)
+
+                if nextdate > date_to:
+                    lookup = False
+
+        # Data Procedures
+
+
+        data_procedure_instances = RequestDataFileProcedureInstance.objects.filter(created__gte=date_from, created__lte=date_to)
+
+        for instance in data_procedure_instances:
+
+            item = {
+                'start': instance.created,
+                'classNames': ['user'],
+                'extendedProps': {
+                    'type': 'data_procedure',
+                    'id': instance.id,
+                    'payload': {
+                        'action': instance.action,
+                        'provider': instance.provider,
+                        'status': instance.status,
+                        'error_message': instance.error_message,
+                    }
+                }
+            }
+
+            item['backgroundColor'] = 'green'
+
+            if instance.status == BaseProcedureInstance.STATUS_ERROR:
+                item['backgroundColor'] = 'red'
+
+            if instance.status == BaseProcedureInstance.STATUS_PENDING:
+                item['backgroundColor'] = 'blue'
+
+
+            title = '[' + str(instance.id) + ']'
+
+            title = title + ' ' + instance.action
+            if instance.member:
+                title = title + ' ' + instance.member.username
+
+            item['title'] = title
+
+
+            results.append(item)
+
+        # Pricing Procedures
+
+        pricing_procedure_instances = PricingProcedureInstance.objects.filter(created__gte=date_from, created__lte=date_to)
+
+        for instance in pricing_procedure_instances:
+
+            item = {
+                'start': instance.created,
+                'classNames': ['user'],
+                'extendedProps': {
+                    'type': 'pricing_procedure',
+                    'id': instance.id,
+                    'payload': {
+                        'action': instance.action,
+                        'provider': instance.provider,
+                        'status': instance.status,
+                        'error_message': instance.error_message,
+                    }
+                }
+            }
+
+            item['backgroundColor'] = 'green'
+
+            if instance.status == BaseProcedureInstance.STATUS_ERROR:
+                item['backgroundColor'] = 'red'
+
+            if instance.status == BaseProcedureInstance.STATUS_PENDING:
+                item['backgroundColor'] = 'blue'
+
+
+            title = '[' + str(instance.id) + ']'
+
+            title = title + ' ' + instance.action
+            if instance.member:
+                title = title + ' ' + instance.member.username
+
+            item['title'] = title
+
+
+            results.append(item)
+
+
+        # Expression Procedures
+
+
+        expression_procedure_instances = ExpressionProcedureInstance.objects.filter(created__gte=date_from, created__lte=date_to)
+
+        for instance in expression_procedure_instances:
+
+            item = {
+                'start': instance.created,
+                'classNames': ['user'],
+                'extendedProps': {
+                    'type': 'expression_procedure',
+                    'id': instance.id,
+                    'payload': {
+                        'action': instance.action,
+                        'provider': instance.provider,
+                        'status': instance.status,
+                        'error_message': instance.error_message,
+                        'result': instance.result
+                    }
+                }
+            }
+
+            item['backgroundColor'] = 'green'
+
+            if instance.status == BaseProcedureInstance.STATUS_ERROR:
+                item['backgroundColor'] = 'red'
+
+            if instance.status == BaseProcedureInstance.STATUS_PENDING:
+                item['backgroundColor'] = 'blue'
+
+
+            title = '[' + str(instance.id) + ']'
+
+            title = title + ' ' + instance.action
+            if instance.member:
+                title = title + ' ' + instance.member.username
+
+            item['title'] = title
+
+
+            results.append(item)
+
+        # Collect Celery Tasks
+
+        tasks = CeleryTask.objects.filter(created__gte=date_from, created__lte=date_to)
+
+        for task in tasks:
+            item = {
+                'start': task.created,
+                'classNames': ['user'],
+                'extendedProps': {
+                    'type': 'celery_task',
+                    'id': task.id,
+                    'payload': {
+                        'type': task.type,
+                        'status': task.status,
+                        'error_message': task.error_message
+                    }
+                }
+            }
+
+            item['backgroundColor'] = 'green'
+
+            if task.status == CeleryTask.STATUS_ERROR:
+                item['backgroundColor'] = 'red'
+
+            if task.status == CeleryTask.STATUS_PENDING:
+                item['backgroundColor'] = 'blue'
+
+            title = '[' + str(task.id) + ']'
+
+            title = title + ' ' + task.type
+            if task.member:
+                title = title + ' ' + task.member.username
+
+            item['title'] = title
+
+            results.append(item)
+
+        # Manual System Message
+
+
+        messages = SystemMessage.objects.filter(created__gte=date_from, created__lte=date_to, title__icontains='manual')
+
+        for message in messages:
+            item = {
+                'title': message.title,
+                'start': message.created,
+                'classNames': ['user'],
+                'extendedProps': {
+                    'type': 'system_message',
+                    'id': message.id,
+                    'payload': {
+                        'type': message.type,
+                        'section': message.section,
+                        'description': message.description
+                    }
+                }
+            }
+
+            results.append(item)
+
+        response = {}
+
+        response['results'] = results
+
+        return Response(response)
