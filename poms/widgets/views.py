@@ -262,6 +262,8 @@ class HistoryPlViewSet(AbstractViewSet):
                 q
             )
 
+        pl_report_histories = pl_report_histories.order_by('date')
+
         pl_report_histories = pl_report_histories.prefetch_related('items')
 
         items = []
