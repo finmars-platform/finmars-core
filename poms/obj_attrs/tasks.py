@@ -76,6 +76,7 @@ def recalculate_attributes(self, instance):
                                             member=instance.member,
                                             started_at=datetime_now(),
                                             task_status='P',
+                                            verbose_name='User Attributes Recalculation',
                                             task_type='attribute_recalculation', celery_task_id=self.request.id)
 
     celery_task.save()

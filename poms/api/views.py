@@ -530,6 +530,7 @@ class CalendarEventsViewSet(AbstractViewSet):
 
         date_from = request.query_params.get('date_from', None)
         date_to = request.query_params.get('date_to', None)
+        filter = request.query_params.get('filter', None)
 
         if not date_from:
             date_from = datetime.today().replace(day=1)
@@ -540,6 +541,11 @@ class CalendarEventsViewSet(AbstractViewSet):
             date_to = last_day_of_month(date_from)
         else:
             date_to = datetime.strptime(date_to, '%Y-%m-%d')
+
+        if not filter:
+            filter = ['data_procedure', 'expression_procedure', 'pricing_procedure', 'celery_task']
+        else:
+            filter = filter.split(',')
 
         _l.info('date_from %s' % date_from)
         _l.info('date_to %s' % date_to)
@@ -556,256 +562,269 @@ class CalendarEventsViewSet(AbstractViewSet):
 
         # Collect System Schedule
 
-        periodic_tasks = PeriodicTask.objects.exclude(name='Shedules Process')
+        if 'system_schedule' in filter:
 
-        for task in periodic_tasks:
+            periodic_tasks = PeriodicTask.objects.exclude(name='Shedules Process')
 
-            # print('task.crontab.shedule %s' % task.crontab)
-            expr = '{0} {1} {2} {3} {4}'.format(cronexp(task.crontab.minute),
-                                                cronexp(task.crontab.hour),
-                                                cronexp(task.crontab.day_of_month),
-                                                cronexp(task.crontab.month_of_year),
-                                                cronexp(task.crontab.day_of_week))
+            for task in periodic_tasks:
 
-            # print('expr %s' % expr)
+                # print('task.crontab.shedule %s' % task.crontab)
+                expr = '{0} {1} {2} {3} {4}'.format(cronexp(task.crontab.minute),
+                                                    cronexp(task.crontab.hour),
+                                                    cronexp(task.crontab.day_of_month),
+                                                    cronexp(task.crontab.month_of_year),
+                                                    cronexp(task.crontab.day_of_week))
 
-            cron = croniter.croniter(expr, date_from)
+                # print('expr %s' % expr)
 
-            lookup = True
-            while lookup:
-                nextdate = cron.get_next(datetime)
+                cron = croniter.croniter(expr, date_from)
 
-                item = {
-                    'title': task.name,
-                    'start': str(nextdate),
-                    'classNames': ['system'],
-                    'backgroundColor': '#ddd',
-                    'extendedProps': {
-                        'type': 'system_schedule',
+                lookup = True
+                while lookup:
+                    nextdate = cron.get_next(datetime)
+
+                    item = {
+                        'title': task.name,
+                        'start': str(nextdate),
+                        'classNames': ['system'],
+                        'backgroundColor': '#ddd',
+                        'extendedProps': {
+                            'type': 'system_schedule',
+                        }
                     }
-                }
 
-                results.append(item)
+                    results.append(item)
 
-                if nextdate > date_to:
-                    lookup = False
+                    if nextdate > date_to:
+                        lookup = False
 
         # Collect User Schedules
 
-        schedules = Schedule.objects.all()
+        if 'schedule' in filter:
 
-        for schedule in schedules:
-            cron = croniter.croniter(schedule.cron_expr, date_from)
+            schedules = Schedule.objects.all()
 
-            lookup = True
-            while lookup:
-                nextdate = cron.get_next(datetime)
+            for schedule in schedules:
+                cron = croniter.croniter(schedule.cron_expr, date_from)
+
+                lookup = True
+                while lookup:
+                    nextdate = cron.get_next(datetime)
+
+                    item = {
+                        'title': schedule.name,
+                        'start': str(nextdate),
+                        'classNames': ['user'],
+                        'backgroundColor': 'lightgrey',
+                        'extendedProps': {
+                            'type': 'schedule',
+                        }
+                    }
+
+                    results.append(item)
+
+                    if nextdate > date_to:
+                        lookup = False
+
+        # Data Procedures
+
+        if 'data_procedure' in filter:
+
+            data_procedure_instances = RequestDataFileProcedureInstance.objects.filter(created__gte=date_from,
+                                                                                       created__lte=date_to)
+            for instance in data_procedure_instances:
 
                 item = {
-                    'title': schedule.name,
-                    'start': str(nextdate),
+                    'start': instance.created,
                     'classNames': ['user'],
-                    'backgroundColor': 'lightgrey',
                     'extendedProps': {
-                        'type': 'schedule',
+                        'type': 'data_procedure',
+                        'id': instance.id,
+                        'payload': {
+                            'action': instance.action,
+                            'provider': instance.provider,
+                            'status': instance.status,
+                            'error_message': instance.error_message,
+                        }
+                    }
+                }
+
+                item['backgroundColor'] = 'green'
+
+                if instance.status == BaseProcedureInstance.STATUS_ERROR:
+                    item['backgroundColor'] = 'red'
+
+                if instance.status == BaseProcedureInstance.STATUS_PENDING:
+                    item['backgroundColor'] = 'blue'
+
+                title = '[' + str(instance.id) + ']'
+
+                if instance.action:
+                    title = title + ' ' + instance.action
+                if instance.member:
+                    title = title + ' by ' + instance.member.username
+
+                item['title'] = title
+
+                results.append(item)
+
+        # Pricing Procedures
+
+        if 'pricing_procedure' in filter:
+
+            pricing_procedure_instances = PricingProcedureInstance.objects.filter(created__gte=date_from,
+                                                                                  created__lte=date_to)
+
+            for instance in pricing_procedure_instances:
+
+                item = {
+                    'start': instance.created,
+                    'classNames': ['user'],
+                    'extendedProps': {
+                        'type': 'pricing_procedure',
+                        'id': instance.id,
+                        'payload': {
+                            'action': instance.action,
+                            'provider': instance.provider,
+                            'status': instance.status,
+                            'error_message': instance.error_message,
+                        }
+                    }
+                }
+
+                item['backgroundColor'] = 'green'
+
+                if instance.status == BaseProcedureInstance.STATUS_ERROR:
+                    item['backgroundColor'] = 'red'
+
+                if instance.status == BaseProcedureInstance.STATUS_PENDING:
+                    item['backgroundColor'] = 'blue'
+
+                title = '[' + str(instance.id) + ']'
+
+                if instance.action:
+                    title = title + ' ' + instance.action
+                if instance.member:
+                    title = title + ' by ' + instance.member.username
+
+                item['title'] = title
+
+                results.append(item)
+
+        # Expression Procedures
+
+        if 'expression_procedure' in filter:
+
+            expression_procedure_instances = ExpressionProcedureInstance.objects.filter(created__gte=date_from,
+                                                                                        created__lte=date_to)
+
+            for instance in expression_procedure_instances:
+
+                item = {
+                    'start': instance.created,
+                    'classNames': ['user'],
+                    'extendedProps': {
+                        'type': 'expression_procedure',
+                        'id': instance.id,
+                        'payload': {
+                            'action': instance.action,
+                            'provider': instance.provider,
+                            'status': instance.status,
+                            'error_message': instance.error_message,
+                            'result': instance.result
+                        }
+                    }
+                }
+
+                item['backgroundColor'] = 'green'
+
+                if instance.status == BaseProcedureInstance.STATUS_ERROR:
+                    item['backgroundColor'] = 'red'
+
+                if instance.status == BaseProcedureInstance.STATUS_PENDING:
+                    item['backgroundColor'] = 'blue'
+
+                title = '[' + str(instance.id) + ']'
+                if instance.action:
+                    title = title + ' ' + instance.action
+                if instance.member:
+                    title = title + ' by ' + instance.member.username
+
+                item['title'] = title
+
+                results.append(item)
+
+        # Collect Celery Tasks
+
+        if 'celery_task' in filter:
+
+            tasks = CeleryTask.objects.filter(created__gte=date_from, created__lte=date_to)
+
+            for task in tasks:
+                item = {
+                    'start': task.created,
+                    'classNames': ['user'],
+                    'extendedProps': {
+                        'type': 'celery_task',
+                        'id': task.id,
+                        'payload': {
+                            'type': task.type,
+                            'status': task.status,
+                            'error_message': task.error_message
+                        }
+                    }
+                }
+
+                item['backgroundColor'] = 'green'
+
+                if task.status == CeleryTask.STATUS_ERROR:
+                    item['backgroundColor'] = 'red'
+
+                if task.status == CeleryTask.STATUS_PENDING:
+                    item['backgroundColor'] = 'blue'
+
+                if task.verbose_name:
+                    item['title'] = task.verbose_name
+                else:
+
+                    title = ''
+
+                    if task.type:
+                        title = title + ' ' + task.type
+
+                    if task.member:
+                        title = title + ' by ' + task.member.username
+
+                    if not title:
+                        title = '[' + str(task.id) + ']'
+
+                    item['title'] = title
+
+                results.append(item)
+
+        # Manual System Message
+
+        if 'system_message' in filter:
+
+            messages = SystemMessage.objects.filter(created__gte=date_from, created__lte=date_to, title__icontains='manual')
+
+            for message in messages:
+                item = {
+                    'title': message.title,
+                    'start': message.created,
+                    'classNames': ['user'],
+                    'extendedProps': {
+                        'type': 'system_message',
+                        'id': message.id,
+                        'payload': {
+                            'type': message.type,
+                            'section': message.section,
+                            'description': message.description
+                        }
                     }
                 }
 
                 results.append(item)
-
-                if nextdate > date_to:
-                    lookup = False
-
-        # Data Procedures
-
-
-        data_procedure_instances = RequestDataFileProcedureInstance.objects.filter(created__gte=date_from, created__lte=date_to)
-
-        for instance in data_procedure_instances:
-
-            item = {
-                'start': instance.created,
-                'classNames': ['user'],
-                'extendedProps': {
-                    'type': 'data_procedure',
-                    'id': instance.id,
-                    'payload': {
-                        'action': instance.action,
-                        'provider': instance.provider,
-                        'status': instance.status,
-                        'error_message': instance.error_message,
-                    }
-                }
-            }
-
-            item['backgroundColor'] = 'green'
-
-            if instance.status == BaseProcedureInstance.STATUS_ERROR:
-                item['backgroundColor'] = 'red'
-
-            if instance.status == BaseProcedureInstance.STATUS_PENDING:
-                item['backgroundColor'] = 'blue'
-
-
-            title = '[' + str(instance.id) + ']'
-
-            if instance.action:
-                title = title + ' ' + instance.action
-            if instance.member:
-                title = title + ' ' + instance.member.username
-
-            item['title'] = title
-
-
-            results.append(item)
-
-        # Pricing Procedures
-
-        pricing_procedure_instances = PricingProcedureInstance.objects.filter(created__gte=date_from, created__lte=date_to)
-
-        for instance in pricing_procedure_instances:
-
-            item = {
-                'start': instance.created,
-                'classNames': ['user'],
-                'extendedProps': {
-                    'type': 'pricing_procedure',
-                    'id': instance.id,
-                    'payload': {
-                        'action': instance.action,
-                        'provider': instance.provider,
-                        'status': instance.status,
-                        'error_message': instance.error_message,
-                    }
-                }
-            }
-
-            item['backgroundColor'] = 'green'
-
-            if instance.status == BaseProcedureInstance.STATUS_ERROR:
-                item['backgroundColor'] = 'red'
-
-            if instance.status == BaseProcedureInstance.STATUS_PENDING:
-                item['backgroundColor'] = 'blue'
-
-
-            title = '[' + str(instance.id) + ']'
-
-            if instance.action:
-                title = title + ' ' + instance.action
-            if instance.member:
-                title = title + ' ' + instance.member.username
-
-            item['title'] = title
-
-
-            results.append(item)
-
-
-        # Expression Procedures
-
-
-        expression_procedure_instances = ExpressionProcedureInstance.objects.filter(created__gte=date_from, created__lte=date_to)
-
-        for instance in expression_procedure_instances:
-
-            item = {
-                'start': instance.created,
-                'classNames': ['user'],
-                'extendedProps': {
-                    'type': 'expression_procedure',
-                    'id': instance.id,
-                    'payload': {
-                        'action': instance.action,
-                        'provider': instance.provider,
-                        'status': instance.status,
-                        'error_message': instance.error_message,
-                        'result': instance.result
-                    }
-                }
-            }
-
-            item['backgroundColor'] = 'green'
-
-            if instance.status == BaseProcedureInstance.STATUS_ERROR:
-                item['backgroundColor'] = 'red'
-
-            if instance.status == BaseProcedureInstance.STATUS_PENDING:
-                item['backgroundColor'] = 'blue'
-
-
-            title = '[' + str(instance.id) + ']'
-            if instance.action:
-                title = title + ' ' + instance.action
-            if instance.member:
-                title = title + ' ' + instance.member.username
-
-            item['title'] = title
-
-
-            results.append(item)
-
-        # Collect Celery Tasks
-
-        tasks = CeleryTask.objects.filter(created__gte=date_from, created__lte=date_to)
-
-        for task in tasks:
-            item = {
-                'start': task.created,
-                'classNames': ['user'],
-                'extendedProps': {
-                    'type': 'celery_task',
-                    'id': task.id,
-                    'payload': {
-                        'type': task.type,
-                        'status': task.status,
-                        'error_message': task.error_message
-                    }
-                }
-            }
-
-            item['backgroundColor'] = 'green'
-
-            if task.status == CeleryTask.STATUS_ERROR:
-                item['backgroundColor'] = 'red'
-
-            if task.status == CeleryTask.STATUS_PENDING:
-                item['backgroundColor'] = 'blue'
-
-            title = '[' + str(task.id) + ']'
-
-            if task.type:
-                title = title + ' ' + task.type
-
-            if task.member:
-                title = title + ' ' + task.member.username
-
-            item['title'] = title
-
-            results.append(item)
-
-        # Manual System Message
-
-
-        messages = SystemMessage.objects.filter(created__gte=date_from, created__lte=date_to, title__icontains='manual')
-
-        for message in messages:
-            item = {
-                'title': message.title,
-                'start': message.created,
-                'classNames': ['user'],
-                'extendedProps': {
-                    'type': 'system_message',
-                    'id': message.id,
-                    'payload': {
-                        'type': message.type,
-                        'section': message.section,
-                        'description': message.description
-                    }
-                }
-            }
-
-            results.append(item)
 
         response = {}
 

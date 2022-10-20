@@ -5,10 +5,10 @@ import json
 from django.core.serializers.json import DjangoJSONEncoder
 
 from poms.common.models import TimeStampedModel
+from poms.file_reports.models import FileReport
 
 
 class CeleryTask(TimeStampedModel):
-
     STATUS_INIT = 'I'
     STATUS_PENDING = 'P'
     STATUS_DONE = 'D'
@@ -27,8 +27,10 @@ class CeleryTask(TimeStampedModel):
         (STATUS_TRANSACTIONS_ABORTED, 'TRANSACTIONS_ABORTED'),
     )
 
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
-    member = models.ForeignKey('users.Member', verbose_name=gettext_lazy('member'), null=True, blank=True, on_delete=models.SET_NULL)
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
+    member = models.ForeignKey('users.Member', verbose_name=gettext_lazy('member'), null=True, blank=True,
+                               on_delete=models.SET_NULL)
 
     is_system_task = models.BooleanField(default=False, verbose_name=gettext_lazy("is system task"))
 
@@ -46,7 +48,11 @@ class CeleryTask(TimeStampedModel):
     notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
     error_message = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('error message'))
 
-    file_report = models.ForeignKey('file_reports.FileReport',null=True, blank=True, verbose_name=gettext_lazy('file report'), on_delete=models.SET_NULL)
+    file_report = models.ForeignKey('file_reports.FileReport', null=True, blank=True,
+                                    verbose_name=gettext_lazy('file report'), on_delete=models.SET_NULL)
+
+    verbose_name = models.CharField(null=True, max_length=255)
+    verbose_result = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('verbose result'))
 
     class Meta:
         ordering = ['-created']
@@ -79,3 +85,20 @@ class CeleryTask(TimeStampedModel):
             self.result = None
         else:
             self.result = json.dumps(value, cls=DjangoJSONEncoder, sort_keys=True, indent=1)
+
+    def add_attachment(self, file_report_id):
+
+        CeleryTaskAttachment.objects.create(celery_task=self,
+                                            file_report_id=file_report_id)
+
+
+class CeleryTaskAttachment(models.Model):
+    celery_task = models.ForeignKey(CeleryTask, verbose_name=gettext_lazy('celery task'),
+                                    on_delete=models.CASCADE, related_name="attachments")
+
+    file_url = models.TextField(null=True, blank=True, default='', verbose_name=gettext_lazy('File URL'))
+    file_name = models.CharField(null=True, max_length=255, blank=True, default='')
+    notes = models.TextField(null=True, blank=True, default='', verbose_name=gettext_lazy('notes'))
+
+    file_report = models.ForeignKey(FileReport, null=True, verbose_name=gettext_lazy('file report'),
+                                    on_delete=models.SET_NULL)

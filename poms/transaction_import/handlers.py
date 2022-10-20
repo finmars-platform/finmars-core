@@ -829,6 +829,9 @@ class TransactionImportProcess(object):
 
             except Exception as e:
 
+                item.status = 'error'
+                item.message = 'Error %s' % e
+
                 _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Exception %s' % (
                     self.task, str(item.row_number), e))
                 _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Traceback %s' % (
@@ -837,6 +840,22 @@ class TransactionImportProcess(object):
         self.result.items = self.items
 
         _l.info('TransactionImportProcess.Task %s. process_items DONE' % self.task)
+
+    def get_verbose_result(self):
+
+        booked_count = 0
+        error_count = 0
+
+        for item in self.result.items:
+            if item.status == 'error':
+                error_count = error_count + 1
+
+            booked_count = booked_count + len(item.booked_transactions)
+
+        result = 'Processed %s rows and successfully booked %s transactions. Error rows %s' % (
+        len(self.items), booked_count, error_count)
+
+        return result
 
     def process(self):
 
@@ -884,8 +903,6 @@ class TransactionImportProcess(object):
                 context=self.context)
 
             self.task.result_object = TransactionImportResultSerializer(instance=self.result, context=self.context).data
-            self.task.status = CeleryTask.STATUS_DONE
-            self.task.save()
 
             self.result.reports = []
 
@@ -934,6 +951,14 @@ class TransactionImportProcess(object):
 
         if self.procedure_instance and self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
+
+        self.task.add_attachment(self.result.reports[0].id)
+        self.task.add_attachment(self.result.reports[1].id)
+
+        self.task.verbose_result = self.get_verbose_result()
+
+        self.task.status = CeleryTask.STATUS_DONE
+        self.task.save()
 
         return self.result
 

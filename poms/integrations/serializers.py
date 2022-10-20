@@ -1218,6 +1218,7 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
                     task = CeleryTask.objects.create(
                         master_user=instance.master_user,
                         member=instance.member,
+                        verbose_name="Download Instrument From Finmars Database",
                         type='download_instrument_from_finmars_database'
                     )
 

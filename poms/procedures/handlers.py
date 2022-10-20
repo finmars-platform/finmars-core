@@ -34,7 +34,8 @@ _l = logging.getLogger('poms.procedures')
 
 class RequestDataFileProcedureProcess(object):
 
-    def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None, member=None, schedule_instance=None, context=None):
+    def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None, member=None,
+                 schedule_instance=None, context=None):
 
         _l.info('RequestDataFileProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
 
@@ -196,6 +197,7 @@ class RequestDataFileProcedureProcess(object):
 
                     celery_task = CeleryTask.objects.create(master_user=master_user,
                                                             member=self.member,
+                                                            verbose_name="Transaction Import",
                                                             type='transaction_import')
 
                     options_object = {}
@@ -219,7 +221,6 @@ class RequestDataFileProcedureProcess(object):
                                 kwargs={'procedure_instance_id': procedure_instance.id,
                                         'celery_task_id': celery_task.id,
                                         })
-
 
                     on_commit(run_tasks)
 
@@ -271,7 +272,7 @@ class RequestDataFileProcedureProcess(object):
 
             _l.debug(
                 "RequestDataFileProcedureProcess: Request_transaction_file. Master User: %s. Provider: %s, Scheme name: %s" % (
-                self.master_user, self.procedure.provider, self.procedure.scheme_user_code))
+                    self.master_user, self.procedure.provider, self.procedure.scheme_user_code))
 
             item = TransactionFileResult.objects.create(
                 procedure_instance=procedure_instance,
@@ -446,17 +447,18 @@ class ExpressionProcedureProcess(object):
 
         self.execute_context_variables_expressions()
 
-
     def execute_context_variables_expressions(self):
 
         self.context_names = {}
 
-        _l.info('ExpressionProcedureProcess.execute_context_variables_expressions %s ' % self.procedure.context_variables.all())
+        _l.info(
+            'ExpressionProcedureProcess.execute_context_variables_expressions %s ' % self.procedure.context_variables.all())
 
         for item in self.procedure.context_variables.all():
 
             try:
-                self.context_names[item.name] = formula.safe_eval(item.expression, names=self.context_names,  context=self.context)
+                self.context_names[item.name] = formula.safe_eval(item.expression, names=self.context_names,
+                                                                  context=self.context)
 
             except Exception as e:
                 _l.info('execute_context_variables_expressions.e %s' % e)
@@ -466,20 +468,20 @@ class ExpressionProcedureProcess(object):
 
     def process(self):
 
-
         try:
 
             procedure_instance = ExpressionProcedureInstance.objects.create(procedure=self.procedure,
-                                                                                 master_user=self.master_user,
-                                                                                 status=ExpressionProcedureInstance.STATUS_PENDING,
-                                                                                 schedule_instance=self.schedule_instance,
-                                                                                 action='execute_expression_procedure',
-                                                                                 provider='finmars',
+                                                                            master_user=self.master_user,
+                                                                            member=self.member,
+                                                                            status=ExpressionProcedureInstance.STATUS_PENDING,
+                                                                            schedule_instance=self.schedule_instance,
+                                                                            action='execute_expression_procedure',
+                                                                            provider='finmars',
 
-                                                                                 action_verbose='Execute Expression Procedure',
-                                                                                 provider_verbose='Finmars'
+                                                                            action_verbose='Execute Expression Procedure',
+                                                                            provider_verbose='Finmars'
 
-                                                                                 )
+                                                                            )
 
             send_system_message(master_user=self.master_user,
                                 performed_by='System',
@@ -501,7 +503,7 @@ class ExpressionProcedureProcess(object):
 
             try:
 
-                result, log = formula.safe_eval_with_logs(self.procedure.code, names=names,  context=self.context)
+                result, log = formula.safe_eval_with_logs(self.procedure.code, names=names, context=self.context)
 
                 _l.debug('ExpressionProcedureProcess.result %s' % result)
 
@@ -524,7 +526,6 @@ class ExpressionProcedureProcess(object):
 
                 _l.error("ExpressionProcedureProcess.safe_eval error %s" % e)
                 _l.error("ExpressionProcedureProcess.safe_eval traceback %s" % traceback.print_exc())
-
 
             send_system_message(master_user=self.master_user,
                                 performed_by='System',

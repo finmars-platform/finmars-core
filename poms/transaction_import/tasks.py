@@ -17,12 +17,20 @@ def transaction_import(self, task_id, procedure_instance_id=None):
         celery_task.celery_task_id = self.request.id
         celery_task.save()
 
-        instance = TransactionImportProcess(task_id=task_id, procedure_instance_id=procedure_instance_id)
+        try:
 
-        instance.fill_with_raw_items()
-        instance.apply_conversion_to_raw_items()
-        instance.preprocess()
-        instance.process()
+            instance = TransactionImportProcess(task_id=task_id, procedure_instance_id=procedure_instance_id)
+
+            instance.fill_with_raw_items()
+            instance.apply_conversion_to_raw_items()
+            instance.preprocess()
+            instance.process()
+
+        except Exception as e:
+
+            celery_task.error_message = "Error %s. \n Traceback: %s" % (e, traceback.format_exc())
+            celery_task.status = CeleryTask.STATUS_ERROR
+            celery_task.save()
 
     except Exception as e:
 

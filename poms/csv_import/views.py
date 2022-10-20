@@ -102,6 +102,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
                                                 options_object=options_object,
+                                                verbose_name="Simple Import",
                                                 type='simple_import')
 
         _l.info('celery_task %s created ' % celery_task.pk)
@@ -151,6 +152,7 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
                                                 options_object=options_object,
+                                                verbose_name="Simple Import Validation",
                                                 type='simple_import')
 
         _l.info('celery_task %s created ' % celery_task.pk)
@@ -267,6 +269,7 @@ class UnifiedCsvDataImportViewSet(AbstractAsyncViewSet):
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                     member=request.user.member,
+                                                    verbose_name="Simple Import",
                                                     type='simple_import', celery_task_id=res.id)
 
             celery_task.save()
