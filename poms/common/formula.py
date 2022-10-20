@@ -2639,6 +2639,7 @@ def _download_instrument_from_finmars_database(evaluator, reference, instrument_
         task = CeleryTask.objects.create(
             master_user=master_user,
             member=member,
+            verbose_name="Download Instrument From Finmars Database",
             type='download_instrument_from_finmars_database'
         )
 
@@ -2888,7 +2889,7 @@ def _run_data_import(evaluator, filepath, scheme):
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
 
-        celery_task = CeleryTask.objects.create(master_user=master_user, member=member, type='simple_import')
+        celery_task = CeleryTask.objects.create(master_user=master_user, member=member, type='simple_import', verbose_name="Simple Import")
         celery_task.status = CeleryTask.STATUS_DONE
 
 
@@ -2955,7 +2956,7 @@ def _run_transaction_import(evaluator, filepath, scheme):
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
 
-        celery_task = CeleryTask.objects.create(master_user=master_user, member=member, type='transaction_import')
+        celery_task = CeleryTask.objects.create(master_user=master_user, member=member, type='transaction_import', verbose_name="Transaction Import")
         celery_task.status = CeleryTask.STATUS_DONE
 
 

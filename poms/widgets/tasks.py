@@ -34,14 +34,19 @@ def start_new_balance_history_collect(task):
 
     if (len(parent_options_object['processed_dates']) + len(parent_options_object['error_dates'])) != len(
             parent_options_object['dates_to_process']):
+
+
+        portfolio = Portfolio.objects.get(id=parent_options_object['portfolio_id'])
+
+        date = find_next_date_to_process(parent_task)
+
         new_celery_task = CeleryTask.objects.create(
             master_user=task.master_user,
             member=task.member,
+            verbose_nane="Collect Nav History for %s portfolio. Date %s" % (portfolio.name, date),
             type='collect_history',
             parent=parent_task
         )
-
-        date = find_next_date_to_process(parent_task)
 
         options_object = {
             "report_date": date,
@@ -226,14 +231,20 @@ def start_new_pl_history_collect(task):
 
     if (len(parent_options_object['processed_dates']) + len(parent_options_object['error_dates'])) != len(
             parent_options_object['dates_to_process']):
+
+        portfolio = Portfolio.objects.get(id=parent_options_object['portfolio_id'])
+
+        date = find_next_date_to_process(parent_task)
+
         new_celery_task = CeleryTask.objects.create(
             master_user=task.master_user,
             member=task.member,
+            verbose_nane="Collect Pl History for %s portfolio. Date %s" % (portfolio.name, date),
             type='collect_history',
             parent=parent_task
         )
 
-        date = find_next_date_to_process(parent_task)
+
 
         options_object = {
             "pl_first_date": parent_options_object['pl_first_date'],
@@ -418,14 +429,18 @@ def start_new_collect_stats(task):
 
     if (len(parent_options_object['processed_dates']) + len(parent_options_object['error_dates'])) != len(
             parent_options_object['dates_to_process']):
+
+        portfolio = Portfolio.objects.get(id=parent_options_object['portfolio_id'])
+
+        date = find_next_date_to_process(parent_task)
+
         new_celery_task = CeleryTask.objects.create(
             master_user=task.master_user,
             member=task.member,
+            verbose_name="Collect Widget Stats for %s portfolio. Date %s" % (portfolio, date),
             type='collect_stats',
             parent=parent_task
         )
-
-        date = find_next_date_to_process(parent_task)
 
         options_object = {
 
