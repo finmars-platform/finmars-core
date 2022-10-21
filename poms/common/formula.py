@@ -28,8 +28,6 @@ from datetime import date
 from django.forms.models import model_to_dict
 import traceback
 
-
-
 _l = logging.getLogger('poms.formula')
 
 MAX_STR_LEN = 20000
@@ -657,8 +655,10 @@ def _reverse(items):
 
     return items
 
+
 def _split(text, delimeter):
     return text.split(delimeter)
+
 
 def _parse_bool(a):
     if isinstance(a, (bool)):
@@ -2438,7 +2438,7 @@ def _run_data_procedure(evaluator, user_code, user_context=None, linked_task_kwa
         from poms.users.utils import get_master_user_from_context
         from poms.users.utils import get_member_from_context
         from poms.procedures.models import RequestDataFileProcedure
-        from poms.procedures.handlers import RequestDataFileProcedureProcess
+        from poms.procedures.handlers import DataProcedureProcess
         from poms.procedures.tasks import run_data_procedure_from_formula
 
         context = evaluator.context
@@ -2480,7 +2480,7 @@ def _run_data_procedure(evaluator, user_code, user_context=None, linked_task_kwa
         #
         # kwargs.pop('user_context', None)
         #
-        # instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member,
+        # instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member,
         #                                            context=merged_context, **kwargs)
         # instance.process()
 
@@ -2500,7 +2500,7 @@ def _run_data_procedure_sync(evaluator, user_code, user_context=None, **kwargs):
         from poms.users.utils import get_master_user_from_context
         from poms.users.utils import get_member_from_context
         from poms.procedures.models import RequestDataFileProcedure
-        from poms.procedures.handlers import RequestDataFileProcedureProcess
+        from poms.procedures.handlers import DataProcedureProcess
         from poms.procedures.tasks import run_data_procedure_from_formula
 
         context = evaluator.context
@@ -2523,7 +2523,7 @@ def _run_data_procedure_sync(evaluator, user_code, user_context=None, **kwargs):
 
         kwargs.pop('user_context', None)
 
-        instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member,
+        instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member,
                                                    context=merged_context, **kwargs)
         instance.process()
 
@@ -2536,7 +2536,6 @@ def _run_data_procedure_sync(evaluator, user_code, user_context=None, **kwargs):
 _run_data_procedure_sync.evaluator = True
 
 
-
 def _rebook_transaction(evaluator, code, values=None, user_context=None, **kwargs):
     _l.info('_rebook_transaction')
 
@@ -2544,7 +2543,7 @@ def _rebook_transaction(evaluator, code, values=None, user_context=None, **kwarg
         from poms.users.utils import get_master_user_from_context
         from poms.users.utils import get_member_from_context
         from poms.procedures.models import RequestDataFileProcedure
-        from poms.procedures.handlers import RequestDataFileProcedureProcess
+        from poms.procedures.handlers import DataProcedureProcess
         from poms.transactions.handlers import TransactionTypeProcess
         from poms.transactions.models import ComplexTransaction
         from poms.transactions.serializers import TransactionTypeProcessSerializer
@@ -2621,7 +2620,8 @@ def _rebook_transaction(evaluator, code, values=None, user_context=None, **kwarg
 _rebook_transaction.evaluator = True
 
 
-def _download_instrument_from_finmars_database(evaluator, reference, instrument_name=None, instrument_type_user_code=None):
+def _download_instrument_from_finmars_database(evaluator, reference, instrument_name=None,
+                                               instrument_type_user_code=None):
     _l.info('_download_instrument_from_finmars_database formula')
 
     try:
@@ -2669,11 +2669,9 @@ _download_instrument_from_finmars_database.evaluator = True
 
 
 def _create_workflow(evaluator, name=None):
-
     from django.db import IntegrityError, transaction
 
     with transaction.atomic():
-
         from poms.workflows.models import Workflow, WorkflowStep
 
         from poms.users.utils import get_master_user_from_context
@@ -2696,11 +2694,9 @@ _create_workflow.evaluator = True
 
 
 def _register_workflow_step(evaluator, workflow_id, code, name=None):
-
     from django.db import IntegrityError, transaction
 
     with transaction.atomic():
-
         from poms.workflows.models import Workflow, WorkflowStep
         import inspect
 
@@ -2710,7 +2706,6 @@ def _register_workflow_step(evaluator, workflow_id, code, name=None):
 
         if not name:
             name = workflow.name + ' step ' + str((order))
-
 
         code_txt = ast.unparse(code.node)
 
@@ -2723,7 +2718,6 @@ _register_workflow_step.evaluator = True
 
 
 def _run_workflow(evaluator, workflow_id):
-
     from poms.workflows.models import Workflow, WorkflowStep
     from poms.workflows.tasks import run_workflow_step
 
@@ -2737,7 +2731,6 @@ _run_workflow.evaluator = True
 
 
 def _get_filenames_from_storage(evaluator, pattern=None, path_to_folder=None):
-
     # pattern \.txt$
 
     from poms.workflows.models import Workflow, WorkflowStep
@@ -2777,7 +2770,6 @@ def _get_filenames_from_storage(evaluator, pattern=None, path_to_folder=None):
         else:
             results.append(file)
 
-
     return results
 
 
@@ -2785,7 +2777,6 @@ _get_filenames_from_storage.evaluator = True
 
 
 def _delete_file_from_storage(evaluator, path):
-
     # pattern \.txt$
 
     from poms.workflows.models import Workflow, WorkflowStep
@@ -2823,7 +2814,6 @@ _delete_file_from_storage.evaluator = True
 
 
 def _put_file_to_storage(evaluator, path, content):
-
     # pattern \.txt$
 
     from poms.workflows.models import Workflow, WorkflowStep
@@ -2860,7 +2850,7 @@ def _put_file_to_storage(evaluator, path, content):
             return False
 
     else:
-        _l.error("_put_file_to_storage could not put files in import folder" )
+        _l.error("_put_file_to_storage could not put files in import folder")
         return False
 
 
@@ -2868,7 +2858,6 @@ _put_file_to_storage.evaluator = True
 
 
 def _run_data_import(evaluator, filepath, scheme):
-
     try:
 
         _l.info('_run_data_import %s' % filepath)
@@ -2889,9 +2878,9 @@ def _run_data_import(evaluator, filepath, scheme):
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
 
-        celery_task = CeleryTask.objects.create(master_user=master_user, member=member, type='simple_import', verbose_name="Simple Import")
+        celery_task = CeleryTask.objects.create(master_user=master_user, member=member, type='simple_import',
+                                                verbose_name="Simple Import")
         celery_task.status = CeleryTask.STATUS_DONE
-
 
         scheme = CsvImportScheme.objects.get(master_user=master_user,
                                              user_code=scheme)
@@ -2915,13 +2904,10 @@ def _run_data_import(evaluator, filepath, scheme):
         _l.error("_run_data_import. general exception traceback %s" % traceback.format_exc())
 
 
-
-
 _run_data_import.evaluator = True
 
 
 def _run_transaction_import(evaluator, filepath, scheme):
-
     try:
 
         _l.info('_run_transaction_import %s' % filepath)
@@ -2956,12 +2942,13 @@ def _run_transaction_import(evaluator, filepath, scheme):
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
 
-        celery_task = CeleryTask.objects.create(master_user=master_user, member=member, type='transaction_import', verbose_name="Transaction Import")
+        celery_task = CeleryTask.objects.create(master_user=master_user, member=member,
+                                                type='transaction_import',
+                                                verbose_name="Transaction Import by %s" % member.username)
         celery_task.status = CeleryTask.STATUS_DONE
 
-
         scheme = ComplexTransactionImportScheme.objects.get(master_user=master_user,
-                                             user_code=scheme)
+                                                            user_code=scheme)
 
         options_object = {}
 
@@ -2983,9 +2970,6 @@ def _run_transaction_import(evaluator, filepath, scheme):
 
 
 _run_transaction_import.evaluator = True
-
-
-
 
 
 def _simple_group(val, ranges, default=None):
@@ -3100,8 +3084,8 @@ def _random():
 def _uuid():
     return str(uuid.uuid4())
 
-def _print_message(evaluator, text):
 
+def _print_message(evaluator, text):
     context = evaluator.context
 
     if 'log' not in context:
@@ -3110,7 +3094,6 @@ def _print_message(evaluator, text):
     context['log'] = context['log'] + text + '\n'
 
     # _l.info("CONTEXT %s" % context)
-
 
 
 _print_message.evaluator = True
@@ -3300,7 +3283,6 @@ FUNCTIONS = [
     SimpleEval2Def('reverse', _reverse),
     SimpleEval2Def('split', _split),
 
-
     SimpleEval2Def('simple_price', _simple_price),
 
     SimpleEval2Def('get_instrument', _get_instrument),
@@ -3386,7 +3368,6 @@ FUNCTIONS = [
     SimpleEval2Def('run_data_procedure_sync', _run_data_procedure_sync),
     SimpleEval2Def('rebook_transaction', _rebook_transaction),
     SimpleEval2Def('download_instrument_from_finmars_database', _download_instrument_from_finmars_database),
-
 
     SimpleEval2Def('create_workflow', _create_workflow),
     SimpleEval2Def('register_workflow_step', _register_workflow_step),
@@ -3816,11 +3797,10 @@ class SimpleEval2(object):
                 raise AttributeDoesNotExist(node.attr)
 
         elif isinstance(val, list):
-            _l.debug("list here? %s" % val )
-            _l.debug("list here? node.value %s" % node.value )
-            _l.debug("list here? node.attr %s" % node.attr )
+            _l.debug("list here? %s" % val)
+            _l.debug("list here? node.value %s" % node.value)
+            _l.debug("list here? node.attr %s" % node.attr)
             if node.attr in ['append', 'pop', 'remove']:
-
                 return getattr(val, node.attr)
         else:
 

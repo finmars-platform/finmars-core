@@ -361,6 +361,7 @@ class RequestDataFileProcedureInstance(BaseProcedureInstance):
 
 
     json_request_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
+    response_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('response data'))
 
     class Meta:
         ordering = ['-created']
@@ -429,6 +430,7 @@ class ExpressionProcedureInstance(BaseProcedureInstance):
 
     calculated_options_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('calculated options'))
 
+    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
     result = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('result'))
     log = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('log'))
 

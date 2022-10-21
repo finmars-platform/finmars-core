@@ -553,6 +553,7 @@ def collect_balance_history(master_user, member, date_from, date_to, dates, segm
     parent_task = CeleryTask.objects.create(
         master_user=master_user,
         member=member,
+        verbose_name="Collect Balance History Chain by %s" % member.username,
         type='collect_history_chain',
     )
 
@@ -572,10 +573,14 @@ def collect_balance_history(master_user, member, date_from, date_to, dates, segm
     parent_task.options_object = parent_task_options_object
     parent_task.save()
 
+    from poms.portfolios.models import Portfolio
+    portfolio = Portfolio.objects.get(id=portfolio_id)
+
     celery_task = CeleryTask.objects.create(
         master_user=master_user,
         member=member,
         type='collect_history',
+        verbose_name="Collect Nav History for %s portfolio. Date %s by %s" % (portfolio.name, dates[0], member.username),
         parent=parent_task
     )
 
@@ -625,6 +630,7 @@ def collect_pl_history(master_user, member, date_from, date_to, dates, segmentat
     parent_task = CeleryTask.objects.create(
         master_user=master_user,
         member=member,
+        verbose_name="Collect History Chain Task",
         type='collect_history_chain',
     )
 
@@ -647,9 +653,13 @@ def collect_pl_history(master_user, member, date_from, date_to, dates, segmentat
     parent_task.options_object = parent_task_options_object
     parent_task.save()
 
+    from poms.portfolios.models import Portfolio
+    portfolio = Portfolio.objects.get(id=portfolio_id)
+
     celery_task = CeleryTask.objects.create(
         master_user=master_user,
         member=member,
+        verbose_name="Collect Pl History for %s portfolio. Date %s by %s" % (portfolio.name, dates[0], member.username),
         type='collect_history',
         parent=parent_task
     )
@@ -697,6 +707,7 @@ def collect_widget_stats(master_user, member, date_from, date_to, dates, segment
     parent_task = CeleryTask.objects.create(
         master_user=master_user,
         member=member,
+        verbose_name="Collect Stats Chain Task",
         type='collect_stats_chain'
     )
 
@@ -715,11 +726,14 @@ def collect_widget_stats(master_user, member, date_from, date_to, dates, segment
 
     parent_task.save()
 
+    from poms.portfolios.models import Portfolio
+    portfolio = Portfolio.objects.get(id=portfolio_id)
+
     celery_task = CeleryTask.objects.create(
         master_user=master_user,
         member=member,
         parent=parent_task,
-        type='collect_stats'
+        verbose_name="Collect Widget Stats for %s portfolio. Date %s by %s" % (portfolio.name, dates[0], member.username),
     )
 
     options_object = {

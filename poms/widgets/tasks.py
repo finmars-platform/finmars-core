@@ -43,7 +43,7 @@ def start_new_balance_history_collect(task):
         new_celery_task = CeleryTask.objects.create(
             master_user=task.master_user,
             member=task.member,
-            verbose_nane="Collect Nav History for %s portfolio. Date %s" % (portfolio.name, date),
+            verbose_nane="Collect Nav History for %s portfolio. Date %s by %s" % (portfolio.name, date, task.member.username),
             type='collect_history',
             parent=parent_task
         )
@@ -239,7 +239,7 @@ def start_new_pl_history_collect(task):
         new_celery_task = CeleryTask.objects.create(
             master_user=task.master_user,
             member=task.member,
-            verbose_nane="Collect Pl History for %s portfolio. Date %s" % (portfolio.name, date),
+            verbose_nane="Collect Pl History for %s portfolio. Date %s by %s" % (portfolio.name, date, task.member.username),
             type='collect_history',
             parent=parent_task
         )
@@ -437,7 +437,7 @@ def start_new_collect_stats(task):
         new_celery_task = CeleryTask.objects.create(
             master_user=task.master_user,
             member=task.member,
-            verbose_name="Collect Widget Stats for %s portfolio. Date %s" % (portfolio, date),
+            verbose_name="Collect Widget Stats for %s portfolio. Date %s by %s" % (portfolio.name, date, task.member.username),
             type='collect_stats',
             parent=parent_task
         )

@@ -657,14 +657,20 @@ class CalendarEventsViewSet(AbstractViewSet):
                 if instance.status == BaseProcedureInstance.STATUS_PENDING:
                     item['backgroundColor'] = 'blue'
 
-                title = '[' + str(instance.id) + ']'
+                if instance.action_verbose:
+                    if instance.provider_verbose:
+                        item['title'] = instance.provider_verbose + ': ' + instance.action_verbose
+                    else:
+                        item['title'] = instance.action_verbose
+                else:
+                    title = '[' + str(instance.id) + ']'
 
-                if instance.action:
-                    title = title + ' ' + instance.action
-                if instance.member:
-                    title = title + ' by ' + instance.member.username
+                    if instance.action:
+                        title = title + ' ' + instance.action
+                    if instance.member:
+                        title = title + ' by ' + instance.member.username
 
-                item['title'] = title
+                    item['title'] = title
 
                 results.append(item)
 
@@ -700,14 +706,20 @@ class CalendarEventsViewSet(AbstractViewSet):
                 if instance.status == BaseProcedureInstance.STATUS_PENDING:
                     item['backgroundColor'] = 'blue'
 
-                title = '[' + str(instance.id) + ']'
+                if instance.action_verbose:
+                    if instance.provider_verbose:
+                        item['title'] = instance.provider_verbose + ': ' + instance.action_verbose
+                    else:
+                        item['title'] = instance.action_verbose
+                else:
+                    title = '[' + str(instance.id) + ']'
 
-                if instance.action:
-                    title = title + ' ' + instance.action
-                if instance.member:
-                    title = title + ' by ' + instance.member.username
+                    if instance.action:
+                        title = title + ' ' + instance.action
+                    if instance.member:
+                        title = title + ' by ' + instance.member.username
 
-                item['title'] = title
+                    item['title'] = title
 
                 results.append(item)
 
@@ -744,13 +756,20 @@ class CalendarEventsViewSet(AbstractViewSet):
                 if instance.status == BaseProcedureInstance.STATUS_PENDING:
                     item['backgroundColor'] = 'blue'
 
-                title = '[' + str(instance.id) + ']'
-                if instance.action:
-                    title = title + ' ' + instance.action
-                if instance.member:
-                    title = title + ' by ' + instance.member.username
+                if instance.action_verbose:
+                    if instance.provider_verbose:
+                        item['title'] = instance.provider_verbose + ': ' + instance.action_verbose
+                    else:
+                        item['title'] = instance.action_verbose
+                else:
 
-                item['title'] = title
+                    title = '[' + str(instance.id) + ']'
+                    if instance.action:
+                        title = title + ' ' + instance.action
+                    if instance.member:
+                        title = title + ' by ' + instance.member.username
+
+                    item['title'] = title
 
                 results.append(item)
 
@@ -806,7 +825,8 @@ class CalendarEventsViewSet(AbstractViewSet):
 
         if 'system_message' in filter:
 
-            messages = SystemMessage.objects.filter(created__gte=date_from, created__lte=date_to, title__icontains='manual')
+            messages = SystemMessage.objects.filter(created__gte=date_from, created__lte=date_to,
+                                                    title__icontains='manual')
 
             for message in messages:
                 item = {
