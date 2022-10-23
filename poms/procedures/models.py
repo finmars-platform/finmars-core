@@ -272,6 +272,7 @@ class PricingProcedureInstance(BaseProcedureInstance):
     error_prices_count = models.IntegerField(default=0, verbose_name=gettext_lazy('error prices count'))
 
     json_request_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json request data'))
+    json_response_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('response data'))
 
     @property
     def request_data(self):
@@ -289,6 +290,27 @@ class PricingProcedureInstance(BaseProcedureInstance):
             self.json_request_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
         else:
             self.json_request_data = None
+
+
+    @property
+    def response_data(self):
+        if self.json_response_data:
+            try:
+                return json.loads(self.json_request_data)
+            except (ValueError, TypeError):
+                return self.json_response_data
+        else:
+            return None
+
+    @response_data.setter
+    def response_data(self, val):
+        if val:
+            try:
+                self.json_response_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+            except Exception as e:
+                self.json_response_data = val
+        else:
+            self.json_response_data = None
 
 
     def save(self, *args, **kwargs):

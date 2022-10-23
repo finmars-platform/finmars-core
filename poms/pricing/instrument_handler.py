@@ -31,6 +31,7 @@ import logging
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import Transaction
+from poms.users.models import Member
 from poms_app import settings
 
 _l = logging.getLogger('poms.pricing')
@@ -154,6 +155,10 @@ class PricingInstrumentHandler(object):
         self.parent_procedure = parent_procedure
 
         self.member = member
+
+        if not self.member:
+            self.member = Member.objects.get(master_user=self.master_user, is_owner=True)
+
         self.schedule_instance = schedule_instance
 
         self.instruments = []
@@ -399,6 +404,7 @@ class PricingInstrumentHandler(object):
 
         return result
 
+    # DEPRECATED
     def calculate_simple_balance_report(self, master_user, report_date, report_currency, portfolio_register):
 
         instance = Report(master_user=master_user)
@@ -414,6 +420,7 @@ class PricingInstrumentHandler(object):
 
         return instance
 
+    # DEPRECATED
     def process_to_linked_with_portfolio_provider(self, items):
 
         _l.debug("Pricing Instrument Handler - Single parameters Formula: len %s" % len(items))
@@ -560,15 +567,11 @@ class PricingInstrumentHandler(object):
 
         _l.debug("Pricing Instrument Handler - Single parameters Formula: len %s" % len(items))
 
-        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
-                                                    date_to=self.procedure.price_date_to)
 
-        successful_prices_count = 0
-        error_prices_count = 0
-
-        procedure_instance = PricingProcedureInstance(procedure=self.procedure,
+        procedure_instance = PricingProcedureInstance.objects.create(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
+                                                      member=self.member,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
                                                       action='single_parameter_formula_get_instrument_prices',
                                                       provider='finmars',
@@ -586,224 +589,232 @@ class PricingInstrumentHandler(object):
             procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
             procedure_instance.schedule_instance = self.schedule_instance
 
-        procedure_instance.save()
+        try:
 
-        for item in items:
+            dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                        date_to=self.procedure.price_date_to)
 
-            last_price = None
+            successful_prices_count = 0
+            error_prices_count = 0
 
-            for date in dates:
+            procedure_instance.save()
 
-                scheme_parameters = item.pricing_scheme.get_parameters()
+            for item in items:
 
-                if scheme_parameters:
+                last_price = None
 
-                    safe_instrument = {
-                        'id': item.instrument.id,
-                    }
+                for date in dates:
 
-                    safe_pp = {
-                        'id': item.policy.id,
-                    }
+                    scheme_parameters = item.pricing_scheme.get_parameters()
 
-                    parameter = get_parameter_from_scheme_parameters(item, item.policy, scheme_parameters)
+                    if scheme_parameters:
 
-                    values = {
-                        'context_date': date,
-                        'context_instrument': safe_instrument,
-                        'context_pricing_policy': safe_pp,
-                        'parameter': parameter
-                    }
+                        safe_instrument = {
+                            'id': item.instrument.id,
+                        }
 
-                    expr = scheme_parameters.expr
-                    accrual_expr = scheme_parameters.accrual_expr
-                    pricing_error_text_expr = scheme_parameters.pricing_error_text_expr
-                    accrual_error_text_expr = scheme_parameters.accrual_error_text_expr
+                        safe_pp = {
+                            'id': item.policy.id,
+                        }
 
-                    _l.debug('values %s' % values)
-                    _l.debug('expr %s' % expr)
+                        parameter = get_parameter_from_scheme_parameters(item, item.policy, scheme_parameters)
 
-                    has_error = False
-                    error = PriceHistoryError(
-                        master_user=self.master_user,
-                        procedure_instance=procedure_instance,
-                        instrument=item.instrument,
-                        pricing_scheme=item.pricing_scheme,
-                        pricing_policy=item.policy.pricing_policy,
-                        date=date,
-                        created=procedure_instance.created
-                    )
+                        values = {
+                            'context_date': date,
+                            'context_instrument': safe_instrument,
+                            'context_pricing_policy': safe_pp,
+                            'parameter': parameter
+                        }
 
-                    principal_price = None
-                    accrued_price = None
+                        expr = scheme_parameters.expr
+                        accrual_expr = scheme_parameters.accrual_expr
+                        pricing_error_text_expr = scheme_parameters.pricing_error_text_expr
+                        accrual_error_text_expr = scheme_parameters.accrual_error_text_expr
 
-                    try:
-                        principal_price = formula.safe_eval(expr, names=values)
-                    except formula.InvalidExpression:
+                        _l.debug('values %s' % values)
+                        _l.debug('expr %s' % expr)
 
-                        has_error = True
+                        has_error = False
+                        error = PriceHistoryError(
+                            master_user=self.master_user,
+                            procedure_instance=procedure_instance,
+                            instrument=item.instrument,
+                            pricing_scheme=item.pricing_scheme,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date,
+                            created=procedure_instance.created
+                        )
+
+                        principal_price = None
+                        accrued_price = None
 
                         try:
-
-                            _l.debug('pricing_error_text_expr %s' % pricing_error_text_expr)
-
-                            error.error_text = formula.safe_eval(pricing_error_text_expr, names=values)
-
+                            principal_price = formula.safe_eval(expr, names=values)
                         except formula.InvalidExpression:
-                            error.error_text = 'Invalid Error Text Expression'
 
-                    if scheme_parameters.accrual_calculation_method == 2:  # ACCRUAL_PER_SCHEDULE
-
-                        try:
-                            accrued_price = item.instrument.get_accrued_price(date)
-                        except Exception:
                             has_error = True
 
                             try:
 
-                                _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
+                                _l.debug('pricing_error_text_expr %s' % pricing_error_text_expr)
 
-                                error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
+                                error.error_text = formula.safe_eval(pricing_error_text_expr, names=values)
 
                             except formula.InvalidExpression:
                                 error.error_text = 'Invalid Error Text Expression'
 
-                    if scheme_parameters.accrual_calculation_method == 3:  # ACCRUAL_PER_FORMULA
-
-                        try:
-                            accrued_price = formula.safe_eval(accrual_expr, names=values)
-                        except formula.InvalidExpression:
-                            has_error = True
+                        if scheme_parameters.accrual_calculation_method == 2:  # ACCRUAL_PER_SCHEDULE
 
                             try:
+                                accrued_price = item.instrument.get_accrued_price(date)
+                            except Exception:
+                                has_error = True
 
-                                _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
+                                try:
 
-                                error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
+                                    _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
+                                    error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
+
+                                except formula.InvalidExpression:
+                                    error.error_text = 'Invalid Error Text Expression'
+
+                        if scheme_parameters.accrual_calculation_method == 3:  # ACCRUAL_PER_FORMULA
+
+                            try:
+                                accrued_price = formula.safe_eval(accrual_expr, names=values)
                             except formula.InvalidExpression:
-                                error.error_text = 'Invalid Error Text Expression'
+                                has_error = True
 
-                    can_write = True
+                                try:
 
-                    try:
+                                    _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
-                        price = PriceHistory.objects.get(
-                            instrument=item.instrument,
-                            pricing_policy=item.policy.pricing_policy,
-                            date=date
-                        )
+                                    error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
-                        if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
-                            can_write = False
-                            _l.debug('Skip %s' % price)
-                        else:
-                            _l.debug('Overwrite existing %s' % price)
+                                except formula.InvalidExpression:
+                                    error.error_text = 'Invalid Error Text Expression'
 
-                    except PriceHistory.DoesNotExist:
+                        can_write = True
 
-                        price = PriceHistory(
-                            instrument=item.instrument,
-                            pricing_policy=item.policy.pricing_policy,
-                            date=date
-                        )
+                        try:
 
-                        _l.debug('Create new %s' % price)
+                            price = PriceHistory.objects.get(
+                                instrument=item.instrument,
+                                pricing_policy=item.policy.pricing_policy,
+                                date=date
+                            )
 
-                    price.procedure_modified_datetime = date_now()
+                            if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
+                                can_write = False
+                                _l.debug('Skip %s' % price)
+                            else:
+                                _l.debug('Overwrite existing %s' % price)
 
-                    price.principal_price = 0
-                    price.accrued_price = 0
+                        except PriceHistory.DoesNotExist:
 
-                    if principal_price is not None:
+                            price = PriceHistory(
+                                instrument=item.instrument,
+                                pricing_policy=item.policy.pricing_policy,
+                                date=date
+                            )
 
-                        if price.id:
-                            if self.procedure.price_overwrite_principal_prices:
-                                price.principal_price = principal_price
-                        else:
-                            price.principal_price = principal_price
+                            _l.debug('Create new %s' % price)
 
-                        error.principal_price = principal_price
+                        price.procedure_modified_datetime = date_now()
 
-                    if accrued_price is not None:
+                        price.principal_price = 0
+                        price.accrued_price = 0
 
-                        if price.id:
-                            if self.procedure.price_overwrite_accrued_prices:
-                                price.accrued_price = accrued_price
-                        else:
-                            price.accrued_price = accrued_price
-
-                        error.accrued_price = accrued_price
-
-                    _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
-
-                    if price.accrued_price == 0 and price.principal_price == 0:
-                        has_error = True
-
-                        error.error_text = error.error_text + ' Price is 0 or null'
-
-                    if can_write:
-
-                        if has_error:
-                            # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
-
-                            error_prices_count = error_prices_count + 1
-                            error.status = PriceHistoryError.STATUS_ERROR
-                            error.save()
-
-                        else:
-
-                            successful_prices_count = successful_prices_count + 1
-
-                            price.save()
+                        if principal_price is not None:
 
                             if price.id:
-                                error.status = PriceHistoryError.STATUS_OVERWRITTEN
+                                if self.procedure.price_overwrite_principal_prices:
+                                    price.principal_price = principal_price
                             else:
-                                error.status = PriceHistoryError.STATUS_SKIP
+                                price.principal_price = principal_price
+
+                            error.principal_price = principal_price
+
+                        if accrued_price is not None:
+
+                            if price.id:
+                                if self.procedure.price_overwrite_accrued_prices:
+                                    price.accrued_price = accrued_price
+                            else:
+                                price.accrued_price = accrued_price
+
+                            error.accrued_price = accrued_price
+
+                        _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
+
+                        if price.accrued_price == 0 and price.principal_price == 0:
+                            has_error = True
+
+                            error.error_text = error.error_text + ' Price is 0 or null'
+
+                        if can_write:
+
+                            if has_error:
+                                # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+
+                                error_prices_count = error_prices_count + 1
+                                error.status = PriceHistoryError.STATUS_ERROR
+                                error.save()
+
+                            else:
+
+                                successful_prices_count = successful_prices_count + 1
+
+                                price.save()
+
+                                if price.id:
+                                    error.status = PriceHistoryError.STATUS_OVERWRITTEN
+                                else:
+                                    error.status = PriceHistoryError.STATUS_SKIP
+                                error.save()
+
+                        else:
+
+                            error_prices_count = error_prices_count + 1
+
+                            error.error_text = "Prices already exists. Principal Price: " + str(
+                                principal_price) + "; Accrued: " + str(accrued_price) + "."
+
+                            error.status = PriceHistoryError.STATUS_SKIP
                             error.save()
 
-                    else:
+                        last_price = price
 
-                        error_prices_count = error_prices_count + 1
+                successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
+                                                                         procedure_instance, item.policy)
 
-                        error.error_text = "Prices already exists. Principal Price: " + str(
-                            principal_price) + "; Accrued: " + str(accrued_price) + "."
+                successful_prices_count = successful_prices_count + successes
+                error_prices_count = error_prices_count + errors
 
-                        error.status = PriceHistoryError.STATUS_SKIP
-                        error.save()
+            procedure_instance.successful_prices_count = successful_prices_count
+            procedure_instance.error_prices_count = error_prices_count
 
-                    last_price = price
+            procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
-            successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
-                                                                     procedure_instance, item.policy)
+            procedure_instance.save()
 
-            successful_prices_count = successful_prices_count + successes
-            error_prices_count = error_prices_count + errors
+            if procedure_instance.schedule_instance:
+                procedure_instance.schedule_instance.run_next_procedure()
 
-        procedure_instance.successful_prices_count = successful_prices_count
-        procedure_instance.error_prices_count = error_prices_count
-
-        procedure_instance.status = PricingProcedureInstance.STATUS_DONE
-
-        procedure_instance.save()
-
-        if procedure_instance.schedule_instance:
-            procedure_instance.schedule_instance.run_next_procedure()
+        except Exception as e:
+            procedure_instance.error_message = 'Error %s' % e
+            procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+            procedure_instance.save()
 
     def process_to_multiple_parameter_formula(self, items):
 
         _l.debug("Pricing Instrument Handler - Multiple parameters Formula: len %s" % len(items))
 
-        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
-                                                    date_to=self.procedure.price_date_to)
-
-        successful_prices_count = 0
-        error_prices_count = 0
-
         procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
+                                                      member=self.member,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
                                                       action='multiple_parameter_formula_get_instrument_prices',
                                                       provider='finmars',
@@ -812,6 +823,14 @@ class PricingInstrumentHandler(object):
                                                       provider_verbose='Finmars'
 
                                                       )
+
+        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                    date_to=self.procedure.price_date_to)
+
+        successful_prices_count = 0
+        error_prices_count = 0
+
+
 
         if self.member:
             procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
@@ -823,299 +842,306 @@ class PricingInstrumentHandler(object):
 
         procedure_instance.save()
 
-        for item in items:
+        try:
 
-            last_price = None
+            for item in items:
 
-            for date in dates:
+                last_price = None
 
-                scheme_parameters = item.pricing_scheme.get_parameters()
+                for date in dates:
 
-                if scheme_parameters:
+                    scheme_parameters = item.pricing_scheme.get_parameters()
 
-                    safe_instrument = {
-                        'id': item.instrument.id,
-                    }
+                    if scheme_parameters:
 
-                    safe_pp = {
-                        'id': item.policy.id,
-                    }
+                        safe_instrument = {
+                            'id': item.instrument.id,
+                        }
 
-                    parameter = None
-
-                    try:
-
-                        if item.policy.default_value:
-
-                            if scheme_parameters.value_type == 10:
-
-                                parameter = str(item.policy.default_value)
-
-                            elif scheme_parameters.value_type == 20:
-
-                                parameter = float(item.policy.default_value)
-
-                            elif scheme_parameters.value_type == 40:
-
-                                parameter = formula._parse_date(str(item.policy.default_value))
-
-                            else:
-
-                                parameter = item.policy.default_value
-
-                        elif item.policy.attribute_key:
-
-                            if 'attributes' in item.policy.attribute_key:
-
-                                user_code = item.policy.attribute_key.split('attributes.')[1]
-
-                                attribute = GenericAttribute.objects.get(object_id=item.instrument.id,
-                                                                         attribute_type__user_code=user_code)
-
-                                if scheme_parameters.value_type == 10:
-                                    parameter = attribute.value_string
-
-                                if scheme_parameters.value_type == 20:
-                                    parameter = attribute.value_float
-
-                                if scheme_parameters.value_type == 40:
-                                    parameter = attribute.value_date
-
-                            else:
-
-                                parameter = getattr(item.instrument, item.policy.attribute_key, None)
-
-                    except Exception as e:
-
-                        _l.debug("Cant find parameter value. Error: %s" % e)
+                        safe_pp = {
+                            'id': item.policy.id,
+                        }
 
                         parameter = None
 
-                    values = {
-                        'context_date': date,
-                        'context_instrument': safe_instrument,
-                        'context_pricing_policy': safe_pp,
-                        'parameter': parameter
-                    }
+                        try:
 
-                    if item.policy.data:
+                            if item.policy.default_value:
 
-                        if 'parameters' in item.policy.data:
+                                if scheme_parameters.value_type == 10:
 
-                            for parameter in item.policy.data['parameters']:
+                                    parameter = str(item.policy.default_value)
 
-                                if 'default_value' in parameter and parameter['default_value']:
+                                elif scheme_parameters.value_type == 20:
 
-                                    if float(parameter['value_type']) == 10:
+                                    parameter = float(item.policy.default_value)
 
-                                        val = str(parameter['default_value'])
+                                elif scheme_parameters.value_type == 40:
 
-                                    elif float(parameter['value_type']) == 20:
+                                    parameter = formula._parse_date(str(item.policy.default_value))
 
-                                        val = float(parameter['default_value'])
+                                else:
 
-                                    elif float(parameter['value_type']) == 40:
+                                    parameter = item.policy.default_value
 
-                                        val = formula._parse_date(str(parameter['default_value']))
+                            elif item.policy.attribute_key:
 
-                                    else:
+                                if 'attributes' in item.policy.attribute_key:
 
-                                        val = parameter['default_value']
+                                    user_code = item.policy.attribute_key.split('attributes.')[1]
 
-                                if 'attribute_key' in parameter and parameter['attribute_key']:
+                                    attribute = GenericAttribute.objects.get(object_id=item.instrument.id,
+                                                                             attribute_type__user_code=user_code)
 
-                                    if 'attributes' in parameter['attribute_key']:
+                                    if scheme_parameters.value_type == 10:
+                                        parameter = attribute.value_string
 
-                                        user_code = parameter['attribute_key'].split('attributes.')[1]
+                                    if scheme_parameters.value_type == 20:
+                                        parameter = attribute.value_float
 
-                                        attribute = GenericAttribute.objects.get(object_id=item.instrument.id,
-                                                                                 attribute_type__user_code=user_code)
+                                    if scheme_parameters.value_type == 40:
+                                        parameter = attribute.value_date
+
+                                else:
+
+                                    parameter = getattr(item.instrument, item.policy.attribute_key, None)
+
+                        except Exception as e:
+
+                            _l.debug("Cant find parameter value. Error: %s" % e)
+
+                            parameter = None
+
+                        values = {
+                            'context_date': date,
+                            'context_instrument': safe_instrument,
+                            'context_pricing_policy': safe_pp,
+                            'parameter': parameter
+                        }
+
+                        if item.policy.data:
+
+                            if 'parameters' in item.policy.data:
+
+                                for parameter in item.policy.data['parameters']:
+
+                                    if 'default_value' in parameter and parameter['default_value']:
 
                                         if float(parameter['value_type']) == 10:
-                                            val = attribute.value_string
 
-                                        if float(parameter['value_type']) == 20:
-                                            val = attribute.value_float
+                                            val = str(parameter['default_value'])
 
-                                        if float(parameter['value_type']) == 40:
-                                            val = attribute.value_date
+                                        elif float(parameter['value_type']) == 20:
 
-                                    else:
+                                            val = float(parameter['default_value'])
 
-                                        val = getattr(item.instrument, parameter['attribute_key'])
+                                        elif float(parameter['value_type']) == 40:
 
-                                values['parameter' + str(parameter['index'])] = val
+                                            val = formula._parse_date(str(parameter['default_value']))
 
-                    expr = scheme_parameters.expr
-                    accrual_expr = scheme_parameters.accrual_expr
-                    pricing_error_text_expr = scheme_parameters.pricing_error_text_expr
-                    accrual_error_text_expr = scheme_parameters.accrual_error_text_expr
+                                        else:
 
-                    _l.debug('values %s' % values)
-                    _l.debug('expr %s' % expr)
+                                            val = parameter['default_value']
 
-                    has_error = False
-                    error = PriceHistoryError(
-                        master_user=self.master_user,
-                        procedure_instance=procedure_instance,
-                        instrument=item.instrument,
-                        pricing_scheme=item.pricing_scheme,
-                        pricing_policy=item.policy.pricing_policy,
-                        date=date,
-                        created=procedure_instance.created
-                    )
+                                    if 'attribute_key' in parameter and parameter['attribute_key']:
 
-                    principal_price = None
-                    accrued_price = None
+                                        if 'attributes' in parameter['attribute_key']:
 
-                    try:
-                        principal_price = formula.safe_eval(expr, names=values)
-                    except formula.InvalidExpression:
-                        has_error = True
+                                            user_code = parameter['attribute_key'].split('attributes.')[1]
 
-                        try:
-                            error.error_text = formula.safe_eval(pricing_error_text_expr, names=values)
-                        except formula.InvalidExpression:
-                            error.error_text = 'Invalid Error Text Expression'
+                                            attribute = GenericAttribute.objects.get(object_id=item.instrument.id,
+                                                                                     attribute_type__user_code=user_code)
 
-                    _l.debug('principal_price %s' % principal_price)
+                                            if float(parameter['value_type']) == 10:
+                                                val = attribute.value_string
 
-                    if scheme_parameters.accrual_calculation_method == 2:  # ACCRUAL_PER_SCHEDULE
+                                            if float(parameter['value_type']) == 20:
+                                                val = attribute.value_float
 
-                        try:
-                            accrued_price = item.instrument.get_accrued_price(date)
-                        except Exception:
-                            has_error = True
+                                            if float(parameter['value_type']) == 40:
+                                                val = attribute.value_date
 
-                            try:
+                                        else:
 
-                                _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
+                                            val = getattr(item.instrument, parameter['attribute_key'])
 
-                                error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
+                                    values['parameter' + str(parameter['index'])] = val
 
-                            except formula.InvalidExpression:
-                                error.error_text = 'Invalid Error Text Expression'
+                        expr = scheme_parameters.expr
+                        accrual_expr = scheme_parameters.accrual_expr
+                        pricing_error_text_expr = scheme_parameters.pricing_error_text_expr
+                        accrual_error_text_expr = scheme_parameters.accrual_error_text_expr
 
-                    if scheme_parameters.accrual_calculation_method == 3:  # ACCRUAL_PER_FORMULA
+                        _l.debug('values %s' % values)
+                        _l.debug('expr %s' % expr)
+
+                        has_error = False
+                        error = PriceHistoryError(
+                            master_user=self.master_user,
+                            procedure_instance=procedure_instance,
+                            instrument=item.instrument,
+                            pricing_scheme=item.pricing_scheme,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date,
+                            created=procedure_instance.created
+                        )
+
+                        principal_price = None
+                        accrued_price = None
 
                         try:
-                            accrued_price = formula.safe_eval(accrual_expr, names=values)
+                            principal_price = formula.safe_eval(expr, names=values)
                         except formula.InvalidExpression:
                             has_error = True
 
                             try:
-
-                                _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
-
-                                error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
-
+                                error.error_text = formula.safe_eval(pricing_error_text_expr, names=values)
                             except formula.InvalidExpression:
                                 error.error_text = 'Invalid Error Text Expression'
 
-                    can_write = True
+                        _l.debug('principal_price %s' % principal_price)
 
-                    try:
+                        if scheme_parameters.accrual_calculation_method == 2:  # ACCRUAL_PER_SCHEDULE
 
-                        price = PriceHistory.objects.get(
-                            instrument=item.instrument,
-                            pricing_policy=item.policy.pricing_policy,
-                            date=date
-                        )
+                            try:
+                                accrued_price = item.instrument.get_accrued_price(date)
+                            except Exception:
+                                has_error = True
 
-                        if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
-                            can_write = False
-                            _l.debug('Skip %s' % price)
-                        else:
-                            _l.debug('Overwrite existing %s' % price)
+                                try:
 
-                    except PriceHistory.DoesNotExist:
+                                    _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
-                        price = PriceHistory(
-                            instrument=item.instrument,
-                            pricing_policy=item.policy.pricing_policy,
-                            date=date
-                        )
+                                    error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
-                        _l.debug('Create new %s' % price)
+                                except formula.InvalidExpression:
+                                    error.error_text = 'Invalid Error Text Expression'
 
-                    price.procedure_modified_datetime = date_now()
+                        if scheme_parameters.accrual_calculation_method == 3:  # ACCRUAL_PER_FORMULA
 
-                    price.principal_price = 0
-                    price.accrued_price = 0
+                            try:
+                                accrued_price = formula.safe_eval(accrual_expr, names=values)
+                            except formula.InvalidExpression:
+                                has_error = True
 
-                    if principal_price is not None:
+                                try:
 
-                        if price.id:
-                            if self.procedure.price_overwrite_principal_prices:
-                                price.principal_price = principal_price
-                        else:
-                            price.principal_price = principal_price
+                                    _l.debug('accrual_error_text_expr %s' % accrual_error_text_expr)
 
-                        error.principal_price = principal_price
+                                    error.error_text = formula.safe_eval(accrual_error_text_expr, names=values)
 
-                    if accrued_price is not None:
+                                except formula.InvalidExpression:
+                                    error.error_text = 'Invalid Error Text Expression'
 
-                        if price.id:
-                            if self.procedure.price_overwrite_accrued_prices:
-                                price.accrued_price = accrued_price
-                        else:
-                            price.accrued_price = accrued_price
+                        can_write = True
 
-                        error.accrued_price = accrued_price
+                        try:
 
-                    _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
+                            price = PriceHistory.objects.get(
+                                instrument=item.instrument,
+                                pricing_policy=item.policy.pricing_policy,
+                                date=date
+                            )
 
-                    if price.accrued_price == 0 and price.principal_price == 0:
-                        has_error = True
-                        error.error_text = error.error_text + ' Price is 0 or null'
+                            if not self.procedure.price_overwrite_principal_prices and not self.procedure.price_overwrite_accrued_prices:
+                                can_write = False
+                                _l.debug('Skip %s' % price)
+                            else:
+                                _l.debug('Overwrite existing %s' % price)
 
-                    if can_write:
+                        except PriceHistory.DoesNotExist:
 
-                        # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
-                        if has_error:
+                            price = PriceHistory(
+                                instrument=item.instrument,
+                                pricing_policy=item.policy.pricing_policy,
+                                date=date
+                            )
 
-                            error_prices_count = error_prices_count + 1
-                            error.status = PriceHistoryError.STATUS_ERROR
-                            error.save()
-                        else:
+                            _l.debug('Create new %s' % price)
 
-                            successful_prices_count = successful_prices_count + 1
+                        price.procedure_modified_datetime = date_now()
 
-                            price.save()
+                        price.principal_price = 0
+                        price.accrued_price = 0
+
+                        if principal_price is not None:
 
                             if price.id:
-                                error.status = PriceHistoryError.STATUS_OVERWRITTEN
+                                if self.procedure.price_overwrite_principal_prices:
+                                    price.principal_price = principal_price
                             else:
-                                error.status = PriceHistoryError.STATUS_SKIP
+                                price.principal_price = principal_price
+
+                            error.principal_price = principal_price
+
+                        if accrued_price is not None:
+
+                            if price.id:
+                                if self.procedure.price_overwrite_accrued_prices:
+                                    price.accrued_price = accrued_price
+                            else:
+                                price.accrued_price = accrued_price
+
+                            error.accrued_price = accrued_price
+
+                        _l.debug('Price: %s. Can write: %s. Has Error: %s.' % (price, can_write, has_error))
+
+                        if price.accrued_price == 0 and price.principal_price == 0:
+                            has_error = True
+                            error.error_text = error.error_text + ' Price is 0 or null'
+
+                        if can_write:
+
+                            # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+                            if has_error:
+
+                                error_prices_count = error_prices_count + 1
+                                error.status = PriceHistoryError.STATUS_ERROR
+                                error.save()
+                            else:
+
+                                successful_prices_count = successful_prices_count + 1
+
+                                price.save()
+
+                                if price.id:
+                                    error.status = PriceHistoryError.STATUS_OVERWRITTEN
+                                else:
+                                    error.status = PriceHistoryError.STATUS_SKIP
+                                error.save()
+
+                        else:
+
+                            error_prices_count = error_prices_count + 1
+
+                            error.error_text = "Prices already exists. Principal Price: " + str(
+                                principal_price) + "; Accrued: " + str(accrued_price) + "."
+
+                            error.status = PriceHistoryError.STATUS_SKIP
                             error.save()
 
-                    else:
+                        last_price = price
 
-                        error_prices_count = error_prices_count + 1
+                successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
+                                                                         procedure_instance, item.policy)
 
-                        error.error_text = "Prices already exists. Principal Price: " + str(
-                            principal_price) + "; Accrued: " + str(accrued_price) + "."
+                successful_prices_count = successful_prices_count + successes
+                error_prices_count = error_prices_count + errors
 
-                        error.status = PriceHistoryError.STATUS_SKIP
-                        error.save()
+            procedure_instance.successful_prices_count = successful_prices_count
+            procedure_instance.error_prices_count = error_prices_count
 
-                    last_price = price
+            procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
-            successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
-                                                                     procedure_instance, item.policy)
+            procedure_instance.save()
 
-            successful_prices_count = successful_prices_count + successes
-            error_prices_count = error_prices_count + errors
+            if procedure_instance.schedule_instance:
+                procedure_instance.schedule_instance.run_next_procedure()
 
-        procedure_instance.successful_prices_count = successful_prices_count
-        procedure_instance.error_prices_count = error_prices_count
-
-        procedure_instance.status = PricingProcedureInstance.STATUS_DONE
-
-        procedure_instance.save()
-
-        if procedure_instance.schedule_instance:
-            procedure_instance.schedule_instance.run_next_procedure()
+        except Exception as e:
+            procedure_instance.error_message = 'Error %s' % e
+            procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+            procedure_instance.save()
 
     def is_valid_parameter_for_bloomberg(self, parameters):
 
@@ -1900,6 +1926,7 @@ class PricingInstrumentHandler(object):
         procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                       parent_procedure_instance=self.parent_procedure,
                                                       master_user=self.master_user,
+                                                      member=self.member,
                                                       status=PricingProcedureInstance.STATUS_PENDING,
                                                       action='cbonds_get_instrument_prices',
                                                       provider='cbonds',
@@ -1919,140 +1946,148 @@ class PricingInstrumentHandler(object):
 
         procedure_instance.save()
 
-        body = {}
-        body['action'] = procedure_instance.action
-        body['procedure'] = procedure_instance.id
-        body['provider'] = procedure_instance.provider
-
-        body['user'] = {
-            'token': self.master_user.id,
-            'base_api_url': settings.BASE_API_URL
-        }
-
-        body['error_code'] = None
-        body['error_message'] = None
-
-        body['data'] = {}
-
-        body['data']['date_from'] = str(self.procedure.price_date_from)
-        body['data']['date_to'] = str(self.procedure.price_date_to)
-        body['data']['items'] = []
-
-        items_with_missing_parameters = []
-
-        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
-                                                    date_to=self.procedure.price_date_to)
-
-        empty_values = get_empty_values_for_dates(dates)
-
-        _l.debug('procedure id %s' % body['procedure'])
-
-        full_items = []
-
-        _l.debug('items len: %s' % len(items))
-
-        for item in items:
-
-            if len(item.parameters):
-
-                item_parameters = item.parameters.copy()
-                item_parameters.pop()
-
-                for date in dates:
-
-                    with transaction.atomic():
-                        try:
-                            record = PricingProcedureCbondsInstrumentResult(master_user=self.master_user,
-                                                                            procedure=procedure_instance,
-                                                                            instrument=item.instrument,
-                                                                            instrument_parameters=str(
-                                                                                item_parameters),
-                                                                            pricing_policy=item.policy.pricing_policy,
-                                                                            pricing_scheme=item.pricing_scheme,
-                                                                            reference=item.parameters[0],
-                                                                            date=date)
-
-                            record.save()
-
-                        except Exception as e:
-                            _l.debug("Cant create Result Record %s" % e)
-                            pass
-
-                item_obj = {
-                    'reference': item.parameters[0],
-                    'parameters': item_parameters,
-                    'fields': []
-                }
-
-                item_obj['fields'].append({
-                    'code': 'close',
-                    'parameters': [],
-                    'values': empty_values
-                })
-
-                item_obj['fields'].append({
-                    'code': 'open',
-                    'parameters': [],
-                    'values': empty_values
-                })
-
-                item_obj['fields'].append({
-                    'code': 'high',
-                    'parameters': [],
-                    'values': empty_values
-                })
-
-                item_obj['fields'].append({
-                    'code': 'low',
-                    'parameters': [],
-                    'values': empty_values
-                })
-
-                item_obj['fields'].append({
-                    'code': 'volume',
-                    'parameters': [],
-                    'values': empty_values
-                })
-
-
-                full_items.append(item_obj)
-
-            else:
-                items_with_missing_parameters.append(item)
-
-        _l.debug('full_items len: %s' % len(full_items))
-
-        optimized_items = optimize_items(full_items)
-
-        _l.debug('optimized_items len: %s' % len(optimized_items))
-
-        body['data']['items'] = optimized_items
-
-        _l.debug('items_with_missing_parameters %s' % len(items_with_missing_parameters))
-        # _l.debug('data %s' % data)
-
-        # _l.debug('self.procedure %s' % self.procedure.id)
-        # _l.debug('send request %s' % body)
-
-        procedure_instance.request_data = body
-        procedure_instance.save()
-
         try:
 
-            self.transport.send_request(body)
+            body = {}
+            body['action'] = procedure_instance.action
+            body['procedure'] = procedure_instance.id
+            body['provider'] = procedure_instance.provider
 
+            body['user'] = {
+                'token': self.master_user.id,
+                'base_api_url': settings.BASE_API_URL
+            }
+
+            body['error_code'] = None
+            body['error_message'] = None
+
+            body['data'] = {}
+
+            body['data']['date_from'] = str(self.procedure.price_date_from)
+            body['data']['date_to'] = str(self.procedure.price_date_to)
+            body['data']['items'] = []
+
+            items_with_missing_parameters = []
+
+            dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                        date_to=self.procedure.price_date_to)
+
+            empty_values = get_empty_values_for_dates(dates)
+
+            _l.debug('procedure id %s' % body['procedure'])
+
+            full_items = []
+
+            _l.debug('items len: %s' % len(items))
+
+            for item in items:
+
+                if len(item.parameters):
+
+                    item_parameters = item.parameters.copy()
+                    item_parameters.pop()
+
+                    for date in dates:
+
+                        with transaction.atomic():
+                            try:
+                                record = PricingProcedureCbondsInstrumentResult(master_user=self.master_user,
+                                                                                procedure=procedure_instance,
+                                                                                instrument=item.instrument,
+                                                                                instrument_parameters=str(
+                                                                                    item_parameters),
+                                                                                pricing_policy=item.policy.pricing_policy,
+                                                                                pricing_scheme=item.pricing_scheme,
+                                                                                reference=item.parameters[0],
+                                                                                date=date)
+
+                                record.save()
+
+                            except Exception as e:
+                                _l.debug("Cant create Result Record %s" % e)
+                                pass
+
+                    item_obj = {
+                        'reference': item.parameters[0],
+                        'parameters': item_parameters,
+                        'fields': []
+                    }
+
+                    item_obj['fields'].append({
+                        'code': 'close',
+                        'parameters': [],
+                        'values': empty_values
+                    })
+
+                    item_obj['fields'].append({
+                        'code': 'open',
+                        'parameters': [],
+                        'values': empty_values
+                    })
+
+                    item_obj['fields'].append({
+                        'code': 'high',
+                        'parameters': [],
+                        'values': empty_values
+                    })
+
+                    item_obj['fields'].append({
+                        'code': 'low',
+                        'parameters': [],
+                        'values': empty_values
+                    })
+
+                    item_obj['fields'].append({
+                        'code': 'volume',
+                        'parameters': [],
+                        'values': empty_values
+                    })
+
+
+                    full_items.append(item_obj)
+
+                else:
+                    items_with_missing_parameters.append(item)
+
+            _l.debug('full_items len: %s' % len(full_items))
+
+            optimized_items = optimize_items(full_items)
+
+            _l.debug('optimized_items len: %s' % len(optimized_items))
+
+            body['data']['items'] = optimized_items
+
+            _l.debug('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+            # _l.debug('data %s' % data)
+
+            # _l.debug('self.procedure %s' % self.procedure.id)
+            # _l.debug('send request %s' % body)
+
+            procedure_instance.request_data = body
+            procedure_instance.save()
+
+            try:
+
+                self.transport.send_request(body)
+
+            except Exception as e:
+
+                procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+                procedure_instance.error_code = 500
+                procedure_instance.error_message = "Mediator is unavailable. Please try later."
+
+                procedure_instance.save()
+
+                send_system_message(master_user=self.master_user,
+                                    performed_by='System',
+                                    type='error',
+                                    description="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
         except Exception as e:
 
             procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
-            procedure_instance.error_code = 500
-            procedure_instance.error_message = "Mediator is unavailable. Please try later."
+            procedure_instance.error_message = "Error %s" % e
 
             procedure_instance.save()
-
-            send_system_message(master_user=self.master_user,
-                                performed_by='System',
-                                type='error',
-                                description="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
 
     def print_grouped_instruments(self):
 

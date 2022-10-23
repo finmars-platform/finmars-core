@@ -1,3 +1,5 @@
+import json
+
 from django_filters.rest_framework import FilterSet
 
 from rest_framework.response import Response
@@ -120,20 +122,27 @@ class PricingBrokerBloombergHandler(APIView):
 
         try:
 
-            procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
+            procedure_instance = PricingProcedureInstance.objects.get(pk=procedure_id)
 
-            procedure.error_code = request.data['error_code']
-            procedure.error_message = request.data['error_message']
+            procedure_instance.error_code = request.data['error_code']
+            procedure_instance.error_message = request.data['error_message']
+            try:
+                procedure_instance.response_data = json.dumps(request.data)
+            except Exception as e:
+
+                procedure_instance.error_message = procedure_instance.error_message + 'Could not parse response %s' % e
+
+            procedure_instance.save()
 
             if not request.data['error_code']:
 
-                instance = FillPricesBrokerBloombergProcess(instance=request.data, master_user=procedure.master_user)
+                instance = FillPricesBrokerBloombergProcess(instance=request.data, master_user=procedure_instance.master_user)
                 instance.process()
 
             else:
 
-                procedure.status = PricingProcedureInstance.STATUS_ERROR
-                procedure.save()
+                procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+                procedure_instance.save()
 
         except PricingProcedureInstance.DoesNotExist:
 
@@ -158,19 +167,26 @@ class PricingBrokerBloombergForwardsHandler(APIView):
 
         try:
 
-            procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
-            procedure.error_code = request.data['error_code']
-            procedure.error_message = request.data['error_message']
+            procedure_instance = PricingProcedureInstance.objects.get(pk=procedure_id)
+            procedure_instance.error_code = request.data['error_code']
+            procedure_instance.error_message = request.data['error_message']
+            try:
+                procedure_instance.response_data = json.dumps(request.data)
+            except Exception as e:
+
+                procedure_instance.error_message = procedure_instance.error_message + 'Could not parse response %s' % e
+
+            procedure_instance.save()
 
             if not request.data['error_code']:
 
-                instance = FillPricesBrokerBloombergForwardsProcess(instance=request.data, master_user=procedure.master_user)
+                instance = FillPricesBrokerBloombergForwardsProcess(instance=request.data, master_user=procedure_instance.master_user)
                 instance.process()
 
             else:
 
-                procedure.status = PricingProcedureInstance.STATUS_ERROR
-                procedure.save()
+                procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+                procedure_instance.save()
 
         except PricingProcedureInstance.DoesNotExist:
 
@@ -195,20 +211,27 @@ class PricingBrokerWtradeHandler(APIView):
 
         try:
 
-            procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
+            procedure_instance = PricingProcedureInstance.objects.get(pk=procedure_id)
 
-            procedure.error_code = request.data['error_code']
-            procedure.error_message = request.data['error_message']
+            procedure_instance.error_code = request.data['error_code']
+            procedure_instance.error_message = request.data['error_message']
+            try:
+                procedure_instance.response_data = json.dumps(request.data)
+            except Exception as e:
+
+                procedure_instance.error_message = procedure_instance.error_message + 'Could not parse response %s' % e
+
+            procedure_instance.save()
 
             if not request.data['error_code']:
 
-                instance = FillPricesBrokerWtradeProcess(instance=request.data, master_user=procedure.master_user)
+                instance = FillPricesBrokerWtradeProcess(instance=request.data, master_user=procedure_instance.master_user)
                 instance.process()
 
             else:
 
-                procedure.status = PricingProcedureInstance.STATUS_ERROR
-                procedure.save()
+                procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+                procedure_instance.save()
 
         except PricingProcedureInstance.DoesNotExist:
 
@@ -233,20 +256,27 @@ class PricingBrokerFixerHandler(APIView):
 
         try:
 
-            procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
+            procedure_instance = PricingProcedureInstance.objects.get(pk=procedure_id)
 
-            procedure.error_code = request.data['error_code']
-            procedure.error_message = request.data['error_message']
+            procedure_instance.error_code = request.data['error_code']
+            procedure_instance.error_message = request.data['error_message']
+            try:
+                procedure_instance.response_data = json.dumps(request.data)
+            except Exception as e:
+
+                procedure_instance.error_message = procedure_instance.error_message + 'Could not parse response %s' % e
+
+            procedure_instance.save()
 
             if not request.data['error_code']:
 
-                instance = FillPricesBrokerFixerProcess(instance=request.data, master_user=procedure.master_user)
+                instance = FillPricesBrokerFixerProcess(instance=request.data, master_user=procedure_instance.master_user)
                 instance.process()
 
             else:
 
-                procedure.status = PricingProcedureInstance.STATUS_ERROR
-                procedure.save()
+                procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+                procedure_instance.save()
 
         except PricingProcedureInstance.DoesNotExist:
 
@@ -271,20 +301,27 @@ class PricingBrokerFxCbondsHandler(APIView):
 
         try:
 
-            procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
+            procedure_instance = PricingProcedureInstance.objects.get(pk=procedure_id)
 
-            procedure.error_code = request.data['error_code']
-            procedure.error_message = request.data['error_message']
+            procedure_instance.error_code = request.data['error_code']
+            procedure_instance.error_message = request.data['error_message']
+            try:
+                procedure_instance.response_data = json.dumps(request.data)
+            except Exception as e:
+
+                procedure_instance.error_message = procedure_instance.error_message + 'Could not parse response %s' % e
+
+            procedure_instance.save()
 
             if not request.data['error_code']:
 
-                instance = FillPricesBrokerFxCbondsProcess(instance=request.data, master_user=procedure.master_user)
+                instance = FillPricesBrokerFxCbondsProcess(instance=request.data, master_user=procedure_instance.master_user)
                 instance.process()
 
             else:
 
-                procedure.status = PricingProcedureInstance.STATUS_ERROR
-                procedure.save()
+                procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+                procedure_instance.save()
 
         except PricingProcedureInstance.DoesNotExist:
 
@@ -309,20 +346,28 @@ class PricingBrokerAlphavHandler(APIView):
 
         try:
 
-            procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
+            procedure_instance = PricingProcedureInstance.objects.get(pk=procedure_id)
 
-            procedure.error_code = request.data['error_code']
-            procedure.error_message = request.data['error_message']
+            procedure_instance.error_code = request.data['error_code']
+            procedure_instance.error_message = request.data['error_message']
+            procedure_instance.response_data = json.dumps(request.data)
+            try:
+                procedure_instance.response_data = json.dumps(request.data)
+            except Exception as e:
+
+                procedure_instance.error_message = procedure_instance.error_message + 'Could not parse response %s' % e
+
+            procedure_instance.save()
 
             if not request.data['error_code']:
 
-                instance = FillPricesBrokerAlphavProcess(instance=request.data, master_user=procedure.master_user)
+                instance = FillPricesBrokerAlphavProcess(instance=request.data, master_user=procedure_instance.master_user)
                 instance.process()
 
             else:
 
-                procedure.status = PricingProcedureInstance.STATUS_ERROR
-                procedure.save()
+                procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+                procedure_instance.save()
 
         except PricingProcedureInstance.DoesNotExist:
 
@@ -345,20 +390,27 @@ class PricingBrokerCbondsHandler(APIView):
 
         try:
 
-            procedure = PricingProcedureInstance.objects.get(pk=procedure_id)
+            procedure_instance = PricingProcedureInstance.objects.get(pk=procedure_id)
 
-            procedure.error_code = request.data['error_code']
-            procedure.error_message = request.data['error_message']
+            procedure_instance.error_code = request.data['error_code']
+            procedure_instance.error_message = request.data['error_message']
+            try:
+                procedure_instance.response_data = json.dumps(request.data)
+            except Exception as e:
+
+                procedure_instance.error_message = procedure_instance.error_message + 'Could not parse response %s' % e
+
+            procedure_instance.save()
 
             if not request.data['error_code']:
 
-                instance = FillPricesBrokerCbondsProcess(instance=request.data, master_user=procedure.master_user)
+                instance = FillPricesBrokerCbondsProcess(instance=request.data, master_user=procedure_instance.master_user)
                 instance.process()
 
             else:
 
-                procedure.status = PricingProcedureInstance.STATUS_ERROR
-                procedure.save()
+                procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+                procedure_instance.save()
 
         except PricingProcedureInstance.DoesNotExist:
 
