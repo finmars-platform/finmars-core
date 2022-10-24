@@ -240,9 +240,9 @@ class TransactionImportProcess(object):
 
         result = serializer.data
 
-        _l.debug('self.result %s' % self.result.__dict__)
+        # _l.debug('self.result %s' % self.result.__dict__)
 
-        _l.debug('generate_json_report.result %s' % result)
+        # _l.debug('generate_json_report.result %s' % result)
 
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
         file_name = 'file_report_%s_task_%s.json' % (current_date_time, self.task.id)
@@ -431,6 +431,15 @@ class TransactionImportProcess(object):
 
                 _l.info('TransactionImportProcess.Task %s. book SUCCESS item %s rule_scenario %s' % (
                     self.task, item, rule_scenario))
+
+                self.task.update_progress(
+                    {
+                        'current': self.result.processed_rows,
+                        'total': len(self.items),
+                        'percent': round(self.result.processed_rows / (len(self.items) / 100)),
+                        'description': 'Going to book %s' % (rule_scenario.transaction_type.user_code)
+                    }
+                )
 
             except Exception as e:
 
@@ -758,6 +767,10 @@ class TransactionImportProcess(object):
 
         _l.info('TransactionImportProcess.Task %s. process_items INIT' % self.task)
 
+
+
+        index = 0
+
         for item in self.items:
 
             try:
@@ -826,6 +839,17 @@ class TransactionImportProcess(object):
                         'file_name': self.result.file_name}
                 }, level="member",
                     context=self.context)
+
+                self.task.update_progress(
+                    {
+                        'current': self.result.processed_rows,
+                        'total': len(self.items),
+                        'percent': round(self.result.processed_rows / (len(self.items) / 100)),
+                        'description': 'Row %s processed' % self.result.processed_rows
+                    }
+                )
+
+
 
             except Exception as e:
 
