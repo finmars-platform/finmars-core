@@ -29,52 +29,27 @@ _l = logging.getLogger('poms.widgets')
 
 
 def start_new_balance_history_collect(task):
-    parent_task = CeleryTask.objects.get(id=task.parent_id)
-    parent_options_object = parent_task.options_object
+    task = CeleryTask.objects.get(id=task.id)
+    task_options_object = task.options_object
 
-    if (len(parent_options_object['processed_dates']) + len(parent_options_object['error_dates'])) != len(
-            parent_options_object['dates_to_process']):
+    if (len(task_options_object['processed_dates']) + len(task_options_object['error_dates'])) < len(
+            task_options_object['dates_to_process']):
 
-
-        portfolio = Portfolio.objects.get(id=parent_options_object['portfolio_id'])
-
-        date = find_next_date_to_process(parent_task)
-
-        new_celery_task = CeleryTask.objects.create(
-            master_user=task.master_user,
-            member=task.member,
-            verbose_nane="Collect Nav History for %s portfolio. Date %s" % (portfolio.name, date),
-            type='collect_history',
-            parent=parent_task
-        )
-
-        options_object = {
-            "report_date": date,
-            "portfolio_id": parent_options_object['portfolio_id'],
-            "report_currency_id": parent_options_object['report_currency_id'],
-            "cost_method_id": parent_options_object['cost_method_id'],
-            "pricing_policy_id": parent_options_object['pricing_policy_id'],
-        }
-
-        new_celery_task.options_object = options_object
-
-        new_celery_task.save()
-
-        collect_balance_report_history.apply_async(kwargs={'task_id': new_celery_task.id})
+        collect_balance_report_history.apply_async(kwargs={'task_id': task.id})
 
     else:
 
-        send_system_message(master_user=parent_task.master_user,
-                            performed_by=parent_task.member.username,
+        send_system_message(master_user=task.master_user,
+                            performed_by=task.member.username,
                             section='schedules',
                             type='success',
                             title='Balance History Collected',
                             description='Balances from %s to %s are available for widgets' % (
-                                parent_options_object['date_from'], parent_options_object['date_to']),
+                                task_options_object['date_from'], task_options_object['date_to']),
                             )
 
-        parent_task.status = CeleryTask.STATUS_DONE
-        parent_task.save()
+        task.status = CeleryTask.STATUS_DONE
+        task.save()
 
 
 @shared_task(name='widgets.collect_balance_report_history', bind=True)
@@ -82,14 +57,14 @@ def collect_balance_report_history(self, task_id):
     _l.info('collect_balance_report_history init task_id %s' % task_id)
 
     task = CeleryTask.objects.get(id=task_id)
-    parent_task = task.parent
+    report_date = find_next_date_to_process(task)
 
     try:
 
         _l.info('task.options_object %s' % task.options_object)
 
         report_currency = Currency.objects.get(id=task.options_object.get('report_currency_id', None))
-        report_date = task.options_object['report_date']
+
         cost_method = CostMethod.objects.get(id=task.options_object.get('cost_method_id', None))
         pricing_policy = PricingPolicy.objects.get(id=task.options_object.get('pricing_policy_id', None))
 
@@ -194,14 +169,25 @@ def collect_balance_report_history(self, task_id):
         except Exception as e:
             _l.error("collect_balance_report_history. Could not collect sector category %s" % e)
 
-        parent_options_object = parent_task.options_object
+        task_options_object = task.options_object
 
-        parent_options_object['processed_dates'].append(report_date)
+        task_options_object['processed_dates'].append(report_date)
 
-        parent_task.options_object = parent_options_object
-        parent_task.save()
+        task.options_object = task_options_object
 
-        task.status = CeleryTask.STATUS_DONE
+        result_object = task.result_object
+
+        if not result_object:
+            result_object = {"results": []}
+
+        result_object['results'].append({
+            'date': str(report_date),
+            'status': "success",
+            'id': balance_report_history.id
+        })
+
+        task.result_object = result_object
+
         task.save()
 
         start_new_balance_history_collect(task)
@@ -211,69 +197,44 @@ def collect_balance_report_history(self, task_id):
         _l.error("collect_balance_report_history. error %s" % e)
         _l.error("collect_balance_report_history. traceback %s" % traceback.format_exc())
 
-        parent_options_object = parent_task.options_object
+        task_options_object = task.options_object
 
-        parent_options_object['error_dates'].append(task.options_object['report_date'])
+        task_options_object['error_dates'].append(task.options_object['report_date'])
 
-        parent_task.options_object = parent_options_object
-        parent_task.save()
+        task.options_object = task_options_object
 
         task.status = CeleryTask.STATUS_ERROR
-        task.error_message = str(e)
+        if not task.error_message:
+            task.error_message = str(e)
+        else:
+            task.error_message = task.error_message + '\n' + str(e)
         task.save()
 
         start_new_balance_history_collect(task)
 
 
 def start_new_pl_history_collect(task):
-    parent_task = CeleryTask.objects.get(id=task.parent_id)
-    parent_options_object = parent_task.options_object
+    task = CeleryTask.objects.get(id=task.id)
+    task_options_object = task.options_object
 
-    if (len(parent_options_object['processed_dates']) + len(parent_options_object['error_dates'])) != len(
-            parent_options_object['dates_to_process']):
+    if (len(task_options_object['processed_dates']) + len(task_options_object['error_dates'])) < len(
+            task_options_object['dates_to_process']):
 
-        portfolio = Portfolio.objects.get(id=parent_options_object['portfolio_id'])
-
-        date = find_next_date_to_process(parent_task)
-
-        new_celery_task = CeleryTask.objects.create(
-            master_user=task.master_user,
-            member=task.member,
-            verbose_nane="Collect Pl History for %s portfolio. Date %s" % (portfolio.name, date),
-            type='collect_history',
-            parent=parent_task
-        )
-
-
-
-        options_object = {
-            "pl_first_date": parent_options_object['pl_first_date'],
-            "report_date": date,
-            "portfolio_id": parent_options_object['portfolio_id'],
-            "report_currency_id": parent_options_object['report_currency_id'],
-            "cost_method_id": parent_options_object['cost_method_id'],
-            "pricing_policy_id": parent_options_object['pricing_policy_id'],
-        }
-
-        new_celery_task.options_object = options_object
-
-        new_celery_task.save()
-
-        collect_pl_report_history.apply_async(kwargs={'task_id': new_celery_task.id})
+        collect_pl_report_history.apply_async(kwargs={'task_id': task.id})
 
     else:
 
-        send_system_message(master_user=parent_task.master_user,
-                            performed_by=parent_task.member.username,
+        send_system_message(master_user=task.master_user,
+                            performed_by=task.member.username,
                             section='schedules',
                             type='success',
                             title='PL History Collected',
                             description='PL History from %s to %s are available for widgets' % (
-                                parent_options_object['date_from'], parent_options_object['date_to']),
+                                task_options_object['date_from'], task_options_object['date_to']),
                             )
 
-        parent_task.status = CeleryTask.STATUS_DONE
-        parent_task.save()
+        task.status = CeleryTask.STATUS_DONE
+        task.save()
 
 
 @shared_task(name='widgets.collect_pl_report_history', bind=True)
@@ -281,14 +242,13 @@ def collect_pl_report_history(self, task_id):
     _l.info('collect_pl_report_history init task_id %s' % task_id)
 
     task = CeleryTask.objects.get(id=task_id)
-    parent_task = task.parent
+    report_date = find_next_date_to_process(task)
 
     try:
 
         _l.info('task.options_object %s' % task.options_object)
 
         report_currency = Currency.objects.get(id=task.options_object.get('report_currency_id', None))
-        report_date = task.options_object['report_date']
         pl_first_date = task.options_object['pl_first_date']
         cost_method = CostMethod.objects.get(id=task.options_object.get('cost_method_id', None))
         pricing_policy = PricingPolicy.objects.get(id=task.options_object.get('pricing_policy_id', None))
@@ -392,14 +352,25 @@ def collect_pl_report_history(self, task_id):
         except Exception as e:
             _l.error("collect_pl_report_history. Could not collect sector category %s" % e)
 
-        parent_options_object = parent_task.options_object
+        task_options_object = task.options_object
 
-        parent_options_object['processed_dates'].append(report_date)
+        task_options_object['processed_dates'].append(report_date)
 
-        parent_task.options_object = parent_options_object
-        parent_task.save()
+        task.options_object = task_options_object
 
-        task.status = CeleryTask.STATUS_DONE
+        result_object = task.result_object
+
+        if not result_object:
+            result_object = {"results": []}
+
+        result_object['results'].append({
+            'date': str(report_date),
+            'status': "success",
+            'id': pl_report_history.id
+        })
+
+        task.result_object = result_object
+
         task.save()
 
         start_new_pl_history_collect(task)
@@ -409,78 +380,60 @@ def collect_pl_report_history(self, task_id):
         _l.error("collect_pl_report_history. error %s" % e)
         _l.error("collect_pl_report_history. traceback %s" % traceback.format_exc())
 
-        parent_options_object = parent_task.options_object
+        task_options_object = task.options_object
 
-        parent_options_object['error_dates'].append(task.options_object['report_date'])
+        task_options_object['error_dates'].append(task.options_object['report_date'])
 
-        parent_task.options_object = parent_options_object
-        parent_task.save()
+        task.options_object = task_options_object
 
         task.status = CeleryTask.STATUS_ERROR
-        task.error_message = str(e)
+
+        if not task.error_message:
+            task.error_message = str(e)
+        else:
+            task.error_message = task.error_message + '\n' + str(e)
+
         task.save()
 
         start_new_pl_history_collect(task)
 
 
 def start_new_collect_stats(task):
-    parent_task = CeleryTask.objects.get(id=task.parent_id)
-    parent_options_object = parent_task.options_object
+    task = CeleryTask.objects.get(id=task.id)
+    task_options_object = task.options_object
 
-    if (len(parent_options_object['processed_dates']) + len(parent_options_object['error_dates'])) != len(
-            parent_options_object['dates_to_process']):
+    if (len(task_options_object['processed_dates']) + len(task_options_object['error_dates'])) < len(
+            task_options_object['dates_to_process']):
 
-        portfolio = Portfolio.objects.get(id=parent_options_object['portfolio_id'])
-
-        date = find_next_date_to_process(parent_task)
-
-        new_celery_task = CeleryTask.objects.create(
-            master_user=task.master_user,
-            member=task.member,
-            verbose_name="Collect Widget Stats for %s portfolio. Date %s" % (portfolio, date),
-            type='collect_stats',
-            parent=parent_task
-        )
-
-        options_object = {
-
-            'portfolio_id': parent_options_object['portfolio_id'],
-            'benchmark': parent_options_object['benchmark'],
-            'date': date
-        }
-
-        new_celery_task.options_object = options_object
-
-        new_celery_task.save()
-
-        collect_stats.apply_async(kwargs={'task_id': new_celery_task.id})
+        collect_stats.apply_async(kwargs={'task_id': task.id})
 
     else:
 
-        send_system_message(master_user=parent_task.master_user,
-                            performed_by=parent_task.member.username,
+        send_system_message(master_user=task.master_user,
+                            performed_by=task.member.username,
                             section='schedules',
                             type='success',
                             title='Stats Collected',
                             description='Stats from %s to %s are available for widgets' % (
-                                parent_options_object['date_from'], parent_options_object['date_to']),
+                                task_options_object['date_from'], task_options_object['date_to']),
                             )
 
-        parent_task.status = CeleryTask.STATUS_DONE
-        parent_task.save()
+        task.status = CeleryTask.STATUS_DONE
+        task.save()
 
 
 @shared_task(name='widgets.collect_stats', bind=True)
 def collect_stats(self, task_id):
     task = CeleryTask.objects.get(id=task_id)
-    parent_task = task.parent
+
+    date = find_next_date_to_process(task)
 
     try:
 
         stats_handler = StatsHandler(
             master_user=task.master_user,
             member=task.member,
-            date=task.options_object['date'],
+            date=date,
             portfolio_id=task.options_object['portfolio_id'],
             benchmark=task.options_object['benchmark']
         )
@@ -531,17 +484,28 @@ def collect_stats(self, task_id):
 
         widget_stats_instance.save()
 
-        task.result_object = result
-
         task.status = CeleryTask.STATUS_DONE
+
+        task_options_object = task.options_object
+
+        task_options_object['processed_dates'].append(date)
+
+        task.options_object = task_options_object
+
+        task_result_object = task.result_object
+
+        if not task_result_object:
+            task_result_object = {"results": []}
+
+        task_result_object['results'].append({
+            'date': str(date),
+            'status': "success",
+            'id': widget_stats_instance.id
+        })
+
+        task.result_object = task_result_object
+
         task.save()
-
-        parent_options_object = parent_task.options_object
-
-        parent_options_object['processed_dates'].append(task.options_object['date'])
-
-        parent_task.options_object = parent_options_object
-        parent_task.save()
 
         start_new_collect_stats(task)
 
@@ -550,15 +514,18 @@ def collect_stats(self, task_id):
         _l.error("collect_stats.error %s" % e)
         _l.error("collect_stats.traceback %s" % traceback.format_exc())
 
-        parent_options_object = parent_task.options_object
+        task_options_object = task.options_object
 
-        parent_options_object['error_dates'].append(task.options_object['date'])
+        task_options_object['error_dates'].append(date)
 
-        parent_task.options_object = parent_options_object
-        parent_task.save()
+        task.options_object = task_options_object
 
         task.status = CeleryTask.STATUS_ERROR
-        task.error_message = str(e)
+        if not task.error_message:
+            task.error_message = str(e)
+        else:
+            task.error_message = task.error_message + '\n' + str(e)
+
         task.save()
 
         start_new_collect_stats(task)
@@ -603,7 +570,6 @@ def calculate_historical(self):
 
             has_transaction = False
 
-
             if Transaction.objects.filter(portfolio=portfolio).count():
                 has_transaction = True
 
@@ -631,12 +597,12 @@ def calculate_historical(self):
                     # Run Collect Widget Stats
 
                     collect_widget_stats(master_user,
-                                       member,
-                                       date_from,
-                                       date_to,
-                                       dates,
-                                       segmentation_type,
-                                       portfolio.id, benchmark, sync)
+                                         member,
+                                         date_from,
+                                         date_to,
+                                         dates,
+                                         segmentation_type,
+                                         portfolio.id, benchmark, sync)
 
                     index = index + 1
                 except Exception as e:

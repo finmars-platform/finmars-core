@@ -137,7 +137,7 @@ def run_data_procedure_from_formula(self, master_user_id, member_id, user_code, 
 
     kwargs.pop('user_context', None)
 
-    from poms.procedures.handlers import RequestDataFileProcedureProcess
-    instance = RequestDataFileProcedureProcess(procedure=procedure, master_user=master_user, member=member,
+    from poms.procedures.handlers import DataProcedureProcess
+    instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member,
                                                context=merged_context, **kwargs)
     instance.process()

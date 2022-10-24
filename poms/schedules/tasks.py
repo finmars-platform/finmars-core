@@ -7,7 +7,7 @@ from django.conf import settings
 import logging
 
 from poms.pricing.handlers import PricingProcedureProcess
-from poms.procedures.handlers import RequestDataFileProcedureProcess
+from poms.procedures.handlers import DataProcedureProcess
 from poms.procedures.models import RequestDataFileProcedure, PricingProcedure
 from poms.schedules.models import Schedule, ScheduleInstance, ScheduleProcedure
 from poms.system_messages.handlers import send_system_message
@@ -69,7 +69,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
 
                 item = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
 
-                instance = RequestDataFileProcedureProcess(procedure=item, master_user=master_user,
+                instance = DataProcedureProcess(procedure=item, master_user=master_user,
                                                            member=owner_member,
                                                            schedule_instance=schedule_instance)
                 instance.process()

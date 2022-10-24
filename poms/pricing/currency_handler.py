@@ -26,6 +26,7 @@ from poms.reports.builders.balance_item import Report, ReportItem
 from poms.reports.builders.balance_pl import ReportBuilder
 from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import Transaction
+from poms.users.models import Member
 from poms_app import settings
 
 _l = logging.getLogger('poms.pricing')
@@ -59,7 +60,7 @@ class CurrencyItem(object):
                 result = None
 
                 if self.policy.attribute_key == 'reference_for_pricing':
-                    result = self.currency.reference_for_pricing   ## TODO check if needed for currency
+                    result = self.currency.reference_for_pricing  ## TODO check if needed for currency
                 else:
 
                     try:
@@ -116,6 +117,10 @@ class PricingCurrencyHandler(object):
         self.parent_procedure = parent_procedure
 
         self.member = member
+
+        if not self.member:
+            self.member = Member.objects.get(master_user=self.master_user, is_owner=True)
+
         self.schedule_instance = schedule_instance
 
         self.currencies = []
@@ -149,7 +154,7 @@ class PricingCurrencyHandler(object):
         _l.debug('currency_items len %s' % len(self.currency_items))
 
         self.currency_items_grouped = group_currency_items_by_provider(items=self.currency_items,
-                                                                   groups=self.currencies_pricing_schemes)
+                                                                       groups=self.currencies_pricing_schemes)
 
         _l.debug('currency_items_grouped len %s' % len(self.currency_items_grouped))
 
@@ -214,10 +219,10 @@ class PricingCurrencyHandler(object):
 
                 base_transactions = Transaction.objects.filter(master_user=self.procedure.master_user)
 
-                base_transactions = base_transactions.filter(Q(accounting_date__lte=self.procedure.price_date_to) | Q(cash_date__lte=self.procedure.price_date_to))
+                base_transactions = base_transactions.filter(Q(accounting_date__lte=self.procedure.price_date_to) | Q(
+                    cash_date__lte=self.procedure.price_date_to))
 
                 if self.procedure.portfolio_filters:
-
                     portfolio_user_codes = self.procedure.portfolio_filters.split(",")
 
                     base_transactions = base_transactions.filter(portfolio__user_code__in=portfolio_user_codes)
@@ -231,14 +236,14 @@ class PricingCurrencyHandler(object):
 
                         if base_transaction.transaction_currency_id:
 
-                            if base_transaction.transaction_currency.pricing_condition_id in [PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
-
+                            if base_transaction.transaction_currency.pricing_condition_id in [
+                                PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
                                 currencies_opened.add(base_transaction.transaction_currency_id)
 
                         if base_transaction.settlement_currency_id:
 
-                            if base_transaction.settlement_currency.pricing_condition_id in [PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
-
+                            if base_transaction.settlement_currency.pricing_condition_id in [
+                                PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
                                 currencies_opened.add(base_transaction.settlement_currency_id)
 
             currencies = currencies.filter(pk__in=(currencies_always | currencies_opened))
@@ -253,7 +258,6 @@ class PricingCurrencyHandler(object):
                 _l.debug("currencies before filter %s " % len(currencies))
                 currencies = currencies.filter(user_code__in=user_codes)
                 _l.debug("currencies after filter %s " % len(currencies))
-
 
         return currencies
 
@@ -278,7 +282,6 @@ class PricingCurrencyHandler(object):
                             allowed_policy = False
 
                     if allowed_policy:
-
                         item = CurrencyItem(currency, policy, policy.pricing_scheme)
 
                         result.append(item)
@@ -289,513 +292,521 @@ class PricingCurrencyHandler(object):
 
         _l.debug("Pricing Currency Handler - Single Parameter Formula: len %s" % len(items))
 
-        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
-                                                    date_to=self.procedure.price_date_to)
+        procedure_instance = PricingProcedureInstance.objects.create(procedure=self.procedure,
+                                                                     parent_procedure_instance=self.parent_procedure,
+                                                                     master_user=self.master_user,
+                                                                     member=self.member,
+                                                                     status=PricingProcedureInstance.STATUS_PENDING,
+                                                                     action='single_parameter_formula_get_currency_prices',
+                                                                     provider='finmars',
 
-        successful_prices_count = 0
-        error_prices_count = 0
+                                                                     action_verbose='Get FX Rates from Single Parameter Formula',
+                                                                     provider_verbose='Finmars'
 
-        procedure_instance = PricingProcedureInstance(procedure=self.procedure,
-                                                      parent_procedure_instance=self.parent_procedure,
-                                                      master_user=self.master_user,
-                                                      status=PricingProcedureInstance.STATUS_PENDING,
-                                                      action='single_parameter_formula_get_currency_prices',
-                                                      provider='finmars',
+                                                                     )
 
-                                                      action_verbose='Get FX Rates from Single Parameter Formula',
-                                                      provider_verbose='Finmars'
+        try:
 
-                                                      )
-        if self.member:
-            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
-            procedure_instance.member = self.member
+            dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                        date_to=self.procedure.price_date_to)
 
-        if self.schedule_instance:
-            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
-            procedure_instance.schedule_instance = self.schedule_instance
+            successful_prices_count = 0
+            error_prices_count = 0
 
-        procedure_instance.save()
+            if self.member:
+                procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
+                procedure_instance.member = self.member
 
-        _l.debug('process_to_single_parameter_formula dates %s' % dates)
+            if self.schedule_instance:
+                procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
+                procedure_instance.schedule_instance = self.schedule_instance
 
-        for item in items:
+            procedure_instance.save()
 
-            last_price = None
+            _l.debug('process_to_single_parameter_formula dates %s' % dates)
 
-            for date in dates:
+            for item in items:
 
-                scheme_parameters = item.pricing_scheme.get_parameters()
+                last_price = None
 
-                _l.debug('process_to_single_parameter_formula scheme_parameters  %s ' % scheme_parameters)
+                for date in dates:
 
-                if scheme_parameters:
+                    scheme_parameters = item.pricing_scheme.get_parameters()
 
-                    safe_currency = {
-                        'id': item.currency.id,
-                    }
+                    _l.debug('process_to_single_parameter_formula scheme_parameters  %s ' % scheme_parameters)
 
-                    safe_pp = {
-                        'id': item.policy.id,
-                    }
+                    if scheme_parameters:
 
-                    parameter = None
+                        safe_currency = {
+                            'id': item.currency.id,
+                        }
 
-                    try:
-
-                        if item.policy.default_value:
-
-                            if scheme_parameters.value_type == 10:
-
-                                parameter = str(item.policy.default_value)
-
-                            elif scheme_parameters.value_type == 20:
-
-                                parameter = float(item.policy.default_value)
-
-                            elif scheme_parameters.value_type == 40:
-
-                                parameter = formula._parse_date(str(item.policy.default_value))
-
-                            else:
-
-                                parameter = item.policy.default_value
-
-                        elif item.policy.attribute_key:
-
-                            if 'attributes' in item.policy.attribute_key:
-
-                                user_code = item.policy.attribute_key.split('attributes.')[1]
-
-                                attribute = GenericAttribute.objects.get(object_id=item.currency.id, attribute_type__user_code=user_code)
-
-                                if scheme_parameters.value_type == 10:
-
-                                    parameter = attribute.value_string
-
-                                if scheme_parameters.value_type == 20:
-
-                                    parameter = attribute.value_float
-
-                                if scheme_parameters.value_type == 40:
-
-                                    parameter = attribute.value_date
-
-                            else:
-
-                                parameter = getattr(item.currency, item.policy.attribute_key, None)
-
-                    except Exception as e:
-
-                        _l.debug("Cant find parameter value. Error: %s" % e)
+                        safe_pp = {
+                            'id': item.policy.id,
+                        }
 
                         parameter = None
 
-                    values = {
-                        'context_date': date,
-                        'context_currency': safe_currency,
-                        'context_pricing_policy': safe_pp,
-                        'parameter': parameter
-                    }
+                        try:
 
-                    has_error = False
-                    error = CurrencyHistoryError(
-                        master_user=self.master_user,
-                        procedure_instance=procedure_instance,
-                        currency=item.currency,
-                        pricing_scheme=item.pricing_scheme,
-                        pricing_policy=item.policy.pricing_policy,
-                        date=date,
-                        created=procedure_instance.created
-                    )
+                            if item.policy.default_value:
 
-                    expr = scheme_parameters.expr
-                    error_text_expr = scheme_parameters.error_text_expr
+                                if scheme_parameters.value_type == 10:
 
-                    _l.debug('values %s' % values)
-                    _l.debug('expr %s' % expr)
+                                    parameter = str(item.policy.default_value)
 
-                    fx_rate = None
+                                elif scheme_parameters.value_type == 20:
 
-                    try:
-                        fx_rate = formula.safe_eval(expr, names=values)
-                    except formula.InvalidExpression:
-                        has_error = True
+                                    parameter = float(item.policy.default_value)
+
+                                elif scheme_parameters.value_type == 40:
+
+                                    parameter = formula._parse_date(str(item.policy.default_value))
+
+                                else:
+
+                                    parameter = item.policy.default_value
+
+                            elif item.policy.attribute_key:
+
+                                if 'attributes' in item.policy.attribute_key:
+
+                                    user_code = item.policy.attribute_key.split('attributes.')[1]
+
+                                    attribute = GenericAttribute.objects.get(object_id=item.currency.id,
+                                                                             attribute_type__user_code=user_code)
+
+                                    if scheme_parameters.value_type == 10:
+                                        parameter = attribute.value_string
+
+                                    if scheme_parameters.value_type == 20:
+                                        parameter = attribute.value_float
+
+                                    if scheme_parameters.value_type == 40:
+                                        parameter = attribute.value_date
+
+                                else:
+
+                                    parameter = getattr(item.currency, item.policy.attribute_key, None)
+
+                        except Exception as e:
+
+                            _l.debug("Cant find parameter value. Error: %s" % e)
+
+                            parameter = None
+
+                        values = {
+                            'context_date': date,
+                            'context_currency': safe_currency,
+                            'context_pricing_policy': safe_pp,
+                            'parameter': parameter
+                        }
+
+                        has_error = False
+                        error = CurrencyHistoryError(
+                            master_user=self.master_user,
+                            procedure_instance=procedure_instance,
+                            currency=item.currency,
+                            pricing_scheme=item.pricing_scheme,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date,
+                            created=procedure_instance.created
+                        )
+
+                        expr = scheme_parameters.expr
+                        error_text_expr = scheme_parameters.error_text_expr
+
+                        _l.debug('values %s' % values)
+                        _l.debug('expr %s' % expr)
+
+                        fx_rate = None
 
                         try:
-                            error.error_text = formula.safe_eval(error_text_expr, names=values)
+                            fx_rate = formula.safe_eval(expr, names=values)
                         except formula.InvalidExpression:
-                            error.error_text = 'Invalid Error Text Expression'
+                            has_error = True
 
-                    _l.debug('fx_rate %s' % fx_rate)
+                            try:
+                                error.error_text = formula.safe_eval(error_text_expr, names=values)
+                            except formula.InvalidExpression:
+                                error.error_text = 'Invalid Error Text Expression'
 
-                    can_write = True
+                        _l.debug('fx_rate %s' % fx_rate)
 
-                    try:
+                        can_write = True
 
-                        price = CurrencyHistory.objects.get(
-                            currency=item.currency,
-                            pricing_policy=item.policy.pricing_policy,
-                            date=date
-                        )
+                        try:
 
-                        if not self.procedure.price_overwrite_fx_rates:
-                            can_write = False
-                            _l.debug('Skip %s' % price)
+                            price = CurrencyHistory.objects.get(
+                                currency=item.currency,
+                                pricing_policy=item.policy.pricing_policy,
+                                date=date
+                            )
+
+                            if not self.procedure.price_overwrite_fx_rates:
+                                can_write = False
+                                _l.debug('Skip %s' % price)
+                            else:
+                                _l.debug('Overwrite existing %s' % price)
+
+                        except CurrencyHistory.DoesNotExist:
+
+                            price = CurrencyHistory(
+                                currency=item.currency,
+                                pricing_policy=item.policy.pricing_policy,
+                                date=date
+                            )
+
+                        price.procedure_modified_datetime = date_now()
+
+                        price.fx_rate = 0
+
+                        if fx_rate is not None:
+                            price.fx_rate = fx_rate
+
+                        if can_write:
+
+                            if has_error or price.fx_rate == 0:
+                                # if has_error:
+
+                                error_prices_count = error_prices_count + 1
+                                error.status = CurrencyHistoryError.STATUS_ERROR
+                                error.save()
+                            else:
+
+                                successful_prices_count = successful_prices_count + 1
+
+                                price.save()
+
+                                if price.id:
+                                    error.status = CurrencyHistoryError.STATUS_OVERWRITTEN
+                                else:
+                                    error.status = CurrencyHistoryError.STATUS_SKIP
+                                error.save()
+
                         else:
-                            _l.debug('Overwrite existing %s' % price)
-
-                    except CurrencyHistory.DoesNotExist:
-
-                        price = CurrencyHistory(
-                            currency=item.currency,
-                            pricing_policy=item.policy.pricing_policy,
-                            date=date
-                        )
-
-                    price.procedure_modified_datetime = date_now()
-
-                    price.fx_rate = 0
-
-                    if fx_rate is not None:
-                        price.fx_rate = fx_rate
-
-                    if can_write:
-
-                        if has_error or price.fx_rate == 0:
-                        # if has_error:
 
                             error_prices_count = error_prices_count + 1
-                            error.status = CurrencyHistoryError.STATUS_ERROR
-                            error.save()
-                        else:
 
-                            successful_prices_count = successful_prices_count + 1
+                            error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
 
-                            price.save()
-
-                            if price.id:
-                                error.status = CurrencyHistoryError.STATUS_OVERWRITTEN
-                            else:
-                                error.status = CurrencyHistoryError.STATUS_SKIP
+                            error.status = CurrencyHistoryError.STATUS_SKIP
                             error.save()
 
-                    else:
+                        last_price = price
 
-                        error_prices_count = error_prices_count + 1
+                if last_price:
+                    successes, errors = roll_currency_history_for_n_day_forward(item, self.procedure, last_price,
+                                                                                self.master_user, procedure_instance)
+                    successful_prices_count = successful_prices_count + successes
+                    error_prices_count = error_prices_count + errors
 
-                        error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
+            procedure_instance.successful_prices_count = successful_prices_count
+            procedure_instance.error_prices_count = error_prices_count
 
-                        error.status = CurrencyHistoryError.STATUS_SKIP
-                        error.save()
+            procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
-                    last_price = price
+            procedure_instance.save()
 
-            if last_price:
-                successes, errors = roll_currency_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
-                successful_prices_count = successful_prices_count + successes
-                error_prices_count = error_prices_count + errors
+            if procedure_instance.schedule_instance:
+                procedure_instance.schedule_instance.run_next_procedure()
 
-
-        procedure_instance.successful_prices_count = successful_prices_count
-        procedure_instance.error_prices_count = error_prices_count
-
-        procedure_instance.status = PricingProcedureInstance.STATUS_DONE
-
-        procedure_instance.save()
-
-        if procedure_instance.schedule_instance:
-            procedure_instance.schedule_instance.run_next_procedure()
+        except Exception as e:
+            procedure_instance.error_message = 'Error %s' % e
+            procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+            procedure_instance.save()
 
     def process_to_multiple_parameter_formula(self, items):
 
         _l.debug("Pricing Currency Handler - Multiple Parameter Formula: len %s" % len(items))
 
-        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
-                                                    date_to=self.procedure.price_date_to)
+        procedure_instance = PricingProcedureInstance.objects.create(procedure=self.procedure,
+                                                                     parent_procedure_instance=self.parent_procedure,
+                                                                     master_user=self.master_user,
+                                                                     member=self.member,
+                                                                     status=PricingProcedureInstance.STATUS_PENDING,
+                                                                     action='multiple_parameter_formula_get_currency_prices',
+                                                                     provider='finmars',
 
-        successful_prices_count = 0
-        error_prices_count = 0
+                                                                     action_verbose='Get FX Rates from Multiple Parameter Formula',
+                                                                     provider_verbose='Finmars'
+                                                                     )
 
-        procedure_instance = PricingProcedureInstance(procedure=self.procedure,
-                                                      parent_procedure_instance=self.parent_procedure,
-                                                      master_user=self.master_user,
-                                                      status=PricingProcedureInstance.STATUS_PENDING,
-                                                      action='multiple_parameter_formula_get_currency_prices',
-                                                      provider='finmars',
+        try:
 
-                                                      action_verbose='Get FX Rates from Multiple Parameter Formula',
-                                                      provider_verbose='Finmars'
-                                                      )
+            dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                        date_to=self.procedure.price_date_to)
 
-        if self.member:
-            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
-            procedure_instance.member = self.member
+            successful_prices_count = 0
+            error_prices_count = 0
 
-        if self.schedule_instance:
-            procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
-            procedure_instance.schedule_instance = self.schedule_instance
+            if self.member:
+                procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
+                procedure_instance.member = self.member
 
-        procedure_instance.save()
+            if self.schedule_instance:
+                procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_SCHEDULE
+                procedure_instance.schedule_instance = self.schedule_instance
 
-        for item in items:
+            procedure_instance.save()
 
-            last_price = None
+            for item in items:
 
-            for date in dates:
+                last_price = None
 
-                scheme_parameters = item.pricing_scheme.get_parameters()
+                for date in dates:
 
-                if scheme_parameters:
+                    scheme_parameters = item.pricing_scheme.get_parameters()
 
-                    safe_currency = {
-                        'id': item.currency.id,
-                    }
+                    if scheme_parameters:
 
-                    safe_pp = {
-                        'id': item.policy.id,
-                    }
+                        safe_currency = {
+                            'id': item.currency.id,
+                        }
 
-                    parameter = None
-
-                    try:
-
-                        if item.policy.default_value:
-
-                            if scheme_parameters.value_type == 10:
-
-                                parameter = str(item.policy.default_value)
-
-                            elif scheme_parameters.value_type == 20:
-
-                                parameter = float(item.policy.default_value)
-
-                            elif scheme_parameters.value_type == 40:
-
-                                parameter = formula._parse_date(str(item.policy.default_value))
-
-                            else:
-
-                                parameter = item.policy.default_value
-
-                        elif item.policy.attribute_key:
-
-                            if 'attributes' in item.policy.attribute_key:
-
-                                user_code = item.policy.attribute_key.split('attributes.')[1]
-
-                                attribute = GenericAttribute.objects.get(object_id=item.currency.id, attribute_type__user_code=user_code)
-
-                                if scheme_parameters.value_type == 10:
-
-                                    parameter = attribute.value_string
-
-                                if scheme_parameters.value_type == 20:
-
-                                    parameter = attribute.value_float
-
-                                if scheme_parameters.value_type == 40:
-
-                                    parameter = attribute.value_date
-
-                            else:
-
-                                parameter = getattr(item.currency, item.policy.attribute_key, None)
-
-                    except Exception as e:
-
-                        _l.debug("Cant find parameter value. Error: %s" % e)
+                        safe_pp = {
+                            'id': item.policy.id,
+                        }
 
                         parameter = None
 
-                    values = {
-                        'context_date': date,
-                        'context_currency': safe_currency,
-                        'context_pricing_policy': safe_pp,
-                        'parameter': parameter
-                    }
+                        try:
 
-                    if item.policy.data:
+                            if item.policy.default_value:
 
-                        if 'parameters' in item.policy.data:
+                                if scheme_parameters.value_type == 10:
 
-                            for parameter in item.policy.data['parameters']:
+                                    parameter = str(item.policy.default_value)
 
-                                _l.debug('parameter %s ' % parameter)
+                                elif scheme_parameters.value_type == 20:
 
-                                if 'default_value' in parameter and parameter['default_value']:
+                                    parameter = float(item.policy.default_value)
 
-                                    if float(parameter['value_type']) == 10:
+                                elif scheme_parameters.value_type == 40:
 
-                                        val = str(parameter['default_value'])
+                                    parameter = formula._parse_date(str(item.policy.default_value))
 
-                                    elif float(parameter['value_type']) == 20:
+                                else:
 
-                                        val = float(parameter['default_value'])
+                                    parameter = item.policy.default_value
 
-                                    elif float(parameter['value_type']) == 40:
+                            elif item.policy.attribute_key:
 
-                                        val = formula._parse_date(str(parameter['default_value']))
+                                if 'attributes' in item.policy.attribute_key:
 
-                                    else:
+                                    user_code = item.policy.attribute_key.split('attributes.')[1]
 
-                                        val = parameter['default_value']
+                                    attribute = GenericAttribute.objects.get(object_id=item.currency.id,
+                                                                             attribute_type__user_code=user_code)
 
-                                if 'attribute_key' in parameter and parameter['attribute_key']:
+                                    if scheme_parameters.value_type == 10:
+                                        parameter = attribute.value_string
 
-                                    if 'attributes' in parameter['attribute_key']:
+                                    if scheme_parameters.value_type == 20:
+                                        parameter = attribute.value_float
 
-                                        user_code = parameter['attribute_key'].split('attributes.')[1]
+                                    if scheme_parameters.value_type == 40:
+                                        parameter = attribute.value_date
 
-                                        attribute = GenericAttribute.objects.get(object_id=item.currency.id, attribute_type__user_code=user_code)
+                                else:
+
+                                    parameter = getattr(item.currency, item.policy.attribute_key, None)
+
+                        except Exception as e:
+
+                            _l.debug("Cant find parameter value. Error: %s" % e)
+
+                            parameter = None
+
+                        values = {
+                            'context_date': date,
+                            'context_currency': safe_currency,
+                            'context_pricing_policy': safe_pp,
+                            'parameter': parameter
+                        }
+
+                        if item.policy.data:
+
+                            if 'parameters' in item.policy.data:
+
+                                for parameter in item.policy.data['parameters']:
+
+                                    _l.debug('parameter %s ' % parameter)
+
+                                    if 'default_value' in parameter and parameter['default_value']:
 
                                         if float(parameter['value_type']) == 10:
 
-                                            val = attribute.value_string
+                                            val = str(parameter['default_value'])
 
-                                        if float(parameter['value_type']) == 20:
+                                        elif float(parameter['value_type']) == 20:
 
-                                            val = attribute.value_float
+                                            val = float(parameter['default_value'])
 
-                                        if float(parameter['value_type']) == 40:
+                                        elif float(parameter['value_type']) == 40:
 
-                                            val = attribute.value_date
+                                            val = formula._parse_date(str(parameter['default_value']))
 
-                                    else:
+                                        else:
 
-                                        val = item.currency[parameter['attribute_key']]
+                                            val = parameter['default_value']
 
+                                    if 'attribute_key' in parameter and parameter['attribute_key']:
 
-                                values['parameter' + str(parameter['index'])] = val
+                                        if 'attributes' in parameter['attribute_key']:
 
-                    has_error = False
-                    error = CurrencyHistoryError(
-                        master_user=self.master_user,
-                        procedure_instance=procedure_instance,
-                        currency=item.currency,
-                        pricing_scheme=item.pricing_scheme,
-                        pricing_policy=item.policy.pricing_policy,
-                        date=date,
-                        created=procedure_instance.created
-                    )
+                                            user_code = parameter['attribute_key'].split('attributes.')[1]
 
-                    expr = scheme_parameters.expr
-                    error_text_expr = scheme_parameters.error_text_expr
+                                            attribute = GenericAttribute.objects.get(object_id=item.currency.id,
+                                                                                     attribute_type__user_code=user_code)
 
-                    _l.debug('values %s' % values)
-                    _l.debug('expr %s' % expr)
+                                            if float(parameter['value_type']) == 10:
+                                                val = attribute.value_string
 
-                    fx_rate = None
+                                            if float(parameter['value_type']) == 20:
+                                                val = attribute.value_float
 
-                    try:
-                        fx_rate = formula.safe_eval(expr, names=values)
-                    except formula.InvalidExpression:
-                        has_error = True
+                                            if float(parameter['value_type']) == 40:
+                                                val = attribute.value_date
+
+                                        else:
+
+                                            val = item.currency[parameter['attribute_key']]
+
+                                    values['parameter' + str(parameter['index'])] = val
+
+                        has_error = False
+                        error = CurrencyHistoryError(
+                            master_user=self.master_user,
+                            procedure_instance=procedure_instance,
+                            currency=item.currency,
+                            pricing_scheme=item.pricing_scheme,
+                            pricing_policy=item.policy.pricing_policy,
+                            date=date,
+                            created=procedure_instance.created
+                        )
+
+                        expr = scheme_parameters.expr
+                        error_text_expr = scheme_parameters.error_text_expr
+
+                        _l.debug('values %s' % values)
+                        _l.debug('expr %s' % expr)
+
+                        fx_rate = None
 
                         try:
-                            error.error_text = formula.safe_eval(error_text_expr, names=values)
+                            fx_rate = formula.safe_eval(expr, names=values)
                         except formula.InvalidExpression:
-                            error.error_text = 'Invalid Error Text Expression'
+                            has_error = True
 
-                    _l.debug('fx_rate %s' % fx_rate)
+                            try:
+                                error.error_text = formula.safe_eval(error_text_expr, names=values)
+                            except formula.InvalidExpression:
+                                error.error_text = 'Invalid Error Text Expression'
 
-                    can_write = True
+                        _l.debug('fx_rate %s' % fx_rate)
 
-                    try:
+                        can_write = True
 
-                        price = CurrencyHistory.objects.get(
-                            currency=item.currency,
-                            pricing_policy=item.policy.pricing_policy,
-                            date=date
-                        )
+                        try:
 
-                        if not self.procedure.price_overwrite_fx_rates:
-                            can_write = False
-                            _l.debug('Skip %s' % price)
+                            price = CurrencyHistory.objects.get(
+                                currency=item.currency,
+                                pricing_policy=item.policy.pricing_policy,
+                                date=date
+                            )
+
+                            if not self.procedure.price_overwrite_fx_rates:
+                                can_write = False
+                                _l.debug('Skip %s' % price)
+                            else:
+                                _l.debug('Overwrite existing %s' % price)
+
+                        except CurrencyHistory.DoesNotExist:
+
+                            price = CurrencyHistory(
+                                currency=item.currency,
+                                pricing_policy=item.policy.pricing_policy,
+                                date=date
+                            )
+
+                            _l.debug('Create new %s' % price)
+
+                        price.procedure_modified_datetime = date_now()
+
+                        price.fx_rate = 0
+
+                        if fx_rate is not None:
+                            price.fx_rate = fx_rate
+
+                        if can_write:
+
+                            if has_error or price.fx_rate == 0:
+                                # if has_error:
+
+                                error_prices_count = error_prices_count + 1
+                                error.status = CurrencyHistoryError.STATUS_ERROR
+                                error.save()
+                            else:
+
+                                successful_prices_count = successful_prices_count + 1
+
+                                price.save()
+
+                                if price.id:
+                                    error.status = CurrencyHistoryError.STATUS_OVERWRITTEN
+                                else:
+                                    error.status = CurrencyHistoryError.STATUS_SKIP
+                                error.save()
+
                         else:
-                            _l.debug('Overwrite existing %s' % price)
-
-                    except CurrencyHistory.DoesNotExist:
-
-                        price = CurrencyHistory(
-                            currency=item.currency,
-                            pricing_policy=item.policy.pricing_policy,
-                            date=date
-                        )
-
-                        _l.debug('Create new %s' % price)
-
-
-                    price.procedure_modified_datetime = date_now()
-
-                    price.fx_rate = 0
-
-                    if fx_rate is not None:
-                        price.fx_rate = fx_rate
-
-                    if can_write:
-
-                        if has_error or price.fx_rate == 0:
-                        # if has_error:
 
                             error_prices_count = error_prices_count + 1
-                            error.status = CurrencyHistoryError.STATUS_ERROR
-                            error.save()
-                        else:
 
-                            successful_prices_count = successful_prices_count + 1
+                            error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
 
-                            price.save()
-
-                            if price.id:
-                                error.status = CurrencyHistoryError.STATUS_OVERWRITTEN
-                            else:
-                                error.status = CurrencyHistoryError.STATUS_SKIP
+                            error.status = CurrencyHistoryError.STATUS_SKIP
                             error.save()
 
-                    else:
+                        last_price = price
 
-                        error_prices_count = error_prices_count + 1
+                if last_price:
+                    successes, errors = roll_currency_history_for_n_day_forward(item, self.procedure, last_price,
+                                                                                self.master_user, procedure_instance)
 
-                        error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
+                    successful_prices_count = successful_prices_count + successes
+                    error_prices_count = error_prices_count + errors
 
-                        error.status = CurrencyHistoryError.STATUS_SKIP
-                        error.save()
+            procedure_instance.successful_prices_count = successful_prices_count
+            procedure_instance.error_prices_count = error_prices_count
 
-                    last_price = price
+            procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
-            if last_price:
+            procedure_instance.save()
 
-                successes, errors = roll_currency_history_for_n_day_forward(item, self.procedure, last_price, self.master_user, procedure_instance)
+            if procedure_instance.schedule_instance:
+                procedure_instance.schedule_instance.run_next_procedure()
 
-                successful_prices_count = successful_prices_count + successes
-                error_prices_count = error_prices_count + errors
-
-        procedure_instance.successful_prices_count = successful_prices_count
-        procedure_instance.error_prices_count = error_prices_count
-
-        procedure_instance.status = PricingProcedureInstance.STATUS_DONE
-
-        procedure_instance.save()
-
-        if procedure_instance.schedule_instance:
-            procedure_instance.schedule_instance.run_next_procedure()
+        except Exception as e:
+            procedure_instance.error_message = 'Error %s' % e
+            procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+            procedure_instance.save()
 
     def process_to_bloomberg_provider(self, items):
 
         _l.debug("Pricing Currency Handler - Bloomberg Provider: len %s" % len(items))
 
+        procedure_instance = PricingProcedureInstance.objects.create(procedure=self.procedure,
+                                                                     parent_procedure_instance=self.parent_procedure,
+                                                                     master_user=self.master_user,
+                                                                     member=self.member,
+                                                                     status=PricingProcedureInstance.STATUS_PENDING,
+                                                                     action='bloomberg_get_currency_prices',
+                                                                     provider='bloomberg',
+                                                                     action_verbose='Get FX Rates from Bloomberg',
+                                                                     provider_verbose='Bloomberg'
 
-        procedure_instance = PricingProcedureInstance(procedure=self.procedure,
-                                                      parent_procedure_instance=self.parent_procedure,
-                                                      master_user=self.master_user,
-                                                      status=PricingProcedureInstance.STATUS_PENDING,
-                                                      action='bloomberg_get_currency_prices',
-                                                      provider='bloomberg',
-
-                                                      action_verbose='Get FX Rates from Bloomberg',
-                                                      provider_verbose='Bloomberg'
-
-                                                      )
+                                                                     )
 
         if self.member:
             procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
@@ -807,149 +818,154 @@ class PricingCurrencyHandler(object):
 
         procedure_instance.save()
 
-        body = {}
-        body['action'] = procedure_instance.action
-        body['procedure'] = procedure_instance.id
-        body['provider'] = procedure_instance.provider
-
-        config = None
-
         try:
 
-            config = BloombergDataProviderCredential.objects.get(master_user=self.master_user)
+            body = {}
+            body['action'] = procedure_instance.action
+            body['procedure'] = procedure_instance.id
+            body['provider'] = procedure_instance.provider
 
-        except Exception as e:
+            config = None
 
-            config = self.master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
+            try:
 
+                config = BloombergDataProviderCredential.objects.get(master_user=self.master_user)
 
-        body['user'] = {
-            'token': self.master_user.token,
-            'base_api_url': settings.BASE_API_URL,
-            'credentials': {
-                'p12cert': str(config.p12cert),
-                'password': config.password
-            }
-        }
+            except Exception as e:
 
-        body['error_code'] = None
-        body['error_message'] = None
+                config = self.master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
 
-        body['data'] = {}
-
-        body['data']['date_from'] = str(self.procedure.price_date_from)
-        body['data']['date_to'] = str(self.procedure.price_date_to)
-        body['data']['items'] = []
-
-        items_with_missing_parameters = []
-
-        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
-                                                    date_to=self.procedure.price_date_to)
-
-        is_yesterday = get_is_yesterday(self.procedure.price_date_from, self.procedure.price_date_to)
-
-        empty_values = get_empty_values_for_dates(dates)
-
-        _l.debug('is_yesterday %s' % is_yesterday)
-        _l.debug('procedure id %s' % body['procedure'])
-
-        full_items = []
-
-        for item in items:
-
-            if len(item.parameters):
-
-                item_parameters = item.parameters.copy()
-                item_parameters.pop()
-
-                for date in dates:
-
-                    with transaction.atomic():
-                        try:
-
-                            record = PricingProcedureBloombergCurrencyResult(master_user=self.master_user,
-                                                                     procedure=procedure_instance,
-                                                                     currency=item.currency,
-                                                                     currency_parameters=str(item_parameters),
-                                                                     pricing_policy=item.policy.pricing_policy,
-                                                                     pricing_scheme=item.pricing_scheme,
-                                                                     reference=item.parameters[0],
-                                                                     date=date)
-
-                            if 'fx_rate' in item.scheme_fields_map:
-                                record.fx_rate_parameters = item.scheme_fields_map[
-                                    'fx_rate']
-
-                            CurrencyHistoryError.objects.create(
-                                master_user=self.master_user,
-                                procedure_instance_id=procedure_instance.id,
-                                currency=record.currency,
-                                pricing_scheme=record.pricing_scheme,
-                                pricing_policy=record.pricing_policy,
-                                date=record.date,
-                                status=CurrencyHistoryError.STATUS_REQUESTED,
-                            created=procedure_instance.created
-                            )
-
-                            record.save()
-
-                        except Exception as e:
-                            _l.debug("Cant create Result Record %s" % e)
-
-                item_obj = {
-                    'reference': item.parameters[0],
-                    'parameters': item_parameters,
-                    'fields': []
+            body['user'] = {
+                'token': self.master_user.token,
+                'base_api_url': settings.BASE_API_URL,
+                'credentials': {
+                    'p12cert': str(config.p12cert),
+                    'password': config.password
                 }
+            }
 
-                if 'fx_rate' in item.scheme_fields_map:
-                    item_obj['fields'].append({
-                        'code': item.scheme_fields_map['fx_rate'],
-                        'parameters': [],
-                        'values': empty_values
-                    })
+            body['error_code'] = None
+            body['error_message'] = None
 
-                full_items.append(item_obj)
+            body['data'] = {}
 
-            else:
-                items_with_missing_parameters.append(item)
+            body['data']['date_from'] = str(self.procedure.price_date_from)
+            body['data']['date_to'] = str(self.procedure.price_date_to)
+            body['data']['items'] = []
 
-        _l.debug('full_items len: %s' % len(full_items))
+            items_with_missing_parameters = []
 
-        optimized_items = optimize_items(full_items)
+            dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                        date_to=self.procedure.price_date_to)
 
-        _l.debug('optimized_items len: %s' % len(optimized_items))
+            is_yesterday = get_is_yesterday(self.procedure.price_date_from, self.procedure.price_date_to)
 
-        body['data']['items'] = optimized_items
+            empty_values = get_empty_values_for_dates(dates)
 
-        _l.debug('items_with_missing_parameters %s' % len(items_with_missing_parameters))
-        # _l.debug('data %s' % data)
+            _l.debug('is_yesterday %s' % is_yesterday)
+            _l.debug('procedure id %s' % body['procedure'])
 
-        _l.debug('self.procedure %s' % self.procedure.id)
-        _l.debug('send request %s' % body)
+            full_items = []
 
-        procedure_instance.request_data = body
-        procedure_instance.save()
+            for item in items:
 
-        try:
+                if len(item.parameters):
 
-            self.transport.send_request(body)
+                    item_parameters = item.parameters.copy()
+                    item_parameters.pop()
 
-        except Exception as e:
+                    for date in dates:
 
-            _l.info("Bloomberg fx rates request failed %s" % e)
+                        with transaction.atomic():
+                            try:
 
-            procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
-            procedure_instance.error_code = 500
-            procedure_instance.error_message = "Mediator is unavailable. Please try later."
+                                record = PricingProcedureBloombergCurrencyResult(master_user=self.master_user,
+                                                                                 procedure=procedure_instance,
+                                                                                 currency=item.currency,
+                                                                                 currency_parameters=str(
+                                                                                     item_parameters),
+                                                                                 pricing_policy=item.policy.pricing_policy,
+                                                                                 pricing_scheme=item.pricing_scheme,
+                                                                                 reference=item.parameters[0],
+                                                                                 date=date)
 
+                                if 'fx_rate' in item.scheme_fields_map:
+                                    record.fx_rate_parameters = item.scheme_fields_map[
+                                        'fx_rate']
+
+                                CurrencyHistoryError.objects.create(
+                                    master_user=self.master_user,
+                                    procedure_instance_id=procedure_instance.id,
+                                    currency=record.currency,
+                                    pricing_scheme=record.pricing_scheme,
+                                    pricing_policy=record.pricing_policy,
+                                    date=record.date,
+                                    status=CurrencyHistoryError.STATUS_REQUESTED,
+                                    created=procedure_instance.created
+                                )
+
+                                record.save()
+
+                            except Exception as e:
+                                _l.debug("Cant create Result Record %s" % e)
+
+                    item_obj = {
+                        'reference': item.parameters[0],
+                        'parameters': item_parameters,
+                        'fields': []
+                    }
+
+                    if 'fx_rate' in item.scheme_fields_map:
+                        item_obj['fields'].append({
+                            'code': item.scheme_fields_map['fx_rate'],
+                            'parameters': [],
+                            'values': empty_values
+                        })
+
+                    full_items.append(item_obj)
+
+                else:
+                    items_with_missing_parameters.append(item)
+
+            _l.debug('full_items len: %s' % len(full_items))
+
+            optimized_items = optimize_items(full_items)
+
+            _l.debug('optimized_items len: %s' % len(optimized_items))
+
+            body['data']['items'] = optimized_items
+
+            _l.debug('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+            # _l.debug('data %s' % data)
+
+            _l.debug('self.procedure %s' % self.procedure.id)
+            _l.debug('send request %s' % body)
+
+            procedure_instance.request_data = body
             procedure_instance.save()
 
-            send_system_message(master_user=self.master_user,
-                                performed_by='System',
-                                type='error',
-                                description="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
+            try:
 
+                self.transport.send_request(body)
+
+            except Exception as e:
+
+                _l.info("Bloomberg fx rates request failed %s" % e)
+
+                procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+                procedure_instance.error_code = 500
+                procedure_instance.error_message = "Mediator is unavailable. Please try later."
+
+                procedure_instance.save()
+
+                send_system_message(master_user=self.master_user,
+                                    performed_by='System',
+                                    type='error',
+                                    description="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
+        except Exception as e:
+            procedure_instance.error_message = 'Error %s' % e
+            procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+            procedure_instance.save()
 
     def process_to_fixer_provider(self, items):
 
@@ -1022,13 +1038,13 @@ class PricingCurrencyHandler(object):
                         try:
 
                             record = PricingProcedureFixerCurrencyResult(master_user=self.master_user,
-                                                                             procedure=procedure_instance,
-                                                                             currency=item.currency,
-                                                                             currency_parameters=str(item_parameters),
-                                                                             pricing_policy=item.policy.pricing_policy,
-                                                                             pricing_scheme=item.pricing_scheme,
-                                                                             reference=item.parameters[0],
-                                                                             date=date)
+                                                                         procedure=procedure_instance,
+                                                                         currency=item.currency,
+                                                                         currency_parameters=str(item_parameters),
+                                                                         pricing_policy=item.policy.pricing_policy,
+                                                                         pricing_scheme=item.pricing_scheme,
+                                                                         reference=item.parameters[0],
+                                                                         date=date)
 
                             record.save()
 
@@ -1095,6 +1111,7 @@ class PricingCurrencyHandler(object):
             procedure_instance = PricingProcedureInstance(procedure=self.procedure,
                                                           parent_procedure_instance=self.parent_procedure,
                                                           master_user=self.master_user,
+                                                          member=self.member,
                                                           status=PricingProcedureInstance.STATUS_PENDING,
                                                           action='cbonds_get_currency_prices',
                                                           provider='cbonds',
@@ -1114,112 +1131,118 @@ class PricingCurrencyHandler(object):
 
             procedure_instance.save()
 
-        body = {}
-        body['action'] = procedure_instance.action
-        body['procedure'] = procedure_instance.id
-        body['provider'] = procedure_instance.provider
-
-        body['user'] = {
-            'token': self.master_user.id,
-            'base_api_url': settings.BASE_API_URL
-        }
-
-        body['error_code'] = None
-        body['error_message'] = None
-
-        body['data'] = {}
-
-        body['data']['date_from'] = str(self.procedure.price_date_from)
-        body['data']['date_to'] = str(self.procedure.price_date_to)
-        body['data']['items'] = []
-
-        items_with_missing_parameters = []
-
-        dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
-                                                    date_to=self.procedure.price_date_to)
-
-        _l.debug('procedure id %s' % body['procedure'])
-
-        empty_values = get_empty_values_for_dates(dates)
-
-        full_items = []
-
-        for item in items:
-
-            if len(item.parameters):
-
-                item_parameters = item.parameters.copy()
-                item_parameters.pop()
-
-                for date in dates:
-
-                    with transaction.atomic():
-                        try:
-
-                            record = PricingProcedureCbondsCurrencyResult(master_user=self.master_user,
-                                                                         procedure=procedure_instance,
-                                                                         currency=item.currency,
-                                                                         currency_parameters=str(item_parameters),
-                                                                         pricing_policy=item.policy.pricing_policy,
-                                                                         pricing_scheme=item.pricing_scheme,
-                                                                         reference=item.parameters[0],
-                                                                         date=date)
-
-                            record.save()
-
-                        except Exception as e:
-                            _l.debug("Cant create Result Record %s" % e)
-
-                item_obj = {
-                    'reference': item.parameters[0],
-                    'parameters': item_parameters,
-                    'fields': []
-                }
-
-                item_obj['fields'].append({
-                    'code': 'close',
-                    'parameters': [],
-                    'values': empty_values
-                })
-
-                full_items.append(item_obj)
-
-            else:
-                items_with_missing_parameters.append(item)
-
-        _l.debug('full_items len: %s' % len(full_items))
-
-        optimized_items = optimize_items(full_items)
-
-        _l.debug('optimized_items len: %s' % len(optimized_items))
-
-        body['data']['items'] = optimized_items
-
-        _l.debug('items_with_missing_parameters %s' % len(items_with_missing_parameters))
-        # _l.debug('data %s' % data)
-
-        _l.debug('self.procedure %s' % self.procedure.id)
-        _l.debug('send request %s' % body)
-
-        procedure_instance.request_data = body
-        procedure_instance.save()
-
         try:
 
-            self.transport.send_request(body)
+            body = {}
+            body['action'] = procedure_instance.action
+            body['procedure'] = procedure_instance.id
+            body['provider'] = procedure_instance.provider
 
-        except Exception as e:
+            body['user'] = {
+                'token': self.master_user.id,
+                'base_api_url': settings.BASE_API_URL
+            }
 
-            procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
-            procedure_instance.error_code = 500
-            procedure_instance.error_message = "Mediator is unavailable. Please try later."
+            body['error_code'] = None
+            body['error_message'] = None
 
+            body['data'] = {}
+
+            body['data']['date_from'] = str(self.procedure.price_date_from)
+            body['data']['date_to'] = str(self.procedure.price_date_to)
+            body['data']['items'] = []
+
+            items_with_missing_parameters = []
+
+            dates = get_list_of_dates_between_two_dates(date_from=self.procedure.price_date_from,
+                                                        date_to=self.procedure.price_date_to)
+
+            _l.debug('procedure id %s' % body['procedure'])
+
+            empty_values = get_empty_values_for_dates(dates)
+
+            full_items = []
+
+            for item in items:
+
+                if len(item.parameters):
+
+                    item_parameters = item.parameters.copy()
+                    item_parameters.pop()
+
+                    for date in dates:
+
+                        with transaction.atomic():
+                            try:
+
+                                record = PricingProcedureCbondsCurrencyResult(master_user=self.master_user,
+                                                                              procedure=procedure_instance,
+                                                                              currency=item.currency,
+                                                                              currency_parameters=str(item_parameters),
+                                                                              pricing_policy=item.policy.pricing_policy,
+                                                                              pricing_scheme=item.pricing_scheme,
+                                                                              reference=item.parameters[0],
+                                                                              date=date)
+
+                                record.save()
+
+                            except Exception as e:
+                                _l.debug("Cant create Result Record %s" % e)
+
+                    item_obj = {
+                        'reference': item.parameters[0],
+                        'parameters': item_parameters,
+                        'fields': []
+                    }
+
+                    item_obj['fields'].append({
+                        'code': 'close',
+                        'parameters': [],
+                        'values': empty_values
+                    })
+
+                    full_items.append(item_obj)
+
+                else:
+                    items_with_missing_parameters.append(item)
+
+            _l.debug('full_items len: %s' % len(full_items))
+
+            optimized_items = optimize_items(full_items)
+
+            _l.debug('optimized_items len: %s' % len(optimized_items))
+
+            body['data']['items'] = optimized_items
+
+            _l.debug('items_with_missing_parameters %s' % len(items_with_missing_parameters))
+            # _l.debug('data %s' % data)
+
+            _l.debug('self.procedure %s' % self.procedure.id)
+            _l.debug('send request %s' % body)
+
+            procedure_instance.request_data = body
             procedure_instance.save()
 
-            send_system_message(master_user=self.master_user,
-                                performed_by='System',
-                                type='error',
-                                description="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
+            try:
+
+                self.transport.send_request(body)
+
+            except Exception as e:
+
+                procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+                procedure_instance.error_code = 500
+                procedure_instance.error_message = "Mediator is unavailable. Please try later."
+
+                procedure_instance.save()
+
+                send_system_message(master_user=self.master_user,
+                                    performed_by='System',
+                                    type='error',
+                                    description="Pricing Procedure %s. Error, Mediator is unavailable." % procedure_instance.procedure.name)
+        except Exception as e:
+            procedure_instance.error_message = 'Error %s' % e
+            procedure_instance.status = PricingProcedureInstance.STATUS_ERROR
+            procedure_instance.save()
 
     def print_grouped_currencies(self):
 
@@ -1229,7 +1252,7 @@ class PricingCurrencyHandler(object):
             3: 'Single Parameter Formula',
             4: 'Multiple Parameter Formula',
             5: 'Bloomberg',
-            6: 'Wtrade', # DEPRECATED
+            6: 'Wtrade',  # DEPRECATED
             7: 'Fixer',
             9: 'Cbonds'
 

@@ -21,6 +21,7 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
     member = MemberField()
     options_object = serializers.JSONField(allow_null=False)
     result_object = serializers.JSONField(allow_null=False)
+    progress_object = serializers.JSONField(allow_null=False)
     attachments = CeleryTaskAttachmentSerializer(many=True)
 
     class Meta:
@@ -35,6 +36,7 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
                   'attachments',
 
                   'verbose_name', 'verbose_result',
+                  'progress_object',
 
                   'file_report')
 
