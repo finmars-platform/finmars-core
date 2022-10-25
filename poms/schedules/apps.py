@@ -68,7 +68,7 @@ class SchedulesConfig(AppConfig):
                 "id": 4,
                 "name": "Calculate Portfolio Register navs",
                 "task": 'portfolios.calculate_portfolio_register_price_history',
-                "crontab": crontabs['daily_noon']
+                "crontab": crontabs['daily_morning']
             },
             {
                 "id": 5,

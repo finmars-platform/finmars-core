@@ -373,9 +373,11 @@ def only_generate_events_at_date_for_single_instrument(master_user_id, date, ins
 
 
 @shared_task(name='instruments.generate_events0', ignore_result=True)
-def generate_events0(master_user):
+def generate_events0(master_user_id):
 
     from poms.celery_tasks.models import CeleryTask
+
+    master_user = MasterUser.objects.get(id=master_user_id)
 
     member = Member.objects.get(master_user=master_user, is_owner=True)
 
@@ -560,7 +562,7 @@ def generate_events(master_users=None):
 
         for master_user in master_user_qs:
 
-            generate_events0.apply_async(kwargs={'master_user': master_user})
+            generate_events0.apply_async(kwargs={'master_user_id': master_user.id})
 
     except Exception as e:
 
