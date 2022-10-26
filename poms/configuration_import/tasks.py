@@ -1,5 +1,7 @@
 import copy
+import json
 import time
+from django.utils.timezone import now
 from celery import shared_task
 from django.contrib.contenttypes.models import ContentType
 from rest_framework.exceptions import ValidationError
@@ -22,6 +24,7 @@ from poms.csv_import.models import CsvImportScheme
 from poms.csv_import.serializers import CsvImportSchemeSerializer
 from poms.currencies.models import Currency
 from poms.currencies.serializers import CurrencySerializer
+from poms.file_reports.models import FileReport
 from poms.instruments.models import InstrumentType, DailyPricingModel, PaymentSizeDetail, Instrument, PricingPolicy, \
     Periodicity, AccrualCalculationModel
 from poms.instruments.serializers import InstrumentTypeSerializer, PricingPolicySerializer
@@ -164,7 +167,7 @@ def get_configuration_access_table(member):
     return result
 
 
-class ImportManager(object):
+class ConfigurationImportManager(object):
 
     def __init__(self, instance):
 
@@ -183,6 +186,8 @@ class ImportManager(object):
 
         self.data_access_table = get_data_access_table(self.member)
         self.configuration_access_table = get_configuration_access_table(self.member)
+
+        self.task = CeleryTask.objects.get(id=self.instance.task_id)
 
         _l.info('self.access_table %s' % self.data_access_table)
         _l.info('self.configuration_access_table %s' % self.configuration_access_table)
@@ -230,12 +235,22 @@ class ImportManager(object):
         }, level="member",
             context={"master_user": self.master_user, "member": self.member})
 
-    def update_progress(self):
+    def update_progress(self, message=''):
 
         self.instance.processed_rows = self.instance.processed_rows + 1
 
         if self.instance.processed_rows > self.instance.total_rows:  # TODO  Somehow processed rows become bigger then total total rows, check for duplicate
             self.instance.processed_rows = self.instance.total_rows
+
+
+        self.task.update_progress(
+            {
+                'current': self.instance.processed_rows,
+                'total': self.instance.total_rows,
+                'percent': round(self.instance.processed_rows / (self.instance.total_rows / 100)),
+                'description': message
+            }
+        )
 
         send_websocket_message(data={
             'type': 'configuration_import_status',
@@ -266,6 +281,33 @@ class ImportManager(object):
         # _l.info('member class instance %s' % context['request'].user.member.__class__.__name__)
 
         return context
+
+    def generate_json_report(self):
+
+        result = self.instance.stats
+
+        current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+        file_name = 'file_report_%s_task_%s.json' % (current_date_time, self.task.id)
+
+        file_report = FileReport()
+
+        _l.info('TransactionImportProcess.generate_json_report uploading file')
+
+        file_report.upload_file(file_name=file_name, text=json.dumps(result, indent=4, default=str),
+                                master_user=self.master_user)
+        file_report.master_user = self.master_user
+        file_report.name = 'Configuration Import %s (Task %s).json' % (current_date_time, self.task.id)
+        file_report.file_name = file_name
+        file_report.type = 'configuration_import.import'
+        file_report.notes = 'System File'
+        file_report.content_type = 'application/json'
+
+        file_report.save()
+
+        _l.info('ConfigurationImportManager.json_report %s' % file_report)
+        _l.info('ConfigurationImportManager.json_report %s' % file_report.file_url)
+
+        return file_report
 
     def sync_transaction_type_action_instrument(self, action_object):
 
@@ -562,7 +604,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Importing Attribute Type: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Attribute Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -653,7 +695,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Importing Instrument Type: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Instrument Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -706,7 +748,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Importing Account Type: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Account Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -759,7 +801,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Importing Transaction Type Group: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Transaction Types Groups done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -828,7 +870,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Importing Transaction Type: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Transaction Types done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -936,7 +978,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress('Importing Balance Custom Column: %s' % content_object['user_code'])
 
         _l.info(
             'Import Configuration Custom Columns Balance Report done %s' % "{:3.3f}".format(time.perf_counter() - st))
@@ -991,7 +1033,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Importing PL Report Custom Column: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Custom Columns PL Report done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -1046,7 +1088,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Importing Transaction Report Custom Column: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Custom Columns Transaction Report done %s' % "{:3.3f}".format(
             time.perf_counter() - st))
@@ -1122,7 +1164,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Importing Form Layout: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Edit Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -1243,7 +1285,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Importing Layout: %s' % content_object['user_code'])
 
         _l.info('Import Configuration List Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -1316,7 +1358,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Importing Context Menu Layout: %s' % content_object['user_code'])
 
         _l.info('Import Configuration List Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -1380,7 +1422,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Importing Reference Tables')
 
         _l.info('Import Reference Table done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -1453,7 +1495,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Import Template Layout: %s' % content_object['user_code'])
 
         _l.info('Import Configuration List Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -1479,7 +1521,7 @@ class ImportManager(object):
                     except ListLayout.DoesNotExist:
                         _l.info("layout is not found %s" % component_type['settings']['layout_name'])
 
-                    self.update_progress()
+                    self.update_progress(message='Importing Dashboard Layout Component Type')
 
     def import_dashboard_layouts(self, configuration_section):
 
@@ -1573,7 +1615,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Importing Dashboard Layout: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Dashboard Layouts done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -1639,10 +1681,11 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Importing Column Sort Data')
 
         _l.info('Import Configuration Column Sort Data done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
+    # TODO DEPRECATED?
     def import_cross_entity_attribute_extension(self, configuration_section):
 
         st = time.perf_counter()
@@ -1782,7 +1825,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Import Download Instrument Scheme: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Instrument Download Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -1894,7 +1937,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Import Transaction Import Scheme: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Transaction Import Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -1986,7 +2029,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Import Data Import Scheme: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Simple Import Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -2072,7 +2115,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Import Complex Import Scheme: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Complex Import Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -2173,7 +2216,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Import Currency: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Currency done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -2261,7 +2304,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Import Pricing Policy: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Pricing Policy done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -2312,7 +2355,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Import Tooltips')
 
         _l.info('Import Configuration Entity Tooltips done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -2381,7 +2424,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Import Color Pallete: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Color Palettes done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -2442,7 +2485,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Import Instrument Labels')
 
         _l.info('Import Configuration Instrument User Fields done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -2492,7 +2535,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Import Transaction Labels')
 
         _l.info('Import Configuration Transaction User Fields done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -2558,7 +2601,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Import Instrument Pricing Scheme: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Instrument Pricing Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -2622,7 +2665,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Import Currency Pricing Scheme: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Currency Pricing Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -2684,7 +2727,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Import Schedule: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Schedules done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -2756,7 +2799,7 @@ class ImportManager(object):
 
                             self.instance.stats['configuration'][item['entity']].append(stats)
 
-                            self.update_progress()
+                            self.update_progress(message='Import Pricing Procedure: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Pricing Procedure done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -2819,7 +2862,7 @@ class ImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress()
+                        self.update_progress(message='Import Data Procedure: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Data Procedure done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -3118,13 +3161,14 @@ def configuration_import_as_json(self, task_id):
         instance = ConfigurationImportAsJson(data=task.options_object['data'],
                                              mode=task.options_object['mode'],
                                              master_user=task.master_user,
+                                             task_id=task_id,
                                              member=task.member)
 
         # _l.info('instance %s' % instance)
         _l.info('instance.mode %s' % instance.mode)
         # _l.info('instance.data %s' % instance.data)
 
-        import_manager = ImportManager(instance)
+        import_manager = ConfigurationImportManager(instance)
 
         configuration_section = None
         mappings_section = None
@@ -3158,6 +3202,10 @@ def configuration_import_as_json(self, task_id):
         _l.info('Import done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         task.result_object = instance.stats
+        
+        file_report = import_manager.generate_json_report()
+
+        task.add_attachment(file_report.id)
 
         task.status = CeleryTask.STATUS_DONE
         task.save()
