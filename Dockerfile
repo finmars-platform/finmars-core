@@ -11,7 +11,7 @@ RUN apt-get install -y python3.9
 
 RUN apt-get update && \
     apt-get install -y apt-utils && \
-    apt-get upgrade -y \
+    apt-get upgrade -y
 
 RUN apt-get install -y \
         wget htop curl \
