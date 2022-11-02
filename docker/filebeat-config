@@ -13,5 +13,5 @@ filebeat.inputs:
   encoding: 'utf8'
 
 output.logstash:
-  hosts: ["109.236.88.76:5044"]
+  hosts: ["3.123.159.169:5044"]
   ssl.certificate_authorities: ["/var/filebeat-secrets/ca.crt"]
