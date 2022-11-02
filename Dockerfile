@@ -4,10 +4,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # install python3.9
 
-RUN apt update
-RUN apt install -y software-properties-common
+RUN apt-get update
+RUN apt-get install -y software-properties-common
 RUN add-apt-repository ppa:deadsnakes/ppa
-RUN apt install -y python3.9
+RUN apt-get install -y python3.9
 
 RUN apt-get update && \
     apt-get install -y apt-utils && \
