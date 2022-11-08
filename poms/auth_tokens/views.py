@@ -439,12 +439,12 @@ class DeleteMember(APIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user_id = serializer.validated_data['user_id']
-
-        master_user_id = serializer.validated_data['master_user_id']
+        # user_id = serializer.validated_data['user_id']
+        #
+        # master_user_id = serializer.validated_data['master_user_id']
 
         try:
-            Member.objects.get(user_id=user_id, master_user_id=master_user_id).delete()
+            Member.objects.get(username=serializer.validated_data['username']).delete()
 
         except Exception as e:
             _l.info("Could not delete member Error %s" % e)
