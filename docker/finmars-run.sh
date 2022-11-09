@@ -57,13 +57,10 @@ then
 
     export DJANGO_SETTINGS_MODULE=poms_app.settings
 
-    /etc/init.d/celeryd start
+    supervisord
 
-    echo "Start celerybeat"
-
-    export DJANGO_SETTINGS_MODULE=poms_app.settings
-
-    /etc/init.d/celerybeat start
+    supervisorctl start celery
+    supervisorctl start celerybeat
 
 fi
 

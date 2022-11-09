@@ -30,7 +30,7 @@ RUN apt-get update && apt-get install filebeat
 
 
 RUN apt-get update && apt-get install ca-certificates
-
+RUN apt-get install supervisor
 
 RUN rm -rf /var/app
 COPY requirements.txt /var/app/requirements.txt
@@ -60,22 +60,16 @@ RUN chmod -R 777 /var/app-data/
 RUN mkdir -p /var/log/finmars
 RUN chown -R www-data:www-data /var/log/finmars/
 
-COPY docker/celeryd /etc/init.d/celeryd
-COPY docker/celeryd-config /etc/default/celeryd
+COPY docker/supervisor/celery.conf /etc/supervisor/conf.d/celery.conf
+COPY docker/supervisor/celerybeat.conf /etc/supervisor/conf.d/celerybeat.conf
 
-COPY docker/celerybeat /etc/init.d/celerybeat
-COPY docker/celerybeat-config /etc/default/celerybeat
 
 COPY docker/uwsgi-www.ini /etc/uwsgi/apps-enabled/finmars.ini
 
 COPY docker/filebeat-config /etc/filebeat/filebeat.yml
 RUN chmod 501 /etc/filebeat/filebeat.yml
 
-RUN chmod +x /var/app/docker/finmars-run.sh  && \
-    chmod +x /etc/init.d/celeryd  && \
-    chmod +x /etc/init.d/celerybeat  && \
-    chmod 640 /etc/default/celeryd  && \
-    chmod 640 /etc/default/celerybeat
+RUN chmod +x /var/app/docker/finmars-run.sh
 
 # create celery user
 RUN useradd -N -M --system -s /bin/bash celery  && \
