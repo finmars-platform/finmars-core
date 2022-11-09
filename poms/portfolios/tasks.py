@@ -308,7 +308,7 @@ def calculate_portfolio_register_price_history(member=None, date_from=None):
     from poms.celery_tasks.models import CeleryTask
     from poms_app import settings
 
-    master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+    master_user = MasterUser.objects.all()[0] # TODO if we return to signle base logic, fix it
 
     if not member:
         member = Member.objects.get(master_user=master_user, is_owner=True)
