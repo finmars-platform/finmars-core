@@ -70,6 +70,12 @@ class ApiConfig(AppConfig):
 
                     master_user = MasterUser.objects.filter()[0]
 
+                    _members = Member.objects.all()
+
+                    for _member in _members:
+                        _member.is_owner = False
+                        _member.save()
+
                     for member in members:
 
                         user = None
@@ -99,7 +105,7 @@ class ApiConfig(AppConfig):
                             _l.info("Member %s created " % member['username'])
 
                 except Exception as e:
-                    _l.error("Could not sync users")
+                    _l.error("Could not sync users %s" % e)
 
 
             except Exception as e:
