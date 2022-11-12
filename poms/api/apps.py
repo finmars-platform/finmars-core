@@ -93,7 +93,7 @@ class ApiConfig(AppConfig):
 
                         try:
 
-                            _member = Member.objects.get(username=member['username'])
+                            _member = Member.objects.get(username=member['username'], master_user=master_user)
 
                         except Exception as e:
 
