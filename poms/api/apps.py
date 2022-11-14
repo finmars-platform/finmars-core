@@ -96,7 +96,7 @@ class ApiConfig(AppConfig):
                             _member = Member.objects.get(user=user, master_user=master_user)
 
                             _member.is_owner = member['is_owner']
-                            _member.is_owner = member['is_admin']
+                            _member.is_admin = member['is_admin']
                             _member.save()
 
                         except Exception as e:
