@@ -68,7 +68,7 @@ class ApiConfig(AppConfig):
 
                     members = response_data['members']
 
-                    master_user = MasterUser.objects.filter()[0]
+                    master_user = MasterUser.objects.all()[0]
 
                     _members = Member.objects.all()
 
@@ -93,11 +93,16 @@ class ApiConfig(AppConfig):
 
                         try:
 
-                            _member = Member.objects.get(username=member['username'], master_user=master_user)
+                            _member = Member.objects.get(user=user, master_user=master_user)
+
+                            _member.is_owner = member['is_owner']
+                            _member.is_owner = member['is_admin']
+                            _member.save()
 
                         except Exception as e:
 
                             _member = Member.objects.create(user=user,
+                                                            username=member['username'],
                                                             master_user=master_user,
                                                             is_owner=member['is_owner'],
                                                             is_admin=member['is_admin'])
