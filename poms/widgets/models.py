@@ -30,6 +30,11 @@ class BalanceReportHistory(DataTimeStampedModel):
 
     nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('nav'))
 
+    class Meta:
+        unique_together = [
+            ['master_user', 'date', 'portfolio'],
+        ]
+
     def __str__(self):
 
         return str(self.date) + ' ' + self.portfolio.name + ' ' + self.report_currency.name
@@ -68,6 +73,11 @@ class PLReportHistory(DataTimeStampedModel):
     report_settings_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('report settings data'))
 
     total = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('total'))
+
+    class Meta:
+        unique_together = [
+            ['master_user', 'date', 'portfolio'],
+        ]
 
     def __str__(self):
 
@@ -118,3 +128,8 @@ class WidgetStats(models.Model):
     betta = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('betta'))
     alpha = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('alpha'))
     correlation = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('correlation'))
+
+    class Meta:
+        unique_together = [
+            ['master_user', 'date', 'portfolio'],
+        ]

@@ -4459,6 +4459,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
                     celery_task = CeleryTask.objects.create(master_user=procedure_instance.master_user,
                                              member=procedure_instance.member,
                                              options_object=options_object,
+                                                            verbose_name="Transaction Import by %s" % procedure_instance.member.username,
                                              type='transaction_import')
 
                     celery_task.save()

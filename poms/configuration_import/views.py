@@ -59,6 +59,7 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                     member=request.user.member,
+                                                    verbose_name="Configuration Import",
                                                     type='configuration_import')
 
             options_object = {

@@ -1,6 +1,7 @@
 import datetime
 import math
 import statistics
+import traceback
 
 import numpy
 from django.db.models import Q
@@ -63,8 +64,6 @@ class StatsHandler():
     def get_performance_report(self):
 
         first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
-
-
 
         instance = PerformanceReport(
             master_user=self.master_user,
@@ -275,7 +274,7 @@ class StatsHandler():
 
         previos_bday_of_date_from = get_last_business_day(end_of_months[0] - + datetime.timedelta(days=1))
 
-        end_of_months.insert(0, previos_bday_of_date_from) # get previous day of start end of month
+        end_of_months.insert(0, previos_bday_of_date_from)  # get previous day of start end of month
         _l.info('previos_bday_of_date_from %s' % previos_bday_of_date_from)
 
         _l.info('get_benchmark_returns.end_of_months after len %s' % len(end_of_months))
@@ -289,7 +288,7 @@ class StatsHandler():
 
             q = q | query
 
-        q = q & Q(**{'instrument__user_code': self.benchmark})
+        q = q & Q(**{'instrument__user_code': self.benchmark, 'pricing_policy': self.ecosystem_default.pricing_policy})
 
         prices = PriceHistory.objects.filter(q)
 
@@ -301,7 +300,8 @@ class StatsHandler():
             _l.info('get_benchmark_returns.end_of_months prices len %s' % len(prices))
             i = 1
             while i < len(end_of_months):
-                results.append((prices[i].principal_price - prices[i - 1].principal_price) / prices[i - 1].principal_price)
+                results.append(
+                    (prices[i].principal_price - prices[i - 1].principal_price) / prices[i - 1].principal_price)
                 i = i + 1
 
         return results
@@ -325,7 +325,7 @@ class StatsHandler():
 
         for period in self.performance_report.periods:
 
-            if str_to_date(period['date_to']) >= date_from: # TODO some mystery
+            if str_to_date(period['date_to']) >= date_from:  # TODO some mystery
 
                 portfolio_returns.append(period['total_return'])
                 # portfolio_months.append(period['date_to'])
@@ -349,10 +349,39 @@ class StatsHandler():
 
         return betta
 
-    # TODO get_alpha
     def get_alpha(self):
 
         alpha = 0
+        # alpha = Retrurn_portfolio - Betta * Return_benchmark
+        benchmarks_returns = []
+        first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
+
+        date_from = first_transaction.accounting_date
+
+        date_to = self.date
+
+        cumulative_return = self.get_cumulative_return()
+        # benchmarks_returns = self.get_benchmark_returns(date_from, date_to)
+
+        betta = self.get_betta()
+
+        try:
+
+            inception_date_price = PriceHistory.objects.get(date=date_from,
+                                                       instrument__user_code=self.benchmark, pricing_policy=self.ecosystem_default.pricing_policy).principal_price
+            report_date_price = PriceHistory.objects.get(date=date_to,
+                                                         instrument__user_code=self.benchmark, pricing_policy=self.ecosystem_default.pricing_policy).principal_price
+
+            benchmarks_returns = (report_date_price - inception_date_price) / inception_date_price
+
+            alpha = cumulative_return - betta * benchmarks_returns
+        except Exception as e:
+            _l.error('get_alpha error %s ' % e)
+            _l.error('get_alpha error  betta %s ' % betta)
+            _l.error('get_alpha error  benchmarks_returns %s ' % benchmarks_returns)
+            _l.error('get_alpha error  cumulative_return %s ' % cumulative_return)
+            _l.error('get_alpha traceback %s ' % traceback.format_exc())
+            alpha = 0
 
         return alpha
 
@@ -372,7 +401,7 @@ class StatsHandler():
         # (p1 - p0) / p0 = result %
 
         for period in self.performance_report.periods:
-            if str_to_date(period['date_to']) >= date_from: # TODO some mystery
+            if str_to_date(period['date_to']) >= date_from:  # TODO some mystery
                 portfolio_returns.append(period['total_return'])
 
         benchmarks_returns = self.get_benchmark_returns(date_from, date_to)

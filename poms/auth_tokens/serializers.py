@@ -49,7 +49,8 @@ class CreateMemberSerializer(serializers.Serializer):
 
 
 class DeleteMemberSerializer(serializers.Serializer):
-    user_id = serializers.CharField(label=_("User Id"))
-    master_user_id = serializers.CharField(label=_("Master User id"))
+    username = serializers.CharField(label=_("username"))
+    # user_id = serializers.CharField(label=_("User Id"))
+    # master_user_id = serializers.CharField(label=_("Master User id"))
 
 

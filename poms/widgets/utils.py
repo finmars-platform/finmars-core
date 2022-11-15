@@ -515,11 +515,11 @@ def collect_currency_category(report_type, master_user, instance_serialized, his
 
     item.save()
 
-def find_next_date_to_process(parent_task):
+def find_next_date_to_process(task):
 
     result = None
 
-    parent_options_object = parent_task.options_object
+    task_options_object = task.options_object
 
     i = 0
 
@@ -527,18 +527,18 @@ def find_next_date_to_process(parent_task):
 
     while not found:
 
-        result = parent_options_object['dates_to_process'][i]
+        result = task_options_object['dates_to_process'][i]
 
         found = True
 
         i = i + 1
 
-        if i < len(parent_options_object['dates_to_process']):
+        if i < len(task_options_object['dates_to_process']):
 
-            if result in parent_options_object['processed_dates']:
+            if result in task_options_object['processed_dates']:
                 found = False
 
-            if result in parent_options_object['error_dates']:
+            if result in task_options_object['error_dates']:
                 found = False
 
     return result
@@ -550,13 +550,19 @@ def collect_balance_history(master_user, member, date_from, date_to, dates, segm
 
     from poms.widgets.tasks import collect_balance_report_history
 
-    parent_task = CeleryTask.objects.create(
+
+    from poms.portfolios.models import Portfolio
+    portfolio = Portfolio.objects.get(id=portfolio_id)
+
+    task = CeleryTask.objects.create(
         master_user=master_user,
         member=member,
-        type='collect_history_chain',
+        type='collect_history',
+        verbose_name="Collect Nav History for %s portfolio by %s" % (portfolio.name, member.username),
     )
 
-    parent_task_options_object = {
+    options_object = {
+        "report_date": dates[0],
         'date_from': date_from,
         'date_to': date_to,
         'portfolio_id': portfolio_id,
@@ -569,52 +575,34 @@ def collect_balance_history(master_user, member, date_from, date_to, dates, segm
         'processed_dates': []
     }
 
-    parent_task.options_object = parent_task_options_object
-    parent_task.save()
+    task.options_object = options_object
 
-    celery_task = CeleryTask.objects.create(
-        master_user=master_user,
-        member=member,
-        type='collect_history',
-        parent=parent_task
-    )
-
-    options_object = {
-        "report_date": dates[0],
-        "portfolio_id": portfolio_id,
-        "report_currency_id": report_currency_id,
-        'cost_method_id': cost_method_id,
-        'pricing_policy_id': pricing_policy_id,
-    }
-
-    celery_task.options_object = options_object
-
-    celery_task.save()
+    task.save()
 
     if sync:
 
-        send_system_message(master_user=parent_task.master_user,
-                            performed_by=parent_task.member.username,
+        send_system_message(master_user=task.master_user,
+                            performed_by=task.member.username,
                             section='schedules',
                             type='info',
                             title='Balance History is start collecting',
                             description='Balance History from %s to %s will be soon available' % (
-                                parent_task_options_object['date_from'], parent_task_options_object['date_to']),
+                                options_object['date_from'], options_object['date_to']),
                             )
 
-        collect_balance_report_history.apply(kwargs={'task_id': celery_task.id})
+        collect_balance_report_history.apply(kwargs={'task_id': task.id})
 
     else:
 
-        transaction.on_commit(lambda: collect_balance_report_history.apply_async(kwargs={'task_id': celery_task.id}))
+        transaction.on_commit(lambda: collect_balance_report_history.apply_async(kwargs={'task_id': task.id}))
 
-        send_system_message(master_user=parent_task.master_user,
-                            performed_by=parent_task.member.username,
+        send_system_message(master_user=task.master_user,
+                            performed_by=task.member.username,
                             section='schedules',
                             type='info',
                             title='Balance History is start collecting',
                             description='Balance History from %s to %s will be soon available' % (
-                                parent_task_options_object['date_from'], parent_task_options_object['date_to']),
+                                options_object['date_from'], options_object['date_to']),
                             )
 
 def collect_pl_history(master_user, member, date_from, date_to, dates, segmentation_type, portfolio_id, report_currency_id, cost_method_id,
@@ -622,16 +610,19 @@ def collect_pl_history(master_user, member, date_from, date_to, dates, segmentat
 
     from poms.widgets.tasks import collect_pl_report_history
 
-    parent_task = CeleryTask.objects.create(
-        master_user=master_user,
-        member=member,
-        type='collect_history_chain',
-    )
+    from poms.portfolios.models import Portfolio
+    portfolio = Portfolio.objects.get(id=portfolio_id)
 
     pl_first_date = str(get_first_transaction(portfolio_id).accounting_date)
 
-    parent_task_options_object = {
-        'pl_first_date': pl_first_date,
+    task = CeleryTask.objects.create(
+        master_user=master_user,
+        member=member,
+        verbose_name="Collect Pl History for %s portfolio by %s" % (portfolio.name, member.username),
+        type='collect_history'
+    )
+
+    options_object = {
         'date_from': date_from,
         'date_to': date_to,
         'segmentation_type': segmentation_type,
@@ -641,66 +632,53 @@ def collect_pl_history(master_user, member, date_from, date_to, dates, segmentat
         'pricing_policy_id': pricing_policy_id,
         'dates_to_process': dates,
         'error_dates': [],
-        'processed_dates': []
-    }
-
-    parent_task.options_object = parent_task_options_object
-    parent_task.save()
-
-    celery_task = CeleryTask.objects.create(
-        master_user=master_user,
-        member=member,
-        type='collect_history',
-        parent=parent_task
-    )
-
-    options_object = {
+        'processed_dates': [],
         'pl_first_date': pl_first_date,
         'report_date': dates[0],
-        'portfolio_id': portfolio_id,
-        'report_currency_id': report_currency_id,
-        'cost_method_id': cost_method_id,
-        'pricing_policy_id': pricing_policy_id,
+
     }
 
-    celery_task.options_object = options_object
+    task.options_object = options_object
 
-    celery_task.save()
+    task.save()
 
     if sync:
-        send_system_message(master_user=parent_task.master_user,
-                            performed_by=parent_task.member.username,
+        send_system_message(master_user=task.master_user,
+                            performed_by=task.member.username,
                             section='schedules',
                             type='info',
                             title='PL History is start collecting',
                             description='PL History from %s to %s will be soon available' % (
-                                parent_task_options_object['date_from'], parent_task_options_object['date_to']),
+                                options_object['date_from'], options_object['date_to']),
                             )
-        collect_pl_report_history.apply(kwargs={'task_id': celery_task.id})
+        collect_pl_report_history.apply(kwargs={'task_id': task.id})
 
     else:
-        transaction.on_commit(lambda: collect_pl_report_history.apply_async(kwargs={'task_id': celery_task.id}))
+        transaction.on_commit(lambda: collect_pl_report_history.apply_async(kwargs={'task_id': task.id}))
 
-        send_system_message(master_user=parent_task.master_user,
-                            performed_by=parent_task.member.username,
+        send_system_message(master_user=task.master_user,
+                            performed_by=task.member.username,
                             section='schedules',
                             type='info',
                             title='PL History is start collecting',
                             description='PL History from %s to %s will be soon available' % (
-                                parent_task_options_object['date_from'], parent_task_options_object['date_to']),
+                                options_object['date_from'], options_object['date_to']),
                             )
 
 def collect_widget_stats(master_user, member, date_from, date_to, dates, segmentation_type, portfolio_id, benchmark, sync=False):
 
     from poms.widgets.tasks import collect_stats
 
-    parent_task = CeleryTask.objects.create(
+    from poms.portfolios.models import Portfolio
+    portfolio = Portfolio.objects.get(id=portfolio_id)
+
+    task = CeleryTask.objects.create(
         master_user=master_user,
         member=member,
-        type='collect_stats_chain'
+        verbose_name="Collect Widget Stats for %s portfolio by %s" % (portfolio.name, member.username),
     )
 
-    parent_options_object = {
+    options_object = {
         'date_from': date_from,
         'date_to': date_to,
         'segmentation_type': segmentation_type,
@@ -708,33 +686,15 @@ def collect_widget_stats(master_user, member, date_from, date_to, dates, segment
         'benchmark': benchmark,
         'dates_to_process': dates,
         'error_dates': [],
-        'processed_dates': []
-    }
-
-    parent_task.options_object = parent_options_object
-
-    parent_task.save()
-
-    celery_task = CeleryTask.objects.create(
-        master_user=master_user,
-        member=member,
-        parent=parent_task,
-        type='collect_stats'
-    )
-
-    options_object = {
-
-        'portfolio_id': portfolio_id,
-        'benchmark': benchmark,
+        'processed_dates': [],
         'date': dates[0]
-
     }
 
-    celery_task.options_object = options_object
+    task.options_object = options_object
 
-    celery_task.save()
+    task.save()
 
     if sync:
-        collect_stats.apply(kwargs={'task_id': celery_task.id})
+        collect_stats.apply(kwargs={'task_id': task.id})
     else:
-        transaction.on_commit(lambda: collect_stats.apply_async(kwargs={'task_id': celery_task.id}))
+        transaction.on_commit(lambda: collect_stats.apply_async(kwargs={'task_id': task.id}))

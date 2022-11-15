@@ -32,11 +32,12 @@ from poms_app import settings
 _l = logging.getLogger('poms.procedures')
 
 
-class RequestDataFileProcedureProcess(object):
+class DataProcedureProcess(object):
 
-    def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None, member=None, schedule_instance=None, context=None):
+    def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None, member=None,
+                 schedule_instance=None, context=None):
 
-        _l.info('RequestDataFileProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
+        _l.info('DataProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
 
         self.master_user = master_user
         self.procedure = procedure
@@ -84,7 +85,7 @@ class RequestDataFileProcedureProcess(object):
                                                                                          date_from=self.procedure.date_from,
                                                                                          date_to=self.procedure.date_to,
                                                                                          action_verbose='Request file with Transactions',
-                                                                                         provider_verbose='universal'
+                                                                                         provider_verbose='Universal'
 
                                                                                          )
 
@@ -95,55 +96,76 @@ class RequestDataFileProcedureProcess(object):
 
                     headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
-                    url = self.procedure.data['url']
-                    security_token = self.procedure.data['security_token']
+                    url = None
+                    security_token = None
+                    data = None
 
-                    data = {
-                        'security_token': security_token,
-                        "id": procedure_instance.id,
-                        "user": {
-                            "token": self.master_user.token,
-                            "credentials": {}
-                        },
-                        "provider": self.procedure.provider.user_code,
-                        "scheme_name": self.procedure.scheme_user_code,
-                        "scheme_type": self.procedure.scheme_type,
-                        "data": [],
-                        "options": self.procedure.data,
-                        "error_status": 0,
-                        "error_message": "",
-                    }
+                    try:
 
-                    if self.context:
-                        if 'names' in self.context:
-                            if "echo" in data['options']:
-                                for key, value in data['options']["echo"].items():
 
-                                    if value in self.context['names']:
-                                        data['options']["echo"][key] = str(self.context['names'][value])
 
-                    if self.procedure.date_from:
-                        data["date_from"] = str(self.procedure.date_from)
+                        url = self.procedure.data['url']
+                        security_token = self.procedure.data['security_token']
 
-                    if self.procedure.date_to:
-                        data["date_to"] = str(self.procedure.date_to)
+                        data = {
+                            'security_token': security_token,
+                            "id": procedure_instance.id,
+                            "user": {
+                                "token": self.master_user.token,
+                                "credentials": {}
+                            },
+                            "provider": self.procedure.provider.user_code,
+                            "scheme_name": self.procedure.scheme_user_code,
+                            "scheme_type": self.procedure.scheme_type,
+                            "data": [],
+                            "options": self.procedure.data,
+                            "error_status": 0,
+                            "error_message": "",
+                        }
 
-                    # if self.procedure.data['currencies']:
-                    #     data["options"]['currencies'] = self.procedure.data['currencies']
+                        if self.context:
+                            if 'names' in self.context:
+                                if "echo" in data['options']:
+                                    for key, value in data['options']["echo"].items():
 
-                    _l.info('request universal url %s' % url)
-                    _l.info('request universal data %s' % data)
-                    _l.info('request universal self.context %s' % self.context)
+                                        if value in self.context['names']:
+                                            data['options']["echo"][key] = str(self.context['names'][value])
 
-                    procedure_instance.request_data = data
-                    procedure_instance.save()
+                        if self.procedure.date_from:
+                            data["date_from"] = str(self.procedure.date_from)
 
-                    response = requests.post(url=url, json=data, headers=headers)
+                        if self.procedure.date_to:
+                            data["date_to"] = str(self.procedure.date_to)
+
+                        # if self.procedure.data['currencies']:
+                        #     data["options"]['currencies'] = self.procedure.data['currencies']
+
+                        _l.info('request universal url %s' % url)
+                        _l.info('request universal data %s' % data)
+                        _l.info('request universal self.context %s' % self.context)
+
+                        procedure_instance.request_data = data
+                        procedure_instance.save()
+                    except Exception as e:
+                        procedure_instance.error_message = 'Data Config Error %s' % e
+                        procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+                        procedure_instance.save()
+
+                    response = None
+
+                    try:
+                        response = requests.post(url=url, json=data, headers=headers)
+                    except Exception as e:
+
+                        procedure_instance.error_message = 'Request To Remote Server Error %s.' % e
+                        procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+                        procedure_instance.save()
+
+                        return
 
                     response_data = None
 
-                    if len(response.text) < 5000:
-                        _l.info('response %s' % response.text)
+
 
                     current_date_time = now().strftime("%Y-%m-%d-%H-%M")
 
@@ -158,11 +180,21 @@ class RequestDataFileProcedureProcess(object):
                         response_data = response.json()
 
                         file_content = json.dumps(response_data, indent=4)
+                        procedure_instance.response_data = file_content
+                        procedure_instance.save()
+
                     except Exception as e:
+
+                        procedure_instance.response_data = response.text
+
+                        procedure_instance.error_message = 'Received JSON Error %s' % e
+                        procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+                        procedure_instance.save()
 
                         _l.info('response %s' % response.text)
                         _l.info("Response parse error %s" % e)
                         file_content = response.text
+
 
                     file_report.upload_file(file_name=file_name, text=file_content, master_user=self.master_user)
                     file_report.master_user = self.master_user
@@ -196,6 +228,8 @@ class RequestDataFileProcedureProcess(object):
 
                     celery_task = CeleryTask.objects.create(master_user=master_user,
                                                             member=self.member,
+                                                            notes='Import initiated by data procedure instance %s' % procedure_instance.id,
+                                                            verbose_name="Transaction Import by %s" % self.member.username,
                                                             type='transaction_import')
 
                     options_object = {}
@@ -219,7 +253,6 @@ class RequestDataFileProcedureProcess(object):
                                 kwargs={'procedure_instance_id': procedure_instance.id,
                                         'celery_task_id': celery_task.id,
                                         })
-
 
                     on_commit(run_tasks)
 
@@ -270,8 +303,8 @@ class RequestDataFileProcedureProcess(object):
                 _l.debug("RequestDataFileProcedureInstance procedure_instance created id: %s" % procedure_instance.id)
 
             _l.debug(
-                "RequestDataFileProcedureProcess: Request_transaction_file. Master User: %s. Provider: %s, Scheme name: %s" % (
-                self.master_user, self.procedure.provider, self.procedure.scheme_user_code))
+                "DataProcedureProcess: Request_transaction_file. Master User: %s. Provider: %s, Scheme name: %s" % (
+                    self.master_user, self.procedure.provider, self.procedure.scheme_user_code))
 
             item = TransactionFileResult.objects.create(
                 procedure_instance=procedure_instance,
@@ -315,6 +348,7 @@ class RequestDataFileProcedureProcess(object):
                                         performed_by="System",
                                         description="Email Provider Procedure is not configured")
 
+            # TODO DEPRECATED DELETE SOON
             if self.procedure.provider.user_code == 'julius_baer':
 
                 try:
@@ -330,7 +364,7 @@ class RequestDataFileProcedureProcess(object):
                                         performed_by="System",
                                         type='error',
                                         description="Can't configure Julius Baer Provider")
-
+            # TODO DEPRECATED DELETE SOON
             if self.procedure.provider.user_code == 'lombard_odier':
 
                 try:
@@ -358,6 +392,7 @@ class RequestDataFileProcedureProcess(object):
                                         type='error',
                                         description="Can't configure Lombard Odier Provider")
 
+            # TODO DEPRECATED DELETE SOON
             if self.procedure.provider.user_code == 'revolut':
 
                 if self.procedure.data:
@@ -446,17 +481,18 @@ class ExpressionProcedureProcess(object):
 
         self.execute_context_variables_expressions()
 
-
     def execute_context_variables_expressions(self):
 
         self.context_names = {}
 
-        _l.info('ExpressionProcedureProcess.execute_context_variables_expressions %s ' % self.procedure.context_variables.all())
+        _l.info(
+            'ExpressionProcedureProcess.execute_context_variables_expressions %s ' % self.procedure.context_variables.all())
 
         for item in self.procedure.context_variables.all():
 
             try:
-                self.context_names[item.name] = formula.safe_eval(item.expression, names=self.context_names,  context=self.context)
+                self.context_names[item.name] = formula.safe_eval(item.expression, names=self.context_names,
+                                                                  context=self.context)
 
             except Exception as e:
                 _l.info('execute_context_variables_expressions.e %s' % e)
@@ -466,20 +502,20 @@ class ExpressionProcedureProcess(object):
 
     def process(self):
 
-
         try:
 
             procedure_instance = ExpressionProcedureInstance.objects.create(procedure=self.procedure,
-                                                                                 master_user=self.master_user,
-                                                                                 status=ExpressionProcedureInstance.STATUS_PENDING,
-                                                                                 schedule_instance=self.schedule_instance,
-                                                                                 action='execute_expression_procedure',
-                                                                                 provider='finmars',
+                                                                            master_user=self.master_user,
+                                                                            member=self.member,
+                                                                            status=ExpressionProcedureInstance.STATUS_PENDING,
+                                                                            schedule_instance=self.schedule_instance,
+                                                                            action='execute_expression_procedure',
+                                                                            provider='finmars',
 
-                                                                                 action_verbose='Execute Expression Procedure',
-                                                                                 provider_verbose='Finmars'
+                                                                            action_verbose='Execute Expression Procedure',
+                                                                            provider_verbose='Finmars'
 
-                                                                                 )
+                                                                            )
 
             send_system_message(master_user=self.master_user,
                                 performed_by='System',
@@ -499,9 +535,13 @@ class ExpressionProcedureProcess(object):
             _l.info('ExpressionProcedureProcess.names %s' % names)
             _l.info('ExpressionProcedureProcess.context %s' % self.context)
 
+            procedure_instance.notes = 'Content: \n' + str(names) + '\n'
+            procedure_instance.notes = '==========\n'
+            procedure_instance.notes = procedure_instance.notes + 'Code: ' + str(self.procedure.code)
+
             try:
 
-                result, log = formula.safe_eval_with_logs(self.procedure.code, names=names,  context=self.context)
+                result, log = formula.safe_eval_with_logs(self.procedure.code, names=names, context=self.context)
 
                 _l.debug('ExpressionProcedureProcess.result %s' % result)
 
@@ -524,7 +564,6 @@ class ExpressionProcedureProcess(object):
 
                 _l.error("ExpressionProcedureProcess.safe_eval error %s" % e)
                 _l.error("ExpressionProcedureProcess.safe_eval traceback %s" % traceback.print_exc())
-
 
             send_system_message(master_user=self.master_user,
                                 performed_by='System',

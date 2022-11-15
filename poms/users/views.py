@@ -870,6 +870,8 @@ class MemberViewSet(AbstractModelViewSet):
         if instance.is_owner == True:
             raise PermissionDenied()
 
+
+
         return super(MemberViewSet, self).perform_destroy(instance)
 
 class UsercodePrefixFilterSet(FilterSet):

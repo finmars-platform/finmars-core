@@ -31,12 +31,16 @@ class CurrentMasterUserDefault(object):
 
 
 class CurrentUserDefaultLocal(object):
+
+    requires_context = True
+
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         user = request.user
         self._user = user
 
-    def __call__(self):
+    def __call__(self, serializer_field):
+        self.set_context(serializer_field)
         return self._user
 
 

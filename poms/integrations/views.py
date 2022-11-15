@@ -878,6 +878,7 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
                                                 options_object=options_object,
+                                                verbose_name="Transaction Import by %s" % request.user.member.username,
                                                 type='transaction_import')
 
 
@@ -1007,6 +1008,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
                                                 options_object=options_object,
+                                                verbose_name="Transaction Import by %s" % request.user.member.username,
                                                 type='transaction_import')
 
         _l.info('celery_task %s created ' % celery_task.pk)
@@ -1139,6 +1141,7 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
                                                 options_object=options_object,
+                                                verbose_import="Transaction Import Validation",
                                                 type='validate_transaction_import')
 
         # celery_task.save()
@@ -1199,6 +1202,7 @@ class TransactionImportJson(APIView):
         procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
 
         celery_task = CeleryTask.objects.create(master_user=master_user,
+                                                verbose_name="Transaction Import by %s" % request.user.member.username,
                                                 type='transaction_import')
 
         celery_task.options_object = {

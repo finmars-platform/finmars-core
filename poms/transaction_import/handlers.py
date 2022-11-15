@@ -240,9 +240,9 @@ class TransactionImportProcess(object):
 
         result = serializer.data
 
-        _l.debug('self.result %s' % self.result.__dict__)
+        # _l.debug('self.result %s' % self.result.__dict__)
 
-        _l.debug('generate_json_report.result %s' % result)
+        # _l.debug('generate_json_report.result %s' % result)
 
         current_date_time = now().strftime("%Y-%m-%d-%H-%M")
         file_name = 'file_report_%s_task_%s.json' % (current_date_time, self.task.id)
@@ -432,6 +432,15 @@ class TransactionImportProcess(object):
                 _l.info('TransactionImportProcess.Task %s. book SUCCESS item %s rule_scenario %s' % (
                     self.task, item, rule_scenario))
 
+                self.task.update_progress(
+                    {
+                        'current': self.result.processed_rows,
+                        'total': len(self.items),
+                        'percent': round(self.result.processed_rows / (len(self.items) / 100)),
+                        'description': 'Going to book %s' % (rule_scenario.transaction_type.user_code)
+                    }
+                )
+
             except Exception as e:
 
                 item.status = 'error'
@@ -464,7 +473,10 @@ class TransactionImportProcess(object):
 
                         for scheme_input in self.scheme.inputs.all():
 
-                            item[scheme_input.name] = file_item[scheme_input.column_name]
+                            try:
+                                item[scheme_input.name] = file_item[scheme_input.column_name]
+                            except Exception as e:
+                                item[scheme_input.name] = None
 
                         self.raw_items.append(item)
 
@@ -482,7 +494,10 @@ class TransactionImportProcess(object):
 
                             for scheme_input in self.scheme.inputs.all():
 
-                                item[scheme_input.name] = file_item[scheme_input.column_name]
+                                try:
+                                    item[scheme_input.name] = file_item[scheme_input.column_name]
+                                except Exception as e:
+                                    item[scheme_input.name] = None
 
                             self.raw_items.append(item)
 
@@ -750,6 +765,10 @@ class TransactionImportProcess(object):
 
         _l.info('TransactionImportProcess.Task %s. process_items INIT' % self.task)
 
+
+
+        index = 0
+
         for item in self.items:
 
             try:
@@ -819,7 +838,21 @@ class TransactionImportProcess(object):
                 }, level="member",
                     context=self.context)
 
+                self.task.update_progress(
+                    {
+                        'current': self.result.processed_rows,
+                        'total': len(self.items),
+                        'percent': round(self.result.processed_rows / (len(self.items) / 100)),
+                        'description': 'Row %s processed' % self.result.processed_rows
+                    }
+                )
+
+
+
             except Exception as e:
+
+                item.status = 'error'
+                item.message = 'Error %s' % e
 
                 _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Exception %s' % (
                     self.task, str(item.row_number), e))
@@ -829,6 +862,22 @@ class TransactionImportProcess(object):
         self.result.items = self.items
 
         _l.info('TransactionImportProcess.Task %s. process_items DONE' % self.task)
+
+    def get_verbose_result(self):
+
+        booked_count = 0
+        error_count = 0
+
+        for item in self.result.items:
+            if item.status == 'error':
+                error_count = error_count + 1
+
+            booked_count = booked_count + len(item.booked_transactions)
+
+        result = 'Processed %s rows and successfully booked %s transactions. Error rows %s' % (
+        len(self.items), booked_count, error_count)
+
+        return result
 
     def process(self):
 
@@ -876,8 +925,6 @@ class TransactionImportProcess(object):
                 context=self.context)
 
             self.task.result_object = TransactionImportResultSerializer(instance=self.result, context=self.context).data
-            self.task.status = CeleryTask.STATUS_DONE
-            self.task.save()
 
             self.result.reports = []
 
@@ -926,6 +973,14 @@ class TransactionImportProcess(object):
 
         if self.procedure_instance and self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
+
+        self.task.add_attachment(self.result.reports[0].id)
+        self.task.add_attachment(self.result.reports[1].id)
+
+        self.task.verbose_result = self.get_verbose_result()
+
+        self.task.status = CeleryTask.STATUS_DONE
+        self.task.save()
 
         return self.result
 
