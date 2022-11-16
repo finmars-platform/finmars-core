@@ -1659,7 +1659,7 @@ class BalanceReportBuilderSql:
 
 
 
-                if result_item['position_size']:
+                if round(item['position_size'], settings.ROUND_NDIGITS):
 
                     updated_result.append(result_item)
 
