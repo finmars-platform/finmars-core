@@ -150,12 +150,12 @@ class AbstractProvider(object):
         if instrument_download_scheme.mode == 'overwrite':
             setattr(instr, attr, v)
 
-        if instrument_download_scheme == 'overwrite_empty_values':
+        if instrument_download_scheme.mode == 'overwrite_empty_values':
 
             if not getattr(instr, attr):
                 setattr(instr, attr, v)
 
-        if instrument_download_scheme == 'skip':
+        if instrument_download_scheme.mode == 'skip':
 
             if not getattr(instr, attr):
                 setattr(instr, attr, v)
