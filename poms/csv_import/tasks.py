@@ -714,7 +714,10 @@ def process_csv_file(master_user,
 
                                         else:
 
-                                            instance[key] = executed_expression
+                                            if key == 'maturity_date':
+                                                instance[key] = str(executed_expression)
+                                            else:
+                                                instance[key] = executed_expression
 
                                 except (ExpressionEvalError, TypeError, Exception, KeyError):
 

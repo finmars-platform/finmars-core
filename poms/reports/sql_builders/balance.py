@@ -1659,7 +1659,7 @@ class BalanceReportBuilderSql:
 
 
 
-                if item['position_size']:
+                if result_item['position_size']:
 
                     updated_result.append(result_item)
 
