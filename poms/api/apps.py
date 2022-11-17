@@ -202,66 +202,6 @@ class ApiConfig(AppConfig):
         else:
             _l.info('settings.AUTHORIZER_URL is not set')
 
-
-    def load_init_configuration(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
-
-        from poms.users.models import User, Member, MasterUser
-        from poms.celery_tasks.models import  CeleryTask
-        from django.db import transaction
-        from poms.configuration_import.tasks import configuration_import_as_json
-
-        if settings.AUTHORIZER_URL:
-
-            try:
-                _l.info("load_init_configuration processing")
-
-                headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-
-                data = {
-                    "base_api_url": settings.BASE_API_URL,
-                }
-
-                try:
-
-                    url = settings.AUTHORIZER_URL + '/backend-get-init-configuration/'
-
-                    response = requests.post(url=url, data=json.dumps(data), headers=headers)
-                    _l.info("load_init_configuration backend-sync-users response.status_code %s" % response.status_code)
-                    # _l.info("sync_users_at_authorizer_service backend-sync-users response.text %s" % response.text)
-
-                    response_data = response.json()
-
-                    master_user = MasterUser.objects.filter()[0]
-                    member = Member.objects.get(master_user=master_user, is_owner=True)
-
-                    celery_task = CeleryTask.objects.create(master_user=master_user,
-                                                            member=member,
-                                                            verbose_name="Configuration Import",
-                                                            type='configuration_import')
-
-                    options_object = {
-                        'data': response_data['data'],
-                        'mode': 'skip'
-                    }
-
-                    celery_task.options_object = options_object
-                    celery_task.save()
-
-                    transaction.on_commit(
-                        lambda: configuration_import_as_json.apply_async(kwargs={'task_id': celery_task.id}))
-
-
-
-                except Exception as e:
-                    _l.error("Could not init configuration %s" % e)
-
-
-            except Exception as e:
-                _l.info("load_init_configuration error %s" % e)
-
-        else:
-            _l.info('settings.AUTHORIZER_URL is not set')
-
     def create_base_folders(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
 
         from poms.common.storage import get_storage
