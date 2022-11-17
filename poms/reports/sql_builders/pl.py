@@ -3064,20 +3064,21 @@ class PLReportBuilderSql:
             result_tmp = []
             result = []
 
-
-
-            for item in result_tmp_raw:
-
-                item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
-
-                result_tmp.append(item)
-
             ITEM_TYPE_INSTRUMENT = 1
             ITEM_TYPE_FX_VARIATIONS = 3
             ITEM_TYPE_FX_TRADES = 4
             ITEM_TYPE_TRANSACTION_PL = 5
             ITEM_TYPE_MISMATCH = 6
 
+            for item in result_tmp_raw:
+
+                item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
+                
+                if item['item_type'] == ITEM_TYPE_MISMATCH:
+                    if item['position_size']:
+                        result_tmp.append(item)
+                else:
+                    result_tmp.append(item)
 
             for item in result_tmp:
 
