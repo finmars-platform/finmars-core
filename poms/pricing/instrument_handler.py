@@ -755,24 +755,24 @@ class PricingInstrumentHandler(object):
 
                         if can_write:
 
-                            if has_error:
-                                # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+                            # if has_error:
+                            #     # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
+                            #
+                            #     error_prices_count = error_prices_count + 1
+                            #     error.status = PriceHistoryError.STATUS_ERROR
+                            #     error.save()
+                            #
+                            # else:
 
-                                error_prices_count = error_prices_count + 1
-                                error.status = PriceHistoryError.STATUS_ERROR
-                                error.save()
+                            successful_prices_count = successful_prices_count + 1
 
+                            price.save()
+
+                            if price.id:
+                                error.status = PriceHistoryError.STATUS_OVERWRITTEN
                             else:
-
-                                successful_prices_count = successful_prices_count + 1
-
-                                price.save()
-
-                                if price.id:
-                                    error.status = PriceHistoryError.STATUS_OVERWRITTEN
-                                else:
-                                    error.status = PriceHistoryError.STATUS_SKIP
-                                error.save()
+                                error.status = PriceHistoryError.STATUS_SKIP
+                            error.save()
 
                         else:
 
@@ -1093,22 +1093,22 @@ class PricingInstrumentHandler(object):
                         if can_write:
 
                             # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
-                            if has_error:
+                            # if has_error:
+                            #
+                            #     error_prices_count = error_prices_count + 1
+                            #     error.status = PriceHistoryError.STATUS_ERROR
+                            #     error.save()
+                            # else:
 
-                                error_prices_count = error_prices_count + 1
-                                error.status = PriceHistoryError.STATUS_ERROR
-                                error.save()
+                            successful_prices_count = successful_prices_count + 1
+
+                            price.save()
+
+                            if price.id:
+                                error.status = PriceHistoryError.STATUS_OVERWRITTEN
                             else:
-
-                                successful_prices_count = successful_prices_count + 1
-
-                                price.save()
-
-                                if price.id:
-                                    error.status = PriceHistoryError.STATUS_OVERWRITTEN
-                                else:
-                                    error.status = PriceHistoryError.STATUS_SKIP
-                                error.save()
+                                error.status = PriceHistoryError.STATUS_SKIP
+                            error.save()
 
                         else:
 
