@@ -43,7 +43,7 @@ class ApiConfig(AppConfig):
         if settings.AUTHORIZER_URL:
 
             try:
-                _l.info("register_at_authorizer_service processing")
+                _l.info("load_master_user_data processing")
 
                 headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
@@ -53,9 +53,13 @@ class ApiConfig(AppConfig):
 
                 url = settings.AUTHORIZER_URL + '/backend-master-user-data/'
 
-                _l.info("register_at_authorizer_service url %s" % url)
+                _l.info("load_master_user_data url %s" % url)
 
                 response = requests.post(url=url, data=json.dumps(data), headers=headers)
+
+                _l.info(
+                    "load_master_user_data  response.status_code %s" % response.status_code)
+                _l.info("load_master_user_data response.text %s" % response.text)
 
                 response_data = response.json()
 
@@ -86,7 +90,7 @@ class ApiConfig(AppConfig):
                     user_profile.save()
 
 
-                if 'old_backup_name' in response_data:
+                if 'old_backup_name' in response_data and response_data['old_backup_name']:
                     # If From backup
                     master_user = MasterUser.objects.get(name=response_data['old_backup_name'])
 
@@ -116,12 +120,10 @@ class ApiConfig(AppConfig):
                         admin_group.members.add(member.id)
                         admin_group.save()
 
-                _l.info(
-                    "register_at_authorizer_service backend-is-ready response.status_code %s" % response.status_code)
-                _l.info("register_at_authorizer_service backend-is-ready response.text %s" % response.text)
+
 
             except Exception as e:
-                _l.info("register_at_authorizer_service error %s" % e)
+                _l.info("load_master_user_data error %s" % e)
 
         else:
             _l.info('settings.AUTHORIZER_URL is not set')
