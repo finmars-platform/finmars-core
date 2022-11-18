@@ -545,8 +545,8 @@ urlpatterns = [
 
     re_path(r'^authorizer/token-auth/', ObtainAuthToken.as_view(), name='api-token-auth'),
     re_path(r'^authorizer/set-token-auth/', SetAuthToken.as_view(), name='set-token-auth'),
-    re_path(r'^authorizer/create-user/', CreateUser.as_view(), name='create-user'),
-    re_path(r'^authorizer/create-master-user/', CreateMasterUser.as_view(), name='create-master-user'),
+    re_path(r'^authorizer/create-user/', CreateUser.as_view(), name='create-user'), # TODO deprecated delete soon
+    re_path(r'^authorizer/create-master-user/', CreateMasterUser.as_view(), name='create-master-user'), # TODO deprecated delete soon
     re_path(r'^authorizer/rename-master-user/', RenameMasterUser.as_view(), name='rename-master-user'),
     re_path(r'^authorizer/create-member/', CreateMember.as_view(), name='create-member'),
     re_path(r'^authorizer/delete-member/', DeleteMember.as_view(), name='delete-member'),
