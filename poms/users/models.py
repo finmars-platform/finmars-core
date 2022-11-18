@@ -117,6 +117,9 @@ class MasterUser(models.Model):
     name = models.CharField(max_length=255, null=True, blank=True,
                             verbose_name=gettext_lazy('name'))
 
+    base_api_url = models.CharField(max_length=255, null=True, blank=True,
+                            verbose_name=gettext_lazy('base api url'))
+
     description = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('description'))
 
     status = models.PositiveSmallIntegerField(default=STATUS_ONLINE, choices=STATUSES,

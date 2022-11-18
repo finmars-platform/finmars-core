@@ -1,3 +1,6 @@
+import json
+import requests
+
 from django.contrib.auth.models import User
 from rest_framework import parsers, renderers
 
@@ -17,6 +20,8 @@ from poms.auth_tokens.serializers import SetAuthTokenSerializer, CreateUserSeria
 from poms.auth_tokens.utils import generate_random_string
 from poms.users.models import MasterUser, Member, UserProfile, Group
 from django.utils import translation
+
+from poms_app import settings
 
 _l = logging.getLogger('poms.auth_tokens')
 
@@ -230,6 +235,7 @@ class CreateMasterUser(APIView):
     def get_serializer(self, *args, **kwargs):
         kwargs['context'] = self.get_serializer_context()
         return self.serializer_class(*args, **kwargs)
+
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
