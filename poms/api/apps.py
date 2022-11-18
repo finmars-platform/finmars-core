@@ -26,10 +26,11 @@ class ApiConfig(AppConfig):
 
         post_migrate.connect(self.add_view_and_manage_permissions, sender=self)
         post_migrate.connect(self.load_master_user_data, sender=self)
-        post_migrate.connect(self.register_at_authorizer_service, sender=self)
         post_migrate.connect(self.sync_users_at_authorizer_service, sender=self)
         post_migrate.connect(self.load_init_configuration, sender=self)
         post_migrate.connect(self.create_base_folders, sender=self)
+
+        post_migrate.connect(self.register_at_authorizer_service, sender=self)
 
     def add_view_and_manage_permissions(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
         from poms.common.utils import add_view_and_manage_permissions
