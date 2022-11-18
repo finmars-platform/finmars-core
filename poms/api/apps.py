@@ -108,7 +108,7 @@ class ApiConfig(AppConfig):
                         master_user = MasterUser.objects.create_master_user(
                             user=user,
                             base_api_url=response_data['base_api_url'],
-                            language=translation.get_language(), name=name)
+                            language='en', name=name)
 
 
                         master_user.save()
