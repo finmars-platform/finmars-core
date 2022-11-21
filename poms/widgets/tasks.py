@@ -459,14 +459,14 @@ def collect_stats(self, task_id):
 
         try:
             widget_stats_instance = WidgetStats.objects.get(master_user=task.master_user,
-                                                            date=task.options_object['date'],
+                                                            date=date,
                                                             portfolio_id=task.options_object['portfolio_id'],
                                                             benchmark=task.options_object['benchmark'])
         except Exception as e:
 
             widget_stats_instance = WidgetStats.objects.create(
                 master_user=task.master_user,
-                date=task.options_object['date'],
+                date=date,
                 portfolio_id=task.options_object['portfolio_id'],
                 benchmark=task.options_object['benchmark'])
 
