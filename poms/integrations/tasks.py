@@ -4545,8 +4545,8 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
             options_object['file_name'] = ''
             options_object['scheme_id'] = scheme.id
             options_object['execution_context'] = {'started_by': 'procedure',
-                                                   'date_from': procedure_instance.date_from,
-                                                   'date_to': procedure_instance.date_to,
+                                                   'date_from': str(procedure_instance.date_from),
+                                                   'date_to': str(procedure_instance.date_to),
                                                    }
 
             celery_task.options_object = options_object

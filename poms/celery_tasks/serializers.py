@@ -38,6 +38,8 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
                   'verbose_name', 'verbose_result',
                   'progress_object',
 
+                  'error_message',
+
                   'file_report')
 
     def __init__(self, *args, **kwargs):

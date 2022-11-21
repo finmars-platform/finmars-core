@@ -955,7 +955,7 @@ class TransactionImportProcess(object):
                             calculate_portfolio_register_price_history
 
                         calculate_portfolio_register_record.apply_async(link=[
-                            calculate_portfolio_register_price_history.s(date_from=self.execution_context['date_from'])
+                            calculate_portfolio_register_price_history.s(date_from=str(self.execution_context['date_from']))
                         ])
 
         send_system_message(master_user=self.master_user,
