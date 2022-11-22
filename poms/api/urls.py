@@ -352,7 +352,8 @@ router.register(r'reports/transaction-report/custom-field', reports.TransactionR
 
 router.register(r'reports/performance-report', reports.PerformanceReportViewSet, "performance-report")
 
-router.register(r'reports/price-history-check-sql', reports.PriceHistoryCheckSqlSyncViewSet, "price-history-check-sql")
+router.register(r'reports/price-history-check-sql', reports.PriceHistoryCheckViewSet, "price-history-check-sql") # deprecated
+router.register(r'reports/price-history-check', reports.PriceHistoryCheckViewSet, "price-history-check")
 
 
 router.register(r'notifications/notification', notifications.NotificationViewSet)

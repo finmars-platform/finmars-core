@@ -205,7 +205,7 @@ class TransactionReportViewSet(AbstractViewSet):
         return Response(cached_data, status=status.HTTP_200_OK)
 
 
-class PriceHistoryCheckSqlSyncViewSet(AbstractViewSet):
+class PriceHistoryCheckViewSet(AbstractViewSet):
     serializer_class = PriceHistoryCheckSerializer
 
 
