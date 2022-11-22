@@ -909,6 +909,8 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
     long_underlying_instrument_object = serializers.PrimaryKeyRelatedField(source='long_underlying_instrument', read_only=True)
     short_underlying_instrument_object = serializers.PrimaryKeyRelatedField(source='short_underlying_instrument', read_only=True)
 
+    exposure_calculation_model_object = ExposureCalculationModelSerializer(source='exposure_calculation_model', read_only=True)
+
     payment_size_detail_object = PaymentSizeDetailSerializer(source='payment_size_detail', read_only=True)
     daily_pricing_model_object = DailyPricingModelSerializer(source='daily_pricing_model', read_only=True)
     pricing_condition_object = PricingConditionSerializer(source='pricing_condition', read_only=True)
@@ -945,7 +947,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
             'manual_pricing_formulas', 'accrual_calculation_schedules', 'factor_schedules', 'event_schedules',
             'is_enabled', 'pricing_policies',
 
-            'exposure_calculation_model',
+            'exposure_calculation_model', 'exposure_calculation_model_object',
 
             'co_directional_exposure_currency', 'counter_directional_exposure_currency',
             'co_directional_exposure_currency_object', 'counter_directional_exposure_currency_object',
@@ -970,6 +972,9 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
         from poms.currencies.serializers import CurrencyViewSerializer
         self.fields['pricing_currency_object'] = CurrencyViewSerializer(source='pricing_currency', read_only=True)
         self.fields['accrued_currency_object'] = CurrencyViewSerializer(source='accrued_currency', read_only=True)
+
+        self.fields['co_directional_exposure_currency_object'] = CurrencyViewSerializer(source='accrued_currency', read_only=True)
+        self.fields['counter_directional_exposure_currency_object'] = CurrencyViewSerializer(source='accrued_currency', read_only=True)
 
 
         from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
