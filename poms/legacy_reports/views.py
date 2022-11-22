@@ -1,26 +1,31 @@
 from __future__ import unicode_literals
 
+import json
 import logging
 
 from django_filters.rest_framework import FilterSet
 
 from poms.common.filters import NoOpFilter, CharFilter
-from poms.common.views import AbstractModelViewSet, AbstractViewSet
+from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet, \
+    AbstractSyncViewSet, AbstractViewSet
+from poms.reports.builders.balance_serializers import BalanceReportSqlSerializer, PLReportSqlSerializer, PriceHistoryCheckSqlSerializer
+from poms.reports.builders.performance_serializers import PerformanceReportSerializer
+from poms.reports.builders.transaction_serializers import TransactionReportSqlSerializer
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
 from poms.reports.serializers import BalanceReportCustomFieldSerializer, PLReportCustomFieldSerializer, \
-    TransactionReportCustomFieldSerializer, PerformanceReportSerializer, PriceHistoryCheckSerializer, \
-    BalanceReportSerializer, PLReportSerializer, TransactionReportSerializer
+    TransactionReportCustomFieldSerializer
 from poms.reports.sql_builders.balance import  BalanceReportBuilderSql
 from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.reports.sql_builders.price_checkers import PriceHistoryCheckerSql
 from poms.reports.sql_builders.transaction import TransactionReportBuilderSql
+
 from poms.reports.utils import generate_report_unique_hash
 from poms.reports.performance_report import PerformanceReportBuilder
 from poms.transactions.models import Transaction
 from poms.users.filters import OwnerByMasterUserFilter
 
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import permissions, status
 
 from django.core.cache import cache
 
@@ -99,9 +104,40 @@ class TransactionReportCustomFieldViewSet(AbstractModelViewSet):
         'name',
     ]
 
+# DEPRECATED
+# class BalanceReportViewSet(AbstractAsyncViewSet):
+#     serializer_class = BalanceReportSerializer
+#     celery_task = balance_report
+
+# DEPRECATED
+# class BalanceReportSyncViewSet(AbstractViewSet):
+#     serializer_class = BalanceReportSerializer
+#
+#
+#     def create(self, request, *args, **kwargs):
+#         print('AbstractSyncViewSet create')
+#
+#         st = time.perf_counter()
+#
+#         serializer = self.get_serializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         instance = serializer.save()
+#
+#         builder = ReportBuilder(instance=instance)
+#         instance = builder.build_balance()
+#
+#         instance.task_id = 1
+#         instance.task_status = "SUCCESS"
+#
+#         serializer = self.get_serializer(instance=instance, many=False)
+#
+#         _l.debug('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - st))
+#
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class BalanceReportViewSet(AbstractViewSet):
-    serializer_class = BalanceReportSerializer
+    serializer_class = BalanceReportSqlSerializer
 
 
     def create(self, request, *args, **kwargs):
@@ -137,8 +173,40 @@ class BalanceReportViewSet(AbstractViewSet):
         return Response(cached_data, status=status.HTTP_200_OK)
 
 
+# DEPRECATED
+# class PLReportViewSet(AbstractAsyncViewSet):
+#     serializer_class = PLReportSerializer
+#     celery_task = pl_report
+
+#DEPRECATED
+# class PLReportSyncViewSet(AbstractViewSet):
+#     serializer_class = PLReportSerializer
+#
+#     def create(self, request, *args, **kwargs):
+#         print('AbstractSyncViewSet create')
+#
+#         serializer = self.get_serializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         instance = serializer.save()
+#
+#         builder = ReportBuilder(instance=instance)
+#         instance = builder.build_pl()
+#
+#         instance.task_id = 1
+#         instance.task_status = "SUCCESS"
+#
+#
+#         serialize_report_st = time.perf_counter()
+#
+#         serializer = self.get_serializer(instance=instance, many=False)
+#
+#         _l.debug('serialize report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+#
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class PLReportViewSet(AbstractViewSet):
-    serializer_class = PLReportSerializer
+    serializer_class = PLReportSqlSerializer
 
     def create(self, request, *args, **kwargs):
 
@@ -170,9 +238,54 @@ class PLReportViewSet(AbstractViewSet):
 
         return Response(cached_data, status=status.HTTP_200_OK)
 
+# DEPRECATED
+# class TransactionReportViewSet(AbstractAsyncViewSet):
+#     serializer_class = TransactionReportSerializer
+#     celery_task = transaction_report
+#
+#     def get_serializer_context(self):
+#         context = super(TransactionReportViewSet, self).get_serializer_context()
+#         context['attributes_hide_objects'] = True
+#         context['custom_fields_hide_objects'] = True
+#         return context
+#
+
+# DEPRECATED
+# class TransactionReportSyncViewSet(AbstractViewSet):
+#     serializer_class = TransactionReportSerializer
+#
+#     def get_serializer_context(self):
+#         context = super(TransactionReportSyncViewSet, self).get_serializer_context()
+#         context['attributes_hide_objects'] = True
+#         context['custom_fields_hide_objects'] = True
+#         return context
+#
+#     def create(self, request, *args, **kwargs):
+#         print('AbstractSyncViewSet create')
+#
+#         serializer = self.get_serializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+#         instance = serializer.save()
+#
+#         builder = TransactionReportBuilder(instance)
+#         builder.build()
+#         instance = builder.instance
+#
+#         instance.task_id = 1
+#         instance.task_status = "SUCCESS"
+#
+#
+#         serialize_report_st = time.perf_counter()
+#
+#         serializer = self.get_serializer(instance=instance, many=False)
+#
+#         _l.debug('serialize report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+#
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class TransactionReportViewSet(AbstractViewSet):
-    serializer_class = TransactionReportSerializer
+    serializer_class = TransactionReportSqlSerializer
 
     def create(self, request, *args, **kwargs):
 
@@ -205,8 +318,25 @@ class TransactionReportViewSet(AbstractViewSet):
         return Response(cached_data, status=status.HTTP_200_OK)
 
 
+# DEPRECATED
+# class CashFlowProjectionReportViewSet(AbstractAsyncViewSet):
+#     serializer_class = CashFlowProjectionReportSerializer
+#     celery_task = cash_flow_projection_report
+#
+#     def get_serializer_context(self):
+#         context = super(CashFlowProjectionReportViewSet, self).get_serializer_context()
+#         context['attributes_hide_objects'] = True
+#         context['custom_fields_hide_objects'] = True
+#         return context
+
+
+# class PerformanceReportViewSet(AbstractAsyncViewSet):
+#     serializer_class = PerformanceReportSerializer
+#     celery_task = performance_report
+
+
 class PriceHistoryCheckSqlSyncViewSet(AbstractViewSet):
-    serializer_class = PriceHistoryCheckSerializer
+    serializer_class = PriceHistoryCheckSqlSerializer
 
 
     def create(self, request, *args, **kwargs):

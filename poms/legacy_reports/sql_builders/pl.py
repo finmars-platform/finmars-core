@@ -5,11 +5,12 @@ import os
 from django.db import connection
 
 from poms.accounts.models import Account
-from poms.currencies.models import Currency
+from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, CostMethod, InstrumentType
 from poms.portfolios.models import Portfolio
-from poms.reports.common import Report
-from poms.reports.models import PLReportCustomField
+from poms.reports.builders.balance_item import Report
+from poms.reports.builders.base_builder import BaseReportBuilder
+from poms.reports.models import BalanceReportCustomField, PLReportCustomField
 from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
     get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
     get_position_consolidation_for_select, dictfetchall
@@ -17,6 +18,8 @@ from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.users.models import EcosystemDefault
 
 from django.conf import settings
+
+import copy
 
 _l = logging.getLogger('poms.reports')
 

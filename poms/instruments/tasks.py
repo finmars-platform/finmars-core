@@ -10,10 +10,9 @@ from django.utils import timezone
 from poms import notifications
 from poms.common.utils import date_now, isclose
 from poms.instruments.models import EventSchedule, Instrument, GeneratedEvent
-from poms.portfolios.models import PortfolioRegister
-from poms.reports.builders.balance_item import Report, ReportItem
-from poms.reports.builders.balance_pl import ReportBuilder
-from poms.transactions.models import NotificationClass, Transaction
+from poms.reports.common import Report, ReportItem
+from poms.reports.sql_builders.balance import BalanceReportBuilderSql
+from poms.transactions.models import NotificationClass
 from poms.users.models import MasterUser, Member
 
 import traceback
@@ -111,15 +110,12 @@ def only_generate_events_at_date(master_user_id, date):
 
         opened_instrument_items = []
 
-        report = Report(
-            master_user=master_user,
-            report_date=date,
-            allocation_mode=Report.MODE_IGNORE,
-        )
-        builder = ReportBuilder(instance=report)
-        builder.build_position_only()
+        instance = Report(master_user=master_user, allocation_mode=Report.MODE_IGNORE, report_date=date)
 
-        for i in report.items:
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
+
+        for i in instance.items:
             if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
                 opened_instrument_items.append(i)
 
@@ -246,15 +242,12 @@ def only_generate_events_at_date_for_single_instrument(master_user_id, date, ins
 
         opened_instrument_items = []
 
-        report = Report(
-            master_user=master_user,
-            report_date=date,
-            allocation_mode=Report.MODE_IGNORE,
-        )
-        builder = ReportBuilder(instance=report)
-        builder.build_position_only()
+        instance = Report(master_user=master_user, allocation_mode=Report.MODE_IGNORE, report_date=date)
 
-        for i in report.items:
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
+
+        for i in instance.items:
             if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
 
                 if i.instr:
@@ -395,15 +388,12 @@ def generate_events0(master_user_id):
 
         now = date_now()
 
-        report = Report(
-            master_user=master_user,
-            report_date=now,
-            allocation_mode=Report.MODE_IGNORE,
-        )
-        builder = ReportBuilder(instance=report)
-        builder.build_position_only()
+        instance = Report(master_user=master_user, allocation_mode=Report.MODE_IGNORE, report_date = now)
 
-        for i in report.items:
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
+
+        for i in instance.items:
             if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
                 opened_instrument_items.append(i)
 
@@ -587,17 +577,15 @@ def generate_events_do_not_inform_apply_default0(master_user_id):
 
         now = date_now()
 
-        report = Report(
-            master_user=master_user,
-            report_date=now,
-            allocation_mode=Report.MODE_IGNORE,
-        )
-        builder = ReportBuilder(instance=report)
-        builder.build_position_only()
+        instance = Report(master_user=master_user, allocation_mode=Report.MODE_IGNORE, report_date = now)
 
-        for i in report.items:
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
+
+        for i in instance.items:
             if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
                 opened_instrument_items.append(i)
+
 
         _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
         if not opened_instrument_items:

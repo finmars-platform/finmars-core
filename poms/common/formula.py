@@ -7,7 +7,6 @@ import logging
 import random
 import time
 import uuid
-import math
 from collections import OrderedDict
 import types
 
@@ -23,7 +22,6 @@ from poms.common.utils import date_now, isclose, get_list_of_dates_between_two_d
 import re
 
 from pandas.tseries.offsets import BMonthEnd, BYearEnd, BQuarterEnd, BDay
-from datetime import date
 
 from django.forms.models import model_to_dict
 import traceback
@@ -292,7 +290,7 @@ def _calculate_performance_report(evaluator, name, date_from, date_to, report_cu
         member = get_member_from_context(context)
 
         from poms.reports.builders.performance_item import PerformanceReport
-        from poms.reports.voila_constructrices.performance import PerformanceReportBuilder
+        from poms.reports.performance_report import PerformanceReportBuilder
         from poms.reports.builders.performance_serializers import PerformanceReportSerializer
         from poms.instruments.models import Instrument
 
@@ -1325,7 +1323,7 @@ _get_latest_fx_rate.evaluator = True
 
 def _get_price_history_principal_price(evaluator, date, instrument, pricing_policy, default_value=0):
     from poms.users.utils import get_master_user_from_context
-    from poms.instruments.models import PriceHistory, Instrument, PricingPolicy
+    from poms.instruments.models import PriceHistory
 
     context = evaluator.context
     master_user = get_master_user_from_context(context)
@@ -1354,7 +1352,7 @@ _get_price_history_principal_price.evaluator = True
 
 def _get_price_history_accrued_price(evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0):
     from poms.users.utils import get_master_user_from_context
-    from poms.instruments.models import PriceHistory, Instrument, PricingPolicy
+    from poms.instruments.models import PriceHistory, PricingPolicy
 
     try:
         days_to_look_back = int(days_to_look_back)
@@ -1431,7 +1429,6 @@ _get_price_history_accrued_price.evaluator = True
 
 def _get_next_coupon_date(evaluator, date, instrument):
     from poms.users.utils import get_master_user_from_context
-    from poms.instruments.models import PriceHistory, Instrument, PricingPolicy
 
     context = evaluator.context
     master_user = get_master_user_from_context(context)
@@ -1700,8 +1697,6 @@ _set_instrument_field.evaluator = True
 
 
 def _set_currency_field(evaluator, currency, parameter_name, parameter_value):
-    from poms.users.utils import get_master_user_from_context
-
     context = evaluator.context
 
     currency = _safe_get_currency(evaluator, currency)
@@ -1717,8 +1712,6 @@ _set_currency_field.evaluator = True
 
 
 def _get_instrument_field(evaluator, instrument, parameter_name):
-    from poms.users.utils import get_master_user_from_context
-
     context = evaluator.context
 
     instrument = _safe_get_instrument(evaluator, instrument)
@@ -1737,8 +1730,6 @@ _get_instrument_field.evaluator = True
 
 
 def _get_currency_field(evaluator, currency, parameter_name):
-    from poms.users.utils import get_master_user_from_context
-
     context = evaluator.context
 
     currency = _safe_get_currency(evaluator, currency)
@@ -2669,10 +2660,10 @@ _download_instrument_from_finmars_database.evaluator = True
 
 
 def _create_workflow(evaluator, name=None):
-    from django.db import IntegrityError, transaction
+    from django.db import transaction
 
     with transaction.atomic():
-        from poms.workflows.models import Workflow, WorkflowStep
+        from poms.workflows.models import Workflow
 
         from poms.users.utils import get_master_user_from_context
         from poms.users.utils import get_member_from_context
@@ -2694,11 +2685,10 @@ _create_workflow.evaluator = True
 
 
 def _register_workflow_step(evaluator, workflow_id, code, name=None):
-    from django.db import IntegrityError, transaction
+    from django.db import transaction
 
     with transaction.atomic():
         from poms.workflows.models import Workflow, WorkflowStep
-        import inspect
 
         workflow = Workflow.objects.get(id=workflow_id)
 
@@ -2718,11 +2708,10 @@ _register_workflow_step.evaluator = True
 
 
 def _run_workflow(evaluator, workflow_id):
-    from poms.workflows.models import Workflow, WorkflowStep
     from poms.workflows.tasks import run_workflow_step
 
     # workflow = Workflow.objects.get(id=workflow_id)
-    from django.db import IntegrityError, transaction
+    from django.db import transaction
 
     transaction.on_commit(lambda: run_workflow_step.apply_async(kwargs={"workflow_id": workflow_id}))
 
@@ -2732,8 +2721,6 @@ _run_workflow.evaluator = True
 
 def _get_filenames_from_storage(evaluator, pattern=None, path_to_folder=None):
     # pattern \.txt$
-
-    from poms.workflows.models import Workflow, WorkflowStep
 
     from poms.users.utils import get_master_user_from_context
     from poms.users.utils import get_member_from_context
@@ -2779,8 +2766,6 @@ _get_filenames_from_storage.evaluator = True
 def _delete_file_from_storage(evaluator, path):
     # pattern \.txt$
 
-    from poms.workflows.models import Workflow, WorkflowStep
-
     from poms.users.utils import get_master_user_from_context
     from poms.users.utils import get_member_from_context
     from poms.common.storage import get_storage
@@ -2815,8 +2800,6 @@ _delete_file_from_storage.evaluator = True
 
 def _put_file_to_storage(evaluator, path, content):
     # pattern \.txt$
-
-    from poms.workflows.models import Workflow, WorkflowStep
 
     from poms.users.utils import get_master_user_from_context
     from poms.users.utils import get_member_from_context

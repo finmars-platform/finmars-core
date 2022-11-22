@@ -1,16 +1,14 @@
 import time
-from datetime import timedelta
 
 from django.db import transaction
 from django.db.models import Q
 
 from poms.common import formula
-from poms.common.utils import isclose, date_now
+from poms.common.utils import date_now
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import PricingCondition
 from poms.integrations.models import ProviderClass, BloombergDataProviderCredential
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
-from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import PricingProcedureInstance, PricingProcedureBloombergCurrencyResult, \
     CurrencyPricingSchemeType, CurrencyHistoryError, PricingProcedureFixerCurrencyResult, \
     PricingProcedureCbondsCurrencyResult
@@ -22,8 +20,6 @@ from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_bet
 import logging
 
 from poms.procedures.models import PricingProcedure, BaseProcedureInstance
-from poms.reports.builders.balance_item import Report, ReportItem
-from poms.reports.builders.balance_pl import ReportBuilder
 from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import Transaction
 from poms.users.models import Member

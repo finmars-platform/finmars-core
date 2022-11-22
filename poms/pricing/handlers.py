@@ -20,9 +20,7 @@ import logging
 
 from poms.pricing.utils import roll_price_history_for_n_day_forward, roll_currency_history_for_n_day_forward, \
     convert_results_for_calc_avg_price
-from poms.procedures.models import PricingProcedureInstance, PricingParentProcedureInstance, BaseProcedureInstance
-from poms.reports.builders.balance_item import Report
-from poms.reports.builders.balance_pl import ReportBuilder
+from poms.procedures.models import PricingProcedureInstance, PricingParentProcedureInstance
 from poms.transactions.models import Transaction
 
 _l = logging.getLogger('poms.pricing')

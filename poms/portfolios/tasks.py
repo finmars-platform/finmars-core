@@ -12,8 +12,6 @@ from poms.common.utils import get_list_of_dates_between_two_dates
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import PriceHistory, PricingPolicy
 from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord
-from poms.reports.builders.balance_item import Report
-from poms.reports.builders.balance_pl import ReportBuilder
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import Transaction, TransactionClass

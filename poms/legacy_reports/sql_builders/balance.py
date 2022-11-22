@@ -2,12 +2,15 @@ import logging
 import time
 
 from django.db import connection
+from rest_framework.exceptions import APIException
 
 from poms.accounts.models import Account
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, InstrumentType, LongUnderlyingExposure, ShortUnderlyingExposure, \
     ExposureCalculationModel
 from poms.portfolios.models import Portfolio
+from poms.reports.builders.balance_item import Report
+from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.models import BalanceReportCustomField
 from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
     get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \

@@ -328,29 +328,32 @@ router.register(r'ui/color-palette', ui.ColorPaletteViewSet)
 router.register(r'ui/cross-entity-attribute-extension', ui.CrossEntityAttributeExtensionViewSet)
 router.register(r'ui/column-sort-data', ui.ColumnSortDataViewSet)
 
-router.register(r'reports/report', reports.BalanceReportViewSet, "report")
-# router.register(r'reports/balance-report', reports.BalanceReportViewSet, "balance-report")
-router.register(r'reports/balance-report', reports.BalanceReportSyncViewSet, "balance-report-sync")
-router.register(r'reports/balance-report-sql', reports.BalanceReportSqlSyncViewSet, "balance-report-sync-sql")
+# router.register(r'reports/report', reports.BalanceReportViewSet, "report")
+router.register(r'reports/balance-report', reports.BalanceReportViewSet, "balance-report")
+router.register(r'reports/balance-report-sql', reports.BalanceReportViewSet, "balance-report-sync-sql") # deprecated
 router.register(r'reports/balance-report/custom-field', reports.BalanceReportCustomFieldViewSet,
                 'balance-report-custom-field')
 # router.register(r'reports/balance-report', reports.BalanceReportSyncViewSet, "balance-report-sync")
 # router.register(r'reports/pl-report', reports.PLReportViewSet, "pl-report")
-router.register(r'reports/pl-report', reports.PLReportSyncViewSet, "pl-report-sync")
-router.register(r'reports/pl-report-sql', reports.PLReportSqlSyncViewSet, "pl-report-sync-sql")
+router.register(r'reports/pl-report', reports.PLReportViewSet, "pl-report")
+router.register(r'reports/pl-report-sql', reports.PLReportViewSet, "pl-report-sync-sql") # deprecated, delete soon
 router.register(r'reports/pl-report/custom-field', reports.PLReportCustomFieldViewSet, 'pl-report-custom-field')
 # router.register(r'reports/transaction-report', reports.TransactionReportViewSet, "transaction-report")
-router.register(r'reports/transaction-report', reports.TransactionReportSyncViewSet, "transaction-report-sync")
-router.register(r'reports/transaction-report-sql', reports.TransactionReportSqlSyncViewSet, "transaction-report-sync-sql")
+router.register(r'reports/transaction-report', reports.TransactionReportViewSet, "transaction-report")
+router.register(r'reports/transaction-report-sql', reports.TransactionReportViewSet, "transaction-report-sync-sql")
 
-router.register(r'reports/price-history-check-sql', reports.PriceHistoryCheckSqlSyncViewSet, "price-history-check-sql")
 
 
 router.register(r'reports/transaction-report/custom-field', reports.TransactionReportCustomFieldViewSet,
                 'transaction-report-custom-field')
-router.register(r'reports/cash-flow-projection-report', reports.CashFlowProjectionReportViewSet,
-                "cash-flow-projection-report")
+# TODO not in use
+# router.register(r'reports/cash-flow-projection-report', reports.CashFlowProjectionReportViewSet,
+#                 "cash-flow-projection-report")
+
 router.register(r'reports/performance-report', reports.PerformanceReportViewSet, "performance-report")
+
+router.register(r'reports/price-history-check-sql', reports.PriceHistoryCheckSqlSyncViewSet, "price-history-check-sql")
+
 
 router.register(r'notifications/notification', notifications.NotificationViewSet)
 
