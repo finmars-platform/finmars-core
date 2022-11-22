@@ -9,8 +9,10 @@ class SchedulesConfig(AppConfig):
     name = 'poms.schedules'
 
     def ready(self):
-        post_migrate.connect(self.update_periodic_tasks, sender=self)
+        # post_migrate.connect(self.update_periodic_tasks, sender=self)
+        pass
 
+    # deprecated
     def update_periodic_tasks(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
 
         from django_celery_beat.models import CrontabSchedule, PeriodicTask
