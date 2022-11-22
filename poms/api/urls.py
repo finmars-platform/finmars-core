@@ -54,30 +54,30 @@ router = routers.DefaultRouter()
 
 router.register(r'system/ecosystem-configuration', system.EcosystemConfigurationViewSet, 'ecosystemconfiguration')
 
-router.register(r'users/login', users.LoginViewSet, 'login')
-router.register(r'users/logout', users.LogoutViewSet, 'logout')
+# router.register(r'users/login', users.LoginViewSet, 'login')
+# router.register(r'users/logout', users.LogoutViewSet, 'logout')
 router.register(r'users/ping', users.PingViewSet, "ping")
-router.register(r'users/protected-ping', users.ProtectedPingViewSet, "protectedping")
-router.register(r'users/two-factor', users.OtpTokenViewSet, "otptoken")
+# router.register(r'users/protected-ping', users.ProtectedPingViewSet, "protectedping")
+# router.register(r'users/two-factor', users.OtpTokenViewSet, "otptoken")
 
-router.register(r'users/reset-password/confirm', users.ResetPasswordConfirmViewSet, "resetpasswordconfirm"),
-router.register(r'users/reset-password', users.ResetPasswordRequestTokenViewSet, "resetpasswordrequest"),
+# router.register(r'users/reset-password/confirm', users.ResetPasswordConfirmViewSet, "resetpasswordconfirm"),
+# router.register(r'users/reset-password', users.ResetPasswordRequestTokenViewSet, "resetpasswordrequest"),
 
-router.register(r'users/user-register', users.UserRegisterViewSet, 'userregister')
-router.register(r'users/master-user-create', users.MasterUserCreateViewSet, 'masterusercreate')
-router.register(r'users/master-user-copy', users.MasterUserCopyViewSet, 'masterusercopy')
-router.register(r'users/master-user-check-uniqueness', users.MasterUserCreateCheckUniquenessViewSet,
-                'masterusercreatecheckuniqueness')
+# router.register(r'users/user-register', users.UserRegisterViewSet, 'userregister')
+# router.register(r'users/master-user-create', users.MasterUserCreateViewSet, 'masterusercreate')
+# router.register(r'users/master-user-copy', users.MasterUserCopyViewSet, 'masterusercopy')
+# router.register(r'users/master-user-check-uniqueness', users.MasterUserCreateCheckUniquenessViewSet,
+#                 'masterusercreatecheckuniqueness')
 router.register(r'users/user', users.UserViewSet)
 router.register(r'users/user-member', users.UserMemberViewSet, 'usermember')
 router.register(r'users/master-user', users.MasterUserViewSet)
 router.register(r'users/master-user-light', users.MasterUserLightViewSet, 'masteruserlight')
-router.register(r'users/master-user-leave', users.LeaveMasterUserViewSet, 'masteruserleave')
-router.register(r'users/master-user-delete', users.DeleteMasterUserViewSet, 'masteruserdelete')
+# router.register(r'users/master-user-leave', users.LeaveMasterUserViewSet, 'masteruserleave')
+# router.register(r'users/master-user-delete', users.DeleteMasterUserViewSet, 'masteruserdelete')
 router.register(r'users/get-current-master-user', users.GetCurrentMasterUserViewSet, 'getcurrentmasteruser')
-router.register(r'users/invite-from-master-user', users.InviteFromMasterUserViewSet, 'invitefrommasteruser')
-router.register(r'users/invite-to-user', users.InviteToUserViewSet, 'invitetouser')
-router.register(r'users/create-invite-to-user', users.CreateInviteViewSet, 'createinvitetouser')
+# router.register(r'users/invite-from-master-user', users.InviteFromMasterUserViewSet, 'invitefrommasteruser')
+# router.register(r'users/invite-to-user', users.InviteToUserViewSet, 'invitetouser')
+# router.register(r'users/create-invite-to-user', users.CreateInviteViewSet, 'createinvitetouser')
 router.register(r'users/member', users.MemberViewSet)
 router.register(r'users/group', users.GroupViewSet)
 router.register(r'users/language', api.LanguageViewSet, 'language')
@@ -357,12 +357,12 @@ router.register(r'reports/price-history-check-sql', reports.PriceHistoryCheckSql
 
 router.register(r'notifications/notification', notifications.NotificationViewSet)
 
-router.register(r'chats/thread-group', chats.ThreadGroupViewSet)
-router.register(r'chats/thread', chats.ThreadViewSet)
-router.register(r'chats/message', chats.MessageViewSet)
-router.register(r'chats/direct-message', chats.DirectMessageViewSet)
+# router.register(r'chats/thread-group', chats.ThreadGroupViewSet)
+# router.register(r'chats/thread', chats.ThreadViewSet)
+# router.register(r'chats/message', chats.MessageViewSet)
+# router.register(r'chats/direct-message', chats.DirectMessageViewSet)
 
-router.register(r'security/http-session', sessions.SessionViewSet)
+# router.register(r'security/http-session', sessions.SessionViewSet)
 router.register(r'audit/auth-log', audit.AuthLogViewSet)
 router.register(r'audit/history', audit.ObjectHistory4ViewSet)
 router.register(r'audit/history-ev', audit.ObjectHistory4EvViewSet)
@@ -377,7 +377,7 @@ router.register(r'import/accrual-schedule-download-method', integrations.Accrual
 
 router.register(r'import/instrument-scheme', integrations.InstrumentDownloadSchemeViewSet)
 router.register(r'import/instrument-scheme-light', integrations.InstrumentDownloadSchemeLightViewSet)
-router.register(r'import/price-download-scheme', integrations.PriceDownloadSchemeViewSet)
+# router.register(r'import/price-download-scheme', integrations.PriceDownloadSchemeViewSet)
 
 router.register(r'import/currency-mapping', integrations.CurrencyMappingViewSet)
 router.register(r'import/pricing-policy-mapping', integrations.PricingPolicyMappingViewSet)
@@ -410,7 +410,7 @@ router.register(r'import/finmars-database/currency', integrations.ImportCurrency
 router.register(r'import/unified-data-provider', integrations.ImportUnifiedDataProviderViewSet, 'importunifieddataprovider')
 router.register(r'import/pricing', integrations.ImportPricingViewSet, 'importpricing')
 router.register(r'import/test-certificate', integrations.TestCertificateViewSet, 'testcertificate')
-router.register(r'import/pricing-automated-schedule', integrations.PricingAutomatedScheduleViewSet)
+# router.register(r'import/pricing-automated-schedule', integrations.PricingAutomatedScheduleViewSet)
 
 router.register(r'import/task', integrations.TaskViewSet)
 
@@ -436,7 +436,8 @@ router.register(r'utils/calendar-events', api.CalendarEventsViewSet, 'calendar-e
 router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
 router.register(r'import/csv/scheme-light', csv_import.SchemeLightViewSet, 'import_csv_scheme_light')
 router.register(r'import/csv', csv_import.CsvDataImportViewSet, 'import_csv')
-router.register(r'import/unified_csv', csv_import.UnifiedCsvDataImportViewSet, 'unified_csv')
+# DEPRECATED
+# router.register(r'import/unified_csv', csv_import.UnifiedCsvDataImportViewSet, 'unified_csv')
 
 router.register(r'import/csv-validate', csv_import.CsvDataImportValidateViewSet, 'import_csv-validate')
 
@@ -446,7 +447,8 @@ router.register(r'import/complex', complex_import.ComplexImportViewSet, 'import_
 router.register(r'import/configuration-json', configuration_import.ConfigurationImportAsJsonViewSet,
                 'configuration_import')
 
-router.register(r'import/generate-configuration-entity-archetype', configuration_import.GenerateConfigurationEntityArchetypeViewSet, 'generate_configuration_entity_archetype')
+# DEPRECATED
+# router.register(r'import/generate-configuration-entity-archetype', configuration_import.GenerateConfigurationEntityArchetypeViewSet, 'generate_configuration_entity_archetype')
 
 router.register(r'export/configuration', configuration_export.ConfigurationExportViewSet, 'configuration_export')
 router.register(r'export/mapping', configuration_export.MappingExportViewSet, 'mapping_export')
@@ -502,8 +504,9 @@ router.register(r'procedures/expression-procedure-instance', procedures.Expressi
 router.register(r'credentials/credentials', credentials.CredentialsViewSet)
 router.register(r'integrations/data-provider', integrations.DataProviderViewSet)
 
-router.register(r'recovery/generate-layout-archetype', layout_recovery.GenerateLayoutArchetypeViewSet, 'recovery_generate_layout_archetype')
-router.register(r'recovery/layout', layout_recovery.FixLayoutViewSet, 'recovery_layout')
+# deprecated
+# router.register(r'recovery/generate-layout-archetype', layout_recovery.GenerateLayoutArchetypeViewSet, 'recovery_generate_layout_archetype')
+# router.register(r'recovery/layout', layout_recovery.FixLayoutViewSet, 'recovery_layout')
 
 
 
