@@ -7,8 +7,8 @@ from django.conf import settings
 import logging
 
 from poms.pricing.handlers import PricingProcedureProcess
-from poms.procedures.handlers import DataProcedureProcess
-from poms.procedures.models import RequestDataFileProcedure, PricingProcedure
+from poms.procedures.handlers import DataProcedureProcess, ExpressionProcedureProcess
+from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, ExpressionProcedure
 from poms.schedules.models import Schedule, ScheduleInstance, ScheduleProcedure
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import Member, MasterUser
@@ -32,7 +32,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
 
         owner_member = Member.objects.filter(master_user=master_user, is_owner=True)[0]
 
-        if procedure.type == 'pricing':
+        if procedure.type == 'pricing_procedure':
 
             try:
 
@@ -63,7 +63,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
                 _l.info("Can't find Pricing Procedure error %s" % e)
                 _l.info("Can't find Pricing Procedure  user_code %s" % procedure.user_code)
 
-        if procedure.type == 'data_provider':
+        if procedure.type == 'data_procedure':
 
             try:
 
@@ -77,6 +77,19 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
             except RequestDataFileProcedure.DoesNotExist:
 
                 _l.info("Can't find Request Data File Procedure %s" % procedure.user_code)
+
+        if procedure.type == 'expression_procedure':
+
+            try:
+
+                item = ExpressionProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
+
+                instance = ExpressionProcedureProcess(procedure=item, master_user=master_user, member=owner_member)
+                instance.process()
+
+            except ExpressionProcedure.DoesNotExist:
+
+                _l.info("Can't find ExpressionProcedure %s" % procedure.user_code)
 
     except Exception as e:
         _l.error('process_procedure_async e %s' % e)

@@ -442,6 +442,11 @@ def generate_events0(master_user_id):
                 result.append(event_schedule)
 
         if not len(result):
+
+            celery_task.status = CeleryTask.STATUS_DONE
+            celery_task.verbose_result = 'event schedules not found'
+            celery_task.save()
+
             _l.debug('event schedules not found')
             return
 
