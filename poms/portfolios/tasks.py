@@ -347,9 +347,17 @@ def calculate_portfolio_register_price_history(member=None, date_from=None):
                 format = '%Y-%m-%d'
                 date_from = datetime.strptime(date_from, format).date()
             else:
-                first_transaction = \
-                    Transaction.objects.filter(portfolio=portfolio_register.portfolio).order_by('accounting_date')[0]
-                date_from = first_transaction.accounting_date
+                try:
+                    first_transaction = \
+                        Transaction.objects.filter(portfolio=portfolio_register.portfolio).order_by('accounting_date')[0]
+                    date_from = first_transaction.accounting_date
+
+                except Exception as e:
+                    task.error_message = "No first transaction"
+                    task.status = CeleryTask.STATUS_ERROR
+                    task.save()
+
+                    return
 
             date_to = timezone_today() - timedelta(days=1)
 
