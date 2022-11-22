@@ -83,19 +83,17 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
         _l.error('process_procedure_async traceback %s' % traceback.format_exc())
 
 @shared_task(name='schedules.process', bind=True)
-def process(self):
-    schedule_qs = Schedule.objects.select_related('master_user').filter(
-        is_enabled=True, next_run_at__lte=timezone.now()
-    )
-    #
-    # _l.info('schedule_qs test %s' % schedule_qs.count())
+def process(self, schedule_user_code):
 
-    if schedule_qs.count():
-        _l.info('Schedules initialized: %s', schedule_qs.count())
+    try:
 
-    procedures_count = 0
+        _l.info('schedule_user_code %s' % schedule_user_code)
 
-    for s in schedule_qs:
+        s = Schedule.objects.select_related('master_user').get(
+            user_code=schedule_user_code
+        )
+
+        procedures_count = 0
 
         master_user = s.master_user
 
@@ -162,5 +160,11 @@ def process(self):
         s.last_run_at = timezone.now()
         s.save(update_fields=['last_run_at'])
 
-    if procedures_count:
-        _l.info('Schedules Finished. Procedures initialized: %s' % procedures_count)
+        _l.info("Schedule %s executed successfuly" % s)
+
+        if procedures_count:
+            _l.info('Schedules Finished. Procedures initialized: %s' % procedures_count)
+
+    except Exception as e:
+        _l.error('schedules.process. error %s' % e)
+        _l.error('schedules.process. traceback %s' % traceback.format_exc())

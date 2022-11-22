@@ -10,6 +10,7 @@ class SchedulesConfig(AppConfig):
 
     def ready(self):
         # post_migrate.connect(self.update_periodic_tasks, sender=self)
+        post_migrate.connect(self.sync_user_schedules_with_celery_beat, sender=self)
         pass
 
     # deprecated
@@ -96,3 +97,9 @@ class SchedulesConfig(AppConfig):
 
             else:
                 PeriodicTask.objects.create(**task)
+
+    def sync_user_schedules_with_celery_beat(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
+
+        from poms.schedules.utils import sync_schedules
+
+        sync_schedules()
