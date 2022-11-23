@@ -328,7 +328,7 @@ def only_generate_events_at_date_for_single_instrument(self, master_user_id, dat
                         event_schedule=event_schedule,
                         effective_date=effective_date,
                         # notification_date=notification_date,
-                        instrument=instr,
+                        instrument=instrument,
                         portfolio=portfolio,
                         account=account,
                         strategy1=strategy1,
@@ -351,7 +351,7 @@ def only_generate_events_at_date_for_single_instrument(self, master_user_id, dat
                     generated_event.status_modified = timezone.now()
                     generated_event.effective_date = effective_date
                     generated_event.notification_date = notification_date
-                    generated_event.instrument = instr
+                    generated_event.instrument = instrument
                     generated_event.portfolio = portfolio
                     generated_event.account = account
                     generated_event.strategy1 = strategy1
