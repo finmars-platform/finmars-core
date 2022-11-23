@@ -56,6 +56,13 @@ class TransactionTypeProcess(object):
     MODE_REBOOK = 'rebook'
     MODE_RECALCULATE = 'recalculate'
 
+    def record_execution_progress(self, message):
+
+        if not self.complex_transaction.execution_log:
+            self.complex_transaction.execution_log = ''
+
+        self.complex_transaction.execution_log = self.complex_transaction.execution_log + message + '\n'
+
     def __init__(self,
                  process_mode=None,
                  transaction_type=None,
@@ -81,12 +88,28 @@ class TransactionTypeProcess(object):
                  member=None,
                  linked_import_task=None): # if book from import
 
+
         _l.info('TransactionTypeProcess')
 
         self.transaction_type = transaction_type
 
         master_user = self.transaction_type.master_user
         self.member = member
+
+        self.complex_transaction = complex_transaction
+        if self.complex_transaction is None:
+            self.complex_transaction = ComplexTransaction(transaction_type=self.transaction_type, date=None,
+                                                          master_user=master_user)
+
+        self.record_execution_progress('Booking Complex Transaction')
+        self.record_execution_progress('Transaction Type: %s' % self.transaction_type.user_code)
+        self.record_execution_progress('Member: %s' % self.member)
+        self.record_execution_progress('Execution_context: %s' % execution_context)
+        self.record_execution_progress('==== INPUT CONTEXT VALUES ====')
+        self.record_execution_progress(str(context_values))
+        self.record_execution_progress('==== INPUT VALUES ====')
+        self.record_execution_progress(str(values))
+
 
         self.process_mode = process_mode
         self.execution_context = execution_context
@@ -108,10 +131,7 @@ class TransactionTypeProcess(object):
 
         self.inputs = list(self.transaction_type.inputs.all())
 
-        self.complex_transaction = complex_transaction
-        if self.complex_transaction is None:
-            self.complex_transaction = ComplexTransaction(transaction_type=self.transaction_type, date=None,
-                                                          master_user=master_user)
+
 
         self.complex_transaction.visibility_status = self.transaction_type.visibility_status
 
@@ -159,6 +179,10 @@ class TransactionTypeProcess(object):
 
             for i in range(10):
                 self.values['phantom_instrument_%s' % i] = None
+
+
+
+
 
 
     @property
@@ -321,6 +345,9 @@ class TransactionTypeProcess(object):
                     self.values[i.name] = value
 
         # _l.debug('self.inputs %s' % self.inputs)
+
+        self.record_execution_progress('==== COMPLEX TRANSACTION VALUES ====')
+        self.record_execution_progress(str(self.values))
 
         for i in self.inputs:
 

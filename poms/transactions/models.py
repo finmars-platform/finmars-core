@@ -1456,6 +1456,8 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
                                null=True, blank=True,
                                verbose_name=gettext_lazy("linked import task"))
 
+    execution_log = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('execution log'))
+
     class Meta:
         verbose_name = gettext_lazy('complex transaction')
         verbose_name_plural = gettext_lazy('complex transactions')

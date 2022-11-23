@@ -2610,7 +2610,9 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
 
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
 
-            'recon_fields'
+            'recon_fields',
+
+            'execution_log'
 
         ]
 
@@ -3343,7 +3345,9 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
             'object_permissions',
 
-            'recon_fields'
+            'recon_fields',
+
+            'execution_log'
 
         ]
 

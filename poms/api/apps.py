@@ -90,27 +90,29 @@ class ApiConfig(AppConfig):
 
                     user_profile.save()
 
+                try:
+                    if 'old_backup_name' in response_data and response_data['old_backup_name']:
+                        # If From backup
+                        master_user = MasterUser.objects.get(name=response_data['old_backup_name'])
 
-                if 'old_backup_name' in response_data and response_data['old_backup_name']:
-                    # If From backup
-                    master_user = MasterUser.objects.get(name=response_data['old_backup_name'])
+                        master_user.name = name
+                        master_user.base_api_url = response_data['base_api_url']
 
-                    master_user.name = name
-                    master_user.base_api_url = response_data['base_api_url']
+                        master_user.save()
 
-                    master_user.save()
+                        # Member.objects.filter(is_owner=False).delete()
 
-                    Member.objects.filter(is_owner=False).delete()
+                except Exception as e:
+                    _l.error("Old backup name error %s" % e)
 
-                else:
 
-                    if MasterUser.objects.all().count() == 0:
+                if MasterUser.objects.all().count() == 0:
 
                         master_user = MasterUser.objects.create_master_user(
                             user=user,
-                            base_api_url=response_data['base_api_url'],
                             language='en', name=name)
 
+                        master_user.base_api_url = response_data['base_api_url']
 
                         master_user.save()
 
