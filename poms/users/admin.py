@@ -119,7 +119,7 @@ class MasterUserAdmin(AbstractModelAdmin):
 
     def generate_events(self, request, queryset):
         from poms.instruments.tasks import generate_events
-        generate_events.apply_async(kwargs={'master_users': [mu.pk for mu in queryset]})
+        generate_events.apply_async()
 
     generate_events.short_description = gettext_lazy("Generate and check events")
 
