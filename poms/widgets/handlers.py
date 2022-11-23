@@ -11,7 +11,7 @@ from poms.common.utils import get_first_transaction, get_last_bdays_of_months_be
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioBundle
-from poms.reports.builders.performance_item import PerformanceReport
+from poms.reports.common import PerformanceReport
 from poms.reports.performance_report import PerformanceReportBuilder
 from poms.users.models import EcosystemDefault
 from poms.widgets.models import BalanceReportHistory, PLReportHistory
