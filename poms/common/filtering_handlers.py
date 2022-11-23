@@ -1081,7 +1081,7 @@ def handle_filters(qs, filter_settings, master_user, content_type):
 def handle_global_table_search(qs, global_table_search, model, content_type):
     start_time = time.time()
 
-    _l.info('handle_global_table_search.global_table_search %s' % global_table_search)
+    # _l.info('handle_global_table_search.global_table_search %s' % global_table_search)
 
     q = Q()
 
@@ -1110,7 +1110,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
 
     char_fields = [f for f in model._meta.fields if isinstance(f, CharField) and f.name != 'deleted_user_code']
 
-    _l.info('char_fields %s' % char_fields)
+    # _l.info('char_fields %s' % char_fields)
 
     char_queries = [Q(**{f.name + '__icontains': global_table_search}) for f in char_fields]
 
@@ -1120,7 +1120,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
 
     text_fields = [f for f in model._meta.fields if isinstance(f, TextField)]
 
-    _l.info('text_fields %s' % text_fields)
+    # _l.info('text_fields %s' % text_fields)
 
     text_queries = [Q(**{f.name + '__icontains': global_table_search}) for f in text_fields]
 
@@ -1153,7 +1153,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
 
         q = q & Q(**{"is_deleted": False})
 
-    _l.info('q %s' % q)
+    # _l.info('q %s' % q)
 
     qs = qs.filter(q).distinct()
 

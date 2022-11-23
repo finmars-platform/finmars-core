@@ -60,9 +60,9 @@ class GeneratedEventProcess(TransactionTypeProcess):
             if generated_event.data:
                 if 'actions_parameters' in generated_event.data:
 
-                    if action.button_position in generated_event.data['actions_parameters']:
+                    if str(action.button_position) in generated_event.data['actions_parameters']:
 
-                        for key, value in generated_event.data['actions_parameters'][action.button_position].items():
+                        for key, value in generated_event.data['actions_parameters'][str(action.button_position)].items():
                             _l.info("key %s: value %s" % (key, value))
                             context_values.update({key: value})
 
