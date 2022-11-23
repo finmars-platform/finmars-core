@@ -2,6 +2,7 @@ from datetime import timedelta, date
 
 from poms.common.utils import date_now
 from poms.instruments.models import CostMethod
+from poms.users.models import EcosystemDefault
 
 
 class BaseReport:
@@ -90,9 +91,11 @@ class Report(BaseReport):
         #     'member': self.member,
         # }
 
+        self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+
         self.report_type = report_type if report_type is not None else Report.TYPE_BALANCE
         self.report_currency = report_currency or master_user.system_currency
-        self.pricing_policy = pricing_policy
+        self.pricing_policy = pricing_policy or self.ecosystem_default.pricing_policy
         self.pl_first_date = pl_first_date
         self.report_date = report_date or (date_now() - timedelta(days=1))
         self.cost_method = cost_method or CostMethod.objects.get(pk=CostMethod.AVCO)

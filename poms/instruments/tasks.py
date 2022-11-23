@@ -110,6 +110,7 @@ def only_generate_events_at_date(master_user_id, date):
 
         opened_instrument_items = []
 
+
         instance = Report(master_user=master_user, allocation_mode=Report.MODE_IGNORE, report_date=date)
 
         builder = BalanceReportBuilderSql(instance=instance)
