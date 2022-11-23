@@ -42,8 +42,9 @@ from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
 from poms.portfolios.models import Portfolio
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer
-from poms.procedures.models import PricingProcedure, RequestDataFileProcedure
-from poms.procedures.serializers import PricingProcedureSerializer, RequestDataFileProcedureSerializer
+from poms.procedures.models import PricingProcedure, RequestDataFileProcedure, ExpressionProcedure
+from poms.procedures.serializers import PricingProcedureSerializer, RequestDataFileProcedureSerializer, \
+    ExpressionProcedureSerializer
 from poms.reference_tables.models import ReferenceTable
 from poms.reference_tables.serializers import ReferenceTableSerializer
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
@@ -2866,6 +2867,69 @@ class ConfigurationImportManager(object):
 
         _l.info('Import Configuration Data Procedure done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
+    def import_expression_procedures(self, configuration_section):
+
+        st = time.perf_counter()
+
+        for item in configuration_section['items']:
+
+            if 'procedures.expressionprocedure' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+                        serializer = ExpressionProcedureSerializer(data=content_object,
+                                                                        context=self.get_serializer_context())
+
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
+                        try:
+                            serializer.is_valid(raise_exception=True)
+                            serializer.save()
+                        except Exception as error:
+
+                            if self.instance.mode == 'overwrite':
+
+                                try:
+
+                                    instance = ExpressionProcedure.objects.get(master_user=self.master_user,
+                                                                                    name=content_object['name'])
+
+                                    serializer = ExpressionProcedureSerializer(data=content_object,
+                                                                                    instance=instance,
+                                                                                    context=self.get_serializer_context())
+                                    serializer.is_valid(raise_exception=True)
+                                    serializer.save()
+
+                                except Exception as error:
+
+                                    stats['status'] = 'error'
+                                    stats['error'][
+                                        'message'] = 'Error. Can\'t Overwrite Expression Procedure for %s' % content_object[
+                                        'name']
+
+                            else:
+
+                                stats['status'] = 'error'
+                                stats['error']['message'] = 'Expression Procedure %s already exists' % content_object['name']
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress(message='Import Expression Procedure: %s' % content_object['user_code'])
+
+        _l.info('Import Configuration Expression Procedure done %s' % "{:3.3f}".format(time.perf_counter() - st))
+
     # Configuration import logic end
 
     def print_entities_in_file(self, configuration_section):
@@ -2912,6 +2976,7 @@ class ConfigurationImportManager(object):
                 self.import_currency_pricing_schemes(configuration_section)
                 self.import_pricing_procedures(configuration_section)
                 self.import_data_procedures(configuration_section)
+                self.import_expression_procedures(configuration_section)
                 self.import_schedules(configuration_section)
 
                 self.import_pricing_policies(configuration_section)  # configuration section
