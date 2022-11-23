@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import traceback
+
 from django.apps import AppConfig
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
@@ -71,6 +73,8 @@ class ApiConfig(AppConfig):
                 try:
                     user = User.objects.get(username=response_data['owner']['username'])
 
+                    _l.info("Owner exists")
+
                 except User.DoesNotExist:
 
                     try:
@@ -81,12 +85,16 @@ class ApiConfig(AppConfig):
                         user = User.objects.create(email=response_data['owner']['email'], username=response_data['owner']['username'], password=password)
                         user.save()
 
+                        _l.info("Create owner %s" % response_data['owner']['username'])
+
                     except Exception as e:
                         _l.info("Create user error %s" % e)
 
                 if user:
 
                     user_profile, created = UserProfile.objects.get_or_create(user_id=user.pk)
+
+                    _l.info("Owner User Profile Updated")
 
                     user_profile.save()
 
@@ -98,8 +106,10 @@ class ApiConfig(AppConfig):
                         master_user.name = name
                         master_user.base_api_url = response_data['base_api_url']
 
+
                         master_user.save()
 
+                        _l.info("Master User From Backup Renamed to new Name and Base API URL")
                         # Member.objects.filter(is_owner=False).delete()
 
                 except Exception as e:
@@ -108,25 +118,33 @@ class ApiConfig(AppConfig):
 
                 if MasterUser.objects.all().count() == 0:
 
-                        master_user = MasterUser.objects.create_master_user(
-                            user=user,
-                            language='en', name=name)
+                    _l.info("Empty database, create new master user")
 
-                        master_user.base_api_url = response_data['base_api_url']
+                    master_user = MasterUser.objects.create_master_user(
+                        user=user,
+                        language='en', name=name)
 
-                        master_user.save()
+                    master_user.base_api_url = response_data['base_api_url']
 
-                        member = Member.objects.create(user=user, master_user=master_user, is_owner=True, is_admin=True)
-                        member.save()
+                    master_user.save()
 
-                        admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
-                        admin_group.members.add(member.id)
-                        admin_group.save()
+                    _l.info("Master user created")
 
+                    member = Member.objects.create(user=user, master_user=master_user, is_owner=True, is_admin=True)
+                    member.save()
+
+                    _l.info("Owner Member created")
+
+                    admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
+                    admin_group.members.add(member.id)
+                    admin_group.save()
+
+                    _l.info("Admin Group Created")
 
 
             except Exception as e:
-                _l.info("load_master_user_data error %s" % e)
+                _l.error("load_master_user_data error %s" % e)
+                _l.error("load_master_user_data traceback %s" % traceback.format_exc())
 
         else:
             _l.info('settings.AUTHORIZER_URL is not set')
