@@ -212,13 +212,13 @@ def only_generate_events_at_date(self, master_user_id, date):
                     generated_event.status_modified = timezone.now()
                     generated_event.effective_date = effective_date
                     generated_event.notification_date = notification_date
-                    generated_event.instrument = instrument
-                    generated_event.portfolio = portfolio
-                    generated_event.account = account
-                    generated_event.strategy1 = strategy1
-                    generated_event.strategy2 = strategy2
-                    generated_event.strategy3 = strategy3
-                    generated_event.position = position
+                    generated_event.instrument_id = instrument
+                    generated_event.portfolio_id = portfolio
+                    generated_event.account_id = account
+                    generated_event.strategy1_id = strategy1
+                    generated_event.strategy2_id = strategy2
+                    generated_event.strategy3_id = strategy3
+                    generated_event.position_id = position
                     generated_event.data = {
                         'actions_parameters': parameters
                     }
@@ -351,12 +351,12 @@ def only_generate_events_at_date_for_single_instrument(self, master_user_id, dat
                     generated_event.status_modified = timezone.now()
                     generated_event.effective_date = effective_date
                     generated_event.notification_date = notification_date
-                    generated_event.instrument = instrument
-                    generated_event.portfolio = portfolio
-                    generated_event.account = account
-                    generated_event.strategy1 = strategy1
-                    generated_event.strategy2 = strategy2
-                    generated_event.strategy3 = strategy3
+                    generated_event.instrument_id = instrument
+                    generated_event.portfolio_id = portfolio
+                    generated_event.account_id = account
+                    generated_event.strategy1_id = strategy1
+                    generated_event.strategy2_id = strategy2
+                    generated_event.strategy3_id = strategy3
                     generated_event.position = position
                     generated_event.data = {
                         'actions_parameters': parameters
@@ -501,12 +501,12 @@ def generate_events(self):
                     generated_event.status_modified = timezone.now()
                     generated_event.effective_date = effective_date
                     generated_event.notification_date = notification_date
-                    generated_event.instrument = instrument
-                    generated_event.portfolio = portfolio
-                    generated_event.account = account
-                    generated_event.strategy1 = strategy1
-                    generated_event.strategy2 = strategy2
-                    generated_event.strategy3 = strategy3
+                    generated_event.instrument_id = instrument
+                    generated_event.portfolio_id = portfolio
+                    generated_event.account_id = account
+                    generated_event.strategy1_id = strategy1
+                    generated_event.strategy2_id = strategy2
+                    generated_event.strategy3_id = strategy3
                     generated_event.position = position
                     generated_event.data = {
                         'parameters': parameters
@@ -661,12 +661,12 @@ def generate_events_do_not_inform_apply_default(self):
                     generated_event.status_modified = timezone.now()
                     generated_event.effective_date = effective_date
                     generated_event.notification_date = notification_date
-                    generated_event.instrument = instrument
-                    generated_event.portfolio = portfolio
-                    generated_event.account = account
-                    generated_event.strategy1 = strategy1
-                    generated_event.strategy2 = strategy2
-                    generated_event.strategy3 = strategy3
+                    generated_event.instrument_id = instrument
+                    generated_event.portfolio_id = portfolio
+                    generated_event.account_id = account
+                    generated_event.strategy1_id = strategy1
+                    generated_event.strategy2_id = strategy2
+                    generated_event.strategy3_id = strategy3
                     generated_event.position = position
                     generated_event.data = {
                         'actions_parameters': parameters
