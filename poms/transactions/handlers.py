@@ -81,6 +81,8 @@ class TransactionTypeProcess(object):
                  member=None,
                  linked_import_task=None): # if book from import
 
+        _l.info('TransactionTypeProcess')
+
         self.transaction_type = transaction_type
 
         master_user = self.transaction_type.master_user
