@@ -253,6 +253,8 @@ def only_generate_events_at_date_for_single_instrument(self, master_user_id, dat
                     if i['instrument_id'] == instrument.id:
                         opened_instrument_items.append(i)
 
+        _l.info('opened_instrument_items len %s' % len(opened_instrument_items))
+
         if not opened_instrument_items:
             return
 
@@ -265,7 +267,7 @@ def only_generate_events_at_date_for_single_instrument(self, master_user_id, dat
         ).filter(
             # effective_date__lte=(date - F("notify_in_n_days")),
             # final_date__gte=date,
-            instrument__in={i['instrument_id'] for i in opened_instrument_items}
+            instrument_id__in={i['instrument_id'] for i in opened_instrument_items}
         ).order_by(
             'instrument__master_user__id',
             'instrument__id'
@@ -290,6 +292,8 @@ def only_generate_events_at_date_for_single_instrument(self, master_user_id, dat
         for event_schedule in result:
             event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
 
+        _l.info('event_schedules_cache %s' % event_schedules_cache)
+
         for item in opened_instrument_items:
             portfolio = item['portfolio_id']
             account = item['account_position_id']
@@ -304,6 +308,8 @@ def only_generate_events_at_date_for_single_instrument(self, master_user_id, dat
                     'instrument=%s, position=%s, event_schedules=%s',
                     portfolio, account, strategy1, strategy2, strategy3,
                     instrument, position, [e.id for e in event_schedules] if event_schedules else [])
+
+
 
             if not event_schedules:
                 continue
@@ -559,6 +565,8 @@ def generate_events_do_not_inform_apply_default(self):
         for i in instance.items:
             if i['item_type'] == ReportItem.TYPE_INSTRUMENT and not isclose(i['position_size'], 0.0):
                 opened_instrument_items.append(i)
+
+        _l.info('opened_instrument_items len %s' % len(opened_instrument_items))
 
         if not opened_instrument_items:
             return
