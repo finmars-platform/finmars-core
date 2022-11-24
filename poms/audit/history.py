@@ -440,8 +440,8 @@ def _instance_post_delete(sender, instance=None, **kwargs):
     if not _is_enabled_for_model(instance):
         return
 
-    _l.debug('post_delete: sender=%s, instance=%s, kwargs=%s',
-             sender, instance, kwargs)
+    # _l.debug('post_delete: sender=%s, instance=%s, kwargs=%s',
+    #          sender, instance, kwargs)
 
     e4 = ObjectHistory4Entry(
         action_flag=ObjectHistory4Entry.DELETION,

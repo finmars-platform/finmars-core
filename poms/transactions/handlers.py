@@ -57,7 +57,14 @@ class TransactionTypeProcess(object):
     MODE_RECALCULATE = 'recalculate'
 
     def record_execution_progress(self, message):
-        self.complex_transaction.execution_log = self.complex_transaction.execution_log + message + '\n'
+        # _l.debug('record_execution_progress.message %s' % message)
+
+        if not self.complex_transaction.execution_log:
+            self.complex_transaction.execution_log = ''
+
+        _time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        self.complex_transaction.execution_log = self.complex_transaction.execution_log + '['+str(_time)+'] ' + message + '\n'
 
     def __init__(self,
                  process_mode=None,
@@ -97,7 +104,7 @@ class TransactionTypeProcess(object):
             self.complex_transaction = ComplexTransaction(transaction_type=self.transaction_type, date=None,
                                                           master_user=master_user)
 
-        self.complex_transaction.execution_log = ''
+        # _l.info("EXECUTION LOG %s" % self.complex_transaction.execution_log)
 
         self.record_execution_progress('Booking Complex Transaction')
         self.record_execution_progress('Start %s ' % date_now())
@@ -423,8 +430,8 @@ class TransactionTypeProcess(object):
             else:
                 _l.debug("Value is not set. No Context. No Default. input %s " % i.name)
 
-            self.record_execution_progress('==== CALCULATED INPUTS ====')
-            self.record_execution_progress(json.dumps(self.values, indent=4, default=str))
+        self.record_execution_progress('==== CALCULATED INPUTS ====')
+        self.record_execution_progress(json.dumps(self.values, indent=4, default=str))
 
         # _l.debug('setvalues %s' % self.values)
 
@@ -1776,6 +1783,9 @@ class TransactionTypeProcess(object):
                     try:
                         # transaction.transaction_date = min(transaction.accounting_date, transaction.cash_date)
                         transaction.save()
+
+                        self.record_execution_progress('Create Transaction %s' % transaction)
+
                         self.assign_permissions_to_transaction(transaction)
 
                     except (ValueError, TypeError, IntegrityError) as error:
@@ -1893,6 +1903,10 @@ class TransactionTypeProcess(object):
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
         ]
 
+        self.record_execution_progress('Calculating User Fields')
+
+        _result_for_log = {}
+
         for field_key in fields:
 
             # _l.debug('field_key')
@@ -1909,6 +1923,8 @@ class TransactionTypeProcess(object):
 
                     setattr(self.complex_transaction, field_key, val)
 
+                    _result_for_log[field_key] = val
+
                 except Exception as e:
 
                     _l.error("User Field Expression Eval error expression %s" % getattr(
@@ -1918,8 +1934,14 @@ class TransactionTypeProcess(object):
 
                     try:
                         setattr(self.complex_transaction, field_key, '<InvalidExpression>')
+                        _result_for_log[field_key] = '<InvalidExpression>'
                     except Exception as e:
                         setattr(self.complex_transaction, field_key, None)
+                        _result_for_log[field_key] = None
+
+        self.record_execution_progress('==== USER FIELDS ====')
+        self.record_execution_progress(json.dumps(_result_for_log, indent=4, default=str))
+
 
     def execute_recon_fields_expressions(self):
 
@@ -2260,8 +2282,6 @@ class TransactionTypeProcess(object):
 
         self.complex_transaction.status_id = ComplexTransaction.PENDING
 
-        self.complex_transaction.save()
-
         self.execute_complex_transaction_main_expressions()
 
         self.execute_user_fields_expressions()
@@ -2362,8 +2382,6 @@ class TransactionTypeProcess(object):
         _l.debug("complex_transaction.code %s" % self.complex_transaction.code)
         _l.debug("complex_transaction.status %s" % self.complex_transaction.status)
 
-        self.complex_transaction.save()
-
         self._context['complex_transaction'] = self.complex_transaction
 
         self._save_inputs()
@@ -2398,6 +2416,9 @@ class TransactionTypeProcess(object):
         self.record_execution_progress('Complex Transaction %s Booked' % self.complex_transaction.code)
 
         self.record_execution_progress('Saving Complex Transaction')
+        self.record_execution_progress(' ')
+        self.record_execution_progress('+====+====+')
+        self.record_execution_progress(' ')
         self.complex_transaction.save()  # save executed text and date expression
 
 
