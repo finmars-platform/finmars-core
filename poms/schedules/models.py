@@ -75,6 +75,9 @@ class Schedule(NamedModel):
         super(Schedule, self).save(force_insert=force_insert, force_update=force_update, using=using,
                                        update_fields=update_fields)
 
+        from poms.schedules.utils import sync_schedules
+        sync_schedules()
+
     def schedule(self, save=False):
         start_time = timezone.localtime(timezone.now())
         cron = croniter(self.cron_expr, start_time)

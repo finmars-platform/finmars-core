@@ -366,8 +366,8 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
                 if last_price.accrued_price is not None:
                     price.accrued_price = last_price.accrued_price
 
-            if can_write and not (price.accrued_price == 0 and price.principal_price == 0):
-            # if can_write:
+            # if can_write and not (price.accrued_price == 0 and price.principal_price == 0):
+            if can_write:
 
                 successful_prices_count = successful_prices_count + 1
 

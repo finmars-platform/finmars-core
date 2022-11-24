@@ -1,13 +1,8 @@
 from __future__ import unicode_literals
-
-import json
-
-from django.contrib.contenttypes.models import ContentType
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import NamedModel, AbstractClassModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel
+from poms.common.models import NamedModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel
 from poms.instruments.models import PricingPolicy, CostMethod
 from poms.users.models import MasterUser, Member
 
@@ -451,7 +446,6 @@ class PerformanceReportInstance(DataTimeStampedModel, NamedModel):
     grand_cash_inflow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('grand cash inflow'))
     grand_cash_outflow = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('grand cash outflow'))
     grand_nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('grand nav'))
-
 
 
 class PerformanceReportInstanceItem(models.Model):

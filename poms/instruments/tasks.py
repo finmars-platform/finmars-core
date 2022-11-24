@@ -10,10 +10,9 @@ from django.utils import timezone
 from poms import notifications
 from poms.common.utils import date_now, isclose
 from poms.instruments.models import EventSchedule, Instrument, GeneratedEvent
-from poms.portfolios.models import PortfolioRegister
-from poms.reports.builders.balance_item import Report, ReportItem
-from poms.reports.builders.balance_pl import ReportBuilder
-from poms.transactions.models import NotificationClass, Transaction
+from poms.reports.common import Report, ReportItem
+from poms.reports.sql_builders.balance import BalanceReportBuilderSql
+from poms.transactions.models import NotificationClass
 from poms.users.models import MasterUser, Member
 
 import traceback
@@ -101,8 +100,8 @@ def fill_parameters_from_instrument(event_schedule, instrument):
     return result
 
 
-@shared_task(name='instruments.only_generate_events_at_date', ignore_result=True)
-def only_generate_events_at_date(master_user_id, date):
+@shared_task(name='instruments.only_generate_events_at_date', bind=True)
+def only_generate_events_at_date(self, master_user_id, date):
     try:
 
         master_user = MasterUser.objects.get(id=master_user_id)
@@ -111,19 +110,16 @@ def only_generate_events_at_date(master_user_id, date):
 
         opened_instrument_items = []
 
-        report = Report(
-            master_user=master_user,
-            report_date=date,
-            allocation_mode=Report.MODE_IGNORE,
-        )
-        builder = ReportBuilder(instance=report)
-        builder.build_position_only()
 
-        for i in report.items:
-            if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
+        instance = Report(master_user=master_user, allocation_mode=Report.MODE_IGNORE, report_date=date)
+
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
+
+        for i in instance.items:
+            if i['item_type'] == ReportItem.TYPE_INSTRUMENT and not isclose(i['position_size'], 0.0):
                 opened_instrument_items.append(i)
 
-        _l.info('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
         if not opened_instrument_items:
             return
 
@@ -136,7 +132,7 @@ def only_generate_events_at_date(master_user_id, date):
         ).filter(
             # effective_date__lte=(date - F("notify_in_n_days")),
             # final_date__gte=date,
-            instrument__in={i.instr.id for i in opened_instrument_items}
+            instrument__in={i['instrument_id'] for i in opened_instrument_items}
         ).order_by(
             'instrument__master_user__id',
             'instrument__id'
@@ -162,19 +158,19 @@ def only_generate_events_at_date(master_user_id, date):
             event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
 
         for item in opened_instrument_items:
-            portfolio = item.prtfl
-            account = item.acc
-            strategy1 = item.str1
-            strategy2 = item.str2
-            strategy3 = item.str3
-            instrument = item.instr
-            position = item.pos_size
+            portfolio = item['portfolio_id']
+            account = item['account_position_id']
+            strategy1 = item['strategy1_position_id']
+            strategy2 = item['strategy2_position_id']
+            strategy3 = item['strategy3_position_id']
+            instrument = item['instrument_id']
+            position = item['position_size']
 
-            event_schedules = event_schedules_cache.get(instrument.id, None)
+            event_schedules = event_schedules_cache.get(instrument, None)
             _l.info('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
                     'instrument=%s, position=%s, event_schedules=%s',
-                    portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
-                    instrument.id, position, [e.id for e in event_schedules] if event_schedules else [])
+                    portfolio, account, strategy1, strategy2, strategy3,
+                    instrument, position, [e.id for e in event_schedules] if event_schedules else [])
 
             if not event_schedules:
                 continue
@@ -216,13 +212,13 @@ def only_generate_events_at_date(master_user_id, date):
                     generated_event.status_modified = timezone.now()
                     generated_event.effective_date = effective_date
                     generated_event.notification_date = notification_date
-                    generated_event.instrument = instrument
-                    generated_event.portfolio = portfolio
-                    generated_event.account = account
-                    generated_event.strategy1 = strategy1
-                    generated_event.strategy2 = strategy2
-                    generated_event.strategy3 = strategy3
-                    generated_event.position = position
+                    generated_event.instrument_id = instrument
+                    generated_event.portfolio_id = portfolio
+                    generated_event.account_id = account
+                    generated_event.strategy1_id = strategy1
+                    generated_event.strategy2_id = strategy2
+                    generated_event.strategy3_id = strategy3
+                    generated_event.position_id = position
                     generated_event.data = {
                         'actions_parameters': parameters
                     }
@@ -234,8 +230,8 @@ def only_generate_events_at_date(master_user_id, date):
         _l.info(traceback.format_exc())
 
 
-@shared_task(name='instruments.only_generate_events_at_date_for_single_instrument', ignore_result=True)
-def only_generate_events_at_date_for_single_instrument(master_user_id, date, instrument_id):
+@shared_task(name='instruments.only_generate_events_at_date_for_single_instrument', bind=True)
+def only_generate_events_at_date_for_single_instrument(self, master_user_id, date, instrument_id):
     try:
 
         date = datetime.date(datetime.strptime(date, '%Y-%m-%d'))
@@ -246,22 +242,19 @@ def only_generate_events_at_date_for_single_instrument(master_user_id, date, ins
 
         opened_instrument_items = []
 
-        report = Report(
-            master_user=master_user,
-            report_date=date,
-            allocation_mode=Report.MODE_IGNORE,
-        )
-        builder = ReportBuilder(instance=report)
-        builder.build_position_only()
+        instance = Report(master_user=master_user, allocation_mode=Report.MODE_IGNORE, report_date=date)
 
-        for i in report.items:
-            if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
 
-                if i.instr:
-                    if i.instr.id == instrument.id:
+        for i in instance.items:
+            if i['item_type'] == ReportItem.TYPE_INSTRUMENT and not isclose(i['position_size'], 0.0):
+
+                    if i['instrument_id'] == instrument.id:
                         opened_instrument_items.append(i)
 
-        _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
+        _l.info('opened_instrument_items len %s' % len(opened_instrument_items))
+
         if not opened_instrument_items:
             return
 
@@ -274,7 +267,7 @@ def only_generate_events_at_date_for_single_instrument(master_user_id, date, ins
         ).filter(
             # effective_date__lte=(date - F("notify_in_n_days")),
             # final_date__gte=date,
-            instrument__in={i.instr.id for i in opened_instrument_items}
+            instrument_id__in={i['instrument_id'] for i in opened_instrument_items}
         ).order_by(
             'instrument__master_user__id',
             'instrument__id'
@@ -299,20 +292,24 @@ def only_generate_events_at_date_for_single_instrument(master_user_id, date, ins
         for event_schedule in result:
             event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
 
-        for item in opened_instrument_items:
-            portfolio = item.prtfl
-            account = item.acc
-            strategy1 = item.str1
-            strategy2 = item.str2
-            strategy3 = item.str3
-            instr = item.instr
-            position = item.pos_size
+        _l.info('event_schedules_cache %s' % event_schedules_cache)
 
-            event_schedules = event_schedules_cache.get(instr.id, None)
-            _l.debug('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
-                     'instrument=%s, position=%s, event_schedules=%s',
-                     portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
-                     instr.id, position, [e.id for e in event_schedules] if event_schedules else [])
+        for item in opened_instrument_items:
+            portfolio = item['portfolio_id']
+            account = item['account_position_id']
+            strategy1 = item['strategy1_position_id']
+            strategy2 = item['strategy2_position_id']
+            strategy3 = item['strategy3_position_id']
+            instrument = item['instrument_id']
+            position = item['position_size']
+
+            event_schedules = event_schedules_cache.get(instrument, None)
+            _l.info('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
+                    'instrument=%s, position=%s, event_schedules=%s',
+                    portfolio, account, strategy1, strategy2, strategy3,
+                    instrument, position, [e.id for e in event_schedules] if event_schedules else [])
+
+
 
             if not event_schedules:
                 continue
@@ -331,7 +328,7 @@ def only_generate_events_at_date_for_single_instrument(master_user_id, date, ins
                         event_schedule=event_schedule,
                         effective_date=effective_date,
                         # notification_date=notification_date,
-                        instrument=instr,
+                        instrument=instrument,
                         portfolio=portfolio,
                         account=account,
                         strategy1=strategy1,
@@ -354,12 +351,12 @@ def only_generate_events_at_date_for_single_instrument(master_user_id, date, ins
                     generated_event.status_modified = timezone.now()
                     generated_event.effective_date = effective_date
                     generated_event.notification_date = notification_date
-                    generated_event.instrument = instr
-                    generated_event.portfolio = portfolio
-                    generated_event.account = account
-                    generated_event.strategy1 = strategy1
-                    generated_event.strategy2 = strategy2
-                    generated_event.strategy3 = strategy3
+                    generated_event.instrument_id = instrument
+                    generated_event.portfolio_id = portfolio
+                    generated_event.account_id = account
+                    generated_event.strategy1_id = strategy1
+                    generated_event.strategy2_id = strategy2
+                    generated_event.strategy3_id = strategy3
                     generated_event.position = position
                     generated_event.data = {
                         'actions_parameters': parameters
@@ -371,13 +368,12 @@ def only_generate_events_at_date_for_single_instrument(master_user_id, date, ins
         _l.info('only_generate_events_at_date_for_single_instrument exception occurred %s' % e)
         _l.info(traceback.format_exc())
 
-
-@shared_task(name='instruments.generate_events0', ignore_result=True)
-def generate_events0(master_user_id):
+@shared_task(name='instruments.generate_events', bind=True)
+def generate_events(self):
 
     from poms.celery_tasks.models import CeleryTask
 
-    master_user = MasterUser.objects.get(id=master_user_id)
+    master_user = MasterUser.objects.all()[0] # TODO get by base_api_url
 
     member = Member.objects.get(master_user=master_user, is_owner=True)
 
@@ -395,19 +391,15 @@ def generate_events0(master_user_id):
 
         now = date_now()
 
-        report = Report(
-            master_user=master_user,
-            report_date=now,
-            allocation_mode=Report.MODE_IGNORE,
-        )
-        builder = ReportBuilder(instance=report)
-        builder.build_position_only()
+        instance = Report(master_user=master_user, allocation_mode=Report.MODE_IGNORE, report_date = now)
 
-        for i in report.items:
-            if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
+
+        for i in instance.items:
+            if i['item_type'] == ReportItem.TYPE_INSTRUMENT and not isclose(i['position_size'], 0.0):
                 opened_instrument_items.append(i)
 
-        _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
         if not opened_instrument_items:
             return
 
@@ -420,7 +412,7 @@ def generate_events0(master_user_id):
         ).filter(
             # effective_date__lte=(now - F("notify_in_n_days")),
             # final_date__gte=now,
-            instrument__in={i.instr.id for i in opened_instrument_items}
+            instrument__in={i['instrument_id'] for i in opened_instrument_items}
         ).order_by(
             'instrument__master_user__id',
             'instrument__id'
@@ -442,6 +434,11 @@ def generate_events0(master_user_id):
                 result.append(event_schedule)
 
         if not len(result):
+
+            celery_task.status = CeleryTask.STATUS_DONE
+            celery_task.verbose_result = 'event schedules not found'
+            celery_task.save()
+
             _l.debug('event schedules not found')
             return
 
@@ -450,19 +447,19 @@ def generate_events0(master_user_id):
             event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
 
         for item in opened_instrument_items:
-            portfolio = item.prtfl
-            account = item.acc
-            strategy1 = item.str1
-            strategy2 = item.str2
-            strategy3 = item.str3
-            instrument = item.instr
-            position = item.pos_size
+            portfolio = item['portfolio_id']
+            account = item['account_position_id']
+            strategy1 = item['strategy1_position_id']
+            strategy2 = item['strategy2_position_id']
+            strategy3 = item['strategy3_position_id']
+            instrument = item['instrument_id']
+            position = item['position_size']
 
-            event_schedules = event_schedules_cache.get(instrument.id, None)
-            _l.debug('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
-                     'instrument=%s, position=%s, event_schedules=%s',
-                     portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
-                     instrument.id, position, [e.id for e in event_schedules] if event_schedules else [])
+            event_schedules = event_schedules_cache.get(instrument, None)
+            _l.info('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
+                    'instrument=%s, position=%s, event_schedules=%s',
+                    portfolio, account, strategy1, strategy2, strategy3,
+                    instrument, position, [e.id for e in event_schedules] if event_schedules else [])
 
             if not event_schedules:
                 continue
@@ -504,12 +501,12 @@ def generate_events0(master_user_id):
                     generated_event.status_modified = timezone.now()
                     generated_event.effective_date = effective_date
                     generated_event.notification_date = notification_date
-                    generated_event.instrument = instrument
-                    generated_event.portfolio = portfolio
-                    generated_event.account = account
-                    generated_event.strategy1 = strategy1
-                    generated_event.strategy2 = strategy2
-                    generated_event.strategy3 = strategy3
+                    generated_event.instrument_id = instrument
+                    generated_event.portfolio_id = portfolio
+                    generated_event.account_id = account
+                    generated_event.strategy1_id = strategy1
+                    generated_event.strategy2_id = strategy2
+                    generated_event.strategy3_id = strategy3
                     generated_event.position = position
                     generated_event.data = {
                         'parameters': parameters
@@ -537,7 +534,7 @@ def generate_events0(master_user_id):
         celery_task.status = CeleryTask.STATUS_DONE
         celery_task.save()
 
-        process_events0.apply_async(kwargs={'master_user_id': master_user.id})
+        process_events.apply_async()
 
     except Exception as e:
 
@@ -548,33 +545,11 @@ def generate_events0(master_user_id):
         _l.info('generate_events0 exception occurred %s' % e)
         _l.info(traceback.format_exc())
 
-
-@shared_task(name='instruments.generate_events', ignore_result=True)
-def generate_events(master_users=None):
-    try:
-        _l.debug('generate_events: master_users=%s', master_users)
-
-        # now = date_now()
-
-        master_user_qs = MasterUser.objects.all()
-        if master_users:
-            master_user_qs = master_user_qs.filter(pk__in=master_users)
-
-        for master_user in master_user_qs:
-
-            generate_events0.apply_async(kwargs={'master_user_id': master_user.id})
-
-    except Exception as e:
-
-        _l.info('generate_events exception occurred %s' % e)
-        _l.info(traceback.format_exc())
-
-
-@shared_task(name='instruments.generate_events_do_not_inform_apply_default0', ignore_result=True)
-def generate_events_do_not_inform_apply_default0(master_user_id):
+@shared_task(name='instruments.generate_events_do_not_inform_apply_default', bind=True)
+def generate_events_do_not_inform_apply_default(self):
     try:
 
-        master_user = MasterUser.objects.get(id=master_user_id)
+        master_user = MasterUser.objects.all()[0]
 
         _l.debug('generate_events0: master_user=%s', master_user.id)
 
@@ -582,19 +557,17 @@ def generate_events_do_not_inform_apply_default0(master_user_id):
 
         now = date_now()
 
-        report = Report(
-            master_user=master_user,
-            report_date=now,
-            allocation_mode=Report.MODE_IGNORE,
-        )
-        builder = ReportBuilder(instance=report)
-        builder.build_position_only()
+        instance = Report(master_user=master_user, allocation_mode=Report.MODE_IGNORE, report_date = now)
 
-        for i in report.items:
-            if i.type == ReportItem.TYPE_INSTRUMENT and not isclose(i.pos_size, 0.0):
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
+
+        for i in instance.items:
+            if i['item_type'] == ReportItem.TYPE_INSTRUMENT and not isclose(i['position_size'], 0.0):
                 opened_instrument_items.append(i)
 
-        _l.debug('opened instruments: %s', sorted(i.instr.id for i in opened_instrument_items))
+        _l.info('opened_instrument_items len %s' % len(opened_instrument_items))
+
         if not opened_instrument_items:
             return
 
@@ -607,7 +580,7 @@ def generate_events_do_not_inform_apply_default0(master_user_id):
         ).filter(
             # effective_date__lte=(now - F("notify_in_n_days")),
             # final_date__gte=now,
-            instrument__in={i.instr.id for i in opened_instrument_items}
+            instrument__in={i['instrument_id'] for i in opened_instrument_items}
         ).order_by(
             'instrument__master_user__id',
             'instrument__id'
@@ -632,19 +605,19 @@ def generate_events_do_not_inform_apply_default0(master_user_id):
             event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
 
         for item in opened_instrument_items:
-            portfolio = item.prtfl
-            account = item.acc
-            strategy1 = item.str1
-            strategy2 = item.str2
-            strategy3 = item.str3
-            instrument = item.instr
-            position = item.pos_size
+            portfolio = item['portfolio_id']
+            account = item['account_position_id']
+            strategy1 = item['strategy1_position_id']
+            strategy2 = item['strategy2_position_id']
+            strategy3 = item['strategy3_position_id']
+            instrument = item['instrument_id']
+            position = item['position_size']
 
-            event_schedules = event_schedules_cache.get(instrument.id, None)
-            _l.debug('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
-                     'instrument=%s, position=%s, event_schedules=%s',
-                     portfolio.id, account.id, strategy1.id, strategy2.id, strategy3.id,
-                     instrument.id, position, [e.id for e in event_schedules] if event_schedules else [])
+            event_schedules = event_schedules_cache.get(instrument, None)
+            _l.info('opened instrument: portfolio=%s, account=%s, strategy1=%s, strategy2=%s, strategy3=%s, '
+                    'instrument=%s, position=%s, event_schedules=%s',
+                    portfolio, account, strategy1, strategy2, strategy3,
+                    instrument, position, [e.id for e in event_schedules] if event_schedules else [])
 
             if not event_schedules:
                 continue
@@ -688,138 +661,32 @@ def generate_events_do_not_inform_apply_default0(master_user_id):
                     generated_event.status_modified = timezone.now()
                     generated_event.effective_date = effective_date
                     generated_event.notification_date = notification_date
-                    generated_event.instrument = instrument
-                    generated_event.portfolio = portfolio
-                    generated_event.account = account
-                    generated_event.strategy1 = strategy1
-                    generated_event.strategy2 = strategy2
-                    generated_event.strategy3 = strategy3
+                    generated_event.instrument_id = instrument
+                    generated_event.portfolio_id = portfolio
+                    generated_event.account_id = account
+                    generated_event.strategy1_id = strategy1
+                    generated_event.strategy2_id = strategy2
+                    generated_event.strategy3_id = strategy3
                     generated_event.position = position
                     generated_event.data = {
                         'actions_parameters': parameters
                     }
                     generated_event.save()
 
-        process_events0.apply_async(kwargs={'master_user_id': master_user.id})
+        process_events.apply_async()
 
     except Exception as e:
 
         _l.info('generate_events exception occurred %s' % e)
         _l.info(traceback.format_exc())
 
-
-@shared_task(name='instruments.generate_events_do_not_inform_apply_default', ignore_result=True)
-def generate_events_do_not_inform_apply_default(master_users=None):
-    try:
-        _l.debug('generate_events_do_not_inform_apply_default: master_users=%s', master_users)
-
-        master_user_qs = MasterUser.objects.all()
-        if master_users:
-            master_user_qs = master_user_qs.filter(pk__in=master_users)
-
-        limit = 5
-        index = 0
-
-        for master_user in master_user_qs:
-
-            index = index + 1
-            if index < limit:
-                generate_events_do_not_inform_apply_default0.apply_async(kwargs={'master_user_id': master_user.id})
-
-    except Exception as e:
-
-        _l.info('generate_events_do_not_inform_apply_default exception occurred %s' % e)
-        _l.info(traceback.format_exc())
-
-
-@shared_task(name='instruments.process_events_do_not_inform_apply_default0', ignore_result=True)
+@shared_task(name='instruments.process_events', bind=True)
 @transaction.atomic()
-def process_events_do_not_inform_apply_default0(master_user_id):
-    try:
-
-        from poms.instruments.handlers import GeneratedEventProcess
-
-        master_user = MasterUser.objects.get(id=master_user_id)
-
-        _l.debug('process_events0: master_user=%s', master_user.id)
-
-        now = date_now()
-
-        generated_event_qs = GeneratedEvent.objects.prefetch_related(
-            'event_schedule',
-            'event_schedule__notification_class',
-            'instrument',
-            'instrument__pricing_currency',
-            'instrument__accrued_currency',
-            'portfolio',
-            'account',
-            'strategy1',
-            'strategy2',
-            'strategy3',
-        ).filter(
-            master_user=master_user,
-            status=GeneratedEvent.NEW,
-        ).filter(
-            Q(effective_date=now) | Q(notification_date=now),
-        )
-
-        for gevent in generated_event_qs:
-
-            is_apply_default_on_notification_date = gevent.is_apply_default_on_notification_date(now)
-            is_apply_default_on_effective_date = gevent.is_apply_default_on_effective_date(now)
-
-            _l.debug(
-                'process_events_do_not_inform_apply_default0:'
-                ' notification_class=%s,'
-                ' notification_date=%s,'
-                ' notification_date_notified=%s'
-                ' effective_date=%s,'
-                ' effective_date_notified=%s,'
-                ' is_apply_default_on_notification_date=%s,'
-                ' is_apply_default_on_effective_date=%s,',
-                gevent.event_schedule.notification_class.user_code,
-                gevent.notification_date,
-                gevent.notification_date_notified,
-                gevent.effective_date,
-                gevent.effective_date_notified,
-
-                is_apply_default_on_notification_date,
-                is_apply_default_on_effective_date)
-
-            owner = next(iter([m for m in gevent.master_user.members.all() if m.is_owner]))
-
-            if is_apply_default_on_notification_date or is_apply_default_on_effective_date:
-                action = next((a for a in gevent.event_schedule.actions.all() if a.is_book_automatic), None)
-                if action:
-                    ttp = GeneratedEventProcess(
-                        generated_event=gevent,
-                        action=action,
-                        context={
-                            'master_user': master_user,
-                            'member': owner,
-                        }
-                    )
-                    ttp.process()
-                    gevent.processed(None, action, ttp.complex_transaction)
-                else:
-                    gevent.status = GeneratedEvent.BOOKED_SYSTEM_DEFAULT
-                    gevent.status_date = timezone.now()
-
-            if is_apply_default_on_notification_date or is_apply_default_on_effective_date:
-                gevent.save()
-    except Exception as e:
-
-        _l.info('process_events_do_not_inform_apply_default0 exception occurred %s' % e)
-        _l.info(traceback.format_exc())
-
-
-@shared_task(name='instruments.process_events0', ignore_result=True)
-@transaction.atomic()
-def process_events0(master_user_id):
+def process_events(self):
 
     from poms.celery_tasks.models import CeleryTask
 
-    master_user = MasterUser.objects.get(id=master_user_id)
+    master_user = MasterUser.objects.all()[0] # TODO refactor to get by base_api_url
     member = Member.objects.get(master_user=master_user, is_owner=True)
     celery_task = CeleryTask.objects.create(
         master_user=master_user,
@@ -830,8 +697,6 @@ def process_events0(master_user_id):
 
     try:
         from poms.instruments.handlers import GeneratedEventProcess
-
-
 
         _l.debug('process_events0: master_user=%s', master_user.id)
 
@@ -955,29 +820,4 @@ def process_events0(master_user_id):
         celery_task.error_message = 'Error %s. Traceback %s' % (e, traceback.format_exc())
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.save()
-
-
-@shared_task(name='instruments.process_events', ignore_result=True)
-def process_events(master_users=None):
-    try:
-
-        _l.debug('process_events: master_users=%s', master_users)
-
-        master_user_qs = MasterUser.objects.prefetch_related(
-            'members'
-        )
-        if master_users:
-            master_user_qs = master_user_qs.filter(pk__in=master_users)
-
-        for master_user in master_user_qs:
-            _l.debug('process_events: master_user=%s', master_user.id)
-
-            process_events0.apply_async(kwargs={'master_user_id': master_user.id})
-
-    except Exception as e:
-
-        _l.error('process_events exception occurred %s' % e)
-        _l.error(traceback.format_exc())
-
-
 

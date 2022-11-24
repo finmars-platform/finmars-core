@@ -20,9 +20,7 @@ import logging
 
 from poms.pricing.utils import roll_price_history_for_n_day_forward, roll_currency_history_for_n_day_forward, \
     convert_results_for_calc_avg_price
-from poms.procedures.models import PricingProcedureInstance, PricingParentProcedureInstance, BaseProcedureInstance
-from poms.reports.builders.balance_item import Report
-from poms.reports.builders.balance_pl import ReportBuilder
+from poms.procedures.models import PricingProcedureInstance, PricingParentProcedureInstance
 from poms.transactions.models import Transaction
 
 _l = logging.getLogger('poms.pricing')
@@ -1636,20 +1634,20 @@ class FillPricesBrokerCbondsProcess(object):
             if can_write:
 
                 # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
-                if has_error:
+                # if has_error:
+                #
+                #     error_prices_count = error_prices_count + 1
+                #     error.status = PriceHistoryError.STATUS_ERROR
+                #     error.save()
+                #
+                # else:
 
-                    error_prices_count = error_prices_count + 1
-                    error.status = PriceHistoryError.STATUS_ERROR
-                    error.save()
+                successful_prices_count = successful_prices_count + 1
 
-                else:
+                error.status = PriceHistoryError.STATUS_CREATED # its journal, not error log
+                error.save()
 
-                    successful_prices_count = successful_prices_count + 1
-
-                    error.status = PriceHistoryError.STATUS_CREATED # its journal, not error log
-                    error.save()
-
-                    price.save()
+                price.save()
 
             if not can_write and exist:
 

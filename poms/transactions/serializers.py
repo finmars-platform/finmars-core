@@ -2610,7 +2610,9 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
 
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
 
-            'recon_fields'
+            'recon_fields',
+
+            'execution_log'
 
         ]
 
@@ -3343,7 +3345,9 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
             'object_permissions',
 
-            'recon_fields'
+            'recon_fields',
+
+            'execution_log'
 
         ]
 
@@ -3563,159 +3567,10 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
 
             instance.complex_transaction = ctrn
 
+        _l.info("==== PROCESS REBOOK ====")
         instance.process()
 
-        # if instance.is_book:
-        #     instance._save_inputs()
-
-        # if instance.calculate:
-        #     instance.process()
-        #
-        #     if instance.store and not instance.has_errors:
-        #         instruments_map = {}
-        #         for instrument in instance.instruments:
-        #             fake_id = instrument.id
-        #             self._save_if_need(instrument)
-        #             if fake_id:
-        #                 instruments_map[fake_id] = instrument
-        #         self._save_inputs(instance)
-        #         if instance.transactions:
-        #             self._save_if_need(instance.complex_transaction)
-        #             for transaction in instance.transactions:
-        #                 if transaction.instrument_id in instruments_map:
-        #                     transaction.instrument = instruments_map[transaction.instrument_id]
-        #                 self._save_if_need(transaction)
-        # else:
-        #     if instance.store:
-        #         instruments_map = {}
-        #         instruments_data = validated_data.get('instruments', None)
-        #         if instruments_data:
-        #             for instrument_data in instruments_data:
-        #                 fake_id = instrument_data.pop('id', None)
-        #                 instrument = Instrument(master_user=instance.transaction_type.master_user)
-        #                 for attr, value in instrument_data.items():
-        #                     setattr(instrument, attr, value)
-        #                 instrument.save()
-        #                 instance.instruments.append(instrument)
-        #                 if fake_id:
-        #                     instruments_map[fake_id] = instrument
-        #
-        #         self._save_inputs(instance)
-        #         transactions_data = validated_data.get('transactions', None)
-        #         if transactions_data:
-        #             self._save_if_need(instance.complex_transaction)
-        #             for transaction_data in transactions_data:
-        #                 transaction = Transaction(master_user=instance.transaction_type.master_user)
-        #                 transaction_data.pop('id', None)
-        #                 for attr, value in transaction_data.items():
-        #                     if attr == 'instrument':
-        #                         value = value.id
-        #                         if value in instruments_map:
-        #                             value = instruments_map[value]
-        #                         else:
-        #                             value = None
-        #                     setattr(transaction, attr, value)
-        #                 transaction.complex_transaction = instance.complex_transaction
-        #                 transaction.save()
-        #                 instance.transactions.append(transaction)
-        #
-        # instance.complex_transaction._fake_transactions = instance.transactions
-
-        # if not instance.has_errors and instance.transactions:
-        #     for trn in instance.transactions:
-        #         trn.calc_cash_by_formulas()
-
-        # if not instance.store:
-        #     instance.complex_transaction.id = instance.next_fake_id()
-        #     instr_map = {}
-        #     for instr in instance.instruments:
-        #         pk = instance.next_fake_id()
-        #         instr_map[instr.pk] = pk
-        #         instr.pk = pk
-        #     for trn in instance.transactions:
-        #         pk = instance.next_fake_id()
-        #         trn.pk = pk
-        #         if trn.instrument_id in instr_map:
-        #             trn.instrument_id = instr_map[trn.instrument_id]
-        #         if trn.linked_instrument_id in instr_map:
-        #             trn.linked_instrument_id = instr_map[trn.linked_instrument_id]
-        #         if trn.allocation_balance_id in instr_map:
-        #             trn.allocation_balance_id = instr_map[trn.allocation_balance_id]
-        #         if trn.allocation_pl_id in instr_map:
-        #             trn.allocation_pl_id = instr_map[trn.allocation_pl_id]
-
         return instance
-
-    # def _save_if_need(self, obj):
-    #     if obj.id is None or obj.id < 0:
-    #         obj.id = None
-    #         obj.save()
-
-    # def _save_inputs(self, instance):
-    #
-    #     print('_save_unputs instance.values %s' % instance.values)
-    #
-    #     instance.complex_transaction.inputs.all().delete()
-    #
-    #     for ti in instance.transaction_type.inputs.all():
-    #         val = instance.values.get(ti.name, None)
-    #
-    #         ci = ComplexTransactionInput()
-    #         ci.complex_transaction = instance.complex_transaction
-    #         ci.transaction_type_input = ti
-    #
-    #         if ti.value_type == TransactionTypeInput.STRING:
-    #             if val is None:
-    #                 val = ''
-    #             ci.value_string = val
-    #         elif ti.value_type == TransactionTypeInput.NUMBER:
-    #             if val is None:
-    #                 val = 0.0
-    #             ci.value_float = val
-    #         elif ti.value_type == TransactionTypeInput.DATE:
-    #             if val is None:
-    #                 val = datetime.date.min
-    #             ci.value_date = val
-    #         elif ti.value_type == TransactionTypeInput.RELATION:
-    #
-    #             model_class = ti.content_type.model_class()
-    #
-    #             if issubclass(model_class, Account):
-    #                 ci.account = val
-    #             elif issubclass(model_class, Currency):
-    #                 ci.currency = val
-    #             elif issubclass(model_class, Instrument):
-    #                 ci.instrument = val
-    #             elif issubclass(model_class, InstrumentType):
-    #                 ci.instrument_type = val
-    #             elif issubclass(model_class, Counterparty):
-    #                 ci.counterparty = val
-    #             elif issubclass(model_class, Responsible):
-    #                 ci.responsible = val
-    #             elif issubclass(model_class, Strategy1):
-    #                 ci.strategy1 = val
-    #             elif issubclass(model_class, Strategy2):
-    #                 ci.strategy2 = val
-    #             elif issubclass(model_class, Strategy3):
-    #                 ci.strategy3 = val
-    #             elif issubclass(model_class, DailyPricingModel):
-    #                 ci.daily_pricing_model = val
-    #             elif issubclass(model_class, PaymentSizeDetail):
-    #                 ci.payment_size_detail = val
-    #             elif issubclass(model_class, Portfolio):
-    #                 ci.portfolio = val
-    #             elif issubclass(model_class, PricingPolicy):
-    #                 ci.pricing_policy = val
-    #             elif issubclass(model_class, Periodicity):
-    #                 ci.periodicity = val
-    #             elif issubclass(model_class, AccrualCalculationModel):
-    #                 ci.accrual_calculation_model = val
-    #             elif issubclass(model_class, EventClass):
-    #                 ci.event_class = val
-    #             elif issubclass(model_class, NotificationClass):
-    #                 ci.notification_class = val
-    #
-    #         ci.save()
 
 
 class TransactionTypeRecalculateSerializer(serializers.Serializer):

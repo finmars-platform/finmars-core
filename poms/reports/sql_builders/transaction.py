@@ -9,10 +9,8 @@ from poms.accounts.models import Account
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument
 from poms.portfolios.models import Portfolio
-from poms.reports.builders.balance_item import Report
-from poms.reports.builders.base_builder import BaseReportBuilder
-from poms.reports.models import BalanceReportCustomField, TransactionReportCustomField
-from poms.reports.sql_builders.helpers import dictfetchall, get_transaction_filter_sql_string, \
+from poms.reports.models import TransactionReportCustomField
+from poms.reports.sql_builders.helpers import dictfetchall, \
     get_transaction_report_filter_sql_string, get_transaction_report_date_filter_sql_string
 from poms.transactions.models import ComplexTransaction, TransactionClass, ComplexTransactionStatus
 from poms.users.models import EcosystemDefault

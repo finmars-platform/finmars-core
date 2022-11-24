@@ -26,7 +26,7 @@ SERVER_TYPE = os.environ.get('SERVER_TYPE', 'local')
 
 print('SERVER_TYPE %s' % SERVER_TYPE)
 
-BASE_API_URL = os.environ.get('BASE_API_URL', 'main')
+BASE_API_URL = os.environ.get('BASE_API_URL', 'client00000')
 HOST_LOCATION = os.environ.get('HOST_LOCATION', 'AWS') # azure, aws, or custom, only log purpose
 
 print('BASE_API_URL %s' % BASE_API_URL)
@@ -64,6 +64,8 @@ INSTALLED_APPS = [
     'poms.http_sessions',
 
     # 'poms.cache_machine',
+
+
 
     'poms.users',
     'poms.audit',
@@ -123,6 +125,12 @@ INSTALLED_APPS = [
     # 'two_factor',
     'django_celery_results',
     'django_celery_beat',
+
+    # ==================================
+    # = IMPORTANT LOGIC ON APP STARTUP =
+    # ==================================
+    'poms.bootstrap'
+
 ]
 
 if SERVER_TYPE == 'local':

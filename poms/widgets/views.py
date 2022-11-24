@@ -1,28 +1,18 @@
-import datetime
-import statistics
-import math
 from django.db.models import Q
 
-from poms.accounts.models import Account
-from poms.celery_tasks.models import CeleryTask
-from poms.common.utils import get_list_of_dates_between_two_dates, check_if_last_day_of_month, get_first_transaction, \
-    last_business_day_in_month, get_list_of_months_between_two_dates, get_list_of_business_days_between_two_dates, \
+from poms.common.utils import get_first_transaction, \
+    get_list_of_business_days_between_two_dates, \
     get_last_bdays_of_months_between_two_dates, get_closest_bday_of_yesterday
 from poms.common.views import AbstractViewSet
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
-from django.db import transaction
 
 from poms.currencies.models import Currency
 from poms.instruments.models import CostMethod, PricingPolicy
-from poms.portfolios.models import Portfolio, PortfolioBundle
-from poms.reports.voila_constructrices.performance import PerformanceReportBuilder
-from poms.system_messages.handlers import send_system_message
+from poms.portfolios.models import Portfolio
 from poms.users.models import EcosystemDefault
-from poms.widgets.handlers import StatsHandler
 from poms.widgets.models import BalanceReportHistory, PLReportHistory, WidgetStats
 from poms.widgets.serializers import CollectHistorySerializer, CollectStatsSerializer, WidgetStatsSerializer
-from poms.widgets.tasks import collect_balance_report_history, collect_pl_report_history, collect_stats
 
 import logging
 

@@ -320,9 +320,9 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         if ordering:
             sort_st = time.perf_counter()
             queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)
-            _l.debug('filtered_list sort done: %s', "{:3.3f}".format(time.perf_counter() - sort_st))
+            # _l.debug('filtered_list sort done: %s', "{:3.3f}".format(time.perf_counter() - sort_st))
 
-        _l.debug('filtered_list apply filters done: %s', "{:3.3f}".format(time.perf_counter() - filters_st))
+        # _l.debug('filtered_list apply filters done: %s', "{:3.3f}".format(time.perf_counter() - filters_st))
 
         page_st = time.perf_counter()
 
@@ -332,7 +332,7 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
 
         page = self.paginator.post_paginate_queryset(queryset, request)
 
-        _l.debug('filtered_list get page done: %s', "{:3.3f}".format(time.perf_counter() - page_st))
+        # _l.debug('filtered_list get page done: %s', "{:3.3f}".format(time.perf_counter() - page_st))
 
         serialize_st = time.perf_counter()
 
@@ -340,9 +340,9 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
 
         result = self.get_paginated_response(serializer.data)
 
-        _l.debug('filtered_list serialize done: %s', "{:3.3f}".format(time.perf_counter() - serialize_st))
+        # _l.debug('filtered_list serialize done: %s', "{:3.3f}".format(time.perf_counter() - serialize_st))
 
-        _l.debug('filtered_list done: %s', "{:3.3f}".format(time.perf_counter() - start_time))
+        # _l.debug('filtered_list done: %s', "{:3.3f}".format(time.perf_counter() - start_time))
 
         return result
 

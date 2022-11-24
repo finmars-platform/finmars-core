@@ -20,15 +20,7 @@ class ReportsConfig(AppConfig):
     verbose_name = gettext_lazy('Reports')
 
     def ready(self):
-        post_migrate.connect(self.update_transaction_classes, sender=self)
         post_migrate.connect(self.create_views_for_sql_reports, sender=self)
-
-    def update_transaction_classes(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
-        # from poms.common.utils import db_class_check_data
-        # from poms.reports.models import ReportClass
-        #
-        # db_class_check_data(ReportClass, verbosity, using)
-        pass
 
     def create_views_for_sql_reports(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
 

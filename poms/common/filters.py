@@ -302,7 +302,7 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
                 i = i + 1
 
-        _l.debug("GroupsAttributeFilter done in %s seconds " % "{:3.3f}".format(time.time() - start_time))
+        # _l.debug("GroupsAttributeFilter done in %s seconds " % "{:3.3f}".format(time.time() - start_time))
 
         return queryset
 
@@ -427,7 +427,7 @@ class AttributeFilter(BaseFilterBackend):
 
         # print('AttributeFilter qs len %s' % len(queryset))
 
-        _l.debug("AttributeFilter.filter_queryset %s seconds " % "{:3.3f}".format(time.time() - start_time))
+        # _l.debug("AttributeFilter.filter_queryset %s seconds " % "{:3.3f}".format(time.time() - start_time))
 
         return queryset
 

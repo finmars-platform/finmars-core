@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import json
+import traceback
 from datetime import date
 
 from django.contrib.contenttypes.fields import GenericRelation
@@ -1455,6 +1456,8 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
                                null=True, blank=True,
                                verbose_name=gettext_lazy("linked import task"))
 
+    execution_log = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('execution log'))
+
     class Meta:
         verbose_name = gettext_lazy('complex transaction')
         verbose_name_plural = gettext_lazy('complex transactions')
@@ -1477,10 +1480,12 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
         _l.info("Complex Transaction Save status %s" % self.status)
         _l.info("Complex Transaction Save text %s" % self.text)
         _l.info("Complex Transaction Save date %s" % self.date)
+
         _l.info("Complex Transaction Save transaction_unique_code %s" % self.transaction_unique_code)
 
         if self.code is None or self.code == 0:
             self.code = FakeSequence.next_value(self.transaction_type.master_user, 'complex_transaction', d=100)
+        _l.info("Complex Transaction Save date %s" % self.code)
         super(ComplexTransaction, self).save(*args, **kwargs)
 
 
@@ -1807,51 +1812,57 @@ class Transaction(models.Model):
 
     def calculate_ytm(self):
 
-        if self.instrument.accrued_currency_id == self.instrument.pricing_currency_id:
-            self.instr_accrued_ccy_cur_fx = 1
-            self.instr_pricing_ccy_cur_fx = 1
-        else:
+        try:
 
-            if self.master_user.system_currency_id == self.instrument.accrued_currency_id:
+            if self.instrument.accrued_currency_id == self.instrument.pricing_currency_id:
                 self.instr_accrued_ccy_cur_fx = 1
-            else:
-                self.instr_accrued_ccy_cur_fx = CurrencyHistory.objects.get(date=self.accounting_date,
-                                                                            currency=self.instrument.accrued_currency).fx_rate
-
-            if self.master_user.system_currency_id == self.instrument.pricing_currency_id:
                 self.instr_pricing_ccy_cur_fx = 1
             else:
-                self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.accounting_date,
-                                                                            currency=self.instrument.pricing_currency).fx_rate
 
-        dt = self.accounting_date
+                if self.master_user.system_currency_id == self.instrument.accrued_currency_id:
+                    self.instr_accrued_ccy_cur_fx = 1
+                else:
+                    self.instr_accrued_ccy_cur_fx = CurrencyHistory.objects.get(date=self.accounting_date,
+                                                                                currency=self.instrument.accrued_currency).fx_rate
 
-        if self.instrument.maturity_date is None or self.instrument.maturity_date == date.max:
+                if self.master_user.system_currency_id == self.instrument.pricing_currency_id:
+                    self.instr_pricing_ccy_cur_fx = 1
+                else:
+                    self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.accounting_date,
+                                                                                currency=self.instrument.pricing_currency).fx_rate
 
-            try:
+            dt = self.accounting_date
 
-                accrual_size = self.instrument.get_accrual_size(dt)
+            if self.instrument.maturity_date is None or self.instrument.maturity_date == date.max:
 
-                # TODO  * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) happens in sql report
-                ytm = (accrual_size * self.instrument.accrued_multiplier) / \
-                      (self.trade_price * self.instrument.price_multiplier)
-            except ArithmeticError:
-                ytm = 0
+                try:
+
+                    accrual_size = self.instrument.get_accrual_size(dt)
+
+                    # TODO  * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) happens in sql report
+                    ytm = (accrual_size * self.instrument.accrued_multiplier) / \
+                          (self.trade_price * self.instrument.price_multiplier)
+                except ArithmeticError:
+                    ytm = 0
+
+                return ytm
+
+            x0 = self.get_instr_ytm_x0(dt)
+
+            data = self.get_instr_ytm_data(dt)
+
+            if data:
+
+                ytm = f_xirr(data, x0=x0)
+
+            else:
+                ytm = 0.0
 
             return ytm
 
-        x0 = self.get_instr_ytm_x0(dt)
-
-        data = self.get_instr_ytm_data(dt)
-
-        if data:
-
-            ytm = f_xirr(data, x0=x0)
-
-        else:
-            ytm = 0.0
-
-        return ytm
+        except Exception as e:
+            _l.error("calculate_ytm error %s" % e)
+            _l.error("calculate_ytm traceback %s" % traceback.format_exc())
 
     def save(self, *args, **kwargs):
         calc_cash = kwargs.pop('calc_cash', False)

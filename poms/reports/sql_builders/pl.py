@@ -5,12 +5,11 @@ import os
 from django.db import connection
 
 from poms.accounts.models import Account
-from poms.currencies.models import Currency, CurrencyHistory
+from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, CostMethod, InstrumentType
 from poms.portfolios.models import Portfolio
-from poms.reports.builders.balance_item import Report
-from poms.reports.builders.base_builder import BaseReportBuilder
-from poms.reports.models import BalanceReportCustomField, PLReportCustomField
+from poms.reports.common import Report
+from poms.reports.models import PLReportCustomField
 from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
     get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
     get_position_consolidation_for_select, dictfetchall
@@ -18,8 +17,6 @@ from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.users.models import EcosystemDefault
 
 from django.conf import settings
-
-import copy
 
 _l = logging.getLogger('poms.reports')
 
@@ -3064,20 +3061,21 @@ class PLReportBuilderSql:
             result_tmp = []
             result = []
 
-
-
-            for item in result_tmp_raw:
-
-                item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
-
-                result_tmp.append(item)
-
             ITEM_TYPE_INSTRUMENT = 1
             ITEM_TYPE_FX_VARIATIONS = 3
             ITEM_TYPE_FX_TRADES = 4
             ITEM_TYPE_TRANSACTION_PL = 5
             ITEM_TYPE_MISMATCH = 6
 
+            for item in result_tmp_raw:
+
+                item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
+                
+                if item['item_type'] == ITEM_TYPE_MISMATCH:
+                    if item['position_size']:
+                        result_tmp.append(item)
+                else:
+                    result_tmp.append(item)
 
             for item in result_tmp:
 

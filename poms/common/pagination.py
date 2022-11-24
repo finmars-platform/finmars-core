@@ -41,9 +41,9 @@ class PageNumberPaginationExt(PageNumberPagination):
         if page_number in self.last_page_strings:
             page_number = paginator.num_pages
 
-        _l.debug('post_paginate_queryset page_number %s' % page_number)
-        _l.debug('post_paginate_queryset page_size %s' % page_size)
-        _l.debug('post_paginate_queryset django_paginator_class %s' % self.django_paginator_class)
+        # _l.debug('post_paginate_queryset page_number %s' % page_number)
+        # _l.debug('post_paginate_queryset page_size %s' % page_size)
+        # _l.debug('post_paginate_queryset django_paginator_class %s' % self.django_paginator_class)
 
         try:
             self.page = paginator.page(page_number)
