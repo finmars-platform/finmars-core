@@ -57,10 +57,6 @@ class TransactionTypeProcess(object):
     MODE_RECALCULATE = 'recalculate'
 
     def record_execution_progress(self, message):
-
-        if not self.complex_transaction.execution_log:
-            self.complex_transaction.execution_log = ''
-
         self.complex_transaction.execution_log = self.complex_transaction.execution_log + message + '\n'
 
     def __init__(self,
@@ -101,14 +97,17 @@ class TransactionTypeProcess(object):
             self.complex_transaction = ComplexTransaction(transaction_type=self.transaction_type, date=None,
                                                           master_user=master_user)
 
+        self.complex_transaction.execution_log = ''
+
         self.record_execution_progress('Booking Complex Transaction')
+        self.record_execution_progress('Start %s ' % date_now())
         self.record_execution_progress('Transaction Type: %s' % self.transaction_type.user_code)
         self.record_execution_progress('Member: %s' % self.member)
         self.record_execution_progress('Execution_context: %s' % execution_context)
         self.record_execution_progress('==== INPUT CONTEXT VALUES ====')
-        self.record_execution_progress(str(context_values))
+        self.record_execution_progress(json.dumps(context_values, indent=4, default=str))
         self.record_execution_progress('==== INPUT VALUES ====')
-        self.record_execution_progress(str(values))
+        self.record_execution_progress(json.dumps(values, indent=4, default=str))
 
 
         self.process_mode = process_mode
@@ -179,10 +178,6 @@ class TransactionTypeProcess(object):
 
             for i in range(10):
                 self.values['phantom_instrument_%s' % i] = None
-
-
-
-
 
 
     @property
@@ -347,7 +342,7 @@ class TransactionTypeProcess(object):
         # _l.debug('self.inputs %s' % self.inputs)
 
         self.record_execution_progress('==== COMPLEX TRANSACTION VALUES ====')
-        self.record_execution_progress(str(self.values))
+        self.record_execution_progress(json.dumps(self.values, indent=4, default=str))
 
         for i in self.inputs:
 
@@ -427,6 +422,9 @@ class TransactionTypeProcess(object):
                 self.values[i.name] = value
             else:
                 _l.debug("Value is not set. No Context. No Default. input %s " % i.name)
+
+            self.record_execution_progress('==== CALCULATED INPUTS ====')
+            self.record_execution_progress(json.dumps(self.values, indent=4, default=str))
 
         # _l.debug('setvalues %s' % self.values)
 
@@ -1984,6 +1982,8 @@ class TransactionTypeProcess(object):
 
         _l.debug('execute_complex_transaction_main_expressions')
 
+        self.record_execution_progress('Calculating Description')
+
         if self.complex_transaction.transaction_type.display_expr:
 
             ctrn = formula.value_prepare(self.complex_transaction)
@@ -2009,6 +2009,10 @@ class TransactionTypeProcess(object):
                     "Cant process self.complex_transaction.transaction_type.display_expr %s" % self.complex_transaction.transaction_type.display_expr)
 
                 self.complex_transaction.text = '<InvalidExpression>'
+
+        self.record_execution_progress('Text: %s' % self.complex_transaction.text)
+
+        self.record_execution_progress('Calculating Date')
 
         if self.complex_transaction.transaction_type.date_expr:
 
@@ -2036,6 +2040,8 @@ class TransactionTypeProcess(object):
         else:
             self.complex_transaction.date = self._now
 
+        self.record_execution_progress('Date: %s' % self.complex_transaction.date)
+
     def execute_uniqueness_expression(self):
 
         # uniqueness below
@@ -2046,6 +2052,8 @@ class TransactionTypeProcess(object):
         # 4 (TREAT_AS_ERROR, gettext_lazy('Treat as error')),
 
         _l.debug('execute_uniqueness_expression self.uniqueness_reaction %s' % self.uniqueness_reaction)
+
+        self.record_execution_progress('Calculating Unique Code')
 
         if self.uniqueness_reaction:
 
@@ -2183,6 +2191,8 @@ class TransactionTypeProcess(object):
             else:
                 self.complex_transaction.transaction_unique_code = None
 
+        self.record_execution_progress('Unique Code: %s ' % self.complex_transaction.transaction_unique_code)
+
     def run_procedures_after_book(self):
 
         try:
@@ -2290,6 +2300,8 @@ class TransactionTypeProcess(object):
         if self.process_mode == self.MODE_RECALCULATE:
             return self.process_recalculate()
 
+        self.record_execution_progress('Booking Process Initialized')
+
         _l.debug('process: %s, values=%s', self.transaction_type, self.values)
 
         _l.debug('process self.process_mode %s' % self.process_mode)
@@ -2378,9 +2390,16 @@ class TransactionTypeProcess(object):
         self.execute_uniqueness_expression()
 
         if self.linked_import_task:
+
+            self.record_execution_progress('Transaction Booked during Task %s' % self.linked_import_task)
+
             self.complex_transaction.linked_import_task = self.linked_import_task
 
+        self.record_execution_progress('Complex Transaction %s Booked' % self.complex_transaction.code)
+
+        self.record_execution_progress('Saving Complex Transaction')
         self.complex_transaction.save()  # save executed text and date expression
+
 
         self.assign_permissions_to_complex_transaction()
 

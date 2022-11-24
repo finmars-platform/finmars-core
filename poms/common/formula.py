@@ -289,9 +289,9 @@ def _calculate_performance_report(evaluator, name, date_from, date_to, report_cu
         master_user = get_master_user_from_context(context)
         member = get_member_from_context(context)
 
-        from poms.reports.builders.performance_item import PerformanceReport
+        from poms.reports.common import PerformanceReport
         from poms.reports.performance_report import PerformanceReportBuilder
-        from poms.reports.builders.performance_serializers import PerformanceReportSerializer
+        from poms.reports.serializers import PerformanceReportSerializer
         from poms.instruments.models import Instrument
 
         currency = _safe_get_currency(evaluator, report_currency)
@@ -310,6 +310,7 @@ def _calculate_performance_report(evaluator, name, date_from, date_to, report_cu
         for register in registers:
             registers_instances.append(Instrument.objects.get(master_user=master_user, user_code=register))
 
+
         instance = PerformanceReport(
             report_instance_name=name,
             master_user=master_user,
@@ -325,6 +326,7 @@ def _calculate_performance_report(evaluator, name, date_from, date_to, report_cu
 
         builder = PerformanceReportBuilder(instance=instance)
         instance = builder.build_report()
+
 
         serializer = PerformanceReportSerializer(instance=instance, context=context)
 
@@ -353,8 +355,8 @@ def _calculate_balance_report(evaluator, name, report_date, report_currency, pri
         member = get_member_from_context(context)
 
         from poms.reports.sql_builders.balance import BalanceReportBuilderSql
-        from poms.reports.builders.balance_serializers import BalanceReportSqlSerializer
-        from poms.reports.builders.balance_item import Report
+        from poms.reports.serializers import BalanceReportSerializer
+        from poms.reports.common import Report
         from poms.instruments.models import Instrument
 
         from poms.users.models import EcosystemDefault
@@ -400,7 +402,8 @@ def _calculate_balance_report(evaluator, name, report_date, report_currency, pri
         builder = BalanceReportBuilderSql(instance=instance)
         instance = builder.build_balance()
 
-        serializer = BalanceReportSqlSerializer(instance=instance, context=context)
+
+        serializer = BalanceReportSerializer(instance=instance, context=context)
 
         serializer.to_representation(instance)
 
@@ -425,8 +428,8 @@ def _calculate_pl_report(evaluator, name, pl_first_date, report_date, report_cur
         member = get_member_from_context(context)
 
         from poms.reports.sql_builders.balance import PLReportBuilderSql
-        from poms.reports.builders.balance_serializers import PLReportSqlSerializer
-        from poms.reports.builders.balance_item import Report
+        from poms.legacy_reports.builders.balance_serializers import PLReportSqlSerializer
+        from poms.reports.common import Report
         from poms.instruments.models import Instrument
 
         from poms.users.models import EcosystemDefault
@@ -475,7 +478,8 @@ def _calculate_pl_report(evaluator, name, pl_first_date, report_date, report_cur
         builder = PLReportBuilderSql(instance=instance)
         instance = builder.build_balance()
 
-        serializer = PLReportSqlSerializer(instance=instance, context=context)
+
+        serializer = PLReportSerializer(instance=instance, context=context)
 
         serializer.to_representation(instance)
 
@@ -1890,8 +1894,8 @@ def _get_instrument_report_data(evaluator, instrument, report_date, report_curre
         instrument = _safe_get_instrument(evaluator, instrument)
 
         from poms.reports.sql_builders.balance import BalanceReportBuilderSql
-        from poms.reports.builders.balance_serializers import BalanceReportSqlSerializer
-        from poms.reports.builders.balance_item import Report
+        from poms.reports.serializers import BalanceReportSerializer
+        from poms.reports.common import Report
         from poms.instruments.models import Instrument
 
         from poms.users.models import EcosystemDefault
@@ -1943,7 +1947,8 @@ def _get_instrument_report_data(evaluator, instrument, report_date, report_curre
         builder = BalanceReportBuilderSql(instance=instance)
         instance = builder.build_balance()
 
-        serializer = BalanceReportSqlSerializer(instance=instance, context=context)
+
+        serializer = BalanceReportSerializer(instance=instance, context=context)
 
         data = serializer.to_representation(instance)
 
@@ -4003,12 +4008,7 @@ def _get_supported_models_serializer_class():
     from poms.integrations.serializers import PriceDownloadSchemeSerializer
     from poms.transactions.models import Transaction, ComplexTransaction
     from poms.transactions.serializers import TransactionTextRenderSerializer, ComplexTransactionEvalSerializer
-    from poms.reports.builders.balance_pl import ReportItem
-    from poms.reports.builders.balance_serializers import ReportItemEvalSerializer
-    from poms.reports.builders.transaction_item import TransactionReportItem
-    from poms.reports.builders.transaction_serializers import TransactionReportItemSerializer
-    from poms.reports.builders.cash_flow_projection_item import CashFlowProjectionReportItem
-    from poms.reports.builders.cash_flow_projection_serializers import CashFlowProjectionReportItemSerializer
+
     return {
         Account: AccountSerializer,
         Counterparty: CounterpartySerializer,
@@ -4025,9 +4025,6 @@ def _get_supported_models_serializer_class():
         PriceDownloadScheme: PriceDownloadSchemeSerializer,
         Transaction: TransactionTextRenderSerializer,
         ComplexTransaction: ComplexTransactionEvalSerializer,
-        ReportItem: ReportItemEvalSerializer,
-        TransactionReportItem: TransactionReportItemSerializer,
-        CashFlowProjectionReportItem: CashFlowProjectionReportItemSerializer,
         GeneratedEvent: GeneratedEventSerializer,
         Member: MemberSerializer
     }
