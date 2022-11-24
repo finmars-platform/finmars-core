@@ -2381,6 +2381,72 @@ def _get_default_strategy3(evaluator):
 
 _get_default_strategy3.evaluator = True
 
+def _create_task(evaluator, name, type='user_task', options=None, function_name=None, notes=None, **kwargs):
+    _l.info('_create_task task_name: %s' % name)
+
+    try:
+
+        from poms.celery_tasks.models import CeleryTask
+
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_member_from_context
+
+        master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
+
+        celery_task = CeleryTask.objects.create(master_user=master_user,
+                                                member=member,
+                                                verbose_name=name,
+                                                function_name=function_name,
+                                                type=type)
+
+
+        celery_task.options_object = options
+        celery_task.save()
+
+        return celery_task.id
+
+    except Exception as e:
+        _l.debug("_create_task.exception %s" % e)
+
+
+_create_task.evaluator = True
+
+
+def _update_task(evaluator, id, name, type=None, status='P', options=None, notes=None, error_message=None, result=None, **kwargs):
+    _l.info('_create_task task_name: %s' % name)
+
+    try:
+
+        from poms.celery_tasks.models import CeleryTask
+
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_member_from_context
+
+        celery_task = CeleryTask.objects.get(id=id)
+
+        celery_task.type = type
+        if notes:
+            celery_task.notes = notes
+        if error_message:
+            celery_task.error_message = error_message
+        if status:
+            celery_task.status = status
+        if options:
+            celery_task.options_object = options
+        if result:
+            celery_task.result_object = result
+        celery_task.save()
+
+        return celery_task.id
+
+    except Exception as e:
+        _l.debug("_create_task.exception %s" % e)
+
+
+_update_task.evaluator = True
 
 def _run_task(evaluator, task_name, **kwargs):
     _l.info('_run_task task_name: %s' % task_name)
@@ -3351,6 +3417,7 @@ FUNCTIONS = [
     SimpleEval2Def('get_default_strategy3', _get_default_strategy3),
 
     SimpleEval2Def('run_task', _run_task),
+    SimpleEval2Def('create_task', _create_task),
     SimpleEval2Def('run_pricing_procedure', _run_pricing_procedure),
     SimpleEval2Def('run_data_procedure', _run_data_procedure),
     SimpleEval2Def('run_data_procedure_sync', _run_data_procedure_sync),
