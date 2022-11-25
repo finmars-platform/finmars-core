@@ -1331,8 +1331,6 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
         # if request.method != 'GET':
         #     complex_transaction.status = ComplexTransaction.PRODUCTION
 
-        print('detail_route: /rebook: process rebook')
-
         if request.method == 'GET':
 
             instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
@@ -1350,7 +1348,8 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
             uniqueness_reaction = request.data.get('uniqueness_reaction', None)
 
-            process_st = time.perf_counter()
+            complex_transaction.execution_log = ''
+
 
             instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                               process_mode=request.data['process_mode'],
@@ -1359,7 +1358,8 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                                               context=self.get_serializer_context(),
                                               uniqueness_reaction=uniqueness_reaction, member=request.user.member)
 
-            _l.debug('rebook TransactionTypeProcess done: %s', "{:3.3f}".format(time.perf_counter() - process_st))
+            _l.info("==== INIT REBOOK ====")
+
 
             try:
                 history.set_flag_change()

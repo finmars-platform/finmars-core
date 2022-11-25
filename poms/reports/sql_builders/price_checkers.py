@@ -3,18 +3,11 @@ import time
 
 from django.db import connection
 
-from poms.accounts.models import Account
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument
-from poms.portfolios.models import Portfolio
-from poms.reports.builders.balance_item import Report
-from poms.reports.builders.base_builder import BaseReportBuilder
-from poms.reports.models import BalanceReportCustomField
-from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
-    get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
-    get_position_consolidation_for_select, get_pl_left_join_consolidation, dictfetchall, \
+from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, \
+    get_position_consolidation_for_select, dictfetchall, \
     get_cash_consolidation_for_select, get_cash_as_position_consolidation_for_select
-from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.users.models import EcosystemDefault
 from django.conf import settings
 

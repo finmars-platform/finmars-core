@@ -1,5 +1,5 @@
 from poms.currencies.models import CurrencyHistory
-from poms.reports.builders.balance_item import Report
+from poms.reports.common import Report
 
 
 def dictfetchall(cursor):

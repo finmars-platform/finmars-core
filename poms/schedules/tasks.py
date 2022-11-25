@@ -7,8 +7,8 @@ from django.conf import settings
 import logging
 
 from poms.pricing.handlers import PricingProcedureProcess
-from poms.procedures.handlers import DataProcedureProcess
-from poms.procedures.models import RequestDataFileProcedure, PricingProcedure
+from poms.procedures.handlers import DataProcedureProcess, ExpressionProcedureProcess
+from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, ExpressionProcedure
 from poms.schedules.models import Schedule, ScheduleInstance, ScheduleProcedure
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import Member, MasterUser
@@ -32,7 +32,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
 
         owner_member = Member.objects.filter(master_user=master_user, is_owner=True)[0]
 
-        if procedure.type == 'pricing':
+        if procedure.type == 'pricing_procedure':
 
             try:
 
@@ -63,7 +63,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
                 _l.info("Can't find Pricing Procedure error %s" % e)
                 _l.info("Can't find Pricing Procedure  user_code %s" % procedure.user_code)
 
-        if procedure.type == 'data_provider':
+        if procedure.type == 'data_procedure':
 
             try:
 
@@ -78,24 +78,35 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
 
                 _l.info("Can't find Request Data File Procedure %s" % procedure.user_code)
 
+        if procedure.type == 'expression_procedure':
+
+            try:
+
+                item = ExpressionProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
+
+                instance = ExpressionProcedureProcess(procedure=item, master_user=master_user, member=owner_member)
+                instance.process()
+
+            except ExpressionProcedure.DoesNotExist:
+
+                _l.info("Can't find ExpressionProcedure %s" % procedure.user_code)
+
     except Exception as e:
         _l.error('process_procedure_async e %s' % e)
         _l.error('process_procedure_async traceback %s' % traceback.format_exc())
 
 @shared_task(name='schedules.process', bind=True)
-def process(self):
-    schedule_qs = Schedule.objects.select_related('master_user').filter(
-        is_enabled=True, next_run_at__lte=timezone.now()
-    )
-    #
-    # _l.info('schedule_qs test %s' % schedule_qs.count())
+def process(self, schedule_user_code):
 
-    if schedule_qs.count():
-        _l.info('Schedules initialized: %s', schedule_qs.count())
+    try:
 
-    procedures_count = 0
+        _l.info('schedule_user_code %s' % schedule_user_code)
 
-    for s in schedule_qs:
+        s = Schedule.objects.select_related('master_user').get(
+            user_code=schedule_user_code
+        )
+
+        procedures_count = 0
 
         master_user = s.master_user
 
@@ -162,5 +173,11 @@ def process(self):
         s.last_run_at = timezone.now()
         s.save(update_fields=['last_run_at'])
 
-    if procedures_count:
-        _l.info('Schedules Finished. Procedures initialized: %s' % procedures_count)
+        _l.info("Schedule %s executed successfuly" % s)
+
+        if procedures_count:
+            _l.info('Schedules Finished. Procedures initialized: %s' % procedures_count)
+
+    except Exception as e:
+        _l.error('schedules.process. error %s' % e)
+        _l.error('schedules.process. traceback %s' % traceback.format_exc())

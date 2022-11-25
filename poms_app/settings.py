@@ -65,6 +65,8 @@ INSTALLED_APPS = [
 
     # 'poms.cache_machine',
 
+
+
     'poms.users',
     'poms.audit',
     'poms.notifications',
@@ -123,6 +125,12 @@ INSTALLED_APPS = [
     # 'two_factor',
     'django_celery_results',
     'django_celery_beat',
+
+    # ==================================
+    # = IMPORTANT LOGIC ON APP STARTUP =
+    # ==================================
+    'poms.bootstrap'
+
 ]
 
 if SERVER_TYPE == 'local':

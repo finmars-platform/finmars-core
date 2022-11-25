@@ -49,7 +49,7 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
     ExposureCalculationModelSerializer, LongUnderlyingExposureSerializer, ShortUnderlyingExposureSerializer, \
     InstrumentForSelectSerializer, InstrumentTypeProcessSerializer, CountrySerializer
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
-    only_generate_events_at_date, generate_events_do_not_inform_apply_default0, \
+    only_generate_events_at_date, \
     generate_events_do_not_inform_apply_default, only_generate_events_at_date_for_single_instrument
 from poms.integrations.models import PriceDownloadScheme
 from poms.integrations.tasks import create_currency_cbond, create_instrument_cbond
@@ -592,7 +592,7 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
 
     @action(detail=False, methods=['post'], url_path='generate-events', serializer_class=serializers.Serializer)
     def generate_events(self, request):
-        ret = generate_events.apply_async(kwargs={'master_users': [request.user.master_user.pk]})
+        ret = generate_events.apply_async()
         return Response({
             'success': True,
             'task_id': ret.id,

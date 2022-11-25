@@ -2,16 +2,15 @@ import traceback
 
 from celery import shared_task
 
-from poms.accounts.models import Account
+
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import get_closest_bday_of_yesterday
 from poms.currencies.models import Currency
 from poms.instruments.models import CostMethod, PricingPolicy
-from poms.obj_attrs.models import GenericClassifier, GenericAttributeType
 from poms.portfolios.models import Portfolio
-from poms.reports.builders.balance_item import Report
-from poms.reports.builders.balance_serializers import BalanceReportSqlSerializer, PLReportSqlSerializer
+from poms.reports.common import Report
+from poms.reports.serializers import BalanceReportSerializer
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql, PLReportBuilderSql
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import EcosystemDefault, Member
@@ -92,7 +91,7 @@ def collect_balance_report_history(self, task_id):
         builder = BalanceReportBuilderSql(instance=instance)
         instance = builder.build_balance()
 
-        serializer = BalanceReportSqlSerializer(instance=instance, context=context)
+        serializer = BalanceReportSerializer(instance=instance, context=context)
 
         instance_serialized = serializer.to_representation(instance)
 
@@ -278,7 +277,7 @@ def collect_pl_report_history(self, task_id):
         builder = PLReportBuilderSql(instance=instance)
         instance = builder.build_balance()
 
-        serializer = PLReportSqlSerializer(instance=instance, context=context)
+        serializer = PLReportSerializer(instance=instance, context=context)
 
         instance_serialized = serializer.to_representation(instance)
 

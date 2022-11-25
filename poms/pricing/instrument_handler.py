@@ -1,17 +1,16 @@
-import json
+
 import time
-from datetime import timedelta
+
 
 from django.db import transaction
 from django.db.models import Q
 
 from poms.common import formula
 from poms.common.utils import isclose, date_now
-from poms.instruments.models import Instrument, DailyPricingModel, PriceHistory, PricingCondition
+from poms.instruments.models import Instrument,  PriceHistory, PricingCondition
 from poms.integrations.models import ProviderClass, BloombergDataProviderCredential
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord
-from poms.pricing.brokers.broker_bloomberg import BrokerBloomberg
 from poms.pricing.models import InstrumentPricingSchemeType, \
     PricingProcedureBloombergInstrumentResult, PricingProcedureWtradeInstrumentResult, PriceHistoryError, \
     PricingProcedureAlphavInstrumentResult, PricingProcedureBloombergForwardInstrumentResult, \
@@ -21,13 +20,11 @@ from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_bet
     get_is_yesterday, optimize_items, roll_price_history_for_n_day_forward, get_empty_values_for_dates, \
     get_closest_tenors, group_instrument_items_by_provider, get_parameter_from_scheme_parameters
 from poms.procedures.models import PricingProcedure, PricingProcedureInstance, BaseProcedureInstance
-from poms.reports.builders.balance_item import Report, ReportItem
-from poms.reports.builders.balance_pl import ReportBuilder
 
-from datetime import date
 
 import logging
 
+from poms.reports.common import Report
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import Transaction

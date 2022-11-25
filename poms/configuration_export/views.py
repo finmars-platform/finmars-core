@@ -42,7 +42,7 @@ from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, 
     InstrumentTypePricingPolicy
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     CurrencyPricingPolicySerializer, InstrumentTypePricingPolicySerializer
-from poms.procedures.models import PricingProcedure, RequestDataFileProcedure
+from poms.procedures.models import PricingProcedure, RequestDataFileProcedure, ExpressionProcedure
 from poms.reconciliation.models import TransactionTypeReconField
 from poms.reference_tables.models import ReferenceTable, ReferenceTableRow
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
@@ -365,6 +365,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         currency_pricing_schemes = self.get_currency_pricing_schemes()
         pricing_procedures = self.get_pricing_procedures()
         data_procedures = self.get_data_procedures()
+        expression_procedures = self.get_expression_procedures()
         schedules = self.get_schedules()
 
         _l.debug('ConfigurationExportViewSet createConfiguration got pricing done: %s',
@@ -465,6 +466,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             configuration["body"].append(currency_pricing_schemes)
             configuration["body"].append(pricing_procedures)
             configuration["body"].append(data_procedures)
+            configuration["body"].append(expression_procedures)
 
             configuration["body"].append(schedules)
 
@@ -2180,6 +2182,30 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "procedures.requestdatafileprocedure",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_expression_procedures(self):
+
+        items = to_json_objects(ExpressionProcedure.objects.filter(master_user=self._master_user))
+        results = []
+
+        for item in items:
+            result_item = item["fields"]
+
+            result_item.pop("master_user", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "procedures.expressionprocedure",
             "count": len(results),
             "content": results
         }

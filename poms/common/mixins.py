@@ -222,19 +222,21 @@ class BulkDestroyModelMixin(DestroyModelMixin):
         queryset = self.filter_queryset(self.get_queryset())
         # is_fake = bool(request.query_params.get('is_fake'))
 
-        for pk in data['ids']:
+        queryset.filter(id__in=data['ids']).delete()
 
-            try:
-                instance = queryset.get(pk=pk)
-
-                try:
-                    self.check_object_permissions(request, instance)
-                except PermissionDenied:
-                    raise
-                self.perform_destroy(instance)
-
-            except ObjectDoesNotExist:
-                print("object does not exist")
+        # for pk in data['ids']:
+        #
+        #     try:
+        #         instance = queryset.get(pk=pk)
+        #
+        #         try:
+        #             self.check_object_permissions(request, instance)
+        #         except PermissionDenied:
+        #             raise
+        #         self.perform_destroy(instance)
+        #
+        #     except ObjectDoesNotExist:
+        #         print("object does not exist")
 
         # if not is_fake:
         #     for instance in queryset:

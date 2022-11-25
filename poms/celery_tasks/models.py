@@ -39,6 +39,7 @@ class CeleryTask(TimeStampedModel):
     is_system_task = models.BooleanField(default=False, verbose_name=gettext_lazy("is system task"))
 
     celery_task_id = models.CharField(null=True, max_length=255)
+    function_name = models.CharField(null=True, max_length=255)
     status = models.CharField(null=True, max_length=1, default=STATUS_INIT, choices=STATUS_CHOICES,
                               verbose_name='status')
     type = models.CharField(max_length=50, blank=True, null=True)
