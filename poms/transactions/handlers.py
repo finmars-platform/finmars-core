@@ -2382,6 +2382,8 @@ class TransactionTypeProcess(object):
         _l.debug("complex_transaction.code %s" % self.complex_transaction.code)
         _l.debug("complex_transaction.status %s" % self.complex_transaction.status)
 
+        self.complex_transaction.save()
+
         self._context['complex_transaction'] = self.complex_transaction
 
         self._save_inputs()
