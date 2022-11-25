@@ -109,6 +109,43 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name',
     ]
 
+    def create(self, request, *args, **kwargs):
+
+        calculate_portfolio_register_record.apply_async(
+            link=[
+                calculate_portfolio_register_price_history.s()
+            ],
+            kwargs={'master_users': [request.user.master_user.id]})
+
+        _l.info("Create Portfolio")
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self,  request, *args, **kwargs):
+
+        calculate_portfolio_register_record.apply_async(
+            link=[
+                calculate_portfolio_register_price_history.s()
+            ],
+            kwargs={'master_users': [request.user.master_user.id]})
+
+        _l.info("Update Portfolio")
+
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
+
+
+
 
 class PortfolioLightFilterSet(FilterSet):
     id = NoOpFilter()
