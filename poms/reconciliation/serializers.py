@@ -1,21 +1,14 @@
+from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
+from poms.common.storage import get_storage
 from poms.integrations.fields import ComplexTransactionImportSchemeRestField
 from poms.integrations.serializers import ComplexTransactionImportSchemeSerializer
 from poms.reconciliation.models import ReconciliationNewBankFileField, ReconciliationComplexTransactionField, \
     ReconciliationBankFileField, TransactionTypeReconField
 from poms.users.fields import MasterUserField, HiddenMemberField
-
-from poms.integrations.storage import import_file_storage
-
-from django.utils.translation import gettext_lazy, gettext_lazy
-from django.utils import timezone
-
-import uuid
-
-from poms.common.storage import get_storage
 from poms_app import settings
 
 storage = get_storage()

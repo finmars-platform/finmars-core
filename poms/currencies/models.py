@@ -5,6 +5,7 @@ import os
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.functional import SimpleLazyObject
@@ -16,8 +17,6 @@ from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser
-from django.core.cache import cache
-
 
 
 def _load_currencies_data():
@@ -34,7 +33,8 @@ currencies_data = SimpleLazyObject(_load_currencies_data)
 
 
 class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
-    master_user = models.ForeignKey(MasterUser, related_name='currencies', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey(MasterUser, related_name='currencies', verbose_name=gettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
     reference_for_pricing = models.CharField(max_length=100, blank=True, default='',
                                              verbose_name=gettext_lazy('reference for pricing'))
 
@@ -44,14 +44,13 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     #                                           blank=True, verbose_name=gettext_lazy('price download scheme'))
 
     pricing_condition = models.ForeignKey('instruments.PricingCondition', null=True, blank=True,
-                                            verbose_name=gettext_lazy('pricing condition'), on_delete=models.CASCADE)
+                                          verbose_name=gettext_lazy('pricing condition'), on_delete=models.CASCADE)
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
     default_fx_rate = models.FloatField(default=1, verbose_name=gettext_lazy('default fx rate'))
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('currency')
@@ -60,7 +59,6 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
             # ('view_currency', 'Can view currency'),
             ('manage_currency', 'Can manage currency'),
         ]
-
 
     @property
     def is_system(self):
@@ -72,7 +70,8 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
 
 
 class CurrencyHistory(DataTimeStampedModel):
-    currency = models.ForeignKey(Currency, related_name='histories', verbose_name=gettext_lazy('currency'), on_delete=models.CASCADE)
+    currency = models.ForeignKey(Currency, related_name='histories', verbose_name=gettext_lazy('currency'),
+                                 on_delete=models.CASCADE)
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, null=True, blank=True,
                                        verbose_name=gettext_lazy('pricing policy'))
     date = models.DateField(db_index=True, default=date_now, verbose_name=gettext_lazy('date'))
@@ -88,7 +87,6 @@ class CurrencyHistory(DataTimeStampedModel):
             ('currency', 'pricing_policy', 'date',)
         )
         ordering = ['date']
-
 
     def save(self, *args, **kwargs):
 
@@ -107,5 +105,4 @@ class CurrencyHistory(DataTimeStampedModel):
 
     def __str__(self):
         # return '%s:%s:%s:%s' % (self.currency_id, self.pricing_policy_id, self.date, self.fx_rate)
-        from datetime import date
         return '%s @%s' % (self.fx_rate, self.date)

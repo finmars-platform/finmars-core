@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('system_messages', '0007_remove_systemmessagemember_status_and_more'),
     ]
@@ -13,6 +12,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='systemmessage',
             name='section',
-            field=models.PositiveSmallIntegerField(choices=[(0, 'General'), (1, 'Events'), (2, 'Transactions'), (3, 'Instruments'), (4, 'Data'), (5, 'Prices'), (6, 'Report'), (7, 'Import'), (8, 'Activity Log'), (9, 'Schedules')], default=0, verbose_name='section'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(0, 'General'), (1, 'Events'), (2, 'Transactions'), (3, 'Instruments'), (4, 'Data'),
+                         (5, 'Prices'), (6, 'Report'), (7, 'Import'), (8, 'Activity Log'), (9, 'Schedules')], default=0,
+                verbose_name='section'),
         ),
     ]

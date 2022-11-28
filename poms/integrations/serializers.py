@@ -1,19 +1,16 @@
 from __future__ import unicode_literals, print_function
 
 import json
-
 from datetime import timedelta
 from logging import getLogger
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
-from django.utils.translation import gettext_lazy, gettext_lazy
+from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 from rest_framework.fields import empty
 from rest_framework.validators import UniqueTogetherValidator
-
-import uuid
 
 from poms.accounts.fields import AccountField, AccountTypeField
 from poms.celery_tasks.models import CeleryTask
@@ -42,7 +39,6 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     ComplexTransactionImportSchemeRuleScenario, ComplexTransactionImportSchemeCalculatedInput, \
     BloombergDataProviderCredential, PricingConditionMapping, TransactionFileResult, DataProvider
 from poms.integrations.providers.base import get_provider, ProviderException
-from poms.integrations.storage import import_file_storage
 from poms.integrations.tasks import download_instrument, test_certificate, download_instrument_cbond, \
     download_unified_data, download_currency_cbond, download_instrument_finmars_database
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
@@ -50,19 +46,16 @@ from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericAtt
     GenericClassifierSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField
-from poms.portfolios.models import Portfolio
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.transactions.fields import TransactionTypeField, TransactionTypeInputField
 from poms.users.fields import MasterUserField, MemberField, HiddenMemberField
-
-from django.core.validators import RegexValidator
-
 from poms.users.models import EcosystemDefault
 from poms_app import settings
 
 _l = getLogger('poms.integrations')
 
 from poms.common.storage import get_storage
+
 storage = get_storage()
 
 
@@ -1005,7 +998,8 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
 
 
 class ImportInstrumentEntry(object):
-    def __init__(self, master_user=None, member=None, instrument_code=None, instrument_name=None, instrument_type_code=None, instrument_download_scheme=None,
+    def __init__(self, master_user=None, member=None, instrument_code=None, instrument_name=None,
+                 instrument_type_code=None, instrument_download_scheme=None,
                  task=None, task_result_overrides=None, instrument=None, errors=None):
         self.master_user = master_user
         self.member = member
@@ -1680,7 +1674,8 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     rule_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
-    data_preprocess_expression = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default='', allow_blank=True, allow_null=True)
+    data_preprocess_expression = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default='',
+                                                 allow_blank=True, allow_null=True)
 
     inputs = ComplexTransactionImportSchemeInputSerializer(many=True, read_only=False)
     calculated_inputs = ComplexTransactionImportSchemeCalculatedInputSerializer(many=True, read_only=False,
@@ -2044,8 +2039,6 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
         json_data = validated_data.get('json_data', None)
 
         print('filetmp %s' % filetmp)
-
-
 
         file_name = None
         if filetmp:

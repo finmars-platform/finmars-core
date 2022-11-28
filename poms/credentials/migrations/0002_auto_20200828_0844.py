@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('credentials', '0001_initial'),
     ]
@@ -13,6 +12,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='credentials',
             name='type',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Username with password'), (2, 'SSH username with private key'), (2, 'Username with password and private key')], db_index=True, default=1, verbose_name='type'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(1, 'Username with password'), (2, 'SSH username with private key'),
+                         (2, 'Username with password and private key')], db_index=True, default=1, verbose_name='type'),
         ),
     ]

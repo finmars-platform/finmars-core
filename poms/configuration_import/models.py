@@ -1,9 +1,9 @@
+import json
+
 from django.contrib.contenttypes.models import ContentType
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
-
-import json
-from django.core.serializers.json import DjangoJSONEncoder
 
 from poms.users.models import MasterUser
 

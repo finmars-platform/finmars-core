@@ -1,25 +1,19 @@
 from __future__ import unicode_literals
 
+from logging import getLogger
+
 import django_filters
 from django.contrib.auth.models import User
 from django_filters.rest_framework import FilterSet
-
-from rest_framework.mixins import DestroyModelMixin
 from rest_framework.decorators import action
+from rest_framework.mixins import DestroyModelMixin
 from rest_framework.response import Response
-from rest_framework.authentication import SessionAuthentication
 
 from poms.common.filters import CharFilter
 from poms.common.views import AbstractReadOnlyModelViewSet
 from poms.http_sessions.models import Session
 from poms.http_sessions.serializers import SessionSerializer, SetSessionSerializer
 from poms.users.filters import OwnerByUserFilter
-
-
-
-
-from logging import getLogger
-
 from poms.users.models import MasterUser, UserProfile, Member
 
 _l = getLogger('poms.http_sessions')
@@ -48,7 +42,8 @@ class SessionViewSet(DestroyModelMixin, AbstractReadOnlyModelViewSet):
         'user_ip', 'user_agent',
     ]
 
-    @action(detail=False, methods=('POST',), url_path='set-session', serializer_class=SetSessionSerializer, permission_classes=[],filter_backends=[])
+    @action(detail=False, methods=('POST',), url_path='set-session', serializer_class=SetSessionSerializer,
+            permission_classes=[], filter_backends=[])
     def set_session(self, request):
 
         _l.info("request.data %s" % request.data)
@@ -96,7 +91,6 @@ class SessionViewSet(DestroyModelMixin, AbstractReadOnlyModelViewSet):
             except Member.DoesNotExist:
                 _l.info("Member not found")
 
-
         session.user = user
         session.current_master_user = master_user
         session.current_member = member
@@ -104,4 +98,3 @@ class SessionViewSet(DestroyModelMixin, AbstractReadOnlyModelViewSet):
         session.save()
 
         return Response({'success': True})
-

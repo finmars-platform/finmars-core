@@ -4,7 +4,7 @@ import logging
 from abc import abstractmethod
 from datetime import date
 from io import StringIO
-from math import isnan, copysign
+from math import isnan
 
 from poms.common.formula_accruals import f_xirr, f_duration
 from poms.common.utils import isclose

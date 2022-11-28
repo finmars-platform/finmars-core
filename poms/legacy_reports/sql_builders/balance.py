@@ -1,16 +1,14 @@
 import logging
 import time
 
+from django.conf import settings
 from django.db import connection
-from rest_framework.exceptions import APIException
 
 from poms.accounts.models import Account
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, InstrumentType, LongUnderlyingExposure, ShortUnderlyingExposure, \
     ExposureCalculationModel
 from poms.portfolios.models import Portfolio
-from poms.reports.builders.balance_item import Report
-from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.models import BalanceReportCustomField
 from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
     get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
@@ -19,7 +17,6 @@ from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string,
 from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.users.models import EcosystemDefault
-from django.conf import settings
 
 _l = logging.getLogger('poms.reports')
 
@@ -64,13 +61,16 @@ class BalanceReportBuilderSql:
 
             transaction_filter_sql_string = get_transaction_filter_sql_string(self.instance)
             report_fx_rate = get_report_fx_rate(self.instance, self.instance.report_date)
-            fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(self.instance)
-            transactions_all_with_multipliers_where_expression = get_where_expression_for_position_consolidation(self.instance,
-                                                                                                                 prefix="tt_w_m.", prefix_second="t_o.")
+            fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
+                self.instance)
+            transactions_all_with_multipliers_where_expression = get_where_expression_for_position_consolidation(
+                self.instance,
+                prefix="tt_w_m.", prefix_second="t_o.")
             consolidation_columns = get_position_consolidation_for_select(self.instance)
             tt_consolidation_columns = get_position_consolidation_for_select(self.instance, prefix="tt.")
             tt_in1_consolidation_columns = get_position_consolidation_for_select(self.instance, prefix="tt_in1.")
-            balance_q_consolidated_select_columns = get_position_consolidation_for_select(self.instance, prefix="balance_q.")
+            balance_q_consolidated_select_columns = get_position_consolidation_for_select(self.instance,
+                                                                                          prefix="balance_q.")
             pl_left_join_consolidation = get_pl_left_join_consolidation(self.instance)
             fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
                 self.instance)
@@ -81,12 +81,14 @@ class BalanceReportBuilderSql:
             _l.debug('report_currency: "%s"' % self.instance.report_currency.id)
             _l.debug('pricing_policy: "%s"' % self.instance.pricing_policy.id)
             _l.debug('transaction_filter_sql_string: "%s"' % transaction_filter_sql_string)
-            _l.debug('fx_trades_and_fx_variations_filter_sql_string: "%s"' % fx_trades_and_fx_variations_filter_sql_string)
+            _l.debug(
+                'fx_trades_and_fx_variations_filter_sql_string: "%s"' % fx_trades_and_fx_variations_filter_sql_string)
             _l.debug('consolidation_columns: "%s"' % consolidation_columns)
             _l.debug('balance_q_consolidated_select_columns: "%s"' % balance_q_consolidated_select_columns)
             _l.debug('tt_consolidation_columns: "%s"' % tt_consolidation_columns)
             _l.debug('tt_in1_consolidation_columns: "%s"' % tt_in1_consolidation_columns)
-            _l.debug('transactions_all_with_multipliers_where_expression: "%s"' % transactions_all_with_multipliers_where_expression)
+            _l.debug(
+                'transactions_all_with_multipliers_where_expression: "%s"' % transactions_all_with_multipliers_where_expression)
 
             pl_query = pl_query.format(report_date=self.instance.report_date,
                                        master_user_id=self.instance.master_user.id,
@@ -1450,9 +1452,8 @@ class BalanceReportBuilderSql:
 
                                  pl_query=pl_query,
                                  pl_left_join_consolidation=pl_left_join_consolidation,
-                                 fx_trades_and_fx_variations_filter_sql_string= fx_trades_and_fx_variations_filter_sql_string
+                                 fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string
                                  )
-
 
             if settings.SERVER_TYPE == 'local':
                 with open('/tmp/query_raw.txt', 'w') as the_file:
@@ -1467,7 +1468,6 @@ class BalanceReportBuilderSql:
             if settings.SERVER_TYPE == 'local':
                 with open('/tmp/query_result.txt', 'w') as the_file:
                     the_file.write(query_str)
-
 
             result = dictfetchall(cursor)
 
@@ -1497,7 +1497,6 @@ class BalanceReportBuilderSql:
 
                 result_item['market_value_loc'] = item['market_value_loc']
                 result_item['exposure_loc'] = item['exposure_loc']
-
 
                 if "portfolio_id" not in item:
                     result_item["portfolio_id"] = self.ecosystem_defaults.portfolio_id
@@ -1552,7 +1551,6 @@ class BalanceReportBuilderSql:
                 result_item["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
                 result_item["instrument_principal_price"] = item["instrument_principal_price"]
                 result_item["instrument_accrued_price"] = item["instrument_accrued_price"]
-
 
                 result_item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
 
@@ -1614,7 +1612,6 @@ class BalanceReportBuilderSql:
                 result_item["overheads_fixed_loc"] = item["overheads_fixed_opened_loc"]
                 result_item["total_fixed_loc"] = item["total_fixed_opened_loc"]
 
-
                 # Position * ( Long Underlying Exposure - Short Underlying Exposure)
                 # "Underlying Long/Short Exposure - Split":
                 # Position * Long Underlying Exposure
@@ -1625,24 +1622,31 @@ class BalanceReportBuilderSql:
 
                 if item["long_underlying_exposure_id"] == LongUnderlyingExposure.ZERO:
                     long = item["exposure_long_underlying_zero"]
-                if item["long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE:
+                if item[
+                    "long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE:
                     long = item["exposure_short_underlying_price"]
                 if item["long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_DELTA:
                     long = item["exposure_long_underlying_price_delta"]
-                if item["long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE:
+                if item[
+                    "long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE:
                     long = item["exposure_long_underlying_fx_rate"]
-                if item["long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE:
+                if item[
+                    "long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE:
                     long = item["exposure_long_underlying_fx_rate_delta"]
 
                 if item["short_underlying_exposure_id"] == ShortUnderlyingExposure.ZERO:
                     short = item["exposure_short_underlying_zero"]
-                if item["short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE:
+                if item[
+                    "short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE:
                     short = item["exposure_short_underlying_price"]
-                if item["short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA:
+                if item[
+                    "short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA:
                     short = item["exposure_short_underlying_price_delta"]
-                if item["short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE:
+                if item[
+                    "short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE:
                     short = item["exposure_short_underlying_fx_rate"]
-                if item["short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE:
+                if item[
+                    "short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE:
                     short = item["exposure_short_underlying_fx_rate_delta"]
 
                 if item["exposure_calculation_model_id"] == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_NET:
@@ -1654,10 +1658,9 @@ class BalanceReportBuilderSql:
                 if long is None:
                     long = 0
 
-                if item["exposure_calculation_model_id"] == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT:
+                if item[
+                    "exposure_calculation_model_id"] == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT:
                     result_item["exposure"] = result_item["position_size"] * long
-
-
 
                 if round(item['position_size'], settings.ROUND_NDIGITS):
 
@@ -1675,7 +1678,6 @@ class BalanceReportBuilderSql:
                                 "currency_id": item["currency_id"],
                                 "instrument_id": item["instrument_id"],
                                 "portfolio_id": item["portfolio_id"],
-
 
                                 "account_cash_id": item["account_cash_id"],
                                 "strategy1_cash_id": item["strategy1_cash_id"],
@@ -1702,7 +1704,8 @@ class BalanceReportBuilderSql:
                                 "exposure_currency_id": item["counter_directional_exposure_currency_id"]
                             }
 
-                            if item["exposure_calculation_model_id"] == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT:
+                            if item[
+                                "exposure_calculation_model_id"] == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT:
                                 new_exposure_item["exposure"] = -item["position_size"] * short
 
                             new_exposure_item["position_size"] = None
@@ -1793,13 +1796,12 @@ class BalanceReportBuilderSql:
         ).filter(master_user=self.instance.master_user) \
             .filter(id__in=ids)
 
-
     def add_data_items_portfolios(self, ids):
 
         self.instance.item_portfolios = Portfolio.objects.prefetch_related(
             'attributes'
         ).defer('object_permissions', 'responsibles', 'counterparties', 'transaction_types', 'accounts') \
-            .filter(master_user=self.instance.master_user)\
+            .filter(master_user=self.instance.master_user) \
             .filter(
             id__in=ids)
 
@@ -1840,7 +1842,6 @@ class BalanceReportBuilderSql:
             'attributes__classifier',
         ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
 
-
     def add_data_items(self):
 
         instance_relations_st = time.perf_counter()
@@ -1850,7 +1851,8 @@ class BalanceReportBuilderSql:
 
         permissions_st = time.perf_counter()
 
-        _l.debug('_refresh_with_perms_optimized permissions done: %s', "{:3.3f}".format(time.perf_counter() - permissions_st))
+        _l.debug('_refresh_with_perms_optimized permissions done: %s',
+                 "{:3.3f}".format(time.perf_counter() - permissions_st))
 
         item_relations_st = time.perf_counter()
 
@@ -1891,7 +1893,6 @@ class BalanceReportBuilderSql:
             if 'strategy3_position_id' in item:
                 strategies3_ids.append(item['strategy3_position_id'])
 
-
             if 'strategy1_cash_id' in item:
                 strategies1_ids.append(item['strategy1_cash_id'])
 
@@ -1900,7 +1901,6 @@ class BalanceReportBuilderSql:
 
             if 'strategy3_cash_id' in item:
                 strategies3_ids.append(item['strategy3_cash_id'])
-
 
         instrument_ids = list(set(instrument_ids))
         portfolio_ids = list(set(portfolio_ids))
@@ -1926,6 +1926,7 @@ class BalanceReportBuilderSql:
 
         self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
 
-        _l.info('_refresh_with_perms_optimized item relations done: %s', "{:3.3f}".format(time.perf_counter() - item_relations_st))
+        _l.info('_refresh_with_perms_optimized item relations done: %s',
+                "{:3.3f}".format(time.perf_counter() - item_relations_st))
 
         _l.info('add_data_items_strategies1 %s ' % self.instance.item_strategies1)

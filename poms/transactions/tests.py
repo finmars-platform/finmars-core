@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 
 from poms.common.tests import BaseApiWithPermissionTestCase, BaseAttributeTypeApiTestCase, \
     BaseNamedModelTestCase
-from poms.obj_perms.utils import get_perms_codename
 from poms.transactions.models import TransactionType, TransactionTypeGroup, Transaction
 
 
@@ -49,7 +48,8 @@ class TransactionTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTe
         return self.get_transaction_type_group(name, self._a_master_user)
 
     def _make_new_data(self, **kwargs):
-        group = self.get_transaction_type_group(kwargs['group'], self._a_master_user) if 'group' in kwargs else self.group_def
+        group = self.get_transaction_type_group(kwargs['group'],
+                                                self._a_master_user) if 'group' in kwargs else self.group_def
         kwargs['group'] = group.id
 
         if 'display_expr' not in kwargs:

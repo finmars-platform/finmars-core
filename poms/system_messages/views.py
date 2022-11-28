@@ -1,21 +1,16 @@
+from logging import getLogger
+
+import django_filters
+from django.db.models import Q
 from django_filters.rest_framework import FilterSet
 from rest_framework.response import Response
-import django_filters
-from poms.common.filters import CharFilter
-from django.db.models import Q
-from itertools import chain
 
+from poms.common.filters import CharFilter
 from poms.common.views import AbstractModelViewSet
 from poms.system_messages.filters import SystemMessageOnlyNewFilter, OwnerBySystemMessageMember
-
-from poms.users.filters import OwnerByMasterUserFilter
-
 from poms.system_messages.models import SystemMessage
 from poms.system_messages.serializers import SystemMessageSerializer, SystemMessageActionSerializer
-
-from rest_framework.views import APIView
-
-from logging import getLogger
+from poms.users.filters import OwnerByMasterUserFilter
 
 _l = getLogger('poms.system_messages')
 from rest_framework.decorators import action
@@ -92,7 +87,8 @@ class MessageViewSet(AbstractModelViewSet):
 
         if page is None or page == "1":
 
-            pinned_queryset = self.get_queryset().filter(members__is_pinned=True,  members__is_read=True,  members__member=request.user.member)
+            pinned_queryset = self.get_queryset().filter(members__is_pinned=True, members__is_read=True,
+                                                         members__member=request.user.member)
 
             if type:
                 pinned_queryset = pinned_queryset.filter(type__in=type)
@@ -178,8 +174,9 @@ class MessageViewSet(AbstractModelViewSet):
             'name': section_mapping[section],
             'errors': get_count(SystemMessage.TYPE_ERROR) + get_count(SystemMessage.TYPE_ERROR, is_pinned=True),
             'warning': get_count(SystemMessage.TYPE_WARNING) + get_count(SystemMessage.TYPE_WARNING, is_pinned=True),
-            'information': get_count(SystemMessage.TYPE_INFORMATION) + get_count(SystemMessage.TYPE_INFORMATION, is_pinned=True),
-            'success': get_count(SystemMessage.TYPE_SUCCESS)  + get_count(SystemMessage.TYPE_SUCCESS, is_pinned=True)
+            'information': get_count(SystemMessage.TYPE_INFORMATION) + get_count(SystemMessage.TYPE_INFORMATION,
+                                                                                 is_pinned=True),
+            'success': get_count(SystemMessage.TYPE_SUCCESS) + get_count(SystemMessage.TYPE_SUCCESS, is_pinned=True)
         }
 
         return stats
@@ -203,7 +200,6 @@ class MessageViewSet(AbstractModelViewSet):
             only_new = True
         else:
             only_new = False
-
 
         result = []
 
@@ -306,7 +302,6 @@ class MessageViewSet(AbstractModelViewSet):
             for member_message in message.members.all():
 
                 if request.user.member.id == member_message.member_id:
-
                     member_message.is_read = True
                     member_message.save()
 

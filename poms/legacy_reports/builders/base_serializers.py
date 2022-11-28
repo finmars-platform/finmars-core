@@ -1,44 +1,30 @@
 from __future__ import unicode_literals
 
+import logging
 import time
 
 from django.utils.functional import cached_property
 from rest_framework import serializers
+from rest_framework.fields import SkipField
+from rest_framework.relations import PKOnlyObject
+from simplejson import OrderedDict
 
 from poms.accounts.models import Account, AccountType
-from poms.accounts.serializers import AccountSerializer
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithUserCodeSerializer
 from poms.counterparties.serializers import ResponsibleSerializer, \
     CounterpartySerializer
 from poms.currencies.models import CurrencyHistory, Currency
-from poms.currencies.serializers import CurrencySerializer, CurrencyHistorySerializer
 from poms.instruments.models import Instrument, InstrumentType, PriceHistory
-from poms.instruments.serializers import InstrumentSerializer, PriceHistorySerializer, \
-    AccrualCalculationScheduleSerializer, InstrumentTypeViewSerializer, PaymentSizeDetailSerializer, \
-    DailyPricingModelSerializer, InstrumentClassSerializer
-from poms.integrations.fields import PriceDownloadSchemeField
-from poms.obj_attrs.fields import GenericClassifierField
+from poms.instruments.serializers import AccrualCalculationScheduleSerializer, InstrumentClassSerializer
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
-from poms.obj_attrs.serializers import GenericAttributeTypeSerializer, GenericAttributeSerializer, \
-    ModelWithAttributesSerializer, GenericClassifierSerializer, GenericClassifierWithoutChildrenSerializer, \
-    GenericClassifierViewSerializer
+from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericClassifierViewSerializer
 from poms.portfolios.models import Portfolio
-from poms.portfolios.serializers import PortfolioSerializer
 from poms.reports.serializers import BalanceReportCustomFieldSerializer, TransactionReportCustomFieldSerializer
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
-from poms.strategies.serializers import Strategy1Serializer, Strategy2Serializer, Strategy3Serializer, \
-    Strategy2SubgroupViewSerializer, Strategy1SubgroupViewSerializer, Strategy3SubgroupViewSerializer
 from poms.transactions.models import ComplexTransaction
-from poms.transactions.serializers import ComplexTransactionSerializer, TransactionTypeViewSerializer
-from poms.users.fields import MasterUserField
-
-from rest_framework.fields import SkipField
-from rest_framework.relations import PKOnlyObject
-from simplejson import OrderedDict
-
-import logging
+from poms.transactions.serializers import TransactionTypeViewSerializer
 
 _l = logging.getLogger('poms.reports')
 
@@ -66,13 +52,12 @@ class ReportGenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = GenericAttributeType
         fields = ['id', 'user_code', 'name', 'short_name', 'public_name', 'notes',
-                  'value_type',]
+                  'value_type', ]
 
         read_only_fields = fields
 
 
 class ReportGenericAttributeSerializer(serializers.ModelSerializer):
-
     attribute_type_object = ReportGenericAttributeTypeSerializer(source='attribute_type', read_only=True)
     classifier_object = GenericClassifierViewSerializer(source='classifier', read_only=True)
 
@@ -81,12 +66,10 @@ class ReportGenericAttributeSerializer(serializers.ModelSerializer):
 
         super(ReportGenericAttributeSerializer, self).__init__(*args, **kwargs)
 
-
-
     class Meta:
         model = GenericAttribute
         fields = [
-            'id',  'value_string', 'value_float', 'value_date',
+            'id', 'value_string', 'value_float', 'value_date',
             'classifier', 'classifier_object',
             'attribute_type', 'attribute_type_object',
         ]
@@ -110,9 +93,9 @@ class ReportPriceHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = PriceHistory
         fields = [
-            'id', 'instrument', 'pricing_policy',
-            'date', 'principal_price', 'accrued_price'
-        ],
+                     'id', 'instrument', 'pricing_policy',
+                     'date', 'principal_price', 'accrued_price'
+                 ],
         read_only_fields = fields
 
 
@@ -124,7 +107,6 @@ class ReportCurrencySerializer(ModelWithUserCodeSerializer, ModelWithAttributesS
 
         self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
 
-
     class Meta:
         model = Currency
         fields = [
@@ -135,7 +117,6 @@ class ReportCurrencySerializer(ModelWithUserCodeSerializer, ModelWithAttributesS
 
 
 class ReportInstrumentTypeSerializer(ModelWithUserCodeSerializer):
-
     instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)
 
     def __init__(self, *args, **kwargs):
@@ -154,7 +135,7 @@ class ReportInstrumentTypeSerializer(ModelWithUserCodeSerializer):
 
 
 class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
-# class ReportInstrumentSerializer(ModelWithUserCodeSerializer):
+    # class ReportInstrumentSerializer(ModelWithUserCodeSerializer):
 
     # instrument_type_object = ReportInstrumentTypeSerializer(source='instrument_type', read_only=True) # TODO Improve later, create separte Serializer without permission check
 
@@ -168,14 +149,13 @@ class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCod
 
         self.fields['attributes'] = ReportGenericAttributeSerializer(many=True, required=False, allow_null=True)
 
-
     class Meta:
         model = Instrument
         fields = [
-            'id', 'instrument_type',  'user_code', 'name', 'short_name',
+            'id', 'instrument_type', 'user_code', 'name', 'short_name',
             'public_name', 'notes',
             'pricing_currency', 'price_multiplier',
-            'accrued_currency',  'accrued_multiplier',
+            'accrued_currency', 'accrued_multiplier',
             'default_price', 'default_accrued',
             'user_text_1', 'user_text_2', 'user_text_3',
             'reference_for_pricing',
@@ -187,7 +167,6 @@ class ReportInstrumentSerializer(ModelWithAttributesSerializer, ModelWithUserCod
         read_only_fields = fields
 
     def to_representation(self, instance):
-
         st = time.perf_counter()
 
         res = super(ReportInstrumentSerializer, self).to_representation(instance)
@@ -232,7 +211,6 @@ class ReportPortfolioSerializer(ModelWithAttributesSerializer, ModelWithUserCode
 
 
 class ReportAccountTypeSerializer(ModelWithUserCodeSerializer):
-
     transaction_details_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                                allow_null=True, default='""')
 
@@ -280,7 +258,7 @@ class ReportStrategy1Serializer(ModelWithUserCodeSerializer):
     class Meta:
         model = Strategy1
         fields = [
-            'id',  'subgroup', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'id', 'subgroup', 'user_code', 'name', 'short_name', 'public_name', 'notes',
             # 'subgroup_object',
         ]
         read_only_fields = fields
@@ -298,7 +276,7 @@ class ReportStrategy2Serializer(ModelWithUserCodeSerializer):
     class Meta:
         model = Strategy2
         fields = [
-            'id',  'subgroup', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'id', 'subgroup', 'user_code', 'name', 'short_name', 'public_name', 'notes',
             # 'subgroup_object',
         ]
         read_only_fields = fields
@@ -316,7 +294,7 @@ class ReportStrategy3Serializer(ModelWithUserCodeSerializer):
     class Meta:
         model = Strategy3
         fields = [
-            'id',  'subgroup', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'id', 'subgroup', 'user_code', 'name', 'short_name', 'public_name', 'notes',
             # 'subgroup_object',
         ]
         read_only_fields = fields
@@ -355,7 +333,6 @@ class ReportCounterpartySerializer(CounterpartySerializer):
         # self.fields.pop('group_object_permissions')
         # self.fields.pop('object_permissions')
 
-
         self.fields.pop('is_default')
 
 
@@ -378,7 +355,8 @@ class ReportComplexTransactionSerializer(ModelWithAttributesSerializer):
             if str(k).endswith('_object'):
                 self.fields.pop(k)
 
-        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(source='transaction_type', read_only=True)
+        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(source='transaction_type',
+                                                                               read_only=True)
 
     class Meta:
         model = ComplexTransaction
@@ -421,8 +399,8 @@ class ReportItemBalanceReportCustomFieldSerializer(serializers.Serializer):
         return [
             field for field in self.fields.values()
             if not field.write_only and (
-                not custom_fields_hide_objects or field.field_name not in ('custom_field_object',))
-            ]
+                    not custom_fields_hide_objects or field.field_name not in ('custom_field_object',))
+        ]
 
 
 class ReportItemTransactionReportCustomFieldSerializer(serializers.Serializer):
@@ -435,7 +413,8 @@ class ReportItemTransactionReportCustomFieldSerializer(serializers.Serializer):
 
         super(ReportItemTransactionReportCustomFieldSerializer, self).__init__(*args, **kwargs)
 
-        self.fields['custom_field_object'] = TransactionReportCustomFieldSerializer(source='custom_field', read_only=True)
+        self.fields['custom_field_object'] = TransactionReportCustomFieldSerializer(source='custom_field',
+                                                                                    read_only=True)
 
     @cached_property
     def _readable_fields(self):
@@ -445,6 +424,7 @@ class ReportItemTransactionReportCustomFieldSerializer(serializers.Serializer):
             if not field.write_only and (
                     not custom_fields_hide_objects or field.field_name not in ('custom_field_object',))
         ]
+
 
 class ReportSerializerWithLogs(serializers.Serializer):
 

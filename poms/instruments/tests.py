@@ -1,11 +1,8 @@
 from __future__ import unicode_literals
 
-from rest_framework import status
-
 from poms.common.tests import BaseApiWithPermissionTestCase, BaseApiWithAttributesTestCase, \
-    BaseAttributeTypeApiTestCase,BaseNamedModelTestCase
+    BaseAttributeTypeApiTestCase, BaseNamedModelTestCase
 from poms.instruments.models import InstrumentType, Instrument, InstrumentClass
-from poms.obj_perms.utils import get_perms_codename
 
 
 def load_tests(loader, standard_tests, pattern):
@@ -24,7 +21,6 @@ class InstrumentTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTes
         self._change_permission = 'change_instrumenttype'
 
     def _create_obj(self, name='instrument_type', accrued_currency=None):
-
         accrued_currency = accrued_currency or self.get_currency('USD', self._a_master_user)
 
         return self.create_instrument_type(name, self._a_master_user, accrued_currency=accrued_currency)
@@ -77,7 +73,8 @@ class InstrumentApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCas
         instrument_type = instrument_type or self.type_def
         pricing_currency = pricing_currency or self.get_currency('USD', self._a_master_user)
         accrued_currency = accrued_currency or self.get_currency('USD', self._a_master_user)
-        return self.create_instrument(name, self._a_master_user, instrument_type=instrument_type, pricing_currency=pricing_currency,
+        return self.create_instrument(name, self._a_master_user, instrument_type=instrument_type,
+                                      pricing_currency=pricing_currency,
                                       accrued_currency=accrued_currency)
 
     def _get_obj(self, name='instrument'):

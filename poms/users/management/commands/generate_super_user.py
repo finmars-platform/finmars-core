@@ -1,6 +1,4 @@
 from django.core.management import BaseCommand
-from django.db import transaction
-
 
 __author__ = 'szhitenev'
 

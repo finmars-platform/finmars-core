@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('procedures', '0022_expressionprocedure_expressionprocedureinstance'),
     ]

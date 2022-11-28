@@ -1,21 +1,12 @@
-from django.apps import apps
-
-from poms.common.filtering_handlers import handle_filters, handle_global_table_search
-from poms.common.utils import force_qs_evaluation
-from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
-
-from django.db.models import Count, Sum, F, Value, Aggregate
-from django.db.models.functions import Lower
-
-from django.db.models import CharField, Case, When
-from django.db.models.functions import Coalesce
-from django.contrib.contenttypes.models import ContentType
-
-from django.db.models import Q
-
+import logging
 import time
 
-import logging
+from django.apps import apps
+from django.db.models import F
+from django.db.models import Q
+
+from poms.common.filtering_handlers import handle_filters, handle_global_table_search
+from poms.obj_attrs.models import GenericAttributeType
 
 _l = logging.getLogger('poms.common')
 
@@ -138,7 +129,6 @@ def is_attribute(item):
 
 
 def get_root_system_attr_group(qs, root_group, groups_order):
-
     if is_relation(root_group):
 
         qs = qs.values(root_group) \
@@ -148,11 +138,11 @@ def get_root_system_attr_group(qs, root_group, groups_order):
             .values('group_name', 'group_identifier') \
             .order_by()
     else:
-            qs = qs \
-                .distinct() \
-                .annotate(group_name=F(root_group), group_identifier=F(root_group)) \
-                .values('group_name', 'group_identifier') \
-                .order_by(root_group)
+        qs = qs \
+            .distinct() \
+            .annotate(group_name=F(root_group), group_identifier=F(root_group)) \
+            .values('group_name', 'group_identifier') \
+            .order_by(root_group)
 
     if groups_order == 'asc':
         qs = qs.order_by(F('group_name').asc())
@@ -422,8 +412,8 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
     return qs
 
 
-def count_groups(qs, groups_types, group_values, master_user, original_qs, content_type, filter_settings, ev_options, global_table_search):
-
+def count_groups(qs, groups_types, group_values, master_user, original_qs, content_type, filter_settings, ev_options,
+                 global_table_search):
     Model = apps.get_model(app_label=content_type.app_label, model_name=content_type.model)
 
     start_time = time.time()
@@ -436,7 +426,7 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
     for item in qs:
 
         options = {}
-        
+
         index = 0
 
         # _l.info('item %s' % item['group_identifier'])
@@ -457,7 +447,6 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                 else:
                     value = item['group_identifier']
 
-
                 attribute_options = {
                     "attributes__attribute_type": attribute_type
                 }
@@ -468,15 +457,12 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                 for key, val in options.items():
                     attribute_options[key] = val
 
-
                 if attribute_type.value_type == 20:
-
                     attribute_options["attributes__value_float"] = value
 
                     result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
 
                 if attribute_type.value_type == 10:
-
                     attribute_options["attributes__value_string"] = value
 
                     # _l.info('attribute_options %s' % attribute_options)
@@ -484,11 +470,9 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                     result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
 
                 if attribute_type.value_type == 30:
-
                     attribute_options["attributes__classifier"] = value
 
                     result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
-
 
                     # _l.info('attributes__classifier__name group_values %s ' % group_values)
                     # _l.info('attributes__classifier__name index %s ' % index)
@@ -496,11 +480,9 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                     # _l.info('attributes__classifier__name result %s ' % result)
 
                 if attribute_type.value_type == 40:
-
                     attribute_options["attributes__value_date"] = value
 
                     result = Model.objects.filter(Q(**attribute_options)).values_list('id', flat=True)
-
 
                 # _l.info('result %s' % result)
 
@@ -523,10 +505,9 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
 
             index = index + 1
 
-
         if content_type.model in ['currencyhistory', 'currencyhistoryerror']:
             options['currency__master_user_id'] = master_user.pk
-        elif content_type.model in [ 'pricehistory', 'pricehistoryerror']:
+        elif content_type.model in ['pricehistory', 'pricehistoryerror']:
             options['instrument__master_user_id'] = master_user.pk
         else:
             options['master_user_id'] = master_user.pk
@@ -549,7 +530,6 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                     if content_type.model not in ['complextransaction']:
                         if 'disabled' not in ev_options['entity_filters']:
                             options['is_enabled'] = True
-
 
         # _l.info('options %s' % options)
 

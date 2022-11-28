@@ -10,15 +10,10 @@ def load_tests(loader, standard_tests, pattern):
     return t(loader, standard_tests, pattern)
 
 
-
-
-
 class PortfolioAttributeTypeApiTestCase(BaseAttributeTypeApiTestCase):
-
     base_model = Portfolio
 
     def setUp(self):
-
         super(PortfolioAttributeTypeApiTestCase, self).setUp()
 
         self._url_list = '/api/v1/portfolios/portfolio-attribute-type/'
@@ -31,7 +26,6 @@ class PortfolioApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase
     model = Portfolio
 
     def setUp(self):
-
         super(PortfolioApiTestCase, self).setUp()
 
         self._url_list = '/api/v1/portfolios/portfolio/'

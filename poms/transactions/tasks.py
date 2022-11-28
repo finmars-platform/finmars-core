@@ -11,7 +11,6 @@ from django.contrib.contenttypes.models import ContentType
 from poms.accounts.models import Account
 from poms.celery_tasks.models import CeleryTask
 from poms.common import formula
-from poms.common.utils import datetime_now
 from poms.obj_perms.models import GenericObjectPermission
 from poms.portfolios.models import Portfolio
 from poms.transactions.models import Transaction, ComplexTransaction, TransactionType, ComplexTransactionInput, \
@@ -27,7 +26,6 @@ celery_logger = get_task_logger(__name__)
 
 #  TODO UPDATE LOGIC
 def get_access_to_inputs(group_id, complex_transaction):
-
     # print('get_access_to_inputs: group_id %s' % group_id)
 
     result = None
@@ -160,7 +158,6 @@ def get_complex_transaction_codename(group_id, complex_transaction, transaction_
 
 
 def get_transaction_access_type(group, transaction, accounts_permissions_grouped, portfolios_permissions_grouped):
-
     result = None
 
     has_portfolio_access = False
@@ -314,7 +311,8 @@ def recalculate_permissions_complex_transaction(self, instance):
     transaction_ctype = ContentType.objects.get_for_model(Transaction)
     transaction_permissions = GenericObjectPermission.objects.filter(group__in=groups,
                                                                      content_type=transaction_ctype,
-                                                                     permission__codename__in=['view_transaction', 'partial_view_transaction']).values(
+                                                                     permission__codename__in=['view_transaction',
+                                                                                               'partial_view_transaction']).values(
         'id',
         'group_id',
         'object_id')
@@ -415,7 +413,6 @@ def recalculate_permissions_complex_transaction(self, instance):
 
 
 def get_values(complex_transaction):
-
     values = {}
 
     # if complex transaction already exists
@@ -436,14 +433,13 @@ def get_values(complex_transaction):
             elif i.value_type == TransactionTypeInput.RELATION:
                 value = ci.value_relation
 
-
             if value is not None:
                 values[i.name] = value
 
     return values
 
-def execute_user_fields_expressions(complex_transaction, values, context, instance):
 
+def execute_user_fields_expressions(complex_transaction, values, context, instance):
     _l.debug('execute_user_fields_expressions')
 
     ctrn = formula.value_prepare(complex_transaction)
@@ -480,7 +476,7 @@ def execute_user_fields_expressions(complex_transaction, values, context, instan
 
         if instance.key == field_key or not instance.key:
 
-             # _l.debug('field_key')
+            # _l.debug('field_key')
 
             if getattr(complex_transaction.transaction_type, field_key):
 
@@ -506,13 +502,13 @@ def execute_user_fields_expressions(complex_transaction, values, context, instan
 
 @shared_task(name='transactions.recalculate_user_fields', bind=True)
 def recalculate_user_fields(self, instance):
-
     try:
 
-        _l.info('recalculate_user_fields: instance.transaction_type_id %s'  % instance.transaction_type_id)
+        _l.info('recalculate_user_fields: instance.transaction_type_id %s' % instance.transaction_type_id)
         # _l.debug('recalculate_attributes: context', context)
 
-        transaction_type = TransactionType.objects.get(id=instance.transaction_type_id, master_user=instance.master_user)
+        transaction_type = TransactionType.objects.get(id=instance.transaction_type_id,
+                                                       master_user=instance.master_user)
 
         complex_transactions = ComplexTransaction.objects.filter(
             transaction_type=transaction_type)
@@ -524,7 +520,8 @@ def recalculate_user_fields(self, instance):
         celery_task = CeleryTask.objects.create(master_user=instance.master_user,
                                                 member=instance.member,
                                                 status='P',
-                                                type='complex_transaction_user_field_recalculation', celery_task_id=self.request.id)
+                                                type='complex_transaction_user_field_recalculation',
+                                                celery_task_id=self.request.id)
 
         celery_task.save()
 
@@ -534,12 +531,10 @@ def recalculate_user_fields(self, instance):
         }
 
         for complex_transaction in complex_transactions:
-
             values = get_values(complex_transaction)
 
             execute_user_fields_expressions(complex_transaction, values, context, instance)
             complex_transaction.save()
-
 
         celery_task.task_status = 'D'
 

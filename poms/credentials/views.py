@@ -1,15 +1,12 @@
+from logging import getLogger
+
 from django_filters import FilterSet
 
 from poms.common.filters import CharFilter
 from poms.common.views import AbstractModelViewSet
 from poms.credentials.models import Credentials
 from poms.credentials.serializers import CredentialsSerializer
-
-
 from poms.users.filters import OwnerByMasterUserFilter
-
-
-from logging import getLogger
 
 _l = getLogger('poms.credentials')
 
@@ -32,7 +29,3 @@ class CredentialsViewSet(AbstractModelViewSet):
     ]
 
     permission_classes = []
-
-
-
-

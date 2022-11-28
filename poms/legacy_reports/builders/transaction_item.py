@@ -1,9 +1,6 @@
 import sys
-
 from datetime import date
-from django.utils.translation import gettext_lazy
 
-from poms.common import formula
 from poms.reports.builders.base_item import BaseReport
 
 empty = object()

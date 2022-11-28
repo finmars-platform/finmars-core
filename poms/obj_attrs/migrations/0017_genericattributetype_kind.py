@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('obj_attrs', '0016_genericattributetype_favorites'),
     ]
@@ -13,6 +12,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='genericattributetype',
             name='kind',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'User'), (2, 'System')], default=1, verbose_name='kind'),
+            field=models.PositiveSmallIntegerField(choices=[(1, 'User'), (2, 'System')], default=1,
+                                                   verbose_name='kind'),
         ),
     ]

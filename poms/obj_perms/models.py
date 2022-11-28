@@ -50,8 +50,10 @@ from poms.users.models import Member, Group
 
 
 class GenericObjectPermission(models.Model):
-    group = models.ForeignKey(Group, null=True, blank=True, verbose_name=gettext_lazy('group'), on_delete=models.CASCADE)
-    member = models.ForeignKey(Member, null=True, blank=True, verbose_name=gettext_lazy('member'), on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, null=True, blank=True, verbose_name=gettext_lazy('group'),
+                              on_delete=models.CASCADE)
+    member = models.ForeignKey(Member, null=True, blank=True, verbose_name=gettext_lazy('member'),
+                               on_delete=models.CASCADE)
 
     content_type = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type'), on_delete=models.CASCADE)
     object_id = models.BigIntegerField(verbose_name=gettext_lazy('object id'))

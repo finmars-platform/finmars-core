@@ -1,4 +1,4 @@
-import time
+from logging import getLogger
 
 from celery import shared_task
 
@@ -7,12 +7,10 @@ from poms.common.formula import safe_eval, ExpressionEvalError
 from poms.common.utils import datetime_now
 from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
 
-from logging import getLogger
-
 _l = getLogger('poms.obj_attrs')
 
-def get_attributes_as_obj(instance, target_model_content_type):
 
+def get_attributes_as_obj(instance, target_model_content_type):
     result = {}
 
     attributes = GenericAttribute.objects.filter(object_id=instance.id, content_type=target_model_content_type)
@@ -38,14 +36,13 @@ def get_attributes_as_obj(instance, target_model_content_type):
 
     return result
 
-def get_json_objs(target_model, target_model_serializer, target_model_content_type, master_user, context):
 
+def get_json_objs(target_model, target_model_serializer, target_model_content_type, master_user, context):
     result = {}
 
     instances = target_model.objects.filter(master_user=master_user)
 
     for instance in instances:
-
         serializer = target_model_serializer(instance=instance, context=context)
 
         result[instance.id] = serializer.data
@@ -57,7 +54,6 @@ def get_json_objs(target_model, target_model_serializer, target_model_content_ty
 
 @shared_task(name='obj_attrs.recalculate_attributes', bind=True)
 def recalculate_attributes(self, instance):
-
     _l.debug('recalculate_attributes: instance', instance)
     # _l.debug('recalculate_attributes: context', context)
 

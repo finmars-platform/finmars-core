@@ -1,35 +1,26 @@
 from __future__ import unicode_literals
 
-import calendar
-import croniter
-from datetime import timedelta, date, datetime
-
-from django.shortcuts import render
+from datetime import date, datetime
 from functools import lru_cache
 
+import croniter
 import pytz
 from babel import Locale
 from babel.dates import get_timezone, get_timezone_gmt, get_timezone_name
 from django.conf import settings
-from django.http import HttpResponse
 from django.utils import translation, timezone
-from django.views.generic import TemplateView
 from rest_framework import response, schemas
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer
-from poms.common.utils import get_list_of_business_days_between_two_dates, date_now, get_closest_bday_of_yesterday, \
+from poms.common.utils import get_list_of_business_days_between_two_dates, get_closest_bday_of_yesterday, \
     get_list_of_dates_between_two_dates, last_day_of_month
 from poms.common.views import AbstractViewSet, AbstractApiView
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory, PricingPolicy, Instrument
 
 _languages = [Language(code, name) for code, name in settings.LANGUAGES]
-
-from django.views.decorators.cache import never_cache
-from django.http import HttpResponse, JsonResponse
 
 import logging
 
@@ -518,7 +509,7 @@ class CalendarEventsViewSet(AbstractViewSet):
 
         from poms.schedules.models import Schedule
         from poms.celery_tasks.models import CeleryTask
-        from django_celery_beat.models import CrontabSchedule, PeriodicTask
+        from django_celery_beat.models import PeriodicTask
         from poms.procedures.models import ExpressionProcedureInstance
         from poms.procedures.models import BaseProcedureInstance
         from poms.procedures.models import PricingProcedureInstance

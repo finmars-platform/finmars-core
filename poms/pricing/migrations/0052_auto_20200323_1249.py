@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('pricing', '0051_pricingprocedure_instrument_type_filters'),
     ]
@@ -13,11 +12,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='currencyhistoryerror',
             name='status',
-            field=models.CharField(choices=[('E', 'Error'), ('S', 'Skip')], default='E', max_length=1, verbose_name='status'),
+            field=models.CharField(choices=[('E', 'Error'), ('S', 'Skip')], default='E', max_length=1,
+                                   verbose_name='status'),
         ),
         migrations.AddField(
             model_name='pricehistoryerror',
             name='status',
-            field=models.CharField(choices=[('E', 'Error'), ('S', 'Skip')], default='E', max_length=1, verbose_name='status'),
+            field=models.CharField(choices=[('E', 'Error'), ('S', 'Skip')], default='E', max_length=1,
+                                   verbose_name='status'),
         ),
     ]

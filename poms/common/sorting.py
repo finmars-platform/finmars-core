@@ -1,17 +1,14 @@
-from django.db.models import Case, When
-
-from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
+import logging
+import math
+import time
 
 from django.db.models import Value
 from django.db.models.functions import Coalesce
 
-import time
-import math
+from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
 
-from django.db.models.functions import Lower
-
-import logging
 _l = logging.getLogger('poms.common')
+
 
 def is_relation(item):
     return item in ['type', 'currency', 'instrument',
@@ -37,8 +34,8 @@ def is_relation(item):
 
                     ]
 
-def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
 
+def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
     _l.debug('sort_by_dynamic_attrs.ordering %s' % ordering)
 
     sort_st = time.perf_counter()
@@ -112,7 +109,8 @@ def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
 
         result_ids = attributes_queryset.values_list('object_id', flat=True)
 
-        _l.debug('sort_by_dynamic_attrs  attributes_queryset done: %s', "{:3.3f}".format(time.perf_counter() - attributes_queryset_st))
+        _l.debug('sort_by_dynamic_attrs  attributes_queryset done: %s',
+                 "{:3.3f}".format(time.perf_counter() - attributes_queryset_st))
 
         table_name = content_type.app_label + '_' + content_type.model
 
@@ -129,7 +127,7 @@ def sort_by_dynamic_attrs(queryset, ordering, master_user, content_type):
 
         if '-' in ordering:
             field = ordering.split('-')[1]
-        else :
+        else:
             field = ordering
 
         _l.debug('ordering field %s' % field)

@@ -15,6 +15,7 @@ class PortalInterfaceAccessModelAdmin(AbstractModelAdmin):
 
 admin.site.register(PortalInterfaceAccessModel, PortalInterfaceAccessModelAdmin)
 
+
 class BaseLayoutAdmin(AbstractModelAdmin):
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
         if db_field.name == 'content_type':
@@ -67,14 +68,14 @@ admin.site.register(EntityTooltip, EntityTooltipAdmin)
 class CrossEntityAttributeExtensionAdmin(BaseLayoutAdmin):
     model = CrossEntityAttributeExtension
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'context_content_type', 'content_type_from', 'content_type_to', 'key_from', 'key_to', 'value_to']
+    list_display = ['id', 'master_user', 'context_content_type', 'content_type_from', 'content_type_to', 'key_from',
+                    'key_to', 'value_to']
     list_select_related = ['master_user']
     search_fields = ['id', 'key_from', 'key_to', 'value_to']
     raw_id_fields = ['master_user']
 
 
 admin.site.register(CrossEntityAttributeExtension, CrossEntityAttributeExtensionAdmin)
-
 
 
 class TransactionUserFieldModelAdmin(BaseLayoutAdmin):
@@ -87,6 +88,7 @@ class TransactionUserFieldModelAdmin(BaseLayoutAdmin):
 
 
 admin.site.register(TransactionUserFieldModel, TransactionUserFieldModelAdmin)
+
 
 class ListLayoutAdmin(BaseLayoutAdmin):
     model = ListLayout
@@ -104,11 +106,12 @@ class ListLayoutAdmin(BaseLayoutAdmin):
 
 admin.site.register(ListLayout, ListLayoutAdmin)
 
+
 class DashboardLayoutAdmin(BaseLayoutAdmin):
     model = DashboardLayout
     master_user_path = 'member__master_user'
     list_display = ['id', 'master_user', 'member', 'name', 'user_code']
-    list_select_related = ['member__master_user', 'member'  ]
+    list_select_related = ['member__master_user', 'member']
     search_fields = ['id', 'name']
     raw_id_fields = ['member']
 
@@ -119,6 +122,7 @@ class DashboardLayoutAdmin(BaseLayoutAdmin):
 
 
 admin.site.register(DashboardLayout, DashboardLayoutAdmin)
+
 
 class ContextMenuLayoutAdmin(BaseLayoutAdmin):
     model = ContextMenuLayout
@@ -135,6 +139,7 @@ class ContextMenuLayoutAdmin(BaseLayoutAdmin):
 
 
 admin.site.register(ContextMenuLayout, ContextMenuLayoutAdmin)
+
 
 class TemplateLayoutAdmin(BaseLayoutAdmin):
     model = TemplateLayout

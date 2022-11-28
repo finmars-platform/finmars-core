@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0108_auto_20220321_1633'),
     ]
@@ -21,6 +20,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='transactiontypecontextparameter',
-            constraint=models.UniqueConstraint(fields=('transaction_type', 'user_code'), name='unique ttype context parameter'),
+            constraint=models.UniqueConstraint(fields=('transaction_type', 'user_code'),
+                                               name='unique ttype context parameter'),
         ),
     ]

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('csv_import', '0024_auto_20201103_0512'),
     ]
@@ -29,7 +28,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='csvimportscheme',
             name='public_name',
-            field=models.CharField(blank=True, help_text='used if user does not have permissions to view object', max_length=255, null=True, verbose_name='public name'),
+            field=models.CharField(blank=True, help_text='used if user does not have permissions to view object',
+                                   max_length=255, null=True, verbose_name='public name'),
         ),
         migrations.AddField(
             model_name='csvimportscheme',

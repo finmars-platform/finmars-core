@@ -147,3 +147,7 @@ local-development/run_celery_prod_tmp.sh
 
 query_result_before_execution_pl.txt
 .settings.json
+pylint_result.json
+dump.sql
+requirements-old.txt
+Dockerfile-old.txt

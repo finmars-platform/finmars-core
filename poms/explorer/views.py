@@ -1,17 +1,13 @@
 import json
+import logging
 from tempfile import NamedTemporaryFile
 
-from poms.common.views import AbstractViewSet
-from rest_framework.response import Response
-from django.http import HttpResponse
 from django.http import FileResponse
-from rest_framework.response import Response
 from rest_framework import status
-
 from rest_framework.exceptions import ValidationError, PermissionDenied
+from rest_framework.response import Response
 
-import logging
-
+from poms.common.views import AbstractViewSet
 from poms.explorer.serializers import ExplorerSerializer
 from poms.procedures.handlers import ExpressionProcedureProcess
 from poms.procedures.models import ExpressionProcedure
@@ -21,11 +17,11 @@ from poms_app import settings
 _l = logging.getLogger('poms.explorer')
 
 from poms.common.storage import get_storage
+
 storage = get_storage()
 
 
 class ExplorerViewSet(AbstractViewSet):
-
     serializer_class = ExplorerSerializer
 
     def list(self, request):
@@ -67,7 +63,6 @@ class ExplorerViewSet(AbstractViewSet):
                 })
 
         for file in items[1]:
-
             results.append({
                 'type': 'file',
                 'name': file,
@@ -82,7 +77,6 @@ class ExplorerViewSet(AbstractViewSet):
 
 
 class ExplorerViewFileViewSet(AbstractViewSet):
-
     serializer_class = ExplorerSerializer
 
     def list(self, request):
@@ -93,7 +87,7 @@ class ExplorerViewFileViewSet(AbstractViewSet):
             raise ValidationError("Path is required")
         else:
             if path[0] == '/':
-                path = settings.BASE_API_URL  + path
+                path = settings.BASE_API_URL + path
             else:
                 path = settings.BASE_API_URL + '/' + path
 
@@ -147,7 +141,6 @@ class ExplorerViewFileViewSet(AbstractViewSet):
 
 
 class ExplorerUploadViewSet(AbstractViewSet):
-
     serializer_class = ExplorerSerializer
 
     def create(self, request):
@@ -167,7 +160,6 @@ class ExplorerUploadViewSet(AbstractViewSet):
         # TODO validate path that eiher public/import/system or user home folder
 
         for file in request.FILES.getlist('file'):
-
             _l.info('f %s' % file)
 
             filepath = path + '/' + file.name
@@ -191,17 +183,16 @@ class ExplorerUploadViewSet(AbstractViewSet):
                     procedures = import_settings['on_create']['expression_procedure']
 
                     for item in procedures:
-
                         _l.info("Trying to execute %s" % item)
 
                         procedure = ExpressionProcedure.objects.get(user_code=item)
 
-                        instance = ExpressionProcedureProcess(procedure=procedure, master_user=request.user.master_user, member=request.user.member)
+                        instance = ExpressionProcedureProcess(procedure=procedure, master_user=request.user.master_user,
+                                                              member=request.user.member)
                         instance.process()
 
             except Exception as e:
                 _l.error("Could not import anything %s" % e)
-
 
         return Response({
             'status': 'ok'
@@ -209,10 +200,9 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
 
 class ExplorerDeleteViewSet(AbstractViewSet):
-
     serializer_class = ExplorerSerializer
 
-    def create(self, request): # refactor later, for destroy id is required
+    def create(self, request):  # refactor later, for destroy id is required
 
         path = request.query_params.get('path')
         is_dir = request.query_params.get('is_dir')
@@ -246,7 +236,6 @@ class ExplorerDeleteViewSet(AbstractViewSet):
 
 
 class ExplorerCreateFolderViewSet(AbstractViewSet):
-
     serializer_class = ExplorerSerializer
 
     def create(self, request):
@@ -269,5 +258,3 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
         return Response({
             "path": path
         })
-
-

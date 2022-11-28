@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('csv_import', '0018_auto_20190521_1455'),
     ]
@@ -15,6 +14,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='csvimportscheme',
             name='filter_expr',
-            field=models.CharField(blank=True, default='', max_length=1000, null=True, verbose_name='filter expression'),
+            field=models.CharField(blank=True, default='', max_length=1000, null=True,
+                                   verbose_name='filter expression'),
         ),
     ]

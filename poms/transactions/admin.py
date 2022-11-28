@@ -50,7 +50,7 @@ admin.site.register(TransactionTypeGroup, TransactionTypeGroupAdmin)
 class TransactionTypeInputAdmin(AbstractModelAdmin):
     model = TransactionTypeInput
     master_user_path = 'transaction_type__master_user'
-    list_display = ['id', 'master_user', 'transaction_type', 'order', 'name', 'value_type', 'content_type',]
+    list_display = ['id', 'master_user', 'transaction_type', 'order', 'name', 'value_type', 'content_type', ]
     list_select_related = ['transaction_type', 'transaction_type__master_user']
     search_fields = ['id', 'name']
     raw_id_fields = ['transaction_type']
@@ -60,9 +60,11 @@ class TransactionTypeInputAdmin(AbstractModelAdmin):
 
     master_user.admin_order_field = 'transaction_type__master_user'
 
+
 class TransactionTypeInputSettingsAdmin(AbstractModelAdmin):
     model = TransactionTypeInputSettings
     list_display = ['id', 'transaction_type_input', 'linked_inputs_names']
+
 
 admin.site.register(TransactionTypeInputSettings, TransactionTypeInputSettingsAdmin)
 
@@ -132,7 +134,8 @@ class TransactionTypeActionInstrumentManualPricingFormulaAdmin(AbstractModelAdmi
     master_user.admin_order_field = 'transaction_type__master_user'
 
 
-admin.site.register(TransactionTypeActionInstrumentManualPricingFormula, TransactionTypeActionInstrumentManualPricingFormulaAdmin)
+admin.site.register(TransactionTypeActionInstrumentManualPricingFormula,
+                    TransactionTypeActionInstrumentManualPricingFormulaAdmin)
 
 
 class TransactionTypeActionInstrumentAccrualCalculationSchedulesAdmin(AbstractModelAdmin):
@@ -149,7 +152,8 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedulesAdmin(AbstractMo
     master_user.admin_order_field = 'transaction_type__master_user'
 
 
-admin.site.register(TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentAccrualCalculationSchedulesAdmin)
+admin.site.register(TransactionTypeActionInstrumentAccrualCalculationSchedules,
+                    TransactionTypeActionInstrumentAccrualCalculationSchedulesAdmin)
 
 
 class TransactionTypeActionInstrumentEventScheduleAdmin(AbstractModelAdmin):
@@ -183,7 +187,9 @@ class TransactionTypeActionInstrumentEventScheduleActionAdmin(AbstractModelAdmin
     master_user.admin_order_field = 'transaction_type__master_user'
 
 
-admin.site.register(TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionInstrumentEventScheduleActionAdmin)
+admin.site.register(TransactionTypeActionInstrumentEventScheduleAction,
+                    TransactionTypeActionInstrumentEventScheduleActionAdmin)
+
 
 class TransactionTypeInputInline(admin.TabularInline):
     model = TransactionTypeInput
@@ -207,7 +213,7 @@ class TransactionTypeInputInline(admin.TabularInline):
     #                    'daily_pricing_model', 'payment_size_detail',),
     #     }),
     # )
-    raw_id_fields = ( 'settings',)
+    raw_id_fields = ('settings',)
     readonly_fields = ('id',)
 
     def formfield_for_foreignkey(self, db_field, request=None, **kwargs):
@@ -413,7 +419,8 @@ class ComplexTransactionAdmin(AbstractModelAdmin):
     list_filter = ['is_deleted', 'date', ]
     search_fields = ['id']
     raw_id_fields = ['transaction_type']
-    inlines = [GenericAttributeInline, TransactionInline, ComplexTransactionInputInline,GenericObjectPermissionInline, ]
+    inlines = [GenericAttributeInline, TransactionInline, ComplexTransactionInputInline,
+               GenericObjectPermissionInline, ]
     save_as = True
 
     def master_user(self, obj):
@@ -484,7 +491,7 @@ class TransactionAdmin(AbstractModelAdmin):
         'linked_instrument',
         'allocation_balance', 'allocation_pl',
     ]
-    list_filter = [ 'transaction_date', ]
+    list_filter = ['transaction_date', ]
     # list_filter = ['is_deleted', 'transaction_date', ]
     search_fields = ['id']
     date_hierarchy = 'transaction_date'

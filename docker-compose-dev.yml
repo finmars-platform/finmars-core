@@ -1,7 +1,7 @@
 version: '2'
 services:
   db:
-    image: postgres:10.1-alpine
+    image: postgres:13-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

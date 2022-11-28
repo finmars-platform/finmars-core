@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from .models import CeleryTask, CeleryTaskAttachment
 from poms.users.fields import MasterUserField, MemberField
+from .models import CeleryTask, CeleryTaskAttachment
 
 
 class CeleryTaskAttachmentSerializer(serializers.ModelSerializer):

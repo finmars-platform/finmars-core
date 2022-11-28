@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('pricing', '0088_alter_currencypricingschemebloombergparameters_error_text_expr_and_more'),
     ]
@@ -63,7 +62,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='instrumentforwardspricingschemebloombergparameters',
             name='accrual_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='accrual error text expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='accrual error text expr'),
         ),
         migrations.AlterField(
             model_name='instrumentforwardspricingschemebloombergparameters',
@@ -78,12 +78,14 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='instrumentforwardspricingschemebloombergparameters',
             name='pricing_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='pricing error text expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='pricing error text expr'),
         ),
         migrations.AlterField(
             model_name='instrumentpricingschemealphavparameters',
             name='accrual_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='accrual error text expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='accrual error text expr'),
         ),
         migrations.AlterField(
             model_name='instrumentpricingschemealphavparameters',
@@ -98,12 +100,14 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='instrumentpricingschemealphavparameters',
             name='pricing_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='pricing error text expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='pricing error text expr'),
         ),
         migrations.AlterField(
             model_name='instrumentpricingschemebloombergparameters',
             name='accrual_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='accrual error text expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='accrual error text expr'),
         ),
         migrations.AlterField(
             model_name='instrumentpricingschemebloombergparameters',
@@ -118,12 +122,14 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='instrumentpricingschemebloombergparameters',
             name='pricing_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='pricing error text expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='pricing error text expr'),
         ),
         migrations.AlterField(
             model_name='instrumentpricingschemecbondsparameters',
             name='accrual_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='accrual error text expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='accrual error text expr'),
         ),
         migrations.AlterField(
             model_name='instrumentpricingschemecbondsparameters',
@@ -138,12 +144,14 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='instrumentpricingschemecbondsparameters',
             name='pricing_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='pricing error text expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='pricing error text expr'),
         ),
         migrations.AlterField(
             model_name='instrumentpricingschememultipleparametersformulaparameters',
             name='accrual_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='accrual error text expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='accrual error text expr'),
         ),
         migrations.AlterField(
             model_name='instrumentpricingschememultipleparametersformulaparameters',
@@ -158,12 +166,14 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='instrumentpricingschememultipleparametersformulaparameters',
             name='pricing_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='pricing error text'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='pricing error text'),
         ),
         migrations.AlterField(
             model_name='instrumentpricingschemesingleparameterformulaparameters',
             name='accrual_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='accrual error text expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='accrual error text expr'),
         ),
         migrations.AlterField(
             model_name='instrumentpricingschemesingleparameterformulaparameters',
@@ -178,12 +188,14 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='instrumentpricingschemesingleparameterformulaparameters',
             name='pricing_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='pricing error text'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='pricing error text'),
         ),
         migrations.AlterField(
             model_name='instrumentpricingschemewtradeparameters',
             name='accrual_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='accrual error text expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='accrual error text expr'),
         ),
         migrations.AlterField(
             model_name='instrumentpricingschemewtradeparameters',
@@ -198,6 +210,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='instrumentpricingschemewtradeparameters',
             name='pricing_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='pricing error text expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='pricing error text expr'),
         ),
     ]

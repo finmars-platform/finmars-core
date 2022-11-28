@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('procedures', '0033_requestdatafileprocedureinstance_date_from_and_more'),
     ]
@@ -18,21 +17,25 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='pricingprocedure',
             name='price_date_from_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='price date from expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='price date from expr'),
         ),
         migrations.AlterField(
             model_name='pricingprocedure',
             name='price_date_to_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='price date to expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='price date to expr'),
         ),
         migrations.AlterField(
             model_name='requestdatafileprocedure',
             name='date_from_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='price date from expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='price date from expr'),
         ),
         migrations.AlterField(
             model_name='requestdatafileprocedure',
             name='date_to_expr',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='price date to expr'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='price date to expr'),
         ),
     ]

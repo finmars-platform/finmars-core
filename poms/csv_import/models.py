@@ -1,10 +1,9 @@
-from django.db import models
 from django.contrib.contenttypes.models import ContentType
+from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import DataTimeStampedModel, NamedModel, EXPRESSION_FIELD_LENGTH
 from poms.users.models import MasterUser
-
 
 ERROR_HANDLER_CHOICES = [
     ['break', 'Break'],
@@ -38,14 +37,14 @@ COLUMN_MATCHER_CHOICES = [
 ]
 
 
-
 class CsvImportScheme(NamedModel, DataTimeStampedModel):
-
     content_type = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type'), on_delete=models.CASCADE)
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user') , on_delete=models.CASCADE)
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
     user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
 
-    filter_expr = models.CharField(max_length=1000, default='', blank=True, null=True, verbose_name=gettext_lazy('filter expression'))
+    filter_expr = models.CharField(max_length=1000, default='', blank=True, null=True,
+                                   verbose_name=gettext_lazy('filter expression'))
 
     mode = models.CharField(max_length=255, choices=MODE_CHOICES, default='skip')
     delimiter = models.CharField(max_length=255, choices=DELIMITER_CHOICES, default=',')
@@ -75,7 +74,8 @@ class CsvImportSchemeCalculatedInput(models.Model):
     name = models.CharField(max_length=255)
     column = models.SmallIntegerField()
 
-    name_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='', verbose_name=gettext_lazy('name expression'))
+    name_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
+                                 verbose_name=gettext_lazy('name expression'))
 
     class Meta:
         verbose_name = gettext_lazy('csv import scheme calculated input')
@@ -92,7 +92,8 @@ class CsvField(models.Model):
     name = models.CharField(max_length=255, blank=True, default='')
     column_name = models.CharField(max_length=255, blank=True, null=True)
 
-    name_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='', verbose_name=gettext_lazy('name expression'))
+    name_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
+                                 verbose_name=gettext_lazy('name expression'))
 
     scheme = models.ForeignKey(CsvImportScheme, related_name='csv_fields', on_delete=models.CASCADE)
 
@@ -109,7 +110,7 @@ class EntityField(models.Model):
     name = models.CharField(max_length=255)
     expression = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='')
 
-    use_default = models.BooleanField(default=True,  verbose_name=gettext_lazy('use default'))
+    use_default = models.BooleanField(default=True, verbose_name=gettext_lazy('use default'))
 
     order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
 

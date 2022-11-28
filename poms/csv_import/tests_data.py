@@ -1,6 +1,4 @@
-
 class TestData():
-
     correct_file_rows = [
         ['Name', 'Short name', 'Account', 'Country', 'Pay Date', 'Fee', 'Responsible', 'Country code'],
         ['DIR20_name', 'DIR20', 'account_2', 'Russia', '2017-01-01', '2.0', 'res_1', 'ru'],
@@ -39,7 +37,6 @@ class TestData():
         ['AC_3', 'AC_3', 'AC_3', 'secondary acc', '2017-12-11', '51', 'hidden', '14', 'wol'],
         ['AC_4', 'AC_4', 'AC_4', 'third acc', '2018-01-05', '44', 'common', '10', 'wol']
     ]
-
 
     counterparty_test_data = [
         ['Name', 'Notes', 'User code', 'Portfolios', 'Rating'],

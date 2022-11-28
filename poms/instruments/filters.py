@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import logging
+
 from django.db.models import Q
 from rest_framework.filters import BaseFilterBackend
 
@@ -8,17 +10,15 @@ from poms.instruments.models import Instrument, InstrumentType
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_perms.utils import obj_perms_filter_objects_for_view
 from poms.portfolios.models import Portfolio
-from poms.strategies.models import Strategy1, Strategy2, Strategy3
 
-
-
-import logging
 _l = logging.getLogger('poms.instruments')
+
 
 class OwnerByInstrumentFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         instruments = Instrument.objects.filter(master_user=request.user.master_user)
         return queryset.filter(instrument__in=instruments)
+
 
 class OwnerByPermissionedInstrumentFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
@@ -59,7 +59,6 @@ class PriceHistoryObjectPermissionFilter(BaseFilterBackend):
 
 class GeneratedEventPermissionFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-
         member = request.user.member
         master_user = request.user.master_user
 
@@ -100,7 +99,6 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
         instrument_type_user_code = Q()
 
         for piece in pieces:
-
             name_q.add(Q(name__icontains=piece), Q.AND)
 
         for piece in pieces:
@@ -118,9 +116,7 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
         for piece in pieces:
             instrument_type_user_code.add(Q(instrument_type__user_code__icontains=piece), Q.AND)
 
-
         # _l.info('query %s' % query)
-
 
         options.add(Q(name__icontains=query), Q.OR)
         options.add(Q(user_code__icontains=query), Q.OR)
@@ -135,7 +131,6 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
 
         if instrument_type:
             options.add(Q(instrument_type__user_code=instrument_type), Q.AND)
-
 
         queryset = queryset.filter(options)
 

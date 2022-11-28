@@ -8,9 +8,6 @@ RABBITMQ_HOST="${$RABBITMQ_HOST:-False}"
 
 echo "Finmars initialization"
 
-echo "Create Finmars log folder /var/log/finmars/"
-
-mkdir /var/log/finmars/
 
 echo "set chmod 777 /var/log/finmars/"
 
@@ -25,18 +22,11 @@ echo "set chmod 777 /var/log/finmars/django.log"
 chmod 777 /var/log/finmars/django.log
 
 
-echo "Create known_hosts for SFTP"
-
-mkdir /var/app/.ssh
-touch /var/app/.ssh/known_hosts
-chmod 777 /var/app/.ssh
-chmod 777 /var/app/.ssh/known_hosts
-
 ############################################
 
 echo "Migrating"
 
-/var/app-venv/bin/python /var/app/manage.py migrate
+python /var/app/manage.py migrate
 
 #echo "Create cache table"
 #
@@ -44,11 +34,11 @@ echo "Migrating"
 
 echo "Clear sessions"
 
-/var/app-venv/bin/python /var/app/manage.py clearsessions
+python /var/app/manage.py clearsessions
 
 echo "Collect static"
 
-/var/app-venv/bin/python /var/app/manage.py collectstatic -c --noinput
+python /var/app/manage.py collectstatic -c --noinput
 
 if [ $USE_CELERY == "True" ];
 then
@@ -85,10 +75,10 @@ fi
 
 echo "Create admin user"
 
-/var/app-venv/bin/python /var/app/manage.py generate_super_user
+python /var/app/manage.py generate_super_user
 
 echo "Run uwsgi"
 
-/var/app-venv/bin/uwsgi /etc/uwsgi/apps-enabled/finmars.ini
+uwsgi /etc/uwsgi/apps-enabled/finmars.ini
 
 echo "Initialized"

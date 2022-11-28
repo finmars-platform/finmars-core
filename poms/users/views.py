@@ -1,47 +1,57 @@
 from __future__ import unicode_literals
 
-from django.utils import translation
+import time
+from datetime import timedelta
+from logging import getLogger
 
 import django_filters
+import pyotp
+from celery.result import AsyncResult
+from django.conf import settings
 from django.contrib.auth import login, logout
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
+from django.core.signing import TimestampSigner
 from django.utils import timezone
+from django.utils import translation
 from django.utils.decorators import method_decorator
+from django.utils.translation import gettext_lazy
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django_filters.rest_framework import FilterSet, DjangoFilterBackend
+from rest_framework import parsers, renderers, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.decorators import action
-
 from rest_framework.exceptions import PermissionDenied
-
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.viewsets import ViewSet, ModelViewSet, ViewSetMixin
+from rest_framework.response import Response
+from rest_framework.viewsets import ViewSet, ModelViewSet
 
 from poms.accounts.models import AccountType, Account
-from poms.chats.models import ThreadGroup, Thread
+from poms.celery_tasks.models import CeleryTask
+from poms.chats.models import ThreadGroup
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtMultipleChoiceFilter
 from poms.common.mixins import UpdateModelMixinExt, DestroyModelFakeMixin
 from poms.common.pagination import BigPagination
+from poms.common.utils import datetime_now
 from poms.common.views import AbstractModelViewSet, AbstractApiView, AbstractViewSet, AbstractAsyncViewSet
 from poms.common.websockets import send_websocket_message
-from poms.complex_import.models import ComplexImportSchemeAction, ComplexImportScheme
+from poms.complex_import.models import ComplexImportScheme
 from poms.counterparties.models import CounterpartyGroup, Counterparty, ResponsibleGroup, Responsible
 from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentType, Instrument
 from poms.integrations.models import InstrumentDownloadScheme
-from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_perms.models import GenericObjectPermission
-from poms.obj_perms.utils import get_permissions_prefetch_lookups, assign_perms3, \
-    get_view_perms, get_all_perms, append_perms3
+from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2Subgroup, Strategy2Group, \
     Strategy2, Strategy3, Strategy3Subgroup, Strategy3Group
 from poms.transactions.models import TransactionType, TransactionTypeInput, TransactionTypeAction, \
-    TransactionTypeActionInstrument, Transaction, ComplexTransaction, TransactionTypeGroup
-from poms.users.filters import OwnerByMasterUserFilter, MasterUserFilter, OwnerByUserFilter, InviteToMasterUserFilter, \
-    IsMemberFilterBackend, MasterUserBackupsForOwnerOnlyFilter
+    Transaction, ComplexTransaction
+from poms.users.filters import OwnerByMasterUserFilter, MasterUserFilter, OwnerByUserFilter, IsMemberFilterBackend, \
+    MasterUserBackupsForOwnerOnlyFilter
 from poms.users.models import MasterUser, Member, Group, ResetPasswordToken, InviteToMasterUser, EcosystemDefault, \
     OtpToken, UsercodePrefix
 from poms.users.permissions import SuperUserOrReadOnly, IsCurrentMasterUser, IsCurrentUser
@@ -52,27 +62,6 @@ from poms.users.serializers import GroupSerializer, UserSerializer, MasterUserSe
     OtpTokenSerializer, MasterUserCopySerializer, UsercodePrefixSerializer
 from poms.users.tasks import clone_master_user
 from poms.users.utils import set_master_user
-
-from datetime import timedelta
-from django.conf import settings
-from rest_framework import parsers, renderers, status
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy
-
-from django.core.signing import TimestampSigner
-from celery.result import AsyncResult
-from poms.common.utils import date_now, datetime_now
-import time
-from poms.celery_tasks.models import CeleryTask
-
-
-from django.core.mail import send_mail
-
-import pyotp
-
-from logging import getLogger
 
 _l = getLogger('poms.users')
 
@@ -99,7 +88,7 @@ class PingViewSet(AbstractApiView, ViewSet):
         current_master_user_id = None
         current_member_id = None
 
-        if hasattr(request.user, 'master_user'): # check if Anon user
+        if hasattr(request.user, 'master_user'):  # check if Anon user
 
             if request.user.master_user:  # check if not None
                 current_master_user_id = request.user.master_user.id
@@ -122,9 +111,8 @@ class PingViewSet(AbstractApiView, ViewSet):
     @action(detail=False, methods=('Get',), url_path='ws')
     def send_message(self, request):
 
-        from datetime import timedelta, date
-
-        send_websocket_message(data={"type": 'simple_message', "payload": {"message": "pong"}}, level="master_user", context={"request": request})
+        send_websocket_message(data={"type": 'simple_message', "payload": {"message": "pong"}}, level="master_user",
+                               context={"request": request})
 
         serializer = PingSerializer(instance={
             'message': 'pong',
@@ -134,6 +122,7 @@ class PingViewSet(AbstractApiView, ViewSet):
             'now': timezone.template_localtime(timezone.now()),
         })
         return Response(serializer.data)
+
 
 class ProtectedPingViewSet(PingViewSet):
     permission_classes = [IsAuthenticated, ]
@@ -166,7 +155,7 @@ class LoginViewSet(ViewSet):
 
             if len(list(tokens)):
                 for token in tokens:
-                    if token.is_active :
+                    if token.is_active:
                         active_tokens = True
 
             if active_tokens:
@@ -230,7 +219,6 @@ class MasterUserCreateViewSet(ViewSet):
 
 
 class MasterUserCopyViewSet(AbstractAsyncViewSet):
-
     celery_task = clone_master_user
     serializer_class = MasterUserCopySerializer
 
@@ -275,7 +263,6 @@ class MasterUserCopyViewSet(AbstractAsyncViewSet):
                 if res.result:
 
                     if celery_task:
-
                         celery_task_data = {}
 
                         celery_task.data = celery_task_data
@@ -305,7 +292,8 @@ class MasterUserCopyViewSet(AbstractAsyncViewSet):
 
         else:
 
-            res = self.celery_task.apply_async(kwargs={'instance': instance, 'name': request.data['name'], 'current_user': request.user})
+            res = self.celery_task.apply_async(
+                kwargs={'instance': instance, 'name': request.data['name'], 'current_user': request.user})
             instance.task_id = signer.sign('%s' % res.id)
 
             celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
@@ -313,7 +301,6 @@ class MasterUserCopyViewSet(AbstractAsyncViewSet):
                                                     task_type='clone_master_user', celery_task_id=res.id)
 
             celery_task.save()
-
 
             instance.task_status = res.status
             serializer = self.get_serializer(instance=instance, many=False)
@@ -672,7 +659,8 @@ class OtpTokenViewSet(AbstractModelViewSet):
 
         totp = pyotp.TOTP(token.secret)
 
-        url = totp.provisioning_uri(name, "finmars.com") # u'otpauth://totp/finmars.com:szhitenev?secret=7PXELOEQIHBUKLYS&issuer=finmars.com'
+        url = totp.provisioning_uri(name,
+                                    "finmars.com")  # u'otpauth://totp/finmars.com:szhitenev?secret=7PXELOEQIHBUKLYS&issuer=finmars.com'
 
         return Response({'provisioning_uri': url, "token_id": token.id})
 
@@ -843,7 +831,6 @@ class MemberViewSet(AbstractModelViewSet):
 
         return super(MemberViewSet, self).get_object()
 
-
     def update(self, request, *args, **kwargs):
 
         owner = Member.objects.get(master_user=request.user.master_user, is_owner=True)
@@ -870,9 +857,8 @@ class MemberViewSet(AbstractModelViewSet):
         if instance.is_owner == True:
             raise PermissionDenied()
 
-
-
         return super(MemberViewSet, self).perform_destroy(instance)
+
 
 class UsercodePrefixFilterSet(FilterSet):
     id = NoOpFilter()

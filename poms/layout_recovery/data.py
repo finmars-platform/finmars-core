@@ -1,5 +1,3 @@
-
-
 entity_viewer_layout = {
     "name": "",
     "id": None,

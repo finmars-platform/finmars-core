@@ -5,7 +5,6 @@ from django_filters.rest_framework import FilterSet
 from poms.common.filters import CharFilter, NoOpFilter
 from poms.common.views import AbstractModelViewSet
 from poms.obj_perms.permissions import PomsConfigurationPermission
-from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
 from poms.reference_tables.models import ReferenceTable
 from poms.reference_tables.serializers import ReferenceTableSerializer
 from poms.users.filters import OwnerByMasterUserFilter

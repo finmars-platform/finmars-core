@@ -7,6 +7,7 @@ from poms.common.admin import AbstractModelAdmin
 from poms.obj_attrs.admin import GenericAttributeInline
 from poms.obj_perms.admin import GenericObjectPermissionInline
 
+
 class AccountTypeAdmin(AbstractModelAdmin):
     model = AccountType
     master_user_path = 'master_user'
@@ -43,7 +44,6 @@ class AccountAdmin(AbstractModelAdmin):
 
 
 admin.site.register(Account, AccountAdmin)
-
 
 # class AccountAttributeTypeAdmin(AbstractAttributeTypeAdmin):
 #     inlines = [

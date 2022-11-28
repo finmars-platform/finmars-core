@@ -1,8 +1,6 @@
 from django.contrib.contenttypes.models import ContentType
-from django.utils.text import Truncator
 from mptt.utils import get_cached_trees
 from rest_framework import serializers
-from rest_framework.fields import empty
 from rest_framework.serializers import ListSerializer
 
 from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeField

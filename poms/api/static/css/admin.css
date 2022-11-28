@@ -1,11 +1,13 @@
 #header {
     background: #000;
 }
+
 a:link {
     color: #F05A22;
 }
+
 a:visited {
-    color: rgba(240,90,34,.4);
+    color: rgba(240, 90, 34, .4);
 }
 
 div.breadcrumbs {
@@ -15,9 +17,11 @@ div.breadcrumbs {
 .module h2, .module caption, .inline-group h2 {
     background: #000
 }
+
 .button.default, input[type=submit].default, .submit-row input.default {
     background: #f05a22;
 }
+
 .button, input[type=submit], input[type=button], .submit-row input, a.button {
-    background: rgba(240,90,34,.4);
+    background: rgba(240, 90, 34, .4);
 }

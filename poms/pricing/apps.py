@@ -1,11 +1,8 @@
 from __future__ import unicode_literals
 
+from django.apps import AppConfig
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
-
-
-
-from django.apps import AppConfig
 
 
 class PricingConfig(AppConfig):
@@ -15,7 +12,6 @@ class PricingConfig(AppConfig):
         post_migrate.connect(self.update_pricing_providers, sender=self)
 
     def update_pricing_providers(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
-        from poms.common.utils import db_class_check_data
         from .models import CurrencyPricingSchemeType, InstrumentPricingSchemeType
 
         currency_scheme_types = [
@@ -127,8 +123,6 @@ class PricingConfig(AppConfig):
 
             else:
                 CurrencyPricingSchemeType.objects.create(**type)
-
-
 
         for type in instrument_scheme_types:
 

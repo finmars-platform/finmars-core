@@ -2,9 +2,10 @@ import uuid
 from collections import OrderedDict
 from datetime import timedelta, date
 
+from poms.reports.builders.base_item import BaseReport, BaseReportItem
+
 from poms.common.utils import date_now, isclose
 from poms.instruments.models import CostMethod
-from poms.reports.builders.base_item import BaseReport, BaseReportItem
 
 
 class PerformancePeriod:
@@ -270,7 +271,8 @@ class PerformancePeriod:
             item.cumulative_return_pl = (getattr(prev_item, 'cumulative_return_pl', 0) + 1) * (item.return_pl + 1) - 1
 
             # =  (Cummulative Return (NAV chng ex CF), %  of previous period + 1) * (Return (NAV chng ex CF), % of the current period + 1) - 1
-            item.cumulative_return_nav = (getattr(prev_item, 'cumulative_return_nav', 0) + 1) * (item.return_nav + 1) - 1
+            item.cumulative_return_nav = (getattr(prev_item, 'cumulative_return_nav', 0) + 1) * (
+                        item.return_nav + 1) - 1
 
     def same_item_key(self, current, prev):
         return PerformanceReportItem.make_item_key(
@@ -475,7 +477,6 @@ class PerformanceReport(BaseReport):
     report_type = 0  # VirtualTransaction
     report_date = date.min  # VirtualTransaction
 
-
     CALCULATION_TYPE_TIME_WEIGHTED = 'time_weighted'
     CALCULATION_TYPE_MONEY_WEIGHTED = 'money_weighted'
     CALCULATION_TYPE_CHOICES = (
@@ -533,7 +534,6 @@ class PerformanceReport(BaseReport):
         self.begin_date = begin_date or date(d.year, 1, 1)
         # self.begin_date = date.min
         self.end_date = end_date or d
-
 
         self.report_currency = report_currency or master_user.system_currency
         self.pricing_policy = pricing_policy

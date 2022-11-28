@@ -1,9 +1,13 @@
 from __future__ import unicode_literals
 
+import smtplib
+from logging import getLogger
+
 from django.conf import settings
 from django.contrib.auth import get_user_model, authenticate, update_session_auth_hash
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
+from django.core.mail import send_mail
 from django.utils import translation
 from django.utils.translation import gettext_lazy
 from rest_framework import serializers
@@ -18,23 +22,15 @@ from poms.counterparties.fields import CounterpartyField, ResponsibleField, Coun
     ResponsibleGroupField
 from poms.currencies.fields import CurrencyField
 from poms.instruments.fields import InstrumentTypeField, InstrumentField, PricingPolicyField, PeriodicityField
-
 from poms.portfolios.fields import PortfolioField
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field, Strategy1SubgroupField, \
     Strategy1GroupField, Strategy2GroupField, Strategy2SubgroupField, Strategy3GroupField, Strategy3SubgroupField
 from poms.transactions.fields import TransactionTypeField
-
 from poms.ui.models import ListLayout, EditLayout
 from poms.users.fields import MasterUserField, MemberField, GroupField, HiddenMemberField
 from poms.users.models import MasterUser, UserProfile, Group, Member, TIMEZONE_CHOICES, InviteToMasterUser, \
     EcosystemDefault, OtpToken, UsercodePrefix
 from poms.users.utils import get_user_from_context, get_master_user_from_context, get_member_from_context
-
-from django.core.mail import send_mail
-
-import smtplib
-
-from logging import getLogger
 
 _l = getLogger('poms.users')
 
@@ -80,7 +76,6 @@ class MasterUserCreateSerializer(serializers.Serializer):
 class MasterUserCopy:
     def __init__(self, task_id=None, task_status=None, master_user=None, member=None, name=None, description=None,
                  reference_master_user=None):
-
         self.task_id = task_id
         self.task_status = task_status
 
@@ -94,7 +89,6 @@ class MasterUserCopy:
         return '%s:%s' % (getattr(self.master_user, 'name', None), self.name)
 
 
-
 class MasterUserCopySerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, required=False, allow_null=True)
     reference_master_user = serializers.IntegerField(required=False, allow_null=True)
@@ -106,7 +100,6 @@ class MasterUserCopySerializer(serializers.Serializer):
     member = HiddenMemberField()
 
     def create(self, validated_data):
-
 
         if validated_data.get('task_id', None):
             validated_data.pop('name', None)
@@ -227,7 +220,8 @@ class UserSerializer(serializers.ModelSerializer):
             profile = instance.profile
             profile.language = profile_data.get('language', profile.language)
             profile.timezone = profile_data.get('timezone', profile.timezone)
-            profile.two_factor_verification = profile_data.get('two_factor_verification', profile.two_factor_verification)
+            profile.two_factor_verification = profile_data.get('two_factor_verification',
+                                                               profile.two_factor_verification)
             profile.save()
 
         return instance
@@ -290,6 +284,7 @@ class MasterUserSerializer(serializers.ModelSerializer):
     is_admin = serializers.SerializerMethodField()
     is_owner = serializers.SerializerMethodField()
     system_currency = CurrencyField()
+
     # currency = CurrencyField()
     # account_type = AccountTypeField()
     # account = AccountField()
@@ -413,7 +408,6 @@ class MasterUserSerializer(serializers.ModelSerializer):
             return obj.id == master_user.id
         return False
 
-
     def get_is_admin(self, obj):
 
         user = get_user_from_context(self.context)
@@ -441,7 +435,6 @@ class MasterUserLightSerializer(serializers.ModelSerializer):
 
     members = MemberField(many=True, required=False)
     members_object = serializers.PrimaryKeyRelatedField(source='members', read_only=True, many=True)
-
 
     class Meta:
         model = MasterUser
@@ -495,7 +488,6 @@ class MasterUserLightSerializer(serializers.ModelSerializer):
 
         return result
 
-
     def get_is_owner(self, obj):
 
         result = False
@@ -510,12 +502,12 @@ class MasterUserLightSerializer(serializers.ModelSerializer):
 
 
 class OtpTokenSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = OtpToken
         fields = [
             'id', 'name', 'is_active'
         ]
+
 
 class EcosystemDefaultSerializer(serializers.ModelSerializer):
     currency = CurrencyField()
@@ -576,8 +568,8 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
             ResponsibleGroupViewSerializer, ResponsibleViewSerializer
         from poms.instruments.serializers import InstrumentViewSerializer, InstrumentTypeViewSerializer, \
             AccrualCalculationModelViewSerializer, \
-            InstrumentClassViewSerializer, DailyPricingModelViewSerializer, PaymentSizeDetailViewSerializer, \
-            PeriodicityViewSerializer, CostMethodViewSerializer, PricingConditionViewSerializer
+            InstrumentClassViewSerializer, PaymentSizeDetailViewSerializer, \
+            PeriodicityViewSerializer, PricingConditionViewSerializer
         from poms.portfolios.serializers import PortfolioViewSerializer
         from poms.strategies.serializers import Strategy1GroupViewSerializer, Strategy1SubgroupViewSerializer, \
             Strategy1ViewSerializer, Strategy2GroupViewSerializer, Strategy2SubgroupViewSerializer, \
@@ -587,7 +579,6 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
         from poms.transactions.serializers import TransactionTypeViewSerializer
         from poms.instruments.serializers import PricingPolicyViewSerializer
         from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer
-        from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
 
         self.fields['accrual_calculation_model_object'] = AccrualCalculationModelViewSerializer(
             source='accrual_calculation_model', read_only=True)
@@ -773,7 +764,6 @@ class MemberViewSerializer(serializers.ModelSerializer):
 
 
 class UsercodePrefixSerializer(serializers.ModelSerializer):
-
     master_user = MasterUserField()
 
     class Meta:

@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0012_masteruser_price_download_scheme'),
     ]
@@ -15,6 +14,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='member',
             name='notification_level',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Do not notify'), (2, 'Show & Email notifications'), (3, 'Email notifications'), (4, 'Show notifications')], db_index=True, default=4, verbose_name='notification level'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(1, 'Do not notify'), (2, 'Show & Email notifications'), (3, 'Email notifications'),
+                         (4, 'Show notifications')], db_index=True, default=4, verbose_name='notification level'),
         ),
     ]

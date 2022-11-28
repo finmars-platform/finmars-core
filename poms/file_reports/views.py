@@ -1,27 +1,16 @@
-from celery.result import AsyncResult
-from django.core.signing import TimestampSigner
+from logging import getLogger
+
 from django.http import HttpResponse
 from django_filters.rest_framework import FilterSet
-from rest_framework.decorators import action
-
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
-from poms.common.utils import date_now, datetime_now
-
-from poms.celery_tasks.models import CeleryTask
-from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet
+from poms.common.views import AbstractModelViewSet
 from poms.csv_import.filters import SchemeContentTypeFilter
-
-from poms.csv_import.tasks import data_csv_file_import, data_csv_file_import_validate
 from poms.file_reports.models import FileReport
 from poms.file_reports.serializers import FileReportSerializer
-from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
-
 from poms.users.filters import OwnerByMasterUserFilter
-
-
-from logging import getLogger
 
 _l = getLogger('poms.csv_import')
 
@@ -41,6 +30,7 @@ class FileReportViewSet(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
+
     # permission_classes = AbstractModelViewSet.permission_classes + [
     #     PomsConfigurationPermission
     # ]
@@ -67,4 +57,3 @@ class FileReportViewSet(AbstractModelViewSet):
         response['Content-Disposition'] = 'attachment; filename=%s' % instance.file_name
 
         return response
-

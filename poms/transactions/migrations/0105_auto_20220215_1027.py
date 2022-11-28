@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0104_auto_20220211_1712'),
     ]
@@ -13,7 +12,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactioninstrumentaccrualcalculationschedules',
             name='accrual_calculation_model',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='accrual calculation model'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='accrual calculation model'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactioninstrumentaccrualcalculationschedules',
@@ -28,7 +28,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactioninstrumenteventschedule',
             name='notification_class',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='notification class'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='notification class'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactioninstrumenteventschedule',

@@ -1,3 +1,4 @@
+import logging
 import time
 
 from django.db import transaction
@@ -16,9 +17,6 @@ from poms.pricing.transport.transport import PricingTransport
 from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_between_two_dates, \
     get_is_yesterday, optimize_items, roll_currency_history_for_n_day_forward, get_empty_values_for_dates, \
     group_currency_items_by_provider
-
-import logging
-
 from poms.procedures.models import PricingProcedure, BaseProcedureInstance
 from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import Transaction

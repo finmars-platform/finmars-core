@@ -1,6 +1,5 @@
 from rest_framework import serializers
 
-
 from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import PricingPolicy, PriceHistory
@@ -104,18 +103,18 @@ class InstrumentPricingSchemeCbondsParametersSerializer(serializers.ModelSeriali
 class CurrencyPricingSchemeFixerParametersSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyPricingSchemeFixerParameters
-        fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'error_text_expr')
+        fields = (
+        'id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'error_text_expr')
 
 
 class CurrencyPricingSchemeCbondsParametersSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyPricingSchemeCbondsParameters
-        fields = ('id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'error_text_expr')
-
+        fields = (
+        'id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'error_text_expr')
 
 
 class InstrumentForwardsPricingSchemeBloombergParametersSerializer(serializers.ModelSerializer):
-
     data = serializers.JSONField(allow_null=False)
 
     class Meta:
@@ -126,7 +125,6 @@ class InstrumentForwardsPricingSchemeBloombergParametersSerializer(serializers.M
                   'price_code',
                   'data'
                   )
-
 
 
 class InstrumentPricingSchemeTypeSerializer(serializers.ModelSerializer):
@@ -148,7 +146,8 @@ class InstrumentPricingSchemeSerializer(ModelWithTimeStampSerializer):
     class Meta:
         model = InstrumentPricingScheme
         fields = (
-            'id', 'name', 'user_code', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter', 'error_handler', 'type',
+            'id', 'name', 'user_code', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter',
+            'error_handler', 'type',
             'type_settings')
 
     def get_type_settings(self, instance):
@@ -259,8 +258,6 @@ class InstrumentPricingSchemeSerializer(ModelWithTimeStampSerializer):
 
                 except InstrumentPricingSchemeCbondsParameters.DoesNotExist:
                     pass
-
-
 
         return result
 
@@ -544,7 +541,6 @@ class InstrumentPricingSchemeSerializer(ModelWithTimeStampSerializer):
                 else:
                     wtrade.accrual_error_text_expr = None
 
-
                 wtrade.save()
 
             if instance.type_id == 7:  # alphav
@@ -607,7 +603,8 @@ class InstrumentPricingSchemeSerializer(ModelWithTimeStampSerializer):
 
                 except InstrumentForwardsPricingSchemeBloombergParameters.DoesNotExist:
 
-                    parameters = InstrumentForwardsPricingSchemeBloombergParameters(instrument_pricing_scheme_id=instance.id)
+                    parameters = InstrumentForwardsPricingSchemeBloombergParameters(
+                        instrument_pricing_scheme_id=instance.id)
 
                 if 'default_value' in type_settings:
                     parameters.default_value = type_settings['default_value']
@@ -778,7 +775,8 @@ class CurrencyPricingSchemeSerializer(ModelWithTimeStampSerializer):
     class Meta:
         model = CurrencyPricingScheme
         fields = (
-            'id', 'name', 'user_code', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter', 'error_handler', 'type',
+            'id', 'name', 'user_code', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter',
+            'error_handler', 'type',
             'type_settings')
 
     def get_type_settings(self, instance):
@@ -1160,7 +1158,8 @@ class CurrencyPricingSchemeLightSerializer(ModelWithTimeStampSerializer):
     class Meta:
         model = CurrencyPricingScheme
         fields = (
-            'id', 'name', 'user_code', 'master_user',  'error_handler')
+            'id', 'name', 'user_code', 'master_user', 'error_handler')
+
 
 class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
@@ -1198,7 +1197,8 @@ class InstrumentTypePricingPolicySerializer(serializers.ModelSerializer):
     class Meta:
         model = InstrumentTypePricingPolicy
         fields = (
-            'id', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data', 'overwrite_default_parameters')
+            'id', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data',
+            'overwrite_default_parameters')
 
 
 class InstrumentPricingPolicySerializer(serializers.ModelSerializer):
@@ -1218,8 +1218,6 @@ class InstrumentPricingPolicySerializer(serializers.ModelSerializer):
         fields = ('id', 'pricing_policy', 'pricing_scheme', 'notes', 'default_value', 'attribute_key', 'data')
 
 
-
-
 class BrokerBloombergSerializer(serializers.Serializer):
 
     def __init__(self, **kwargs):
@@ -1227,7 +1225,6 @@ class BrokerBloombergSerializer(serializers.Serializer):
 
 
 class PriceHistoryErrorSerializer(serializers.ModelSerializer):
-
     pricing_scheme_object = InstrumentPricingSchemeLightSerializer(source='pricing_scheme', read_only=True)
     procedure_instance_object = PricingProcedureInstanceSerializer(source='procedure_instance', read_only=True)
 
@@ -1262,9 +1259,11 @@ class PriceHistoryErrorSerializer(serializers.ModelSerializer):
         instance = super(PriceHistoryErrorSerializer, self).update(instance, validated_data)
 
         try:
-            price_history = PriceHistory.objects.get(instrument=instance.instrument, pricing_policy=instance.pricing_policy, date=instance.date)
+            price_history = PriceHistory.objects.get(instrument=instance.instrument,
+                                                     pricing_policy=instance.pricing_policy, date=instance.date)
         except PriceHistory.DoesNotExist:
-            price_history = PriceHistory(instrument=instance.instrument, pricing_policy=instance.pricing_policy, date=instance.date)
+            price_history = PriceHistory(instrument=instance.instrument, pricing_policy=instance.pricing_policy,
+                                         date=instance.date)
 
         price_history.principal_price = instance.principal_price
         price_history.accrued_price = instance.accrued_price
@@ -1277,7 +1276,6 @@ class PriceHistoryErrorSerializer(serializers.ModelSerializer):
 
 
 class CurrencyHistoryErrorSerializer(serializers.ModelSerializer):
-
     pricing_scheme_object = CurrencyPricingSchemeLightSerializer(source='pricing_scheme', read_only=True)
     procedure_instance_object = PricingProcedureInstanceSerializer(source='procedure_instance', read_only=True)
 
@@ -1292,8 +1290,6 @@ class CurrencyHistoryErrorSerializer(serializers.ModelSerializer):
 
         self.fields['currency_object'] = CurrencyViewSerializer(source='currency', read_only=True)
         self.fields['pricing_policy_object'] = PricingPolicyLightSerializer(source='pricing_policy', read_only=True)
-
-
 
     class Meta:
         model = CurrencyHistoryError
@@ -1315,9 +1311,11 @@ class CurrencyHistoryErrorSerializer(serializers.ModelSerializer):
         instance = super(CurrencyHistoryErrorSerializer, self).update(instance, validated_data)
 
         try:
-            currency_history = CurrencyHistory.objects.get(currency=instance.currency, pricing_policy=instance.pricing_policy, date=instance.date)
+            currency_history = CurrencyHistory.objects.get(currency=instance.currency,
+                                                           pricing_policy=instance.pricing_policy, date=instance.date)
         except CurrencyHistory.DoesNotExist:
-            currency_history = CurrencyHistory(currency=instance.currency, pricing_policy=instance.pricing_policy, date=instance.date)
+            currency_history = CurrencyHistory(currency=instance.currency, pricing_policy=instance.pricing_policy,
+                                               date=instance.date)
 
         currency_history.fx_rate = instance.fx_rate
 

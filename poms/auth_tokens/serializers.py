@@ -1,11 +1,9 @@
-from django.contrib.auth import authenticate
 from django.utils.translation import gettext_lazy as _
 
 from rest_framework import serializers
 
 
 class SetAuthTokenSerializer(serializers.Serializer):
-
     key = serializers.CharField(label=_("Key"))
 
     user_id = serializers.CharField(label=_("User id"))
@@ -25,7 +23,7 @@ class CreateMasterUserSerializer(serializers.Serializer):
     name = serializers.CharField(label=_("name"))
     unique_id = serializers.CharField(label=_("Unique id"))
     user_unique_id = serializers.CharField(label=_("User Unique id"))
-    old_backup_name = serializers.CharField(label=_("Old backup name"),  required=False, allow_blank=True)
+    old_backup_name = serializers.CharField(label=_("Old backup name"), required=False, allow_blank=True)
 
 
 class RenameMasterUserSerializer(serializers.Serializer):
@@ -47,10 +45,7 @@ class CreateMemberSerializer(serializers.Serializer):
     master_user_legacy_id = serializers.IntegerField(required=False, label=_("Current master user legacy id"))
 
 
-
 class DeleteMemberSerializer(serializers.Serializer):
     username = serializers.CharField(label=_("username"))
     # user_id = serializers.CharField(label=_("User Id"))
     # master_user_id = serializers.CharField(label=_("Master User id"))
-
-

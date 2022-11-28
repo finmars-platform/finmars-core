@@ -5,7 +5,7 @@ import zlib
 
 from django.core.signing import TimestampSigner
 from kombu.serialization import register
-from kombu.utils.encoding import str_to_bytes, bytes_to_str
+from kombu.utils.encoding import bytes_to_str
 
 __author__ = 'ailyukhin'
 

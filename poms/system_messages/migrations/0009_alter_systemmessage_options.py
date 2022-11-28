@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('system_messages', '0008_alter_systemmessage_section'),
     ]

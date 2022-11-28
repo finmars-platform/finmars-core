@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('pricing', '0043_currencypricingschemefixerparameters_error_text_expr'),
     ]
@@ -13,12 +12,15 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instrumentpricingschemewtradeparameters',
             name='accrual_calculation_method',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Not applicable'), (2, 'As per Accrual Schedule'), (3, 'As per Formula')], default=1, verbose_name='accrual calculation method'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(1, 'Not applicable'), (2, 'As per Accrual Schedule'), (3, 'As per Formula')], default=1,
+                verbose_name='accrual calculation method'),
         ),
         migrations.AddField(
             model_name='instrumentpricingschemewtradeparameters',
             name='accrual_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='accrual error text expr'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='accrual error text expr'),
         ),
         migrations.AddField(
             model_name='instrumentpricingschemewtradeparameters',
@@ -28,6 +30,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instrumentpricingschemewtradeparameters',
             name='pricing_error_text_expr',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='pricing error text expr'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='pricing error text expr'),
         ),
     ]

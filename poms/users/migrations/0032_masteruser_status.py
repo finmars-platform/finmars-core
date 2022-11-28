@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0031_ecosystemdefault_pricing_condition'),
     ]
@@ -13,6 +12,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='masteruser',
             name='status',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Online'), (2, 'Offline'), (3, 'Backup')], default=1, verbose_name='status'),
+            field=models.PositiveSmallIntegerField(choices=[(1, 'Online'), (2, 'Offline'), (3, 'Backup')], default=1,
+                                                   verbose_name='status'),
         ),
     ]

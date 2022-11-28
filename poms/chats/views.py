@@ -5,8 +5,6 @@ from django.db.models import Count, Prefetch
 from django.utils import timezone
 from django_filters.rest_framework import FilterSet
 from rest_framework.decorators import action
-
-
 from rest_framework.response import Response
 
 from poms.chats.filters import MessagePermissionFilter, DirectMessagePermissionFilter
@@ -85,8 +83,8 @@ class ThreadViewSet(AbstractWithObjectPermissionViewSet):
             to_attr="messages_last",
             queryset=Message.objects.prefetch_related('sender').filter(
                 pk__in=Message.objects.distinct('thread').
-                    order_by('thread_id', '-created', '-id').
-                    values_list('id', flat=True))
+                order_by('thread_id', '-created', '-id').
+                values_list('id', flat=True))
 
         ),
         *get_permissions_prefetch_lookups(
@@ -105,7 +103,7 @@ class ThreadViewSet(AbstractWithObjectPermissionViewSet):
     ]
 
     @action(detail=True, url_path='close',
-                  permission_classes=AbstractWithObjectPermissionViewSet.permission_classes + [SuperUserOnly, ])
+            permission_classes=AbstractWithObjectPermissionViewSet.permission_classes + [SuperUserOnly, ])
     def close(self, request, pk=None):
         instance = self.get_object()
         instance.is_closed = True
@@ -115,7 +113,7 @@ class ThreadViewSet(AbstractWithObjectPermissionViewSet):
         return Response(serializer.data)
 
     @action(detail=True, url_path='reopen',
-                  permission_classes=AbstractWithObjectPermissionViewSet.permission_classes + [SuperUserOnly, ])
+            permission_classes=AbstractWithObjectPermissionViewSet.permission_classes + [SuperUserOnly, ])
     def reopen(self, request, pk=None):
         instance = self.get_object()
         instance.is_closed = False

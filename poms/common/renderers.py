@@ -1,10 +1,9 @@
 from __future__ import unicode_literals
 
-from rest_framework.renderers import BaseRenderer, JSONRenderer
-from rest_framework.utils.encoders import JSONEncoder
-
-
 from json.encoder import encode_basestring_ascii, encode_basestring, INFINITY, _make_iterencode
+
+from rest_framework.renderers import JSONRenderer
+from rest_framework.utils.encoders import JSONEncoder
 
 
 class CustomJSONEncoder(JSONEncoder):

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0073_remove_transaction_ytm'),
     ]
@@ -18,6 +17,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeinput',
             name='value_type',
-            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (100, 'Relation'), (110, 'Selector'), (120, 'Button')], default=20, verbose_name='value type'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (100, 'Relation'), (110, 'Selector'),
+                         (120, 'Button')], default=20, verbose_name='value type'),
         ),
     ]

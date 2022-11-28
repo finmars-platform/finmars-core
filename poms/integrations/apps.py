@@ -28,10 +28,8 @@ class IntegrationsConfig(AppConfig):
         db_class_check_data(FactorScheduleDownloadMethod, verbosity, using)
         db_class_check_data(AccrualScheduleDownloadMethod, verbosity, using)
 
-
     def update_data_providers(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
 
-        from poms.common.utils import db_class_check_data
         from .models import DataProvider
 
         provider_types = [
@@ -82,4 +80,3 @@ class IntegrationsConfig(AppConfig):
 
             else:
                 DataProvider.objects.create(**type)
-

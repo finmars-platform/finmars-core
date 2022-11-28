@@ -1,7 +1,6 @@
 from __future__ import unicode_literals, print_function
 
 from django.contrib.contenttypes.models import ContentType
-from rest_framework.decorators import detail_route, list_route
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 

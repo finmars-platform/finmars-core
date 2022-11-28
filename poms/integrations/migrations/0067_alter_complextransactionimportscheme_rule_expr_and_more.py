@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('integrations', '0066_alter_complextransactionimportscheme_rule_expr_and_more'),
     ]

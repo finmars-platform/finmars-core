@@ -1,21 +1,19 @@
+import logging
+
 from django.db.models import Q
+from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
 
 from poms.common.utils import get_first_transaction, \
     get_list_of_business_days_between_two_dates, \
     get_last_bdays_of_months_between_two_dates, get_closest_bday_of_yesterday
 from poms.common.views import AbstractViewSet
-from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
-
 from poms.currencies.models import Currency
 from poms.instruments.models import CostMethod, PricingPolicy
 from poms.portfolios.models import Portfolio
 from poms.users.models import EcosystemDefault
 from poms.widgets.models import BalanceReportHistory, PLReportHistory, WidgetStats
 from poms.widgets.serializers import CollectHistorySerializer, CollectStatsSerializer, WidgetStatsSerializer
-
-import logging
-
 from poms.widgets.utils import collect_balance_history, collect_pl_history, collect_widget_stats
 
 _l = logging.getLogger('poms.widgets')
@@ -434,7 +432,6 @@ class CollectStatsViewSet(AbstractViewSet):
 
         if not segmentation_type:
             segmentation_type = 'months'
-
 
         if not portfolio_id:
             raise ValidationError("Portfolio is not set")

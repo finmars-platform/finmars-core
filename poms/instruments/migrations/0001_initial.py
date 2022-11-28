@@ -3,13 +3,14 @@
 from __future__ import unicode_literals
 
 import datetime
-from django.db import migrations, models
+
 import django.utils.timezone
+from django.db import migrations, models
+
 import poms.common.utils
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -43,8 +44,10 @@ class Migration(migrations.Migration):
             name='AccrualCalculationSchedule',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('accrual_start_date', models.DateField(default=poms.common.utils.date_now, verbose_name='accrual start date')),
-                ('first_payment_date', models.DateField(default=poms.common.utils.date_now, verbose_name='first payment date')),
+                ('accrual_start_date',
+                 models.DateField(default=poms.common.utils.date_now, verbose_name='accrual start date')),
+                ('first_payment_date',
+                 models.DateField(default=poms.common.utils.date_now, verbose_name='first payment date')),
                 ('accrual_size', models.FloatField(default=0.0, verbose_name='accrual size')),
                 ('periodicity_n', models.IntegerField(default=0, verbose_name='periodicity n')),
                 ('notes', models.TextField(blank=True, default='', verbose_name='notes')),
@@ -158,7 +161,9 @@ class Migration(migrations.Migration):
                 ('effective_date_notified', models.BooleanField(db_index=True, default=False)),
                 ('notification_date', models.DateField(db_index=True, default=poms.common.utils.date_now)),
                 ('notification_date_notified', models.BooleanField(db_index=True, default=False)),
-                ('status', models.PositiveSmallIntegerField(choices=[(1, 'New'), (2, 'Ignored'), (3, 'Book pending'), (4, 'Booked')], db_index=True, default=1)),
+                ('status', models.PositiveSmallIntegerField(
+                    choices=[(1, 'New'), (2, 'Ignored'), (3, 'Book pending'), (4, 'Booked')], db_index=True,
+                    default=1)),
                 ('status_date', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
                 ('position', models.FloatField(default=0.0)),
             ],
@@ -175,7 +180,9 @@ class Migration(migrations.Migration):
                 ('user_code', models.CharField(blank=True, max_length=25, null=True, verbose_name='user code')),
                 ('name', models.CharField(max_length=255, verbose_name='name')),
                 ('short_name', models.CharField(blank=True, max_length=50, null=True, verbose_name='short name')),
-                ('public_name', models.CharField(blank=True, help_text='used if user does not have permissions to view object', max_length=255, null=True, verbose_name='public name')),
+                ('public_name',
+                 models.CharField(blank=True, help_text='used if user does not have permissions to view object',
+                                  max_length=255, null=True, verbose_name='public name')),
                 ('notes', models.TextField(blank=True, null=True, verbose_name='notes')),
                 ('is_deleted', models.BooleanField(db_index=True, default=False)),
                 ('is_active', models.BooleanField(default=True, verbose_name='is active')),
@@ -183,15 +190,20 @@ class Migration(migrations.Migration):
                 ('accrued_multiplier', models.FloatField(default=1.0, verbose_name='accrued multiplier')),
                 ('default_price', models.FloatField(default=0.0, verbose_name='default price')),
                 ('default_accrued', models.FloatField(default=0.0, verbose_name='default accrued')),
-                ('user_text_1', models.CharField(blank=True, help_text='User specified field 1', max_length=255, null=True)),
-                ('user_text_2', models.CharField(blank=True, help_text='User specified field 2', max_length=255, null=True)),
-                ('user_text_3', models.CharField(blank=True, help_text='User specified field 3', max_length=255, null=True)),
-                ('reference_for_pricing', models.CharField(blank=True, default='', max_length=100, verbose_name='reference for pricing')),
+                ('user_text_1',
+                 models.CharField(blank=True, help_text='User specified field 1', max_length=255, null=True)),
+                ('user_text_2',
+                 models.CharField(blank=True, help_text='User specified field 2', max_length=255, null=True)),
+                ('user_text_3',
+                 models.CharField(blank=True, help_text='User specified field 3', max_length=255, null=True)),
+                ('reference_for_pricing',
+                 models.CharField(blank=True, default='', max_length=100, verbose_name='reference for pricing')),
                 ('maturity_date', models.DateField(default=datetime.date(9999, 12, 31), verbose_name='maturity date')),
             ],
             options={
                 'abstract': False,
-                'permissions': [('view_instrument', 'Can view instrument'), ('manage_instrument', 'Can manage instrument')],
+                'permissions': [('view_instrument', 'Can view instrument'),
+                                ('manage_instrument', 'Can manage instrument')],
                 'verbose_name': 'instrument',
                 'ordering': ['user_code'],
                 'verbose_name_plural': 'instruments',
@@ -240,13 +252,16 @@ class Migration(migrations.Migration):
                 ('user_code', models.CharField(blank=True, max_length=25, null=True, verbose_name='user code')),
                 ('name', models.CharField(max_length=255, verbose_name='name')),
                 ('short_name', models.CharField(blank=True, max_length=50, null=True, verbose_name='short name')),
-                ('public_name', models.CharField(blank=True, help_text='used if user does not have permissions to view object', max_length=255, null=True, verbose_name='public name')),
+                ('public_name',
+                 models.CharField(blank=True, help_text='used if user does not have permissions to view object',
+                                  max_length=255, null=True, verbose_name='public name')),
                 ('notes', models.TextField(blank=True, null=True, verbose_name='notes')),
                 ('is_deleted', models.BooleanField(db_index=True, default=False)),
             ],
             options={
                 'abstract': False,
-                'permissions': [('view_instrumenttype', 'Can view instrument type'), ('manage_instrumenttype', 'Can manage instrument type')],
+                'permissions': [('view_instrumenttype', 'Can view instrument type'),
+                                ('manage_instrumenttype', 'Can manage instrument type')],
                 'verbose_name': 'instrument type',
                 'ordering': ['user_code'],
                 'verbose_name_plural': 'instrument types',
@@ -332,7 +347,9 @@ class Migration(migrations.Migration):
                 ('user_code', models.CharField(blank=True, max_length=25, null=True, verbose_name='user code')),
                 ('name', models.CharField(max_length=255, verbose_name='name')),
                 ('short_name', models.CharField(blank=True, max_length=50, null=True, verbose_name='short name')),
-                ('public_name', models.CharField(blank=True, help_text='used if user does not have permissions to view object', max_length=255, null=True, verbose_name='public name')),
+                ('public_name',
+                 models.CharField(blank=True, help_text='used if user does not have permissions to view object',
+                                  max_length=255, null=True, verbose_name='public name')),
                 ('notes', models.TextField(blank=True, null=True, verbose_name='notes')),
                 ('expr', models.CharField(blank=True, default='', max_length=255, verbose_name='expression')),
             ],

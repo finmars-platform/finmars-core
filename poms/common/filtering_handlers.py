@@ -1,24 +1,14 @@
-from poms.common.utils import force_qs_evaluation
-from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
-
-from django.db.models import Count, Sum, F, Value, Aggregate
-from django.db.models.functions import Lower
-
-from django.db.models import CharField, Case, When, DateField, FloatField, ForeignKey, TextField, IntegerField
-from django.db.models.functions import Coalesce
-from django.contrib.contenttypes.models import ContentType
-
+import logging
 import operator
+import time
+from datetime import datetime
 from functools import reduce
+
 from dateutil.parser import parse
-
-from datetime import date, timedelta, datetime
-
+from django.db.models import CharField, DateField, FloatField, ForeignKey, TextField, IntegerField
 from django.db.models import Q
 
-import time
-
-import logging
+from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 
 _l = logging.getLogger('poms.common')
 
@@ -1117,7 +1107,6 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
     for query in char_queries:
         q = q | query
 
-
     text_fields = [f for f in model._meta.fields if isinstance(f, TextField)]
 
     # _l.info('text_fields %s' % text_fields)
@@ -1133,13 +1122,11 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
     for query in date_queries:
         q = q | query
 
-
     integer_fields = [f for f in model._meta.fields if isinstance(f, IntegerField)]
     integer_queries = [Q(**{f.name + '__icontains': global_table_search}) for f in integer_fields]
 
     for query in integer_queries:
         q = q | query
-
 
     float_fields = [f for f in model._meta.fields if isinstance(f, FloatField)]
     float_queries = [Q(**{f.name + '__icontains': global_table_search}) for f in float_fields]

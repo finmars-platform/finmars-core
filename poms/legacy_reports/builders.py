@@ -14,21 +14,18 @@ from itertools import groupby
 from django.conf import settings
 from django.db.models import Q
 from django.utils.functional import cached_property
-from django.utils.translation import gettext_lazy, gettext_lazy
+from django.utils.translation import gettext_lazy
 
-from poms.accounts.models import Account, AccountType
+from poms.accounts.models import Account
 from poms.common import formula
 from poms.common.formula_accruals import f_xirr, f_duration
 from poms.common.utils import date_now, isclose
 from poms.currencies.models import Currency
-from poms.instruments.models import Instrument, InstrumentType, CostMethod, InstrumentClass
+from poms.instruments.models import Instrument, CostMethod, InstrumentClass
 from poms.obj_attrs.utils import get_attributes_prefetch
-from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
-
 from poms.reports.utils import sprint_table
-from poms.strategies.models import Strategy1, Strategy2, Strategy3, Strategy1Subgroup, Strategy1Group, \
-    Strategy2Subgroup, Strategy2Group, Strategy3Subgroup, Strategy3Group
+from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import TransactionClass, Transaction, ComplexTransaction
 
 _l = logging.getLogger('poms.reports')
@@ -614,10 +611,6 @@ class VirtualTransaction(_Base):
                                         (1.0 - self.multiplier) / self.pos_size / self.instr.price_multiplier
                 except ArithmeticError:
                     self.net_cost_res = 0.0
-
-
-
-
 
                 try:
                     self.principal_invested_res = self.principal_res * self.ref_fx * \
@@ -1880,7 +1873,6 @@ class ReportItem(_Base):
             except ArithmeticError:
                 self.net_pos_return_res = 0.0
 
-
             # def get_future_accrual_payments(self, d0,v0):
             #     //Если есть в кэше, взять оттуда
             #     //if hasattr(self, '_instr_ytm_data'):
@@ -1942,7 +1934,9 @@ class ReportItem(_Base):
                 # Для записка итеративного алгоритма, для x0 из accrued schedule
                 # берем на текущую дату - (accrued_size * accrued_multiplier)/(price * price_multiplier).
 
-                v0 = -(self.instr_price_cur_principal_price * self.instr.price_multiplier * self.instr.get_factor(self.report.report_date) + self.instr_price_cur_accrued_price * self.instr.accrued_multiplier * self.instr.get_factor(self.report.report_date) * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx))
+                v0 = -(self.instr_price_cur_principal_price * self.instr.price_multiplier * self.instr.get_factor(
+                    self.report.report_date) + self.instr_price_cur_accrued_price * self.instr.accrued_multiplier * self.instr.get_factor(
+                    self.report.report_date) * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx))
 
                 try:
                     future_accrual_payments = self.instr.get_future_accrual_payments(
@@ -2296,7 +2290,7 @@ class ReportItem(_Base):
         elif self.type == ReportItem.TYPE_FX_TRADE:
             # return gettext_lazy('FX-Trade')
             return gettext_lazy('FX-Trades: %s/%s') % (getattr(self.trn_ccy, 'short_name', None),
-                                                   getattr(self.ccy, 'short_name', None),)
+                                                       getattr(self.ccy, 'short_name', None),)
 
         elif self.type == ReportItem.TYPE_CASH_IN_OUT:
             # return gettext_lazy('Cash In/Out: %s/%s')

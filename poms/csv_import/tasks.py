@@ -1,69 +1,58 @@
-import re
-import uuid
 import hashlib
+import re
+import traceback
+import uuid
+from logging import getLogger
 
-from celery import shared_task, chord, current_task
+from celery import shared_task, current_task
+from django.apps import apps
 from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ValidationError as CoreValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.utils.timezone import now
+from django.utils.translation import gettext_lazy
+from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
+from rest_framework.exceptions import ValidationError
 
+from poms.accounts.models import Account, AccountType
+from poms.celery_tasks.models import CeleryTask
+from poms.common import formula
 from poms.common.crypto.AESCipher import AESCipher
 from poms.common.crypto.RSACipher import RSACipher
 from poms.common.formula import safe_eval, ExpressionEvalError
-from poms.common.utils import date_now
+from poms.common.models import ProxyUser, ProxyRequest
+from poms.common.websockets import send_websocket_message
+from poms.counterparties.models import Counterparty, Responsible
+from poms.currencies.models import Currency
 from poms.file_reports.models import FileReport
-from poms.obj_perms.models import GenericObjectPermission
-from poms.pricing.models import InstrumentPricingPolicy
-from poms.system_messages.handlers import send_system_message
-
-from poms.users.models import EcosystemDefault, Group
-from django.apps import apps
-from django.contrib.contenttypes.models import ContentType
-
+from poms.instruments.handlers import InstrumentTypeProcess
+from poms.instruments.models import PricingPolicy, Instrument, InstrumentType
 from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping, \
     PortfolioClassifierMapping, AccountClassifierMapping, ResponsibleClassifierMapping, CounterpartyClassifierMapping, \
     PricingPolicyMapping, InstrumentMapping, CurrencyMapping, InstrumentTypeMapping, PaymentSizeDetailMapping, \
-    DailyPricingModelMapping, InstrumentClassifierMapping, AccountTypeMapping, \
+    InstrumentClassifierMapping, AccountTypeMapping, \
     Task, PricingConditionMapping, TransactionFileResult
-
-from poms.portfolios.models import Portfolio
-from poms.currencies.models import Currency
-from poms.instruments.models import PricingPolicy, Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, \
-    PricingCondition, AccrualCalculationModel, Periodicity
-from poms.counterparties.models import Counterparty, Responsible
-from poms.accounts.models import Account, AccountType
-
 from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, GenericClassifier
-from poms.common import formula
-from django.core.exceptions import ValidationError as CoreValidationError
-from rest_framework.exceptions import ValidationError
-
-from poms_app import settings
-from .filters import SchemeContentTypeFilter
-from .handlers import handler_instrument_object
-from .models import CsvDataImport, CsvImportScheme
-from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer, CsvDataFileImport
-
-from django.utils.translation import gettext_lazy
-from logging import getLogger
-from openpyxl import load_workbook
-
-from poms.celery_tasks.models import CeleryTask
-from poms.common.websockets import send_websocket_message
-
-import traceback
-
-from poms.instruments.handlers import InstrumentTypeProcess
+from poms.obj_perms.models import GenericObjectPermission
+from poms.portfolios.models import Portfolio
+from poms.pricing.models import InstrumentPricingPolicy
 from poms.procedures.models import RequestDataFileProcedureInstance
-from poms.common.models import ProxyUser, ProxyRequest
+from poms.system_messages.handlers import send_system_message
+from poms.users.models import EcosystemDefault, Group
+from poms_app import settings
+from .handlers import handler_instrument_object
+from .models import CsvImportScheme
+from .serializers import CsvDataFileImport
 
 _l = getLogger('poms.csv_import')
 
 import csv
 
 from poms.common.storage import get_storage
+
 storage = get_storage()
 
 from tempfile import NamedTemporaryFile
@@ -1824,7 +1813,6 @@ def data_csv_file_import(self, task_id, procedure_instance_id=None):
 def data_csv_file_import_by_procedure(self, procedure_instance_id, transaction_file_result_id):
     with transaction.atomic():
 
-        from poms.integrations.serializers import ComplexTransactionCsvFileImport
         from poms.procedures.models import RequestDataFileProcedureInstance
 
         procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
@@ -1962,7 +1950,6 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
         _l.info('data_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (
             procedure_instance_id, celery_task_id))
 
-        from poms.integrations.serializers import ComplexTransactionCsvFileImport
         from poms.procedures.models import RequestDataFileProcedureInstance
 
         procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)

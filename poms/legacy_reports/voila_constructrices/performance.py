@@ -3,32 +3,20 @@ import json
 import logging
 import time
 from datetime import timedelta
-import calendar
 
-from django.db import connection
 from django.forms import model_to_dict
 from django.views.generic.dates import timezone_today
-from rest_framework.exceptions import APIException
 
 from poms.accounts.models import Account
-from poms.common.utils import get_list_of_dates_between_two_dates, get_list_of_business_days_between_two_dates, \
+from poms.common.utils import get_list_of_business_days_between_two_dates, \
     last_business_day_in_month, is_business_day, get_last_business_day
 from poms.currencies.models import Currency, CurrencyHistory
-from poms.instruments.models import Instrument, InstrumentType, LongUnderlyingExposure, ShortUnderlyingExposure, \
-    ExposureCalculationModel, PriceHistory
+from poms.instruments.models import Instrument, InstrumentType, PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioRegisterRecord, PortfolioRegister
-from poms.reports.builders.balance_item import Report
-from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.models import BalanceReportCustomField
-from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
-    get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
-    get_position_consolidation_for_select, get_pl_left_join_consolidation, dictfetchall, \
-    get_cash_consolidation_for_select, get_cash_as_position_consolidation_for_select
-from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
-from poms.users.models import EcosystemDefault
-from django.conf import settings
 from poms.transactions.models import Transaction, TransactionClass
+from poms.users.models import EcosystemDefault
 
 _l = logging.getLogger('poms.reports')
 
@@ -347,7 +335,6 @@ class PerformanceReportBuilder:
 
                 result = self.format_to_days(dates)
 
-
         if segmentation_type == 'months':
             result = self.format_to_months(dates)
 
@@ -386,20 +373,19 @@ class PerformanceReportBuilder:
                 if not is_business_day(month_end):
                     month_end = get_last_business_day(month_end)
 
+            month_start = get_last_business_day(
+                datetime.date(year, month, 1) - timedelta(days=1))  # 2022-10-01 - 2022-09-30
 
-            month_start = get_last_business_day(datetime.date(year, month, 1) - timedelta(days=1)) #2022-10-01 - 2022-09-30
-
-            #begin_date_year = begin_date.year
-            #begin_date_month = begin_date.month
+            # begin_date_year = begin_date.year
+            # begin_date_month = begin_date.month
 
             # previous_end_of_month_of_begin_date = datetime.date(begin_date_year, begin_date_month, 1) - timedelta(
             #     days=1)
 
             # TODO check?
-            #previous_end_of_month_of_begin_date = last_business_day_in_month(begin_date_year, begin_date_month) - timedelta(days=1)
+            # previous_end_of_month_of_begin_date = last_business_day_in_month(begin_date_year, begin_date_month) - timedelta(days=1)
 
             if begin_date > month_start:
-
                 month_start = begin_date
 
             if year_month not in result_obj:
@@ -1073,7 +1059,8 @@ class PerformanceReportBuilder:
                         if record.transaction_class_id in [TransactionClass.CASH_INFLOW, TransactionClass.INJECTION]:
                             cash_inflow = cash_inflow + record.cash_amount_valuation_currency * fx_rate
 
-                        if record.transaction_class_id in [TransactionClass.CASH_OUTFLOW, TransactionClass.DISTRIBUTION]:
+                        if record.transaction_class_id in [TransactionClass.CASH_OUTFLOW,
+                                                           TransactionClass.DISTRIBUTION]:
                             cash_outflow = cash_outflow + record.cash_amount_valuation_currency * fx_rate
 
                     date_n = dates_map[item['transaction_date_str']]

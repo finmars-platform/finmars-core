@@ -1,25 +1,21 @@
 import logging
-import time
 import os
+import time
 
+from django.conf import settings
 from django.db import connection
+from poms.reports.builders.balance_item import Report
 
 from poms.accounts.models import Account
-from poms.currencies.models import Currency, CurrencyHistory
+from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, CostMethod, InstrumentType
 from poms.portfolios.models import Portfolio
-from poms.reports.builders.balance_item import Report
-from poms.reports.builders.base_builder import BaseReportBuilder
-from poms.reports.models import BalanceReportCustomField, PLReportCustomField
+from poms.reports.models import PLReportCustomField
 from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
     get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
     get_position_consolidation_for_select, dictfetchall
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.users.models import EcosystemDefault
-
-from django.conf import settings
-
-import copy
 
 _l = logging.getLogger('poms.reports')
 
@@ -3047,7 +3043,7 @@ class PLReportBuilderSql:
 
             if settings.DEBUG:
                 with open(os.path.join(settings.BASE_DIR, 'query_result_before_execution_pl.txt'), 'w') as the_file:
-                    the_file.\
+                    the_file. \
                         write(query)
 
             cursor.execute(query)
@@ -3073,7 +3069,7 @@ class PLReportBuilderSql:
             for item in result_tmp_raw:
 
                 item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
-                
+
                 if item['item_type'] == ITEM_TYPE_MISMATCH:
                     if item['position_size']:
                         result_tmp.append(item)
@@ -3090,7 +3086,6 @@ class PLReportBuilderSql:
                 result_item_opened['user_code'] = item['user_code']
                 result_item_opened['item_type'] = item['item_type']
                 result_item_opened['item_type_name'] = item['item_type_name']
-
 
                 result_item_opened['market_value'] = item['market_value']
                 result_item_opened['exposure'] = item['exposure']
@@ -3116,7 +3111,7 @@ class PLReportBuilderSql:
 
                 result_item_opened['position_return'] = item['position_return']
                 result_item_opened['position_return_loc'] = item['position_return_loc']
-                
+
                 result_item_opened['net_position_return'] = item['net_position_return']
                 result_item_opened['net_position_return_loc'] = item['net_position_return_loc']
 
@@ -3124,7 +3119,6 @@ class PLReportBuilderSql:
                 result_item_opened['mismatch'] = item['mismatch']
 
                 result_item_opened['instrument_id'] = item['instrument_id']
-
 
                 if "portfolio_id" not in item:
                     result_item_opened['portfolio_id'] = self.ecosystem_defaults.portfolio_id
@@ -3151,7 +3145,6 @@ class PLReportBuilderSql:
                 else:
                     result_item_opened['strategy3_position_id'] = item['strategy3_position_id']
 
-
                 if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT:
                     result_item_opened["item_group"] = 10
                     result_item_opened["item_group_code"] = "OPENED"
@@ -3177,14 +3170,12 @@ class PLReportBuilderSql:
                     result_item_opened["item_group_code"] = "MISMATCH"
                     result_item_opened["item_group_name"] = "Mismatch"
 
-
                 result_item_opened["exposure_currency_id"] = item["co_directional_exposure_currency_id"]
                 result_item_opened["pricing_currency_id"] = item["pricing_currency_id"]
                 result_item_opened["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
                 result_item_opened["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
                 result_item_opened["instrument_principal_price"] = item["instrument_principal_price"]
                 result_item_opened["instrument_accrued_price"] = item["instrument_accrued_price"]
-
 
                 result_item_opened["principal"] = item["principal_opened"]
                 result_item_opened["carry"] = item["carry_opened"]
@@ -3300,7 +3291,7 @@ class PLReportBuilderSql:
 
                     result_item_closed['position_return'] = item['position_return']
                     result_item_closed['position_return_loc'] = item['position_return_loc']
-                    
+
                     result_item_closed['net_position_return'] = item['net_position_return']
                     result_item_closed['net_position_return_loc'] = item['net_position_return_loc']
 
@@ -3326,7 +3317,7 @@ class PLReportBuilderSql:
 
                     result_item_closed['position_return'] = item['position_return']
                     result_item_closed['position_return_loc'] = item['position_return_loc']
-                    
+
                     result_item_closed['net_position_return'] = item['net_position_return']
                     result_item_closed['net_position_return_loc'] = item['net_position_return_loc']
 
@@ -3360,15 +3351,16 @@ class PLReportBuilderSql:
                     else:
                         result_item_closed['strategy3_position_id'] = item['strategy3_position_id']
 
-
                     result_item_closed["item_group"] = 11
                     result_item_closed["item_group_code"] = "CLOSED"
                     result_item_closed["item_group_name"] = "Closed"
 
                     result_item_closed["exposure_currency_id"] = item["co_directional_exposure_currency_id"]
                     result_item_closed["pricing_currency_id"] = item["pricing_currency_id"]
-                    result_item_closed["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
-                    result_item_closed["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
+                    result_item_closed["instrument_pricing_currency_fx_rate"] = item[
+                        "instrument_pricing_currency_fx_rate"]
+                    result_item_closed["instrument_accrued_currency_fx_rate"] = item[
+                        "instrument_accrued_currency_fx_rate"]
                     result_item_closed["instrument_principal_price"] = item["instrument_principal_price"]
                     result_item_closed["instrument_accrued_price"] = item["instrument_accrued_price"]
 
@@ -3405,7 +3397,6 @@ class PLReportBuilderSql:
                     result_item_closed["carry_fixed_loc"] = item["carry_fixed_opened_loc"]
                     result_item_closed["overheads_fixed_loc"] = item["overheads_fixed_opened_loc"]
                     result_item_closed["total_fixed_loc"] = item["total_fixed_opened_loc"]
-
 
                     result.append(result_item_closed)
 
@@ -3569,7 +3560,6 @@ class PLReportBuilderSql:
             if 'strategy3_position_id' in item:
                 strategies3_ids.append(item['strategy3_position_id'])
 
-
             if 'strategy1_cash_id' in item:
                 strategies1_ids.append(item['strategy1_cash_id'])
 
@@ -3589,7 +3579,6 @@ class PLReportBuilderSql:
         self.add_data_items_strategies1(strategies1_ids)
         self.add_data_items_strategies2(strategies2_ids)
         self.add_data_items_strategies3(strategies3_ids)
-
 
         self.instance.custom_fields = PLReportCustomField.objects.filter(master_user=self.instance.master_user)
 

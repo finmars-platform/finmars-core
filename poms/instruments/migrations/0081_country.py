@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('instruments', '0080_alter_eventschedule_description_and_more'),
     ]
@@ -23,10 +22,13 @@ class Migration(migrations.Migration):
                 ('iso_3166_2', models.CharField(blank=True, max_length=255, null=True, verbose_name='iso_3166_2')),
                 ('region', models.CharField(blank=True, max_length=255, null=True, verbose_name='region')),
                 ('sub_region', models.CharField(blank=True, max_length=255, null=True, verbose_name='sub region')),
-                ('intermediate_region', models.CharField(blank=True, max_length=255, null=True, verbose_name='intermediate region')),
+                ('intermediate_region',
+                 models.CharField(blank=True, max_length=255, null=True, verbose_name='intermediate region')),
                 ('region_code', models.CharField(blank=True, max_length=255, null=True, verbose_name='region code')),
-                ('sub_region_code', models.CharField(blank=True, max_length=255, null=True, verbose_name='sub region code')),
-                ('intermediate_region_code', models.CharField(blank=True, max_length=255, null=True, verbose_name='intermediate region code')),
+                ('sub_region_code',
+                 models.CharField(blank=True, max_length=255, null=True, verbose_name='sub region code')),
+                ('intermediate_region_code',
+                 models.CharField(blank=True, max_length=255, null=True, verbose_name='intermediate region code')),
             ],
             options={
                 'abstract': False,

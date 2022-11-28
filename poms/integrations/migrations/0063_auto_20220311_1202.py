@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('integrations', '0062_complextransactionimportscheme_spreadsheet_active_tab_name'),
     ]

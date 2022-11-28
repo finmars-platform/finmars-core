@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('integrations', '0067_alter_complextransactionimportscheme_rule_expr_and_more'),
     ]
@@ -13,6 +12,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='complextransactionimportscheme',
             name='data_preprocess_expression',
-            field=models.CharField(blank=True, default='', max_length=4096, null=True, verbose_name='data preprocess expression'),
+            field=models.CharField(blank=True, default='', max_length=4096, null=True,
+                                   verbose_name='data preprocess expression'),
         ),
     ]

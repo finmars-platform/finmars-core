@@ -1,16 +1,15 @@
+import json
+import logging
+
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
-
-import json
-from django.core.serializers.json import DjangoJSONEncoder
 
 from poms.common.models import TimeStampedModel
 from poms.file_reports.models import FileReport
 
-
-import logging
-
 _l = logging.getLogger('poms.celery_tasks')
+
 
 class CeleryTask(TimeStampedModel):
     STATUS_INIT = 'I'

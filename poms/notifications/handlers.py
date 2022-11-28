@@ -6,13 +6,11 @@ from django.template.loader import get_template
 
 from poms.integrations.tasks import send_mail
 from poms.notifications.models import Notification
-
 from poms.users.models import Member
 
 
 @receiver(post_save, dispatch_uid='notification_post_save', sender=Notification)
 def notification_post_save(sender, instance=None, created=None, **kwargs):
-
     # print("Notification recipient %s" % instance.recipient)
 
     if created and instance.recipient.email and instance.recipient_member:
@@ -29,4 +27,3 @@ def notification_post_save(sender, instance=None, created=None, **kwargs):
             ]
 
             send_mail(subject, message, None, recipient_list, html_message=html_message)
-

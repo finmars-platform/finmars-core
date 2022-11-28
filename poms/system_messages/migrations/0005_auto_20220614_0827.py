@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('system_messages', '0004_auto_20201111_1737'),
     ]
@@ -13,6 +12,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='systemmessage',
             name='level',
-            field=models.CharField(choices=[('info', 'Info'), ('warn', 'Warning'), ('error', 'Error')], default='info', max_length=255, verbose_name='level'),
+            field=models.CharField(choices=[('info', 'Info'), ('warn', 'Warning'), ('error', 'Error')], default='info',
+                                   max_length=255, verbose_name='level'),
         )
     ]

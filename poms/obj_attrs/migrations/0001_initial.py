@@ -3,13 +3,13 @@
 from __future__ import unicode_literals
 
 import datetime
-from django.db import migrations, models
+
 import django.db.models.deletion
 import mptt.fields
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -21,7 +21,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('object_id', models.BigIntegerField(db_index=True)),
-                ('value_string', models.CharField(blank=True, default='', max_length=255, verbose_name='value (String)')),
+                ('value_string',
+                 models.CharField(blank=True, default='', max_length=255, verbose_name='value (String)')),
                 ('value_float', models.FloatField(default=0.0, verbose_name='value (Float)')),
                 ('value_date', models.DateField(default=datetime.date(1, 1, 1), verbose_name='value (Date)')),
             ],
@@ -38,9 +39,13 @@ class Migration(migrations.Migration):
                 ('user_code', models.CharField(blank=True, max_length=25, null=True, verbose_name='user code')),
                 ('name', models.CharField(max_length=255, verbose_name='name')),
                 ('short_name', models.CharField(blank=True, max_length=50, null=True, verbose_name='short name')),
-                ('public_name', models.CharField(blank=True, help_text='used if user does not have permissions to view object', max_length=255, null=True, verbose_name='public name')),
+                ('public_name',
+                 models.CharField(blank=True, help_text='used if user does not have permissions to view object',
+                                  max_length=255, null=True, verbose_name='public name')),
                 ('notes', models.TextField(blank=True, null=True, verbose_name='notes')),
-                ('value_type', models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier')], default=10, verbose_name='value type')),
+                ('value_type', models.PositiveSmallIntegerField(
+                    choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier')], default=10,
+                    verbose_name='value type')),
                 ('order', models.IntegerField(default=0, verbose_name='order')),
             ],
             options={
@@ -55,7 +60,9 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('is_hidden', models.BooleanField(default=False, verbose_name='is hidden')),
-                ('attribute_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='options', to='obj_attrs.GenericAttributeType', verbose_name='attribute type')),
+                ('attribute_type',
+                 models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='options',
+                                   to='obj_attrs.GenericAttributeType', verbose_name='attribute type')),
             ],
         ),
         migrations.CreateModel(
@@ -67,8 +74,13 @@ class Migration(migrations.Migration):
                 ('rght', models.PositiveIntegerField(db_index=True, editable=False)),
                 ('tree_id', models.PositiveIntegerField(db_index=True, editable=False)),
                 ('level', models.PositiveIntegerField(db_index=True, editable=False)),
-                ('attribute_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='classifiers', to='obj_attrs.GenericAttributeType', verbose_name='attribute type')),
-                ('parent', mptt.fields.TreeForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='children', to='obj_attrs.GenericClassifier', verbose_name='parent')),
+                ('attribute_type',
+                 models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='classifiers',
+                                   to='obj_attrs.GenericAttributeType', verbose_name='attribute type')),
+                ('parent',
+                 mptt.fields.TreeForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE,
+                                            related_name='children', to='obj_attrs.GenericClassifier',
+                                            verbose_name='parent')),
             ],
             options={
                 'ordering': ['tree_id', 'level', 'name'],

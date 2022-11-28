@@ -1,10 +1,5 @@
 from __future__ import unicode_literals
 
-from rest_framework import status
-
-from poms.chats.models import Thread, Message, DirectMessage, ThreadGroup
-from poms.common.tests import BaseApiTestCase, BaseApiWithPermissionTestCase
-
 # TODO update unit tests
 # def load_tests(loader, standard_tests, pattern):
 #     from poms.common.tests import load_tests as t

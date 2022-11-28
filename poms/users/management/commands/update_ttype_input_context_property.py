@@ -1,6 +1,4 @@
 from django.core.management import BaseCommand
-from django.db import transaction
-
 
 __author__ = 'szhitenev'
 
@@ -23,4 +21,3 @@ class Command(BaseCommand):
                     processed = processed + 1
 
         print('Inputs processed: %s' % processed)
-

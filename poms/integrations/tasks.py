@@ -1,17 +1,18 @@
 from __future__ import unicode_literals, print_function
 
+import copy
 import csv
+import hashlib
 import json
 import logging
 import os
 import re
 import time
+import traceback
 import uuid
-import hashlib
-import copy
 from datetime import date
+from io import BytesIO
 from tempfile import NamedTemporaryFile
-from filtration import Expression
 
 import requests
 from celery import shared_task, chord
@@ -25,6 +26,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
+from filtration import Expression
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
 
@@ -35,42 +37,36 @@ from poms.common import formula
 from poms.common.crypto.AESCipher import AESCipher
 from poms.common.crypto.RSACipher import RSACipher
 from poms.common.formula import ExpressionEvalError
+from poms.common.jwt import encode_with_jwt
+from poms.common.models import ProxyUser, ProxyRequest
+from poms.common.websockets import send_websocket_message
 from poms.counterparties.models import Counterparty, Responsible
+from poms.counterparties.serializers import CounterpartySerializer
 from poms.csv_import.handlers import handler_instrument_object
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.file_reports.models import FileReport
 from poms.instruments.models import Instrument, DailyPricingModel, PriceHistory, InstrumentType, \
     PaymentSizeDetail, Periodicity, AccrualCalculationModel, PricingCondition
+from poms.integrations.models import ImportConfig
 from poms.integrations.models import Task, PriceDownloadScheme, InstrumentDownloadScheme, \
     AccountMapping, CurrencyMapping, PortfolioMapping, CounterpartyMapping, InstrumentTypeMapping, ResponsibleMapping, \
     Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, \
     PriceDownloadSchemeMapping, InstrumentMapping, PeriodicityMapping, AccrualCalculationModelMapping, \
     BloombergDataProviderCredential, ComplexTransactionImportScheme, TransactionFileResult
 from poms.integrations.providers.base import get_provider, parse_date_iso, AbstractProvider
-
+from poms.obj_attrs.models import GenericAttributeType
 from poms.portfolios.models import Portfolio
+from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.system_messages.handlers import send_system_message
+from poms.transaction_import.tasks import transaction_import
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.users.models import EcosystemDefault
-from io import BytesIO
-
-
-from poms.integrations.models import ImportConfig
-from poms.transaction_import.tasks import transaction_import
-from poms.common.jwt import encode_with_jwt
-from poms.common.models import ProxyUser, ProxyRequest
-from poms.common.websockets import send_websocket_message
-
-import traceback
-
-from poms.counterparties.serializers import CounterpartySerializer
-from poms.obj_attrs.models import GenericAttributeType
-from poms.procedures.models import RequestDataFileProcedureInstance
 
 _l = logging.getLogger('poms.integrations')
 
 from poms.common.storage import get_storage
+
 storage = get_storage()
 
 
@@ -254,9 +250,7 @@ def download_instrument(instrument_code=None, instrument_download_scheme=None, m
         return task, None, None
 
 
-
 def create_instrument_from_finmars_database(data, master_user, member):
-
     try:
 
         from poms.instruments.serializers import InstrumentSerializer
@@ -286,7 +280,8 @@ def create_instrument_from_finmars_database(data, master_user, member):
         _l.info('create_instrument_from_finmars_database.instrument_data %s' % instrument_data)
 
         # TODO remove stocks ASAP as configuration ready
-        if instrument_data['instrument_type']['user_code'] == 'stocks' or instrument_data['instrument_type']['user_code'] == 'stock':
+        if instrument_data['instrument_type']['user_code'] == 'stocks' or instrument_data['instrument_type'][
+            'user_code'] == 'stock':
 
             if 'default_exchange' in instrument_data:
                 if instrument_data['default_exchange']:
@@ -302,12 +297,14 @@ def create_instrument_from_finmars_database(data, master_user, member):
                                     instrument_data['reference_for_pricing'] = instrument_data['user_code']
                                 else:
 
-                                    instrument_data['reference_for_pricing'] = instrument_data['user_code'] + ':' + instrument_data['default_currency_code']
+                                    instrument_data['reference_for_pricing'] = instrument_data['user_code'] + ':' + \
+                                                                               instrument_data['default_currency_code']
                             else:
-                                instrument_data['reference_for_pricing'] = instrument_data['user_code'] + '.' + instrument_data['default_exchange'] + ':' + instrument_data['default_currency_code']
+                                instrument_data['reference_for_pricing'] = instrument_data['user_code'] + '.' + \
+                                                                           instrument_data['default_exchange'] + ':' + \
+                                                                           instrument_data['default_currency_code']
 
                             _l.info('Reference for pricing updated %s' % instrument_data['reference_for_pricing'])
-
 
             _l.info("Overwrite Pricing Currency for stock")
             if 'default_currency_code' in instrument_data:
@@ -333,8 +330,6 @@ def create_instrument_from_finmars_database(data, master_user, member):
                                                 attribute_types)
 
         object_data['short_name'] = object_data['name'] + ' (' + object_data['user_code'] + ')'
-
-
 
         try:
 
@@ -408,12 +403,14 @@ def create_instrument_cbond(data, master_user, member):
                                     instrument_data['reference_for_pricing'] = instrument_data['user_code']
                                 else:
 
-                                    instrument_data['reference_for_pricing'] = instrument_data['user_code'] + ':' + instrument_data['default_currency_code']
+                                    instrument_data['reference_for_pricing'] = instrument_data['user_code'] + ':' + \
+                                                                               instrument_data['default_currency_code']
                             else:
-                                instrument_data['reference_for_pricing'] = instrument_data['user_code'] + '.' + instrument_data['default_exchange'] + ':' + instrument_data['default_currency_code']
+                                instrument_data['reference_for_pricing'] = instrument_data['user_code'] + '.' + \
+                                                                           instrument_data['default_exchange'] + ':' + \
+                                                                           instrument_data['default_currency_code']
 
                             _l.info('Reference for pricing updated %s' % instrument_data['reference_for_pricing'])
-
 
             _l.info("Overwrite Pricing Currency for stock")
             if 'default_currency_code' in instrument_data:
@@ -655,7 +652,6 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
                 instrument.is_active = False
 
                 if itype:
-
                     instrument.instrument_type = itype
 
                     small_item = {
@@ -853,8 +849,6 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
         return None, errors
 
 
-
-
 def download_instrument_finmars_database(task_id):
     errors = []
 
@@ -890,7 +884,8 @@ def download_instrument_finmars_database(task_id):
 
         options['request_id'] = task.pk
         options['base_api_url'] = settings.BASE_API_URL
-        options['callback_url'] = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/api/instruments/fdb-create-from-callback/'
+        options[
+            'callback_url'] = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/api/instruments/fdb-create-from-callback/'
 
         options['data'] = {}
 
@@ -910,19 +905,24 @@ def download_instrument_finmars_database(task_id):
         _l.info('download_instrument_finmars_database.options %s' % request_options)
 
         try:
-            response = requests.post(url=settings.FINMARS_DATABASE_URL + 'api/export/instrument', data=json.dumps(request_options),
+            response = requests.post(url=settings.FINMARS_DATABASE_URL + 'api/export/instrument',
+                                     data=json.dumps(request_options),
                                      headers=headers, timeout=25)
             _l.debug('download_instrument_finmars_database.response.text %s ' % response.text)
             _l.info('download_instrument_finmars_database.response.status_code %s ' % response.status_code)
 
         except requests.exceptions.Timeout as e:
 
-            _l.info("download_instrument_finmars_database Finmars Database Timeout. Trying to create simple instrument %s" % options['reference'])
+            _l.info(
+                "download_instrument_finmars_database Finmars Database Timeout. Trying to create simple instrument %s" %
+                options['reference'])
 
             try:
                 instrument = Instrument.objects.get(master_user=task.master_user, user_code=options['reference'])
 
-                _l.info("download_instrument_finmars_database Finmars Database Timeout. Simple instrument %s exist. Abort." % options['reference'])
+                _l.info(
+                    "download_instrument_finmars_database Finmars Database Timeout. Simple instrument %s exist. Abort." %
+                    options['reference'])
 
             except Exception as e:
 
@@ -931,8 +931,10 @@ def download_instrument_finmars_database(task_id):
                 if options['instrument_type_user_code'] == 'equity':
                     instrument_type_code = 'stocks'
 
-                _l.info('download_instrument_finmars_database Finmars Database Timeout. instrument_type_user_code %s' % options['instrument_type_user_code'])
-                _l.info('download_instrument_finmars_database Finmars Database Timeout. instrument_name %s' % options['instrument_name'])
+                _l.info('download_instrument_finmars_database Finmars Database Timeout. instrument_type_user_code %s' %
+                        options['instrument_type_user_code'])
+                _l.info('download_instrument_finmars_database Finmars Database Timeout. instrument_name %s' % options[
+                    'instrument_name'])
 
                 if options['instrument_type_user_code']:
                     try:
@@ -963,7 +965,6 @@ def download_instrument_finmars_database(task_id):
                 instrument.is_active = False
 
                 if itype:
-
                     instrument.instrument_type = itype
 
                     small_item = {
@@ -1055,13 +1056,12 @@ def download_instrument_finmars_database(task_id):
         _l.error("download_instrument_finmars_database.traceback %s" % traceback.format_exc())
 
 
-
 @shared_task(name='integrations.download_instrument_finmars_database_async', bind=True)
 def download_instrument_finmars_database_async(self, task_id):
-
     _l.info('download_instrument_finmars_database_async %s' % task_id)
 
     download_instrument_finmars_database(task_id)
+
 
 @shared_task(name='integrations.download_instrument_cbond_task', bind=True, ignore_result=False)
 def download_instrument_cbond_task(self, task_id):
@@ -2011,7 +2011,6 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
         _l.info(traceback.format_exc())
 
 
-
 # DEPRECATED
 @shared_task(name='integrations.complex_transaction_csv_file_import', bind=True)
 def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=None):
@@ -2194,7 +2193,8 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
             for i in scheme_calculated_inputs:
 
                 try:
-                    value = formula.safe_eval(i.name_expr, names=inputs, context={"master_user": master_user, "member": member})
+                    value = formula.safe_eval(i.name_expr, names=inputs,
+                                              context={"master_user": master_user, "member": member})
                     inputs[i.name] = value
 
                 except Exception:
@@ -2219,7 +2219,8 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
             fields_error = []
             for field in rule.fields.all():
                 try:
-                    field_value = formula.safe_eval(field.value_expr, names=inputs, context={"master_user": master_user, "member": member})
+                    field_value = formula.safe_eval(field.value_expr, names=inputs,
+                                                    context={"master_user": master_user, "member": member})
                     field_value = _convert_value(field, field_value, error_rows)
                     fields[field.transaction_type_input.name] = field_value
 
@@ -2440,7 +2441,8 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                         except Exception:
                             _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                             _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
-                            error_rows['error_data']['data']['imported_columns'].append(gettext_lazy('Invalid expression'))
+                            error_rows['error_data']['data']['imported_columns'].append(
+                                gettext_lazy('Invalid expression'))
                             inputs_error.append(i)
 
                     if instance.scheme.column_matcher == 'name':
@@ -2459,7 +2461,8 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                         except Exception:
                             _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                             _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
-                            error_rows['error_data']['data']['imported_columns'].append(gettext_lazy('Invalid expression'))
+                            error_rows['error_data']['data']['imported_columns'].append(
+                                gettext_lazy('Invalid expression'))
                             inputs_error.append(i)
 
                 # _l.debug('Row %s inputs_raw: %s' % (row_index, inputs_raw))
@@ -2502,7 +2505,8 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                         i.name + ': Conversion Expression ' + '(' + i.name_expr + ')')
 
                     try:
-                        inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw, context={"master_user": master_user, "member": member})
+                        inputs[i.name] = formula.safe_eval(i.name_expr, names=inputs_raw,
+                                                           context={"master_user": master_user, "member": member})
                         error_rows['error_data']['data']['converted_imported_columns'].append(inputs_raw[i.name])
                     except Exception:
                         _l.debug('can\'t process conversion input: %s|%s', i.name, i.column, exc_info=True)
@@ -2519,7 +2523,8 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                     error_rows['error_message'] = error_rows['error_message'] + str(
                         gettext_lazy('Can\'t process fields: %(inputs)s') % {
                             'inputs': ', '.join(
-                                '[' + str(i.name) + '] (Imported column conversion expression, value; "' + str(i.name_expr) + '")'
+                                '[' + str(i.name) + '] (Imported column conversion expression, value; "' + str(
+                                    i.name_expr) + '")'
                                 for
                                 i in inputs_conversion_error)
                         })
@@ -2557,7 +2562,8 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                 # _l.debug('Row %s inputs_with_calculated: %s' % (row_index, inputs))
 
                 try:
-                    rule_value = formula.safe_eval(scheme.rule_expr, names=inputs, context={"master_user": master_user, "member": member})
+                    rule_value = formula.safe_eval(scheme.rule_expr, names=inputs,
+                                                   context={"master_user": master_user, "member": member})
                 except Exception:
 
                     error_rows['level'] = 'error'
@@ -2847,7 +2853,8 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                 if celery_task.options_object['execution_context'] and celery_task.options_object['execution_context'][
                     "started_by"] == 'procedure':
 
-                    from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_price_history
+                    from poms.portfolios.tasks import calculate_portfolio_register_record, \
+                        calculate_portfolio_register_price_history
                     _l.info('complex_transaction_csv_file_import_parallel_finish send final import message')
 
                     send_system_message(master_user=celery_task.master_user,
@@ -2857,20 +2864,17 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
 
                     if celery_task.options_object['execution_context']['date_from']:
                         calculate_portfolio_register_record.apply_async(link=[
-                            calculate_portfolio_register_price_history.s(date_from=celery_task.options_object['execution_context']['date_from'])
+                            calculate_portfolio_register_price_history.s(
+                                date_from=celery_task.options_object['execution_context']['date_from'])
                         ])
-
-
 
                 celery_task.result_object = result_object
 
                 celery_task.status = CeleryTask.STATUS_DONE
                 celery_task.save()
 
-
         if procedure_instance and procedure_instance.schedule_instance:
             procedure_instance.schedule_instance.run_next_procedure()
-
 
         return instance
     except Exception as e:
@@ -2950,7 +2954,7 @@ def complex_transaction_csv_file_import_parallel(task_id):
                             storage.save(chunk_path, chunk)  # save working chunk before creating new one
 
                         chunk_filename = '%s_chunk_file_%s' % (
-                        celery_task.id, str(lineno) + '_' + str(lineno + lines_per_file))
+                            celery_task.id, str(lineno) + '_' + str(lineno + lines_per_file))
                         chunk_path = _get_path(celery_task.master_user, chunk_filename, ext)
 
                         # _l.info('creating chunk file %s' % chunk_path)
@@ -3019,6 +3023,7 @@ def complex_transaction_csv_file_import_parallel(task_id):
 
         _l.info('Exception occurred %s' % e)
         _l.info(traceback.format_exc())
+
 
 # DEPRECATED
 @shared_task(name="integrations.complex_transaction_csv_file_import_validate_parallel_finish", bind=True)
@@ -3329,7 +3334,8 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                         except Exception:
                             _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                             _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
-                            error_rows['error_data']['data']['imported_columns'].append(gettext_lazy('Invalid expression'))
+                            error_rows['error_data']['data']['imported_columns'].append(
+                                gettext_lazy('Invalid expression'))
                             inputs_error.append(i)
 
                     if instance.scheme.column_matcher == 'name':
@@ -3343,7 +3349,8 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                         except Exception:
                             _l.debug('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
                             _l.debug('can\'t process inputs_raw: %s|%s', inputs_raw)
-                            error_rows['error_data']['data']['imported_columns'].append(gettext_lazy('Invalid expression'))
+                            error_rows['error_data']['data']['imported_columns'].append(
+                                gettext_lazy('Invalid expression'))
                             inputs_error.append(i)
 
                 # _l.info('Row %s inputs_raw: %s' % (row_index, inputs_raw))
@@ -3403,7 +3410,8 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                         error_rows['error_data']['data']['calculated_columns'].append(row[index])
                     except Exception:
                         _l.info('can\'t process input: %s|%s', i.name, i.column, exc_info=True)
-                        error_rows['error_data']['data']['calculated_columns'].append(gettext_lazy('Invalid expression'))
+                        error_rows['error_data']['data']['calculated_columns'].append(
+                            gettext_lazy('Invalid expression'))
                         calculated_columns_error.append(i)
 
                 if inputs_error:
@@ -3783,7 +3791,7 @@ def complex_transaction_csv_file_import_validate_parallel(task_id):
                         storage.save(chunk_path, chunk)  # save working chunk before creating new one
 
                     chunk_filename = '%s_chunk_file_%s' % (
-                    celery_task.id, str(lineno) + '_' + str(lineno + lines_per_file))
+                        celery_task.id, str(lineno) + '_' + str(lineno + lines_per_file))
                     chunk_path = _get_path(celery_task.master_user, chunk_filename, ext)
 
                     # _l.info('creating chunk file %s' % chunk_path)
@@ -3937,7 +3945,7 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
                         master_user=procedure_instance.master_user)
                     file_report.master_user = procedure_instance.master_user
                     file_report.name = "'Transaction Import File. Procedure ' %s %s" % (
-                    procedure_instance.id, current_date_time)
+                        procedure_instance.id, current_date_time)
                     file_report.file_name = 'Data Procedure %s (%s).csv' % (current_date_time, file_name_hash)
                     file_report.type = 'transaction_import.import'
                     file_report.notes = 'Transaction Import File. Procedure %s' % procedure_instance.id
@@ -3975,10 +3983,10 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
                         'complex_transaction_csv_file_import_by_procedure total_rows %s' % options_object['total_rows'])
 
                     celery_task = CeleryTask.objects.create(master_user=procedure_instance.master_user,
-                                             member=procedure_instance.member,
-                                             options_object=options_object,
+                                                            member=procedure_instance.member,
+                                                            options_object=options_object,
                                                             verbose_name="Transaction Import by %s" % procedure_instance.member.username,
-                                             type='transaction_import')
+                                                            type='transaction_import')
 
                     celery_task.save()
 
@@ -4039,9 +4047,8 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
     with transaction.atomic():
 
         _l.info('complex_transaction_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (
-        procedure_instance_id, celery_task_id))
+            procedure_instance_id, celery_task_id))
 
-        from poms.integrations.serializers import ComplexTransactionCsvFileImport
         from poms.procedures.models import RequestDataFileProcedureInstance
 
         procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
@@ -4063,8 +4070,8 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
             options_object['file_name'] = ''
             options_object['scheme_id'] = scheme.id
             options_object['execution_context'] = {'started_by': 'procedure',
-                                                   'date_from': procedure_instance.date_from,
-                                                   'date_to': procedure_instance.date_to,
+                                                   'date_from': str(procedure_instance.date_from),
+                                                   'date_to': str(procedure_instance.date_to),
                                                    }
 
             celery_task.options_object = options_object
@@ -4077,7 +4084,8 @@ def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instan
                                 performed_by='System',
                                 description=text)
 
-            transaction.on_commit(lambda: transaction_import.apply_async(kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
+            transaction.on_commit(lambda: transaction_import.apply_async(
+                kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
 
 
         except Exception as e:

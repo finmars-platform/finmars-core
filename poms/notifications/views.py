@@ -1,13 +1,11 @@
 from __future__ import unicode_literals
 
 import django_filters
-from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
 from django_filters.rest_framework import FilterSet
 from django_filters.widgets import BooleanWidget
 from rest_framework import serializers
 from rest_framework.decorators import action
-
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 

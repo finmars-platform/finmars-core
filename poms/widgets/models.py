@@ -1,5 +1,5 @@
-from django.utils.translation import gettext_lazy
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from poms.common.models import DataTimeStampedModel
 from poms.common.utils import date_now
@@ -24,7 +24,7 @@ class BalanceReportHistory(DataTimeStampedModel):
                                     verbose_name=gettext_lazy('cost method'))
 
     portfolio = models.ForeignKey('portfolios.Portfolio', blank=True, on_delete=models.CASCADE,
-                                   verbose_name=gettext_lazy('portfolio'))
+                                  verbose_name=gettext_lazy('portfolio'))
 
     report_settings_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('report settings data'))
 
@@ -36,8 +36,8 @@ class BalanceReportHistory(DataTimeStampedModel):
         ]
 
     def __str__(self):
-
         return str(self.date) + ' ' + self.portfolio.name + ' ' + self.report_currency.name
+
 
 class BalanceReportHistoryItem(models.Model):
     balance_report_history = models.ForeignKey(BalanceReportHistory, related_name='items',
@@ -80,7 +80,6 @@ class PLReportHistory(DataTimeStampedModel):
         ]
 
     def __str__(self):
-
         return str(self.date) + ' ' + self.portfolio.name + ' ' + self.report_currency.name
 
 
@@ -107,7 +106,6 @@ class PLReportHistoryItem(models.Model):
 # "correlation": stats_handler.get_correlation()
 
 class WidgetStats(models.Model):
-
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -119,12 +117,17 @@ class WidgetStats(models.Model):
 
     nav = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('nav'))
     total = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('total'))
-    cumulative_return = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('cumulative return'))
-    annualized_return = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('annualized return'))
-    portfolio_volatility = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('portfolio volatility'))
-    annualized_portfolio_volatility = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('annualized portfolio volatility'))
+    cumulative_return = models.FloatField(default=0.0, null=True, blank=True,
+                                          verbose_name=gettext_lazy('cumulative return'))
+    annualized_return = models.FloatField(default=0.0, null=True, blank=True,
+                                          verbose_name=gettext_lazy('annualized return'))
+    portfolio_volatility = models.FloatField(default=0.0, null=True, blank=True,
+                                             verbose_name=gettext_lazy('portfolio volatility'))
+    annualized_portfolio_volatility = models.FloatField(default=0.0, null=True, blank=True,
+                                                        verbose_name=gettext_lazy('annualized portfolio volatility'))
     sharpe_ratio = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('sharpe_ratio'))
-    max_annualized_drawdown = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('max_annualized_drawdown'))
+    max_annualized_drawdown = models.FloatField(default=0.0, null=True, blank=True,
+                                                verbose_name=gettext_lazy('max_annualized_drawdown'))
     betta = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('betta'))
     alpha = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('alpha'))
     correlation = models.FloatField(default=0.0, null=True, blank=True, verbose_name=gettext_lazy('correlation'))

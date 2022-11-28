@@ -1,33 +1,22 @@
-from celery.result import AsyncResult
-from django.core.signing import TimestampSigner
-from django_filters.rest_framework import FilterSet
-
-from rest_framework.response import Response
-from rest_framework import status
-
-from poms.common.filters import CharFilter
-from poms.common.utils import date_now, datetime_now
-
-from poms.celery_tasks.models import CeleryTask
-from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet
-
-from poms.csv_import.tasks import data_csv_file_import, data_csv_file_import_validate, unified_data_csv_file_import
-from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
-
-from poms.users.filters import OwnerByMasterUserFilter
-
-from .filters import SchemeContentTypeFilter
-from .models import CsvDataImport, CsvImportScheme
-from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer, CsvImportSchemeLightSerializer
-
-from django.forms.models import model_to_dict
-
-from rest_framework.exceptions import PermissionDenied
-
 import time
-
 from logging import getLogger
 
+from celery.result import AsyncResult
+from django_filters.rest_framework import FilterSet
+from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
+
+from poms.celery_tasks.models import CeleryTask
+from poms.common.filters import CharFilter
+from poms.common.utils import datetime_now
+from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet
+from poms.csv_import.tasks import data_csv_file_import, data_csv_file_import_validate, unified_data_csv_file_import
+from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
+from poms.users.filters import OwnerByMasterUserFilter
+from .filters import SchemeContentTypeFilter
+from .models import CsvImportScheme
+from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer, CsvImportSchemeLightSerializer
 from ..system_messages.handlers import send_system_message
 
 _l = getLogger('poms.csv_import')
@@ -112,7 +101,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
         send_system_message(master_user=request.user.master_user,
                             performed_by='System',
                             description='Member %s started Simple Import (scheme %s)' % (
-                            request.user.member.username, instance.scheme.name))
+                                request.user.member.username, instance.scheme.name))
 
         data_csv_file_import.apply_async(kwargs={'task_id': celery_task.pk})
 
@@ -162,7 +151,7 @@ class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
         send_system_message(master_user=request.user.master_user,
                             performed_by='System',
                             description='Member %s started Simple Import (scheme %s)' % (
-                            request.user.member.username, instance.scheme.name))
+                                request.user.member.username, instance.scheme.name))
 
         data_csv_file_import_validate.apply_async(kwargs={"task_id": celery_task.pk})
 

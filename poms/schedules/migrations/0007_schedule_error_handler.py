@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('schedules', '0006_delete_pricingschedule'),
     ]
@@ -13,6 +12,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='schedule',
             name='error_handler',
-            field=models.CharField(choices=[['break', 'Break'], ['continue', 'Continue']], default='break', max_length=255),
+            field=models.CharField(choices=[['break', 'Break'], ['continue', 'Continue']], default='break',
+                                   max_length=255),
         ),
     ]

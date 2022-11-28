@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0021_auto_20181102_1443'),
     ]
@@ -15,6 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transactiontypeaction',
             name='rebook_reaction',
-            field=models.IntegerField(choices=[(0, 'Create'), (1, 'Skip'), (2, 'Overwrite'), (3, 'Clear all & Create'), (4, 'Create if not exist')], default=0),
+            field=models.IntegerField(choices=[(0, 'Create'), (1, 'Skip'), (2, 'Overwrite'), (3, 'Clear all & Create'),
+                                               (4, 'Create if not exist')], default=0),
         ),
     ]

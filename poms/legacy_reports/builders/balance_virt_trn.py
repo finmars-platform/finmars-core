@@ -1,11 +1,11 @@
+import logging
+import time
 import uuid
 
-import time
-import logging
-
-from poms.common.utils import format_float
 from poms.reports.builders.balance_item import Report
 from poms.reports.builders.base_item import BaseReportItem, YTMMixin
+
+from poms.common.utils import format_float
 from poms.transactions.models import TransactionClass
 
 _l = logging.getLogger('poms.reports')
@@ -594,7 +594,7 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
         elif self.trn_cls.id in [TransactionClass.FX_TRADE, TransactionClass.TRANSACTION_PL,
                                  TransactionClass.CASH_INFLOW, TransactionClass.CASH_INFLOW]:
             self.pricing_ccy = self.report.report_currency
-        else: # WHAT?
+        else:  # WHAT?
             self.pricing_ccy = self.report.report_currency
 
         if self.pricing_ccy.id == self.report.report_currency.id:
@@ -689,7 +689,6 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
         except ArithmeticError:
             return 0
 
-
     def round_after_calc(self):
         self.avco_multiplier = format_float(self.avco_multiplier)
         self.avco_rolling_pos_size = format_float(self.avco_rolling_pos_size)
@@ -766,15 +765,16 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
         self.amount_invested_loc = format_float(self.amount_invested_loc)
 
         self.balance_pos_size = format_float(self.balance_pos_size)
-        self.sum_remaining_pos_size = format_float(self.sum_remaining_pos_size)   # sum of remaining_pos_size by trns before current
+        self.sum_remaining_pos_size = format_float(
+            self.sum_remaining_pos_size)  # sum of remaining_pos_size by trns before current
         self.remaining_pos_size = format_float(self.remaining_pos_size)
-        self.remaining_pos_size_percent = format_float(self.remaining_pos_size_percent)   # calculated in second pass
+        self.remaining_pos_size_percent = format_float(self.remaining_pos_size_percent)  # calculated in second pass
         self.ytm = format_float(self.ytm)
         self.time_invested_days = format_float(self.time_invested_days)
         self.time_invested = format_float(self.time_invested)
-        self.weighted_ytm = format_float(self.weighted_ytm)   # calculated in second pass
-        self.weighted_time_invested_days = format_float(self.weighted_time_invested_days)   # calculated in second pass
-        self.weighted_time_invested = format_float(self.weighted_time_invested)   # calculated in second pass
+        self.weighted_ytm = format_float(self.weighted_ytm)  # calculated in second pass
+        self.weighted_time_invested_days = format_float(self.weighted_time_invested_days)  # calculated in second pass
+        self.weighted_time_invested = format_float(self.weighted_time_invested)  # calculated in second pass
 
         # Cash related
 
@@ -1073,7 +1073,6 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
 
                     # principal_invested
 
-
                     try:
                         self.principal_invested_res = self.principal * self.ref_fx * \
                                                       (
@@ -1081,7 +1080,6 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
                                                       (1.0 - self.multiplier)
                     except ArithmeticError:
                         self.principal_invested_res = 0.0
-
 
                     try:
                         self.principal_invested_loc = self.principal * self.ref_fx * \
@@ -1146,7 +1144,6 @@ class VirtualTransaction(YTMMixin, BaseReportItem):
 
         else:
             self.mismatch = self.cash - self.total
-
 
         # self.round_after_calc() # TODO Temporary disabled
 

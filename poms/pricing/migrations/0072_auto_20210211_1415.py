@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0035_auto_20201222_1103'),
         ('pricing', '0071_auto_20200922_0633'),

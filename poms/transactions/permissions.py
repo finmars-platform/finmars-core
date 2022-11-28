@@ -9,7 +9,7 @@ class TransactionObjectPermission(BasePermission):
         if member.is_superuser:
             return True
         p = lambda obj1: PomsObjectPermission().simple_has_object_permission(member, 'GET', obj1)
-        return p(obj.portfolio) and (p(obj.account_position) | p (obj.account_cash) | p(obj.account_interim))
+        return p(obj.portfolio) and (p(obj.account_position) | p(obj.account_cash) | p(obj.account_interim))
 
 
 class ComplexTransactionPermission(BasePermission):

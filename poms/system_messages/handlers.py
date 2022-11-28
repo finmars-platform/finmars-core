@@ -1,12 +1,8 @@
+import logging
 import traceback
-
-from django.db import transaction
 
 from poms.common.websockets import send_websocket_message
 from poms.system_messages.models import SystemMessage, SystemMessageAttachment, SystemMessageMember
-
-import logging
-
 from poms.users.models import Member
 
 _l = logging.getLogger('poms.system_messages')
@@ -64,12 +60,10 @@ def send_system_message(master_user, title=None, description=None, attachments=[
 
         for file_report_id in attachments:
             system_message_attachments.append(SystemMessageAttachment(system_message=system_message,
-                                                                file_report_id=file_report_id))
+                                                                      file_report_id=file_report_id))
         if len(system_message_attachments):
             SystemMessageAttachment.objects.bulk_create(system_message_attachments)
             _l.info("Saved %s attachments " % len(system_message_attachments))
-
-
 
         members = Member.objects.all()
 
@@ -84,7 +78,6 @@ def send_system_message(master_user, title=None, description=None, attachments=[
             _l.debug("Send message to %s members " % len(system_message_members))
 
             for member in members:
-
                 send_websocket_message(data={
                     'type': 'new_system_message',
                     'payload': {

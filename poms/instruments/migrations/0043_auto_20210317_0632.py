@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('instruments', '0042_auto_20210312_1647'),
     ]
@@ -13,21 +12,33 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='accrualcalculationschedule',
             name='accrual_size_value_type',
-            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'), (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'), (120, 'Button')], default=20, verbose_name='accrual size value type'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'),
+                         (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'),
+                         (120, 'Button')], default=20, verbose_name='accrual size value type'),
         ),
         migrations.AddField(
             model_name='accrualcalculationschedule',
             name='accrual_start_date_value_type',
-            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'), (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'), (120, 'Button')], default=40, verbose_name='accrual start date value type'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'),
+                         (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'),
+                         (120, 'Button')], default=40, verbose_name='accrual start date value type'),
         ),
         migrations.AddField(
             model_name='accrualcalculationschedule',
             name='first_payment_date_value_type',
-            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'), (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'), (120, 'Button')], default=40, verbose_name='first payment date value type'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'),
+                         (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'),
+                         (120, 'Button')], default=40, verbose_name='first payment date value type'),
         ),
         migrations.AddField(
             model_name='accrualcalculationschedule',
             name='periodicity_n_value_type',
-            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'), (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'), (120, 'Button')], default=20, verbose_name='periodicity n value type'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'),
+                         (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'),
+                         (120, 'Button')], default=20, verbose_name='periodicity n value type'),
         ),
     ]

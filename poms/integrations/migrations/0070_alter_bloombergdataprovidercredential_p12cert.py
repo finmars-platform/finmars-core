@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('integrations', '0069_alter_bloombergdataprovidercredential_p12cert'),
     ]

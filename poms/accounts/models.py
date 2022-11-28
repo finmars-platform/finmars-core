@@ -3,19 +3,17 @@ from __future__ import unicode_literals, print_function
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy
-from mptt.models import MPTTModel
-
 
 from poms.common.models import NamedModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel
 from poms.common.wrapper_models import NamedModelAutoMapping
-from poms.currencies.models import Currency
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
-from poms.users.models import MasterUser, Member
+from poms.users.models import MasterUser
 
 
 class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
-    master_user = models.ForeignKey(MasterUser, related_name='account_types', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey(MasterUser, related_name='account_types', verbose_name=gettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
     show_transaction_details = models.BooleanField(default=False,
                                                    verbose_name=gettext_lazy('show transaction details'))
     transaction_details_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True,
@@ -39,7 +37,8 @@ class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
 
 class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
-    master_user = models.ForeignKey(MasterUser, related_name='accounts', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey(MasterUser, related_name='accounts', verbose_name=gettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
     type = models.ForeignKey(AccountType, on_delete=models.PROTECT, null=True, blank=True,
                              verbose_name=gettext_lazy('account type'))
     is_valid_for_all_portfolios = models.BooleanField(default=True,
@@ -55,7 +54,6 @@ class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
             # ('view_account', 'Can view account'),
             ('manage_account', 'Can manage account'),
         ]
-
 
     @property
     def is_default(self):

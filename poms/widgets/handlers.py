@@ -1,13 +1,15 @@
 import datetime
+import logging
 import math
 import statistics
 import traceback
 
 import numpy
-from django.db.models import Q
 from dateutil.relativedelta import relativedelta
+from django.db.models import Q
 
-from poms.common.utils import get_first_transaction, get_last_bdays_of_months_between_two_dates, get_last_business_day, str_to_date
+from poms.common.utils import get_first_transaction, get_last_bdays_of_months_between_two_dates, get_last_business_day, \
+    str_to_date
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioBundle
@@ -15,8 +17,6 @@ from poms.reports.common import PerformanceReport
 from poms.reports.performance_report import PerformanceReportBuilder
 from poms.users.models import EcosystemDefault
 from poms.widgets.models import BalanceReportHistory, PLReportHistory
-
-import logging
 
 _l = logging.getLogger('poms.widgets')
 
@@ -367,9 +367,11 @@ class StatsHandler():
         try:
 
             inception_date_price = PriceHistory.objects.get(date=date_from,
-                                                       instrument__user_code=self.benchmark, pricing_policy=self.ecosystem_default.pricing_policy).principal_price
+                                                            instrument__user_code=self.benchmark,
+                                                            pricing_policy=self.ecosystem_default.pricing_policy).principal_price
             report_date_price = PriceHistory.objects.get(date=date_to,
-                                                         instrument__user_code=self.benchmark, pricing_policy=self.ecosystem_default.pricing_policy).principal_price
+                                                         instrument__user_code=self.benchmark,
+                                                         pricing_policy=self.ecosystem_default.pricing_policy).principal_price
 
             benchmarks_returns = (report_date_price - inception_date_price) / inception_date_price
 

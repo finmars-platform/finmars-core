@@ -1,17 +1,15 @@
-import traceback
+import logging
 
 from celery import shared_task
-
-import logging
 
 from poms.common import formula
 from poms.workflows.models import Workflow, WorkflowStep
 
 _l = logging.getLogger('poms.workflows')
 
+
 @shared_task(name='workflows.run_workflow_step', bind=True)
 def run_workflow_step(self, workflow_id):
-
     _l.info("run_workflow_step init workflow %s" % workflow_id)
 
     workflow = Workflow.objects.get(id=workflow_id)
@@ -23,11 +21,11 @@ def run_workflow_step(self, workflow_id):
         names = {}
         context = {'master_user': workflow.master_user, 'member': workflow.member}
 
-        workflow_step.code = workflow_step.code + '\nrun_step_'+str(workflow_step.order)+'()'
+        workflow_step.code = workflow_step.code + '\nrun_step_' + str(workflow_step.order) + '()'
 
         _l.info('workflow_step.code %s' % workflow_step.code)
 
-        result, log = formula.safe_eval_with_logs(workflow_step.code, names=names,  context=context)
+        result, log = formula.safe_eval_with_logs(workflow_step.code, names=names, context=context)
 
         _l.debug('ExpressionProcedureProcess.result %s' % result)
 

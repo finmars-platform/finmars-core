@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals, division, print_function
 
-from difflib import ndiff, SequenceMatcher, Differ
+from difflib import ndiff, SequenceMatcher
 
 from diff_match_patch import diff_match_patch
 

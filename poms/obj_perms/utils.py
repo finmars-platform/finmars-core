@@ -42,8 +42,6 @@ from poms.obj_perms.models import GenericObjectPermission
 
 
 def obj_perms_filter_objects(member, perms, queryset, model_cls=None, prefetch=True):
-
-
     if member is None:
         return queryset
 
@@ -75,7 +73,6 @@ def obj_perms_filter_objects(member, perms, queryset, model_cls=None, prefetch=T
         # print('ctype %s' % ctype)
         # print('codenames %s' % codenames)
         #
-        from poms.transactions.models import ComplexTransaction
 
         # print('perms %s' % perms)
         #
@@ -306,7 +303,6 @@ def append_perms3(obj, perms=None):
 
 
 def get_perms_codename(model, actions):
-
     params = {
         'action': None,
         'app_label': model._meta.app_label,
@@ -316,8 +312,6 @@ def get_perms_codename(model, actions):
     for action in actions:
         params['action'] = action
         ret.append('%(action)s_%(model_name)s' % params)
-
-
 
     return ret
 

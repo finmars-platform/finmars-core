@@ -1,16 +1,11 @@
-from celery import shared_task
-from django.conf import settings
-import requests
-import json
-
-from poms.common.models import ProxyUser, ProxyRequest
-from poms.integrations.tasks import complex_transaction_csv_file_import_by_procedure
-from poms.csv_import.tasks import data_csv_file_import_by_procedure
-
-from poms.procedures.models import RequestDataFileProcedureInstance
-
 import logging
 
+import requests
+from celery import shared_task
+from django.conf import settings
+
+from poms.common.models import ProxyUser, ProxyRequest
+from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.system_messages.handlers import send_system_message
 
 _l = logging.getLogger('poms.procedures')
@@ -22,7 +17,6 @@ def procedure_request_data_file(self,
                                 procedure_instance,
                                 transaction_file_result,
                                 data):
-
     _l.debug('procedure_request_data_file processing')
     _l.debug('procedure_request_data_file procedure %s' % procedure_instance)
     _l.debug('procedure_request_data_file transaction_file_result %s' % transaction_file_result)
@@ -48,7 +42,6 @@ def procedure_request_data_file(self,
         _l.debug('response %s' % response)
         _l.debug('response text %s' % response.text)
 
-
         if response.status_code == 200:
 
             procedure_instance.save()
@@ -58,7 +51,6 @@ def procedure_request_data_file(self,
             if 'error_message' in data:
 
                 if data['error_message']:
-
                     text = "Data File Procedure %s. Error during request to Data Service. Error Message: %s" % (
                         procedure_instance.procedure.user_code, data['error_message'])
 
@@ -104,8 +96,7 @@ def procedure_request_data_file(self,
 
 
 @shared_task(name='procedures.run_data_procedure_from_formula', bind=True)
-def run_data_procedure_from_formula(self, master_user_id, member_id, user_code, user_context,  **kwargs):
-
+def run_data_procedure_from_formula(self, master_user_id, member_id, user_code, user_context, **kwargs):
     _l.info('run_data_procedure_from_formula init')
 
     from poms.users.models import MasterUser
@@ -132,12 +123,11 @@ def run_data_procedure_from_formula(self, master_user_id, member_id, user_code, 
 
         merged_context['names'].update(user_context)
 
-
     procedure = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=user_code)
 
     kwargs.pop('user_context', None)
 
     from poms.procedures.handlers import DataProcedureProcess
     instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member,
-                                               context=merged_context, **kwargs)
+                                    context=merged_context, **kwargs)
     instance.process()

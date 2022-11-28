@@ -2,30 +2,26 @@ from __future__ import unicode_literals
 
 import logging
 
+from django.core.cache import cache
 from django_filters.rest_framework import FilterSet
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
+from poms.reports.performance_report import PerformanceReportBuilder
 from poms.reports.serializers import BalanceReportCustomFieldSerializer, PLReportCustomFieldSerializer, \
     TransactionReportCustomFieldSerializer, PerformanceReportSerializer, PriceHistoryCheckSerializer, \
     BalanceReportSerializer, PLReportSerializer, TransactionReportSerializer
-from poms.reports.sql_builders.balance import  BalanceReportBuilderSql
+from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.reports.sql_builders.price_checkers import PriceHistoryCheckerSql
 from poms.reports.sql_builders.transaction import TransactionReportBuilderSql
 from poms.reports.utils import generate_report_unique_hash
-from poms.reports.performance_report import PerformanceReportBuilder
 from poms.transactions.models import Transaction
 from poms.users.filters import OwnerByMasterUserFilter
-
-from rest_framework.response import Response
-from rest_framework import status
-
-from django.core.cache import cache
-
-from rest_framework.decorators import action
-
 
 _l = logging.getLogger('poms.reports')
 import time
@@ -103,17 +99,15 @@ class TransactionReportCustomFieldViewSet(AbstractModelViewSet):
 class BalanceReportViewSet(AbstractViewSet):
     serializer_class = BalanceReportSerializer
 
-
     def create(self, request, *args, **kwargs):
-
         serialize_report_st = time.perf_counter()
 
-        key = generate_report_unique_hash('report', 'balance', request.data, request.user.master_user, request.user.member)
+        key = generate_report_unique_hash('report', 'balance', request.data, request.user.master_user,
+                                          request.user.member)
 
         cached_data = cache.get(key)
 
         if not cached_data:
-
             _l.info("Could not find in cache")
 
             serializer = self.get_serializer(data=request.data)
@@ -141,7 +135,6 @@ class PLReportViewSet(AbstractViewSet):
     serializer_class = PLReportSerializer
 
     def create(self, request, *args, **kwargs):
-
         serialize_report_st = time.perf_counter()
 
         key = generate_report_unique_hash('report', 'pl', request.data, request.user.master_user, request.user.member)
@@ -149,7 +142,6 @@ class PLReportViewSet(AbstractViewSet):
         cached_data = cache.get(key)
 
         if not cached_data:
-
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
@@ -175,15 +167,14 @@ class TransactionReportViewSet(AbstractViewSet):
     serializer_class = TransactionReportSerializer
 
     def create(self, request, *args, **kwargs):
-
         serialize_report_st = time.perf_counter()
 
-        key = generate_report_unique_hash('report', 'transaction', request.data, request.user.master_user, request.user.member)
+        key = generate_report_unique_hash('report', 'transaction', request.data, request.user.master_user,
+                                          request.user.member)
 
         cached_data = cache.get(key)
 
         if not cached_data:
-
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
@@ -208,10 +199,7 @@ class TransactionReportViewSet(AbstractViewSet):
 class PriceHistoryCheckViewSet(AbstractViewSet):
     serializer_class = PriceHistoryCheckSerializer
 
-
     def create(self, request, *args, **kwargs):
-
-
         serialize_report_st = time.perf_counter()
 
         serializer = self.get_serializer(data=request.data)
@@ -251,7 +239,6 @@ class PerformanceReportViewSet(AbstractViewSet):
             portfolios = []
 
             for item in bundle_instance.registers.all():
-
                 portfolios.append(item.portfolio_id)
 
             transactions = transactions.filter(portfolio_id__in=portfolios)
@@ -259,7 +246,6 @@ class PerformanceReportViewSet(AbstractViewSet):
         transactions = transactions.order_by('accounting_date')
 
         if (len(transactions)):
-
             result['code'] = str(transactions[0].complex_transaction.code)
             result['transaction_date'] = str(transactions[0].transaction_date)
             result['accounting_date'] = str(transactions[0].accounting_date)
@@ -276,12 +262,12 @@ class PerformanceReportViewSet(AbstractViewSet):
 
         serialize_report_st = time.perf_counter()
 
-        key = generate_report_unique_hash('report', 'performance', request.data, request.user.master_user, request.user.member)
+        key = generate_report_unique_hash('report', 'performance', request.data, request.user.master_user,
+                                          request.user.member)
 
         cached_data = cache.get(key)
 
         if not cached_data:
-
             _l.info("Could not find in cache")
 
             serializer = self.get_serializer(data=request.data)
@@ -303,4 +289,3 @@ class PerformanceReportViewSet(AbstractViewSet):
             cache.set(key, cached_data)
 
         return Response(cached_data, status=status.HTTP_200_OK)
-

@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+from logging import getLogger
+
 from rest_framework import serializers
 
 from poms.accounts.fields import AccountField
@@ -13,32 +15,28 @@ from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord, PortfolioBundle
 from poms.transactions.fields import TransactionTypeField
-
 from poms.users.fields import MasterUserField
 from poms.users.models import EcosystemDefault
-
-from logging import getLogger
 
 _l = getLogger('poms.portfolios')
 
 
 class PortfolioPortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
-                                  ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
-
+                                           ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
     valuation_currency_object = serializers.PrimaryKeyRelatedField(source='valuation_currency', read_only=True)
     linked_instrument_object = serializers.PrimaryKeyRelatedField(source='linked_instrument', read_only=True)
-    valuation_pricing_policy_object = serializers.PrimaryKeyRelatedField(source='valuation_pricing_policy', read_only=True)
-
+    valuation_pricing_policy_object = serializers.PrimaryKeyRelatedField(source='valuation_pricing_policy',
+                                                                         read_only=True)
 
     class Meta:
         model = PortfolioRegister
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'is_deleted',  'is_enabled',
+            'is_deleted', 'is_enabled',
             'linked_instrument', 'linked_instrument_object',
-            'valuation_currency',  'valuation_currency_object',
+            'valuation_currency', 'valuation_currency_object',
             'valuation_pricing_policy', 'valuation_pricing_policy_object',
             'default_price'
         ]
@@ -49,14 +47,12 @@ class PortfolioPortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, 
         self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
 
         self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
-        self.fields['valuation_pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy", read_only=True)
-
-
+        self.fields['valuation_pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy",
+                                                                                 read_only=True)
 
 
 class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
                           ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
-
     master_user = MasterUserField()
     accounts = AccountField(many=True, allow_null=True, required=False)
     responsibles = ResponsibleField(many=True, allow_null=True, required=False)
@@ -97,7 +93,7 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
                 master_user=master_user,
                 portfolio=instance,
                 user_code=instance.user_code,
-)
+            )
         except Exception as e:
 
             ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
@@ -106,7 +102,7 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
 
             # TODO maybe create new instr instead of existing?
             try:
-                new_instrument = Instrument.objects.get(master_user=master_user, user_code = instance.user_code)
+                new_instrument = Instrument.objects.get(master_user=master_user, user_code=instance.user_code)
             except Exception as e:
 
                 new_linked_instrument = {
@@ -121,7 +117,8 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
                 instrument_type = None
 
                 try:
-                    instrument_type = InstrumentType.objects.get(master_user=master_user, user_code=new_linked_instrument['instrument_type'])
+                    instrument_type = InstrumentType.objects.get(master_user=master_user,
+                                                                 user_code=new_linked_instrument['instrument_type'])
                 except Exception as e:
                     instrument_type = ecosystem_default.instrument_type
 
@@ -163,7 +160,6 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
 
         return instance
 
-
     def update(self, instance, validated_data):
 
         instance = super(PortfolioSerializer, self).update(instance, validated_data)
@@ -173,7 +169,8 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
         return instance
 
 
-class PortfolioEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+class PortfolioEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+                            ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     class Meta:
@@ -208,27 +205,24 @@ class PortfolioGroupSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=256)
 
 
-
-
 class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
-                          ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
-
+                                  ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
     valuation_currency_object = serializers.PrimaryKeyRelatedField(source='valuation_currency', read_only=True)
     portfolio_object = serializers.PrimaryKeyRelatedField(source='portfolio', read_only=True)
     linked_instrument_object = serializers.PrimaryKeyRelatedField(source='linked_instrument', read_only=True)
-    valuation_pricing_policy_object = serializers.PrimaryKeyRelatedField(source='valuation_pricing_policy', read_only=True)
-
+    valuation_pricing_policy_object = serializers.PrimaryKeyRelatedField(source='valuation_pricing_policy',
+                                                                         read_only=True)
 
     class Meta:
         model = PortfolioRegister
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'is_deleted',  'is_enabled',
+            'is_deleted', 'is_enabled',
             'portfolio', 'portfolio_object',
             'linked_instrument', 'linked_instrument_object',
-            'valuation_currency',  'valuation_currency_object',
+            'valuation_currency', 'valuation_currency_object',
             'valuation_pricing_policy', 'valuation_pricing_policy_object',
             'default_price'
         ]
@@ -240,7 +234,8 @@ class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWith
         self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
         self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
         self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
-        self.fields['valuation_pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy", read_only=True)
+        self.fields['valuation_pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy",
+                                                                                 read_only=True)
 
     def create(self, validated_data):
 
@@ -258,9 +253,11 @@ class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWith
             instrument_type = None
 
             if isinstance(new_linked_instrument['instrument_type'], int):
-                instrument_type = InstrumentType.objects.get(master_user=master_user, id=new_linked_instrument['instrument_type'])
+                instrument_type = InstrumentType.objects.get(master_user=master_user,
+                                                             id=new_linked_instrument['instrument_type'])
             else:
-                instrument_type = InstrumentType.objects.get(master_user=master_user, user_code=new_linked_instrument['instrument_type'])
+                instrument_type = InstrumentType.objects.get(master_user=master_user,
+                                                             user_code=new_linked_instrument['instrument_type'])
 
             process = InstrumentTypeProcess(instrument_type=instrument_type)
 
@@ -284,18 +281,18 @@ class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWith
 
             instance.save()
 
-
-
         return instance
 
-class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
+
+class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+                                    ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     valuation_currency_object = serializers.PrimaryKeyRelatedField(source='valuation_currency', read_only=True)
     portfolio_object = serializers.PrimaryKeyRelatedField(source='portfolio', read_only=True)
     linked_instrument_object = serializers.PrimaryKeyRelatedField(source='linked_instrument', read_only=True)
-    valuation_pricing_policy_object = serializers.PrimaryKeyRelatedField(source='valuation_pricing_policy', read_only=True)
-
+    valuation_pricing_policy_object = serializers.PrimaryKeyRelatedField(source='valuation_pricing_policy',
+                                                                         read_only=True)
 
     class Meta:
         model = PortfolioRegister
@@ -305,7 +302,8 @@ class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWi
             'is_deleted', 'is_enabled',
             'portfolio', 'linked_instrument', 'valuation_pricing_policy', 'valuation_currency',
 
-            'valuation_currency_object', 'portfolio_object', 'linked_instrument_object', 'valuation_pricing_policy_object',
+            'valuation_currency_object', 'portfolio_object', 'linked_instrument_object',
+            'valuation_pricing_policy_object',
             'default_price'
 
         ]
@@ -317,22 +315,20 @@ class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWi
         self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
         self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
         self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
-        self.fields['valuation_pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy", read_only=True)
-
-
+        self.fields['valuation_pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy",
+                                                                                 read_only=True)
 
 
 class PortfolioRegisterRecordSerializer(ModelWithObjectPermissionSerializer, ModelWithTimeStampSerializer):
-
     master_user = MasterUserField()
-
 
     class Meta:
         model = PortfolioRegisterRecord
         fields = [
             'id', 'master_user',
 
-            'portfolio', 'instrument', 'transaction_class', 'transaction_code', 'transaction_date', 'cash_amount', 'cash_currency',
+            'portfolio', 'instrument', 'transaction_class', 'transaction_code', 'transaction_date', 'cash_amount',
+            'cash_currency',
             'fx_rate', 'cash_amount_valuation_currency', 'valuation_currency', 'nav_previous_day_valuation_currency',
 
             'n_shares_previous_day', 'n_shares_added',
@@ -346,7 +342,6 @@ class PortfolioRegisterRecordSerializer(ModelWithObjectPermissionSerializer, Mod
         super(PortfolioRegisterRecordSerializer, self).__init__(*args, **kwargs)
 
 
-
 class PortfolioRegisterRecordEvSerializer(ModelWithObjectPermissionSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
@@ -355,7 +350,8 @@ class PortfolioRegisterRecordEvSerializer(ModelWithObjectPermissionSerializer, M
         fields = [
             'id', 'master_user',
 
-            'portfolio', 'instrument', 'transaction_class', 'transaction_code', 'transaction_date', 'cash_amount', 'cash_currency',
+            'portfolio', 'instrument', 'transaction_class', 'transaction_code', 'transaction_date', 'cash_amount',
+            'cash_currency',
             'fx_rate', 'cash_amount_valuation_currency', 'valuation_currency', 'nav_previous_day_valuation_currency',
 
             'n_shares_previous_day', 'n_shares_added',
@@ -372,19 +368,18 @@ class PortfolioRegisterRecordEvSerializer(ModelWithObjectPermissionSerializer, M
             source='transaction_class', read_only=True)
         self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
         self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
-        self.fields['portfolio_register_object'] = PortfolioRegisterSerializer(source='portfolio_register', read_only=True)
+        self.fields['portfolio_register_object'] = PortfolioRegisterSerializer(source='portfolio_register',
+                                                                               read_only=True)
 
         self.fields['cash_currency_object'] = CurrencyViewSerializer(source='cash_currency', read_only=True)
         self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
 
-class CalculateRecordsSerializer(serializers.Serializer):
 
+class CalculateRecordsSerializer(serializers.Serializer):
     portfolio_register_ids = serializers.CharField(allow_blank=False)
 
 
-
 class PortfolioBundleSerializer(ModelWithObjectPermissionSerializer, ModelWithTimeStampSerializer):
-
     master_user = MasterUserField()
 
     class Meta:
@@ -398,7 +393,6 @@ class PortfolioBundleSerializer(ModelWithObjectPermissionSerializer, ModelWithTi
 
     def __init__(self, *args, **kwargs):
         super(PortfolioBundleSerializer, self).__init__(*args, **kwargs)
-
 
 
 class PortfolioBundleEvSerializer(ModelWithObjectPermissionSerializer, ModelWithTimeStampSerializer):

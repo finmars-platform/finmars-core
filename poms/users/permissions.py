@@ -8,7 +8,6 @@ class SuperUserOnly(BasePermission):
         except Exception:
             return False
 
-
     def has_object_permission(self, request, view, obj):
         try:
             return request.user.member.is_superuser

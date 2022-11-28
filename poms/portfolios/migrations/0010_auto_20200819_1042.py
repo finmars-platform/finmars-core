@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('portfolios', '0009_auto_20200525_1351'),
     ]
@@ -12,6 +11,8 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='portfolio',
-            options={'base_manager_name': 'objects', 'ordering': ['user_code'], 'permissions': (('manage_portfolio', 'Can manage portfolio'),), 'verbose_name': 'portfolio', 'verbose_name_plural': 'portfolios'},
+            options={'base_manager_name': 'objects', 'ordering': ['user_code'],
+                     'permissions': (('manage_portfolio', 'Can manage portfolio'),), 'verbose_name': 'portfolio',
+                     'verbose_name_plural': 'portfolios'},
         ),
     ]

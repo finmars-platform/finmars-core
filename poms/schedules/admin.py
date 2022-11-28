@@ -26,5 +26,3 @@ class ScheduleInstanceAdmin(admin.ModelAdmin):
 
 
 admin.site.register(ScheduleInstance, ScheduleInstanceAdmin)
-
-

@@ -148,7 +148,7 @@ class TransactionReportBuilderSql:
 
             if self.instance.complex_transaction_statuses_filter:
 
-                pieces  = self.instance.complex_transaction_statuses_filter.split(',')
+                pieces = self.instance.complex_transaction_statuses_filter.split(',')
 
                 if len(pieces):
 
@@ -158,11 +158,8 @@ class TransactionReportBuilderSql:
                     if 'ignored' in pieces:
                         statuses.append('3')
 
-
             statuses_str = (',').join(statuses)
-            statuses_str = '(' + statuses_str +')'
-
-
+            statuses_str = '(' + statuses_str + ')'
 
             query = query.format(begin_date=self.instance.begin_date,
                                  end_date=self.instance.end_date,
@@ -171,7 +168,6 @@ class TransactionReportBuilderSql:
                                  filter_sql_string=filter_sql_string,
                                  date_filter_sql_string=date_filter_sql_string
                                  )
-
 
             # cursor.execute(query, [self.instance.begin_date, self.instance.end_date, self.instance.master_user.id, statuses, filter_sql_string])
             cursor.execute(query)
@@ -203,9 +199,9 @@ class TransactionReportBuilderSql:
         self.instance.item_portfolios = Portfolio.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
-                 'attributes__classifier',
+            'attributes__classifier',
         ).defer('object_permissions', 'responsibles', 'counterparties', 'transaction_types', 'accounts') \
-            .filter(master_user=self.instance.master_user)\
+            .filter(master_user=self.instance.master_user) \
             .filter(
             id__in=ids)
 
@@ -239,11 +235,9 @@ class TransactionReportBuilderSql:
 
         self.instance.item_transaction_classes = TransactionClass.objects.all()
 
-
     def add_data_items_complex_transaction_status(self):
 
         self.instance.item_complex_transaction_status = ComplexTransactionStatus.objects.all()
-
 
     def add_data_items(self):
 
@@ -254,7 +248,8 @@ class TransactionReportBuilderSql:
 
         permissions_st = time.perf_counter()
 
-        _l.debug('_refresh_with_perms_optimized permissions done: %s', "{:3.3f}".format(time.perf_counter() - permissions_st))
+        _l.debug('_refresh_with_perms_optimized permissions done: %s',
+                 "{:3.3f}".format(time.perf_counter() - permissions_st))
 
         item_relations_st = time.perf_counter()
 
@@ -266,7 +261,6 @@ class TransactionReportBuilderSql:
         complex_transactions_ids = []
 
         for item in self.instance.items:
-
             portfolio_ids.append(item['portfolio_id'])
 
             instrument_ids.append(item['instrument_id'])
@@ -283,7 +277,6 @@ class TransactionReportBuilderSql:
             # if item['complex_transaction_id'] not in complex_transactions_ids:
             #     complex_transactions_ids.append(item['complex_transaction_id'])
 
-
         self.add_data_items_instruments(instrument_ids)
         self.add_data_items_portfolios(portfolio_ids)
         self.add_data_items_accounts(account_ids)
@@ -294,4 +287,5 @@ class TransactionReportBuilderSql:
 
         self.instance.custom_fields = TransactionReportCustomField.objects.filter(master_user=self.instance.master_user)
 
-        _l.debug('_refresh_with_perms_optimized item relations done: %s', "{:3.3f}".format(time.perf_counter() - item_relations_st))
+        _l.debug('_refresh_with_perms_optimized item relations done: %s',
+                 "{:3.3f}".format(time.perf_counter() - item_relations_st))

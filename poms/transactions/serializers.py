@@ -1,35 +1,34 @@
 from __future__ import unicode_literals
 
 import datetime
-
+import logging
 import time
+
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.validators import RegexValidator
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty
 
 from poms.accounts.fields import AccountField, AccountDefault
 from poms.accounts.models import Account
-from poms.accounts.serializers import AccountViewSerializer
 from poms.common import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.counterparties.fields import ResponsibleField, CounterpartyField, ResponsibleDefault, CounterpartyDefault
 from poms.counterparties.models import Counterparty, Responsible
-from poms.counterparties.serializers import ResponsibleViewSerializer, CounterpartyViewSerializer
 from poms.currencies.fields import CurrencyField, CurrencyDefault, SystemCurrencyDefault
 from poms.currencies.models import Currency
 from poms.currencies.serializers import CurrencyViewSerializer
 from poms.instruments.fields import InstrumentField, InstrumentTypeField, InstrumentDefault, PricingPolicyField, \
-    AccrualCalculationModelField, PeriodicityField, NotificationClassField, EventClassField, EventScheduleField, \
-    TransactionTypeInputSettingsField
+    AccrualCalculationModelField, PeriodicityField, NotificationClassField, EventClassField, EventScheduleField
 from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
     Periodicity, AccrualCalculationModel, EventSchedule
 from poms.instruments.serializers import PeriodicitySerializer, \
     AccrualCalculationModelSerializer, InstrumentViewSerializer
 from poms.integrations.fields import PriceDownloadSchemeField
-from poms.integrations.models import PriceDownloadScheme, ComplexTransactionImportSchemeReconField
+from poms.integrations.models import PriceDownloadScheme
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer, GenericObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField, PortfolioDefault
@@ -41,25 +40,18 @@ from poms.reconciliation.serializers import TransactionTypeReconFieldSerializer,
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field, Strategy1Default, Strategy2Default, \
     Strategy3Default
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
-from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
 from poms.transactions.fields import TransactionTypeInputContentTypeField, \
-    TransactionTypeGroupField, ReadOnlyContentTypeField, TransactionTypeField, TransactionTypeInputField
+    TransactionTypeGroupField, ReadOnlyContentTypeField
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionClass, Transaction, TransactionType, TransactionTypeAction, \
     TransactionTypeActionTransaction, TransactionTypeActionInstrument, TransactionTypeInput, TransactionTypeGroup, \
-    ComplexTransaction, EventClass, NotificationClass, ComplexTransactionInput, \
-    TransactionTypeActionInstrumentFactorSchedule, TransactionTypeActionInstrumentManualPricingFormula, \
+    ComplexTransaction, EventClass, NotificationClass, TransactionTypeActionInstrumentFactorSchedule, \
+    TransactionTypeActionInstrumentManualPricingFormula, \
     TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
     TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionExecuteCommand, \
     TransactionTypeInputSettings, ComplexTransactionStatus, TransactionTypeContextParameter
 from poms.users.fields import MasterUserField, HiddenMemberField
-
-from django.core.validators import RegexValidator
-
-from poms.common.utils import date_now
 from poms.users.utils import get_member_from_context
-
-import logging
 
 _l = logging.getLogger('poms.transactions')
 
@@ -189,7 +181,6 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         from poms.portfolios.serializers import PortfolioViewSerializer
         from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, \
             Strategy3ViewSerializer
-        from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
 
         self.fields['account_object'] = AccountViewSerializer(source='account', read_only=True)
 
@@ -274,13 +265,11 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-
         instance = super(TransactionTypeInputSerializer, self).create(validated_data)
 
         return instance
 
     def update(self, instance, validated_data):
-
         instance = super(TransactionTypeInputSerializer, self).update(instance, validated_data)
 
         return instance
@@ -353,11 +342,6 @@ class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super(TransactionTypeActionInstrumentSerializer, self).__init__(*args, **kwargs)
-
-        from poms.instruments.serializers import InstrumentTypeViewSerializer, DailyPricingModelSerializer, \
-            PaymentSizeDetailSerializer
-        from poms.currencies.serializers import CurrencyViewSerializer
-        from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
 
     def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
 
@@ -517,14 +501,6 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super(TransactionTypeActionTransactionSerializer, self).__init__(*args, **kwargs)
-
-        from poms.portfolios.serializers import PortfolioViewSerializer
-        from poms.instruments.serializers import InstrumentViewSerializer
-        from poms.currencies.serializers import CurrencyViewSerializer
-        from poms.accounts.serializers import AccountViewSerializer
-        from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, \
-            Strategy3ViewSerializer
-        from poms.counterparties.serializers import ResponsibleViewSerializer, CounterpartyViewSerializer
 
         self.fields['transaction_class_object'] = TransactionClassSerializer(source='transaction_class', read_only=True)
 
@@ -728,7 +704,7 @@ class TransactionTypeActionInstrumentManualPricingFormulaSerializer(serializers.
     def __init__(self, *args, **kwargs):
         super(TransactionTypeActionInstrumentManualPricingFormulaSerializer, self).__init__(*args, **kwargs)
 
-        from poms.instruments.serializers import InstrumentViewSerializer, PricingPolicySerializer
+        from poms.instruments.serializers import PricingPolicySerializer
 
         self.fields['pricing_policy_object'] = PricingPolicySerializer(source='pricing_policy', read_only=True)
 
@@ -769,8 +745,6 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(seria
 
     def __init__(self, *args, **kwargs):
         super(TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer, self).__init__(*args, **kwargs)
-
-        from poms.instruments.serializers import InstrumentViewSerializer
 
         # self.fields['periodicity_object'] = PeriodicitySerializer(source='periodicity', read_only=True)
         # self.fields['accrual_calculation_model_object'] = AccrualCalculationModelSerializer(
@@ -868,8 +842,6 @@ class TransactionTypeActionInstrumentEventScheduleSerializer(serializers.ModelSe
     def __init__(self, *args, **kwargs):
         super(TransactionTypeActionInstrumentEventScheduleSerializer, self).__init__(*args, **kwargs)
 
-        from poms.instruments.serializers import InstrumentViewSerializer
-
         # self.fields['periodicity_object'] = PeriodicitySerializer(source='periodicity', read_only=True)
         # self.fields['notification_class_object'] = NotificationClassSerializer(source='notification_class',
         #                                                                        read_only=True)
@@ -895,11 +867,12 @@ class TransactionTypeActionInstrumentEventScheduleSerializer(serializers.ModelSe
             result = None
 
         return result
+
     def to_representation(self, instance):
 
-        from poms.instruments.models import Periodicity, AccrualCalculationModel
+        from poms.instruments.models import Periodicity
 
-        from poms.instruments.serializers import PeriodicitySerializer, AccrualCalculationModelSerializer
+        from poms.instruments.serializers import PeriodicitySerializer
 
         data = super(TransactionTypeActionInstrumentEventScheduleSerializer, self).to_representation(instance)
 
@@ -1408,7 +1381,8 @@ class TransactionTypeLightSerializerWithInputs(TransactionTypeLightSerializer):
         ]
 
 
-class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer, ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
+class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
+                                ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     group = TransactionTypeGroupField(required=False, allow_null=False)
     date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -1750,7 +1724,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
                     context_parameter = TransactionTypeContextParameter.objects.get(transaction_type=instance,
                                                                                     order=context_parameter_field_data[
                                                                                         'order'],
-                                                                                    user_code=context_parameter_field_data[
+                                                                                    user_code=
+                                                                                    context_parameter_field_data[
                                                                                         'user_code'],
                                                                                     name=context_parameter_field_data[
                                                                                         'name'])
@@ -3484,8 +3459,7 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
         )
 
         if self.instance:
-
-            _l.info('instance=self.instance %s '% self.instance.values)
+            _l.info('instance=self.instance %s ' % self.instance.values)
 
             self.fields['values'] = TransactionTypeProcessValuesSerializer(instance=self.instance, required=False)
 
@@ -3576,7 +3550,6 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
 class TransactionTypeRecalculateSerializer(serializers.Serializer):
 
     def __init__(self, **kwargs):
-        from poms.instruments.serializers import InstrumentSerializer
         st = time.perf_counter()
 
         kwargs['context'] = context = kwargs.get('context', {}) or {}

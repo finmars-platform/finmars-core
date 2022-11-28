@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('instruments', '0044_auto_20210317_0634'),
     ]
@@ -13,17 +12,26 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='eventschedule',
             name='effective_date_value_type',
-            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'), (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'), (120, 'Button')], default=40, verbose_name='effective date value type'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'),
+                         (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'),
+                         (120, 'Button')], default=40, verbose_name='effective date value type'),
         ),
         migrations.AddField(
             model_name='eventschedule',
             name='final_date_value_type',
-            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'), (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'), (120, 'Button')], default=40, verbose_name='final_date value type'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'),
+                         (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'),
+                         (120, 'Button')], default=40, verbose_name='final_date value type'),
         ),
         migrations.AddField(
             model_name='eventschedule',
             name='periodicity_n_value_type',
-            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'), (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'), (120, 'Button')], default=20, verbose_name='periodicity n value type'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'),
+                         (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'),
+                         (120, 'Button')], default=20, verbose_name='periodicity n value type'),
         ),
         migrations.AlterField(
             model_name='eventschedule',

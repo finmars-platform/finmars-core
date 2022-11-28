@@ -1,18 +1,15 @@
+import logging
 
 from celery import shared_task
-
-import logging
+from django.utils.timezone import now
 
 from poms.file_reports.models import FileReport
 
-from django.utils.timezone import now
-
-
 _l = logging.getLogger('poms.file_reports')
 
-@shared_task(name='file_reports.clear_old_file_reports', bind=True, ignore_result=True)
-def clear_old_file_reports(self,):
 
+@shared_task(name='file_reports.clear_old_file_reports', bind=True, ignore_result=True)
+def clear_old_file_reports(self, ):
     _l.debug("File Reports: clear_old_file_reports")
 
     today = now()

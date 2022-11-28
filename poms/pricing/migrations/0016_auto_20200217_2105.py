@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('pricing', '0015_auto_20200217_1930'),
     ]
@@ -13,26 +12,31 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='pricingprocedure',
             name='accrual_date_from_expr',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='accrual date from expr'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='accrual date from expr'),
         ),
         migrations.AlterField(
             model_name='pricingprocedure',
             name='accrual_date_to_expr',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='accrual date to expr'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='accrual date to expr'),
         ),
         migrations.AlterField(
             model_name='pricingprocedure',
             name='price_balance_date_expr',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='price balance date expr'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='price balance date expr'),
         ),
         migrations.AlterField(
             model_name='pricingprocedure',
             name='price_date_from_expr',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='price date from expr'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='price date from expr'),
         ),
         migrations.AlterField(
             model_name='pricingprocedure',
             name='price_date_to_expr',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='price date to expr'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='price date to expr'),
         ),
     ]

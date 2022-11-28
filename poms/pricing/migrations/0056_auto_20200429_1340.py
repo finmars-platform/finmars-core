@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0029_userprofile_two_factor_verification'),
         ('pricing', '0055_auto_20200427_1502'),
@@ -19,7 +18,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='pricingprocedure',
             name='type',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Created by User'), (2, 'Created by Instrument')], default=1, verbose_name='type'),
+            field=models.PositiveSmallIntegerField(choices=[(1, 'Created by User'), (2, 'Created by Instrument')],
+                                                   default=1, verbose_name='type'),
         ),
         migrations.AlterUniqueTogether(
             name='pricingprocedure',

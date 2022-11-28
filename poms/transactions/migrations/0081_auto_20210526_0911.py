@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0080_auto_20210312_1647'),
     ]
@@ -12,6 +11,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='transactionclass',
-            options={'ordering': ['name'], 'verbose_name': 'transaction class', 'verbose_name_plural': 'transaction classes'},
+            options={'ordering': ['name'], 'verbose_name': 'transaction class',
+                     'verbose_name_plural': 'transaction classes'},
         ),
     ]

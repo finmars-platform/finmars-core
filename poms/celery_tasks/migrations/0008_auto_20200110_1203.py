@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('celery_tasks', '0007_celerytask_file_report'),
     ]

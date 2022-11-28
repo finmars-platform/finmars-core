@@ -1,10 +1,10 @@
+import logging
 import traceback
+
 from celery import shared_task
 
 from poms.celery_tasks.models import CeleryTask
 from poms.transaction_import.handlers import TransactionImportProcess
-
-import logging
 
 _l = logging.getLogger('poms.transaction_import')
 

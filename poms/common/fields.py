@@ -44,8 +44,6 @@ class PrimaryKeyRelatedFilteredField(PrimaryKeyRelatedField):
                 return value['pk']
 
 
-
-
 class SlugRelatedFilteredField(SlugRelatedField):
     filter_backends = None
 
@@ -99,6 +97,7 @@ class ExpressionField(CharField):
     #         formula.validate(value)
     #     return value
 
+
 class Expression2Field(CharField):
     def __init__(self, **kwargs):
         kwargs['allow_null'] = kwargs.get('allow_null', False)
@@ -110,7 +109,6 @@ class Expression2Field(CharField):
         # if value and value != empty:
         #     formula.validate(value)
         return value
-
 
 
 class FloatEvalField(FloatField):

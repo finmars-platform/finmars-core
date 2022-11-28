@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0051_transactiontypeactionexecutecommand'),
     ]
@@ -13,6 +12,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transactiontype',
             name='type',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Default'), (2, 'Procedure')], db_index=True, default=1, verbose_name='type'),
+            field=models.PositiveSmallIntegerField(choices=[(1, 'Default'), (2, 'Procedure')], db_index=True, default=1,
+                                                   verbose_name='type'),
         ),
     ]

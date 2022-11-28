@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0029_userprofile_two_factor_verification'),
         ('layout_recovery', '0001_initial'),

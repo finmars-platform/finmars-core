@@ -1,9 +1,8 @@
-from datetime import datetime
 import os
 import os.path
+from datetime import datetime
 
 from django.core.management import BaseCommand
-from django.db import transaction
 
 from poms_app import settings
 
@@ -23,7 +22,6 @@ class Command(BaseCommand):
         parser.add_argument('--revision', type=int)
         parser.add_argument('--increment', type=str)
 
-
     def handle(self, *args, **options):
 
         version_date = datetime.today().strftime('%Y-%m-%d-%H-%M')
@@ -32,7 +30,6 @@ class Command(BaseCommand):
 
         print('version_path %s' % version_path)
         print('options %s' % options)
-
 
         if os.path.isfile(version_path):
 
@@ -66,7 +63,6 @@ class Command(BaseCommand):
 
                 f.write(version)
 
-
     def get_version_str(self, options, version_date):
 
         if options['major']:
@@ -89,7 +85,8 @@ class Command(BaseCommand):
             if options['increment'] == 'revision':
                 self.current_revision = self.current_revision + 1
 
-        result_version = str(self.current_major) + "." + str(self.current_minor) + "." + str(self.current_revision) + " " + version_date
+        result_version = str(self.current_major) + "." + str(self.current_minor) + "." + str(
+            self.current_revision) + " " + version_date
 
         print('New version: %s' % result_version)
 

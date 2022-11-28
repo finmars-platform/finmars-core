@@ -1,19 +1,16 @@
+import logging
 
 from rest_framework import serializers
-
-from poms.common.fields import DateTimeTzAwareField
-from poms.common.serializers import ModelWithTimeStampSerializer
-from poms.schedules.models import ScheduleProcedure, Schedule
-from poms.users.fields import MasterUserField
 from rest_framework.fields import empty
 
-import logging
+from poms.common.fields import DateTimeTzAwareField
+from poms.schedules.models import ScheduleProcedure, Schedule
+from poms.users.fields import MasterUserField
 
 _l = logging.getLogger('poms.schedules')
 
 
 class ScheduleProcedureSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ScheduleProcedure
         fields = [
@@ -22,7 +19,6 @@ class ScheduleProcedureSerializer(serializers.ModelSerializer):
 
 
 class RunScheduleSerializer(serializers.Serializer):
-
     schedules = serializers.CharField(allow_blank=False)
 
     def __init__(self, **kwargs):
@@ -32,7 +28,6 @@ class RunScheduleSerializer(serializers.Serializer):
 
 
 class ScheduleSerializer(serializers.ModelSerializer):
-
     master_user = MasterUserField()
     last_run_at = DateTimeTzAwareField(read_only=True)
     next_run_at = DateTimeTzAwareField(read_only=True)

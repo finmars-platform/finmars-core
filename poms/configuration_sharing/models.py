@@ -1,13 +1,11 @@
 import json
 
+from django.conf import settings
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy
 
 from poms.users.models import MasterUser, Member
-
-from django.conf import settings
 
 
 class SharedConfigurationFile(models.Model):
@@ -28,7 +26,7 @@ class SharedConfigurationFile(models.Model):
                                                       verbose_name=gettext_lazy('publicity type'))
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-                               verbose_name=gettext_lazy('user'))
+                             verbose_name=gettext_lazy('user'))
 
     linked_master_user = models.ForeignKey(MasterUser, null=True, blank=True,
                                            verbose_name=gettext_lazy('linked master user'), on_delete=models.CASCADE)
@@ -55,7 +53,6 @@ class SharedConfigurationFile(models.Model):
 
 
 class InviteToSharedConfigurationFile(models.Model):
-
     SENT = 0
     ACCEPTED = 1
     DECLINED = 2
@@ -65,8 +62,10 @@ class InviteToSharedConfigurationFile(models.Model):
                       (DECLINED, 'Declined'),
                       )
 
-    member_from = models.ForeignKey(Member, related_name="my_invites_to_shared_configuration_files", verbose_name=gettext_lazy('member from'), on_delete=models.CASCADE)
-    member_to = models.ForeignKey(Member, related_name="invites_to_shared_configuration_files_to", verbose_name=gettext_lazy('member to'), on_delete=models.CASCADE)
+    member_from = models.ForeignKey(Member, related_name="my_invites_to_shared_configuration_files",
+                                    verbose_name=gettext_lazy('member from'), on_delete=models.CASCADE)
+    member_to = models.ForeignKey(Member, related_name="invites_to_shared_configuration_files_to",
+                                  verbose_name=gettext_lazy('member to'), on_delete=models.CASCADE)
     shared_configuration_file = models.ForeignKey(SharedConfigurationFile,
                                                   verbose_name=gettext_lazy('shared configuration file'),
                                                   on_delete=models.CASCADE)
