@@ -1,13 +1,12 @@
+import logging
 import sys
-
 import time
+
 from django.core.paginator import InvalidPage
 from rest_framework.exceptions import NotFound
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.settings import api_settings
 
-
-import logging
 _l = logging.getLogger('poms.common')
 
 
@@ -26,7 +25,6 @@ def _positive_int(integer_string, strict=False, cutoff=None):
 class PageNumberPaginationExt(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = api_settings.PAGE_SIZE * 10
-
 
     def post_paginate_queryset(self, queryset, request, view=None):
 

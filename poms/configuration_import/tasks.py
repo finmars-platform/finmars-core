@@ -1,11 +1,14 @@
 import copy
 import json
 import time
-from django.utils.timezone import now
+import traceback
+from logging import getLogger
+
 from celery import shared_task
 from django.contrib.contenttypes.models import ContentType
-from rest_framework.exceptions import ValidationError
 from django.db import transaction
+from django.utils.timezone import now
+from rest_framework.exceptions import ValidationError
 
 from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountTypeSerializer
@@ -28,15 +31,14 @@ from poms.file_reports.models import FileReport
 from poms.instruments.models import InstrumentType, DailyPricingModel, PaymentSizeDetail, Instrument, PricingPolicy, \
     Periodicity, AccrualCalculationModel
 from poms.instruments.serializers import InstrumentTypeSerializer, PricingPolicySerializer
-from poms.integrations.models import PriceDownloadScheme, ComplexTransactionImportScheme, PricingAutomatedSchedule, \
-    Task, AccountTypeMapping, InstrumentTypeMapping, PricingPolicyMapping, PriceDownloadSchemeMapping, \
+from poms.integrations.models import PriceDownloadScheme, ComplexTransactionImportScheme, Task, AccountTypeMapping, \
+    InstrumentTypeMapping, PricingPolicyMapping, PriceDownloadSchemeMapping, \
     PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping, \
     InstrumentDownloadScheme
-from poms.integrations.serializers import ComplexTransactionImportSchemeSerializer, PricingAutomatedScheduleSerializer, \
-    AccountTypeMappingSerializer, InstrumentTypeMappingSerializer, PricingPolicyMappingSerializer, \
+from poms.integrations.serializers import ComplexTransactionImportSchemeSerializer, AccountTypeMappingSerializer, \
+    InstrumentTypeMappingSerializer, PricingPolicyMappingSerializer, \
     PriceDownloadSchemeMappingSerializer, PeriodicityMappingSerializer, DailyPricingModelMappingSerializer, \
     PaymentSizeDetailMappingSerializer, AccrualCalculationModelMappingSerializer, InstrumentDownloadSchemeSerializer
-from poms.layout_recovery.handlers import LayoutArchetypeGenerateHandler
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
 from poms.portfolios.models import Portfolio
@@ -59,14 +61,10 @@ from poms.transactions.serializers import TransactionTypeGroupSerializer, Transa
 from poms.ui.models import ListLayout, InstrumentUserFieldModel, TransactionUserFieldModel, DashboardLayout, EditLayout, \
     ContextMenuLayout, TemplateLayout, EntityTooltip, ColorPalette, ColumnSortData, CrossEntityAttributeExtension
 from poms.ui.serializers import EditLayoutSerializer, ListLayoutSerializer, DashboardLayoutSerializer, \
-    InstrumentUserFieldSerializer, TransactionUserFieldSerializer, ContextMenuLayoutSerializer, \
+    InstrumentUserFieldSerializer, ContextMenuLayoutSerializer, \
     TemplateLayoutSerializer, EntityTooltipSerializer, ColorPaletteSerializer, ColumnSortDataSerializer, \
     CrossEntityAttributeExtensionSerializer
 from poms.users.models import EcosystemDefault
-
-import traceback
-
-from logging import getLogger
 
 _l = getLogger('poms.configuration_import')
 
@@ -242,7 +240,6 @@ class ConfigurationImportManager(object):
 
         if self.instance.processed_rows > self.instance.total_rows:  # TODO  Somehow processed rows become bigger then total total rows, check for duplicate
             self.instance.processed_rows = self.instance.total_rows
-
 
         self.task.update_progress(
             {
@@ -802,7 +799,8 @@ class ConfigurationImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress(message='Importing Transaction Type Group: %s' % content_object['user_code'])
+                        self.update_progress(
+                            message='Importing Transaction Type Group: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Transaction Types Groups done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -1034,7 +1032,8 @@ class ConfigurationImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress(message='Importing PL Report Custom Column: %s' % content_object['user_code'])
+                        self.update_progress(
+                            message='Importing PL Report Custom Column: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Custom Columns PL Report done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -1089,7 +1088,8 @@ class ConfigurationImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress(message='Importing Transaction Report Custom Column: %s' % content_object['user_code'])
+                        self.update_progress(
+                            message='Importing Transaction Report Custom Column: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Custom Columns Transaction Report done %s' % "{:3.3f}".format(
             time.perf_counter() - st))
@@ -1826,7 +1826,8 @@ class ConfigurationImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress(message='Import Download Instrument Scheme: %s' % content_object['user_code'])
+                        self.update_progress(
+                            message='Import Download Instrument Scheme: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Instrument Download Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -1868,7 +1869,7 @@ class ConfigurationImportManager(object):
                                                                                                '___transaction_type__user_code']).pk
                                 except TransactionType.DoesNotExist:
                                     _l.info('Cant find Transaction Type form %s for %s' % (
-                                    rule['___transaction_type__user_code'], content_object['user_code']))
+                                        rule['___transaction_type__user_code'], content_object['user_code']))
                                     rule['transaction_type'] = self.ecosystem_default.transaction_type_id
                                     tt_found = False
                                     # stats['status'] = 'error'
@@ -1888,7 +1889,7 @@ class ConfigurationImportManager(object):
                                             stats['status'] = 'error'
                                             stats['error'][
                                                 'message'] = 'Error. Can\'t Import Transaction Import Scheme for %s. Input %s is missing.' % (
-                                            content_object['user_code'], field['___input__name'])
+                                                content_object['user_code'], field['___input__name'])
                                             continue
 
                         if stats['status'] == 'error':
@@ -1938,7 +1939,8 @@ class ConfigurationImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress(message='Import Transaction Import Scheme: %s' % content_object['user_code'])
+                        self.update_progress(
+                            message='Import Transaction Import Scheme: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Transaction Import Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -2602,7 +2604,8 @@ class ConfigurationImportManager(object):
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
-                        self.update_progress(message='Import Instrument Pricing Scheme: %s' % content_object['user_code'])
+                        self.update_progress(
+                            message='Import Instrument Pricing Scheme: %s' % content_object['user_code'])
 
         _l.info('Import Configuration Instrument Pricing Scheme done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
@@ -2882,7 +2885,7 @@ class ConfigurationImportManager(object):
                     for content_object in item['content']:
 
                         serializer = ExpressionProcedureSerializer(data=content_object,
-                                                                        context=self.get_serializer_context())
+                                                                   context=self.get_serializer_context())
 
                         stats = {
                             'content_type': item['entity'],
@@ -2904,11 +2907,11 @@ class ConfigurationImportManager(object):
                                 try:
 
                                     instance = ExpressionProcedure.objects.get(master_user=self.master_user,
-                                                                                    name=content_object['name'])
+                                                                               name=content_object['name'])
 
                                     serializer = ExpressionProcedureSerializer(data=content_object,
-                                                                                    instance=instance,
-                                                                                    context=self.get_serializer_context())
+                                                                               instance=instance,
+                                                                               context=self.get_serializer_context())
                                     serializer.is_valid(raise_exception=True)
                                     serializer.save()
 
@@ -2916,13 +2919,15 @@ class ConfigurationImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Expression Procedure for %s' % content_object[
-                                        'name']
+                                        'message'] = 'Error. Can\'t Overwrite Expression Procedure for %s' % \
+                                                     content_object[
+                                                         'name']
 
                             else:
 
                                 stats['status'] = 'error'
-                                stats['error']['message'] = 'Expression Procedure %s already exists' % content_object['name']
+                                stats['error']['message'] = 'Expression Procedure %s already exists' % content_object[
+                                    'name']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -3208,7 +3213,7 @@ def configuration_import_as_json(self, task_id):
 
         task = CeleryTask.objects.get(id=task_id)
 
-        task.celery_task_id=self.request.id
+        task.celery_task_id = self.request.id
         task.save()
 
         with transaction.atomic():
@@ -3267,7 +3272,7 @@ def configuration_import_as_json(self, task_id):
         _l.info('Import done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         task.result_object = instance.stats
-        
+
         file_report = import_manager.generate_json_report()
 
         task.add_attachment(file_report.id)

@@ -276,7 +276,8 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
                             section='prices',
                             type='success',
                             title='New FX rate (manual)',
-                            description=instance.currency.user_code + ' ' + str(instance.date) + ' ' + str(instance.fx_rate)
+                            description=instance.currency.user_code + ' ' + str(instance.date) + ' ' + str(
+                                instance.fx_rate)
                             )
 
         return instance
@@ -291,7 +292,8 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
         try:
 
             history_item = CurrencyHistoryError.objects.get(currency=instance.currency,
-                                                            master_user=instance.currency.master_user, date=instance.date,
+                                                            master_user=instance.currency.master_user,
+                                                            date=instance.date,
                                                             pricing_policy=instance.pricing_policy)
 
             history_item.status = CurrencyHistoryError.STATUS_OVERWRITTEN
@@ -318,7 +320,8 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
                             section='prices',
                             type='warning',
                             title='Edit FX rate (manual)',
-                            description=instance.currency.user_code + ' ' + str(instance.date) + ' ' + str(instance.fx_rate)
+                            description=instance.currency.user_code + ' ' + str(instance.date) + ' ' + str(
+                                instance.fx_rate)
                             )
 
         return instance

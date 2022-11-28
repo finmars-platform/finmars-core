@@ -1,20 +1,20 @@
-import csv
+import json
 import os
+import time
+from logging import getLogger
 
 from django.apps import apps
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Prefetch
-from django.shortcuts import render
+from django.core import serializers
 from django.http import HttpResponse
-
 # Create your views here.
 from django.utils.datetime_safe import datetime
 from rest_framework import status
-from rest_framework.renderers import JSONRenderer
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from poms.accounts.models import AccountType, Account
-from poms.common.utils import delete_keys_from_dict, recursive_callback
+from poms.common.utils import recursive_callback
 from poms.common.views import AbstractModelViewSet
 from poms.complex_import.models import ComplexImportScheme, ComplexImportSchemeAction, \
     ComplexImportSchemeActionCsvImport, ComplexImportSchemeActionTransactionImport
@@ -26,20 +26,15 @@ from poms.instruments.models import InstrumentType, Instrument, Periodicity, Dai
     AccrualCalculationModel, PricingPolicy, PricingCondition
 from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloadSchemeInput, \
     InstrumentDownloadSchemeAttribute, PriceDownloadScheme, ComplexTransactionImportScheme, \
-    ComplexTransactionImportSchemeInput, ComplexTransactionImportSchemeField, \
-    PricingAutomatedSchedule, PortfolioMapping, CurrencyMapping, InstrumentTypeMapping, AccountMapping, \
+    PortfolioMapping, CurrencyMapping, InstrumentTypeMapping, AccountMapping, \
     InstrumentMapping, CounterpartyMapping, ResponsibleMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
     PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping, \
-    PriceDownloadSchemeMapping, AccountTypeMapping, PricingPolicyMapping, ComplexTransactionImportSchemeRuleScenario, \
-    ComplexTransactionImportSchemeReconScenario, ComplexTransactionImportSchemeReconField, \
-    ComplexTransactionImportSchemeSelectorValue, ComplexTransactionImportSchemeCalculatedInput, PricingConditionMapping
-from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
-from poms.obj_attrs.serializers import GenericClassifierViewSerializer, GenericClassifierNodeSerializer, \
-    GenericAttributeTypeSerializer
+    PriceDownloadSchemeMapping, AccountTypeMapping, PricingPolicyMapping, PricingConditionMapping
+from poms.obj_attrs.models import GenericAttributeType
+from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
 from poms.obj_perms.utils import obj_perms_filter_objects
 from poms.portfolios.models import Portfolio
-from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, CurrencyPricingPolicy, \
-    InstrumentTypePricingPolicy
+from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentTypePricingPolicy
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     CurrencyPricingPolicySerializer, InstrumentTypePricingPolicySerializer
 from poms.procedures.models import PricingProcedure, RequestDataFileProcedure, ExpressionProcedure
@@ -53,26 +48,12 @@ from poms.transactions.models import TransactionType, TransactionTypeInput, Tran
     TransactionTypeActionInstrument, TransactionTypeActionTransaction, TransactionTypeGroup, \
     TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
     TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionInstrumentFactorSchedule, \
-    TransactionTypeActionInstrumentManualPricingFormula, NotificationClass, EventClass, TransactionClass, \
-    TransactionTypeInputSettings
-
-from rest_framework.exceptions import ValidationError
-
-from django.core import serializers
-import json
-import time
-
-from poms.transactions.serializers import TransactionTypeSerializer
+    TransactionTypeActionInstrumentManualPricingFormula, NotificationClass, EventClass, TransactionClass
 from poms.ui.models import EditLayout, ListLayout, Bookmark, TransactionUserFieldModel, InstrumentUserFieldModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, ColorPaletteColor, ColumnSortData, \
     CrossEntityAttributeExtension
-
-from django.forms.models import model_to_dict
-
 from poms.ui.serializers import BookmarkSerializer
 from poms_app import settings
-
-from logging import getLogger
 
 _l = getLogger('poms.configuration_export')
 
@@ -203,9 +184,7 @@ def get_access_table(member):
 
 
 class ConfigurationExportViewSet(AbstractModelViewSet):
-
     serializer_class = EmptySerializer
-
 
     def list(self, request):
 
@@ -496,10 +475,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
                 if input_model.pk == input_json['pk']:
 
                     if input_model.content_type:
-
                         input_json["fields"]["content_type"] = '%s.%s' % (
                             input_model.content_type.app_label, input_model.content_type.model)
-
 
                     if input_model.settings:
                         input_json["fields"]["settings"] = {
@@ -937,8 +914,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
     def get_currencies(self):
 
-        items = Currency.objects.filter(master_user=self._master_user, is_deleted=False)\
-            .exclude(user_code='-')\
+        items = Currency.objects.filter(master_user=self._master_user, is_deleted=False) \
+            .exclude(user_code='-') \
             .prefetch_related(
             "pricing_policies",
             "pricing_policies__pricing_policy",
@@ -1834,7 +1811,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             for item_json in items_json:
 
                 if item.pk == item_json["pk"]:
-
                     result_item = item_json["fields"]
 
                     result_item["___input__name"] = item.transaction_type_input.name
@@ -1924,8 +1900,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         items = scheme.rule_scenarios.all()
         items_json = to_json_objects(items)
 
-
-
         # results = unwrap_items(rules)
 
         results = []
@@ -1934,11 +1908,11 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             for item_json in items_json:
 
                 if item.pk == item_json["pk"]:
-
                     result_item = item_json["fields"]
 
                     result_item["fields"] = self.get_complex_transaction_import_scheme_rule_fields(item)
-                    result_item["selector_values"] = self.get_complex_transaction_import_scheme_rule_selector_values(item)
+                    result_item["selector_values"] = self.get_complex_transaction_import_scheme_rule_selector_values(
+                        item)
 
                     result_item["___transaction_type__user_code"] = item.transaction_type.user_code
                     result_item.pop("transaction_type", None)
@@ -2059,7 +2033,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         content_type = ContentType.objects.get(app_label=app_label, model=model)
 
         items = to_json_objects(
-            GenericAttributeType.objects.filter(master_user=self._master_user, content_type=content_type, kind=GenericAttributeType.USER))
+            GenericAttributeType.objects.filter(master_user=self._master_user, content_type=content_type,
+                                                kind=GenericAttributeType.USER))
 
         results = []
 
@@ -2243,7 +2218,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
 
 class MappingExportViewSet(AbstractModelViewSet):
-
     serializer_class = EmptySerializer
 
     def list(self, request):
@@ -2873,7 +2847,6 @@ class MappingExportViewSet(AbstractModelViewSet):
 
 
 class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
-
     serializer_class = EmptySerializer
 
     def create(self, request, *args, **kwargs):

@@ -1,19 +1,14 @@
+import logging
 import time
 import traceback
-
-from collections import OrderedDict
 
 from django.contrib.contenttypes.models import ContentType
 
 from poms.currencies.models import Currency
 from poms.instruments.models import GeneratedEvent, Instrument
 from poms.obj_attrs.models import GenericClassifier, GenericAttributeType
-
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import ComplexTransaction, TransactionType
-
-import logging
-
 from poms.users.models import EcosystemDefault
 
 _l = logging.getLogger('poms.instruments')
@@ -62,12 +57,12 @@ class GeneratedEventProcess(TransactionTypeProcess):
 
                     if str(action.button_position) in generated_event.data['actions_parameters']:
 
-                        for key, value in generated_event.data['actions_parameters'][str(action.button_position)].items():
+                        for key, value in generated_event.data['actions_parameters'][
+                            str(action.button_position)].items():
                             _l.info("key %s: value %s" % (key, value))
                             context_values.update({key: value})
 
             kwargs['context_values'] = context_values
-
 
             if generated_event.status == GeneratedEvent.ERROR:
                 kwargs['complex_transaction_status'] = ComplexTransaction.PENDING
@@ -152,20 +147,21 @@ class InstrumentTypeProcess(object):
                 instrument_object['exposure_calculation_model'] = None
 
             try:
-                instrument_object['long_underlying_instrument'] = Instrument.objects.get(master_user=instrument_type.master_user,
-                                                                                         user_code=instrument_type.long_underlying_instrument).pk
+                instrument_object['long_underlying_instrument'] = Instrument.objects.get(
+                    master_user=instrument_type.master_user,
+                    user_code=instrument_type.long_underlying_instrument).pk
             except Exception as e:
                 _l.info("Could not set long_underlying_instrument, fallback to default")
                 instrument_object['long_underlying_instrument'] = self.ecosystem_default.instrument.pk
-
 
             instrument_object['underlying_long_multiplier'] = instrument_type.underlying_long_multiplier
 
             instrument_object['short_underlying_instrument'] = instrument_type.short_underlying_instrument
 
             try:
-                instrument_object['short_underlying_instrument'] = Instrument.objects.get(master_user=instrument_type.master_user,
-                                                                                          user_code=instrument_type.short_underlying_instrument).pk
+                instrument_object['short_underlying_instrument'] = Instrument.objects.get(
+                    master_user=instrument_type.master_user,
+                    user_code=instrument_type.short_underlying_instrument).pk
             except Exception as e:
                 _l.info("Could not set short_underlying_instrument, fallback to default")
                 instrument_object['short_underlying_instrument'] = self.ecosystem_default.instrument.pk
@@ -176,16 +172,18 @@ class InstrumentTypeProcess(object):
             instrument_object['short_underlying_exposure'] = instrument_type.short_underlying_exposure_id
 
             try:
-                instrument_object['co_directional_exposure_currency'] = Currency.objects.get(master_user=instrument_type.master_user,
-                                                                                             user_code=instrument_type.co_directional_exposure_currency).pk
+                instrument_object['co_directional_exposure_currency'] = Currency.objects.get(
+                    master_user=instrument_type.master_user,
+                    user_code=instrument_type.co_directional_exposure_currency).pk
             except Exception as e:
                 _l.info("Could not set co_directional_exposure_currency, fallback to default")
                 instrument_object['co_directional_exposure_currency'] = self.ecosystem_default.currency.pk
 
             try:
                 instrument_object[
-                    'counter_directional_exposure_currency'] = Currency.objects.get(master_user=instrument_type.master_user,
-                                                                                    user_code=instrument_type.counter_directional_exposure_currency).pk
+                    'counter_directional_exposure_currency'] = Currency.objects.get(
+                    master_user=instrument_type.master_user,
+                    user_code=instrument_type.counter_directional_exposure_currency).pk
             except Exception as e:
                 _l.info("Could not set counter_directional_exposure_currency, fallback to default")
                 instrument_object['counter_directional_exposure_currency'] = self.ecosystem_default.currency.pk

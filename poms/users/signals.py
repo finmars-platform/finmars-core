@@ -4,8 +4,6 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
-from poms.users.models import UserProfile
-
 
 @receiver(post_save, dispatch_uid='create_user_profile', sender=User)
 def create_user_profile(instance=None, created=None, using=None, **kwargs):

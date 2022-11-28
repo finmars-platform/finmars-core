@@ -2,8 +2,8 @@
 from __future__ import unicode_literals, division
 
 from django.conf import settings
-
 from poms.reports.hist.backends.base import BaseReport2Builder
+
 from poms.reports.models import PLReportItem, BalanceReportItem
 from poms.transactions.models import TransactionClass
 
@@ -117,8 +117,8 @@ class PLReport2Builder(BaseReport2Builder):
             pli.overheads_with_sign_report_ccy = self.system_ccy_to_report_ccy(pli.overheads_with_sign_system_ccy)
 
             pli.total_report_ccy = pli.principal_with_sign_report_ccy + \
-                        pli.carry_with_sign_report_ccy + \
-                        pli.overheads_with_sign_report_ccy
+                                   pli.carry_with_sign_report_ccy + \
+                                   pli.overheads_with_sign_report_ccy
 
         summary = self.instance.summary
         for i in self._items.values():

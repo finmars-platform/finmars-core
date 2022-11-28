@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('pricing', '0018_auto_20200218_0658'),
     ]
@@ -18,7 +17,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='currencypricingscheme',
             name='public_name',
-            field=models.CharField(blank=True, help_text='used if user does not have permissions to view object', max_length=255, null=True, verbose_name='public name'),
+            field=models.CharField(blank=True, help_text='used if user does not have permissions to view object',
+                                   max_length=255, null=True, verbose_name='public name'),
         ),
         migrations.AddField(
             model_name='currencypricingscheme',
@@ -38,7 +38,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instrumentpricingscheme',
             name='public_name',
-            field=models.CharField(blank=True, help_text='used if user does not have permissions to view object', max_length=255, null=True, verbose_name='public name'),
+            field=models.CharField(blank=True, help_text='used if user does not have permissions to view object',
+                                   max_length=255, null=True, verbose_name='public name'),
         ),
         migrations.AddField(
             model_name='instrumentpricingscheme',

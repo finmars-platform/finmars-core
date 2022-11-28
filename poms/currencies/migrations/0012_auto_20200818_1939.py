@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('currencies', '0011_auto_20200525_1351'),
     ]
@@ -12,6 +11,8 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='currency',
-            options={'base_manager_name': 'objects', 'ordering': ['user_code'], 'permissions': [('manage_currency', 'Can manage currency')], 'verbose_name': 'currency', 'verbose_name_plural': 'currencies'},
+            options={'base_manager_name': 'objects', 'ordering': ['user_code'],
+                     'permissions': [('manage_currency', 'Can manage currency')], 'verbose_name': 'currency',
+                     'verbose_name_plural': 'currencies'},
         ),
     ]

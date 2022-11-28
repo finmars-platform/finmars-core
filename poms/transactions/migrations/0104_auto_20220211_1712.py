@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0103_auto_20220211_1624'),
     ]
@@ -23,7 +22,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactioninstrument',
             name='payment_size_detail',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='payment_size detail'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='payment_size detail'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactioninstrument',
@@ -48,7 +48,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
             name='allocation_balance',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='allocation balance'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='allocation balance'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
@@ -68,7 +69,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
             name='linked_instrument',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='linked instrument'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='linked instrument'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
@@ -83,7 +85,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
             name='settlement_currency',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='settlement currency'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='settlement currency'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
@@ -93,7 +96,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
             name='strategy1_position',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='strategy1 position'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='strategy1 position'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
@@ -103,7 +107,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
             name='strategy2_position',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='strategy2 position'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='strategy2 position'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
@@ -113,11 +118,13 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
             name='strategy3_position',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='strategy3 position'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='strategy3 position'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
             name='transaction_currency',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='transaction currency'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='transaction currency'),
         ),
     ]

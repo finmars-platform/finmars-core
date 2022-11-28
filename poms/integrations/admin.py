@@ -59,6 +59,7 @@ class BloombergDataProviderCredentialAdmin(AbstractModelAdmin):
     master_user_path = 'master_user'
     list_display = ['id', 'master_user', 'created', 'modified', 'is_valid']
 
+
 admin.site.register(BloombergDataProviderCredential, BloombergDataProviderCredentialAdmin)
 
 
@@ -334,6 +335,7 @@ class ComplexTransactionImportSchemeReconFieldInline(admin.TabularInline):
     raw_id_fields = ['recon_scenario']
     extra = 0
 
+
 class ComplexTransactionImportSchemeAdmin(AbstractModelAdmin):
     model = ComplexTransactionImportScheme
     master_user_path = 'master_user'
@@ -370,7 +372,7 @@ admin.site.register(ComplexTransactionImportScheme, ComplexTransactionImportSche
 class ComplexTransactionImportSchemeRuleScenarioAdmin(AbstractModelAdmin):
     model = ComplexTransactionImportSchemeRuleScenario
     master_user_path = 'scheme__master_user'
-    list_display = ['id', 'master_user', 'scheme','transaction_type']
+    list_display = ['id', 'master_user', 'scheme', 'transaction_type']
     list_select_related = ['scheme', 'scheme__master_user', ]
     search_fields = ['id', 'scheme__user_code', ]
     raw_id_fields = ['scheme', 'transaction_type']
@@ -393,7 +395,7 @@ class ComplexTransactionImportSchemeReconScenarioAdmin(AbstractModelAdmin):
     list_display = ['id', 'master_user', 'scheme']
     list_select_related = ['scheme', 'scheme__master_user', ]
     search_fields = ['id', 'scheme__user_code', ]
-    raw_id_fields = ['scheme',]
+    raw_id_fields = ['scheme', ]
     inlines = [
         ComplexTransactionImportSchemeReconFieldInline
     ]
@@ -405,6 +407,7 @@ class ComplexTransactionImportSchemeReconScenarioAdmin(AbstractModelAdmin):
 
 
 admin.site.register(ComplexTransactionImportSchemeReconScenario, ComplexTransactionImportSchemeReconScenarioAdmin)
+
 
 # class ComplexTransactionImportSchemeFieldAdmin(AbstractModelAdmin):
 #     model = ComplexTransactionImportSchemeField
@@ -438,9 +441,8 @@ admin.site.register(DataProvider, DataProviderAdmin)
 
 class TransactionFileResultAdmin(admin.ModelAdmin):
     model = TransactionFileResult
-    list_display = ['id', 'master_user',  'provider', 'scheme_user_code']
+    list_display = ['id', 'master_user', 'provider', 'scheme_user_code']
     raw_id_fields = ['master_user', 'provider']
 
 
 admin.site.register(TransactionFileResult, TransactionFileResultAdmin)
-

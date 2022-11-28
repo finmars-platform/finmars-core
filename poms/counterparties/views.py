@@ -1,9 +1,7 @@
 from __future__ import unicode_literals
 
 import django_filters
-from django.db.models import Prefetch
 from django_filters.rest_framework import FilterSet
-
 from rest_framework.settings import api_settings
 
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, AttributeFilter, \
@@ -13,9 +11,8 @@ from poms.counterparties.models import Counterparty, Responsible, CounterpartyGr
 from poms.counterparties.serializers import CounterpartySerializer, ResponsibleSerializer, CounterpartyGroupSerializer, \
     ResponsibleGroupSerializer, ResponsibleLightSerializer, CounterpartyLightSerializer, CounterpartyEvSerializer, \
     ResponsibleEvSerializer
-from poms.obj_attrs.filters import AttributeTypeValueTypeFilter
 from poms.obj_attrs.utils import get_attributes_prefetch
-from poms.obj_attrs.views import AbstractAttributeTypeViewSet, AbstractClassifierViewSet, GenericAttributeTypeViewSet, \
+from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
@@ -187,7 +184,6 @@ class CounterpartyEvViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name'
     ]
-
 
 
 class CounterpartyLightFilterSet(FilterSet):

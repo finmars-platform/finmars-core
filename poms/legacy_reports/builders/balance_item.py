@@ -1,12 +1,12 @@
 import logging
 from datetime import timedelta
 
-from django.utils.translation import gettext_lazy, gettext_lazy
+from django.utils.translation import gettext_lazy
+from poms.reports.builders.base_item import BaseReportItem, YTMMixin, BaseReport
 
 from poms.common import formula
 from poms.common.utils import isclose, date_now
 from poms.instruments.models import CostMethod
-from poms.reports.builders.base_item import BaseReportItem, YTMMixin, BaseReport
 from poms.transactions.models import TransactionClass
 
 _l = logging.getLogger('poms.reports')
@@ -1024,7 +1024,9 @@ class ReportItem(YTMMixin, BaseReportItem):
 
         # _l.debug('instr_pricing_ccy_cur_fx %s' % self.instr_pricing_ccy_cur_fx)
 
-        v0 = -(self.instr_price_cur_principal_price * self.instr.price_multiplier * self.instr.get_factor(dt) + self.instr_price_cur_accrued_price * self.instr.accrued_multiplier * self.instr.get_factor(dt) * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx))
+        v0 = -(self.instr_price_cur_principal_price * self.instr.price_multiplier * self.instr.get_factor(
+            dt) + self.instr_price_cur_accrued_price * self.instr.accrued_multiplier * self.instr.get_factor(dt) * (
+                           self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx))
 
         return dt, v0
 
@@ -1166,8 +1168,6 @@ class ReportItem(YTMMixin, BaseReportItem):
             except ArithmeticError:
                 self.pos_return_res = 0
 
-
-
             try:
                 self.pos_return_loc = (self.principal_opened_loc + self.carry_opened_loc) \
                                       / -self.principal_invested_loc
@@ -1175,7 +1175,8 @@ class ReportItem(YTMMixin, BaseReportItem):
                 self.pos_return_loc = 0
 
             try:
-                self.net_pos_return_res = (self.principal_opened_res + self.carry_opened_res + self.overheads_opened_res) \
+                self.net_pos_return_res = (
+                                                      self.principal_opened_res + self.carry_opened_res + self.overheads_opened_res) \
                                           / -self.principal_invested_res
             except ArithmeticError:
                 self.net_pos_return_res = 0.0
@@ -2170,7 +2171,6 @@ class Report(BaseReport):
         super(Report, self).__init__(id=id, master_user=master_user, member=member,
                                      task_id=task_id, task_status=task_status)
 
-
         # self.id = id
         # self.task_id = task_id
         # self.task_status = task_status
@@ -2188,8 +2188,8 @@ class Report(BaseReport):
         self.report_date = report_date or (date_now() - timedelta(days=1))
         self.cost_method = cost_method or CostMethod.objects.get(pk=CostMethod.AVCO)
 
-        self.report_instance_name=report_instance_name
-        self.save_report=save_report
+        self.report_instance_name = report_instance_name
+        self.save_report = save_report
         self.portfolio_mode = portfolio_mode
         self.account_mode = account_mode
         self.strategy1_mode = strategy1_mode
@@ -2210,7 +2210,6 @@ class Report(BaseReport):
         self.strategies1 = strategies1 or []
         self.strategies2 = strategies2 or []
         self.strategies3 = strategies3 or []
-
 
         self.transaction_classes = transaction_classes or []
         # self.date_field = date_field or 'transaction_date'

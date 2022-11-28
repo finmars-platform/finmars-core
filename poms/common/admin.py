@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.contrib.admin.views.main import ChangeList
 from django.db.models import Q
-from modeltranslation.admin import TranslationAdmin
 from mptt.admin import MPTTModelAdmin
 
 

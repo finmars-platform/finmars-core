@@ -10,7 +10,7 @@ from mptt.models import MPTTModel
 
 from poms.common.models import AbstractClassModel, NamedModel, TimeStampedModel
 from poms.configuration_sharing.models import SharedConfigurationFile
-from poms.users.models import MasterUser, Member, Group
+from poms.users.models import MasterUser, Member
 
 
 class PortalInterfaceAccessModel(AbstractClassModel):
@@ -189,7 +189,6 @@ class EntityTooltip(models.Model):
 
 
 class CrossEntityAttributeExtension(models.Model):
-
     NULL = 'NULL'
     CONSTANT = 'CONSTANT'
     ATTRIBUTE = 'ATTRIBUTE'
@@ -200,21 +199,28 @@ class CrossEntityAttributeExtension(models.Model):
         (ATTRIBUTE, gettext_lazy('Attribute'))
     )
 
-
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
-    context_content_type = models.ForeignKey(ContentType, verbose_name=gettext_lazy('context content type'), on_delete=models.CASCADE, related_name="cross_entity_attribute_extensions_by_context")
+    context_content_type = models.ForeignKey(ContentType, verbose_name=gettext_lazy('context content type'),
+                                             on_delete=models.CASCADE,
+                                             related_name="cross_entity_attribute_extensions_by_context")
 
-    content_type_from = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type from'), on_delete=models.CASCADE, related_name="cross_entity_attribute_extensions_by_from")
+    content_type_from = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type from'),
+                                          on_delete=models.CASCADE,
+                                          related_name="cross_entity_attribute_extensions_by_from")
 
-    content_type_to = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type to'), on_delete=models.CASCADE, related_name="cross_entity_attribute_extensions_by_to")
+    content_type_to = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type to'),
+                                        on_delete=models.CASCADE,
+                                        related_name="cross_entity_attribute_extensions_by_to")
 
     key_from = models.CharField(max_length=255, default='', blank=True, verbose_name=gettext_lazy('key from'))
     key_to = models.CharField(null=True, max_length=255, default='', blank=True, verbose_name=gettext_lazy('key to'))
-    value_to = models.CharField(null=True, max_length=255, default='', blank=True, verbose_name=gettext_lazy('value to'))
+    value_to = models.CharField(null=True, max_length=255, default='', blank=True,
+                                verbose_name=gettext_lazy('value to'))
 
-    extension_type = models.CharField(null=True, max_length=255, blank=True, choices=VALUE_TYPES, default=NULL, verbose_name=gettext_lazy('value type'))
+    extension_type = models.CharField(null=True, max_length=255, blank=True, choices=VALUE_TYPES, default=NULL,
+                                      verbose_name=gettext_lazy('value type'))
 
     class Meta:
         unique_together = [
@@ -238,7 +244,8 @@ class ColorPalette(NamedModel):
 
 
 class ColorPaletteColor(models.Model):
-    color_palette = models.ForeignKey(ColorPalette,  related_name='colors', verbose_name=gettext_lazy('color palette'), on_delete=models.CASCADE)
+    color_palette = models.ForeignKey(ColorPalette, related_name='colors', verbose_name=gettext_lazy('color palette'),
+                                      on_delete=models.CASCADE)
 
     order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
 
@@ -272,19 +279,18 @@ class InstrumentUserFieldModel(models.Model):
 
 
 class ColumnSortData(models.Model):
-
     member = models.ForeignKey(Member, related_name='column_sort_data',
                                verbose_name=gettext_lazy('member'), on_delete=models.CASCADE)
 
     name = models.CharField(max_length=255, default='', blank=True, verbose_name=gettext_lazy('name'))
     user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
 
-    column_key = models.CharField(max_length=255, null=True,  default='', blank=True, verbose_name=gettext_lazy('column key'))
+    column_key = models.CharField(max_length=255, null=True, default='', blank=True,
+                                  verbose_name=gettext_lazy('column key'))
 
     is_common = models.BooleanField(default=False, verbose_name=gettext_lazy('is common'))
 
     json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
-
 
     @property
     def data(self):
@@ -302,7 +308,6 @@ class ColumnSortData(models.Model):
             self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
         else:
             self.json_data = None
-
 
 
 class BaseUIModel(models.Model):

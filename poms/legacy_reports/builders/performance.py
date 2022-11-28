@@ -6,13 +6,13 @@ from datetime import date
 from django.db import transaction
 from django.db.models import Q
 from django.utils.functional import cached_property, SimpleLazyObject
-
-from poms.common import formula
 from poms.reports.builders.balance_pl import ReportBuilder
 from poms.reports.builders.performance_item import PerformancePeriod
 from poms.reports.builders.performance_virt_trn import PerformanceVirtualTransaction
 from poms.reports.builders.pricing import FakeInstrumentPricingProvider, InstrumentPricingProvider, \
     FakeCurrencyFxRateProvider, CurrencyFxRateProvider
+
+from poms.common import formula
 
 _l = logging.getLogger('poms.reports')
 
@@ -162,7 +162,7 @@ class PerformanceReportBuilder(ReportBuilder):
         _l.debug('> _periods_init')
 
         for trn in self._transactions:
-            if trn.period_key not in  self._periods:
+            if trn.period_key not in self._periods:
                 period = PerformancePeriod(
                     self.instance,
                     period_begin=trn.period_begin,

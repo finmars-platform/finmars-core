@@ -20,9 +20,6 @@ from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEv
 from poms.portfolios.models import Portfolio
 from poms.users.filters import OwnerByMasterUserFilter
 
-from rest_framework.response import Response
-from poms.common.grouping_handlers import handle_groups
-from rest_framework import viewsets, status
 
 class AccountTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = AccountType
@@ -30,6 +27,7 @@ class AccountTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
     permission_classes = GenericAttributeTypeViewSet.permission_classes + [
         PomsConfigurationPermission
     ]
+
 
 class AccountTypeFilterSet(FilterSet):
     id = NoOpFilter()
@@ -109,7 +107,6 @@ class AccountTypeEvViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name', 'show_transaction_details'
     ]
-
 
 
 class AccountTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
@@ -247,6 +244,7 @@ class AccountEvViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name'
     ]
+
 
 class AccountLightFilterSet(FilterSet):
     id = NoOpFilter()

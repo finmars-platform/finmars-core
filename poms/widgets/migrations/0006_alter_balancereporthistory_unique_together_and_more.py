@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('portfolios', '0029_rename_groups_portfoliobundle_registers'),
         ('users', '0043_ecosystemdefault_currency_pricing_scheme_and_more'),

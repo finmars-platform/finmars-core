@@ -4,10 +4,8 @@ import json
 import unittest
 import uuid
 
-from django.contrib.auth import user_logged_in, user_logged_out
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
-from django.dispatch import receiver
 from django.utils.text import Truncator
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -18,7 +16,7 @@ from poms.counterparties.models import Counterparty, Responsible, CounterpartyGr
 from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentClass, InstrumentType, Instrument
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
-from poms.obj_perms.utils import assign_perms3, get_all_perms, get_perms_codename, get_change_perms
+from poms.obj_perms.utils import assign_perms3, get_all_perms, get_change_perms
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy3Group, Strategy2Group, Strategy1Group, Strategy1Subgroup, Strategy2Subgroup, \
     Strategy3Subgroup, Strategy1, Strategy2, Strategy3
@@ -34,7 +32,6 @@ def load_tests(loader, standard_tests, pattern):
     for test_case in standard_tests:
 
         if len(test_case._tests):
-
 
             add = True
 
@@ -250,7 +247,7 @@ class BaseApiTestCase(APITestCase):
     def get_portfolio(self, name, master_user):
         return Portfolio.objects.get(name=name, master_user__name=master_user)
 
-    def create_instrument_type(self, name, master_user, instrument_class=None,accrued_currency=None):
+    def create_instrument_type(self, name, master_user, instrument_class=None, accrued_currency=None):
         master_user = self.get_master_user(master_user)
 
         accrued_currency = self.get_currency(accrued_currency, master_user)
@@ -623,14 +620,14 @@ class BaseAttributeTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermission
                 {
                     'name': 'clsfr1_n1',
                     'children': [
-                        {'name': 'clsfr1_n11',},
-                        {'name': 'clsfr1_n12',},
+                        {'name': 'clsfr1_n11', },
+                        {'name': 'clsfr1_n12', },
                     ]
                 }, {
                     'name': 'clsfr1_n2',
                     'children': [
-                        {'name': 'clsfr1_n21',},
-                        {'name': 'clsfr1_n22',},
+                        {'name': 'clsfr1_n21', },
+                        {'name': 'clsfr1_n22', },
                     ]
                 },
             ]
@@ -644,14 +641,14 @@ class BaseAttributeTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermission
                 {
                     'name': 'clsfr2_n1',
                     'children': [
-                        {'name': 'clsfr2_n11',},
-                        {'name': 'clsfr2_n12',},
+                        {'name': 'clsfr2_n11', },
+                        {'name': 'clsfr2_n12', },
                     ]
                 }, {
                     'name': 'clsfr2_n2',
                     'children': [
-                        {'name': 'clsfr2_n21',},
-                        {'name': 'clsfr2_n22',},
+                        {'name': 'clsfr2_n21', },
+                        {'name': 'clsfr2_n22', },
                     ]
                 },
             ]

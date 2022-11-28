@@ -1,17 +1,13 @@
 import json
+import logging
 
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import EXPRESSION_FIELD_LENGTH, NamedModel, DataTimeStampedModel
 from poms.common.utils import date_now
 from poms.procedures.models import PricingProcedureInstance
-from poms.users.models import MasterUser
-
-from django.core.serializers.json import DjangoJSONEncoder
-
-import logging
 
 _l = logging.getLogger('poms.pricing')
 
@@ -37,7 +33,6 @@ class InstrumentPricingSchemeType(models.Model):
 
 
 class InstrumentPricingScheme(NamedModel, DataTimeStampedModel):
-
     ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END = 1
     ADD_TO_ERROR_TABLE_AND_NO_NOTIFICATION = 2
     ADD_TO_ERROR_TABLE_AND_NOTIFY_DIRECTLY = 3
@@ -59,7 +54,8 @@ class InstrumentPricingScheme(NamedModel, DataTimeStampedModel):
 
     notes_for_parameter = models.TextField(blank=True, default='', verbose_name=gettext_lazy('notes for parameter'))
 
-    error_handler = models.PositiveSmallIntegerField(default=ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END, choices=ERROR_HANDLER_CHOICES,
+    error_handler = models.PositiveSmallIntegerField(default=ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END,
+                                                     choices=ERROR_HANDLER_CHOICES,
                                                      verbose_name=gettext_lazy('error handler'))
 
     type = models.ForeignKey(InstrumentPricingSchemeType, verbose_name=gettext_lazy('type'), on_delete=models.CASCADE)
@@ -135,7 +131,7 @@ class InstrumentPricingScheme(NamedModel, DataTimeStampedModel):
 
                     result = None
 
-            if self.type.id == 7: # alphav
+            if self.type.id == 7:  # alphav
 
                 try:
 
@@ -145,17 +141,18 @@ class InstrumentPricingScheme(NamedModel, DataTimeStampedModel):
 
                     result = None
 
-            if self.type.id == 8: # bloomberg
+            if self.type.id == 8:  # bloomberg
 
                 try:
 
-                    result = InstrumentForwardsPricingSchemeBloombergParameters.objects.get(instrument_pricing_scheme=self)
+                    result = InstrumentForwardsPricingSchemeBloombergParameters.objects.get(
+                        instrument_pricing_scheme=self)
 
                 except InstrumentForwardsPricingSchemeBloombergParameters.DoesNotExist:
 
                     result = None
 
-            if self.type.id == 9: # cbonds
+            if self.type.id == 9:  # cbonds
 
                 try:
 
@@ -191,7 +188,6 @@ class CurrencyPricingSchemeType(models.Model):
 
 
 class CurrencyPricingScheme(NamedModel, DataTimeStampedModel):
-
     ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END = 1
     ADD_TO_ERROR_TABLE_AND_NO_NOTIFICATION = 2
     ADD_TO_ERROR_TABLE_AND_NOTIFY_DIRECTLY = 3
@@ -213,7 +209,8 @@ class CurrencyPricingScheme(NamedModel, DataTimeStampedModel):
 
     notes_for_parameter = models.TextField(blank=True, default='', verbose_name=gettext_lazy('notes for parameter'))
 
-    error_handler = models.PositiveSmallIntegerField(default=ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END, choices=ERROR_HANDLER_CHOICES,
+    error_handler = models.PositiveSmallIntegerField(default=ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END,
+                                                     choices=ERROR_HANDLER_CHOICES,
                                                      verbose_name=gettext_lazy('error handler'))
 
     type = models.ForeignKey(CurrencyPricingSchemeType, verbose_name=gettext_lazy('type'), on_delete=models.CASCADE)
@@ -658,11 +655,11 @@ class InstrumentPricingSchemeWtradeParameters(models.Model):
     accrual_error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
                                                verbose_name=gettext_lazy('accrual error text expr'))
 
-
     default_value = models.CharField(max_length=255, null=True, blank=True)
     attribute_key = models.CharField(max_length=255, null=True, blank=True)
     value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
                                                   verbose_name=gettext_lazy('value type'))
+
 
 # DEPRECATED since 09.03.2020
 # class CurrencyPricingSchemeWtradeParameters(models.Model):
@@ -732,7 +729,6 @@ class InstrumentPricingSchemeAlphavParameters(models.Model):
     accrual_error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
                                                verbose_name=gettext_lazy('accrual error text expr'))
 
-
     default_value = models.CharField(max_length=255, null=True, blank=True)
     attribute_key = models.CharField(max_length=255, null=True, blank=True)
     value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
@@ -782,15 +778,13 @@ class InstrumentForwardsPricingSchemeBloombergParameters(models.Model):
     accrual_error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
                                                verbose_name=gettext_lazy('accrual error text expr'))
 
-
     default_value = models.CharField(max_length=255, null=True, blank=True)
     attribute_key = models.CharField(max_length=255, null=True, blank=True)
     value_type = models.PositiveSmallIntegerField(default=STRING, choices=TYPES,
                                                   verbose_name=gettext_lazy('value type'))
 
-
     price_code = models.CharField(max_length=50, blank=True, null=True,
-                                      verbose_name=gettext_lazy('price code'))
+                                  verbose_name=gettext_lazy('price code'))
 
     json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
@@ -854,7 +848,6 @@ class InstrumentPricingSchemeCbondsParameters(models.Model):
 
     accrual_error_text_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, null=True, blank=True, default='',
                                                verbose_name=gettext_lazy('accrual error text expr'))
-
 
     default_value = models.CharField(max_length=255, null=True, blank=True)
     attribute_key = models.CharField(max_length=255, null=True, blank=True)
@@ -1039,7 +1032,6 @@ class InstrumentPricingPolicy(models.Model):
 
 
 class PriceHistoryError(DataTimeStampedModel):
-
     STATUS_ERROR = 'E'
     STATUS_SKIP = 'S'
     STATUS_CREATED = 'C'
@@ -1068,7 +1060,8 @@ class PriceHistoryError(DataTimeStampedModel):
 
     date = models.DateField(db_index=True, default=date_now, verbose_name=gettext_lazy('date'))
 
-    principal_price = models.FloatField(default=None, null=True, blank=True, verbose_name=gettext_lazy('principal price'))
+    principal_price = models.FloatField(default=None, null=True, blank=True,
+                                        verbose_name=gettext_lazy('principal price'))
     accrued_price = models.FloatField(default=None, null=True, blank=True, verbose_name=gettext_lazy('accrued price'))
 
     # DEPRECATED
@@ -1077,7 +1070,7 @@ class PriceHistoryError(DataTimeStampedModel):
     # DEPRECATED
     accrual_error_text = models.TextField(blank=True, default='', verbose_name=gettext_lazy('accrual error text'))
 
-    procedure_instance = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,  null=True,
+    procedure_instance = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE, null=True,
                                            verbose_name=gettext_lazy('pricing procedure instance'))
 
     status = models.CharField(max_length=1, default=STATUS_ERROR, choices=STATUS_CHOICES,
@@ -1090,7 +1083,6 @@ class PriceHistoryError(DataTimeStampedModel):
 
 
 class CurrencyHistoryError(DataTimeStampedModel):
-
     STATUS_ERROR = 'E'
     STATUS_SKIP = 'S'
     STATUS_CREATED = 'C'
@@ -1109,7 +1101,7 @@ class CurrencyHistoryError(DataTimeStampedModel):
                                     on_delete=models.CASCADE)
 
     currency = models.ForeignKey('currencies.Currency', on_delete=models.CASCADE,
-                                   verbose_name=gettext_lazy('currency'))
+                                 verbose_name=gettext_lazy('currency'))
 
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE,
                                        verbose_name=gettext_lazy('pricing policy'))
@@ -1123,7 +1115,7 @@ class CurrencyHistoryError(DataTimeStampedModel):
 
     error_text = models.TextField(blank=True, default='', verbose_name=gettext_lazy('error text'))
 
-    procedure_instance = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE,  null=True,
+    procedure_instance = models.ForeignKey(PricingProcedureInstance, on_delete=models.CASCADE, null=True,
                                            verbose_name=gettext_lazy('pricing procedure instance'))
 
     status = models.CharField(max_length=1, default=STATUS_ERROR, choices=STATUS_CHOICES,
@@ -1186,7 +1178,6 @@ class PricingProcedureBloombergInstrumentResult(models.Model):
 
 
 class PricingProcedureBloombergForwardInstrumentResult(models.Model):
-
     master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
@@ -1208,16 +1199,16 @@ class PricingProcedureBloombergForwardInstrumentResult(models.Model):
     instrument_parameters = models.CharField(max_length=255, null=True, blank=True)
 
     price_code_parameters = models.CharField(max_length=255, null=True, blank=True,
-                                      verbose_name=gettext_lazy('price code parameters'))
+                                             verbose_name=gettext_lazy('price code parameters'))
     price_code_value = models.FloatField(null=True, blank=True, verbose_name=gettext_lazy('price code value'))
 
     price_code_value_error_text = models.CharField(max_length=255, null=True, blank=True)
 
     tenor_type = models.CharField(max_length=255, null=True, blank=True,
-                                             verbose_name=gettext_lazy('tenor type'))
+                                  verbose_name=gettext_lazy('tenor type'))
 
     tenor_clause = models.CharField(max_length=255, null=True, blank=True,
-                                  verbose_name=gettext_lazy('tenor clause'))
+                                    verbose_name=gettext_lazy('tenor clause'))
 
     class Meta:
         unique_together = (
@@ -1286,7 +1277,6 @@ class PricingProcedureWtradeInstrumentResult(models.Model):
     high_value = models.FloatField(null=True, blank=True, verbose_name=gettext_lazy('high value'))
     low_value = models.FloatField(null=True, blank=True, verbose_name=gettext_lazy('low value'))
     volume_value = models.FloatField(null=True, blank=True, verbose_name=gettext_lazy('volume value'))
-
 
     open_value_error_text = models.CharField(max_length=255, null=True, blank=True)
     close_value_error_text = models.CharField(max_length=255, null=True, blank=True)
@@ -1429,7 +1419,6 @@ class PricingProcedureAlphavInstrumentResult(models.Model):
             ('master_user', 'instrument', 'date', 'pricing_policy', 'procedure')
         )
         ordering = ['date']
-
 
 
 class PricingProcedureCbondsInstrumentResult(models.Model):

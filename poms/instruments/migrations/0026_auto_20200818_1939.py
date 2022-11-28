@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('instruments', '0025_auto_20200818_1406'),
     ]
@@ -12,14 +11,19 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='accrualcalculationschedule',
-            options={'base_manager_name': 'objects', 'ordering': ['accrual_start_date'], 'verbose_name': 'accrual calculation schedule', 'verbose_name_plural': 'accrual calculation schedules'},
+            options={'base_manager_name': 'objects', 'ordering': ['accrual_start_date'],
+                     'verbose_name': 'accrual calculation schedule',
+                     'verbose_name_plural': 'accrual calculation schedules'},
         ),
         migrations.AlterModelOptions(
             name='instrumentfactorschedule',
-            options={'base_manager_name': 'objects', 'ordering': ['effective_date'], 'verbose_name': 'instrument factor schedule', 'verbose_name_plural': 'instrument factor schedules'},
+            options={'base_manager_name': 'objects', 'ordering': ['effective_date'],
+                     'verbose_name': 'instrument factor schedule',
+                     'verbose_name_plural': 'instrument factor schedules'},
         ),
         migrations.AlterModelOptions(
             name='pricehistory',
-            options={'base_manager_name': 'objects', 'ordering': ['date'], 'verbose_name': 'price history', 'verbose_name_plural': 'price histories'},
+            options={'base_manager_name': 'objects', 'ordering': ['date'], 'verbose_name': 'price history',
+                     'verbose_name_plural': 'price histories'},
         ),
     ]

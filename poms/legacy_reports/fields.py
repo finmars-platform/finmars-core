@@ -1,5 +1,3 @@
-from rest_framework.relations import PrimaryKeyRelatedField
-
 from poms.common.fields import PrimaryKeyRelatedFilteredField
 # from poms.reports.models import CustomField
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
@@ -25,7 +23,6 @@ class TransactionReportCustomFieldField(PrimaryKeyRelatedFilteredField):
     filter_backends = [
         OwnerByMasterUserFilter,
     ]
-
 
 # class CustomFieldField(PrimaryKeyRelatedFilteredField):
 #     queryset = CustomField.objects.all()

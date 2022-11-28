@@ -9,7 +9,7 @@ from poms.reports.models import BalanceReport, PLReport, PerformanceReport, Cash
 class LayoutContentTypeFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         from poms.accounts.models import AccountType, Account
-        from poms.audit.models import InstrumentAudit,TransactionAudit, ObjectHistory4Entry, AuthLogEntry
+        from poms.audit.models import InstrumentAudit, TransactionAudit, ObjectHistory4Entry, AuthLogEntry
         from poms.currencies.models import Currency, CurrencyHistory
         from poms.instruments.models import InstrumentType, Instrument, PriceHistory, PricingPolicy, GeneratedEvent
         from poms.counterparties.models import Counterparty, Responsible, CounterpartyGroup, ResponsibleGroup
@@ -22,7 +22,8 @@ class LayoutContentTypeFilter(BaseFilterBackend):
         models = [AccountType, Account, Currency, InstrumentType, Instrument,
                   PriceHistory, CurrencyHistory,
                   PriceHistoryError, CurrencyHistoryError,
-                  PricingPolicy, CounterpartyGroup, Counterparty, Responsible, ResponsibleGroup, Portfolio, PortfolioRegister, PortfolioRegisterRecord,
+                  PricingPolicy, CounterpartyGroup, Counterparty, Responsible, ResponsibleGroup, Portfolio,
+                  PortfolioRegister, PortfolioRegisterRecord,
                   TransactionTypeGroup, TransactionType, Transaction, ComplexTransaction,
                   Strategy1Group, Strategy1Subgroup, Strategy1,
                   Strategy2Group, Strategy2Subgroup, Strategy2,

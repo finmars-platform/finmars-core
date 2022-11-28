@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0029_userprofile_two_factor_verification'),
         ('reconciliation', '0004_auto_20191223_1124'),

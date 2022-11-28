@@ -1,34 +1,26 @@
-
-
-import asyncio
-import pathlib
-import ssl
-import traceback
-
-import websockets
 import json
-
+import traceback
 from logging import getLogger
 
+import websockets
 from django.conf import settings
 
 _l = getLogger('poms.common')
 
 import asyncio
 import datetime
-from datetime import timedelta, date
+from datetime import date
 
 event_loop = asyncio.new_event_loop()
 
 
 async def send_message(message):
-
     try:
 
         uri = settings.WEBSOCKET_HOST
         async with websockets.connect(
                 uri,
-        extra_headers=[('finmars-app', settings.WEBSOCKET_APP_TOKEN)]
+                extra_headers=[('finmars-app', settings.WEBSOCKET_APP_TOKEN)]
         ) as websocket:
             await websocket.send(message)
 
@@ -48,8 +40,7 @@ def jsonconverter(o):
         return o.__str__()
 
 
-def send_websocket_message(data,  level='system', context=None):
-
+def send_websocket_message(data, level='system', context=None):
     if settings.USE_WEBSOCKETS:
 
         try:
@@ -96,7 +87,7 @@ def send_websocket_message(data,  level='system', context=None):
 
             # _l.info('message %s' % message)
 
-            json_message = json.dumps(message, default = jsonconverter)
+            json_message = json.dumps(message, default=jsonconverter)
             # json_message = json.dumps(message)
 
             event_loop.run_until_complete(send_message(json_message))

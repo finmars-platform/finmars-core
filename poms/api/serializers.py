@@ -1,3 +1,4 @@
+import logging
 import traceback
 
 from django.utils.translation import gettext_lazy
@@ -5,10 +6,10 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from poms.common import formula
-from poms.common.fields import ExpressionField, Expression2Field
+from poms.common.fields import ExpressionField
 
-import logging
 _l = logging.getLogger('poms.api')
+
 
 class Language(object):
     def __init__(self, code='', name=''):
@@ -64,6 +65,7 @@ class ExpressionSerializer(serializers.Serializer):
     is_eval = serializers.BooleanField()
     result = serializers.ReadOnlyField()
     log = serializers.ReadOnlyField()
+
     # help_raw = serializers.SerializerMethodField()
     # help = serializers.SerializerMethodField()
 
@@ -92,7 +94,7 @@ class ExpressionSerializer(serializers.Serializer):
                 names.update(names2)
             attrs['names'] = names
             try:
-                attrs['result'], attrs['log']  = formula.safe_eval_with_logs(expression, names, context=self.context)
+                attrs['result'], attrs['log'] = formula.safe_eval_with_logs(expression, names, context=self.context)
             except formula.InvalidExpression as e:
                 _l.error("Manual expression error %s" % e)
                 _l.error("Manual expression traceback %s" % traceback.format_exc())
@@ -104,5 +106,3 @@ class ExpressionSerializer(serializers.Serializer):
 
     def get_help_raw(self, obj):
         return formula.HELP.split('\n')
-
-

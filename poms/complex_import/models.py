@@ -1,5 +1,4 @@
 from django.db import models
-from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import DataTimeStampedModel, NamedModel
@@ -7,15 +6,14 @@ from poms.users.models import MasterUser
 
 
 class ComplexImportScheme(NamedModel, DataTimeStampedModel):
-
     user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
 
     class Meta:
         unique_together = (
             ('user_code', 'master_user')
         )
-
 
 
 MISSING_DATA_CHOICES = [
@@ -44,7 +42,7 @@ class ComplexImportSchemeAction(models.Model):
     order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
 
     skip = models.BooleanField(default=False,
-                              verbose_name=gettext_lazy('Skip Action'))
+                               verbose_name=gettext_lazy('Skip Action'))
 
     complex_import_scheme = models.ForeignKey(ComplexImportScheme, related_name='actions', on_delete=models.CASCADE)
 

@@ -4,6 +4,7 @@ import logging
 
 _l = logging.getLogger('poms.reports')
 
+
 def generate_report_unique_hash(app, action, data, master_user, member):
     _data = data.copy()
 
@@ -31,7 +32,6 @@ def generate_report_unique_hash(app, action, data, master_user, member):
 
     if 'report_currency' in _data:
         report_options['report_currency'] = _data['report_currency']
-
 
     if 'pricing_policy' in _data:
         report_options['pricing_policy'] = _data['pricing_policy']
@@ -75,7 +75,6 @@ def generate_report_unique_hash(app, action, data, master_user, member):
     if 'portfolios' in _data:
         report_options['portfolios'] = _data['portfolios']
 
-
     if 'accounts' in _data:
         report_options['accounts'] = _data['accounts']
 
@@ -87,7 +86,6 @@ def generate_report_unique_hash(app, action, data, master_user, member):
 
     if 'strategies3' in _data:
         report_options['strategies3'] = _data['strategies3']
-
 
     # Performance report field
 
@@ -105,7 +103,6 @@ def generate_report_unique_hash(app, action, data, master_user, member):
 
     if 'bundle' in _data:
         report_options['bundle'] = _data['bundle']
-
 
     result = app + '_' + action + '_' + str(master_user.id) + '_' + str(member.id) + '_' + hashlib.md5(
         json.dumps(report_options, sort_keys=True).encode('utf-8')).hexdigest()

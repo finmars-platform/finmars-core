@@ -1,33 +1,32 @@
 from __future__ import unicode_literals, print_function
 
+import logging
+
 import django_filters
 from celery.result import AsyncResult
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.signing import TimestampSigner
+from django.db import transaction
 from django.db.models import Prefetch
+from django.http import HttpResponse
 from django_filters.rest_framework import FilterSet, DjangoFilterBackend
 from rest_framework.exceptions import MethodNotAllowed, ValidationError
+from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.filters import OrderingFilter
-from django.http import HttpResponse
-from django.db import transaction
 from rest_framework.viewsets import ModelViewSet
-
-from poms.transaction_import.handlers import TransactionImportProcess
-from poms.transaction_import.tasks import transaction_import
-from poms.common.mixins import UpdateModelMixinExt, DestroyModelFakeMixin, BulkModelMixin
-from poms.common.utils import date_now, datetime_now
 
 from poms.accounts.models import Account, AccountType
 from poms.celery_tasks.models import CeleryTask
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
     ModelExtMultipleChoiceFilter, ByIdFilterBackend
+from poms.common.mixins import UpdateModelMixinExt, DestroyModelFakeMixin, BulkModelMixin
+from poms.common.utils import datetime_now
 from poms.common.views import AbstractViewSet, AbstractModelViewSet, AbstractReadOnlyModelViewSet, \
     AbstractClassModelViewSet, AbstractAsyncViewSet, AbstractApiView
 from poms.counterparties.models import Counterparty, Responsible
+from poms.csv_import.tasks import data_csv_file_import_by_procedure
 from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentType, AccrualCalculationModel, Periodicity, Instrument, PaymentSizeDetail, \
     PricingPolicy, PricingCondition
@@ -64,26 +63,25 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     PricingConditionMappingSerializer, TransactionFileResultSerializer, DataProviderSerializer, \
     InstrumentDownloadSchemeLightSerializer, ImportInstrumentCbondsSerializer, ImportUnifiedDataProviderSerializer, \
     ImportCurrencyCbondsSerializer
-from poms.integrations.tasks import complex_transaction_csv_file_import, complex_transaction_csv_file_import_validate, \
-    complex_transaction_csv_file_import_by_procedure, complex_transaction_csv_file_import_parallel, \
+from poms.integrations.tasks import complex_transaction_csv_file_import_by_procedure, \
+    complex_transaction_csv_file_import_parallel, \
     complex_transaction_csv_file_import_validate_parallel
-from poms.csv_import.tasks import data_csv_file_import_by_procedure
-from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
+from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.system_messages.handlers import send_system_message
+from poms.transaction_import.handlers import TransactionImportProcess
+from poms.transaction_import.tasks import transaction_import
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import Member, MasterUser
 from poms.users.permissions import SuperUserOrReadOnly, SuperUserOnly
 
-import logging
-
 _l = logging.getLogger('poms.integrations')
 
-from rest_framework import permissions, status
+from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
 
 import requests
@@ -860,13 +858,13 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
         return context
 
     def create(self, request, *args, **kwargs):
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
         if not instance.scheme.data_preprocess_expression:
-            raise ValidationError({'data_preprocess_expression': 'data_preprocess_expression is required to preprocess file'})
+            raise ValidationError(
+                {'data_preprocess_expression': 'data_preprocess_expression is required to preprocess file'})
 
         options_object = {}
         options_object['file_name'] = instance.file_name
@@ -881,7 +879,6 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
                                                 verbose_name="Transaction Import by %s" % request.user.member.username,
                                                 type='transaction_import')
 
-
         transaction_import_process = TransactionImportProcess(task_id=celery_task.id)
 
         transaction_import_process.fill_with_raw_items()
@@ -890,9 +887,10 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
         filename_without_ext = instance.file_name.split('.')[0]
 
         response = HttpResponse(new_raw_items, content_type='application/force-download')
-        response['Content-Disposition'] = 'attachment; filename=%s' % 'preprocessed_'+ filename_without_ext + '.json'
+        response['Content-Disposition'] = 'attachment; filename=%s' % 'preprocessed_' + filename_without_ext + '.json'
 
         return response
+
 
 class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
@@ -1002,7 +1000,6 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         options_object['scheme_id'] = instance.scheme.id
         options_object['execution_context'] = None
 
-
         _l.info('options_object %s' % options_object)
 
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
@@ -1016,7 +1013,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         send_system_message(master_user=request.user.master_user,
                             performed_by='System',
                             description='Member %s started Transaction Import (scheme %s)' % (
-                            request.user.member.username, instance.scheme.name))
+                                request.user.member.username, instance.scheme.name))
 
         transaction_import.apply_async(kwargs={"task_id": celery_task.pk})
 
@@ -1137,7 +1134,6 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
         options_object['scheme_id'] = instance.scheme.id
         options_object['execution_context'] = None
 
-
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
                                                 options_object=options_object,
@@ -1187,7 +1183,6 @@ class TransactionImportJson(APIView):
     permission_classes = []
 
     def get(self, request):
-
         return Response({'status': 'ok'})
 
     def post(self, request):

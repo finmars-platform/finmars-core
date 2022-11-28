@@ -86,7 +86,8 @@ class ObjectHistory4Entry(models.Model):
 
     old_value = models.TextField(blank=True, verbose_name=gettext_lazy('old value'))
     old_value_content_type = models.ForeignKey(ContentType, related_name='+', blank=True, null=True,
-                                               verbose_name=gettext_lazy('old value content type'), on_delete=models.SET_NULL)
+                                               verbose_name=gettext_lazy('old value content type'),
+                                               on_delete=models.SET_NULL)
     old_value_object_id = models.BigIntegerField(blank=True, null=True,
                                                  verbose_name=gettext_lazy('old value object id'))
     old_value_content_object = GenericForeignKey(ct_field='old_value_content_type', fk_field='old_value_object_id')
@@ -226,7 +227,8 @@ class ObjectHistory4Entry(models.Model):
 
 
 class InstrumentAudit(models.Model):
-    master_user = models.ForeignKey('users.MasterUser', related_name='+', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey('users.MasterUser', related_name='+', verbose_name=gettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = gettext_lazy('instrument audit')
@@ -234,7 +236,8 @@ class InstrumentAudit(models.Model):
 
 
 class TransactionAudit(models.Model):
-    master_user = models.ForeignKey('users.MasterUser', related_name='+', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey('users.MasterUser', related_name='+', verbose_name=gettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
 
     class Meta:
         verbose_name = gettext_lazy('transaction audit')

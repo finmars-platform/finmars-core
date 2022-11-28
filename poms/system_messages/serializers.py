@@ -1,16 +1,11 @@
-import uuid
-
-
 from rest_framework import serializers
 
-from poms.users.fields import MasterUserField
-
 from poms.system_messages.models import SystemMessage, SystemMessageAttachment
+from poms.users.fields import MasterUserField
 from poms.users.utils import get_member_from_context
 
 
 class SystemMessageAttachmentSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = SystemMessageAttachment
         fields = ('id', 'file_url', 'file_name', 'notes', 'file_report')
@@ -19,7 +14,7 @@ class SystemMessageAttachmentSerializer(serializers.ModelSerializer):
         super(SystemMessageAttachmentSerializer, self).__init__(*args, **kwargs)
 
         from poms.file_reports.serializers import FileReportSerializer
-        self.fields['file_report_object'] = FileReportSerializer(source='file_report',  read_only=True)
+        self.fields['file_report_object'] = FileReportSerializer(source='file_report', read_only=True)
 
 
 class SystemMessageSerializer(serializers.ModelSerializer):
@@ -63,4 +58,5 @@ class SystemMessageSerializer(serializers.ModelSerializer):
 
 class SystemMessageActionSerializer(serializers.Serializer):
     ids = serializers.PrimaryKeyRelatedField(many=True, queryset=SystemMessage.objects.all())
-    sections = serializers.MultipleChoiceField(default=SystemMessage.SECTION_OTHER, choices=SystemMessage.SECTION_CHOICES)
+    sections = serializers.MultipleChoiceField(default=SystemMessage.SECTION_OTHER,
+                                               choices=SystemMessage.SECTION_CHOICES)

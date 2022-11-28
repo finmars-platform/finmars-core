@@ -1,29 +1,22 @@
+import logging
+import time
 from functools import partial
 
 import django_filters
+from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import FieldDoesNotExist
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models import F
+from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 from django_filters.rest_framework import FilterSet
 from rest_framework.filters import BaseFilterBackend
 from rest_framework.settings import api_settings
+from six import string_types
 
 from poms.common.middleware import get_request
-from poms.common.utils import force_qs_evaluation
-from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
+from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_perms.utils import obj_perms_filter_objects_for_view
-
-from django.db.models import Q
-
-from django.contrib.contenttypes.models import ContentType
-
-from django.utils.translation import gettext_lazy as _
-from six import string_types
-from django.core.exceptions import ImproperlyConfigured
-
-from django.core.exceptions import FieldDoesNotExist
-
-import time
-
-import logging
 
 _l = logging.getLogger('poms.common')
 
@@ -75,6 +68,7 @@ def is_system_relation(item):
 
 def is_scheme(item):
     return item in ['price_download_scheme']
+
 
 def _model_choices(model, field_name, master_user_path):
     master_user = get_request().user.master_user
@@ -609,19 +603,15 @@ class EntitySpecificFilter(BaseFilterBackend):
                 if 'entity_filters' in request.data['ev_options']:
 
                     if 'disabled' in request.data['ev_options']['entity_filters']:
-
                         is_disabled = True
 
                     if 'deleted' in request.data['ev_options']['entity_filters']:
-
                         is_deleted = True
 
                     if 'inactive' in request.data['ev_options']['entity_filters']:
-
                         is_inactive = True
 
                     if 'active' in request.data['ev_options']['entity_filters']:
-
                         is_active = True
 
             # Show Disabled
@@ -668,13 +658,10 @@ class ComplexTransactionStatusFilter(BaseFilterBackend):
                 if 'complex_transaction_filters' in request.data['ev_options']:
 
                     if 'booked' in request.data['ev_options']['complex_transaction_filters']:
-
                         show_booked = True
 
                     if 'ignored' in request.data['ev_options']['complex_transaction_filters']:
-
                         show_ignored = True
-
 
             if show_booked == False and show_ignored == True:
 

@@ -1,37 +1,33 @@
 from __future__ import unicode_literals
 
 import json
+import logging
 import traceback
 from datetime import date
+from math import isnan
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
+from django.core.cache import cache
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
-from mptt.models import MPTTModel
 
 from poms.accounts.models import Account
+from poms.common.formula_accruals import f_xirr
 from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH, \
     DataTimeStampedModel
 from poms.common.utils import date_now
+from poms.common.utils import isclose
 from poms.counterparties.models import Responsible, Counterparty
 from poms.currencies.models import Currency, CurrencyHistory
-from poms.instruments.models import Instrument, InstrumentClass, PricingPolicy, AccrualCalculationModel, Periodicity, \
-    EventSchedule
+from poms.instruments.models import Instrument, InstrumentClass, PricingPolicy, EventSchedule
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.utils import calc_cash_for_contract_for_difference
-from poms.users.models import MasterUser, Member, FakeSequence
-
-from poms.common.formula_accruals import f_xirr
-from math import isnan, copysign
-from poms.common.utils import isclose
-from django.core.cache import cache
-
-import logging
+from poms.users.models import MasterUser, FakeSequence
 
 _l = logging.getLogger('poms.transactions')
 
@@ -1453,8 +1449,8 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     linked_import_task = models.ForeignKey('celery_tasks.CeleryTask', on_delete=models.PROTECT,
-                               null=True, blank=True,
-                               verbose_name=gettext_lazy("linked import task"))
+                                           null=True, blank=True,
+                                           verbose_name=gettext_lazy("linked import task"))
 
     execution_log = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('execution log'))
 

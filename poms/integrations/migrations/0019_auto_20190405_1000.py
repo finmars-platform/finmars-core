@@ -6,7 +6,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0014_masteruser_user_code_counters'),
         ('obj_attrs', '0005_auto_20180717_1147'),

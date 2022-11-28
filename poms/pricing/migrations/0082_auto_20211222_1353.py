@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('pricing', '0081_auto_20211210_1400'),
     ]
@@ -13,11 +12,15 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='currencyhistoryerror',
             name='status',
-            field=models.CharField(choices=[('E', 'Error'), ('S', 'Skip'), ('C', 'Created'), ('O', 'Overwritten'), ('R', 'Requested')], default='E', max_length=1, verbose_name='status'),
+            field=models.CharField(
+                choices=[('E', 'Error'), ('S', 'Skip'), ('C', 'Created'), ('O', 'Overwritten'), ('R', 'Requested')],
+                default='E', max_length=1, verbose_name='status'),
         ),
         migrations.AlterField(
             model_name='pricehistoryerror',
             name='status',
-            field=models.CharField(choices=[('E', 'Error'), ('S', 'Skip'), ('C', 'Created'), ('O', 'Overwritten'), ('R', 'Requested')], default='E', max_length=1, verbose_name='status'),
+            field=models.CharField(
+                choices=[('E', 'Error'), ('S', 'Skip'), ('C', 'Created'), ('O', 'Overwritten'), ('R', 'Requested')],
+                default='E', max_length=1, verbose_name='status'),
         ),
     ]

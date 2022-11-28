@@ -1,14 +1,12 @@
-
+import traceback
+from logging import getLogger
 
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, PaymentSizeDetail, AccrualCalculationModel, Periodicity, Country
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 
-
-import traceback
-
-from logging import getLogger
 _l = getLogger('poms.csv_import')
+
 
 ## Probably DEPRECATED, Use InstrumentTypeProcess.fill_instrument_with_instrument_type_defaults
 def set_defaults_from_instrument_type(instrument_object, instrument_type, ecosystem_default):
@@ -44,8 +42,9 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type, ecosys
             instrument_object['pricing_condition'] = None
 
         try:
-            instrument_object['long_underlying_instrument'] = Instrument.objects.get(master_user=instrument_type.master_user,
-                                                                                     user_code=instrument_type.long_underlying_instrument).pk
+            instrument_object['long_underlying_instrument'] = Instrument.objects.get(
+                master_user=instrument_type.master_user,
+                user_code=instrument_type.long_underlying_instrument).pk
         except Exception as e:
             _l.info("Could not set long_underlying_instrument, fallback to default")
             instrument_object['long_underlying_instrument'] = ecosystem_default.instrument.pk
@@ -53,8 +52,9 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type, ecosys
         instrument_object['underlying_long_multiplier'] = instrument_type.underlying_long_multiplier
 
         try:
-            instrument_object['short_underlying_instrument'] = Instrument.objects.get(master_user=instrument_type.master_user,
-                                                                                      user_code=instrument_type.short_underlying_instrument).pk
+            instrument_object['short_underlying_instrument'] = Instrument.objects.get(
+                master_user=instrument_type.master_user,
+                user_code=instrument_type.short_underlying_instrument).pk
         except Exception as e:
             _l.info("Could not set short_underlying_instrument, fallback to default")
             instrument_object['short_underlying_instrument'] = ecosystem_default.instrument.pk
@@ -65,8 +65,9 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type, ecosys
         instrument_object['short_underlying_exposure'] = instrument_type.short_underlying_exposure_id
 
         try:
-            instrument_object['co_directional_exposure_currency'] = Currency.objects.get(master_user=instrument_type.master_user,
-                                                                                         user_code=instrument_type.co_directional_exposure_currency).pk
+            instrument_object['co_directional_exposure_currency'] = Currency.objects.get(
+                master_user=instrument_type.master_user,
+                user_code=instrument_type.co_directional_exposure_currency).pk
         except Exception as e:
             _l.info("Could not set co_directional_exposure_currency, fallback to default")
             instrument_object['co_directional_exposure_currency'] = ecosystem_default.currency.pk
@@ -268,7 +269,6 @@ def set_accruals_for_instrument(instrument_object, data_object, instrument_type_
             # accrual['periodicity_n'] = data_object['periodicity_n']
 
 
-
 # Global method for create instrument object from Instrument Type Defaults
 def handler_instrument_object(source_data, instrument_type, master_user, ecosystem_default, attribute_types):
     object_data = {}
@@ -346,7 +346,6 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
     try:
         if 'country' in source_data:
-
             country = Country.objects.get(alpha_2=source_data['country']['code'])
 
             object_data['country'] = country.id
@@ -368,7 +367,6 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
                     attribute['value_string'] = source_data['sector']
 
             if not exist:
-
                 attribute['attribute_type'] = sector_attribute.id
                 attribute['value_string'] = source_data['sector']
 
@@ -429,9 +427,8 @@ def handler_instrument_object(source_data, instrument_type, master_user, ecosyst
 
                             _tmp_attributes_dict[attribute['attribute_type']] = attribute
     except Exception as e:
-        _l.error("Could not set attributes from finmars database. Error %s"  % e )
-        _l.error("Could not set attributes from finmars database. Traceback %s"  % traceback.format_exc())
-
+        _l.error("Could not set attributes from finmars database. Error %s" % e)
+        _l.error("Could not set attributes from finmars database. Traceback %s" % traceback.format_exc())
 
     object_data['attributes'] = []
 

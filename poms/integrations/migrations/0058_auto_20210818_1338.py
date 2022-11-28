@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('integrations', '0057_complextransactionimportschemerulescenario_is_default_rule_scenario'),
     ]

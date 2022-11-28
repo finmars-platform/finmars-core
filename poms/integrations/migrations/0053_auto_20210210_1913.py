@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('integrations', '0052_auto_20210210_1911'),
     ]
@@ -12,7 +11,8 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='instrumentdownloadscheme',
-            options={'verbose_name': 'instrument download scheme', 'verbose_name_plural': 'instrument download schemes'},
+            options={'verbose_name': 'instrument download scheme',
+                     'verbose_name_plural': 'instrument download schemes'},
         ),
         migrations.AlterField(
             model_name='instrumentdownloadscheme',

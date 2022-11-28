@@ -1,26 +1,23 @@
-from celery import shared_task, chord
-
 import csv
 import logging
-
-from poms.common import formula
-from poms.integrations.models import Task
 # from poms.integrations.storage import import_file_storage
 from tempfile import NamedTemporaryFile
-from django.utils.translation import gettext_lazy
-from django.db import transaction
-from poms.common.utils import date_now
 
+from celery import shared_task
+from django.utils.translation import gettext_lazy
+
+from poms.common import formula
+from poms.common.utils import date_now
+from poms.integrations.models import Task
 from poms.reconciliation.models import ReconciliationNewBankFileField, ReconciliationBankFileField
 from poms.reconciliation.serializers import ReconciliationNewBankFileFieldSerializer, \
     ReconciliationBankFileFieldSerializer
 
 _l = logging.getLogger('poms.reconciliation')
 
-
 from poms.common.storage import get_storage
-storage = get_storage()
 
+storage = get_storage()
 
 
 @shared_task(name='reconciliation.process_bank_file_for_reconcile', bind=True)

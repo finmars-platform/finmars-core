@@ -8,45 +8,35 @@ from rest_framework import routers
 import poms.accounts.views as accounts
 import poms.api.views as api
 import poms.audit.views as audit
-import poms.chats.views as chats
+import poms.celery_tasks.views as celery_tasks
+import poms.common.views as common
+import poms.complex_import.views as complex_import
+import poms.configuration_export.views as configuration_export
+import poms.configuration_import.views as configuration_import
+import poms.configuration_sharing.views as configuration_sharing
 import poms.counterparties.views as counterparties
+import poms.credentials.views as credentials
+import poms.csv_import.views as csv_import
 import poms.currencies.views as currencies
-import poms.http_sessions.views as sessions
+import poms.explorer.views as explorer
+import poms.file_reports.views as file_reports
 import poms.instruments.views as instruments
 import poms.integrations.views as integrations
 import poms.notifications.views as notifications
 import poms.portfolios.views as portfolios
+import poms.pricing.views as pricing
+import poms.procedures.views as procedures
+import poms.reconciliation.views as reconciliation
+import poms.reference_tables.views as reference_table
 import poms.reports.views as reports
+import poms.schedules.views as schedules
 import poms.strategies.views as strategies
+import poms.system.views as system
+import poms.system_messages.views as system_messages
 import poms.transactions.views as transactions
 import poms.ui.views as ui
 import poms.users.views as users
-import poms.reconciliation.views as reconciliation
-
-import poms.csv_import.views as csv_import
-import poms.reference_tables.views as reference_table
-import poms.celery_tasks.views as celery_tasks
-
-import poms.configuration_export.views as configuration_export
-import poms.configuration_import.views as configuration_import
-import poms.complex_import.views as complex_import
-
-import poms.system.views as system
-
-import poms.file_reports.views as file_reports
-import poms.configuration_sharing.views as configuration_sharing
-
-import poms.pricing.views as pricing
-import poms.schedules.views as schedules
-import poms.procedures.views as procedures
-import poms.credentials.views as credentials
-import poms.system_messages.views as system_messages
-import poms.layout_recovery.views as layout_recovery
-
 import poms.widgets.views as widgets
-import poms.explorer.views as explorer
-
-import poms.common.views as common
 from poms.auth_tokens.views import ObtainAuthToken, SetAuthToken, CreateUser, CreateMasterUser, CreateMember, \
     DeleteMember, RenameMasterUser, MasterUserChangeOwner
 
@@ -176,8 +166,6 @@ router.register(r'instruments/instrument-ev', instruments.InstrumentEvViewSet)
 router.register(r'instruments/instrument-light', instruments.InstrumentLightViewSet)
 router.register(r'instruments/instrument-for-select', instruments.InstrumentForSelectViewSet)
 
-
-
 router.register(r'instruments/price-history-ev-group', instruments.PriceHistoryEvGroupViewSet, 'instrumentevgroup')
 router.register(r'instruments/price-history-ev', instruments.PriceHistoryViewSet)
 router.register(r'instruments/price-history', instruments.PriceHistoryViewSet)
@@ -197,23 +185,25 @@ router.register(r'portfolios/portfolio-ev', portfolios.PortfolioEvViewSet)
 router.register(r'portfolios/portfolio', portfolios.PortfolioViewSet)
 router.register(r'portfolios/portfolio-light', portfolios.PortfolioLightViewSet)
 
-
 router.register(r'portfolios/portfolio-register-attribute-type', portfolios.PortfolioRegisterAttributeTypeViewSet,
                 'portfolioregisterattributetype')
 
 router.register(r'portfolios/portfolio-register', portfolios.PortfolioRegisterViewSet, 'portfolioregister')
 router.register(r'portfolios/portfolio-register-ev', portfolios.PortfolioRegisterEvViewSet, 'portfolioregisterev')
-router.register(r'portfolios/portfolio-register-ev-group', portfolios.PortfolioRegisterEvGroupViewSet, 'portfolioregisterevgroup')
+router.register(r'portfolios/portfolio-register-ev-group', portfolios.PortfolioRegisterEvGroupViewSet,
+                'portfolioregisterevgroup')
 
-
-router.register(r'portfolios/portfolio-register-record', portfolios.PortfolioRegisterRecordViewSet, 'portfolioregisterrecord')
-router.register(r'portfolios/portfolio-register-record-ev', portfolios.PortfolioRegisterRecordEvViewSet, 'portfolioregisterrecordev')
-router.register(r'portfolios/portfolio-register-record-ev-group', portfolios.PortfolioRegisterRecordEvGroupViewSet, 'portfolioregisterrecordgroup')
+router.register(r'portfolios/portfolio-register-record', portfolios.PortfolioRegisterRecordViewSet,
+                'portfolioregisterrecord')
+router.register(r'portfolios/portfolio-register-record-ev', portfolios.PortfolioRegisterRecordEvViewSet,
+                'portfolioregisterrecordev')
+router.register(r'portfolios/portfolio-register-record-ev-group', portfolios.PortfolioRegisterRecordEvGroupViewSet,
+                'portfolioregisterrecordgroup')
 
 router.register(r'portfolios/portfolio-bundle', portfolios.PortfolioBundleViewSet, 'portfoliobundle')
 router.register(r'portfolios/portfolio-bundle-ev', portfolios.PortfolioBundleEvViewSet, 'portfoliobundleev')
-router.register(r'portfolios/portfolio-bundle-ev-group', portfolios.PortfolioBundleEvGroupViewSet, 'portfoliobundlevgroup')
-
+router.register(r'portfolios/portfolio-bundle-ev-group', portfolios.PortfolioBundleEvGroupViewSet,
+                'portfoliobundlevgroup')
 
 router.register(r'strategies/1/group-ev-group', strategies.Strategy1GroupEvGroupViewSet, 'strategy1groupevgroup')
 router.register(r'strategies/1/group', strategies.Strategy1GroupViewSet)
@@ -310,7 +300,6 @@ router.register(r'transactions/bank-file', integrations.TransactionFileResultVie
 
 router.register(r'specific-data/values-for-select', common.ValuesForSelectViewSet, 'valuesforselect')
 
-
 router.register(r'ui/portal-interface-access', ui.PortalInterfaceAccessViewSet)
 router.register(r'ui/list-layout', ui.ListLayoutViewSet)
 router.register(r'ui/list-layout-light', ui.ListLayoutLightViewSet)
@@ -330,19 +319,17 @@ router.register(r'ui/column-sort-data', ui.ColumnSortDataViewSet)
 
 # router.register(r'reports/report', reports.BalanceReportViewSet, "report")
 router.register(r'reports/balance-report', reports.BalanceReportViewSet, "balance-report")
-router.register(r'reports/balance-report-sql', reports.BalanceReportViewSet, "balance-report-sync-sql") # deprecated
+router.register(r'reports/balance-report-sql', reports.BalanceReportViewSet, "balance-report-sync-sql")  # deprecated
 router.register(r'reports/balance-report/custom-field', reports.BalanceReportCustomFieldViewSet,
                 'balance-report-custom-field')
 # router.register(r'reports/balance-report', reports.BalanceReportSyncViewSet, "balance-report-sync")
 # router.register(r'reports/pl-report', reports.PLReportViewSet, "pl-report")
 router.register(r'reports/pl-report', reports.PLReportViewSet, "pl-report")
-router.register(r'reports/pl-report-sql', reports.PLReportViewSet, "pl-report-sync-sql") # deprecated, delete soon
+router.register(r'reports/pl-report-sql', reports.PLReportViewSet, "pl-report-sync-sql")  # deprecated, delete soon
 router.register(r'reports/pl-report/custom-field', reports.PLReportCustomFieldViewSet, 'pl-report-custom-field')
 # router.register(r'reports/transaction-report', reports.TransactionReportViewSet, "transaction-report")
 router.register(r'reports/transaction-report', reports.TransactionReportViewSet, "transaction-report")
 router.register(r'reports/transaction-report-sql', reports.TransactionReportViewSet, "transaction-report-sync-sql")
-
-
 
 router.register(r'reports/transaction-report/custom-field', reports.TransactionReportCustomFieldViewSet,
                 'transaction-report-custom-field')
@@ -352,9 +339,9 @@ router.register(r'reports/transaction-report/custom-field', reports.TransactionR
 
 router.register(r'reports/performance-report', reports.PerformanceReportViewSet, "performance-report")
 
-router.register(r'reports/price-history-check-sql', reports.PriceHistoryCheckViewSet, "price-history-check-sql") # deprecated
+router.register(r'reports/price-history-check-sql', reports.PriceHistoryCheckViewSet,
+                "price-history-check-sql")  # deprecated
 router.register(r'reports/price-history-check', reports.PriceHistoryCheckViewSet, "price-history-check")
-
 
 router.register(r'notifications/notification', notifications.NotificationViewSet)
 
@@ -406,9 +393,11 @@ router.register(r'import/price-download-scheme-mapping', integrations.PriceDownl
 router.register(r'import/pricing-condition-mapping', integrations.PricingConditionMappingViewSet)
 
 router.register(r'import/instrument', integrations.ImportInstrumentViewSet, 'importinstrument')
-router.register(r'import/finmars-database/instrument', integrations.ImportInstrumentCbondsViewSet, 'importinstrumentcbonds')
+router.register(r'import/finmars-database/instrument', integrations.ImportInstrumentCbondsViewSet,
+                'importinstrumentcbonds')
 router.register(r'import/finmars-database/currency', integrations.ImportCurrencyCbondsViewSet, 'importcurrencycbonds')
-router.register(r'import/unified-data-provider', integrations.ImportUnifiedDataProviderViewSet, 'importunifieddataprovider')
+router.register(r'import/unified-data-provider', integrations.ImportUnifiedDataProviderViewSet,
+                'importunifieddataprovider')
 router.register(r'import/pricing', integrations.ImportPricingViewSet, 'importpricing')
 router.register(r'import/test-certificate', integrations.TestCertificateViewSet, 'testcertificate')
 # router.register(r'import/pricing-automated-schedule', integrations.PricingAutomatedScheduleViewSet)
@@ -416,15 +405,13 @@ router.register(r'import/test-certificate', integrations.TestCertificateViewSet,
 router.register(r'import/task', integrations.TaskViewSet)
 
 router.register(r'import/complex-transaction-import-scheme', integrations.ComplexTransactionImportSchemeViewSet)
-router.register(r'import/complex-transaction-import-scheme-light', integrations.ComplexTransactionImportSchemeLightViewSet)
+router.register(r'import/complex-transaction-import-scheme-light',
+                integrations.ComplexTransactionImportSchemeLightViewSet)
 router.register(r'import/complex-transaction-csv-file-import', integrations.ComplexTransactionCsvFileImportViewSet,
                 'complextransactioncsvfileimport')
 
 router.register(r'import/complex-transaction-preprocess-file', integrations.ComplexTransactionFilePreprocessViewSet,
                 'complextransactionfilepreprocessviewSet')
-
-
-
 
 router.register(r'import/complex-transaction-csv-file-import-validate',
                 integrations.ComplexTransactionCsvFileImportValidateViewSet,
@@ -474,27 +461,33 @@ router.register(r'configuration-sharing/invites', configuration_sharing.InviteTo
 router.register(r'configuration-sharing/my-invites', configuration_sharing.MyInviteToSharedConfigurationFileViewSet,
                 'my_invites_to_shared_configuration_file')
 
-router.register(r'pricing/instrument-pricing-scheme', pricing.InstrumentPricingSchemeViewSet, 'pricing_instrument_pricing_scheme')
-router.register(r'pricing/instrument-pricing-scheme-type', pricing.InstrumentPricingSchemeTypeViewSet, 'pricing_instrument_pricing_scheme type')
-router.register(r'pricing/currency-pricing-scheme', pricing.CurrencyPricingSchemeViewSet, 'pricing_currency_pricing_scheme')
-router.register(r'pricing/currency-pricing-scheme-type', pricing.CurrencyPricingSchemeTypeViewSet, 'pricing_currency_pricing_scheme_type')
+router.register(r'pricing/instrument-pricing-scheme', pricing.InstrumentPricingSchemeViewSet,
+                'pricing_instrument_pricing_scheme')
+router.register(r'pricing/instrument-pricing-scheme-type', pricing.InstrumentPricingSchemeTypeViewSet,
+                'pricing_instrument_pricing_scheme type')
+router.register(r'pricing/currency-pricing-scheme', pricing.CurrencyPricingSchemeViewSet,
+                'pricing_currency_pricing_scheme')
+router.register(r'pricing/currency-pricing-scheme-type', pricing.CurrencyPricingSchemeTypeViewSet,
+                'pricing_currency_pricing_scheme_type')
 
-
-router.register(r'pricing/price-history-error-ev-group', pricing.PriceHistoryErrorEvGroupViewSet, 'pricehistoryerrorevgroup')
+router.register(r'pricing/price-history-error-ev-group', pricing.PriceHistoryErrorEvGroupViewSet,
+                'pricehistoryerrorevgroup')
 router.register(r'pricing/price-history-error-ev', pricing.PriceHistoryErrorEvViewSet)
 router.register(r'pricing/price-history-error', pricing.PriceHistoryErrorViewSet)
-router.register(r'pricing/currency-history-error-ev-group', pricing.CurrencyHistoryErrorEvGroupViewSet, 'currencyhistoryerrorevgroup')
+router.register(r'pricing/currency-history-error-ev-group', pricing.CurrencyHistoryErrorEvGroupViewSet,
+                'currencyhistoryerrorevgroup')
 router.register(r'pricing/currency-history-error-ev', pricing.CurrencyHistoryErrorEvViewSet)
 router.register(r'pricing/currency-history-error', pricing.CurrencyHistoryErrorViewSet)
-
 
 router.register(r'schedules/schedule', schedules.ScheduleViewSet)
 
 router.register(r'system-messages/message', system_messages.MessageViewSet)
 
 router.register(r'procedures/pricing-procedure', procedures.PricingProcedureViewSet, 'pricing_procedure')
-router.register(r'procedures/pricing-procedure-instance', procedures.PricingProcedureInstanceViewSet, 'pricing_procedure_instance')
-router.register(r'procedures/pricing-parent-procedure-instance', procedures.PricingParentProcedureInstanceViewSet, 'pricing_parent_procedure_instance')
+router.register(r'procedures/pricing-procedure-instance', procedures.PricingProcedureInstanceViewSet,
+                'pricing_procedure_instance')
+router.register(r'procedures/pricing-parent-procedure-instance', procedures.PricingParentProcedureInstanceViewSet,
+                'pricing_parent_procedure_instance')
 
 router.register(r'procedures/request-data-procedure', procedures.RequestDataFileProcedureViewSet)
 router.register(r'procedures/data-procedure-instance', procedures.RequestDataFileProcedureInstanceViewSet)
@@ -508,7 +501,6 @@ router.register(r'integrations/data-provider', integrations.DataProviderViewSet)
 # deprecated
 # router.register(r'recovery/generate-layout-archetype', layout_recovery.GenerateLayoutArchetypeViewSet, 'recovery_generate_layout_archetype')
 # router.register(r'recovery/layout', layout_recovery.FixLayoutViewSet, 'recovery_layout')
-
 
 
 router.register(r'widgets/history/nav', widgets.HistoryNavViewSet, 'widgets_history_nav')
@@ -529,7 +521,6 @@ router.register(r'debug/logs', common.DebugLogViewSet, 'debug_log')
 # router.register(r'pricing/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view()), 'pricing_broker_bloomberg')
 
 
-
 urlpatterns = [
     re_path(r'^v1/', include(router.urls)),
 
@@ -538,30 +529,30 @@ urlpatterns = [
     re_path(r'instruments/instrument-database-search', instruments.InstrumentDatabaseSearchViewSet.as_view()),
     re_path(r'currencies/currency-database-search', currencies.CurrencyDatabaseSearchViewSet.as_view()),
     re_path(r'internal/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view())),
-    re_path(r'internal/brokers/bloomberg-forwards/callback', csrf_exempt(pricing.PricingBrokerBloombergForwardsHandler.as_view())),
+    re_path(r'internal/brokers/bloomberg-forwards/callback',
+            csrf_exempt(pricing.PricingBrokerBloombergForwardsHandler.as_view())),
     re_path(r'internal/brokers/wtrade/callback', csrf_exempt(pricing.PricingBrokerWtradeHandler.as_view())),
     re_path(r'internal/brokers/cbonds/callback', csrf_exempt(pricing.PricingBrokerCbondsHandler.as_view())),
     re_path(r'internal/brokers/fx-cbonds/callback', csrf_exempt(pricing.PricingBrokerFxCbondsHandler.as_view())),
     re_path(r'internal/brokers/fixer/callback', csrf_exempt(pricing.PricingBrokerFixerHandler.as_view())),
     re_path(r'internal/brokers/alphav/callback', csrf_exempt(pricing.PricingBrokerAlphavHandler.as_view())),
-    re_path(r'internal/data/transactions/callback', csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),
+    re_path(r'internal/data/transactions/callback',
+            csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),
     re_path(r'internal/data/transactions/json', csrf_exempt(integrations.TransactionImportJson.as_view())),
     re_path(r'integrations/superset/get-security-token', csrf_exempt(integrations.SupersetGetSecurityToken.as_view())),
     re_path(r'instruments/instrument-external-api', csrf_exempt(instruments.InstrumentExternalAPIViewSet.as_view())),
-    re_path(r'instruments/fdb-create-from-callback', csrf_exempt(instruments.InstrumentFDBCreateFromCallbackViewSet.as_view())),
+    re_path(r'instruments/fdb-create-from-callback',
+            csrf_exempt(instruments.InstrumentFDBCreateFromCallbackViewSet.as_view())),
 
     re_path(r'^authorizer/token-auth/', ObtainAuthToken.as_view(), name='api-token-auth'),
     re_path(r'^authorizer/set-token-auth/', SetAuthToken.as_view(), name='set-token-auth'),
-    re_path(r'^authorizer/create-user/', CreateUser.as_view(), name='create-user'), # TODO deprecated delete soon
-    re_path(r'^authorizer/create-master-user/', CreateMasterUser.as_view(), name='create-master-user'), # TODO deprecated delete soon
+    re_path(r'^authorizer/create-user/', CreateUser.as_view(), name='create-user'),  # TODO deprecated delete soon
+    re_path(r'^authorizer/create-master-user/', CreateMasterUser.as_view(), name='create-master-user'),
+    # TODO deprecated delete soon
     re_path(r'^authorizer/rename-master-user/', RenameMasterUser.as_view(), name='rename-master-user'),
     re_path(r'^authorizer/create-member/', CreateMember.as_view(), name='create-member'),
     re_path(r'^authorizer/delete-member/', DeleteMember.as_view(), name='delete-member'),
     re_path(r'^authorizer/master-user-change-owner/', MasterUserChangeOwner.as_view(), name='master-user-change-owner'),
-
-
-
-
 
 ]
 

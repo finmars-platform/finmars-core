@@ -80,7 +80,6 @@ class TransactionReport(models.Model):
         verbose_name = gettext_lazy('transaction report')
         verbose_name_plural = gettext_lazy('transaction reports')
 
-
 # # ----------------------------------------------------------------------------------------------------------------------
 #
 #

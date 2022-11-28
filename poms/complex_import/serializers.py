@@ -1,17 +1,12 @@
-from django.contrib.contenttypes.models import ContentType
-from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
+from rest_framework.fields import empty
 
 from poms.common.serializers import ModelWithTimeStampSerializer, ModelWithUserCodeSerializer
 from poms.complex_import.models import ComplexImportScheme, ComplexImport, ComplexImportSchemeAction, \
     ComplexImportSchemeActionCsvImport, ComplexImportSchemeActionTransactionImport
 from poms.csv_import.fields import CsvImportSchemeField
-from poms.integrations.fields import ComplexTransactionImportSchemeRestField
-
 from poms.users.fields import MasterUserField
-
-from rest_framework.fields import empty
 
 
 class ComplexImportSchemeActionCsvImportSerializer(serializers.ModelSerializer):
@@ -100,8 +95,7 @@ class ComplexImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserC
                                                                         action_csv_import_scheme.action_notes)
 
                 action_csv_import_scheme.skip = action_data.get('skip',
-                                                                                action_csv_import_scheme.skip)
-
+                                                                action_csv_import_scheme.skip)
 
                 for attr, value in action_csv_import_scheme_data.items():
                     setattr(action_csv_import_scheme, attr, value)
@@ -136,7 +130,7 @@ class ComplexImportSchemeSerializer(ModelWithTimeStampSerializer, ModelWithUserC
                                                                                         action_complex_transaction_import_scheme.action_notes)
 
                 action_complex_transaction_import_scheme.skip = action_data.get('skip',
-                                                                                        action_complex_transaction_import_scheme.skip)
+                                                                                action_complex_transaction_import_scheme.skip)
 
                 for attr, value in action_complex_transaction_import_scheme_data.items():
                     setattr(action_complex_transaction_import_scheme, attr, value)

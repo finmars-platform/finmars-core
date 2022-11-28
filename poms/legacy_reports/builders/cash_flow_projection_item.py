@@ -1,7 +1,6 @@
 import logging
 
 from django.utils.translation import gettext_lazy
-
 from poms.reports.builders.transaction_item import TransactionReportItem, TransactionReport
 
 _l = logging.getLogger('poms.reports')

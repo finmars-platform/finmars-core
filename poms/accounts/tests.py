@@ -1,11 +1,8 @@
 from __future__ import unicode_literals
 
-from rest_framework import status
-
 from poms.accounts.models import Account, AccountType
 from poms.common.tests import BaseApiWithPermissionTestCase, BaseApiWithAttributesTestCase, \
     BaseAttributeTypeApiTestCase, BaseNamedModelTestCase
-from poms.obj_perms.utils import get_perms_codename
 
 
 def load_tests(loader, standard_tests, pattern):

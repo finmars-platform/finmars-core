@@ -1,27 +1,23 @@
-import copy
 import os
-import json
 import csv
-import traceback
+import json
+import os
 import re
-
-import celery
-from django.db import transaction
-from tempfile import NamedTemporaryFile
+import traceback
 from datetime import date
+from tempfile import NamedTemporaryFile
+
+from django.db import transaction
 from django.utils.timezone import now
-
 from filtration import Expression
-
-from poms.accounts.models import Account
-from poms.celery_tasks.models import CeleryTask
-
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
 
+from poms.accounts.models import Account
+from poms.celery_tasks.models import CeleryTask
 from poms.common import formula
 from poms.common.models import ProxyUser, ProxyRequest
-from poms.common.utils import convert_name_to_key
+from poms.common.storage import get_storage
 from poms.common.websockets import send_websocket_message
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
@@ -40,10 +36,6 @@ from poms.transaction_import.serializers import TransactionImportResultSerialize
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionTypeInput
 from poms.users.models import EcosystemDefault
-
-from django.core.serializers.json import DjangoJSONEncoder
-
-from poms.common.storage import get_storage
 
 storage = get_storage()
 
@@ -537,7 +529,6 @@ class TransactionImportProcess(object):
                                         file_item[key] = value
 
                                     for scheme_input in self.scheme.inputs.all():
-
                                         item[scheme_input.name] = file_item[scheme_input.column_name]
 
                                     self.file_items.append(file_item)
@@ -615,7 +606,6 @@ class TransactionImportProcess(object):
                                     file_item[key] = value
 
                                 for scheme_input in self.scheme.inputs.all():
-
                                     item[scheme_input.name] = file_item[scheme_input.column_name]
 
                                 self.file_items.append(file_item)
@@ -765,8 +755,6 @@ class TransactionImportProcess(object):
 
         _l.info('TransactionImportProcess.Task %s. process_items INIT' % self.task)
 
-
-
         index = 0
 
         for item in self.items:
@@ -875,7 +863,7 @@ class TransactionImportProcess(object):
             booked_count = booked_count + len(item.booked_transactions)
 
         result = 'Processed %s rows and successfully booked %s transactions. Error rows %s' % (
-        len(self.items), booked_count, error_count)
+            len(self.items), booked_count, error_count)
 
         return result
 
@@ -953,7 +941,8 @@ class TransactionImportProcess(object):
                             calculate_portfolio_register_price_history
 
                         calculate_portfolio_register_record.apply_async(link=[
-                            calculate_portfolio_register_price_history.s(date_from=str(self.execution_context['date_from']))
+                            calculate_portfolio_register_price_history.s(
+                                date_from=str(self.execution_context['date_from']))
                         ])
 
         send_system_message(master_user=self.master_user,

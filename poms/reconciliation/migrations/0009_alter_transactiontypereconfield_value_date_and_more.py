@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('reconciliation', '0008_alter_transactiontypereconfield_value_date_and_more'),
     ]

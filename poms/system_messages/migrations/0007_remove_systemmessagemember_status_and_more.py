@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('system_messages', '0006_rename_text_systemmessage_description_and_more'),
     ]
@@ -17,7 +16,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='systemmessage',
             name='action_status',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Not Required'), (2, 'Required'), (3, 'Solved')], default=1, verbose_name='action status'),
+            field=models.PositiveSmallIntegerField(choices=[(1, 'Not Required'), (2, 'Required'), (3, 'Solved')],
+                                                   default=1, verbose_name='action status'),
         ),
         migrations.AddField(
             model_name='systemmessagemember',
@@ -27,6 +27,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='systemmessage',
             name='type',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Information'), (2, 'Warning'), (3, 'Error'), (4, 'Success')], default=1, verbose_name='type'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(1, 'Information'), (2, 'Warning'), (3, 'Error'), (4, 'Success')], default=1,
+                verbose_name='type'),
         ),
     ]

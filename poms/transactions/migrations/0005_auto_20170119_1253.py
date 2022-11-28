@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0004_auto_20170113_1048'),
     ]
@@ -20,7 +19,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transaction',
             name='position_amount',
-            field=models.FloatField(default=0.0, help_text='Absolute value of Position with Sign (for calculations on the form)', verbose_name='position amount'),
+            field=models.FloatField(default=0.0,
+                                    help_text='Absolute value of Position with Sign (for calculations on the form)',
+                                    verbose_name='position amount'),
         ),
         migrations.AddField(
             model_name='transactiontypeactiontransaction',

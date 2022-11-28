@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('csv_import', '0032_csvimportscheme_spreadsheet_active_tab_name'),
     ]

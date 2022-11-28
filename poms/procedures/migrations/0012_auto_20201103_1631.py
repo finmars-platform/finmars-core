@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('procedures', '0011_requestdatafileprocedure_scheme_type'),
     ]
@@ -13,6 +12,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='requestdatafileprocedure',
             name='scheme_type',
-            field=models.CharField(choices=[['transaction_import', 'Transaction Import'], ['simple_import', 'Simple Import']], default='transaction_import', max_length=255),
+            field=models.CharField(
+                choices=[['transaction_import', 'Transaction Import'], ['simple_import', 'Simple Import']],
+                default='transaction_import', max_length=255),
         ),
     ]

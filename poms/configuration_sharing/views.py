@@ -1,33 +1,23 @@
-from celery.result import AsyncResult
-from django.core.signing import TimestampSigner
-from django_filters.rest_framework import FilterSet
+import logging
 
+from django_filters.rest_framework import FilterSet
 from rest_framework.response import Response
-from rest_framework import status
 
 from poms.common.filters import CharFilter
-from poms.common.utils import date_now, datetime_now
-
-from poms.celery_tasks.models import CeleryTask
-from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet
+from poms.common.views import AbstractModelViewSet
 from poms.configuration_import.serializers import ConfigurationImportAsJsonSerializer
+from poms.configuration_import.tasks import configuration_import_as_json
 from poms.configuration_sharing.filters import OwnerByRecipient, OwnerBySender
 from poms.configuration_sharing.models import SharedConfigurationFile, InviteToSharedConfigurationFile
 from poms.configuration_sharing.serializers import SharedConfigurationFileSerializer, \
     InviteToSharedConfigurationFileSerializer, MyInviteToSharedConfigurationFileSerializer
-
-from poms.csv_import.tasks import data_csv_file_import, data_csv_file_import_validate
-from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
+from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.ui.models import ListLayout
-from poms.configuration_import.tasks import configuration_import_as_json
 
-from poms.users.filters import OwnerByMasterUserFilter, OwnerByUserFilter
-
-import logging
 _l = logging.getLogger('poms.configuration_sharing')
 
-class SharedConfigurationFileFilterSet(FilterSet):
 
+class SharedConfigurationFileFilterSet(FilterSet):
     class Meta:
         model = SharedConfigurationFile
         fields = []
@@ -67,10 +57,9 @@ class SharedConfigurationFileViewSet(AbstractModelViewSet):
             processed = 0
 
             for layout in layouts:
-
                 serializer = ConfigurationImportAsJsonSerializer(data={
                     "data": instance.data,
-                    "master_user": master_user, # share only inside same ecosystem
+                    "master_user": master_user,  # share only inside same ecosystem
                     "member": layout.member,
                     "mode": 'overwrite'
                 }, context={
@@ -84,12 +73,10 @@ class SharedConfigurationFileViewSet(AbstractModelViewSet):
 
             _l.info("Processed layouts %s" % processed)
 
-
         return Response(serializer.data)
 
 
 class InviteToSharedConfigurationFileFilterSet(FilterSet):
-
     status = CharFilter()
 
     class Meta:

@@ -13,7 +13,6 @@ class OwnerByMasterUserFilter(BaseFilterBackend):
         # master_user = get_master_user(request)
 
         if hasattr(request.user, 'master_user'):
-
             master_user = request.user.master_user
             return queryset.filter(master_user=master_user)
 
@@ -67,7 +66,6 @@ class MasterUserBackupsForOwnerOnlyFilter(BaseFilterBackend):
                 for member in item.members.all():
 
                     if member.user_id == user.id and member.is_owner:
-
                         ids.append(item.id)
 
             else:
@@ -84,7 +82,6 @@ class InviteToMasterUserFilter(BaseFilterBackend):
 
 class IsMemberFilterBackend(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-
         user = request.user
         master_user = request.user.master_user
 

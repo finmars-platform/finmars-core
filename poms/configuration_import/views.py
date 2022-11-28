@@ -1,23 +1,18 @@
+import time
+from logging import getLogger
+
 from celery.result import AsyncResult
 from django.core.signing import TimestampSigner
-from rest_framework import status
 from django.db import transaction
+from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet
 from poms.configuration_import.serializers import ConfigurationImportAsJsonSerializer, \
     GenerateConfigurationEntityArchetypeSerializer
-
 from poms.configuration_import.tasks import configuration_import_as_json, generate_configuration_entity_archetype
-
-from poms.common.utils import date_now, datetime_now
-
-import time
-
-from rest_framework.exceptions import PermissionDenied
-
-from logging import getLogger
 
 _l = getLogger('poms.configuration_import')
 
@@ -51,7 +46,6 @@ class ConfigurationImportAsJsonViewSet(AbstractAsyncViewSet):
             celery_task = CeleryTask.objects.get(id=instance.task_id)
 
             if celery_task.status == CeleryTask.STATUS_DONE:
-
                 instance.stats = celery_task.result_object
                 instance.task_status = 'SUCCESS'
 

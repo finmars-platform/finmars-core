@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0029_userprofile_two_factor_verification'),
         ('pricing', '0052_auto_20200323_1249'),

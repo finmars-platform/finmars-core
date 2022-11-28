@@ -7,6 +7,7 @@ from poms.users.filters import OwnerByMasterUserFilter
 
 class CurrencyDefault(object):
     requires_context = True
+
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         self._master_user = request.user.master_user
@@ -18,6 +19,7 @@ class CurrencyDefault(object):
 
 class SystemCurrencyDefault(object):
     requires_context = True
+
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         self._master_user = request.user.master_user

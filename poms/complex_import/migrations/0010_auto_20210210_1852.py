@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('complex_import', '0009_auto_20200525_1357'),
     ]
@@ -29,7 +28,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='compleximportscheme',
             name='public_name',
-            field=models.CharField(blank=True, help_text='used if user does not have permissions to view object', max_length=255, null=True, verbose_name='public name'),
+            field=models.CharField(blank=True, help_text='used if user does not have permissions to view object',
+                                   max_length=255, null=True, verbose_name='public name'),
         ),
         migrations.AddField(
             model_name='compleximportscheme',

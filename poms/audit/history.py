@@ -409,7 +409,6 @@ def _instance_m2m_changed(sender, instance=None, action=None, reverse=None, mode
     if attr not in instance._poms_history_initial_state:
         instance._poms_history_initial_state[attr] = [o.pk for o in getattr(instance, attr).all()]
 
-
     for pk in pk_set:
 
         e4 = ObjectHistory4Entry(

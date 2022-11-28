@@ -1,9 +1,11 @@
 from __future__ import unicode_literals
 
+import logging
+
 import django_filters
 import requests
 from django_filters.rest_framework import FilterSet
-
+from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
@@ -16,20 +18,15 @@ from poms.currencies.filters import OwnerByCurrencyFilter
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.currencies.serializers import CurrencySerializer, CurrencyHistorySerializer, CurrencyLightSerializer, \
     CurrencyEvSerializer
-from poms.instruments.models import PricingPolicy, DailyPricingModel
-from poms.integrations.models import PriceDownloadScheme
+from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet
 from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractEvGroupWithObjectPermissionViewSet, AbstractWithObjectPermissionViewSet
 from poms.users.filters import OwnerByMasterUserFilter
-from rest_framework.response import Response
 
-import logging
 _l = logging.getLogger('poms.currencies')
-
-
 
 from poms_app import settings
 
@@ -221,7 +218,6 @@ class CurrencyHistoryEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, 
 
 
 class CurrencyDatabaseSearchViewSet(APIView):
-
     permission_classes = []
 
     def get(self, request):
@@ -229,8 +225,8 @@ class CurrencyDatabaseSearchViewSet(APIView):
         headers = {'Content-type': 'application/json'}
 
         payload_jwt = {
-            "sub":  settings.BASE_API_URL, #"user_id_or_name",
-            "role": 0 # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
+            "sub": settings.BASE_API_URL,  # "user_id_or_name",
+            "role": 0  # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
         }
 
         token = encode_with_jwt(payload_jwt)
@@ -262,9 +258,8 @@ class CurrencyDatabaseSearchViewSet(APIView):
             result = response.json()
         except Exception as e:
             if response:
-                _l.info('response %s' % response.text )
+                _l.info('response %s' % response.text)
                 _l.info("Response parse error %s" % e)
             result = {}
-
 
         return Response(result)

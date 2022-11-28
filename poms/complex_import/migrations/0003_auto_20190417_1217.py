@@ -6,7 +6,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0014_masteruser_user_code_counters'),
         ('complex_import', '0002_auto_20190416_1329'),

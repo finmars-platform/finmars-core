@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0109_alter_transactiontypecontextparameter_options_and_more'),
     ]
@@ -23,7 +22,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontype',
             name='transaction_unique_code_expr',
-            field=models.CharField(blank=True, default='', max_length=2048, verbose_name='transaction unique code expr'),
+            field=models.CharField(blank=True, default='', max_length=2048,
+                                   verbose_name='transaction unique code expr'),
         ),
         migrations.AlterField(
             model_name='transactiontype',
@@ -353,7 +353,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactioninstrument',
             name='payment_size_detail',
-            field=models.CharField(blank=True, default='', max_length=2048, null=True, verbose_name='payment_size detail'),
+            field=models.CharField(blank=True, default='', max_length=2048, null=True,
+                                   verbose_name='payment_size detail'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactioninstrument',
@@ -363,7 +364,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactioninstrument',
             name='pricing_condition',
-            field=models.CharField(blank=True, default='', max_length=2048, null=True, verbose_name='pricing condition'),
+            field=models.CharField(blank=True, default='', max_length=2048, null=True,
+                                   verbose_name='pricing condition'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactioninstrument',
@@ -403,7 +405,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactioninstrumentaccrualcalculationschedules',
             name='accrual_calculation_model',
-            field=models.CharField(blank=True, default='', max_length=2048, null=True, verbose_name='accrual calculation model'),
+            field=models.CharField(blank=True, default='', max_length=2048, null=True,
+                                   verbose_name='accrual calculation model'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactioninstrumentaccrualcalculationschedules',
@@ -478,7 +481,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactioninstrumenteventschedule',
             name='notification_class',
-            field=models.CharField(blank=True, default='', max_length=2048, null=True, verbose_name='notification class'),
+            field=models.CharField(blank=True, default='', max_length=2048, null=True,
+                                   verbose_name='notification class'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactioninstrumenteventschedule',
@@ -503,12 +507,14 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactioninstrumenteventscheduleaction',
             name='is_book_automatic',
-            field=models.CharField(default=False, help_text='If checked - is book automatic', max_length=2048, verbose_name='is book automatic'),
+            field=models.CharField(default=False, help_text='If checked - is book automatic', max_length=2048,
+                                   verbose_name='is book automatic'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactioninstrumenteventscheduleaction',
             name='is_sent_to_pending',
-            field=models.CharField(default=False, help_text='If checked - is sent to pending', max_length=2048, verbose_name='is sent to pending'),
+            field=models.CharField(default=False, help_text='If checked - is sent to pending', max_length=2048,
+                                   verbose_name='is sent to pending'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactioninstrumenteventscheduleaction',
@@ -573,7 +579,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
             name='allocation_balance',
-            field=models.CharField(blank=True, default='', max_length=2048, null=True, verbose_name='allocation balance'),
+            field=models.CharField(blank=True, default='', max_length=2048, null=True,
+                                   verbose_name='allocation balance'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
@@ -618,7 +625,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
             name='linked_instrument',
-            field=models.CharField(blank=True, default='', max_length=2048, null=True, verbose_name='linked instrument'),
+            field=models.CharField(blank=True, default='', max_length=2048, null=True,
+                                   verbose_name='linked instrument'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
@@ -673,7 +681,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
             name='settlement_currency',
-            field=models.CharField(blank=True, default='', max_length=2048, null=True, verbose_name='settlement currency'),
+            field=models.CharField(blank=True, default='', max_length=2048, null=True,
+                                   verbose_name='settlement currency'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
@@ -683,7 +692,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
             name='strategy1_position',
-            field=models.CharField(blank=True, default='', max_length=2048, null=True, verbose_name='strategy1 position'),
+            field=models.CharField(blank=True, default='', max_length=2048, null=True,
+                                   verbose_name='strategy1 position'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
@@ -693,7 +703,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
             name='strategy2_position',
-            field=models.CharField(blank=True, default='', max_length=2048, null=True, verbose_name='strategy2 position'),
+            field=models.CharField(blank=True, default='', max_length=2048, null=True,
+                                   verbose_name='strategy2 position'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
@@ -703,7 +714,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
             name='strategy3_position',
-            field=models.CharField(blank=True, default='', max_length=2048, null=True, verbose_name='strategy3 position'),
+            field=models.CharField(blank=True, default='', max_length=2048, null=True,
+                                   verbose_name='strategy3 position'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
@@ -713,16 +725,19 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactiontransaction',
             name='transaction_currency',
-            field=models.CharField(blank=True, default='', max_length=2048, null=True, verbose_name='transaction currency'),
+            field=models.CharField(blank=True, default='', max_length=2048, null=True,
+                                   verbose_name='transaction currency'),
         ),
         migrations.AlterField(
             model_name='transactiontypeinput',
             name='value',
-            field=models.CharField(blank=True, help_text='this is expression for default value', max_length=2048, null=True, verbose_name='value'),
+            field=models.CharField(blank=True, help_text='this is expression for default value', max_length=2048,
+                                   null=True, verbose_name='value'),
         ),
         migrations.AlterField(
             model_name='transactiontypeinput',
             name='value_expr',
-            field=models.CharField(blank=True, help_text='this is expression for recalculate value', max_length=2048, null=True, verbose_name='value expression'),
+            field=models.CharField(blank=True, help_text='this is expression for recalculate value', max_length=2048,
+                                   null=True, verbose_name='value expression'),
         ),
     ]

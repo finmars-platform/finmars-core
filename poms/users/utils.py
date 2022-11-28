@@ -1,19 +1,17 @@
+import logging
+import time
+
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.exceptions import NotFound, PermissionDenied
 
 from poms.auth_tokens.models import AuthToken
 from poms.http_sessions.models import Session
-from poms.users.models import Member, MasterUser, UserProfile
+from poms.users.models import Member, MasterUser
 
-import time
-
-import logging
 _l = logging.getLogger('poms.users')
 
 
 def set_master_user(request, master_user):
-
     try:
 
         set_st = time.perf_counter()
@@ -21,7 +19,7 @@ def set_master_user(request, master_user):
         session = Session.objects.get(session_key=request.session.session_key)
 
         user = User.objects.get(id=request.user.id)
-        member = Member.objects.get(user=user, master_user = master_user)
+        member = Member.objects.get(user=user, master_user=master_user)
 
         session.current_master_user = master_user
         session.current_member = member
@@ -67,7 +65,6 @@ def set_master_user(request, master_user):
 
 
 def get_master_user_and_member_old(request):
-
     if not request.user.is_authenticated:
         raise PermissionDenied()
 
@@ -81,7 +78,6 @@ def get_master_user_and_member_old(request):
         master_user = None
 
         if master_user_id is not None:
-
             master_user = MasterUser.objects.get(id=master_user_id)
 
         if member_id is not None:
@@ -101,7 +97,6 @@ def get_master_user_and_member_old(request):
 
 
 def get_master_user_and_member(request):
-
     if not request.user.is_authenticated:
         raise PermissionDenied()
 

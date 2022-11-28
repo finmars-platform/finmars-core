@@ -1,30 +1,22 @@
 import json
+import logging
 import traceback
-from datetime import timedelta
 
 import requests
+from django.db import transaction
+from django.db.transaction import on_commit
+from django.utils.timezone import now
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common import formula
 from poms.common.crypto.RSACipher import RSACipher
 from poms.credentials.models import Credentials
-from poms.file_reports.models import FileReport
-from django.utils.timezone import now
-
-from django.db.transaction import on_commit
-
-from poms.integrations.models import TransactionFileResult
-
-import logging
-
-from poms.integrations.tasks import complex_transaction_csv_file_import_parallel, \
-    complex_transaction_csv_file_import_by_procedure, complex_transaction_csv_file_import_by_procedure_json
 from poms.csv_import.tasks import data_csv_file_import_by_procedure_json
+from poms.file_reports.models import FileReport
+from poms.integrations.models import TransactionFileResult
+from poms.integrations.tasks import complex_transaction_csv_file_import_by_procedure_json
 from poms.procedures.models import RequestDataFileProcedureInstance, ExpressionProcedureInstance
 from poms.procedures.tasks import procedure_request_data_file
-
-from django.db import transaction
-
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import Member, MasterUser
 from poms_app import settings
@@ -102,8 +94,6 @@ class DataProcedureProcess(object):
 
                     try:
 
-
-
                         url = self.procedure.data['url']
                         security_token = self.procedure.data['security_token']
 
@@ -165,8 +155,6 @@ class DataProcedureProcess(object):
 
                     response_data = None
 
-
-
                     current_date_time = now().strftime("%Y-%m-%d-%H-%M")
 
                     file_report = FileReport()
@@ -194,7 +182,6 @@ class DataProcedureProcess(object):
                         _l.info('response %s' % response.text)
                         _l.info("Response parse error %s" % e)
                         file_content = response.text
-
 
                     file_report.upload_file(file_name=file_name, text=file_content, master_user=self.master_user)
                     file_report.master_user = self.master_user

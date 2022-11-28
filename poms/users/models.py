@@ -1,13 +1,12 @@
 from __future__ import unicode_literals
 
+import binascii
 import json
+import os
 import uuid
 
 import pytz
 from django.conf import settings
-from django.contrib.auth.models import User, Permission
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
@@ -15,12 +14,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy
 
-
-from poms.common.models import NamedModel, FakeDeletableModel
-
-import binascii
-import os
-
+from poms.common.models import FakeDeletableModel
 from poms.common.utils import get_content_type_by_name
 
 AVAILABLE_APPS = ['accounts', 'counterparties', 'currencies', 'instruments', 'portfolios', 'strategies', 'transactions',
@@ -103,7 +97,6 @@ class MasterUserManager(models.Manager):
 
 
 class MasterUser(models.Model):
-
     STATUS_ONLINE = 1
     STATUS_OFFLINE = 2
     STATUS_BACKUP = 3
@@ -118,12 +111,12 @@ class MasterUser(models.Model):
                             verbose_name=gettext_lazy('name'))
 
     base_api_url = models.CharField(max_length=255, null=True, blank=True,
-                            verbose_name=gettext_lazy('base api url'))
+                                    verbose_name=gettext_lazy('base api url'))
 
     description = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('description'))
 
     status = models.PositiveSmallIntegerField(default=STATUS_ONLINE, choices=STATUSES,
-                                                  verbose_name=gettext_lazy('status'))
+                                              verbose_name=gettext_lazy('status'))
 
     language = models.CharField(max_length=LANGUAGE_MAX_LENGTH, default=settings.LANGUAGE_CODE,
                                 verbose_name=gettext_lazy('language'))
@@ -718,13 +711,13 @@ class MasterUser(models.Model):
 
                 except EntityTooltip.DoesNotExist:
 
-                    item = EntityTooltip.objects.create(master_user=self, name=field["name"], key=field["key"], content_type=content_type)
+                    item = EntityTooltip.objects.create(master_user=self, name=field["name"], key=field["key"],
+                                                        content_type=content_type)
                     item.save()
 
     def create_color_palettes(self):
 
         from poms.ui.models import ColorPalette, ColorPaletteColor
-
 
         default_color_map = {
             0: "#000000",
@@ -790,26 +783,22 @@ class MasterUser(models.Model):
                     color.name = "Color " + str(x + 1)
                     color.save()
 
-
-
     def create_defaults(self, user=None):
         from poms.currencies.models import currencies_data, Currency
         from poms.accounts.models import AccountType, Account
         from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsible, ResponsibleGroup
         from poms.portfolios.models import Portfolio
         from poms.instruments.models import InstrumentClass, InstrumentType, EventScheduleConfig, Instrument, \
-             AccrualCalculationModel, PaymentSizeDetail, Periodicity
-        from poms.integrations.models import PricingAutomatedSchedule, CurrencyMapping, ProviderClass
+            AccrualCalculationModel, PaymentSizeDetail, Periodicity
+        from poms.integrations.models import PricingAutomatedSchedule, ProviderClass
         from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, \
             Strategy2Subgroup, Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
         from poms.chats.models import ThreadGroup
-        from poms.transactions.models import NotificationClass, TransactionTypeGroup, TransactionType
+        from poms.transactions.models import TransactionTypeGroup, TransactionType
         from poms.obj_perms.utils import get_change_perms, assign_perms3
         from poms.instruments.models import PricingPolicy
         from poms.instruments.models import PricingCondition
         from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme
-
-
 
         if not EventScheduleConfig.objects.filter(master_user=self).exists():
             EventScheduleConfig.create_default(master_user=self)
@@ -885,8 +874,10 @@ class MasterUser(models.Model):
         pricing_policy = PricingPolicy.objects.create(master_user=self, name='-', expr='(ask+bid)/2')
         pricing_policy_dft = PricingPolicy.objects.create(master_user=self, name='DFT', expr='(ask+bid)/2')
 
-        instrument_pricing_scheme = InstrumentPricingScheme.objects.create(master_user=self, name='-', user_code='', type_id=1)
-        currency_pricing_scheme = CurrencyPricingScheme.objects.create(master_user=self, name='-', user_code='', type_id=1)
+        instrument_pricing_scheme = InstrumentPricingScheme.objects.create(master_user=self, name='-', user_code='',
+                                                                           type_id=1)
+        currency_pricing_scheme = CurrencyPricingScheme.objects.create(master_user=self, name='-', user_code='',
+                                                                       type_id=1)
 
         bloomberg = ProviderClass.objects.get(pk=ProviderClass.BLOOMBERG)
         # for dc in currencies_data.values():
@@ -1058,7 +1049,7 @@ class MasterUser(models.Model):
 
 class EcosystemDefault(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='ecosystem_default',
-                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE,)
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE, )
 
     account_type = models.ForeignKey('accounts.AccountType', null=True, blank=True, on_delete=models.PROTECT,
                                      verbose_name=gettext_lazy('account type'))
@@ -1155,19 +1146,16 @@ class EcosystemDefault(models.Model):
                                     verbose_name=gettext_lazy('periodicity'))
 
     pricing_condition = models.ForeignKey('instruments.PricingCondition', null=True, blank=True,
-                                            on_delete=models.PROTECT,
-                                            verbose_name=gettext_lazy('pricing condition'))
+                                          on_delete=models.PROTECT,
+                                          verbose_name=gettext_lazy('pricing condition'))
 
     instrument_pricing_scheme = models.ForeignKey('pricing.InstrumentPricingScheme', null=True, blank=True,
-                                          on_delete=models.PROTECT,
-                                          verbose_name=gettext_lazy('instrument pricing scheme'))
+                                                  on_delete=models.PROTECT,
+                                                  verbose_name=gettext_lazy('instrument pricing scheme'))
 
     currency_pricing_scheme = models.ForeignKey('pricing.CurrencyPricingScheme', null=True, blank=True,
-                                                  on_delete=models.PROTECT,
-                                                  verbose_name=gettext_lazy('currency pricing scheme'))
-
-
-
+                                                on_delete=models.PROTECT,
+                                                verbose_name=gettext_lazy('currency pricing scheme'))
 
 
 class Member(FakeDeletableModel):
@@ -1182,7 +1170,8 @@ class Member(FakeDeletableModel):
         (SHOW_ONLY, gettext_lazy('Show notifications')),
     )
 
-    master_user = models.ForeignKey(MasterUser, related_name='members', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey(MasterUser, related_name='members', verbose_name=gettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
                              related_name='members', verbose_name=gettext_lazy('user'))
 
@@ -1256,34 +1245,34 @@ class Member(FakeDeletableModel):
 
 
 class OtpToken(models.Model):
-
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
                              related_name='otp_tokens', verbose_name=gettext_lazy('OTP Token'))
 
     name = models.CharField(max_length=80, verbose_name=gettext_lazy('name'))
 
     secret = models.CharField(max_length=16, blank=True, default='', editable=False,
-                                verbose_name=gettext_lazy('secret'))
+                              verbose_name=gettext_lazy('secret'))
 
     is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
 
 
 class InviteToMasterUser(models.Model):
-
     SENT = 0
     ACCEPTED = 1
     DECLINED = 2
 
     STATUS_CHOICES = ((SENT, 'Sent'),
-               (ACCEPTED, 'Accepted'),
-               (DECLINED, 'Declined'),
-               )
+                      (ACCEPTED, 'Accepted'),
+                      (DECLINED, 'Declined'),
+                      )
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='invites_to_master_user', verbose_name=gettext_lazy('user'), on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='invites_to_master_user',
+                             verbose_name=gettext_lazy('user'), on_delete=models.CASCADE)
     from_member = models.ForeignKey(Member, related_name="invites_to_users",
                                     verbose_name=gettext_lazy('from_member'), on_delete=models.CASCADE)
 
-    master_user = models.ForeignKey(MasterUser, related_name='invites_to_users', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey(MasterUser, related_name='invites_to_users',
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     groups = models.ManyToManyField('Group', blank=True, related_name='invites', verbose_name=gettext_lazy('groups'))
 
@@ -1311,7 +1300,8 @@ class UserProfile(models.Model):
 
     two_factor_verification = models.BooleanField(default=False, verbose_name=gettext_lazy('two factor verification'))
 
-    active_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=gettext_lazy('master user'), on_delete=models.SET_NULL)
+    active_master_user = models.ForeignKey(MasterUser, null=True, blank=True, verbose_name=gettext_lazy('master user'),
+                                           on_delete=models.SET_NULL)
 
     user_unique_id = models.UUIDField(null=True, blank=True)
 
@@ -1324,14 +1314,12 @@ class UserProfile(models.Model):
 
 
 class UsercodePrefix(models.Model):
-
-    master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE )
+    master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     value = models.CharField(max_length=80, verbose_name=gettext_lazy('prefix'))
     notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
 
 
 class Group(models.Model):
-
     ADMIN = 1
     USER = 2
 
@@ -1343,11 +1331,12 @@ class Group(models.Model):
         (USER, gettext_lazy('User')),
     )
 
-    master_user = models.ForeignKey(MasterUser, related_name='groups', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE )
+    master_user = models.ForeignKey(MasterUser, related_name='groups', verbose_name=gettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
     name = models.CharField(max_length=80, verbose_name=gettext_lazy('name'))
 
     role = models.PositiveSmallIntegerField(default=USER, choices=ROLE_CHOICES, db_index=True,
-                                                         verbose_name=gettext_lazy('role'))
+                                            verbose_name=gettext_lazy('role'))
 
     permission_table_json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
@@ -1381,28 +1370,26 @@ class Group(models.Model):
 
     def grant_all_permissions_to_model_objects(self, model, master_user, group):
 
-        from poms.obj_perms.utils import get_view_perms, append_perms3, get_all_perms
+        from poms.obj_perms.utils import append_perms3, get_all_perms
 
         for item in model.objects.filter(master_user=master_user):
 
             perms = []
 
             for p in get_all_perms(item):
-
                 perms.append({'group': group, 'permission': p})
 
             append_perms3(item, perms=perms)
 
     def grant_view_permissions_to_model_objects(self, model, master_user, group):
 
-        from poms.obj_perms.utils import get_view_perms, append_perms3, get_all_perms
+        from poms.obj_perms.utils import get_view_perms, append_perms3
 
         for item in model.objects.filter(master_user=master_user):
 
             perms = []
 
             for p in get_view_perms(item):
-
                 perms.append({'group': group, 'permission': p})
 
             append_perms3(item, perms=perms)
@@ -1415,7 +1402,8 @@ class Group(models.Model):
         from poms.instruments.models import InstrumentType, Instrument
         from poms.obj_attrs.models import GenericAttributeType
         from poms.portfolios.models import Portfolio
-        from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, Strategy2Subgroup, \
+        from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, \
+            Strategy2Subgroup, \
             Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
         from poms.transactions.models import TransactionTypeGroup, TransactionType, ComplexTransaction, Transaction
 
@@ -1457,10 +1445,9 @@ class Group(models.Model):
         self.grant_view_permissions_to_model_objects(Transaction, master_user, instance)
 
 
-
 class FakeSequence(models.Model):
     master_user = models.ForeignKey(MasterUser, related_name='fake_sequences',
-                                    verbose_name=gettext_lazy('master user'),on_delete=models.CASCADE )
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     name = models.CharField(max_length=80, verbose_name=gettext_lazy('name'))
     value = models.PositiveIntegerField(default=0, verbose_name=gettext_lazy('value'))
 

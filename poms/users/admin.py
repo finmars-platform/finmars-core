@@ -4,14 +4,13 @@ from functools import update_wrapper
 
 from django import forms
 from django.conf import settings
-from django.urls import re_path
 from django.contrib import admin
-from django.contrib.admin import ModelAdmin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import F
 from django.http import HttpResponseRedirect
+from django.urls import re_path
 from django.urls import reverse
 from django.utils.translation import gettext_lazy
 
@@ -235,7 +234,6 @@ class UserProfileForm(forms.ModelForm):
     language = forms.ChoiceField(choices=settings.LANGUAGES, initial=settings.LANGUAGE_CODE)
     timezone = forms.ChoiceField(choices=TIMEZONE_CHOICES)
 
-
     class Meta:
         model = UserProfile
         fields = ['language', 'timezone', 'two_factor_verification', 'active_master_user', 'user_unique_id']
@@ -354,7 +352,7 @@ admin.site.register(FakeSequence, FakeSequenceAdmin)
 
 class InviteToMasterUserAdmin(AbstractModelAdmin):
     model = InviteToMasterUser
-    list_display = ['id', 'user', 'from_member', 'status', 'master_user' ]
+    list_display = ['id', 'user', 'from_member', 'status', 'master_user']
     list_select_related = ['user', 'from_member', 'master_user']
     list_filter = ['status', ]
     raw_id_fields = ['user', ]

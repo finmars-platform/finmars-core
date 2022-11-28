@@ -5,7 +5,6 @@ from poms.users.filters import OwnerByMasterUserFilter
 
 
 class ThreadGroupDefault(object):
-
     requires_context = True
 
     def set_context(self, serializer_field):

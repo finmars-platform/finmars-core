@@ -2,12 +2,12 @@ from __future__ import unicode_literals
 
 import django_filters
 from django_filters.rest_framework import FilterSet
-
 from rest_framework.settings import api_settings
 
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, AttributeFilter, \
     GroupsAttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
+from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
@@ -21,7 +21,6 @@ from poms.strategies.serializers import Strategy1GroupSerializer, Strategy1Seria
     Strategy3SubgroupSerializer, Strategy3Serializer, Strategy1LightSerializer, Strategy2LightSerializer, \
     Strategy3LightSerializer, Strategy1EvSerializer, Strategy2EvSerializer, Strategy3EvSerializer
 from poms.users.filters import OwnerByMasterUserFilter
-from poms.obj_attrs.utils import get_attributes_prefetch
 
 
 class Strategy1GroupFilterSet(FilterSet):
@@ -694,7 +693,6 @@ class Strategy3EvViewSet(Strategy1ViewSet):
     ]
     serializer_class = Strategy3EvSerializer
     filter_class = Strategy3EvFilterSet
-
 
 
 class Strategy3LightFilterSet(FilterSet):

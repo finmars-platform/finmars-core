@@ -1,14 +1,16 @@
 from __future__ import unicode_literals
 
+import logging
+import time
 from datetime import timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.utils.timezone import now
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty, ReadOnlyField
 from rest_framework.serializers import ListSerializer
-from django.db import transaction
 
 from poms.common.fields import ExpressionField, FloatEvalField, DateTimeTzAwareField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
@@ -23,7 +25,6 @@ from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, D
     PricingPolicy, EventScheduleAction, EventScheduleConfig, GeneratedEvent, PricingCondition, InstrumentTypeAccrual, \
     InstrumentTypeEvent, InstrumentTypeInstrumentAttribute, InstrumentTypeInstrumentFactorSchedule, \
     ExposureCalculationModel, LongUnderlyingExposure, ShortUnderlyingExposure, Country
-from poms.integrations.fields import PriceDownloadSchemeField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, ModelWithAttributesOnlySerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.pricing.models import InstrumentPricingPolicy, InstrumentTypePricingPolicy, PriceHistoryError
@@ -33,10 +34,6 @@ from poms.system_messages.handlers import send_system_message
 from poms.transactions.fields import TransactionTypeField
 from poms.transactions.models import TransactionType
 from poms.users.fields import MasterUserField
-
-import time
-import logging
-
 from poms.users.utils import get_member_from_context, get_master_user_from_context
 
 _l = logging.getLogger('poms.instruments')
@@ -103,6 +100,7 @@ class CountrySerializer(serializers.ModelSerializer):
                   'sub_region', 'sub_region_code']
         model = Country
 
+
 class ExposureCalculationModelSerializer(PomsClassSerializer):
     class Meta(PomsClassSerializer.Meta):
         model = ExposureCalculationModel
@@ -147,46 +145,40 @@ class CostMethodViewSerializer(PomsClassSerializer):
 
 
 def set_currency_pricing_scheme_parameters(pricing_policy, parameters):
-
     # print('pricing_policy %s ' % pricing_policy)
     # print('parameters %s ' % parameters)
 
     if parameters:
 
         if hasattr(parameters, 'data'):
-
             pricing_policy.data = parameters.data
 
         if hasattr(parameters, 'default_value'):
-
             pricing_policy.default_value = parameters.default_value
 
         if hasattr(parameters, 'attribute_key'):
-
             pricing_policy.attribute_key = parameters.attribute_key
 
-def set_instrument_pricing_scheme_parameters(pricing_policy, parameters):
 
+def set_instrument_pricing_scheme_parameters(pricing_policy, parameters):
     # print('pricing_policy %s ' % pricing_policy)
     # print('parameters %s ' % parameters)
 
     if parameters:
 
         if hasattr(parameters, 'data'):
-
             pricing_policy.data = parameters.data
 
         if hasattr(parameters, 'default_value'):
-
             pricing_policy.default_value = parameters.default_value
 
         if hasattr(parameters, 'attribute_key'):
-
             pricing_policy.attribute_key = parameters.attribute_key
 
 
 class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
+
     # expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_blank=True, allow_null=True)
 
     class Meta:
@@ -202,8 +194,6 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
         self.fields['default_currency_pricing_scheme_object'] = CurrencyPricingSchemeSerializer(
             source='default_currency_pricing_scheme', read_only=True)
 
-
-
     def create_instrument_type_pricing_policies(self, instance):
 
         from poms.pricing.models import InstrumentTypePricingPolicy
@@ -217,13 +207,14 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
                 try:
 
                     try:
-                        pricing_policy = InstrumentTypePricingPolicy.objects.get(instrument_type=item, pricing_policy=instance)
+                        pricing_policy = InstrumentTypePricingPolicy.objects.get(instrument_type=item,
+                                                                                 pricing_policy=instance)
                     except Exception as e:
 
                         _l.error("Get error, trying to create new InstrumentTypePricingPolicy %s" % e)
 
                         pricing_policy = InstrumentTypePricingPolicy(instrument_type=item, pricing_policy=instance,
-                                                                 pricing_scheme=instance.default_instrument_pricing_scheme)
+                                                                     pricing_scheme=instance.default_instrument_pricing_scheme)
 
                         parameters = instance.default_instrument_pricing_scheme.get_parameters()
                         set_instrument_pricing_scheme_parameters(pricing_policy, parameters)
@@ -331,7 +322,6 @@ class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
 
 
 class InstrumentTypeAccrualSerializer(serializers.ModelSerializer):
-
     data = serializers.JSONField(allow_null=False)
 
     class Meta:
@@ -340,14 +330,13 @@ class InstrumentTypeAccrualSerializer(serializers.ModelSerializer):
 
 
 class InstrumentTypeInstrumentAttributeSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = InstrumentTypeInstrumentAttribute
-        fields = ['id', 'attribute_type_user_code', 'value_type', 'value_string', 'value_float', 'value_date', 'value_classifier']
+        fields = ['id', 'attribute_type_user_code', 'value_type', 'value_string', 'value_float', 'value_date',
+                  'value_classifier']
 
 
 class InstrumentTypeInstrumentFactorScheduleSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = InstrumentTypeInstrumentFactorSchedule
         fields = ['id',
@@ -361,7 +350,6 @@ class InstrumentTypeInstrumentFactorScheduleSerializer(serializers.ModelSerializ
 
 
 class InstrumentTypeEventSerializer(serializers.ModelSerializer):
-
     data = serializers.JSONField(allow_null=True, required=False)
 
     class Meta:
@@ -370,7 +358,7 @@ class InstrumentTypeEventSerializer(serializers.ModelSerializer):
 
 
 class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                                 ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
+                               ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)
     one_off_event = TransactionTypeField(allow_null=True, required=False)
@@ -388,7 +376,8 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
     pricing_condition_object = PricingConditionSerializer(source='pricing_condition', read_only=True)
 
     instrument_attributes = InstrumentTypeInstrumentAttributeSerializer(required=False, many=True, read_only=False)
-    instrument_factor_schedules = InstrumentTypeInstrumentFactorScheduleSerializer(required=False, many=True, read_only=False)
+    instrument_factor_schedules = InstrumentTypeInstrumentFactorScheduleSerializer(required=False, many=True,
+                                                                                   read_only=False)
 
     accruals = InstrumentTypeAccrualSerializer(required=False, many=True, read_only=False)
     events = InstrumentTypeEventSerializer(required=False, many=True, read_only=False)
@@ -421,7 +410,6 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
             'accrued_currency', 'accrued_currency_object',
             'accrued_multiplier', 'default_accrued',
 
-
             'exposure_calculation_model',
 
             'co_directional_exposure_currency', 'counter_directional_exposure_currency',
@@ -449,13 +437,16 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
     def __init__(self, *args, **kwargs):
         super(InstrumentTypeSerializer, self).__init__(*args, **kwargs)
 
-        self.fields['one_off_event_object'] = TransactionTypeSimpleViewSerializer(source='one_off_event', read_only=True)
-        self.fields['regular_event_object'] = TransactionTypeSimpleViewSerializer(source='regular_event', read_only=True)
+        self.fields['one_off_event_object'] = TransactionTypeSimpleViewSerializer(source='one_off_event',
+                                                                                  read_only=True)
+        self.fields['regular_event_object'] = TransactionTypeSimpleViewSerializer(source='regular_event',
+                                                                                  read_only=True)
         self.fields['factor_same_object'] = TransactionTypeSimpleViewSerializer(source='factor_same', read_only=True)
         self.fields['factor_up_object'] = TransactionTypeSimpleViewSerializer(source='factor_up', read_only=True)
         self.fields['factor_down_object'] = TransactionTypeSimpleViewSerializer(source='factor_down', read_only=True)
 
-        self.fields['pricing_policies'] = InstrumentTypePricingPolicySerializer(many=True, required=False, allow_null=True)
+        self.fields['pricing_policies'] = InstrumentTypePricingPolicySerializer(many=True, required=False,
+                                                                                allow_null=True)
 
     def validate(self, attrs):
         instrument_class = attrs.get('instrument_class', None)
@@ -563,7 +554,6 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
         InstrumentTypeAccrual.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
 
-
     def save_events(self, instance, events):
 
         ids = set()
@@ -615,12 +605,9 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                         print("Can't Create Instrument Type Event %s" % e)
 
-
         # print('events create ids %s ' % ids)
 
-
         InstrumentTypeEvent.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
-
 
     def save_instrument_attributes(self, instance, events):
 
@@ -669,12 +656,9 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                         print("Can't Create Instrument Type Instrument Attribute %s" % e)
 
-
         print('instrument attribute create ids %s ' % ids)
 
-
         InstrumentTypeInstrumentAttribute.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
-
 
     def save_instrument_factor_schedules(self, instance, events):
 
@@ -730,12 +714,9 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
                         print("Can't Create Instrument Type Instrument Factor Schedule %s" % e)
 
-
         print('instrument Factor Schedule create ids %s ' % ids)
 
-
         InstrumentTypeInstrumentFactorSchedule.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
-
 
     def save_pricing_policies(self, instance, pricing_policies):
 
@@ -758,7 +739,6 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
                 # print('policy.default_instrument_pricing_scheme %s' % policy.default_instrument_pricing_scheme)
 
                 if policy.default_instrument_pricing_scheme:
-
                     o.pricing_scheme = policy.default_instrument_pricing_scheme
 
                     parameters = policy.default_instrument_pricing_scheme.get_parameters()
@@ -834,7 +814,6 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
 
 class TransactionTypeSimpleViewSerializer(ModelWithObjectPermissionSerializer):
-
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = TransactionType
         fields = [
@@ -843,8 +822,8 @@ class TransactionTypeSimpleViewSerializer(ModelWithObjectPermissionSerializer):
         ]
 
 
-class InstrumentTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer, ModelWithUserCodeSerializer):
-
+class InstrumentTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+                                 ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)
@@ -902,14 +881,18 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
     instrument_type_object = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
     pricing_currency_object = serializers.PrimaryKeyRelatedField(source='pricing_currency', read_only=True)
     accrued_currency_object = serializers.PrimaryKeyRelatedField(source='accrued_currency', read_only=True)
-    co_directional_exposure_currency_object = serializers.PrimaryKeyRelatedField(source='co_directional_exposure_currency', read_only=True)
-    counter_directional_exposure_currency_object = serializers.PrimaryKeyRelatedField(source='counter_directional_exposure_currency', read_only=True)
+    co_directional_exposure_currency_object = serializers.PrimaryKeyRelatedField(
+        source='co_directional_exposure_currency', read_only=True)
+    counter_directional_exposure_currency_object = serializers.PrimaryKeyRelatedField(
+        source='counter_directional_exposure_currency', read_only=True)
 
+    long_underlying_instrument_object = serializers.PrimaryKeyRelatedField(source='long_underlying_instrument',
+                                                                           read_only=True)
+    short_underlying_instrument_object = serializers.PrimaryKeyRelatedField(source='short_underlying_instrument',
+                                                                            read_only=True)
 
-    long_underlying_instrument_object = serializers.PrimaryKeyRelatedField(source='long_underlying_instrument', read_only=True)
-    short_underlying_instrument_object = serializers.PrimaryKeyRelatedField(source='short_underlying_instrument', read_only=True)
-
-    exposure_calculation_model_object = ExposureCalculationModelSerializer(source='exposure_calculation_model', read_only=True)
+    exposure_calculation_model_object = ExposureCalculationModelSerializer(source='exposure_calculation_model',
+                                                                           read_only=True)
 
     payment_size_detail_object = PaymentSizeDetailSerializer(source='payment_size_detail', read_only=True)
     daily_pricing_model_object = DailyPricingModelSerializer(source='daily_pricing_model', read_only=True)
@@ -936,8 +919,6 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
             'pricing_currency', 'pricing_currency_object', 'price_multiplier',
             'accrued_currency', 'accrued_currency_object', 'accrued_multiplier',
 
-
-
             'payment_size_detail', 'payment_size_detail_object', 'default_price', 'default_accrued',
             'user_text_1', 'user_text_2', 'user_text_3',
             'reference_for_pricing',
@@ -960,7 +941,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
             'long_underlying_exposure', 'short_underlying_exposure',
 
             'position_reporting',
-            
+
             'country', 'country_object'
 
             # 'attributes'
@@ -973,11 +954,11 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
         self.fields['pricing_currency_object'] = CurrencyViewSerializer(source='pricing_currency', read_only=True)
         self.fields['accrued_currency_object'] = CurrencyViewSerializer(source='accrued_currency', read_only=True)
 
-        self.fields['co_directional_exposure_currency_object'] = CurrencyViewSerializer(source='accrued_currency', read_only=True)
-        self.fields['counter_directional_exposure_currency_object'] = CurrencyViewSerializer(source='accrued_currency', read_only=True)
+        self.fields['co_directional_exposure_currency_object'] = CurrencyViewSerializer(source='accrued_currency',
+                                                                                        read_only=True)
+        self.fields['counter_directional_exposure_currency_object'] = CurrencyViewSerializer(source='accrued_currency',
+                                                                                             read_only=True)
 
-
-        from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
         # self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(source='price_download_scheme',
         #                                                                                 read_only=True)
 
@@ -1059,7 +1040,6 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
                 # print('policy.default_instrument_pricing_scheme %s' % policy.default_instrument_pricing_scheme)
 
                 if policy.default_instrument_pricing_scheme:
-
                     o.pricing_scheme = policy.default_instrument_pricing_scheme
 
                     parameters = policy.default_instrument_pricing_scheme.get_parameters()
@@ -1267,7 +1247,6 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
 
 
 class InstrumentLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
-
     master_user = MasterUserField()
 
     class Meta:
@@ -1278,7 +1257,6 @@ class InstrumentLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         ]
 
     def to_representation(self, instance):
-
         st = time.perf_counter()
 
         result = super(InstrumentLightSerializer, self).to_representation(instance)
@@ -1289,7 +1267,6 @@ class InstrumentLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
 
 class InstrumentForSelectSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
-
     master_user = MasterUserField()
 
     instrument_type_object = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
@@ -1303,7 +1280,6 @@ class InstrumentForSelectSerializer(ModelWithObjectPermissionSerializer, ModelWi
         ]
 
     def to_representation(self, instance):
-
         st = time.perf_counter()
 
         result = super(InstrumentForSelectSerializer, self).to_representation(instance)
@@ -1313,10 +1289,8 @@ class InstrumentForSelectSerializer(ModelWithObjectPermissionSerializer, ModelWi
         return result
 
 
-
-
-class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesOnlySerializer, ModelWithUserCodeSerializer):
-
+class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesOnlySerializer,
+                             ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     instrument_type_object = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
@@ -1357,9 +1331,7 @@ class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttri
 
         ]
 
-
     def to_representation(self, instance):
-
         st = time.perf_counter()
 
         result = super(InstrumentEvSerializer, self).to_representation(instance)
@@ -1367,7 +1339,6 @@ class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttri
         # _l.debug('InstrumentEvSerializer done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         return result
-
 
 
 class InstrumentViewSerializer(ModelWithObjectPermissionSerializer):
@@ -1423,7 +1394,7 @@ class AccrualCalculationScheduleSerializer(serializers.ModelSerializer):
             'accrual_size', 'accrual_size_value_type',
             'periodicity_n', 'periodicity_n_value_type',
             'accrual_calculation_model',
-            'accrual_calculation_model_object', 'periodicity', 'periodicity_object',  'notes']
+            'accrual_calculation_model_object', 'periodicity', 'periodicity_object', 'notes']
 
     def validate(self, attrs):
         # TODO check it later
@@ -1468,7 +1439,6 @@ class EventScheduleActionSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(EventScheduleActionSerializer, self).__init__(*args, **kwargs)
 
-        from poms.transactions.serializers import TransactionTypeViewSerializer
         # self.fields['transaction_type_object'] = TransactionTypeViewSerializer(source='transaction_type',
         #                                                                        read_only=True)
 
@@ -1603,8 +1573,9 @@ class PriceHistorySerializer(serializers.ModelSerializer):
         try:
 
             history_item = PriceHistoryError.objects.get(instrument=instance.instrument,
-                                                            master_user=instance.instrument.master_user, date=instance.date,
-                                                            pricing_policy=instance.pricing_policy)
+                                                         master_user=instance.instrument.master_user,
+                                                         date=instance.date,
+                                                         pricing_policy=instance.pricing_policy)
 
             history_item.status = PriceHistoryError.STATUS_OVERWRITTEN
 
@@ -1632,7 +1603,8 @@ class PriceHistorySerializer(serializers.ModelSerializer):
                             section='prices',
                             type='success',
                             title='New Price (manual)',
-                            description=instance.instrument.user_code + ' ' + str(instance.date) + ' ' + str(instance.principal_price)
+                            description=instance.instrument.user_code + ' ' + str(instance.date) + ' ' + str(
+                                instance.principal_price)
                             )
 
         return instance
@@ -1679,7 +1651,8 @@ class PriceHistorySerializer(serializers.ModelSerializer):
                             section='prices',
                             type='warning',
                             title='Edit Price (manual)',
-                            description=instance.instrument.user_code + ' ' + str(instance.date) + ' ' + str(instance.principal_price)
+                            description=instance.instrument.user_code + ' ' + str(instance.date) + ' ' + str(
+                                instance.principal_price)
                             )
 
         return instance
@@ -1801,9 +1774,7 @@ class EventScheduleConfigSerializer(serializers.ModelSerializer):
 
 class InstrumentTypeProcessSerializer(serializers.Serializer):
 
-
     def __init__(self, **kwargs):
-
         kwargs['context'] = context = kwargs.get('context', {}) or {}
         super(InstrumentTypeProcessSerializer, self).__init__(**kwargs)
         context['instance'] = self.instance
@@ -1813,13 +1784,10 @@ class InstrumentTypeProcessSerializer(serializers.Serializer):
 
         self.fields['instrument_type_object'] = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
 
-
     def get_instrument(self, obj):
-
         obj.instrument['pricing_policies'] = []
 
         for itype_pp in list(obj.instrument['_instrument_type_pricing_policies'].all()):
-
             pricing_policy_data = InstrumentTypePricingPolicySerializer(instance=itype_pp).data
 
             pricing_policy = {

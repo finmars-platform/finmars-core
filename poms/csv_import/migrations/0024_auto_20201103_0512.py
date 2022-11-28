@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('csv_import', '0023_auto_20200525_1354'),
     ]
@@ -18,21 +17,26 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='csvimportscheme',
             name='delimiter',
-            field=models.CharField(choices=[[',', 'Comma'], [';', 'Semicolon'], ['\t', 'Tab']], default=',', max_length=255),
+            field=models.CharField(choices=[[',', 'Comma'], [';', 'Semicolon'], ['\t', 'Tab']], default=',',
+                                   max_length=255),
         ),
         migrations.AddField(
             model_name='csvimportscheme',
             name='error_handler',
-            field=models.CharField(choices=[['break', 'Break'], ['continue', 'Continue']], default='break', max_length=255),
+            field=models.CharField(choices=[['break', 'Break'], ['continue', 'Continue']], default='break',
+                                   max_length=255),
         ),
         migrations.AddField(
             model_name='csvimportscheme',
             name='missing_data_handler',
-            field=models.CharField(choices=[['throw_error', 'Treat as Error'], ['set_defaults', 'Replace with Default Value']], default='throw_error', max_length=255),
+            field=models.CharField(
+                choices=[['throw_error', 'Treat as Error'], ['set_defaults', 'Replace with Default Value']],
+                default='throw_error', max_length=255),
         ),
         migrations.AddField(
             model_name='csvimportscheme',
             name='mode',
-            field=models.CharField(choices=[['skip', 'Skip if exists'], ['overwrite', 'Overwrite']], default='skip', max_length=255),
+            field=models.CharField(choices=[['skip', 'Skip if exists'], ['overwrite', 'Overwrite']], default='skip',
+                                   max_length=255),
         ),
     ]

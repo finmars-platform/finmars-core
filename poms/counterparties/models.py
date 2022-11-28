@@ -8,7 +8,7 @@ from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedMo
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
-from poms.users.models import MasterUser, Member
+from poms.users.models import MasterUser
 
 
 class CounterpartyGroup(NamedModel, FakeDeletableModel):
@@ -75,7 +75,8 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
 
 
 class Responsible(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
-    master_user = models.ForeignKey(MasterUser, related_name='responsibles', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey(MasterUser, related_name='responsibles', verbose_name=gettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
     group = models.ForeignKey(ResponsibleGroup, related_name='responsibles', null=True, blank=True,
                               verbose_name=gettext_lazy('group'), on_delete=models.SET_NULL)
     is_valid_for_all_portfolios = models.BooleanField(default=True,

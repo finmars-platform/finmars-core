@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('obj_attrs', '0011_auto_20191003_1346'),
     ]

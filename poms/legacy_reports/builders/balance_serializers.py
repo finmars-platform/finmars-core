@@ -1,13 +1,19 @@
 from __future__ import unicode_literals
 
-import json
+import logging
+import time
 import uuid
 from datetime import timedelta, date
 
-import time
 from django.conf import settings
 from django.db.models import ForeignKey
-from django.utils.translation import gettext_lazy, gettext_lazy
+from django.utils.translation import gettext_lazy
+from poms.reports.builders.balance_item import ReportItem, Report
+from poms.reports.builders.base_serializers import ReportPortfolioSerializer, \
+    ReportAccountSerializer, ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, \
+    ReportInstrumentSerializer, ReportCurrencySerializer, ReportCurrencyHistorySerializer, ReportPriceHistorySerializer, \
+    ReportAccrualCalculationScheduleSerializer, ReportItemBalanceReportCustomFieldSerializer, \
+    ReportInstrumentTypeSerializer, ReportAccountTypeSerializer, ReportSerializerWithLogs
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -22,13 +28,6 @@ from poms.instruments.models import CostMethod
 from poms.instruments.serializers import PricingPolicyViewSerializer, CostMethodSerializer
 from poms.portfolios.fields import PortfolioField
 from poms.portfolios.serializers import PortfolioViewSerializer
-from poms.reports.builders.balance_item import ReportItem, Report
-from poms.reports.builders.base_serializers import ReportPortfolioSerializer, \
-    ReportAccountSerializer, ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, \
-    ReportInstrumentSerializer, ReportCurrencySerializer, ReportCurrencyHistorySerializer, ReportPriceHistorySerializer, \
-    ReportAccrualCalculationScheduleSerializer, ReportItemBalanceReportCustomFieldSerializer, \
-    ReportInstrumentTypeSerializer, ReportAccountTypeSerializer, ReportGenericAttributeSerializer, \
-    ReportSerializerWithLogs
 # from poms.reports.fields import CustomFieldField
 from poms.reports.fields import BalanceReportCustomFieldField, PLReportCustomFieldField
 from poms.reports.models import BalanceReportInstance, BalanceReportInstanceItem, PLReportInstance, PLReportInstanceItem
@@ -38,8 +37,6 @@ from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSe
 from poms.transactions.models import TransactionClass
 from poms.transactions.serializers import TransactionClassSerializer
 from poms.users.fields import MasterUserField, HiddenMemberField
-
-import logging
 
 _l = logging.getLogger('poms.reports')
 
@@ -1013,7 +1010,6 @@ def serialize_report_item_instrument(item):
             "sub_region_code": item.country.sub_region_code,
         }
 
-
     result = {
         "id": item.id,
         "name": item.name,
@@ -1163,7 +1159,8 @@ class BalanceReportSqlSerializer(ReportSerializer):
                         try:
 
                             if cc.value_type == 10:
-                                setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
+                                setattr(instance_item, 'custom_field_text_' + str(index_text),
+                                        custom_field_item['value'])
 
                                 index_text = index_text + 1
 
@@ -1174,7 +1171,8 @@ class BalanceReportSqlSerializer(ReportSerializer):
                                 index_number = index_number + 1
 
                             if cc.value_type == 40:
-                                setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
+                                setattr(instance_item, 'custom_field_date_' + str(index_date),
+                                        custom_field_item['value'])
 
                                 index_date = index_date + 1
 
@@ -1199,7 +1197,6 @@ class BalanceReportSqlSerializer(ReportSerializer):
 
 
 class PLReportSqlSerializer(PLReportSerializer):
-
     custom_fields = PLReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
 
     items = serializers.SerializerMethodField()
@@ -1264,7 +1261,6 @@ class PLReportSqlSerializer(PLReportSerializer):
                     cost_method=instance.cost_method,
                 )
 
-
             report_instance.report_uuid = report_uuid
             report_instance.report_date = instance.report_date
             report_instance.pl_first_date = instance.pl_first_date
@@ -1328,7 +1324,8 @@ class PLReportSqlSerializer(PLReportSerializer):
                         try:
 
                             if cc.value_type == 10:
-                                setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
+                                setattr(instance_item, 'custom_field_text_' + str(index_text),
+                                        custom_field_item['value'])
 
                                 index_text = index_text + 1
 
@@ -1339,7 +1336,8 @@ class PLReportSqlSerializer(PLReportSerializer):
                                 index_number = index_number + 1
 
                             if cc.value_type == 40:
-                                setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
+                                setattr(instance_item, 'custom_field_date_' + str(index_date),
+                                        custom_field_item['value'])
 
                                 index_date = index_date + 1
 

@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('currencies', '0005_currency_default_fx_rate'),
     ]
@@ -12,6 +11,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='currency',
-            options={'ordering': ['user_code'], 'permissions': [('manage_currency', 'Can manage currency')], 'verbose_name': 'currency', 'verbose_name_plural': 'currencies'},
+            options={'ordering': ['user_code'], 'permissions': [('manage_currency', 'Can manage currency')],
+                     'verbose_name': 'currency', 'verbose_name_plural': 'currencies'},
         ),
     ]

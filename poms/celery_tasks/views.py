@@ -1,29 +1,22 @@
-import json
+from logging import getLogger
 
 from celery.result import AsyncResult
-
 from django_filters.rest_framework import FilterSet, DjangoFilterBackend
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.viewsets import  ModelViewSet
+from rest_framework.viewsets import ModelViewSet
 
+from poms.common.filters import CharFilter
 from poms.common.views import AbstractApiView
+from poms.users.filters import OwnerByMasterUserFilter
 from .filters import CeleryTaskQueryFilter
 from .models import CeleryTask
 from .serializers import CeleryTaskSerializer
-from poms.common.filters import CharFilter
-from poms.users.filters import OwnerByMasterUserFilter
-
-from rest_framework.decorators import action
-
-from logging import getLogger
-
-
 
 _l = getLogger('poms.celery_tasks')
 
 
 class CeleryTaskFilterSet(FilterSet):
-
     id = CharFilter()
     celery_task_id = CharFilter()
     status = CharFilter()
@@ -49,7 +42,6 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='status')
     def status(self, request, pk=None):
-
         celery_task_id = request.query_params.get('celery_task_id', None)
         async_result = AsyncResult(celery_task_id)
 
@@ -66,7 +58,6 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=['PUT'], url_path='cancel')
     def cancel(self, request, pk=None):
-
         celery_task_id = request.query_params.get('celery_task_id', None)
         async_result = AsyncResult(celery_task_id).revoke()
 
@@ -80,7 +71,6 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=['PUT'], url_path='abort-transaction-import')
     def abort_transaction_import(self, request, pk=None):
-
         task = CeleryTask.objects.get(pk=pk)
 
         from poms.transactions.models import ComplexTransaction
@@ -95,7 +85,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         task.notes = '%s Transactions were aborted \n' % count
 
-        task.notes = task.notes  + (', '.join(str(x) for x in codes))
+        task.notes = task.notes + (', '.join(str(x) for x in codes))
         task.status = CeleryTask.STATUS_TRANSACTIONS_ABORTED
 
         task.save()

@@ -1,17 +1,18 @@
 from __future__ import unicode_literals
 
+# metestig
+import logging
 import traceback
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import IntegrityError, transaction
-from django.utils.translation import gettext_lazy
+from django.db import IntegrityError
+from django.db import models
 from mptt.utils import get_cached_trees
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty
 from rest_framework.serializers import ListSerializer
-from django.db import models
 
 from poms.common.fields import ExpressionField
 from poms.common.formula import safe_eval, ExpressionEvalError
@@ -22,12 +23,12 @@ from poms.integrations.models import PortfolioClassifierMapping, ProviderClass, 
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier, GenericAttribute
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
-from poms.obj_perms.utils import has_view_perms, get_permissions_prefetch_lookups, obj_perms_filter_objects_for_view
+from poms.obj_perms.utils import has_view_perms, obj_perms_filter_objects_for_view
 from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.utils import get_member_from_context, get_master_user_from_context
-# metestig
-import logging
+
 _l = logging.getLogger('poms.obj_attrs')
+
 
 class ModelWithAttributesSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
@@ -85,17 +86,15 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
             except Exception as e:
 
                 _l.debug("create_attributes_if_not_exists.exception %s" % e)
-                _l.info("Creating empty attribute %s for %s" %(attribute_type, instance.id))
-                _l.info("Creating empty attribute %s for %s" %(attribute_type, instance))
+                _l.info("Creating empty attribute %s for %s" % (attribute_type, instance.id))
+                _l.info("Creating empty attribute %s for %s" % (attribute_type, instance))
 
                 attributes_to_create.append(GenericAttribute(attribute_type=attribute_type, content_type=content_type,
-                                                      object_id=instance.id))
+                                                             object_id=instance.id))
 
         if len(attributes_to_create):
-
             GenericAttribute.objects.bulk_create(attributes_to_create)
             _l.info('attributes_to_create %s ' % len(attributes_to_create))
-
 
     def recursive_calculation(self, attribute_types, executed_expressions, eval_data, current_index, limit):
 
@@ -103,7 +102,8 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
             if attribute_type.can_recalculate:
                 try:
-                    executed_expressions[attribute_type.user_code] = safe_eval(attribute_type.expr, names={'this': eval_data},
+                    executed_expressions[attribute_type.user_code] = safe_eval(attribute_type.expr,
+                                                                               names={'this': eval_data},
                                                                                context={})
                 except (ExpressionEvalError, TypeError, Exception, KeyError):
                     executed_expressions[attribute_type.user_code] = 'Invalid Expression'
@@ -156,7 +156,6 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
         self.recursive_calculation(attr_types_qs, executed_expressions, data, current_index=0, limit=4)
 
-
         for attr in attrs_qs:
 
             if attr.attribute_type.can_recalculate:
@@ -204,7 +203,8 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
                 # _l.info('save_attributes.attr %s' % attr)
 
-                oattr = GenericAttribute.objects.get(content_type=ctype, object_id=instance.id, attribute_type_id=attribute_type.id)
+                oattr = GenericAttribute.objects.get(content_type=ctype, object_id=instance.id,
+                                                     attribute_type_id=attribute_type.id)
 
                 if 'value_string' in attr:
 
@@ -233,7 +233,6 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
         except Exception as e:
             _l.error("Attribute save error %s " % e)
             _l.error("Attribute save traceback %s " % traceback.format_exc())
-
 
 
 class ModelWithAttributesOnlySerializer(serializers.ModelSerializer):
@@ -490,7 +489,6 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
 
             # if  and o.id == prev_sibling.id:
 
-
             self.create_classifier_node_mapping(instance, o)
 
         except IntegrityError:
@@ -566,7 +564,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
 
         attrs = []
 
-        master_user =  get_master_user_from_context(self.context)
+        master_user = get_master_user_from_context(self.context)
 
         items = instance.content_type.model_class().objects.filter(master_user=master_user)
 
@@ -578,7 +576,8 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
 
             except GenericAttribute.DoesNotExist:
 
-                attrs.append(GenericAttribute(attribute_type=instance, content_type=instance.content_type, object_id=item.pk))
+                attrs.append(
+                    GenericAttribute(attribute_type=instance, content_type=instance.content_type, object_id=item.pk))
 
         GenericAttribute.objects.bulk_create(attrs)
 
@@ -625,8 +624,6 @@ class GenericAttributeViewListSerializer(serializers.ListSerializer):
         return [
             o for o in objects if has_view_perms(member, o.attribute)
         ]
-
-
 
 
 class GenericAttributeSerializer(serializers.ModelSerializer):
@@ -710,7 +707,6 @@ class GenericAttributeOnlySerializer(serializers.ModelSerializer):
         self._attribute_type_classifiers = {}
 
     def to_representation(self, instance):
-
         # if instance.classifier_id:
         #     # classifiers must be already loaded through prefetch_related()
         #     if instance.attribute_type_id not in self._attribute_type_classifiers:
@@ -765,5 +761,4 @@ class RecalculateAttributesSerializer(serializers.Serializer):
     stats_file_report = serializers.ReadOnlyField()
 
     def create(self, validated_data):
-
         return RecalculateAttributes(**validated_data)

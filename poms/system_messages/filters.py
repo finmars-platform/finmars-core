@@ -1,5 +1,3 @@
-import django_filters
-from django.db.models import Q
 from rest_framework.filters import BaseFilterBackend
 
 

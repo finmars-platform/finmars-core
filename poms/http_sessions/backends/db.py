@@ -4,8 +4,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.sessions.backends.db import SessionStore as DjangoSessionStore
 
 
-
-
 class SessionStore(DjangoSessionStore):
     @classmethod
     def get_model_class(cls):
@@ -14,7 +12,7 @@ class SessionStore(DjangoSessionStore):
 
     def create_model_instance(self, data):
 
-        from poms.users.models import UserProfile, MasterUser, Member
+        from poms.users.models import MasterUser, Member
 
         obj = super(SessionStore, self).create_model_instance(data)
 
@@ -28,8 +26,6 @@ class SessionStore(DjangoSessionStore):
 
         obj.user_agent = data.get('user_agent', None)
         obj.user_ip = data.get('user_ip', None)
-
-
 
         try:
             master_user_id = int(data.get('current_master_user', None))
@@ -62,13 +58,11 @@ class SessionStore(DjangoSessionStore):
             if not obj.current_master_user:
 
                 if master_user_id:
-
                     obj.current_master_user = MasterUser.objects.get(pk=master_user_id)
 
             if not obj.current_member:
 
                 if member_id:
-
                     obj.current_member = Member.objects.get(pk=member_id)
 
         except Exception as e:

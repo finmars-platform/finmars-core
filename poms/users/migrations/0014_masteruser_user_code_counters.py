@@ -7,7 +7,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0013_member_notification_level'),
     ]
@@ -16,6 +15,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='masteruser',
             name='user_code_counters',
-            field=django.contrib.postgres.fields.ArrayField(base_field=models.IntegerField(blank=True, null=True), blank=True, null=True, size=None),
+            field=django.contrib.postgres.fields.ArrayField(base_field=models.IntegerField(blank=True, null=True),
+                                                            blank=True, null=True, size=None),
         ),
     ]

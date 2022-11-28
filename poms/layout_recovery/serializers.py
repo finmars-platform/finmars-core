@@ -21,7 +21,6 @@ class LayoutArchetypeSerializer(serializers.ModelSerializer):
     data = serializers.JSONField(allow_null=False)
 
     class Meta:
-
         model = LayoutArchetype
         fields = ('id', 'master_user', 'name', 'data')
 

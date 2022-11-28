@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('procedures', '0018_requestdatafileprocedureinstance_json_request_data'),
     ]

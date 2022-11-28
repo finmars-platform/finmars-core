@@ -1,8 +1,16 @@
 from __future__ import unicode_literals
 
+import logging
+import time
 from datetime import timedelta
 
 from django.utils.translation import gettext_lazy
+from poms.reports.builders.base_serializers import ReportPortfolioSerializer, \
+    ReportAccountSerializer, ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, \
+    ReportInstrumentSerializer, ReportCurrencySerializer, ReportGenericAttributeSerializer, \
+    ReportComplexTransactionSerializer, ReportResponsibleSerializer, ReportCounterpartySerializer, \
+    ReportItemTransactionReportCustomFieldSerializer, ReportSerializerWithLogs
+from poms.reports.builders.transaction_item import TransactionReport
 from rest_framework import serializers
 
 from poms.accounts.fields import AccountField
@@ -10,25 +18,16 @@ from poms.accounts.serializers import AccountViewSerializer
 from poms.common import formula
 from poms.portfolios.fields import PortfolioField
 from poms.portfolios.serializers import PortfolioViewSerializer
-from poms.reports.builders.base_serializers import ReportPortfolioSerializer, \
-    ReportAccountSerializer, ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, \
-    ReportInstrumentSerializer, ReportCurrencySerializer, ReportGenericAttributeSerializer, \
-    ReportComplexTransactionSerializer, ReportResponsibleSerializer, ReportCounterpartySerializer, \
-    ReportItemTransactionReportCustomFieldSerializer, ReportSerializerWithLogs
-from poms.reports.builders.transaction_item import TransactionReport
 from poms.reports.fields import TransactionReportCustomFieldField
 from poms.reports.serializers import TransactionReportCustomFieldSerializer
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
-from poms.transactions.serializers import TransactionClassSerializer, ComplexTransactionSerializer, \
-    ComplexTransactionStatusSerializer
+from poms.transactions.serializers import TransactionClassSerializer, ComplexTransactionStatusSerializer
 from poms.users.fields import MasterUserField, HiddenMemberField
-
-import time
-import logging
 
 _l = logging.getLogger('poms.reports')
 from poms.common.utils import date_now
+
 
 class TransactionReportItemSerializer(serializers.Serializer):
     id = serializers.ReadOnlyField()
@@ -73,8 +72,6 @@ class TransactionReportItemSerializer(serializers.Serializer):
     attributes = ReportGenericAttributeSerializer(many=True, read_only=True)
 
     custom_fields = ReportItemTransactionReportCustomFieldSerializer(many=True, read_only=True)
-
-
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('read_only', True)
@@ -147,7 +144,6 @@ class TransactionReportSerializer(serializers.Serializer):
     item_strategies3 = ReportStrategy3Serializer(many=True, read_only=True)
     item_responsibles = ReportResponsibleSerializer(many=True, read_only=True)
     item_counterparties = ReportCounterpartySerializer(many=True, read_only=True)
-
 
     def __init__(self, *args, **kwargs):
         super(TransactionReportSerializer, self).__init__(*args, **kwargs)
@@ -249,7 +245,8 @@ class TransactionReportSerializer(serializers.Serializer):
                             if not cf['user_code'] in custom_fields_names:
                                 custom_fields_names[cf['user_code']] = value
                             else:
-                                if custom_fields_names[cf['user_code']] == None or custom_fields_names[cf['user_code']] == gettext_lazy('Invalid expression'):
+                                if custom_fields_names[cf['user_code']] == None or custom_fields_names[
+                                    cf['user_code']] == gettext_lazy('Invalid expression'):
                                     custom_fields_names[cf['user_code']] = value
 
                     names['custom_fields'] = custom_fields_names
@@ -266,7 +263,8 @@ class TransactionReportSerializer(serializers.Serializer):
 
                                 if expr:
                                     try:
-                                        value = formula.safe_eval('str(item)', names={'item': value}, context=self.context)
+                                        value = formula.safe_eval('str(item)', names={'item': value},
+                                                                  context=self.context)
                                     except formula.InvalidExpression:
                                         value = gettext_lazy('Invalid expression')
                                 else:
@@ -276,7 +274,8 @@ class TransactionReportSerializer(serializers.Serializer):
 
                                 if expr:
                                     try:
-                                        value = formula.safe_eval('float(item)', names={'item': value}, context=self.context)
+                                        value = formula.safe_eval('float(item)', names={'item': value},
+                                                                  context=self.context)
                                     except formula.InvalidExpression:
                                         value = gettext_lazy('Invalid expression')
                                 else:
@@ -285,7 +284,8 @@ class TransactionReportSerializer(serializers.Serializer):
 
                                 if expr:
                                     try:
-                                        value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value}, context=self.context)
+                                        value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value},
+                                                                  context=self.context)
                                     except formula.InvalidExpression:
                                         value = gettext_lazy('Invalid expression')
                                 else:
@@ -300,6 +300,7 @@ class TransactionReportSerializer(serializers.Serializer):
                 item['custom_fields'] = cfv
 
         return data
+
 
 def serialize_transaction_report_item(item):
     result = {
@@ -450,8 +451,9 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
                                              # ('user_date_10', gettext_lazy('User Date 10')),
                                          ))
 
-    begin_date = serializers.DateField(required=False, allow_null=True, initial=date_now() - timedelta(days=365), default=date_now() - timedelta(days=365))
-    end_date = serializers.DateField(required=False, allow_null=True,  initial=date_now, default=date_now)
+    begin_date = serializers.DateField(required=False, allow_null=True, initial=date_now() - timedelta(days=365),
+                                       default=date_now() - timedelta(days=365))
+    end_date = serializers.DateField(required=False, allow_null=True, initial=date_now, default=date_now)
     portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
     accounts = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
     accounts_position = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
@@ -465,7 +467,8 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
     custom_fields_to_calculate = serializers.CharField(default='', allow_null=True, allow_blank=True, required=False)
     custom_fields_object = TransactionReportCustomFieldSerializer(source='custom_fields', read_only=True, many=True)
 
-    complex_transaction_statuses_filter = serializers.CharField(default='', allow_null=True, allow_blank=True, required=False)
+    complex_transaction_statuses_filter = serializers.CharField(default='', allow_null=True, allow_blank=True,
+                                                                required=False)
 
     portfolios_object = PortfolioViewSerializer(source='portfolios', read_only=True, many=True)
     accounts_object = AccountViewSerializer(source='accounts', read_only=True, many=True)
@@ -490,7 +493,6 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
     item_strategies3 = ReportStrategy3Serializer(many=True, read_only=True)
     item_responsibles = ReportResponsibleSerializer(many=True, read_only=True)
     item_counterparties = ReportCounterpartySerializer(many=True, read_only=True)
-
 
     def __init__(self, *args, **kwargs):
         super(TransactionReportSqlSerializer, self).__init__(*args, **kwargs)
@@ -628,7 +630,8 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
 
                                     if expr:
                                         try:
-                                            value = formula.safe_eval('str(item)', names={'item': value}, context=self.context)
+                                            value = formula.safe_eval('str(item)', names={'item': value},
+                                                                      context=self.context)
                                         except formula.InvalidExpression:
                                             value = gettext_lazy('Invalid expression')
                                     else:
@@ -638,7 +641,8 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
 
                                     if expr:
                                         try:
-                                            value = formula.safe_eval('float(item)', names={'item': value}, context=self.context)
+                                            value = formula.safe_eval('float(item)', names={'item': value},
+                                                                      context=self.context)
                                         except formula.InvalidExpression:
                                             value = gettext_lazy('Invalid expression')
                                     else:
@@ -647,7 +651,8 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
 
                                     if expr:
                                         try:
-                                            value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value}, context=self.context)
+                                            value = formula.safe_eval("parse_date(item, '%d/%m/%Y')",
+                                                                      names={'item': value}, context=self.context)
                                         except formula.InvalidExpression:
                                             value = gettext_lazy('Invalid expression')
                                     else:
@@ -661,6 +666,7 @@ class TransactionReportSqlSerializer(ReportSerializerWithLogs):
 
                     item['custom_fields'] = cfv
 
-        _l.debug('TransactionReportSerializer custom fields execution done: %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug(
+            'TransactionReportSerializer custom fields execution done: %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         return data

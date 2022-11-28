@@ -1,4 +1,8 @@
+from logging import getLogger
+
 from django_filters import FilterSet
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from poms.common.filters import CharFilter, NoOpFilter
 from poms.common.views import AbstractModelViewSet
@@ -12,18 +16,12 @@ from poms.procedures.serializers import RequestDataFileProcedureSerializer, RunR
     RequestDataFileProcedureInstanceSerializer, ExpressionProcedureSerializer, RunExpressionProcedureSerializer, \
     ExpressionProcedureInstanceSerializer, PricingProcedureInstanceSerializer
 from poms.system_messages.handlers import send_system_message
-
 from poms.users.filters import OwnerByMasterUserFilter
-from rest_framework.decorators import action
-from rest_framework.response import Response
-
-from logging import getLogger
 
 _l = getLogger('poms.procedures')
 
 
 class PricingProcedureFilterSet(FilterSet):
-
     class Meta:
         model = PricingProcedure
         fields = []
@@ -62,13 +60,13 @@ class PricingProcedureViewSet(AbstractModelViewSet):
             if request.data['user_price_date_to']:
                 date_to = parse_date_iso(request.data['user_price_date_to'])
 
-        instance = PricingProcedureProcess(procedure=procedure, master_user=master_user, date_from=date_from, date_to=date_to)
+        instance = PricingProcedureProcess(procedure=procedure, master_user=master_user, date_from=date_from,
+                                           date_to=date_to)
         instance.process()
 
         serializer = self.get_serializer(instance=instance)
 
         return Response(serializer.data)
-
 
 
 class PricingParentProcedureInstanceFilterSet(FilterSet):
@@ -89,12 +87,14 @@ class PricingParentProcedureInstanceViewSet(AbstractModelViewSet):
     ]
     filter_class = PricingParentProcedureInstanceFilterSet
 
+
 class PricingProcedureInstanceFilterSet(FilterSet):
     id = NoOpFilter()
 
     class Meta:
         model = PricingProcedureInstance
         fields = []
+
 
 class PricingProcedureInstanceViewSet(AbstractModelViewSet):
     queryset = PricingProcedureInstance.objects.select_related(
@@ -105,9 +105,6 @@ class PricingProcedureInstanceViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
     ]
     filter_class = PricingProcedureInstanceFilterSet
-
-
-
 
 
 class RequestDataFileProcedureFilterSet(FilterSet):
@@ -129,9 +126,9 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
 
     permission_classes = []
 
-    @action(detail=True, methods=['post'], url_path='run-procedure', serializer_class=RunRequestDataFileProcedureSerializer)
+    @action(detail=True, methods=['post'], url_path='run-procedure',
+            serializer_class=RunRequestDataFileProcedureSerializer)
     def run_procedure(self, request, pk=None):
-
         _l.debug("Run Procedure %s" % pk)
 
         _l.debug("Run Procedure data %s" % request.data)
@@ -140,7 +137,6 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
 
         master_user = request.user.master_user
         member = request.user.member
-
 
         instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member)
         instance.process()
@@ -175,9 +171,6 @@ class RequestDataFileProcedureInstanceViewSet(AbstractModelViewSet):
     filter_class = RequestDataFileProcedureInstanceFilterSet
 
 
-
-
-
 class ExpressionProcedureFilterSet(FilterSet):
     user_code = CharFilter()
     name = CharFilter()
@@ -199,7 +192,6 @@ class ExpressionProcedureViewSet(AbstractModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='run-procedure', serializer_class=RunExpressionProcedureSerializer)
     def run_procedure(self, request, pk=None):
-
         _l.debug("Run Procedure %s" % pk)
 
         _l.debug("Run Procedure data %s" % request.data)
@@ -208,7 +200,6 @@ class ExpressionProcedureViewSet(AbstractModelViewSet):
 
         master_user = request.user.master_user
         member = request.user.member
-
 
         instance = ExpressionProcedureProcess(procedure=procedure, master_user=master_user, member=member)
         instance.process()

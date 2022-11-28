@@ -1,6 +1,5 @@
 from django.contrib import admin
 
-
 from poms.credentials.models import Credentials
 
 
@@ -11,4 +10,3 @@ class CredentialsAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Credentials, CredentialsAdmin)
-

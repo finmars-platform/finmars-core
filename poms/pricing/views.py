@@ -1,18 +1,16 @@
 import json
+from logging import getLogger
 
 from django_filters.rest_framework import FilterSet
-
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
 from poms.common.filters import NoOpFilter, GroupsAttributeFilter
 from poms.common.pagination import CustomPaginationMixin
-
 from poms.common.views import AbstractModelViewSet, AbstractEvGroupViewSet
-from poms.instruments.models import Instrument, PricingPolicy
+from poms.instruments.models import Instrument
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
-
 from poms.pricing.handlers import FillPricesBrokerBloombergProcess, \
     FillPricesBrokerWtradeProcess, FillPricesBrokerFixerProcess, FillPricesBrokerAlphavProcess, \
     FillPricesBrokerBloombergForwardsProcess, FillPricesBrokerCbondsProcess, FillPricesBrokerFxCbondsProcess
@@ -23,16 +21,12 @@ from poms.pricing.serializers import InstrumentPricingSchemeSerializer, Currency
     CurrencyPricingSchemeTypeSerializer, InstrumentPricingSchemeTypeSerializer, \
     PriceHistoryErrorSerializer, \
     CurrencyHistoryErrorSerializer
-
 from poms.users.filters import OwnerByMasterUserFilter
-
-from logging import getLogger
 
 _l = getLogger('poms.pricing')
 
 
 class InstrumentPricingSchemeFilterSet(FilterSet):
-
     class Meta:
         model = InstrumentPricingScheme
         fields = []
@@ -51,7 +45,6 @@ class InstrumentPricingSchemeViewSet(AbstractModelViewSet):
 
 
 class InstrumentPricingSchemeTypeFilterSet(FilterSet):
-
     class Meta:
         model = InstrumentPricingSchemeType
         fields = []
@@ -70,7 +63,6 @@ class InstrumentPricingSchemeTypeViewSet(AbstractModelViewSet):
 
 
 class CurrencyPricingSchemeFilterSet(FilterSet):
-
     class Meta:
         model = CurrencyPricingScheme
         fields = []
@@ -89,7 +81,6 @@ class CurrencyPricingSchemeViewSet(AbstractModelViewSet):
 
 
 class CurrencyPricingSchemeTypeFilterSet(FilterSet):
-
     class Meta:
         model = CurrencyPricingSchemeType
         fields = []
@@ -107,9 +98,7 @@ class CurrencyPricingSchemeTypeViewSet(AbstractModelViewSet):
     ]
 
 
-
 class PricingBrokerBloombergHandler(APIView):
-
     permission_classes = []
 
     def post(self, request):
@@ -136,7 +125,8 @@ class PricingBrokerBloombergHandler(APIView):
 
             if not request.data['error_code']:
 
-                instance = FillPricesBrokerBloombergProcess(instance=request.data, master_user=procedure_instance.master_user)
+                instance = FillPricesBrokerBloombergProcess(instance=request.data,
+                                                            master_user=procedure_instance.master_user)
                 instance.process()
 
             else:
@@ -154,7 +144,6 @@ class PricingBrokerBloombergHandler(APIView):
 
 
 class PricingBrokerBloombergForwardsHandler(APIView):
-
     permission_classes = []
 
     def post(self, request):
@@ -180,7 +169,8 @@ class PricingBrokerBloombergForwardsHandler(APIView):
 
             if not request.data['error_code']:
 
-                instance = FillPricesBrokerBloombergForwardsProcess(instance=request.data, master_user=procedure_instance.master_user)
+                instance = FillPricesBrokerBloombergForwardsProcess(instance=request.data,
+                                                                    master_user=procedure_instance.master_user)
                 instance.process()
 
             else:
@@ -198,7 +188,6 @@ class PricingBrokerBloombergForwardsHandler(APIView):
 
 
 class PricingBrokerWtradeHandler(APIView):
-
     permission_classes = []
 
     def post(self, request):
@@ -225,7 +214,8 @@ class PricingBrokerWtradeHandler(APIView):
 
             if not request.data['error_code']:
 
-                instance = FillPricesBrokerWtradeProcess(instance=request.data, master_user=procedure_instance.master_user)
+                instance = FillPricesBrokerWtradeProcess(instance=request.data,
+                                                         master_user=procedure_instance.master_user)
                 instance.process()
 
             else:
@@ -243,7 +233,6 @@ class PricingBrokerWtradeHandler(APIView):
 
 
 class PricingBrokerFixerHandler(APIView):
-
     permission_classes = []
 
     def post(self, request):
@@ -270,7 +259,8 @@ class PricingBrokerFixerHandler(APIView):
 
             if not request.data['error_code']:
 
-                instance = FillPricesBrokerFixerProcess(instance=request.data, master_user=procedure_instance.master_user)
+                instance = FillPricesBrokerFixerProcess(instance=request.data,
+                                                        master_user=procedure_instance.master_user)
                 instance.process()
 
             else:
@@ -288,7 +278,6 @@ class PricingBrokerFixerHandler(APIView):
 
 
 class PricingBrokerFxCbondsHandler(APIView):
-
     permission_classes = []
 
     def post(self, request):
@@ -315,7 +304,8 @@ class PricingBrokerFxCbondsHandler(APIView):
 
             if not request.data['error_code']:
 
-                instance = FillPricesBrokerFxCbondsProcess(instance=request.data, master_user=procedure_instance.master_user)
+                instance = FillPricesBrokerFxCbondsProcess(instance=request.data,
+                                                           master_user=procedure_instance.master_user)
                 instance.process()
 
             else:
@@ -333,7 +323,6 @@ class PricingBrokerFxCbondsHandler(APIView):
 
 
 class PricingBrokerAlphavHandler(APIView):
-
     permission_classes = []
 
     def post(self, request):
@@ -361,7 +350,8 @@ class PricingBrokerAlphavHandler(APIView):
 
             if not request.data['error_code']:
 
-                instance = FillPricesBrokerAlphavProcess(instance=request.data, master_user=procedure_instance.master_user)
+                instance = FillPricesBrokerAlphavProcess(instance=request.data,
+                                                         master_user=procedure_instance.master_user)
                 instance.process()
 
             else:
@@ -379,7 +369,6 @@ class PricingBrokerAlphavHandler(APIView):
 
 
 class PricingBrokerCbondsHandler(APIView):
-
     permission_classes = []
 
     def post(self, request):
@@ -404,7 +393,8 @@ class PricingBrokerCbondsHandler(APIView):
 
             if not request.data['error_code']:
 
-                instance = FillPricesBrokerCbondsProcess(instance=request.data, master_user=procedure_instance.master_user)
+                instance = FillPricesBrokerCbondsProcess(instance=request.data,
+                                                         master_user=procedure_instance.master_user)
                 instance.process()
 
             else:
@@ -524,6 +514,7 @@ class CurrencyHistoryErrorViewSet(AbstractModelViewSet):
     ordering_fields = [
         'date'
     ]
+
 
 class CurrencyHistoryErrorEvViewSet(AbstractModelViewSet):
     queryset = CurrencyHistoryError.objects.select_related(

@@ -76,7 +76,7 @@ def calc_cash_for_contract_for_difference(transaction, instrument, portfolio, ac
         add_this = transaction.id is None or not any(transaction.pk == t.pk for t in rb._transactions)
         if add_this:
             rb._transactions.append(VirtualTransaction(report=rb.instance, pricing_provider=rb.pricing_provider,
-                                                   fx_rate_provider=rb.fx_rate_provider, trn=transaction))
+                                                       fx_rate_provider=rb.fx_rate_provider, trn=transaction))
             rb.sort_transactions()
 
     rb._calc_fifo_multipliers()

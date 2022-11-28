@@ -18,12 +18,9 @@ from poms.instruments.fields import PricingPolicyField, InstrumentField, Registe
 from poms.instruments.models import CostMethod
 from poms.portfolios.fields import PortfolioField
 from poms.portfolios.serializers import PortfolioViewSerializer
-from poms.reports.builders.base_serializers import ReportPortfolioSerializer, ReportAccountSerializer, \
-    ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer
 from poms.reports.builders.performance_item import PerformanceReport
 from poms.reports.models import BalanceReportInstance, BalanceReportInstanceItem, PerformanceReportInstance, \
     PerformanceReportInstanceItem
-from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
 from poms.users.fields import MasterUserField, HiddenMemberField
 

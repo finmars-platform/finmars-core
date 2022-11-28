@@ -1,9 +1,4 @@
-import time
-
 from django.core.management.base import BaseCommand
-from django.db.models import Max, Min
-from django.db.utils import ProgrammingError
-from django_celery_results.models import TaskResult
 
 
 class Command(BaseCommand):
@@ -17,7 +12,6 @@ class Command(BaseCommand):
         from django.contrib.contenttypes.models import ContentType
 
         content_types = ContentType.objects.all()
-
 
         members = Member.objects.all()
 
@@ -37,6 +31,5 @@ class Command(BaseCommand):
                         layout.is_default = True
                         layout.save()
                         count = count + 1
-
 
         self.stdout.write("Job Done. Layouts Affected %s " % count)

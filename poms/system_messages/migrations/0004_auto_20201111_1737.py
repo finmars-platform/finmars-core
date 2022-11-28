@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('system_messages', '0003_systemmessageattachment_file_report'),
     ]

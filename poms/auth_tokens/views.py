@@ -1,9 +1,8 @@
-import json
-import requests
+import logging
 
 from django.contrib.auth.models import User
+from django.utils import translation
 from rest_framework import parsers, renderers
-
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.compat import coreapi, coreschema
 from rest_framework.response import Response
@@ -12,16 +11,10 @@ from rest_framework.schemas import coreapi as coreapi_schema
 from rest_framework.views import APIView
 
 from poms.auth_tokens.models import AuthToken
-
-import logging
-
 from poms.auth_tokens.serializers import SetAuthTokenSerializer, CreateUserSerializer, CreateMasterUserSerializer, \
     CreateMemberSerializer, DeleteMemberSerializer, RenameMasterUserSerializer, MasterUserChangeOwnerSerializer
 from poms.auth_tokens.utils import generate_random_string
 from poms.users.models import MasterUser, Member, UserProfile, Group
-from django.utils import translation
-
-from poms_app import settings
 
 _l = logging.getLogger('poms.auth_tokens')
 
@@ -236,7 +229,6 @@ class CreateMasterUser(APIView):
         kwargs['context'] = self.get_serializer_context()
         return self.serializer_class(*args, **kwargs)
 
-
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -353,6 +345,7 @@ class MasterUserChangeOwner(APIView):
         new_owner_member.save()
         return Response({'status': 'ok'})
 
+
 class CreateMember(APIView):
     throttle_classes = ()
     permission_classes = ()
@@ -456,5 +449,3 @@ class DeleteMember(APIView):
             _l.info("Could not delete member Error %s" % e)
 
         return Response({'status': 'ok'})
-
-

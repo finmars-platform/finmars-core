@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('procedures', '0034_alter_expressionprocedurecontextvariable_expression_and_more'),
     ]

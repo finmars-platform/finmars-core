@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('celery_tasks', '0015_alter_celerytask_status'),
     ]

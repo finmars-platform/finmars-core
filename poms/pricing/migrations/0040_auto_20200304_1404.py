@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('pricing', '0039_auto_20200303_1338'),
     ]
@@ -13,11 +12,17 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='currencypricingscheme',
             name='error_handler',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Add to Error Table and notify in the End'), (2, 'Add to Error Table, no notification'), (3, 'Add to Error Table, notify directly'), (4, 'Notify Directly and request Prices')], default=1, verbose_name='error handler'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(1, 'Add to Error Table and notify in the End'), (2, 'Add to Error Table, no notification'),
+                         (3, 'Add to Error Table, notify directly'), (4, 'Notify Directly and request Prices')],
+                default=1, verbose_name='error handler'),
         ),
         migrations.AlterField(
             model_name='instrumentpricingscheme',
             name='error_handler',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Add to Error Table and notify in the End'), (2, 'Add to Error Table, no notification'), (3, 'Add to Error Table, notify directly'), (4, 'Notify Directly and request Prices')], default=1, verbose_name='error handler'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(1, 'Add to Error Table and notify in the End'), (2, 'Add to Error Table, no notification'),
+                         (3, 'Add to Error Table, notify directly'), (4, 'Notify Directly and request Prices')],
+                default=1, verbose_name='error handler'),
         ),
     ]

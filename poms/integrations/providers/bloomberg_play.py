@@ -1,11 +1,9 @@
 # noinspection PyUnresolvedReferences
 import django
 
-import env_ai
-
 django.setup()
 
-from poms.integrations.providers.bloomberg import get_certs_from_file, FakeBloombergDataProvider, BloombergDataProvider
+from poms.integrations.providers.bloomberg import get_certs_from_file, FakeBloombergDataProvider
 
 import logging
 import os

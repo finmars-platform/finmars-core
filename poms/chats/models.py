@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.utils.text import Truncator
 from django.utils.translation import get_language, gettext_lazy
 
-from poms.common.models import TimeStampedModel, NamedModel, FakeDeletableModel
+from poms.common.models import TimeStampedModel, FakeDeletableModel
 from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser, Member
 
@@ -53,7 +53,8 @@ class ThreadGroup(FakeDeletableModel, models.Model):
 
 
 class Thread(TimeStampedModel, FakeDeletableModel):
-    master_user = models.ForeignKey(MasterUser, related_name='chat_threads', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey(MasterUser, related_name='chat_threads', verbose_name=gettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
     thread_group = models.ForeignKey(ThreadGroup, related_name='groups', null=True, blank=True,
                                      verbose_name=gettext_lazy('thread group'), on_delete=models.CASCADE)
     subject = models.CharField(max_length=255, verbose_name=gettext_lazy('subject'))
@@ -94,8 +95,10 @@ class Thread(TimeStampedModel, FakeDeletableModel):
 
 
 class Message(TimeStampedModel):
-    thread = models.ForeignKey(Thread, related_name='messages', verbose_name=gettext_lazy('thread'), on_delete=models.CASCADE)
-    sender = models.ForeignKey(Member, related_name='chat_sent_messages', verbose_name=gettext_lazy('sender'), on_delete=models.CASCADE)
+    thread = models.ForeignKey(Thread, related_name='messages', verbose_name=gettext_lazy('thread'),
+                               on_delete=models.CASCADE)
+    sender = models.ForeignKey(Member, related_name='chat_sent_messages', verbose_name=gettext_lazy('sender'),
+                               on_delete=models.CASCADE)
     text = models.TextField(verbose_name=gettext_lazy('text'))
 
     class Meta(TimeStampedModel.Meta):

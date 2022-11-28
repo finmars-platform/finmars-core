@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('pricing', '0066_pricingprocedurebloombergforwardinstrumentresult'),
     ]

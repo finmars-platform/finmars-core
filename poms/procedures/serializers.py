@@ -1,3 +1,6 @@
+from rest_framework import serializers
+
+from poms.common import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithTimeStampSerializer
@@ -5,8 +8,6 @@ from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, P
     PricingParentProcedureInstance, RequestDataFileProcedureInstance, ExpressionProcedure, ExpressionProcedureInstance, \
     ExpressionProcedureContextVariable
 from poms.users.fields import MasterUserField
-from rest_framework import serializers
-from poms.common import formula
 
 
 class PricingProcedureSerializer(serializers.ModelSerializer):
@@ -170,7 +171,8 @@ class ExpressionProcedureContextVariableSerializer(serializers.ModelSerializer):
 
 
 class ExpressionProcedureSerializer(ModelWithTimeStampSerializer):
-    context_variables = ExpressionProcedureContextVariableSerializer(many=True, allow_null=True, required=False, read_only=False)
+    context_variables = ExpressionProcedureContextVariableSerializer(many=True, allow_null=True, required=False,
+                                                                     read_only=False)
 
     master_user = MasterUserField()
     data = serializers.JSONField(allow_null=True, required=False)

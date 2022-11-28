@@ -1,9 +1,4 @@
-import time
-
 from django.core.management.base import BaseCommand
-from django.db.models import Max, Min
-from django.db.utils import ProgrammingError
-from django_celery_results.models import TaskResult
 
 
 class Command(BaseCommand):

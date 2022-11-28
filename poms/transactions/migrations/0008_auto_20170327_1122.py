@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0007_auto_20170214_0815'),
     ]
@@ -15,11 +14,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transactiontypeinput',
             name='value_expr',
-            field=models.CharField(blank=True, help_text='this is expression for recalculate value', max_length=255, null=True, verbose_name='value expression'),
+            field=models.CharField(blank=True, help_text='this is expression for recalculate value', max_length=255,
+                                   null=True, verbose_name='value expression'),
         ),
         migrations.AlterField(
             model_name='transactiontypeinput',
             name='value',
-            field=models.CharField(blank=True, help_text='this is expression for default value', max_length=255, null=True, verbose_name='value'),
+            field=models.CharField(blank=True, help_text='this is expression for default value', max_length=255,
+                                   null=True, verbose_name='value'),
         ),
     ]

@@ -10,7 +10,6 @@ from poms.users.models import Member, Group
 
 
 class CurrentMasterUserDefault(object):
-
     requires_context = True
 
     def set_context(self, serializer_field):
@@ -31,7 +30,6 @@ class CurrentMasterUserDefault(object):
 
 
 class CurrentUserDefaultLocal(object):
-
     requires_context = True
 
     def set_context(self, serializer_field):
@@ -58,7 +56,6 @@ class CurrentUserField(serializers.HiddenField):
 
 
 class CurrentMemberDefault(object):
-
     requires_context = True
 
     def set_context(self, serializer_field):
@@ -68,16 +65,17 @@ class CurrentMemberDefault(object):
         self._member = member
 
     def __call__(self, serializer_field):
-
         self.set_context(serializer_field)
 
         # return self._member
         return getattr(self, '_member', None)
 
+
 class HiddenMemberField(serializers.HiddenField):
     def __init__(self, **kwargs):
         kwargs['default'] = CurrentMemberDefault()
         super(HiddenMemberField, self).__init__(**kwargs)
+
 
 # TODO deprecated from django 1.10
 # class HiddenMemberField(serializers.PrimaryKeyRelatedField):

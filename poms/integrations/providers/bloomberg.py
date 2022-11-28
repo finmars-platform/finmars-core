@@ -19,7 +19,6 @@ from poms.instruments.models import AccrualCalculationSchedule, InstrumentFactor
 from poms.integrations.models import FactorScheduleDownloadMethod, AccrualScheduleDownloadMethod, ProviderClass, \
     InstrumentDownloadScheme, PriceDownloadScheme
 from poms.integrations.providers.base import AbstractProvider, ProviderException, parse_date_iso
-from poms.common.utils import date_now, isclose
 
 _l = logging.getLogger('poms.integrations.providers.bloomberg')
 

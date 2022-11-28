@@ -1,4 +1,5 @@
 import logging
+import statistics
 import sys
 import time
 from collections import Counter, defaultdict
@@ -6,22 +7,19 @@ from datetime import date
 from itertools import groupby
 
 from django.db.models import Q
-
-from poms.common.utils import isclose
-from poms.instruments.models import CostMethod, InstrumentClass, Instrument
 from poms.reports.builders.balance_item import ReportItem, Report
 from poms.reports.builders.balance_virt_trn import VirtualTransaction
 from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.builders.pricing import FakeInstrumentPricingProvider, FakeCurrencyFxRateProvider, \
     CurrencyFxRateProvider
 from poms.reports.builders.pricing import InstrumentPricingProvider
+
+from poms.common.utils import isclose
+from poms.instruments.models import CostMethod, InstrumentClass, Instrument
 from poms.reports.models import BalanceReportCustomField
 from poms.transactions.models import TransactionClass, Transaction
-import statistics
-
 
 _l = logging.getLogger('poms.reports')
-
 
 
 class ReportBuilder(BaseReportBuilder):
@@ -113,19 +111,22 @@ class ReportBuilder(BaseReportBuilder):
 
         self._transaction_pricing()
 
-        _l.debug('build transactions_pricing_st done: %s', "{:3.3f}".format(time.perf_counter() - transactions_pricing_st))
+        _l.debug('build transactions_pricing_st done: %s',
+                 "{:3.3f}".format(time.perf_counter() - transactions_pricing_st))
 
         transactions_multipliers_st = time.perf_counter()
 
         self._transaction_multipliers()
 
-        _l.debug('build transactions_multipliers_st done: %s', "{:3.3f}".format(time.perf_counter() - transactions_multipliers_st))
+        _l.debug('build transactions_multipliers_st done: %s',
+                 "{:3.3f}".format(time.perf_counter() - transactions_multipliers_st))
 
         clone_transactions_if_need_st = time.perf_counter()
 
         self._clone_transactions_if_need()
 
-        _l.debug('build clone_transactions_if_need_st done: %s', "{:3.3f}".format(time.perf_counter() - clone_transactions_if_need_st))
+        _l.debug('build clone_transactions_if_need_st done: %s',
+                 "{:3.3f}".format(time.perf_counter() - clone_transactions_if_need_st))
 
         transaction_calc_st = time.perf_counter()
 
@@ -198,13 +199,15 @@ class ReportBuilder(BaseReportBuilder):
 
         self._load_transactions()
 
-        _l.debug('build_position_only load_transactions_st done: %s', "{:3.3f}".format(time.perf_counter() - load_transactions_st))
+        _l.debug('build_position_only load_transactions_st done: %s',
+                 "{:3.3f}".format(time.perf_counter() - load_transactions_st))
 
         clone_transactions_st = time.perf_counter()
 
         self._clone_transactions_if_need()
 
-        _l.debug('build_position_only clone_transactions_st done: %s', "{:3.3f}".format(time.perf_counter() - clone_transactions_st))
+        _l.debug('build_position_only clone_transactions_st done: %s',
+                 "{:3.3f}".format(time.perf_counter() - clone_transactions_st))
 
         # self.instance.transactions = self._transactions
         if not self._transactions:
@@ -214,13 +217,15 @@ class ReportBuilder(BaseReportBuilder):
 
         self._generate_items()
 
-        _l.debug('build_position_only generate_items_st done: %s', "{:3.3f}".format(time.perf_counter() - generate_items_st))
+        _l.debug('build_position_only generate_items_st done: %s',
+                 "{:3.3f}".format(time.perf_counter() - generate_items_st))
 
         sorted_items_st = time.perf_counter()
 
         sorted_items = sorted(self._items, key=lambda item: self._item_group_key(item))
 
-        _l.debug('build_position_only sorted_items_st done: %s', "{:3.3f}".format(time.perf_counter() - sorted_items_st))
+        _l.debug('build_position_only sorted_items_st done: %s',
+                 "{:3.3f}".format(time.perf_counter() - sorted_items_st))
 
         _l.debug('build_position_only aggregate items')
 
@@ -369,13 +374,10 @@ class ReportBuilder(BaseReportBuilder):
         from poms.currencies.models import Currency
         from poms.portfolios.models import Portfolio
         from poms.accounts.models import Account
-        from poms.accounts.models import AccountType
 
         from poms.strategies.models import Strategy1
         from poms.strategies.models import Strategy2
         from poms.strategies.models import Strategy3
-
-        from poms.obj_perms.utils import get_permissions_prefetch_lookups
 
         transaction_classes_list = TransactionClass.objects.all()
 
@@ -579,7 +581,6 @@ class ReportBuilder(BaseReportBuilder):
         from poms.currencies.models import Currency
         from poms.portfolios.models import Portfolio
         from poms.accounts.models import Account
-        from poms.accounts.models import AccountType
 
         from poms.strategies.models import Strategy1
         from poms.strategies.models import Strategy2
@@ -614,7 +615,8 @@ class ReportBuilder(BaseReportBuilder):
 
         instruments_dict = self.list_as_dict(instruments_list)
 
-        _l.debug('_inject_relations_ids_only load instruments done: %s', "{:3.3f}".format(time.perf_counter() - instrument_st))
+        _l.debug('_inject_relations_ids_only load instruments done: %s',
+                 "{:3.3f}".format(time.perf_counter() - instrument_st))
 
         class Trn:
             pass
@@ -714,7 +716,8 @@ class ReportBuilder(BaseReportBuilder):
 
             result.append(t)
 
-        _l.debug('_inject_relations_ids_only create transactions done: %s', "{:3.3f}".format(time.perf_counter() - iteration_st))
+        _l.debug('_inject_relations_ids_only create transactions done: %s',
+                 "{:3.3f}".format(time.perf_counter() - iteration_st))
 
         _l.debug('_inject_relations_ids_only done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
@@ -905,7 +908,6 @@ class ReportBuilder(BaseReportBuilder):
 
             st_data.append(duration_st)
 
-
         _l.debug('build transaction_calc total slowest %s (threshold %s)' % (slowest_count, threshold))
         if st_slowest:
             _l.debug('build transaction_calc slowest %s' % "{:3.3f}".format(st_slowest))
@@ -914,7 +916,6 @@ class ReportBuilder(BaseReportBuilder):
             _l.debug('build transaction_calc fastest %s' % "{:3.6f}".format(st_fastest))
         if len(st_data):
             _l.debug('build transaction_calc median %s' % "{:3.6f}".format(statistics.median(st_data)))
-
 
     def _clone_transactions_if_need(self):
         # _l.debug('transactions - clone if need')
@@ -1098,7 +1099,7 @@ class ReportBuilder(BaseReportBuilder):
     def _calc_avco_multipliers(self):
         # _l.debug('transactions - calculate multipliers - avco')
 
-        items = defaultdict(list) # храним только еще не закрытые позиции
+        items = defaultdict(list)  # храним только еще не закрытые позиции
 
         # {"portfolio.id,instrument.id": [
         # trn1
@@ -1112,8 +1113,7 @@ class ReportBuilder(BaseReportBuilder):
 
         def _close_by(closed, cur, delta):
             # closed.avco_closed_by.append(VirtualTransactionClosedByData(cur, delta))
-            closed.avco_closed_by.append((cur, delta)) # возможно избыточно
-
+            closed.avco_closed_by.append((cur, delta))  # возможно избыточно
 
         # {
         # portfolio.id = 1,
@@ -1130,10 +1130,9 @@ class ReportBuilder(BaseReportBuilder):
         #
         # }
 
-
         for t in self._transactions:
 
-            t_key = self._get_trn_group_key(t) # вычленяем key из транзакции
+            t_key = self._get_trn_group_key(t)  # вычленяем key из транзакции
 
             if t.trn_cls.id == TransactionClass.INSTRUMENT_PL:
                 t.avco_rolling_pos_size = self.avco_rolling_positions[t_key]
@@ -1160,19 +1159,20 @@ class ReportBuilder(BaseReportBuilder):
                     for t0 in items[t_key]:
                         delta = _set_mul(t0, 1.0)  # во всех предыдущих поставить 1
                         _close_by(t0, t, delta)
-                    del items[t_key] # закрыли и удалили
+                    del items[t_key]  # закрыли и удалили
                 items[t_key].append(t)
-                _set_mul(t, 1.0 / k) # часть закрыли, а часть осталась
+                _set_mul(t, 1.0 / k)  # часть закрыли, а часть осталась
                 rolling_pos = t.pos_size * (1.0 - t.avco_multiplier)  # добавляем только незакрытую часть транзакции
 
             elif isclose(k, 1.0):
                 # Закрыли все позиции (возможно есть нюанс)
                 if t_key in items:
                     for t0 in items[t_key]:
-                        delta = _set_mul(t0, 1.0) # вместо формулы ставим 1, так как знает что эта транзакция все закрывает
-                                                  # та формула - t0.avco_multiplier + k * (1.0 - t0.avco_multiplier
+                        delta = _set_mul(t0,
+                                         1.0)  # вместо формулы ставим 1, так как знает что эта транзакция все закрывает
+                        # та формула - t0.avco_multiplier + k * (1.0 - t0.avco_multiplier
                         _close_by(t0, t, delta)
-                    del items[t_key] # закрыли и удалили
+                    del items[t_key]  # закрыли и удалили
                 _set_mul(t, 1.0)
                 rolling_pos = 0.0
 
@@ -1186,18 +1186,18 @@ class ReportBuilder(BaseReportBuilder):
                     # равномерное распределение по оставшимся открым позициям
 
                     for t0 in items[t_key]:
+                        delta = _set_mul(t0, t0.avco_multiplier + k * (
+                                    1.0 - t0.avco_multiplier))  # amendment avco multiplicators
+                        _close_by(t0, t, delta)  # здесь записали кем была закрыта базовая транзакция
 
-                        delta = _set_mul(t0, t0.avco_multiplier + k * (1.0 - t0.avco_multiplier)) # amendment avco multiplicators
-                        _close_by(t0, t, delta) # здесь записали кем была закрыта базовая транзакция
-
-                _set_mul(t, 1.0) # из-за того что rolling был больше чем position_with_sign текущей транзакции
+                _set_mul(t, 1.0)  # из-за того что rolling был больше чем position_with_sign текущей транзакции
                 rolling_pos += t.pos_size
 
             else:
                 # K < 0, либо дооткрыли либо допродали
                 # если K равно -1 - это значит, что транзакций, либо не было, либо они были все закрыты
 
-                items[t_key].append(t) # добавили в items[t_key] для повторного возвращения
+                items[t_key].append(t)  # добавили в items[t_key] для повторного возвращения
                 rolling_pos += t.pos_size  # увеличили
 
             self.avco_rolling_positions[t_key] = rolling_pos  # обновили rolling pos у самой позиции
@@ -1235,7 +1235,7 @@ class ReportBuilder(BaseReportBuilder):
 
             # _l.debug('self.fifo_rolling_positions[t_key] %s ' % self.fifo_rolling_positions[t_key])
 
-            if isclose(rolling_pos, 0.0): # isclose - is first parameter equal to second parameter
+            if isclose(rolling_pos, 0.0):  # isclose - is first parameter equal to second parameter
                 k = -1
             else:
                 k = - t.pos_size / rolling_pos
@@ -1268,7 +1268,8 @@ class ReportBuilder(BaseReportBuilder):
                 if t_key in items:
                     t_items = items[t_key]
                     for t0 in t_items:
-                        remaining = t0.pos_size * (1.0 - t0.fifo_multiplier) # remaining - в каждой транзакции ищем остатки позиции
+                        remaining = t0.pos_size * (
+                                    1.0 - t0.fifo_multiplier)  # remaining - в каждой транзакции ищем остатки позиции
                         k0 = - position / remaining
                         if k0 > 1.0:
                             delta = _set_mul(t0, 1.0)
@@ -1284,7 +1285,7 @@ class ReportBuilder(BaseReportBuilder):
                             _close_by(t0, t, delta)
                         # else:
                         #     break
-                        if isclose(position, 0.0): # возможно unreachable
+                        if isclose(position, 0.0):  # возможно unreachable
                             break
                     t_items = [t0 for t0 in t_items if not isclose(t0.fifo_multiplier, 1.0)]
                     if t_items:
@@ -1292,7 +1293,7 @@ class ReportBuilder(BaseReportBuilder):
                     else:
                         del items[t_key]
 
-                _set_mul(t, abs((t.pos_size - position) / t.pos_size)) # здесь возможно position всегда равен 0
+                _set_mul(t, abs((t.pos_size - position) / t.pos_size))  # здесь возможно position всегда равен 0
                 rolling_pos += t.pos_size * t.fifo_multiplier
 
             else:
@@ -1808,11 +1809,12 @@ class ReportBuilder(BaseReportBuilder):
         # TODO END HERE
 
         _l.debug('_refresh_with_perms_optimized instance relations done: %s',
-                "{:3.3f}".format(time.perf_counter() - instance_relations_st))
+                 "{:3.3f}".format(time.perf_counter() - instance_relations_st))
 
         permissions_st = time.perf_counter()
 
-        _l.debug('_refresh_with_perms_optimized permissions done: %s', "{:3.3f}".format(time.perf_counter() - permissions_st))
+        _l.debug('_refresh_with_perms_optimized permissions done: %s',
+                 "{:3.3f}".format(time.perf_counter() - permissions_st))
 
         item_relations_st = time.perf_counter()
 
@@ -1845,13 +1847,12 @@ class ReportBuilder(BaseReportBuilder):
                                                                                 attribute_types)
 
         _l.debug('_refresh_with_perms_optimized set attribute types done: %s',
-                "{:3.3f}".format(time.perf_counter() - attribute_types_st))
+                 "{:3.3f}".format(time.perf_counter() - attribute_types_st))
 
-        _l.debug('_refresh_with_perms_optimized item relations done: %s', "{:3.3f}".format(time.perf_counter() - item_relations_st))
+        _l.debug('_refresh_with_perms_optimized item relations done: %s',
+                 "{:3.3f}".format(time.perf_counter() - item_relations_st))
 
         pass
-
-
 
     def _refresh_with_perms(self):
         # _l.debug('items - refresh all objects with permissions')

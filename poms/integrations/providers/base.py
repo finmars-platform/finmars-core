@@ -160,7 +160,6 @@ class AbstractProvider(object):
             if not getattr(instr, attr):
                 setattr(instr, attr, v)
 
-
     def create_instrument(self, instrument_download_scheme, values):
 
         _l.info("Create instrument scheme %s" % instrument_download_scheme)
@@ -181,8 +180,9 @@ class AbstractProvider(object):
                         try:
                             values_converted[key] = formula.safe_eval(input.name_expr, names=values)
                         except formula.InvalidExpression:
-                            _l.info('Invalid instrument attribute expression conversion: id=%s, input=%s, expr=%s, values=%s',
-                                     instrument_download_scheme.id, input, input.name_expr, values)
+                            _l.info(
+                                'Invalid instrument attribute expression conversion: id=%s, input=%s, expr=%s, values=%s',
+                                instrument_download_scheme.id, input, input.name_expr, values)
                             errors[input] = [gettext_lazy('Invalid expression.')]
                             continue
 
@@ -190,7 +190,8 @@ class AbstractProvider(object):
                 user_code = formula.safe_eval(instrument_download_scheme.instrument_user_code, names=values_converted)
             except formula.InvalidExpression:
                 _l.info('Invalid instrument attribute expression: id=%s, attr=%s, expr=%s, values=%s',
-                         instrument_download_scheme.id, 'instrument_user_code', instrument_download_scheme.instrument_user_code, values)
+                        instrument_download_scheme.id, 'instrument_user_code',
+                        instrument_download_scheme.instrument_user_code, values)
                 errors['instrument_user_code'] = [gettext_lazy('Invalid expression.')]
                 instr = Instrument(master_user=master_user)
                 return instr, errors
@@ -216,7 +217,7 @@ class AbstractProvider(object):
                     v = formula.safe_eval(expr, names=values_converted)
                 except formula.InvalidExpression:
                     _l.info('Invalid instrument attribute expression: id=%s, attr=%s, expr=%s, values=%s',
-                             instrument_download_scheme.id, attr, expr, values)
+                            instrument_download_scheme.id, attr, expr, values)
                     errors[attr] = [gettext_lazy('Invalid expression.')]
 
                     v = 'Invalid Expression'
@@ -264,13 +265,15 @@ class AbstractProvider(object):
                         else:
                             errors[attr] = [gettext_lazy('A valid date is required.')]
 
-                elif attr in ('instrument_user_code', 'instrument_name', 'instrument_short_name', 'instrument_public_name', 'instrument_notes'):
+                elif attr in (
+                'instrument_user_code', 'instrument_name', 'instrument_short_name', 'instrument_public_name',
+                'instrument_notes'):
                     if self.is_empty_value(v):
                         pass
                     else:
                         v = str(v)
 
-                        instr_attr = attr[11:] # substring "instrument_" prefix
+                        instr_attr = attr[11:]  # substring "instrument_" prefix
 
                         # setattr(instr, instr_attr, v)
                         self.set_instrument_attr(instrument_download_scheme, instr, instr_attr, v)
@@ -319,8 +322,9 @@ class AbstractProvider(object):
                     try:
                         v = formula.safe_eval(attr.value, names=values)
                     except formula.InvalidExpression:
-                        _l.debug('Invalid instrument dynamic attribute expression: id=%s, attr=%s, expr="%s", values=%s',
-                                 instrument_download_scheme.id, attr.id, attr.value, values)
+                        _l.debug(
+                            'Invalid instrument dynamic attribute expression: id=%s, attr=%s, expr="%s", values=%s',
+                            instrument_download_scheme.id, attr.id, attr.value, values)
                         errors[err_name] = [gettext_lazy('Invalid expression.')]
                         continue
                     # if not self.is_empty_value(v):
@@ -474,7 +478,6 @@ def get_provider(master_user=None, provider=None, task=None):
         else:
             from poms.integrations.providers.bloomberg import BloombergDataProvider
 
-
             try:
 
                 _l.debug("Trying to get bloomberg credentials")
@@ -497,8 +500,6 @@ def get_provider(master_user=None, provider=None, task=None):
                     return BloombergDataProvider(cert=cert, key=key)
                 except (ObjectDoesNotExist, FileNotFoundError, ValueError):
                     raise ProviderNotConfiguredException()
-
-
 
     return None
 

@@ -1,7 +1,6 @@
-
 from rest_framework import serializers
 
-from poms.users.fields import MasterUserField, MemberField, HiddenMemberField
+from poms.users.fields import MasterUserField, HiddenMemberField
 
 
 class GenerateConfigurationEntityArchetype:

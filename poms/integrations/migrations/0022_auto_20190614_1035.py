@@ -6,7 +6,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('integrations', '0021_instrumentdownloadschemeinput_name_expr'),
     ]

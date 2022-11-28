@@ -6,7 +6,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0003_masteruser_transaction_type_group'),
         ('integrations', '0012_auto_20180511_1027'),

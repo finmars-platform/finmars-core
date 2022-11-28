@@ -20,7 +20,7 @@ class PortalInterfaceAccessModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = PortalInterfaceAccessModel
         fields = [
-           'id', 'value', 'user_code', 'name'
+            'id', 'value', 'user_code', 'name'
         ]
 
 
@@ -33,14 +33,12 @@ class TransactionUserFieldSerializer(serializers.ModelSerializer):
 
 
 class ColorPaletteColorSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ColorPaletteColor
         fields = ['id', 'order', 'name', 'value', 'tooltip']
 
 
 class ColorPaletteSerializer(serializers.ModelSerializer):
-
     master_user = MasterUserField()
 
     colors = ColorPaletteColorSerializer(many=True)
@@ -91,7 +89,6 @@ class ColorPaletteSerializer(serializers.ModelSerializer):
 
 
 class EntityTooltipSerializer(serializers.ModelSerializer):
-
     master_user = MasterUserField()
 
     content_type = LayoutContentTypeField()
@@ -102,7 +99,6 @@ class EntityTooltipSerializer(serializers.ModelSerializer):
 
 
 class CrossEntityAttributeExtensionSerializer(serializers.ModelSerializer):
-
     master_user = MasterUserField()
 
     context_content_type = LayoutContentTypeField()
@@ -120,7 +116,6 @@ class CrossEntityAttributeExtensionSerializer(serializers.ModelSerializer):
 
 
 class ColumnSortDataSerializer(serializers.ModelSerializer):
-
     member = HiddenMemberField()
     data = serializers.JSONField(allow_null=False)
 
@@ -152,7 +147,8 @@ class ContextMenuLayoutSerializer(ModelWithTimeStampSerializer):
 
     class Meta:
         model = ContextMenuLayout
-        fields = ['id', 'member', 'type', 'name',  'user_code', 'data', 'origin_for_global_layout', 'sourced_from_global_layout']
+        fields = ['id', 'member', 'type', 'name', 'user_code', 'data', 'origin_for_global_layout',
+                  'sourced_from_global_layout']
 
 
 class ListLayoutSerializer(ModelWithTimeStampSerializer):
@@ -162,7 +158,8 @@ class ListLayoutSerializer(ModelWithTimeStampSerializer):
 
     class Meta:
         model = ListLayout
-        fields = ['id', 'member', 'content_type', 'name', 'user_code', 'is_default', 'is_active', 'is_systemic', 'data', 'origin_for_global_layout', 'sourced_from_global_layout']
+        fields = ['id', 'member', 'content_type', 'name', 'user_code', 'is_default', 'is_active', 'is_systemic', 'data',
+                  'origin_for_global_layout', 'sourced_from_global_layout']
 
     def to_representation(self, instance):
 
@@ -178,7 +175,8 @@ class ListLayoutSerializer(ModelWithTimeStampSerializer):
 
             try:
 
-                layout_archetype = LayoutArchetype.objects.get(content_type=instance.content_type, master_user=instance.member.master_user)
+                layout_archetype = LayoutArchetype.objects.get(content_type=instance.content_type,
+                                                               master_user=instance.member.master_user)
 
                 instance.data = recursive_dict_fix(layout_archetype.data, instance.data)
 
@@ -200,7 +198,8 @@ class ListLayoutLightSerializer(ModelWithTimeStampSerializer):
 
     class Meta:
         model = ListLayout
-        fields = ['id', 'member', 'content_type', 'name', 'user_code', 'is_default', 'is_active', 'is_systemic', 'origin_for_global_layout', 'sourced_from_global_layout']
+        fields = ['id', 'member', 'content_type', 'name', 'user_code', 'is_default', 'is_active', 'is_systemic',
+                  'origin_for_global_layout', 'sourced_from_global_layout']
 
 
 class DashboardLayoutSerializer(ModelWithTimeStampSerializer):
@@ -209,7 +208,8 @@ class DashboardLayoutSerializer(ModelWithTimeStampSerializer):
 
     class Meta:
         model = DashboardLayout
-        fields = ['id', 'member', 'name', 'user_code', 'is_default', 'is_active', 'data', 'origin_for_global_layout', 'sourced_from_global_layout']
+        fields = ['id', 'member', 'name', 'user_code', 'is_default', 'is_active', 'data', 'origin_for_global_layout',
+                  'sourced_from_global_layout']
 
 
 class DashboardLayoutLightSerializer(ModelWithTimeStampSerializer):
@@ -217,7 +217,8 @@ class DashboardLayoutLightSerializer(ModelWithTimeStampSerializer):
 
     class Meta:
         model = DashboardLayout
-        fields = ['id', 'member', 'name', 'user_code', 'is_default', 'is_active', 'origin_for_global_layout', 'sourced_from_global_layout']
+        fields = ['id', 'member', 'name', 'user_code', 'is_default', 'is_active', 'origin_for_global_layout',
+                  'sourced_from_global_layout']
 
 
 class ConfigurationExportLayoutSerializer(ModelWithTimeStampSerializer):

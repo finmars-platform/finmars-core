@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('instruments', '0052_auto_20210520_1137'),
     ]
@@ -12,11 +11,13 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='accrualcalculationmodel',
-            options={'ordering': ['name'], 'verbose_name': 'accrual calculation model', 'verbose_name_plural': 'accrual calculation models'},
+            options={'ordering': ['name'], 'verbose_name': 'accrual calculation model',
+                     'verbose_name_plural': 'accrual calculation models'},
         ),
         migrations.AlterModelOptions(
             name='accrualcalculationschedule',
-            options={'ordering': ['accrual_start_date'], 'verbose_name': 'accrual calculation schedule', 'verbose_name_plural': 'accrual calculation schedules'},
+            options={'ordering': ['accrual_start_date'], 'verbose_name': 'accrual calculation schedule',
+                     'verbose_name_plural': 'accrual calculation schedules'},
         ),
         migrations.AlterModelOptions(
             name='costmethod',
@@ -24,31 +25,39 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterModelOptions(
             name='exposurecalculationmodel',
-            options={'ordering': ['name'], 'verbose_name': 'Exposure calculation model', 'verbose_name_plural': 'Exposure calculation models '},
+            options={'ordering': ['name'], 'verbose_name': 'Exposure calculation model',
+                     'verbose_name_plural': 'Exposure calculation models '},
         ),
         migrations.AlterModelOptions(
             name='instrument',
-            options={'ordering': ['user_code'], 'permissions': [('manage_instrument', 'Can manage instrument')], 'verbose_name': 'instrument', 'verbose_name_plural': 'instruments'},
+            options={'ordering': ['user_code'], 'permissions': [('manage_instrument', 'Can manage instrument')],
+                     'verbose_name': 'instrument', 'verbose_name_plural': 'instruments'},
         ),
         migrations.AlterModelOptions(
             name='instrumentclass',
-            options={'ordering': ['name'], 'verbose_name': 'instrument class', 'verbose_name_plural': 'instrument classes'},
+            options={'ordering': ['name'], 'verbose_name': 'instrument class',
+                     'verbose_name_plural': 'instrument classes'},
         ),
         migrations.AlterModelOptions(
             name='instrumentfactorschedule',
-            options={'ordering': ['effective_date'], 'verbose_name': 'instrument factor schedule', 'verbose_name_plural': 'instrument factor schedules'},
+            options={'ordering': ['effective_date'], 'verbose_name': 'instrument factor schedule',
+                     'verbose_name_plural': 'instrument factor schedules'},
         ),
         migrations.AlterModelOptions(
             name='instrumenttype',
-            options={'ordering': ['user_code'], 'permissions': [('manage_instrumenttype', 'Can manage instrument type')], 'verbose_name': 'instrument type', 'verbose_name_plural': 'instrument types'},
+            options={'ordering': ['user_code'],
+                     'permissions': [('manage_instrumenttype', 'Can manage instrument type')],
+                     'verbose_name': 'instrument type', 'verbose_name_plural': 'instrument types'},
         ),
         migrations.AlterModelOptions(
             name='longunderlyingexposure',
-            options={'ordering': ['name'], 'verbose_name': 'Long underlying exposure', 'verbose_name_plural': 'Long underlying exposure '},
+            options={'ordering': ['name'], 'verbose_name': 'Long underlying exposure',
+                     'verbose_name_plural': 'Long underlying exposure '},
         ),
         migrations.AlterModelOptions(
             name='paymentsizedetail',
-            options={'ordering': ['name'], 'verbose_name': 'payment size detail', 'verbose_name_plural': 'payment size details'},
+            options={'ordering': ['name'], 'verbose_name': 'payment size detail',
+                     'verbose_name_plural': 'payment size details'},
         ),
         migrations.AlterModelOptions(
             name='periodicity',
@@ -60,6 +69,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterModelOptions(
             name='shortunderlyingexposure',
-            options={'ordering': ['name'], 'verbose_name': 'Short underlying exposure', 'verbose_name_plural': 'Short underlying exposure '},
+            options={'ordering': ['name'], 'verbose_name': 'Short underlying exposure',
+                     'verbose_name_plural': 'Short underlying exposure '},
         ),
     ]

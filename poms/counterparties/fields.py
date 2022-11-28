@@ -18,7 +18,6 @@ from poms.users.filters import OwnerByMasterUserFilter
 
 
 class CounterpartyGroupDefault(object):
-
     requires_context = True
 
     def set_context(self, serializer_field):
@@ -39,6 +38,7 @@ class CounterpartyGroupField(PrimaryKeyRelatedFilteredWithObjectPermissionField)
 
 class CounterpartyDefault(object):
     requires_context = True
+
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         self._master_user = request.user.master_user
@@ -69,6 +69,7 @@ class CounterpartyField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
 
 class ResponsibleGroupDefault(object):
     requires_context = True
+
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         self._master_user = request.user.master_user
@@ -87,6 +88,7 @@ class ResponsibleGroupField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
 
 class ResponsibleDefault(object):
     requires_context = True
+
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         self._master_user = request.user.master_user

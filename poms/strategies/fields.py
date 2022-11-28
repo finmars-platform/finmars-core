@@ -29,6 +29,7 @@ class Strategy1Field(PrimaryKeyRelatedFilteredWithObjectPermissionField):
 
 class Strategy1GroupDefault(object):
     requires_context = True
+
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         self._master_user = request.user.master_user
@@ -40,6 +41,7 @@ class Strategy1GroupDefault(object):
 
 class Strategy1SubgroupDefault(object):
     requires_context = True
+
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         self._master_user = request.user.master_user

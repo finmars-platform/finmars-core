@@ -53,7 +53,6 @@ class CounterpartyApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestC
         #                   users=[self._a0, self._a1, self._a2], groups=['g1', 'g2'],
         #                   perms=get_perms_codename(self.type_def, ['change', 'view']))
 
-
     def _create_obj(self, name='counterparty'):
         return self.create_counterparty(name, self._a_master_user)
 

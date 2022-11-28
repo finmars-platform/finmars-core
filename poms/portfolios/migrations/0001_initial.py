@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -22,11 +21,14 @@ class Migration(migrations.Migration):
                 ('user_code', models.CharField(blank=True, max_length=25, null=True, verbose_name='user code')),
                 ('name', models.CharField(max_length=255, verbose_name='name')),
                 ('short_name', models.CharField(blank=True, max_length=50, null=True, verbose_name='short name')),
-                ('public_name', models.CharField(blank=True, help_text='used if user does not have permissions to view object', max_length=255, null=True, verbose_name='public name')),
+                ('public_name',
+                 models.CharField(blank=True, help_text='used if user does not have permissions to view object',
+                                  max_length=255, null=True, verbose_name='public name')),
                 ('notes', models.TextField(blank=True, null=True, verbose_name='notes')),
                 ('is_deleted', models.BooleanField(db_index=True, default=False)),
                 ('accounts', models.ManyToManyField(blank=True, related_name='portfolios', to='accounts.Account')),
-                ('counterparties', models.ManyToManyField(blank=True, related_name='portfolios', to='counterparties.Counterparty')),
+                ('counterparties',
+                 models.ManyToManyField(blank=True, related_name='portfolios', to='counterparties.Counterparty')),
             ],
             options={
                 'abstract': False,
