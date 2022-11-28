@@ -165,7 +165,10 @@ class BootstrapConfig(AppConfig):
             _l.info("register_at_authorizer_service error %s" % e)
 
     def sync_users_at_authorizer_service(self):
-        from poms.users.models import User, Member, MasterUser
+
+        from django.contrib.auth.models import User
+
+        from poms.users.models import Member, MasterUser
 
         try:
             _l.info("sync_users_at_authorizer_service processing")
