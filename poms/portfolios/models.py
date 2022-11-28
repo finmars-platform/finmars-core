@@ -73,9 +73,6 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     def save(self, *args, **kwargs):
         super(PortfolioRegister, self).save(*args, **kwargs)
 
-        from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_price_history
-
-
         if self.linked_instrument:
             self.linked_instrument.has_linked_with_portfolio = True
             self.linked_instrument.save()
