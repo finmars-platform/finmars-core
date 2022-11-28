@@ -39,7 +39,7 @@ class BootstrapConfig(AppConfig):
 
     def load_master_user_data(self):
 
-        from django.contrib.auth.models import Userg
+        from django.contrib.auth.models import User
         from poms.users.models import Member, MasterUser, Group, UserProfile
 
         try:
