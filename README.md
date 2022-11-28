@@ -241,3 +241,4 @@ pip install psutil # for healthcheck
 pip install pyotp # possibly can be removed
 pip install uwsgi
 pip install django-cprofile-middleware
+pip install flower
