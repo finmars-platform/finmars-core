@@ -150,3 +150,4 @@ query_result_before_execution_pl.txt
 pylint_result.json
 dump.sql
 requirements-old.txt
+Dockerfile-old.txt
