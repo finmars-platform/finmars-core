@@ -340,7 +340,7 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
 
         for portfolio_register in portfolio_registers:
 
-            if date_from and isinstance(date_from, str):
+            if date_from and isinstance(date_from, str) and date_from != 'None':
                 format = '%Y-%m-%d'
                 date_from = datetime.strptime(date_from, format).date()
             else:
