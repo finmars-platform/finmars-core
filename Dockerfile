@@ -39,6 +39,12 @@ RUN chmod 501 /etc/filebeat/filebeat.yml
 
 RUN chmod +x /var/app/docker/finmars-run.sh
 
+# create celery user
+RUN useradd -N -M --system -s /bin/bash celery  && \
+# celery perms
+    groupadd grp_celery && usermod -a -G grp_celery celery && mkdir -p /var/run/celery/ /var/log/celery/  && \
+    chown -R celery:grp_celery /var/run/celery/ /var/log/celery/
+
 ENV LC_ALL=C.UTF-8
 ENV LANG=C.UTF-8
 
