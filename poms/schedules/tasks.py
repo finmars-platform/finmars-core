@@ -30,6 +30,17 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
 
         owner_member = Member.objects.filter(master_user=master_user, is_owner=True)[0]
 
+        context = {
+            'execution_context': {
+                'source': 'schedule',
+                'actor': schedule.user_code,
+                'schedule_object': {
+                    'id': schedule.id,
+                    'user_code': schedule.user_code
+                },
+            }
+        }
+
         if procedure.type == 'pricing_procedure':
 
             try:
@@ -54,6 +65,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
 
                 instance = PricingProcedureProcess(procedure=item, master_user=master_user, member=owner_member,
                                                    schedule_instance=schedule_instance, date_from=date_from,
+                                                   context=context,
                                                    date_to=date_to)
                 instance.process()
 
@@ -70,6 +82,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
 
                 instance = DataProcedureProcess(procedure=item, master_user=master_user,
                                                 member=owner_member,
+                                                context=context,
                                                 schedule_instance=schedule_instance)
                 instance.process()
 
@@ -83,7 +96,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
 
                 item = ExpressionProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
 
-                instance = ExpressionProcedureProcess(procedure=item, master_user=master_user, member=owner_member)
+                instance = ExpressionProcedureProcess(procedure=item, master_user=master_user, member=owner_member, context=context)
                 instance.process()
 
             except ExpressionProcedure.DoesNotExist:

@@ -1,15 +1,26 @@
 #!/usr/bin/env bash
 export DJANGO_SETTINGS_MODULE=poms_app.settings
+REGISTER_ACCESS_KEY=B5A9ZCHA \
+REDIS_HOST=0.0.0.0:6379 \
 DB_NAME=finmars_dev \
 DB_USER=postgres \
 DB_PASSWORD=postgres \
 DB_HOST=localhost \
 DB_PORT=5434 \
 DEBUG=True \
-SFTP_HOST=sftp.finmars.com \
-SFTP_USERNAME=finmars \
-SFTP_PASSWORD=97cZgv1pL2pz \
+LOCAL=True \
+PROFILER=True \
+ENV_CSRF_TRUSTED_ORIGINS=http://0.0.0.0:8080 \
+AWS_STORAGE_BUCKET_NAME=finmars-client00000local \
+AWS_S3_ACCESS_KEY_ID=AKIAZFI7MO4TROTNDZWN \
+AWS_S3_SECRET_ACCESS_KEY=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 \
+MEDIATOR_URL=http://localhost:8082/ \
 DJANGO_LOG_LEVEL=DEBUG \
-USE_WEBSOCKETS=True \
+SERVER_TYPE=local \
+USE_WEBSOCKETS=False \
 WEBSOCKET_HOST=ws://0.0.0.0:6969 \
-celery beat --app=poms_app --loglevel=INFO --logfile=/var/log/finmars/celery.log --scheduler django_celery_beat.schedulers:DatabaseScheduler
+SECRET_KEY=mv83o5mq \
+FINMARS_DATABASE_URL=https://database.finmars.com/ \
+FINMARS_DATABASE_USER=finmars \
+FINMARS_DATABASE_PASSWORD=8ah9o7zq2nw10oud2ictqvgxw6ja81007m \
+celery --app=poms_app beat --loglevel=INFO --logfile=/var/log/finmars/celery.log --scheduler django_celery_beat.schedulers:DatabaseScheduler

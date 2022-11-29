@@ -19,6 +19,7 @@ from poms.common.utils import get_list_of_business_days_between_two_dates, get_c
 from poms.common.views import AbstractViewSet, AbstractApiView
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory, PricingPolicy, Instrument
+from poms.schedules.models import ScheduleInstance
 
 _languages = [Language(code, name) for code, name in settings.LANGUAGES]
 
@@ -509,7 +510,6 @@ class CalendarEventsViewSet(AbstractViewSet):
 
         from poms.schedules.models import Schedule
         from poms.celery_tasks.models import CeleryTask
-        from django_celery_beat.models import PeriodicTask
         from poms.procedures.models import ExpressionProcedureInstance
         from poms.procedures.models import BaseProcedureInstance
         from poms.procedures.models import PricingProcedureInstance
@@ -551,44 +551,6 @@ class CalendarEventsViewSet(AbstractViewSet):
         #     end    : '2010-01-07'
         # },
 
-        # Collect System Schedule
-
-        if 'system_schedule' in filter:
-
-            periodic_tasks = PeriodicTask.objects.exclude(name='Shedules Process')
-
-            for task in periodic_tasks:
-
-                # print('task.crontab.shedule %s' % task.crontab)
-                expr = '{0} {1} {2} {3} {4}'.format(cronexp(task.crontab.minute),
-                                                    cronexp(task.crontab.hour),
-                                                    cronexp(task.crontab.day_of_month),
-                                                    cronexp(task.crontab.month_of_year),
-                                                    cronexp(task.crontab.day_of_week))
-
-                # print('expr %s' % expr)
-
-                cron = croniter.croniter(expr, date_from)
-
-                lookup = True
-                while lookup:
-                    nextdate = cron.get_next(datetime)
-
-                    item = {
-                        'title': task.name,
-                        'start': str(nextdate),
-                        'classNames': ['system'],
-                        'backgroundColor': '#ddd',
-                        'extendedProps': {
-                            'type': 'system_schedule',
-                        }
-                    }
-
-                    results.append(item)
-
-                    if nextdate > date_to:
-                        lookup = False
-
         # Collect User Schedules
 
         if 'schedule' in filter:
@@ -616,6 +578,45 @@ class CalendarEventsViewSet(AbstractViewSet):
 
                     if nextdate > date_to:
                         lookup = False
+
+        # Schedule Instance
+
+        if 'schedule_instance' in filter:
+
+            schedule_instances = ScheduleInstance.objects.filter(created__gte=date_from,
+                                                                 created__lte=date_to)
+            for instance in schedule_instances:
+
+                item = {
+                    'start': instance.created,
+                    'classNames': ['user'],
+                    'extendedProps': {
+                        'type': 'schedule_instance',
+                        'id': instance.id,
+                        'payload': {
+                            'schedule': instance.schedule_id,
+                            'schedule_object': {
+                                'id': instance.schedule.id,
+                                'user_code': instance.schedule.user_code
+                            },
+                            'status': instance.status,
+                            'current': instance.current_processing_procedure_number,
+                            'total': len(instance.schedule.procedures.all())
+                        }
+                    }
+                }
+
+                item['backgroundColor'] = 'green'
+
+                if instance.status == BaseProcedureInstance.STATUS_ERROR:
+                    item['backgroundColor'] = 'red'
+
+                if instance.status == BaseProcedureInstance.STATUS_PENDING:
+                    item['backgroundColor'] = 'blue'
+
+                item['title'] = 'Schedule %s' % instance.schedule.user_code
+
+                results.append(item)
 
         # Data Procedures
 
