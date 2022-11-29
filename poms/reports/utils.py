@@ -54,6 +54,9 @@ def generate_report_unique_hash(app, action, data, master_user, member):
     if 'strategy3_mode' in _data:
         report_options['strategy3_mode'] = _data['strategy3_mode']
 
+    if 'allocation_mode' in _data:
+        report_options['allocation_mode'] = _data['allocation_mode']
+
     if 'custom_fields_to_calculate' in _data:
         report_options['custom_fields_to_calculate'] = _data['custom_fields_to_calculate']
 

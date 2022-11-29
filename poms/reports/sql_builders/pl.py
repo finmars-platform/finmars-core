@@ -69,6 +69,9 @@ class PLReportBuilderSql:
         if self.instance.strategy3_mode == Report.MODE_INDEPENDENT:
             result.append("(q2.strategy3_position_id) as strategy3_position_id")
 
+        if self.instance.allocation_mode == Report.MODE_INDEPENDENT:
+            result.append("(q2.allocation_pl_id) as allocation_pl_id")
+
         resultString = ''
 
         if len(result):
