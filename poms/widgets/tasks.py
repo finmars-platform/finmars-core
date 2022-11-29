@@ -10,7 +10,7 @@ from poms.currencies.models import Currency
 from poms.instruments.models import CostMethod, PricingPolicy
 from poms.portfolios.models import Portfolio
 from poms.reports.common import Report
-from poms.reports.serializers import BalanceReportSerializer
+from poms.reports.serializers import BalanceReportSerializer, PLReportSerializer
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql, PLReportBuilderSql
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import EcosystemDefault, Member
@@ -537,7 +537,7 @@ def calculate_historical(self):
 
         bday_yesterday = get_closest_bday_of_yesterday()
 
-        _l.info("calculate_historical for %s portfolios for %s" % (len(portfolios), bday_yesterday))
+        _l.info("widgets.calculate_historical for %s portfolios for %s" % (len(portfolios), bday_yesterday))
 
         date_from = bday_yesterday
         date_to = bday_yesterday

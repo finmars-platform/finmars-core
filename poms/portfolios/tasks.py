@@ -340,15 +340,17 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
 
         for portfolio_register in portfolio_registers:
 
+            _date_from = None
+
             if date_from and isinstance(date_from, str) and date_from != 'None':
                 format = '%Y-%m-%d'
-                date_from = datetime.strptime(date_from, format).date()
+                _date_from = datetime.strptime(date_from, format).date()
             else:
                 try:
                     first_transaction = \
                         Transaction.objects.filter(portfolio=portfolio_register.portfolio).order_by('accounting_date')[
                             0]
-                    date_from = first_transaction.accounting_date
+                    _date_from = first_transaction.accounting_date
 
                 except Exception as e:
                     task.error_message = "No first transaction"
@@ -359,9 +361,9 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
 
             date_to = timezone_today() - timedelta(days=1)
 
-            _l.info('calculate_portfolio_register_nav0.date_from %s' % date_from)
+            _l.info('calculate_portfolio_register_nav0.date_from %s' % _date_from)
             _l.info('calculate_portfolio_register_nav0.date_to %s' % date_to)
-            dates = get_list_of_dates_between_two_dates(date_from, date_to)
+            dates = get_list_of_dates_between_two_dates(_date_from, date_to)
 
             _l.info('calculate_portfolio_register_nav0.dates %s ' % len(dates))
 
