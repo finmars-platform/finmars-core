@@ -454,7 +454,7 @@ class DataProcedureProcess(object):
 
 class ExpressionProcedureProcess(object):
 
-    def __init__(self, procedure=None, master_user=None, member=None, schedule_instance=None):
+    def __init__(self, procedure=None, master_user=None, member=None, schedule_instance=None, context=None):
 
         _l.debug('ExpressionProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
 
@@ -463,8 +463,15 @@ class ExpressionProcedureProcess(object):
 
         self.member = member
         self.schedule_instance = schedule_instance
+        self.context = context
 
-        self.context = {'master_user': master_user, 'member': member}
+        if self.context:
+            self.context = {}
+
+        if not 'master_user' in self.context:
+            self.context.update({'master_user': master_user})
+        if not 'member' in self.context:
+            self.context.update({'member': member})
 
         self.execute_context_variables_expressions()
 
@@ -522,8 +529,14 @@ class ExpressionProcedureProcess(object):
             _l.info('ExpressionProcedureProcess.names %s' % names)
             _l.info('ExpressionProcedureProcess.context %s' % self.context)
 
-            procedure_instance.notes = 'Content: \n' + str(names) + '\n'
-            procedure_instance.notes = '==========\n'
+            procedure_instance.notes = ''
+
+            if 'execution_context' in self.context:
+                procedure_instance.notes = procedure_instance.notes = 'Executed by: %s %s' % (
+                self.context['execution_context']['source'], self.context['execution_context']['actor'])
+
+            procedure_instance.notes = procedure_instance.notes + 'Content: \n' + str(names) + '\n'
+            procedure_instance.notes = procedure_instance.notes + '==========\n'
             procedure_instance.notes = procedure_instance.notes + 'Code: ' + str(self.procedure.code)
 
             try:
