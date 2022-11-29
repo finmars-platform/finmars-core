@@ -6,6 +6,7 @@ from poms.chats.models import Thread, Message, DirectMessage, ThreadGroup
 from poms.common.admin import AbstractModelAdmin
 from poms.obj_perms.admin import GenericObjectPermissionInline
 
+
 class ThreadGroupAdmin(AbstractModelAdmin):
     model = ThreadGroup
     master_user_path = 'master_user'

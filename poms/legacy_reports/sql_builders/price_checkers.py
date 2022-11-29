@@ -1,28 +1,20 @@
 import logging
 import time
 
+from django.conf import settings
 from django.db import connection
 
-from poms.accounts.models import Account
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument
-from poms.portfolios.models import Portfolio
-from poms.reports.builders.balance_item import Report
-from poms.reports.builders.base_builder import BaseReportBuilder
-from poms.reports.models import BalanceReportCustomField
-from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
-    get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
-    get_position_consolidation_for_select, get_pl_left_join_consolidation, dictfetchall, \
+from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_position_consolidation_for_select, \
+    dictfetchall, \
     get_cash_consolidation_for_select, get_cash_as_position_consolidation_for_select
-from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.users.models import EcosystemDefault
-from django.conf import settings
 
 _l = logging.getLogger('poms.reports')
 
 
 def execute_nav_sql(date, instance, cursor, ecosystem_defaults):
-
     # language=PostgreSQL
     query = """
         with unioned_transactions_for_balance as (
@@ -447,7 +439,6 @@ def execute_nav_sql(date, instance, cursor, ecosystem_defaults):
             and {report_currency_id} != {default_currency_id}
     """
 
-
     consolidated_cash_columns = get_cash_consolidation_for_select(instance)
     consolidated_position_columns = get_position_consolidation_for_select(instance)
     consolidated_cash_as_position_columns = get_cash_as_position_consolidation_for_select(instance)
@@ -481,7 +472,6 @@ def execute_nav_sql(date, instance, cursor, ecosystem_defaults):
 
 
 def execute_transaction_prices_sql(date, instance, cursor, ecosystem_defaults):
-
     # language=PostgreSQL
     query = """
             with 
@@ -637,7 +627,6 @@ def execute_transaction_prices_sql(date, instance, cursor, ecosystem_defaults):
             
     """
 
-
     consolidated_cash_columns = get_cash_consolidation_for_select(instance)
     consolidated_position_columns = get_position_consolidation_for_select(instance)
     consolidated_cash_as_position_columns = get_cash_as_position_consolidation_for_select(instance)
@@ -710,12 +699,12 @@ class PriceHistoryCheckerSql:
 
                 # self.instance.items = self.instance.items + positions
 
-                transactions = execute_transaction_prices_sql(self.instance.pl_first_date, self.instance, cursor, self.ecosystem_defaults)
+                transactions = execute_transaction_prices_sql(self.instance.pl_first_date, self.instance, cursor,
+                                                              self.ecosystem_defaults)
 
                 _l.debug('transactions %s ' % len(transactions))
 
                 self.instance.items = self.instance.items + transactions
-
 
             # report date
 
@@ -734,7 +723,8 @@ class PriceHistoryCheckerSql:
 
             # self.instance.items = self.instance.items + positions
 
-            transactions = execute_transaction_prices_sql(self.instance.report_date, self.instance, cursor, self.ecosystem_defaults)
+            transactions = execute_transaction_prices_sql(self.instance.report_date, self.instance, cursor,
+                                                          self.ecosystem_defaults)
 
             _l.debug('transactions %s ' % len(transactions))
 
@@ -759,15 +749,11 @@ class PriceHistoryCheckerSql:
                     _l.info(item)
 
             for key, value in unique_items_dict.items():
-
                 unique_items.append(unique_items_dict[key])
-
 
             self.instance.items = unique_items
 
-
         self.add_data_items()
-
 
         _l.debug('Price History check query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
@@ -850,7 +836,6 @@ class PriceHistoryCheckerSql:
                 if item['transaction_currency_id'] == dash_currency.id:
                     is_not_dash = False
 
-
             if is_not_dash:
                 items_without_dash_currency.append(item)
 
@@ -864,4 +849,3 @@ class PriceHistoryCheckerSql:
 
         _l.debug('_refresh_with_perms_optimized item relations done: %s',
                  "{:3.3f}".format(time.perf_counter() - item_relations_st))
-

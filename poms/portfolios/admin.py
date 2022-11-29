@@ -27,6 +27,7 @@ class PortfolioAdmin(AbstractModelAdmin):
 
 admin.site.register(Portfolio, PortfolioAdmin)
 
+
 #
 # class PortfolioAttributeTypeAdmin(AbstractAttributeTypeAdmin):
 #     inlines = [
@@ -46,9 +47,9 @@ admin.site.register(Portfolio, PortfolioAdmin)
 class PortfolioRegisterAdmin(AbstractModelAdmin):
     model = PortfolioRegister
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'portfolio', 'linked_instrument', 'valuation_pricing_policy', 'valuation_currency']
+    list_display = ['id', 'master_user', 'portfolio', 'linked_instrument', 'valuation_pricing_policy',
+                    'valuation_currency']
     raw_id_fields = ['master_user', 'portfolio', 'linked_instrument', 'valuation_pricing_policy', 'valuation_currency']
-
 
 
 admin.site.register(PortfolioRegister, PortfolioRegisterAdmin)
@@ -57,9 +58,9 @@ admin.site.register(PortfolioRegister, PortfolioRegisterAdmin)
 class PortfolioRegisterRecordAdmin(AbstractModelAdmin):
     model = PortfolioRegisterRecord
     master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'transaction_date', 'portfolio', 'instrument', 'transaction_class', 'portfolio_register']
+    list_display = ['id', 'master_user', 'transaction_date', 'portfolio', 'instrument', 'transaction_class',
+                    'portfolio_register']
     raw_id_fields = ['master_user', 'portfolio', 'instrument', 'portfolio_register']
-
 
 
 admin.site.register(PortfolioRegisterRecord, PortfolioRegisterRecordAdmin)
@@ -72,7 +73,6 @@ class PortfolioBundleAdmin(AbstractModelAdmin):
     raw_id_fields = ['master_user']
 
     filter_horizontal = ('registers',)
-
 
 
 admin.site.register(PortfolioBundle, PortfolioBundleAdmin)

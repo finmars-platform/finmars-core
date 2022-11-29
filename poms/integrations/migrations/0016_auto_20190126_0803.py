@@ -6,7 +6,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0013_member_notification_level'),
         ('integrations', '0015_auto_20181227_2052'),

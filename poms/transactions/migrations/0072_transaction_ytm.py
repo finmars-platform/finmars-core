@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0071_transactiontypeinputsettings_recalc_on_change_linked_inputs'),
     ]

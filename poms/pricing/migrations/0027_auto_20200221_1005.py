@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('pricing', '0026_auto_20200221_0938'),
     ]
@@ -23,7 +22,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='currencypricingschememultipleparametersformulaparameters',
             name='value_type',
-            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date')], default=10, verbose_name='value type'),
+            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date')], default=10,
+                                                   verbose_name='value type'),
         ),
         migrations.AddField(
             model_name='instrumentpricingschememultipleparametersformulaparameters',
@@ -38,6 +38,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instrumentpricingschememultipleparametersformulaparameters',
             name='value_type',
-            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date')], default=10, verbose_name='value type'),
+            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date')], default=10,
+                                                   verbose_name='value type'),
         ),
     ]

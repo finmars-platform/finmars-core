@@ -91,11 +91,10 @@ instrument_type_standard = {
     "short_name": "",
     "user_code": "",
     "public_name": "",
-    "instrument_class": None, # TODO ecosystem default
-    "one_off_event": None, # TODO ecosystem default
-    "regular_event": None, # TODO ecosystem default
-    "factor_same": None, # TODO ecosystem default
-    "factor_up": None, # TODO ecosystem default
-    "factor_down": None, # TODO ecosystem default
+    "instrument_class": None,  # TODO ecosystem default
+    "one_off_event": None,  # TODO ecosystem default
+    "regular_event": None,  # TODO ecosystem default
+    "factor_same": None,  # TODO ecosystem default
+    "factor_up": None,  # TODO ecosystem default
+    "factor_down": None,  # TODO ecosystem default
 }
-

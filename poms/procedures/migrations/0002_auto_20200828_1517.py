@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('procedures', '0001_initial'),
     ]
@@ -18,7 +17,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='requestdatafileprocedure',
             name='price_date_from_expr',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='price date from expr'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='price date from expr'),
         ),
         migrations.AddField(
             model_name='requestdatafileprocedure',
@@ -28,6 +28,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='requestdatafileprocedure',
             name='price_date_to_expr',
-            field=models.CharField(blank=True, default='', max_length=1024, null=True, verbose_name='price date to expr'),
+            field=models.CharField(blank=True, default='', max_length=1024, null=True,
+                                   verbose_name='price date to expr'),
         ),
     ]

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('integrations', '0055_auto_20210312_1647'),
     ]
@@ -13,6 +12,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instrumentdownloadscheme',
             name='mode',
-            field=models.CharField(choices=[['skip', 'Skip if exists'], ['overwrite_empty_values', 'Overwrite only empty values'], ['overwrite', 'Overwrite']], default='skip', max_length=255),
+            field=models.CharField(
+                choices=[['skip', 'Skip if exists'], ['overwrite_empty_values', 'Overwrite only empty values'],
+                         ['overwrite', 'Overwrite']], default='skip', max_length=255),
         ),
     ]

@@ -1,6 +1,4 @@
 from django.db import models
-
-
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import EXPRESSION_FIELD_LENGTH
@@ -9,20 +7,21 @@ from poms.users.models import MasterUser
 
 
 class TransactionTypeReconField(models.Model):
-
     transaction_type = models.ForeignKey(TransactionType, related_name='recon_fields',
                                          verbose_name=gettext_lazy('transaction type'), on_delete=models.CASCADE)
 
     reference_name = models.CharField(max_length=255, verbose_name=gettext_lazy('reference name '))
     description = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('description'))
 
-    value_string = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=gettext_lazy('value string'),  blank=True, default='',)
-    value_float = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=gettext_lazy('value float'),  blank=True, default='',)
-    value_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=gettext_lazy('value date'),  blank=True, default='',)
+    value_string = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=gettext_lazy('value string'),
+                                    blank=True, default='', )
+    value_float = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=gettext_lazy('value float'),
+                                   blank=True, default='', )
+    value_date = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=gettext_lazy('value date'),
+                                  blank=True, default='', )
 
 
 class ReconciliationComplexTransactionField(models.Model):
-
     MATCHED = 1
     UNMATCHED = 2
     AUTO_MATCHED = 3
@@ -38,7 +37,8 @@ class ReconciliationComplexTransactionField(models.Model):
     master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
-    complex_transaction = models.ForeignKey(ComplexTransaction, related_name='recon_fields', on_delete=models.CASCADE, verbose_name=gettext_lazy('complex transaction'))
+    complex_transaction = models.ForeignKey(ComplexTransaction, related_name='recon_fields', on_delete=models.CASCADE,
+                                            verbose_name=gettext_lazy('complex transaction'))
 
     reference_name = models.CharField(max_length=255, verbose_name=gettext_lazy('reference name '))
 
@@ -61,7 +61,6 @@ class ReconciliationComplexTransactionField(models.Model):
 
 
 class ReconciliationBankFileField(models.Model):
-
     MATCHED = 1
     CONFLICT = 2
     RESOLVED = 3
@@ -100,8 +99,10 @@ class ReconciliationBankFileField(models.Model):
 
     notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
 
-    linked_complex_transaction_field = models.ForeignKey(ReconciliationComplexTransactionField, null=True, blank=True, on_delete=models.SET_NULL,
-                                             related_name='bank_file_fields', verbose_name=gettext_lazy('linked complex transaction field'))
+    linked_complex_transaction_field = models.ForeignKey(ReconciliationComplexTransactionField, null=True, blank=True,
+                                                         on_delete=models.SET_NULL,
+                                                         related_name='bank_file_fields',
+                                                         verbose_name=gettext_lazy('linked complex transaction field'))
 
     class Meta:
         verbose_name = gettext_lazy('reconciliation bank file field')
@@ -113,8 +114,7 @@ class ReconciliationBankFileField(models.Model):
 
 
 class ReconciliationNewBankFileField(models.Model):
-
-    master_user = models.ForeignKey(MasterUser,  verbose_name=gettext_lazy('master user'),
+    master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
     source_id = models.CharField(max_length=30, null=True, blank=True, verbose_name=gettext_lazy('source id'))

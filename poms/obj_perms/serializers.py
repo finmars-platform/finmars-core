@@ -6,7 +6,7 @@ from rest_framework.fields import empty
 
 from poms.obj_perms.fields import PermissionField, GrantedPermissionField
 from poms.obj_perms.models import GenericObjectPermission
-from poms.obj_perms.utils import has_view_perms, get_all_perms, has_manage_perm, assign_perms3
+from poms.obj_perms.utils import has_view_perms, has_manage_perm, assign_perms3
 from poms.users.fields import MemberField, GroupField
 from poms.users.utils import get_member_from_context
 
@@ -41,6 +41,7 @@ class GroupObjectPermissionSerializer(serializers.Serializer):
     class Meta:
         list_serializer_class = GroupObjectPermissionListSerializer
         fields = ['id', 'member', 'permission']
+
 
 class ModelWithObjectPermissionViewListSerializer(serializers.ListSerializer):
     def get_attribute(self, instance):

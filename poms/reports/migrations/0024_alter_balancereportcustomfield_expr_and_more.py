@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('reports', '0023_alter_balancereportcustomfield_expr_and_more'),
     ]

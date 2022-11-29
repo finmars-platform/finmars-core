@@ -1,21 +1,16 @@
-from django.db import models
-from django.contrib.contenttypes.models import ContentType
-from django.utils.translation import gettext_lazy
-
-from poms.common.models import NamedModel, DataTimeStampedModel
-from poms.integrations.models import DataProvider
-from poms.system_messages.handlers import send_system_message
-from poms.users.models import MasterUser
+import json
+import logging
+from datetime import datetime
 
 from croniter import croniter
 from django.core.exceptions import ValidationError
+from django.db import models
 from django.utils import timezone
-from datetime import date, datetime, timedelta
-from django.conf import settings
+from django.utils.translation import gettext_lazy
 
-import json
-
-import logging
+from poms.common.models import NamedModel, DataTimeStampedModel
+from poms.system_messages.handlers import send_system_message
+from poms.users.models import MasterUser
 
 _l = logging.getLogger('poms.schedules')
 
@@ -29,13 +24,12 @@ def validate_crontab(value):
 
 
 class Schedule(NamedModel):
-
     ERROR_HANDLER_CHOICES = [
         ['break', 'Break'],
         ['continue', 'Continue'],
     ]
 
-    master_user = models.ForeignKey(MasterUser,  verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     cron_expr = models.CharField(max_length=255, blank=True, default='', validators=[validate_crontab],
                                  verbose_name=gettext_lazy('cron expr'),
@@ -73,7 +67,7 @@ class Schedule(NamedModel):
         if self.is_enabled:
             self.schedule(save=False)
         super(Schedule, self).save(force_insert=force_insert, force_update=force_update, using=using,
-                                       update_fields=update_fields)
+                                   update_fields=update_fields)
 
         from poms.schedules.utils import sync_schedules
         sync_schedules()
@@ -100,7 +94,7 @@ class Schedule(NamedModel):
 
     class Meta(NamedModel.Meta):
         unique_together = (
-            ('user_code',  'master_user')
+            ('user_code', 'master_user')
         )
 
     def __str__(self):
@@ -108,8 +102,8 @@ class Schedule(NamedModel):
 
 
 class ScheduleProcedure(models.Model):
-
-    schedule = models.ForeignKey(Schedule,  verbose_name=gettext_lazy('schedule'), related_name="procedures", on_delete=models.CASCADE)
+    schedule = models.ForeignKey(Schedule, verbose_name=gettext_lazy('schedule'), related_name="procedures",
+                                 on_delete=models.CASCADE)
     type = models.CharField(max_length=25, null=True, blank=True, verbose_name=gettext_lazy('type'))
     user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
     order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
@@ -121,7 +115,6 @@ class ScheduleProcedure(models.Model):
 
 
 class ScheduleInstance(DataTimeStampedModel):
-
     STATUS_INIT = 'I'
     STATUS_PENDING = 'P'
     STATUS_DONE = 'D'
@@ -134,10 +127,12 @@ class ScheduleInstance(DataTimeStampedModel):
         (STATUS_ERROR, gettext_lazy('Error')),
     )
 
-    master_user = models.ForeignKey(MasterUser,  verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
-    schedule = models.ForeignKey(Schedule,  verbose_name=gettext_lazy('schedule'), related_name="instances", on_delete=models.CASCADE)
-    current_processing_procedure_number = models.IntegerField(default=0, verbose_name=gettext_lazy('current processing procedure number'))
+    schedule = models.ForeignKey(Schedule, verbose_name=gettext_lazy('schedule'), related_name="instances",
+                                 on_delete=models.CASCADE)
+    current_processing_procedure_number = models.IntegerField(default=0, verbose_name=gettext_lazy(
+        'current processing procedure number'))
 
     status = models.CharField(max_length=1, default=STATUS_INIT, choices=STATUS_CHOICES,
                               verbose_name=gettext_lazy('status'))
@@ -151,11 +146,13 @@ class ScheduleInstance(DataTimeStampedModel):
         send_system_message(master_user=self.master_user,
                             performed_by='system',
                             section='schedules',
-                            description="Schedule %s. Step  %s/%s finished" % (self.schedule.name, self.current_processing_procedure_number, total_procedures))
+                            description="Schedule %s. Step  %s/%s finished" % (
+                            self.schedule.name, self.current_processing_procedure_number, total_procedures))
 
         self.current_processing_procedure_number = self.current_processing_procedure_number + 1
 
-        _l.debug('run_next_procedure schedule %s procedure number %s' % (self.schedule, self.current_processing_procedure_number))
+        _l.debug('run_next_procedure schedule %s procedure number %s' % (
+        self.schedule, self.current_processing_procedure_number))
 
         for procedure in self.schedule.procedures.all():
 
@@ -164,15 +161,18 @@ class ScheduleInstance(DataTimeStampedModel):
                 if self.status != ScheduleInstance.STATUS_ERROR or self.schedule.error_handler == 'continue':
 
                     if procedure.order == self.current_processing_procedure_number:
-
                         self.save()
 
                         send_system_message(master_user=self.master_user,
                                             performed_by='system',
                                             section='schedules',
-                                            description="Schedule %s. Start processing step %s/%s " % (self.schedule.name, self.current_processing_procedure_number, total_procedures))
+                                            description="Schedule %s. Start processing step %s/%s " % (
+                                            self.schedule.name, self.current_processing_procedure_number,
+                                            total_procedures))
 
-                        process_procedure_async.apply_async(kwargs={'procedure_id':procedure.id, 'master_user_id':self.master_user.id, 'schedule_instance_id': self.id})
+                        process_procedure_async.apply_async(
+                            kwargs={'procedure_id': procedure.id, 'master_user_id': self.master_user.id,
+                                    'schedule_instance_id': self.id})
 
             except Exception as e:
 
@@ -182,4 +182,5 @@ class ScheduleInstance(DataTimeStampedModel):
                 send_system_message(master_user=self.master_user,
                                     performed_by='system',
                                     section='schedules',
-                                    description="Schedule %s. Error occurred at step %s/%s" % (self.schedule.name, self.current_processing_procedure_number, total_procedures))
+                                    description="Schedule %s. Error occurred at step %s/%s" % (
+                                    self.schedule.name, self.current_processing_procedure_number, total_procedures))

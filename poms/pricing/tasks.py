@@ -1,10 +1,6 @@
-
-from celery import shared_task
-
 import logging
 
-from poms.file_reports.models import FileReport
-
+from celery import shared_task
 from django.utils.timezone import now
 
 from poms.pricing.models import PricingProcedureInstance
@@ -12,9 +8,9 @@ from poms.procedures.models import PricingParentProcedureInstance
 
 _l = logging.getLogger('poms.pricing')
 
+
 @shared_task(name='pricing.clear_old_pricing_procedure_instances', bind=True, ignore_result=True)
 def clear_old_pricing_procedure_instances():
-
     _l.debug("Pricing: clear_old_pricing_procedure_instances")
 
     today = now()
@@ -54,7 +50,6 @@ def clear_old_pricing_procedure_instances():
 
 @shared_task(name='pricing.set_old_processing_procedure_instances_to_error', bind=True, ignore_result=True)
 def set_old_processing_procedure_instances_to_error():
-
     _l.debug("Pricing: set_old_processing_procedure_instances_to_error")
 
     today = now()
@@ -69,12 +64,10 @@ def set_old_processing_procedure_instances_to_error():
 
         if diff.days > 1:
 
-           if item.status == PricingProcedureInstance.STATUS_PENDING:
+            if item.status == PricingProcedureInstance.STATUS_PENDING:
+                item.status = PricingProcedureInstance.STATUS_ERROR
+                item.save()
 
-               item.status = PricingProcedureInstance.STATUS_ERROR
-               item.save()
-
-               count = count + 1
+                count = count + 1
 
     _l.debug("PricingParentProcedureInstance items set to error status %s" % len(count))
-

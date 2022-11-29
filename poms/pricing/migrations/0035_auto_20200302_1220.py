@@ -4,9 +4,9 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('pricing', '0034_currencypricingschemewtradeparameters_instrumentpricingschemewtradeparameters_pricingprocedurewtrade'),
+        ('pricing',
+         '0034_currencypricingschemewtradeparameters_instrumentpricingschemewtradeparameters_pricingprocedurewtrade'),
     ]
 
     operations = [
@@ -28,7 +28,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instrumentpricingschemebloombergparameters',
             name='accrual_calculation_method',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Not applicable'), (2, 'As per Accrual Schedule'), (3, 'As per Formula')], default=1, verbose_name='accrual calculation method'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(1, 'Not applicable'), (2, 'As per Accrual Schedule'), (3, 'As per Formula')], default=1,
+                verbose_name='accrual calculation method'),
         ),
         migrations.AddField(
             model_name='instrumentpricingschemebloombergparameters',
@@ -58,7 +60,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instrumentpricingschememultipleparametersformulaparameters',
             name='accrual_calculation_method',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Not applicable'), (2, 'As per Accrual Schedule'), (3, 'As per Formula')], default=1, verbose_name='accrual calculation method'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(1, 'Not applicable'), (2, 'As per Accrual Schedule'), (3, 'As per Formula')], default=1,
+                verbose_name='accrual calculation method'),
         ),
         migrations.AddField(
             model_name='instrumentpricingschememultipleparametersformulaparameters',
@@ -78,7 +82,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instrumentpricingschemesingleparameterformulaparameters',
             name='accrual_calculation_method',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Not applicable'), (2, 'As per Accrual Schedule'), (3, 'As per Formula')], default=1, verbose_name='accrual calculation method'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(1, 'Not applicable'), (2, 'As per Accrual Schedule'), (3, 'As per Formula')], default=1,
+                verbose_name='accrual calculation method'),
         ),
         migrations.AddField(
             model_name='instrumentpricingschemesingleparameterformulaparameters',

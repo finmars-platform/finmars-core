@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('strategies', '0003_auto_20170125_1037'),
     ]
@@ -12,38 +11,53 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='strategy1',
-            options={'ordering': ['user_code'], 'permissions': [('manage_strategy1', 'Can manage strategy1')], 'verbose_name': 'strategy1', 'verbose_name_plural': 'strategies1'},
+            options={'ordering': ['user_code'], 'permissions': [('manage_strategy1', 'Can manage strategy1')],
+                     'verbose_name': 'strategy1', 'verbose_name_plural': 'strategies1'},
         ),
         migrations.AlterModelOptions(
             name='strategy1group',
-            options={'ordering': ['user_code'], 'permissions': [('manage_strategy1group', 'Can manage strategy1 group')], 'verbose_name': 'strategy1 group', 'verbose_name_plural': 'strategy1 groups'},
+            options={'ordering': ['user_code'],
+                     'permissions': [('manage_strategy1group', 'Can manage strategy1 group')],
+                     'verbose_name': 'strategy1 group', 'verbose_name_plural': 'strategy1 groups'},
         ),
         migrations.AlterModelOptions(
             name='strategy1subgroup',
-            options={'ordering': ['user_code'], 'permissions': [('manage_strategy1subgroup', 'Can manage strategy1 subgroup')], 'verbose_name': 'strategy1 subgroup', 'verbose_name_plural': 'strategy1 subgroups'},
+            options={'ordering': ['user_code'],
+                     'permissions': [('manage_strategy1subgroup', 'Can manage strategy1 subgroup')],
+                     'verbose_name': 'strategy1 subgroup', 'verbose_name_plural': 'strategy1 subgroups'},
         ),
         migrations.AlterModelOptions(
             name='strategy2',
-            options={'ordering': ['user_code'], 'permissions': [('manage_strategy2', 'Can manage strategy2')], 'verbose_name': 'strategy2', 'verbose_name_plural': 'strategies2'},
+            options={'ordering': ['user_code'], 'permissions': [('manage_strategy2', 'Can manage strategy2')],
+                     'verbose_name': 'strategy2', 'verbose_name_plural': 'strategies2'},
         ),
         migrations.AlterModelOptions(
             name='strategy2group',
-            options={'ordering': ['user_code'], 'permissions': [('manage_strategy2group', 'Can manage strategy2 group')], 'verbose_name': 'strategy2 group', 'verbose_name_plural': 'strategy2 groups'},
+            options={'ordering': ['user_code'],
+                     'permissions': [('manage_strategy2group', 'Can manage strategy2 group')],
+                     'verbose_name': 'strategy2 group', 'verbose_name_plural': 'strategy2 groups'},
         ),
         migrations.AlterModelOptions(
             name='strategy2subgroup',
-            options={'ordering': ['user_code'], 'permissions': [('manage_strategy2subgroup', 'Can manage strategy2 subgroup')], 'verbose_name': 'strategy2 subgroup', 'verbose_name_plural': 'strategy2 subgroups'},
+            options={'ordering': ['user_code'],
+                     'permissions': [('manage_strategy2subgroup', 'Can manage strategy2 subgroup')],
+                     'verbose_name': 'strategy2 subgroup', 'verbose_name_plural': 'strategy2 subgroups'},
         ),
         migrations.AlterModelOptions(
             name='strategy3',
-            options={'ordering': ['user_code'], 'permissions': [('manage_strategy3', 'Can manage strategy3')], 'verbose_name': 'strategy3', 'verbose_name_plural': 'strategies3'},
+            options={'ordering': ['user_code'], 'permissions': [('manage_strategy3', 'Can manage strategy3')],
+                     'verbose_name': 'strategy3', 'verbose_name_plural': 'strategies3'},
         ),
         migrations.AlterModelOptions(
             name='strategy3group',
-            options={'ordering': ['user_code'], 'permissions': [('manage_strategy3group', 'Can manage strategy3 group')], 'verbose_name': 'strategy3 group', 'verbose_name_plural': 'strategy3 groups'},
+            options={'ordering': ['user_code'],
+                     'permissions': [('manage_strategy3group', 'Can manage strategy3 group')],
+                     'verbose_name': 'strategy3 group', 'verbose_name_plural': 'strategy3 groups'},
         ),
         migrations.AlterModelOptions(
             name='strategy3subgroup',
-            options={'ordering': ['user_code'], 'permissions': [('manage_strategy3subgroup', 'Can manage strategy3 subgroup')], 'verbose_name': 'strategy3 subgroup', 'verbose_name_plural': 'strategy3 subgroups'},
+            options={'ordering': ['user_code'],
+                     'permissions': [('manage_strategy3subgroup', 'Can manage strategy3 subgroup')],
+                     'verbose_name': 'strategy3 subgroup', 'verbose_name_plural': 'strategy3 subgroups'},
         ),
     ]

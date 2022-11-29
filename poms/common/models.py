@@ -1,16 +1,10 @@
 from __future__ import unicode_literals
 
-
-from django.db import models
-from django.utils.text import Truncator
-from django.utils.translation import gettext_lazy
 from django.core.cache import cache
-
+from django.db import models
+from django.utils.translation import gettext_lazy
 
 from poms.common import formula
-
-from django.utils.timezone import now
-
 from poms.common.middleware import get_request
 
 EXPRESSION_FIELD_LENGTH = 4096
@@ -99,7 +93,8 @@ class AbstractClassModel(models.Model):
 
 class FakeDeletableModel(models.Model):
     is_deleted = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is deleted'))
-    deleted_user_code =  models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('deleted user code'))
+    deleted_user_code = models.CharField(max_length=255, null=True, blank=True,
+                                         verbose_name=gettext_lazy('deleted user code'))
 
     class Meta:
         abstract = True
@@ -111,7 +106,6 @@ class FakeDeletableModel(models.Model):
 
         from poms.system_messages.handlers import send_system_message
 
-
         self.is_deleted = True
 
         fields_to_update = ['is_deleted']
@@ -120,7 +114,8 @@ class FakeDeletableModel(models.Model):
 
         if hasattr(self, 'user_code'):
             self.deleted_user_code = self.user_code
-            self.user_code = formula.safe_eval('generate_user_code("del", "", 0)', context={'master_user': self.master_user})
+            self.user_code = formula.safe_eval('generate_user_code("del", "", 0)',
+                                               context={'master_user': self.master_user})
 
             self.name = '(del) ' + self.name
             self.short_name = '(del) ' + self.short_name
@@ -145,11 +140,10 @@ class FakeDeletableModel(models.Model):
                             section='data',
                             type='warning',
                             title='Delete ' + entity_name + ' (manual)',
-                            description= entity_name + ' was deleted (manual) - ' + self.name,
+                            description=entity_name + ' was deleted (manual) - ' + self.name,
                             )
 
         self.save(update_fields=fields_to_update)
-
 
 
 # These models need to create custom context, that could be passed to serializers

@@ -1,16 +1,18 @@
 from __future__ import unicode_literals
 
 import json
+import logging
+import time
 from collections import OrderedDict
 from os.path import getsize
 
 from celery.result import AsyncResult
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
 from django.core.signing import TimestampSigner
 from django.db import transaction
 from django.utils import timezone
-from django_celery_results.models import TaskResult
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import permissions, status
 from rest_framework.decorators import action
@@ -24,20 +26,13 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 from poms.audit.mixins import HistoricalModelMixin
 from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend, OrderingPostFilter, \
-    ByIsEnabledFilterBackend, EntitySpecificFilter
+    ByIsEnabledFilterBackend
+from poms.common.grouping_handlers import handle_groups, count_groups
 from poms.common.mixins import BulkModelMixin, DestroyModelFakeMixin, UpdateModelMixinExt
 from poms.common.sorting import sort_by_dynamic_attrs
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.utils import get_master_user_and_member
 
-from django.contrib.contenttypes.models import ContentType
-
-from poms.common.grouping_handlers import handle_groups, count_groups
-import time
-
-from django.db import models
-
-import logging
 _l = logging.getLogger('poms.common')
 
 from django.http import HttpResponse, Http404
@@ -150,8 +145,6 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
 
         filtered_qs = self.get_queryset()
 
-
-
         filtered_qs = filtered_qs.filter(id__in=qs)
 
         filtered_qs = filtered_qs.filter(master_user=master_user)
@@ -170,9 +163,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
             if is_enabled == 'true':
                 filtered_qs = filtered_qs.filter(is_enabled=True)
 
-
         filtered_qs = handle_groups(filtered_qs, request, self.get_queryset(), content_type)
-
 
         page = self.paginate_queryset(filtered_qs)
 
@@ -210,7 +201,8 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         filtered_qs = handle_filters(filtered_qs, filter_settings, master_user, content_type)
 
         if global_table_search:
-            filtered_qs = handle_global_table_search(filtered_qs, global_table_search, self.serializer_class.Meta.model, content_type)
+            filtered_qs = handle_global_table_search(filtered_qs, global_table_search, self.serializer_class.Meta.model,
+                                                     content_type)
 
         # print('len after handle filters %s' % len(filtered_qs))
 
@@ -229,7 +221,8 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         filtered_qs = handle_groups(filtered_qs, groups_types, groups_values, groups_order, master_user,
                                     self.get_queryset(), content_type)
 
-        filtered_qs = count_groups(filtered_qs, groups_types, groups_values, master_user, self.get_queryset(), content_type, filter_settings, ev_options, global_table_search)
+        filtered_qs = count_groups(filtered_qs, groups_types, groups_values, master_user, self.get_queryset(),
+                                   content_type, filter_settings, ev_options, global_table_search)
 
         # print('len after handle groups %s' % len(filtered_qs))
 
@@ -272,7 +265,6 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         if ordering:
             queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)
 
-
         try:
             queryset.model._meta.get_field('is_enabled')
         except FieldDoesNotExist:
@@ -304,7 +296,8 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         filters_st = time.perf_counter()
         queryset = self.filter_queryset(self.get_queryset())
 
-        if content_type.model not in ['currencyhistory', 'pricehistory', 'complextransaction', 'transaction', 'currencyhistoryerror', 'pricehistoryerror']:
+        if content_type.model not in ['currencyhistory', 'pricehistory', 'complextransaction', 'transaction',
+                                      'currencyhistoryerror', 'pricehistoryerror']:
 
             is_enabled = request.data.get('is_enabled', 'true')
 
@@ -326,9 +319,9 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
 
         page_st = time.perf_counter()
 
-
         if global_table_search:
-            queryset = handle_global_table_search(queryset, global_table_search, self.serializer_class.Meta.model, content_type)
+            queryset = handle_global_table_search(queryset, global_table_search, self.serializer_class.Meta.model,
+                                                  content_type)
 
         page = self.paginator.post_paginate_queryset(queryset, request)
 
@@ -475,15 +468,68 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
 
     def list(self, request):
 
-            results = []
+        results = []
 
-            content_type_name = request.query_params.get('content_type', None)
-            key = request.query_params.get('key', None)
-            value_type = request.query_params.get('value_type', None)
+        content_type_name = request.query_params.get('content_type', None)
+        key = request.query_params.get('key', None)
+        value_type = request.query_params.get('value_type', None)
 
-            master_user = request.user.master_user
+        master_user = request.user.master_user
 
-            if not content_type_name:
+        if not content_type_name:
+            return Response({
+                "status": status.HTTP_404_NOT_FOUND,
+                "message": 'No content type provided.',
+                "results": []
+            })
+
+        if not key:
+            return Response({
+                "status": status.HTTP_404_NOT_FOUND,
+                "message": 'No key provided.',
+                "results": []
+            })
+
+        if not value_type:
+            return Response({
+                "status": status.HTTP_404_NOT_FOUND,
+                "message": 'No value type provided.',
+                "results": []
+            })
+
+        if value_type != 'field':
+
+            try:
+                value_type = int(value_type)
+            except Exception as e:
+                return Response({
+                    "status": status.HTTP_404_NOT_FOUND,
+                    "message": 'Value type is invalid.',
+                    "results": []
+                })
+
+        content_type_pieces = content_type_name.split('.')
+
+        try:
+            content_type = ContentType.objects.get(app_label=content_type_pieces[0], model=content_type_pieces[1])
+        except ContentType.DoesNotExist:
+            return Response({
+                "status": status.HTTP_404_NOT_FOUND,
+                "message": 'Content type does not exist.',
+                "results": []
+            })
+
+        model = content_type.model_class()
+
+        if 'attributes.' in key:
+
+            attribute_type_user_code = key.split('attributes.')[1]
+
+            try:
+                attribute_type = GenericAttributeType.objects.get(master_user=master_user,
+                                                                  user_code=attribute_type_user_code,
+                                                                  content_type=content_type)
+            except GenericAttributeType.DoesNotExist:
 
                 return Response({
                     "status": status.HTTP_404_NOT_FOUND,
@@ -491,113 +537,86 @@ class ValuesForSelectViewSet(AbstractApiView, ViewSet):
                     "results": []
                 })
 
-            if not key:
+            if value_type == 10:
+                results = GenericAttribute.objects.filter(content_type=content_type,
+                                                          attribute_type=attribute_type).order_by(
+                    'value_string').values_list('value_string', flat=True).distinct('value_string')
+            if value_type == 20:
+                results = GenericAttribute.objects.filter(content_type=content_type,
+                                                          attribute_type=attribute_type).order_by(
+                    'value_float').values_list('value_float', flat=True).distinct('value_float')
+            if value_type == 30:
+                results = GenericAttribute.objects.filter(content_type=content_type,
+                                                          attribute_type=attribute_type).order_by(
+                    'classifier__name').values_list('classifier__name', flat=True).distinct('classifier__name')
+            if value_type == 40:
+                results = GenericAttribute.objects.filter(content_type=content_type,
+                                                          attribute_type=attribute_type).order_by(
+                    'value_date').values_list('value_date', flat=True).distinct('value_date')
 
-                return Response({
-                    "status": status.HTTP_404_NOT_FOUND,
-                    "message": 'No key provided.',
-                    "results": []
-                })
+        else:
 
-            if not value_type:
-
-                return Response({
-                    "status": status.HTTP_404_NOT_FOUND,
-                    "message": 'No value type provided.',
-                    "results": []
-                })
-
-            if value_type != 'field':
-
-                try:
-                    value_type = int(value_type)
-                except Exception as e:
-                    return Response({
-                        "status": status.HTTP_404_NOT_FOUND,
-                        "message": 'Value type is invalid.',
-                        "results": []
-                    })
-
-            content_type_pieces = content_type_name.split('.')
-
-            try:
-                content_type = ContentType.objects.get(app_label=content_type_pieces[0], model=content_type_pieces[1])
-            except ContentType.DoesNotExist:
-                return Response({
-                    "status": status.HTTP_404_NOT_FOUND,
-                    "message": 'Content type does not exist.',
-                    "results": []
-                })
-
-            model = content_type.model_class()
-
-            if 'attributes.' in key:
-
-                attribute_type_user_code = key.split('attributes.')[1]
-
-                try:
-                    attribute_type = GenericAttributeType.objects.get(master_user=master_user, user_code=attribute_type_user_code, content_type=content_type)
-                except GenericAttributeType.DoesNotExist:
-
-                    return Response({
-                        "status": status.HTTP_404_NOT_FOUND,
-                        "message": 'No content type provided.',
-                        "results": []
-                    })
+            if content_type_name == 'instruments.pricehistory':
 
                 if value_type == 10:
-                    results = GenericAttribute.objects.filter(content_type=content_type, attribute_type=attribute_type).order_by('value_string').values_list('value_string', flat=True).distinct('value_string')
+                    results = model.objects.filter(instrument__master_user=master_user).order_by(key).values_list(key,
+                                                                                                                  flat=True).distinct(
+                        key)
                 if value_type == 20:
-                    results = GenericAttribute.objects.filter(content_type=content_type, attribute_type=attribute_type).order_by('value_float').values_list('value_float', flat=True).distinct('value_float')
-                if value_type == 30:
-                    results = GenericAttribute.objects.filter(content_type=content_type, attribute_type=attribute_type).order_by('classifier__name').values_list('classifier__name', flat=True).distinct('classifier__name')
+                    results = model.objects.filter(instrument__master_user=master_user).order_by(key).values_list(key,
+                                                                                                                  flat=True).distinct(
+                        key)
                 if value_type == 40:
-                    results = GenericAttribute.objects.filter(content_type=content_type, attribute_type=attribute_type).order_by('value_date').values_list('value_date', flat=True).distinct('value_date')
+                    results = model.objects.filter(instrument__master_user=master_user).order_by(key).values_list(key,
+                                                                                                                  flat=True).distinct(
+                        key)
+                if value_type == 'field':
+                    results = model.objects.filter(instrument__master_user=master_user).order_by(
+                        key + '__user_code').values_list(key + '__user_code', flat=True).distinct(key + '__user_code')
+
+
+            elif content_type_name == 'currencies.currencyhistory':
+
+                if value_type == 10:
+                    results = model.objects.filter(currency__master_user=master_user).order_by(key).values_list(key,
+                                                                                                                flat=True).distinct(
+                        key)
+                if value_type == 20:
+                    results = model.objects.filter(currency__master_user=master_user).order_by(key).values_list(key,
+                                                                                                                flat=True).distinct(
+                        key)
+                if value_type == 40:
+                    results = model.objects.filter(currency__master_user=master_user).order_by(key).values_list(key,
+                                                                                                                flat=True).distinct(
+                        key)
+                if value_type == 'field':
+                    results = model.objects.filter(currency__master_user=master_user).order_by(
+                        key + '__user_code').values_list(key + '__user_code', flat=True).distinct(key + '__user_code')
+
 
             else:
 
-                if content_type_name == 'instruments.pricehistory':
+                if value_type == 10:
+                    results = model.objects.filter(master_user=master_user).order_by(key).values_list(key,
+                                                                                                      flat=True).distinct(
+                        key)
+                if value_type == 20:
+                    results = model.objects.filter(master_user=master_user).order_by(key).values_list(key,
+                                                                                                      flat=True).distinct(
+                        key)
+                if value_type == 40:
+                    results = model.objects.filter(master_user=master_user).order_by(key).values_list(key,
+                                                                                                      flat=True).distinct(
+                        key)
+                if value_type == 'field':
+                    results = model.objects.filter(master_user=master_user).order_by(key + '__user_code').values_list(
+                        key + '__user_code', flat=True).distinct(key + '__user_code')
 
-                    if value_type == 10:
-                        results = model.objects.filter(instrument__master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
-                    if value_type == 20:
-                        results = model.objects.filter(instrument__master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
-                    if value_type == 40:
-                        results = model.objects.filter(instrument__master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
-                    if value_type == 'field':
-                        results = model.objects.filter(instrument__master_user=master_user).order_by(key + '__user_code').values_list(key + '__user_code', flat=True).distinct(key + '__user_code')
+        _l.debug('model %s' % model)
 
-
-                elif content_type_name == 'currencies.currencyhistory':
-
-                    if value_type == 10:
-                        results = model.objects.filter(currency__master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
-                    if value_type == 20:
-                        results = model.objects.filter(currency__master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
-                    if value_type == 40:
-                        results = model.objects.filter(currency__master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
-                    if value_type == 'field':
-                        results = model.objects.filter(currency__master_user=master_user).order_by(key + '__user_code').values_list(key + '__user_code', flat=True).distinct(key + '__user_code')
-
-
-                else:
-
-                    if value_type == 10:
-                        results = model.objects.filter(master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
-                    if value_type == 20:
-                        results = model.objects.filter(master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
-                    if value_type == 40:
-                        results = model.objects.filter(master_user=master_user).order_by(key).values_list(key, flat=True).distinct(key)
-                    if value_type == 'field':
-
-                        results = model.objects.filter(master_user=master_user).order_by(key + '__user_code').values_list(key + '__user_code', flat=True).distinct(key + '__user_code')
-
-
-            _l.debug('model %s' % model)
-
-            return Response({
-                "results": results
-            })
+        return Response({
+            "results": results
+        })
 
 
 class DebugLogViewSet(AbstractViewSet):
@@ -619,7 +638,7 @@ class DebugLogViewSet(AbstractViewSet):
 
         log_file = '/var/log/finmars/django.log'
 
-        seek_to = request.query_params.get('seek_to', 0 )
+        seek_to = request.query_params.get('seek_to', 0)
 
         seek_to = int(seek_to)
 
@@ -645,7 +664,6 @@ class DebugLogViewSet(AbstractViewSet):
             context['starts'] = seek_to
         except IOError:
             raise Http404('Cannot access file')
-
 
         return HttpResponse(
             self.iter_json(context),

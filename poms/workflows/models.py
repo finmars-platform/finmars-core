@@ -1,5 +1,5 @@
-from django.utils.translation import gettext_lazy
 from django.db import models
+from django.utils.translation import gettext_lazy
 
 from poms.common.models import DataTimeStampedModel
 from poms.users.models import MasterUser, Member
@@ -8,7 +8,8 @@ from poms.users.models import MasterUser, Member
 class Workflow(DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
-    member = models.ForeignKey(Member, null=True, blank=True, verbose_name=gettext_lazy('member'), on_delete=models.SET_NULL)
+    member = models.ForeignKey(Member, null=True, blank=True, verbose_name=gettext_lazy('member'),
+                               on_delete=models.SET_NULL)
 
     name = models.CharField(max_length=255, blank=True, default='', verbose_name=gettext_lazy('name'))
 
@@ -17,9 +18,7 @@ class Workflow(DataTimeStampedModel):
     current_step = models.IntegerField(default=0, verbose_name=gettext_lazy('current step'))
 
 
-
 class WorkflowStep(DataTimeStampedModel):
-
     STATUS_INIT = 'I'
     STATUS_PENDING = 'P'
     STATUS_DONE = 'D'
@@ -54,4 +53,3 @@ class WorkflowStep(DataTimeStampedModel):
     code = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('code'))
 
     order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
-

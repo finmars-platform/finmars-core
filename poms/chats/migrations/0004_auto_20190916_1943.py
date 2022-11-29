@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('chats', '0003_auto_20170125_1037'),
     ]
@@ -12,10 +11,13 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='thread',
-            options={'get_latest_by': 'modified', 'ordering': ['subject'], 'permissions': [('manage_thread', 'Can manage thread')], 'verbose_name': 'thread', 'verbose_name_plural': 'threads'},
+            options={'get_latest_by': 'modified', 'ordering': ['subject'],
+                     'permissions': [('manage_thread', 'Can manage thread')], 'verbose_name': 'thread',
+                     'verbose_name_plural': 'threads'},
         ),
         migrations.AlterModelOptions(
             name='threadgroup',
-            options={'ordering': ['name'], 'permissions': [('manage_threadgroup', 'Can manage thread group')], 'verbose_name': 'thread group', 'verbose_name_plural': 'thread groups'},
+            options={'ordering': ['name'], 'permissions': [('manage_threadgroup', 'Can manage thread group')],
+                     'verbose_name': 'thread group', 'verbose_name_plural': 'thread groups'},
         ),
     ]

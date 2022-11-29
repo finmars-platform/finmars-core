@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('integrations', '0045_auto_20201103_0517'),
     ]
@@ -17,6 +16,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='complextransactionimportscheme',
             name='book_uniqueness_settings',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Skip'), (2, 'Book without Unique Code '), (3, 'Overwrite'), (4, 'Treat as error')], default=1, verbose_name='book uniqueness settings'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(1, 'Skip'), (2, 'Book without Unique Code '), (3, 'Overwrite'), (4, 'Treat as error')],
+                default=1, verbose_name='book uniqueness settings'),
         ),
     ]

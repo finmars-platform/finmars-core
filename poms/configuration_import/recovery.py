@@ -1,5 +1,4 @@
 import time
-
 from logging import getLogger
 
 from poms.configuration_import.models import ConfigurationEntityArchetype

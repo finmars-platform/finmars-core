@@ -1,16 +1,14 @@
 from __future__ import unicode_literals, print_function
 
 import logging
-import time
 from datetime import timedelta, datetime
 
 from celery import shared_task
-from django.db import transaction
 from django.views.generic.dates import timezone_today
 
 from poms.common.utils import get_list_of_dates_between_two_dates
 from poms.currencies.models import CurrencyHistory
-from poms.instruments.models import PriceHistory, PricingPolicy
+from poms.instruments.models import PricingPolicy
 from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord
 from poms.reports.common import Report
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
@@ -306,7 +304,6 @@ def calculate_portfolio_register_record(self, master_users=None):
 @shared_task(name='portfolios.calculate_portfolio_register_price_history', bind=True)
 def calculate_portfolio_register_price_history(self, member=None, date_from=None):
     from poms.celery_tasks.models import CeleryTask
-    from poms_app import settings
 
     master_user = MasterUser.objects.all()[0]  # TODO if we return to signle base logic, fix it
 
@@ -343,7 +340,7 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
 
         for portfolio_register in portfolio_registers:
 
-            if date_from and isinstance(date_from, str):
+            if date_from and isinstance(date_from, str) and date_from != 'None':
                 format = '%Y-%m-%d'
                 date_from = datetime.strptime(date_from, format).date()
             else:

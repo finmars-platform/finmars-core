@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0047_complextransaction_visibility_status'),
     ]
@@ -13,6 +12,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transactiontype',
             name='visibility_status',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Show Parameters'), (2, 'Hide Parameters')], db_index=True, default=1, verbose_name='visibility_status'),
+            field=models.PositiveSmallIntegerField(choices=[(1, 'Show Parameters'), (2, 'Hide Parameters')],
+                                                   db_index=True, default=1, verbose_name='visibility_status'),
         ),
     ]

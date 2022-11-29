@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from django.db import models
 from django.utils.translation import gettext_lazy
 
@@ -8,7 +6,6 @@ from poms.users.models import Member
 
 
 class SystemMessage(models.Model):
-
     SECTION_GENERAL = 0
     SECTION_EVENTS = 1
     SECTION_TRANSACTIONS = 2
@@ -61,13 +58,13 @@ class SystemMessage(models.Model):
                                     on_delete=models.CASCADE)
 
     section = models.PositiveSmallIntegerField(default=SECTION_GENERAL, choices=SECTION_CHOICES,
-                                            verbose_name=gettext_lazy('section'))
+                                               verbose_name=gettext_lazy('section'))
 
     type = models.PositiveSmallIntegerField(default=TYPE_INFORMATION, choices=TYPE_CHOICES,
                                             verbose_name=gettext_lazy('type'))
 
     action_status = models.PositiveSmallIntegerField(default=ACTION_STATUS_NOT_REQUIRED, choices=ACTION_STATUS_CHOICES,
-                                            verbose_name=gettext_lazy('action status'))
+                                                     verbose_name=gettext_lazy('action status'))
 
     title = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('title'))
 
@@ -102,6 +99,7 @@ class SystemMessage(models.Model):
 
         return ' '.join(pieces)
 
+
 class SystemMessageAttachment(models.Model):
     system_message = models.ForeignKey(SystemMessage, verbose_name=gettext_lazy('system message'),
                                        on_delete=models.CASCADE, related_name="attachments")
@@ -115,13 +113,11 @@ class SystemMessageAttachment(models.Model):
 
 
 class SystemMessageMember(models.Model):
-
     system_message = models.ForeignKey(SystemMessage, verbose_name=gettext_lazy('system message'),
                                        related_name='members',
                                        on_delete=models.CASCADE)
 
     member = models.ForeignKey(Member, verbose_name=gettext_lazy('member'), on_delete=models.CASCADE)
-
 
     is_read = models.BooleanField(default=False, verbose_name=gettext_lazy('is read'))
     is_pinned = models.BooleanField(default=False, verbose_name=gettext_lazy('is pinned'))

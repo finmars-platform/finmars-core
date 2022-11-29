@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0020_member_deleted_user_code'),
         ('contenttypes', '0002_remove_content_type_name'),

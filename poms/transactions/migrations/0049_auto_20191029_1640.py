@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0048_transactiontype_visibility_status'),
     ]
@@ -12,6 +11,9 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='complextransaction',
-            options={'ordering': ['code'], 'permissions': (('view_complextransaction_show_parameters', 'Show Parameters'), ('view_complextransaction_hide_parameters', 'Hide Parameters')), 'verbose_name': 'complex transaction', 'verbose_name_plural': 'complex transactions'},
+            options={'ordering': ['code'], 'permissions': (
+            ('view_complextransaction_show_parameters', 'Show Parameters'),
+            ('view_complextransaction_hide_parameters', 'Hide Parameters')), 'verbose_name': 'complex transaction',
+                     'verbose_name_plural': 'complex transactions'},
         ),
     ]

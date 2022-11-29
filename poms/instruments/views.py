@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 
+import datetime
 import json
+import logging
 
 import django_filters
 import requests
@@ -10,12 +12,10 @@ from django.db import transaction
 from django.db.models import Prefetch, Q, Case, When, Value, BooleanField
 from django.utils import timezone
 from django_filters.rest_framework import FilterSet
-from rest_framework import serializers, permissions
+from rest_framework import serializers
 from rest_framework.decorators import action
-
 from rest_framework.exceptions import MethodNotAllowed, PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
-
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
@@ -44,16 +44,15 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
     InstrumentClassSerializer, DailyPricingModelSerializer, AccrualCalculationModelSerializer, \
     PaymentSizeDetailSerializer, PeriodicitySerializer, CostMethodSerializer, InstrumentTypeSerializer, \
     PricingPolicySerializer, EventScheduleConfigSerializer, InstrumentCalculatePricesAccruedPriceSerializer, \
-    GeneratedEventSerializer, EventScheduleActionSerializer, InstrumentTypeLightSerializer, InstrumentLightSerializer, \
+    GeneratedEventSerializer, InstrumentTypeLightSerializer, InstrumentLightSerializer, \
     PricingPolicyLightSerializer, PricingConditionSerializer, InstrumentEvSerializer, InstrumentTypeEvSerializer, \
     ExposureCalculationModelSerializer, LongUnderlyingExposureSerializer, ShortUnderlyingExposureSerializer, \
     InstrumentForSelectSerializer, InstrumentTypeProcessSerializer, CountrySerializer
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
     only_generate_events_at_date, \
     generate_events_do_not_inform_apply_default, only_generate_events_at_date_for_single_instrument
-from poms.integrations.models import PriceDownloadScheme
 from poms.integrations.tasks import create_currency_cbond, create_instrument_cbond
-from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, GenericClassifier
+from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
@@ -70,11 +69,6 @@ from poms.transactions.serializers import TransactionTypeProcessSerializer
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import MasterUser, EcosystemDefault
 from poms.users.permissions import SuperUserOrReadOnly
-
-import datetime
-
-import logging
-
 from poms_app import settings
 
 _l = logging.getLogger('poms.instruments')
@@ -106,12 +100,12 @@ class PricingConditionViewSet(AbstractClassModelViewSet):
 
 
 class CountryViewSet(AbstractModelViewSet):
-
     queryset = Country.objects
     serializer_class = CountrySerializer
     ordering_fields = ['name']
     filter_fields = ['name']
     pagination_class = None
+
 
 class ExposureCalculationModelViewSet(AbstractClassModelViewSet):
     queryset = ExposureCalculationModel.objects
@@ -310,7 +304,7 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
                     print("Nothing changed for %s" % policy)
             except InstrumentPricingPolicy.DoesNotExist:
                 print("Policy %s is not found for instrument %s" % (
-                request.data['pricing_policy_object']['name'], instrument))
+                    request.data['pricing_policy_object']['name'], instrument))
 
         return Response({"status": "ok"})
 
@@ -456,7 +450,7 @@ class InstrumentTypeLightViewSet(AbstractWithObjectPermissionViewSet):
                     print("Nothing changed for %s" % policy)
             except InstrumentPricingPolicy.DoesNotExist:
                 print("Policy %s is not found for instrument %s" % (
-                request.data['pricing_policy_object']['name'], instrument))
+                    request.data['pricing_policy_object']['name'], instrument))
 
         return Response({"status": "ok"})
 
@@ -680,7 +674,8 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
 
         for dte in dates:
             res = only_generate_events_at_date_for_single_instrument.apply_async(
-                kwargs={'master_user_id': request.user.master_user.id, 'date': str(dte), 'instrument_id': instrument.id})
+                kwargs={'master_user_id': request.user.master_user.id, 'date': str(dte),
+                        'instrument_id': instrument.id})
             tasks_ids.append(res.id)
 
         return Response({
@@ -993,7 +988,8 @@ class InstrumentDatabaseSearchViewSet(APIView):
                     size = request.query_params.get('size', 40)
                     page = request.query_params.get('page', 0)
 
-                    instruments_url = settings.FINMARS_DATABASE_URL + 'api/instrument-narrows?page=' + str(page) + '&size=' + str(size) + '&query.contains=' + name
+                    instruments_url = settings.FINMARS_DATABASE_URL + 'api/instrument-narrows?page=' + str(
+                        page) + '&size=' + str(size) + '&query.contains=' + name
 
                     headers['Authorization'] = 'Bearer ' + auth_token
 
@@ -1012,7 +1008,6 @@ class InstrumentDatabaseSearchViewSet(APIView):
                     mappedItems = []
 
                     for item in items:
-
                         mappedItem = {}
 
                         mappedItem['instrumentType'] = item['instrument_type']['user_code']
@@ -1026,7 +1021,6 @@ class InstrumentDatabaseSearchViewSet(APIView):
                         mappedItem['wkn'] = ''
 
                         mappedItems.append(mappedItem)
-
 
                     result = {
                         'foundItems': mappedItems,

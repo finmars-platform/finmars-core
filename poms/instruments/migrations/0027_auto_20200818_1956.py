@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('instruments', '0026_auto_20200818_1939'),
     ]
@@ -12,30 +11,38 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='accrualcalculationmodel',
-            options={'base_manager_name': 'objects', 'ordering': ['name'], 'verbose_name': 'accrual calculation model', 'verbose_name_plural': 'accrual calculation models'},
+            options={'base_manager_name': 'objects', 'ordering': ['name'], 'verbose_name': 'accrual calculation model',
+                     'verbose_name_plural': 'accrual calculation models'},
         ),
         migrations.AlterModelOptions(
             name='costmethod',
-            options={'base_manager_name': 'objects', 'ordering': ['name'], 'verbose_name': 'cost method', 'verbose_name_plural': 'cost methods'},
+            options={'base_manager_name': 'objects', 'ordering': ['name'], 'verbose_name': 'cost method',
+                     'verbose_name_plural': 'cost methods'},
         ),
         migrations.AlterModelOptions(
             name='instrumenttype',
-            options={'base_manager_name': 'objects', 'ordering': ['user_code'], 'permissions': [('manage_instrumenttype', 'Can manage instrument type')], 'verbose_name': 'instrument type', 'verbose_name_plural': 'instrument types'},
+            options={'base_manager_name': 'objects', 'ordering': ['user_code'],
+                     'permissions': [('manage_instrumenttype', 'Can manage instrument type')],
+                     'verbose_name': 'instrument type', 'verbose_name_plural': 'instrument types'},
         ),
         migrations.AlterModelOptions(
             name='paymentsizedetail',
-            options={'base_manager_name': 'objects', 'ordering': ['name'], 'verbose_name': 'payment size detail', 'verbose_name_plural': 'payment size details'},
+            options={'base_manager_name': 'objects', 'ordering': ['name'], 'verbose_name': 'payment size detail',
+                     'verbose_name_plural': 'payment size details'},
         ),
         migrations.AlterModelOptions(
             name='periodicity',
-            options={'base_manager_name': 'objects', 'ordering': ['name'], 'verbose_name': 'periodicity', 'verbose_name_plural': 'periodicities'},
+            options={'base_manager_name': 'objects', 'ordering': ['name'], 'verbose_name': 'periodicity',
+                     'verbose_name_plural': 'periodicities'},
         ),
         migrations.AlterModelOptions(
             name='pricingcondition',
-            options={'base_manager_name': 'objects', 'ordering': ['name'], 'verbose_name': 'pricing condition', 'verbose_name_plural': 'pricing conditions '},
+            options={'base_manager_name': 'objects', 'ordering': ['name'], 'verbose_name': 'pricing condition',
+                     'verbose_name_plural': 'pricing conditions '},
         ),
         migrations.AlterModelOptions(
             name='pricingpolicy',
-            options={'base_manager_name': 'objects', 'ordering': ['user_code'], 'verbose_name': 'pricing policy', 'verbose_name_plural': 'pricing policies'},
+            options={'base_manager_name': 'objects', 'ordering': ['user_code'], 'verbose_name': 'pricing policy',
+                     'verbose_name_plural': 'pricing policies'},
         ),
     ]

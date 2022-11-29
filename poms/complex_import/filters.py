@@ -1,8 +1,5 @@
-from functools import partial
-
 import django_filters
 from django.contrib.contenttypes.models import ContentType
-from rest_framework.filters import BaseFilterBackend
 
 from poms.accounts.models import Account
 from poms.accounts.models import AccountType
@@ -36,7 +33,6 @@ def scheme_content_type_choices():
 
 class SchemeContentTypeFilter(django_filters.MultipleChoiceFilter):
     def __init__(self, *args, **kwargs):
-
         kwargs['choices'] = scheme_content_type_choices
         super(SchemeContentTypeFilter, self).__init__(*args, **kwargs)
 

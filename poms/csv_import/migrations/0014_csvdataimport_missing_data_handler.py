@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('csv_import', '0013_auto_20190417_1231'),
     ]
@@ -15,6 +14,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='csvdataimport',
             name='missing_data_handler',
-            field=models.CharField(choices=[['throw_error', 'Treat as Error'], ['set_defaults', 'Replace with Default Value']], default='throw_error', max_length=255),
+            field=models.CharField(
+                choices=[['throw_error', 'Treat as Error'], ['set_defaults', 'Replace with Default Value']],
+                default='throw_error', max_length=255),
         ),
     ]

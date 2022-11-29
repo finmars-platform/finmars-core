@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('accounts', '0010_auto_20200818_1406'),
     ]
@@ -12,6 +11,8 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='accounttype',
-            options={'base_manager_name': 'objects', 'ordering': ['user_code'], 'permissions': [('manage_accounttype', 'Can manage account type')], 'verbose_name': 'account type', 'verbose_name_plural': 'account types'},
+            options={'base_manager_name': 'objects', 'ordering': ['user_code'],
+                     'permissions': [('manage_accounttype', 'Can manage account type')], 'verbose_name': 'account type',
+                     'verbose_name_plural': 'account types'},
         ),
     ]

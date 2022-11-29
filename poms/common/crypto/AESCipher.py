@@ -20,7 +20,7 @@ class AESCipher:
         :param raw: str to encrypt
         :return: base64 encoded encrypted str
         """
-        #YAKU  cipher = AES.new(self.key, AES.MODE_CBC, self.iv)
+        # YAKU  cipher = AES.new(self.key, AES.MODE_CBC, self.iv)
         cipher = AES.new(self.key, AES.MODE_ECB)
         return base64.b64encode(cipher.encrypt(self.__pad(raw).encode())).decode()
 
@@ -30,8 +30,8 @@ class AESCipher:
         :param enc: base64 encoded encrypted str
         :return: decrypted raw str
         """
-        #YAKU cipher = AES.new(self.key, AES.MODE_CBC, self.iv)
-        cipher = AES.new(self.key, AES.MODE_ECB )
+        # YAKU cipher = AES.new(self.key, AES.MODE_CBC, self.iv)
+        cipher = AES.new(self.key, AES.MODE_ECB)
         return self.__unpad(cipher.decrypt(base64.b64decode(enc)).decode())
 
     def __pad(self, text):

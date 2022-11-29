@@ -3,14 +3,10 @@ import time
 
 from celery import shared_task
 from django.db import transaction
-
 from poms.reports.builders.balance_pl import ReportBuilder
 from poms.reports.builders.cash_flow_projection import CashFlowProjectionReportBuilder
 from poms.reports.builders.performance import PerformanceReportBuilder
 from poms.reports.builders.transaction import TransactionReportBuilder
-
-
-
 
 _l = logging.getLogger('poms.reports')
 
@@ -26,6 +22,7 @@ class FakeRequest:
 
 
 print('Celery')
+
 
 @shared_task(name='reports.balance_report')
 def balance_report(instance):

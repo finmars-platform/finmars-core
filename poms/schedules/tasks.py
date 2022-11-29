@@ -1,10 +1,9 @@
+import logging
 import traceback
 
 from celery import shared_task
-from django.utils import timezone
 from django.conf import settings
-
-import logging
+from django.utils import timezone
 
 from poms.pricing.handlers import PricingProcedureProcess
 from poms.procedures.handlers import DataProcedureProcess, ExpressionProcedureProcess
@@ -18,7 +17,6 @@ _l = logging.getLogger('poms.schedules')
 
 @shared_task(name='schedules.process_procedure_async', bind=True)
 def process_procedure_async(self, procedure_id, master_user_id, schedule_instance_id):
-
     try:
         _l.info("Schedule: Subprocess process. Master User: %s. Procedure: %s" % (master_user_id, procedure_id))
 
@@ -55,7 +53,8 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
                             date_to = schedule.data['end_date']
 
                 instance = PricingProcedureProcess(procedure=item, master_user=master_user, member=owner_member,
-                                                   schedule_instance=schedule_instance, date_from=date_from, date_to=date_to)
+                                                   schedule_instance=schedule_instance, date_from=date_from,
+                                                   date_to=date_to)
                 instance.process()
 
             except Exception as e:
@@ -70,8 +69,8 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
                 item = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
 
                 instance = DataProcedureProcess(procedure=item, master_user=master_user,
-                                                           member=owner_member,
-                                                           schedule_instance=schedule_instance)
+                                                member=owner_member,
+                                                schedule_instance=schedule_instance)
                 instance.process()
 
             except RequestDataFileProcedure.DoesNotExist:
@@ -95,9 +94,9 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
         _l.error('process_procedure_async e %s' % e)
         _l.error('process_procedure_async traceback %s' % traceback.format_exc())
 
+
 @shared_task(name='schedules.process', bind=True)
 def process(self, schedule_user_code):
-
     try:
 
         _l.info('schedule_user_code %s' % schedule_user_code)
@@ -144,8 +143,9 @@ def process(self, schedule_user_code):
                                                 s.name, schedule_instance.current_processing_procedure_number,
                                                 total_procedures))
 
-                        process_procedure_async.apply_async(kwargs={'procedure_id': procedure.id, 'master_user_id': master_user.id,
-                                                                    'schedule_instance_id': schedule_instance.id})
+                        process_procedure_async.apply_async(
+                            kwargs={'procedure_id': procedure.id, 'master_user_id': master_user.id,
+                                    'schedule_instance_id': schedule_instance.id})
 
                         _l.info('Schedule: Process first procedure master_user=%s, next_run_at=%s', master_user.id,
                                 s.next_run_at)

@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -20,7 +19,9 @@ class Migration(migrations.Migration):
                 ('user_code', models.CharField(blank=True, max_length=25, null=True, verbose_name='user code')),
                 ('name', models.CharField(max_length=255, verbose_name='name')),
                 ('short_name', models.CharField(blank=True, max_length=50, null=True, verbose_name='short name')),
-                ('public_name', models.CharField(blank=True, help_text='used if user does not have permissions to view object', max_length=255, null=True, verbose_name='public name')),
+                ('public_name',
+                 models.CharField(blank=True, help_text='used if user does not have permissions to view object',
+                                  max_length=255, null=True, verbose_name='public name')),
                 ('notes', models.TextField(blank=True, null=True, verbose_name='notes')),
                 ('is_deleted', models.BooleanField(db_index=True, default=False)),
                 ('is_valid_for_all_portfolios', models.BooleanField(default=True)),
@@ -40,15 +41,20 @@ class Migration(migrations.Migration):
                 ('user_code', models.CharField(blank=True, max_length=25, null=True, verbose_name='user code')),
                 ('name', models.CharField(max_length=255, verbose_name='name')),
                 ('short_name', models.CharField(blank=True, max_length=50, null=True, verbose_name='short name')),
-                ('public_name', models.CharField(blank=True, help_text='used if user does not have permissions to view object', max_length=255, null=True, verbose_name='public name')),
+                ('public_name',
+                 models.CharField(blank=True, help_text='used if user does not have permissions to view object',
+                                  max_length=255, null=True, verbose_name='public name')),
                 ('notes', models.TextField(blank=True, null=True, verbose_name='notes')),
                 ('is_deleted', models.BooleanField(db_index=True, default=False)),
-                ('show_transaction_details', models.BooleanField(default=False, verbose_name='show transaction details')),
-                ('transaction_details_expr', models.CharField(blank=True, max_length=255, null=True, verbose_name='transaction details expr')),
+                ('show_transaction_details',
+                 models.BooleanField(default=False, verbose_name='show transaction details')),
+                ('transaction_details_expr',
+                 models.CharField(blank=True, max_length=255, null=True, verbose_name='transaction details expr')),
             ],
             options={
                 'abstract': False,
-                'permissions': [('view_accounttype', 'Can view account type'), ('manage_accounttype', 'Can manage account type')],
+                'permissions': [('view_accounttype', 'Can view account type'),
+                                ('manage_accounttype', 'Can manage account type')],
                 'verbose_name': 'account type',
                 'ordering': ['user_code'],
                 'verbose_name_plural': 'account types',

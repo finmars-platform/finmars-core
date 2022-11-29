@@ -7,6 +7,7 @@ from poms.obj_perms.admin import GenericObjectPermissionInline
 from poms.strategies.models import Strategy1Group, Strategy2Subgroup, Strategy3, Strategy1Subgroup, Strategy1, \
     Strategy2Group, Strategy2, Strategy3Group, Strategy3Subgroup
 
+
 class Strategy1GroupAdmin(AbstractModelAdmin):
     model = Strategy1Group
     master_user_path = 'master_user'

@@ -1,11 +1,11 @@
 import json
 import logging
+import time
 import traceback
 from datetime import date, datetime
 
-from django.contrib.contenttypes.models import ContentType
+from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db import DatabaseError, IntegrityError
 from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
@@ -14,14 +14,12 @@ from poms.accounts.models import Account
 from poms.common import formula
 from poms.common.utils import date_now, format_float, format_float_to_2
 from poms.counterparties.models import Counterparty, Responsible
-
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, PricingPolicy, Periodicity, \
     AccrualCalculationModel, InstrumentFactorSchedule, ManualPricingFormula, AccrualCalculationSchedule, EventSchedule, \
     EventScheduleAction, InstrumentType
-from poms.integrations.models import PriceDownloadScheme
 from poms.obj_perms.models import GenericObjectPermission
-from poms.obj_perms.utils import assign_perms3, get_view_perms
+from poms.obj_perms.utils import assign_perms3
 from poms.portfolios.models import Portfolio
 from poms.reconciliation.models import TransactionTypeReconField
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
@@ -29,9 +27,6 @@ from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import ComplexTransaction, TransactionTypeInput, Transaction, EventClass, \
     NotificationClass, RebookReactionChoice, ComplexTransactionInput, TransactionType
 from poms.users.models import EcosystemDefault, Group
-from django.apps import apps
-
-import time
 
 _l = logging.getLogger('poms.transactions')
 
@@ -64,7 +59,8 @@ class TransactionTypeProcess(object):
 
         _time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        self.complex_transaction.execution_log = self.complex_transaction.execution_log + '['+str(_time)+'] ' + message + '\n'
+        self.complex_transaction.execution_log = self.complex_transaction.execution_log + '[' + str(
+            _time) + '] ' + message + '\n'
 
     def __init__(self,
                  process_mode=None,
@@ -89,8 +85,7 @@ class TransactionTypeProcess(object):
                  uniqueness_reaction=None,
                  execution_context='manual',
                  member=None,
-                 linked_import_task=None): # if book from import
-
+                 linked_import_task=None):  # if book from import
 
         _l.info('TransactionTypeProcess')
 
@@ -116,7 +111,6 @@ class TransactionTypeProcess(object):
         self.record_execution_progress('==== INPUT VALUES ====')
         self.record_execution_progress(json.dumps(values, indent=4, default=str))
 
-
         self.process_mode = process_mode
         self.execution_context = execution_context
         self.linked_import_task = linked_import_task
@@ -136,8 +130,6 @@ class TransactionTypeProcess(object):
         # self.expressions_result = None
 
         self.inputs = list(self.transaction_type.inputs.all())
-
-
 
         self.complex_transaction.visibility_status = self.transaction_type.visibility_status
 
@@ -185,7 +177,6 @@ class TransactionTypeProcess(object):
 
             for i in range(10):
                 self.values['phantom_instrument_%s' % i] = None
-
 
     @property
     def is_book(self):
@@ -572,7 +563,8 @@ class TransactionTypeProcess(object):
                             _l.info('set rel instrument.instrument_type %s' % instrument.instrument_type.id)
 
                             from poms.csv_import.handlers import set_defaults_from_instrument_type
-                            set_defaults_from_instrument_type(object_data, instrument.instrument_type, ecosystem_default)
+                            set_defaults_from_instrument_type(object_data, instrument.instrument_type,
+                                                              ecosystem_default)
 
                             self._set_val(errors=errors, values=self.values, default_value='',
                                           target=instrument, target_attr_name='name',
@@ -1793,7 +1785,8 @@ class TransactionTypeProcess(object):
                         _l.debug(error)
 
                         self._add_err_msg(errors, 'non_field_errors',
-                                          gettext_lazy('Invalid transaction action fields (please, use type convertion).'))
+                                          gettext_lazy(
+                                              'Invalid transaction action fields (please, use type convertion).'))
                     except DatabaseError:
                         self._add_err_msg(errors, 'non_field_errors', gettext_lazy('General DB error.'))
                     else:
@@ -1941,7 +1934,6 @@ class TransactionTypeProcess(object):
 
         self.record_execution_progress('==== USER FIELDS ====')
         self.record_execution_progress(json.dumps(_result_for_log, indent=4, default=str))
-
 
     def execute_recon_fields_expressions(self):
 
@@ -2095,8 +2087,6 @@ class TransactionTypeProcess(object):
                 _l.info('names %s' % names)
                 _l.info('self._context %s' % self._context)
 
-
-
                 self.complex_transaction.transaction_unique_code = formula.safe_eval(
                     self.complex_transaction.transaction_type.transaction_unique_code_expr, names=names,
                     context=self._context)
@@ -2223,7 +2213,8 @@ class TransactionTypeProcess(object):
 
             _l.info("TransactionTypeProcess.run_procedures_after_book. execution_context %s" % self.execution_context)
 
-            from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_price_history
+            from poms.portfolios.tasks import calculate_portfolio_register_record, \
+                calculate_portfolio_register_price_history
 
             if self.execution_context == 'manual':
 
@@ -2234,7 +2225,8 @@ class TransactionTypeProcess(object):
                 # app.send_task('calculate_portfolio_register_record', [])
                 # app.send_task('calculate_portfolio_register_nav', [])
 
-                _l.info("TransactionTypeProcess.run_procedures_after_book. recalculate prices %s" % self.complex_transaction.status)
+                _l.info(
+                    "TransactionTypeProcess.run_procedures_after_book. recalculate prices %s" % self.complex_transaction.status)
 
                 if self.complex_transaction.status_id == ComplexTransaction.PRODUCTION:
 
@@ -2261,8 +2253,6 @@ class TransactionTypeProcess(object):
         except Exception as e:
             _l.error("TransactionTypeProcess.run_procedures_after_book e %s" % e)
             _l.error("TransactionTypeProcess.run_procedures_after_book traceback %s" % traceback.format_exc())
-
-
 
     def process_as_pending(self):
 
@@ -2303,7 +2293,6 @@ class TransactionTypeProcess(object):
             system_message_description = 'New transactions created (manual) - ' + str(self.complex_transaction.text)
 
             if self.process_mode == self.MODE_REBOOK:
-
                 system_message_title = 'Edit transactions (manual)'
                 system_message_description = 'Edit transaction - ' + str(self.complex_transaction.text)
 
@@ -2410,7 +2399,6 @@ class TransactionTypeProcess(object):
         self.execute_uniqueness_expression()
 
         if self.linked_import_task:
-
             self.record_execution_progress('Transaction Booked during Task %s' % self.linked_import_task)
 
             self.complex_transaction.linked_import_task = self.linked_import_task
@@ -2422,7 +2410,6 @@ class TransactionTypeProcess(object):
         self.record_execution_progress('+====+====+')
         self.record_execution_progress(' ')
         self.complex_transaction.save()  # save executed text and date expression
-
 
         self.assign_permissions_to_complex_transaction()
 
@@ -2438,7 +2425,6 @@ class TransactionTypeProcess(object):
 
         if self.complex_transaction.transaction_type.type == TransactionType.TYPE_PROCEDURE:
             self.complex_transaction.delete()
-
 
     def process_recalculate(self):
         if not self.recalculate_inputs:
@@ -2554,10 +2540,10 @@ class TransactionTypeProcess(object):
         else:
             value = default_value
 
-        if object_data: # set default from instrument type?
+        if object_data:  # set default from instrument type?
             object_data[target_attr_name] = value
 
-        setattr(target, target_attr_name, value) # set computed value
+        setattr(target, target_attr_name, value)  # set computed value
 
     def _set_rel(self, errors, values, default_value, target, target_attr_name, source, source_attr_name, model,
                  object_data=None):

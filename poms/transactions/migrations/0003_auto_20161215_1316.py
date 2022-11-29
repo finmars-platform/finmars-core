@@ -3,11 +3,11 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
+
 import poms.common.utils
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0002_auto_20161212_1150'),
     ]
@@ -31,6 +31,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transaction',
             name='transaction_date',
-            field=models.DateField(db_index=True, default=poms.common.utils.date_now, editable=False, verbose_name='transaction date'),
+            field=models.DateField(db_index=True, default=poms.common.utils.date_now, editable=False,
+                                   verbose_name='transaction date'),
         ),
     ]

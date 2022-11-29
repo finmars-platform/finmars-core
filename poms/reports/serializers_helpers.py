@@ -573,7 +573,6 @@ def serialize_report_item_instrument(item):
             "sub_region_code": item.country.sub_region_code,
         }
 
-
     result = {
         "id": item.id,
         "name": item.name,

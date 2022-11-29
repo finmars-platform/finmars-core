@@ -1,23 +1,24 @@
 from __future__ import unicode_literals
+
+import logging
 import time
 import uuid
 from datetime import timedelta, date
 
 from django.db.models import ForeignKey
 from django.utils.translation import gettext_lazy
-
 from rest_framework import serializers
-from rest_framework.relations import PKOnlyObject
-from rest_framework.fields import SkipField
 from rest_framework.exceptions import ValidationError
+from rest_framework.fields import SkipField
+from rest_framework.relations import PKOnlyObject
 from simplejson import OrderedDict
 
 from poms.accounts.fields import AccountField
 from poms.accounts.serializers import AccountViewSerializer
+from poms.common import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.utils import date_now
-from poms.common import formula
 from poms.currencies.fields import CurrencyField, SystemCurrencyDefault
 from poms.currencies.serializers import CurrencyViewSerializer
 from poms.instruments.fields import PricingPolicyField, RegisterField, BundleField
@@ -43,14 +44,11 @@ from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Fiel
 from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, Strategy3ViewSerializer
 from poms.transactions.models import TransactionClass
 from poms.transactions.serializers import TransactionClassSerializer, ComplexTransactionStatusSerializer
-
 from poms.users.fields import MasterUserField, HiddenMemberField
-
-import logging
-
 from poms_app import settings
 
 _l = logging.getLogger('poms.reports')
+
 
 class BalanceReportCustomFieldSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
@@ -59,7 +57,7 @@ class BalanceReportCustomFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = BalanceReportCustomField
         fields = [
-            'id',  'master_user', 'name', 'user_code', 'expr', 'value_type', 'notes'
+            'id', 'master_user', 'name', 'user_code', 'expr', 'value_type', 'notes'
         ]
 
 
@@ -561,7 +559,8 @@ class BalanceReportSerializer(ReportSerializer):
                         try:
 
                             if cc.value_type == 10:
-                                setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
+                                setattr(instance_item, 'custom_field_text_' + str(index_text),
+                                        custom_field_item['value'])
 
                                 index_text = index_text + 1
 
@@ -572,7 +571,8 @@ class BalanceReportSerializer(ReportSerializer):
                                 index_number = index_number + 1
 
                             if cc.value_type == 40:
-                                setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
+                                setattr(instance_item, 'custom_field_date_' + str(index_date),
+                                        custom_field_item['value'])
 
                                 index_date = index_date + 1
 
@@ -597,7 +597,6 @@ class BalanceReportSerializer(ReportSerializer):
 
 
 class PLReportSerializer(ReportSerializer):
-
     custom_fields = PLReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
 
     items = serializers.SerializerMethodField()
@@ -662,7 +661,6 @@ class PLReportSerializer(ReportSerializer):
                     cost_method=instance.cost_method,
                 )
 
-
             report_instance.report_uuid = report_uuid
             report_instance.report_date = instance.report_date
             report_instance.pl_first_date = instance.pl_first_date
@@ -726,7 +724,8 @@ class PLReportSerializer(ReportSerializer):
                         try:
 
                             if cc.value_type == 10:
-                                setattr(instance_item, 'custom_field_text_' + str(index_text), custom_field_item['value'])
+                                setattr(instance_item, 'custom_field_text_' + str(index_text),
+                                        custom_field_item['value'])
 
                                 index_text = index_text + 1
 
@@ -737,7 +736,8 @@ class PLReportSerializer(ReportSerializer):
                                 index_number = index_number + 1
 
                             if cc.value_type == 40:
-                                setattr(instance_item, 'custom_field_date_' + str(index_date), custom_field_item['value'])
+                                setattr(instance_item, 'custom_field_date_' + str(index_date),
+                                        custom_field_item['value'])
 
                                 index_date = index_date + 1
 
@@ -786,8 +786,9 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
                                              # ('user_date_10', gettext_lazy('User Date 10')),
                                          ))
 
-    begin_date = serializers.DateField(required=False, allow_null=True, initial=date_now() - timedelta(days=365), default=date_now() - timedelta(days=365))
-    end_date = serializers.DateField(required=False, allow_null=True,  initial=date_now, default=date_now)
+    begin_date = serializers.DateField(required=False, allow_null=True, initial=date_now() - timedelta(days=365),
+                                       default=date_now() - timedelta(days=365))
+    end_date = serializers.DateField(required=False, allow_null=True, initial=date_now, default=date_now)
     portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
     accounts = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
     accounts_position = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
@@ -801,7 +802,8 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
     custom_fields_to_calculate = serializers.CharField(default='', allow_null=True, allow_blank=True, required=False)
     custom_fields_object = TransactionReportCustomFieldSerializer(source='custom_fields', read_only=True, many=True)
 
-    complex_transaction_statuses_filter = serializers.CharField(default='', allow_null=True, allow_blank=True, required=False)
+    complex_transaction_statuses_filter = serializers.CharField(default='', allow_null=True, allow_blank=True,
+                                                                required=False)
 
     portfolios_object = PortfolioViewSerializer(source='portfolios', read_only=True, many=True)
     accounts_object = AccountViewSerializer(source='accounts', read_only=True, many=True)
@@ -826,7 +828,6 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
     item_strategies3 = ReportStrategy3Serializer(many=True, read_only=True)
     item_responsibles = ReportResponsibleSerializer(many=True, read_only=True)
     item_counterparties = ReportCounterpartySerializer(many=True, read_only=True)
-
 
     def __init__(self, *args, **kwargs):
         super(TransactionReportSerializer, self).__init__(*args, **kwargs)
@@ -964,7 +965,8 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
 
                                     if expr:
                                         try:
-                                            value = formula.safe_eval('str(item)', names={'item': value}, context=self.context)
+                                            value = formula.safe_eval('str(item)', names={'item': value},
+                                                                      context=self.context)
                                         except formula.InvalidExpression:
                                             value = gettext_lazy('Invalid expression')
                                     else:
@@ -974,7 +976,8 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
 
                                     if expr:
                                         try:
-                                            value = formula.safe_eval('float(item)', names={'item': value}, context=self.context)
+                                            value = formula.safe_eval('float(item)', names={'item': value},
+                                                                      context=self.context)
                                         except formula.InvalidExpression:
                                             value = gettext_lazy('Invalid expression')
                                     else:
@@ -983,7 +986,8 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
 
                                     if expr:
                                         try:
-                                            value = formula.safe_eval("parse_date(item, '%d/%m/%Y')", names={'item': value}, context=self.context)
+                                            value = formula.safe_eval("parse_date(item, '%d/%m/%Y')",
+                                                                      names={'item': value}, context=self.context)
                                         except formula.InvalidExpression:
                                             value = gettext_lazy('Invalid expression')
                                     else:
@@ -997,7 +1001,8 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
 
                     item['custom_fields'] = cfv
 
-        _l.debug('TransactionReportSerializer custom fields execution done: %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug(
+            'TransactionReportSerializer custom fields execution done: %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         return data
 
@@ -1025,7 +1030,6 @@ class PerformanceReportItemSerializer(serializers.Serializer):
 
 
 class PerformanceReportSerializer(serializers.Serializer):
-
     master_user = MasterUserField()
     member = HiddenMemberField()
 
@@ -1201,4 +1205,3 @@ class PriceHistoryCheckSerializer(ReportSerializer):
             result.append(serialize_price_checker_item_instrument(item))
 
         return result
-

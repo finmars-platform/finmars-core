@@ -1,13 +1,12 @@
-
+import logging
 import time
-
 
 from django.db import transaction
 from django.db.models import Q
 
 from poms.common import formula
 from poms.common.utils import isclose, date_now
-from poms.instruments.models import Instrument,  PriceHistory, PricingCondition
+from poms.instruments.models import Instrument, PriceHistory, PricingCondition
 from poms.integrations.models import ProviderClass, BloombergDataProviderCredential
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord
@@ -20,10 +19,6 @@ from poms.pricing.utils import get_unique_pricing_schemes, get_list_of_dates_bet
     get_is_yesterday, optimize_items, roll_price_history_for_n_day_forward, get_empty_values_for_dates, \
     get_closest_tenors, group_instrument_items_by_provider, get_parameter_from_scheme_parameters
 from poms.procedures.models import PricingProcedure, PricingProcedureInstance, BaseProcedureInstance
-
-
-import logging
-
 from poms.reports.common import Report
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.system_messages.handlers import send_system_message
@@ -93,7 +88,7 @@ class InstrumentItem(object):
 
                     except (Exception, GenericAttribute.DoesNotExist) as e:
                         _l.info("instrument_handler fill_parameters instrument %s " % self.instrument)
-                        _l.info("instrument_handler fill_parameters error %s " %  e)
+                        _l.info("instrument_handler fill_parameters error %s " % e)
                         pass
 
                 if result:
@@ -184,7 +179,7 @@ class PricingInstrumentHandler(object):
         _l.debug('instrument_items len %s' % len(self.instrument_items))
 
         self.instrument_items_grouped = group_instrument_items_by_provider(items=self.instrument_items,
-                                                                groups=self.instrument_pricing_schemes)
+                                                                           groups=self.instrument_pricing_schemes)
 
         _l.debug('instrument_items_grouped len %s' % len(self.instrument_items_grouped))
 
@@ -300,8 +295,8 @@ class PricingInstrumentHandler(object):
                     for id, pos in instruments_positions.items():
                         if not isclose(pos, 0.0):
 
-                            if instruments_dict[id].pricing_condition_id in [PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
-
+                            if instruments_dict[id].pricing_condition_id in [
+                                PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
                                 instruments_opened.add(id)
 
                 _l.debug('< get_instruments instruments_opened (step a) len %s' % len(instruments_opened))
@@ -335,7 +330,6 @@ class PricingInstrumentHandler(object):
                     if trn.instrument_id:
 
                         if trn.instrument.pricing_condition_id in [PricingCondition.RUN_VALUATION_IF_NON_ZERO]:
-
                             instruments_opened.add(trn.instrument_id)
 
                 _l.debug('< get_instruments instruments_opened (step b) len %s' % len(instruments_opened))
@@ -463,7 +457,6 @@ class PricingInstrumentHandler(object):
                 principal_price = None
                 accrued_price = None
 
-
                 try:
 
                     portfolio_register = PortfolioRegister.objects.get(master_user=self.master_user,
@@ -485,7 +478,6 @@ class PricingInstrumentHandler(object):
                             nav = nav + balance_report_item['market_value']
 
                     principal_price = nav / portfolio_register_record.n_shares_end_of_the_day
-
 
                     try:
 
@@ -544,7 +536,8 @@ class PricingInstrumentHandler(object):
                     _l.debug("Portfolio register or PortfolioRegisterRecord is not found")
 
             if last_price:
-                successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
+                successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price,
+                                                                         self.master_user,
                                                                          procedure_instance, item.policy)
 
                 successful_prices_count = successful_prices_count + successes
@@ -564,19 +557,18 @@ class PricingInstrumentHandler(object):
 
         _l.debug("Pricing Instrument Handler - Single parameters Formula: len %s" % len(items))
 
-
         procedure_instance = PricingProcedureInstance.objects.create(procedure=self.procedure,
-                                                      parent_procedure_instance=self.parent_procedure,
-                                                      master_user=self.master_user,
-                                                      member=self.member,
-                                                      status=PricingProcedureInstance.STATUS_PENDING,
-                                                      action='single_parameter_formula_get_instrument_prices',
-                                                      provider='finmars',
+                                                                     parent_procedure_instance=self.parent_procedure,
+                                                                     master_user=self.master_user,
+                                                                     member=self.member,
+                                                                     status=PricingProcedureInstance.STATUS_PENDING,
+                                                                     action='single_parameter_formula_get_instrument_prices',
+                                                                     provider='finmars',
 
-                                                      action_verbose='Get Instrument Prices from Single Parameter Formula',
-                                                      provider_verbose='Finmars'
+                                                                     action_verbose='Get Instrument Prices from Single Parameter Formula',
+                                                                     provider_verbose='Finmars'
 
-                                                      )
+                                                                     )
 
         if self.member:
             procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
@@ -783,7 +775,8 @@ class PricingInstrumentHandler(object):
 
                         last_price = price
 
-                successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
+                successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price,
+                                                                         self.master_user,
                                                                          procedure_instance, item.policy)
 
                 successful_prices_count = successful_prices_count + successes
@@ -826,8 +819,6 @@ class PricingInstrumentHandler(object):
 
         successful_prices_count = 0
         error_prices_count = 0
-
-
 
         if self.member:
             procedure_instance.started_by = BaseProcedureInstance.STARTED_BY_MEMBER
@@ -1119,7 +1110,8 @@ class PricingInstrumentHandler(object):
 
                         last_price = price
 
-                successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price, self.master_user,
+                successes, errors = roll_price_history_for_n_day_forward(item, self.procedure, last_price,
+                                                                         self.master_user,
                                                                          procedure_instance, item.policy)
 
                 successful_prices_count = successful_prices_count + successes
@@ -1264,7 +1256,6 @@ class PricingInstrumentHandler(object):
                                 if 'accrual_yesterday' in item.scheme_fields_map:
                                     record.accrual_parameters = item.scheme_fields_map[
                                         'accrual_yesterday']
-
 
                                 history_record = PriceHistoryError.objects.create(
                                     master_user=self.master_user,
@@ -1603,7 +1594,6 @@ class PricingInstrumentHandler(object):
 
         procedure_instance.request_data = body
         procedure_instance.save()
-
 
         try:
 
@@ -2039,7 +2029,6 @@ class PricingInstrumentHandler(object):
                         'parameters': [],
                         'values': empty_values
                     })
-
 
                     full_items.append(item_obj)
 

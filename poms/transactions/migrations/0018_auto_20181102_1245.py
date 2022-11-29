@@ -6,7 +6,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0017_auto_20181102_1219'),
     ]
@@ -18,6 +17,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AlterModelOptions(
             name='transactiontypeactioninstrumenteventscheduleaction',
-            options={'verbose_name': 'transaction type action instrument event schedule action', 'verbose_name_plural': 'transaction type action instrument event schedule actions'},
+            options={'verbose_name': 'transaction type action instrument event schedule action',
+                     'verbose_name_plural': 'transaction type action instrument event schedule actions'},
         ),
     ]

@@ -1,6 +1,5 @@
 from django.apps import AppConfig
 
-
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
 
@@ -21,32 +20,32 @@ class SchedulesConfig(AppConfig):
         crontabs = {}
 
         crontabs['every_30_min'], _ = CrontabSchedule.objects.get_or_create(minute='*/30',
-                                                         hour='*',
-                                                         day_of_week='*',
-                                                         day_of_month='*',
-                                                         month_of_year='*'
-                                                         )
-
-        crontabs['every_5_min'], _ = CrontabSchedule.objects.get_or_create(minute='*/5',
                                                                             hour='*',
                                                                             day_of_week='*',
                                                                             day_of_month='*',
                                                                             month_of_year='*'
                                                                             )
 
-        crontabs['daily_morning'], _ = CrontabSchedule.objects.get_or_create(minute='0',
-                                                                          hour='6',
-                                                                          day_of_week='*',
-                                                                          day_of_month='*',
-                                                                          month_of_year='*'
-                                                                          )
-
-        crontabs['daily_noon'], _ = CrontabSchedule.objects.get_or_create(minute='0',
-                                                                           hour='12',
+        crontabs['every_5_min'], _ = CrontabSchedule.objects.get_or_create(minute='*/5',
+                                                                           hour='*',
                                                                            day_of_week='*',
                                                                            day_of_month='*',
                                                                            month_of_year='*'
                                                                            )
+
+        crontabs['daily_morning'], _ = CrontabSchedule.objects.get_or_create(minute='0',
+                                                                             hour='6',
+                                                                             day_of_week='*',
+                                                                             day_of_month='*',
+                                                                             month_of_year='*'
+                                                                             )
+
+        crontabs['daily_noon'], _ = CrontabSchedule.objects.get_or_create(minute='0',
+                                                                          hour='12',
+                                                                          day_of_week='*',
+                                                                          day_of_month='*',
+                                                                          month_of_year='*'
+                                                                          )
 
         periodic_tasks = [
             {

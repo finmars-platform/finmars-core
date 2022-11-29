@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('csv_import', '0011_auto_20190401_1625'),
     ]
@@ -24,11 +23,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='csvdataimport',
             name='delimiter',
-            field=models.CharField(choices=[[',', 'Comma'], [';', 'Semicolon'], ['\t', 'Tab']], default=',', max_length=255),
+            field=models.CharField(choices=[[',', 'Comma'], [';', 'Semicolon'], ['\t', 'Tab']], default=',',
+                                   max_length=255),
         ),
         migrations.AddField(
             model_name='csvdataimport',
             name='mode',
-            field=models.CharField(choices=[['skip', 'Skip if exists'], ['overwrite', 'Overwrite']], default='skip', max_length=255),
+            field=models.CharField(choices=[['skip', 'Skip if exists'], ['overwrite', 'Overwrite']], default='skip',
+                                   max_length=255),
         ),
     ]

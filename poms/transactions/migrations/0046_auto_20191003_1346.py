@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0045_transaction_ytm_at_cost'),
     ]

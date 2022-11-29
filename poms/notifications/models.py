@@ -4,7 +4,6 @@ from babel import Locale
 from babel.dates import format_timedelta
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.models import Group
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
@@ -17,11 +16,15 @@ from poms.notifications import LEVELS
 
 class NotificationSetting(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='notification_settings', on_delete=models.CASCADE)
-    member = models.ForeignKey('users.Member', related_name='notification_settings', null=True, on_delete=models.SET_NULL)
+    member = models.ForeignKey('users.Member', related_name='notification_settings', null=True,
+                               on_delete=models.SET_NULL)
 
-    actor_content_type = models.ForeignKey(ContentType, related_name='notify_actor', null=True, blank=True, on_delete=models.SET_NULL)
-    target_content_type = models.ForeignKey(ContentType, related_name='notify_actor', null=True, blank=True, on_delete=models.SET_NULL)
-    action_object_content_type = models.ForeignKey(ContentType, related_name='notify_actor', null=True, blank=True, on_delete=models.SET_NULL)
+    actor_content_type = models.ForeignKey(ContentType, related_name='notify_actor', null=True, blank=True,
+                                           on_delete=models.SET_NULL)
+    target_content_type = models.ForeignKey(ContentType, related_name='notify_actor', null=True, blank=True,
+                                            on_delete=models.SET_NULL)
+    action_object_content_type = models.ForeignKey(ContentType, related_name='notify_actor', null=True, blank=True,
+                                                   on_delete=models.SET_NULL)
 
     level = models.PositiveSmallIntegerField(choices=LEVELS, default=messages.INFO)
     is_email_enabled = models.BooleanField(default=True)
@@ -57,7 +60,8 @@ class Notification(models.Model):
     verb = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('verb'))
 
     action_object_content_type = models.ForeignKey(ContentType, blank=True, null=True, related_name='+',
-                                                   verbose_name=gettext_lazy('action object content type'), on_delete=models.SET_NULL)
+                                                   verbose_name=gettext_lazy('action object content type'),
+                                                   on_delete=models.SET_NULL)
     action_object_object_id = models.CharField(max_length=255, blank=True, null=True,
                                                verbose_name=gettext_lazy('action object object id'))
     action_object = GenericForeignKey('action_object_content_type', 'action_object_object_id')

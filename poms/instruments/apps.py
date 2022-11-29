@@ -21,7 +21,6 @@ def load_countries():
     return results
 
 
-
 class InstrumentsConfig(AppConfig):
     name = 'poms.instruments'
     # label = 'poms'
@@ -32,14 +31,12 @@ class InstrumentsConfig(AppConfig):
         post_migrate.connect(self.fill_with_countries, sender=self)
 
     def fill_with_countries(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
-
         countries = load_countries()
 
         from .models import Country
 
         for country in countries:
             item, created = Country.objects.get_or_create(name=country['name'])
-
 
             item.name = country['name']
             item.user_code = country['name']
@@ -59,11 +56,11 @@ class InstrumentsConfig(AppConfig):
 
             item.save()
 
-
     def update_transaction_classes(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
         from poms.common.utils import db_class_check_data
         from .models import InstrumentClass, DailyPricingModel, AccrualCalculationModel, Periodicity, \
-            CostMethod, PaymentSizeDetail, PricingCondition, ExposureCalculationModel, LongUnderlyingExposure, ShortUnderlyingExposure
+            CostMethod, PaymentSizeDetail, PricingCondition, ExposureCalculationModel, LongUnderlyingExposure, \
+            ShortUnderlyingExposure
 
         db_class_check_data(InstrumentClass, verbosity, using)
         db_class_check_data(DailyPricingModel, verbosity, using)

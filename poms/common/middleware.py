@@ -10,16 +10,15 @@ from threading import local
 from django.conf import settings
 from django.contrib.gis.geoip2 import GeoIP2
 from django.http import HttpResponse
+from django.http.response import JsonResponse
 from django.utils.cache import get_max_age, patch_cache_control, add_never_cache_headers
 from django.utils.functional import SimpleLazyObject
-from geoip2.errors import AddressNotFoundError
 from django.utils.translation import gettext_lazy as _
-from rest_framework import HTTP_HEADER_ENCODING, exceptions
-
+from geoip2.errors import AddressNotFoundError
+from rest_framework import exceptions
+from rest_framework.exceptions import PermissionDenied, AuthenticationFailed, NotAuthenticated
 
 from .keycloak import KeycloakConnect
-from django.http.response import JsonResponse
-from rest_framework.exceptions import PermissionDenied, AuthenticationFailed, NotAuthenticated
 
 try:
     from django.utils.deprecation import MiddlewareMixin
@@ -160,7 +159,6 @@ class NoCacheMiddleware(MiddlewareMixin):
         return response
 
 
-
 class CustomExceptionMiddleware(MiddlewareMixin):
 
     def __init__(self, get_response):
@@ -171,8 +169,6 @@ class CustomExceptionMiddleware(MiddlewareMixin):
         return response
 
     def process_exception(self, request, exception):
-
-
         # print('exception %s' % exception)
 
         print(traceback.format_exc())
@@ -194,7 +190,6 @@ class CustomExceptionMiddleware(MiddlewareMixin):
         response_json = json.dumps(data, indent=2, sort_keys=True)
 
         return HttpResponse(response_json, status=500)
-
 
 
 class KeycloakMiddleware:

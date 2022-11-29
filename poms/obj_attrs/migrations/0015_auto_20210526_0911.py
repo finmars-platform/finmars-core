@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0040_auto_20210409_1154'),
         ('contenttypes', '0002_remove_content_type_name'),

@@ -1,5 +1,8 @@
 from __future__ import unicode_literals
 
+import logging
+import time
+
 import django_filters
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -19,11 +22,10 @@ from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoice
     NoOpFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter, ComplexTransactionStatusFilter
 from poms.common.middleware import get_request
 from poms.common.pagination import CustomPaginationMixin
-from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet, AbstractAsyncViewSet
+from poms.common.views import AbstractClassModelViewSet, AbstractAsyncViewSet
 from poms.counterparties.models import Responsible, Counterparty, ResponsibleGroup, CounterpartyGroup
 from poms.currencies.models import Currency
-from poms.instruments.models import Instrument, InstrumentType, PricingPolicy, Periodicity, AccrualCalculationModel
-from poms.integrations.tasks import complex_transaction_csv_file_import_validate
+from poms.instruments.models import Instrument, InstrumentType, PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
@@ -36,13 +38,11 @@ from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3, Strategy1Subgroup, Strategy1Group, \
     Strategy2Subgroup, Strategy2Group, Strategy3Subgroup, Strategy3Group
 from poms.system_messages.handlers import send_system_message
-from poms.transactions.filters import TransactionObjectPermissionFilter, ComplexTransactionPermissionFilter, \
-    TransactionObjectPermissionMemberFilter, TransactionObjectPermissionGroupFilter, \
+from poms.transactions.filters import TransactionObjectPermissionMemberFilter, TransactionObjectPermissionGroupFilter, \
     TransactionObjectPermissionPermissionFilter, ComplexTransactionSpecificFilter
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionClass, Transaction, TransactionType, TransactionTypeGroup, \
-    ComplexTransaction, EventClass, NotificationClass, TransactionTypeInput, TransactionTypeAction
-from poms.transactions.permissions import TransactionObjectPermission, ComplexTransactionPermission
+    ComplexTransaction, EventClass, NotificationClass
 from poms.transactions.serializers import TransactionClassSerializer, TransactionSerializer, TransactionTypeSerializer, \
     TransactionTypeProcessSerializer, TransactionTypeGroupSerializer, ComplexTransactionSerializer, \
     EventClassSerializer, NotificationClassSerializer, TransactionTypeLightSerializer, \
@@ -53,11 +53,6 @@ from poms.transactions.serializers import TransactionClassSerializer, Transactio
 from poms.transactions.tasks import recalculate_permissions_transaction, recalculate_permissions_complex_transaction, \
     recalculate_user_fields
 from poms.users.filters import OwnerByMasterUserFilter
-
-import logging
-import time
-
-from poms.users.utils import get_member_from_context, get_master_user_from_context
 
 _l = logging.getLogger('poms.transactions')
 
@@ -562,7 +557,8 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         if request.method == 'GET':
 
             instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
-                                              context=self.get_serializer_context(), context_values=context_values, member=request.user.member)
+                                              context=self.get_serializer_context(), context_values=context_values,
+                                              member=request.user.member)
 
             serializer = self.get_serializer(instance=instance)
             return Response(serializer.data)
@@ -602,7 +598,8 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
                                           context=self.get_serializer_context(),
-                                          complex_transaction_status=complex_transaction_status, member=request.user.member)
+                                          complex_transaction_status=complex_transaction_status,
+                                          member=request.user.member)
 
         if request.method == 'GET':
             serializer = self.get_serializer(instance=instance)
@@ -1322,7 +1319,6 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                             description='Transaction ' + str(instance.code) + ' was deleted'
                             )
 
-
     @action(detail=True, methods=['get', 'put'], url_path='rebook', serializer_class=TransactionTypeProcessSerializer,
             permission_classes=[IsAuthenticated])
     def rebook(self, request, pk=None):
@@ -1350,7 +1346,6 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
             complex_transaction.execution_log = ''
 
-
             instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                               process_mode=request.data['process_mode'],
                                               complex_transaction=complex_transaction,
@@ -1359,7 +1354,6 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                                               uniqueness_reaction=uniqueness_reaction, member=request.user.member)
 
             _l.info("==== INIT REBOOK ====")
-
 
             try:
                 history.set_flag_change()

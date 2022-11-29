@@ -29,9 +29,7 @@ class BaseReport:
         }
 
 
-
 class Report(BaseReport):
-
     TYPE_BALANCE = 1
     TYPE_PL = 2
     TYPE_CHOICES = (
@@ -80,7 +78,6 @@ class Report(BaseReport):
         super(Report, self).__init__(id=id, master_user=master_user, member=member,
                                      task_id=task_id, task_status=task_status)
 
-
         # self.id = id
         # self.task_id = task_id
         # self.task_status = task_status
@@ -100,8 +97,8 @@ class Report(BaseReport):
         self.report_date = report_date or (date_now() - timedelta(days=1))
         self.cost_method = cost_method or CostMethod.objects.get(pk=CostMethod.AVCO)
 
-        self.report_instance_name=report_instance_name
-        self.save_report=save_report
+        self.report_instance_name = report_instance_name
+        self.save_report = save_report
         self.portfolio_mode = portfolio_mode
         self.account_mode = account_mode
         self.strategy1_mode = strategy1_mode
@@ -122,7 +119,6 @@ class Report(BaseReport):
         self.strategies1 = strategies1 or []
         self.strategies2 = strategies2 or []
         self.strategies3 = strategies3 or []
-
 
         self.transaction_classes = transaction_classes or []
         # self.date_field = date_field or 'transaction_date'
@@ -253,6 +249,7 @@ class ReportItem:
     TYPE_SUMMARY = 200
     TYPE_ALLOCATION = 400
 
+
 class TransactionReport(BaseReport):
     def __init__(self,
                  id=None,
@@ -335,7 +332,6 @@ class PerformanceReport(BaseReport):
     report_type = 0  # VirtualTransaction
     report_date = date.min  # VirtualTransaction
 
-
     CALCULATION_TYPE_TIME_WEIGHTED = 'time_weighted'
     CALCULATION_TYPE_MONEY_WEIGHTED = 'money_weighted'
     CALCULATION_TYPE_CHOICES = (
@@ -393,7 +389,6 @@ class PerformanceReport(BaseReport):
         self.begin_date = begin_date or date(d.year, 1, 1)
         # self.begin_date = date.min
         self.end_date = end_date or d
-
 
         self.report_currency = report_currency or master_user.system_currency
         self.pricing_policy = pricing_policy

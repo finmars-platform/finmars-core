@@ -5,6 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 from poms.common.models import NamedModel
 from poms.integrations.models import ProviderClass
 
+
 # DEPRECATED SHIT
 class NamedModelAutoMapping(NamedModel):
     class Meta:

@@ -1,19 +1,15 @@
-import datetime
+import logging
 
 import pytz
-from django.conf import settings
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
+from rest_framework import exceptions
 from rest_framework.authentication import TokenAuthentication, get_authorization_header
 from rest_framework.exceptions import AuthenticationFailed
-from django.utils.translation import gettext_lazy as _
-from rest_framework import HTTP_HEADER_ENCODING, exceptions
 
 from poms.auth_tokens.models import AuthToken
 
-import logging
 _l = logging.getLogger('poms.auth_tokens')
-
-
 
 
 class ExpiringTokenAuthentication(TokenAuthentication):
@@ -41,7 +37,6 @@ class ExpiringTokenAuthentication(TokenAuthentication):
             msg = _('Invalid token header. All Tokens invalid.')
             raise exceptions.AuthenticationFailed(msg)
 
-
     def authenticate(self, request):
         auth = get_authorization_header(request).split()
 
@@ -58,18 +53,14 @@ class ExpiringTokenAuthentication(TokenAuthentication):
             for key, value in request.COOKIES.items():
 
                 if 'authtoken' == key:
-
                     tokens.append(value)
 
             if len(tokens):
-
                 _l.info("Multiple tokens detected %s " % len(tokens))
 
                 index = 0
                 self.try_token(tokens, index)
                 return self.result_token_user, self.result_token
-
-
 
         # if len(auth) == 0:
         #
@@ -85,8 +76,6 @@ class ExpiringTokenAuthentication(TokenAuthentication):
 
         if not auth or auth[0].lower() != self.keyword.lower().encode():
             return None
-
-
 
         if len(auth) == 1:
             msg = _('Invalid token header. No credentials provided.')
@@ -127,5 +116,3 @@ class ExpiringTokenAuthentication(TokenAuthentication):
         #         {"error": "Token has expired", "is_authenticated": False}
         #     )
         return token.user, token
-
-

@@ -9,7 +9,6 @@ SYSTEM_ATTRIBUTE = 60
 USER_ATTRIBUTE = 70
 DATETIME = 80
 
-
 RELATION = 100
 SELECTOR = 110
 BUTTON = 120
@@ -28,6 +27,7 @@ SYSTEM_VALUE_TYPES = (
     (DATETIME, gettext_lazy('Datetime'))
 )
 
+
 class SystemValueType():
     STRING = 10
     NUMBER = 20
@@ -37,7 +37,6 @@ class SystemValueType():
     SYSTEM_ATTRIBUTE = 60
     USER_ATTRIBUTE = 70
     DATETIME = 80
-
 
     RELATION = 100
     SELECTOR = 110

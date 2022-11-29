@@ -1,25 +1,17 @@
-import uuid
-
-from django.contrib.contenttypes.models import ContentType
 from django.apps import apps
-from django.core.validators import RegexValidator
 from django.core.exceptions import ObjectDoesNotExist
-
+from django.core.validators import RegexValidator
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithTimeStampSerializer, ModelWithUserCodeSerializer
+from poms.common.storage import get_storage
 from poms.users.fields import MasterUserField, HiddenMemberField
 from poms_app import settings
-from .models import CsvField, EntityField, CsvDataImport, CsvImportScheme, CsvImportSchemeCalculatedInput
 from .fields import CsvImportContentTypeField, CsvImportSchemeField
+from .models import CsvField, EntityField, CsvImportScheme, CsvImportSchemeCalculatedInput
 
-
-from django.utils import timezone
-
-from poms.common.storage import get_storage
 storage = get_storage()
 
 
@@ -27,7 +19,8 @@ class CsvDataFileImport:
     def __init__(self, task_id=None, task_status=None, master_user=None, member=None, status=None,
                  scheme=None, file_path=None, delimiter=None, mode=None, quotechar=None, encoding=None,
                  error_handler=None, missing_data_handler=None, classifier_handler=None,
-                 total_rows=None, processed_rows=None, stats=None, filename=None, imported=None, stats_file_report=None):
+                 total_rows=None, processed_rows=None, stats=None, filename=None, imported=None,
+                 stats_file_report=None):
         self.task_id = task_id
         self.task_status = task_status
 
@@ -96,7 +89,6 @@ class CsvImportSchemeCalculatedInputSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'column', 'name_expr']
 
 
-
 class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     csv_fields = CsvFieldSerializer(many=True)
@@ -160,7 +152,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
                 'price_multiplier', 'accrued_multiplier',
                 'maturity_date', 'maturity_price',
                 'default_price', 'default_accrued'
-                'user_text_1', 'user_text_2', 'user_text_3'
+                                 'user_text_1', 'user_text_2', 'user_text_3'
             ],
             'instruments.pricehistory': [
                 'instrument', 'pricing_policy', 'date', 'principal_price', 'accrued_price'
@@ -181,7 +173,6 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
                 'subgroup'
             ]
 
-
         }
 
         ids = set()
@@ -193,7 +184,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
                 try:
 
                     o = EntityField.objects.get(scheme=scheme,
-                                            system_property_key=model_field.name)
+                                                system_property_key=model_field.name)
 
                     ids.add(o.id)
 
@@ -205,9 +196,9 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
                         name = model_field.verbose_name
 
                     o = EntityField.objects.create(scheme=scheme,
-                                               system_property_key=model_field.name,
-                                               name=name,
-                                               expression='')
+                                                   system_property_key=model_field.name,
+                                                   name=name,
+                                                   expression='')
 
                     ids.add(o.id)
 
@@ -270,7 +261,6 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
             pk_set.add(input0.id)
         scheme.calculated_inputs.exclude(pk__in=pk_set).delete()
 
-
     def create(self, validated_data):
 
         csv_fields = validated_data.pop('csv_fields')
@@ -305,8 +295,10 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
         scheme.short_name = validated_data.get('short_name', scheme.short_name)
         scheme.filter_expr = validated_data.get('filter_expr', scheme.filter_expr)
         scheme.spreadsheet_start_cell = validated_data.get('spreadsheet_start_cell', scheme.spreadsheet_start_cell)
-        scheme.spreadsheet_active_tab_name = validated_data.get('spreadsheet_active_tab_name', scheme.spreadsheet_active_tab_name)
-        scheme.instrument_reference_column = validated_data.get('instrument_reference_column', scheme.instrument_reference_column)
+        scheme.spreadsheet_active_tab_name = validated_data.get('spreadsheet_active_tab_name',
+                                                                scheme.spreadsheet_active_tab_name)
+        scheme.instrument_reference_column = validated_data.get('instrument_reference_column',
+                                                                scheme.instrument_reference_column)
 
         # 'mode', 'delimiter', 'error_handler', 'missing_data_handler', 'classifier_handler'
 
@@ -336,9 +328,8 @@ class CsvImportSchemeLightSerializer(ModelWithUserCodeSerializer):
     content_type = CsvImportContentTypeField()
 
     class Meta:
-
         model = CsvImportScheme
-        fields = ('id', 'master_user',  'name', 'user_code', 'filter_expr', 'content_type')
+        fields = ('id', 'master_user', 'name', 'user_code', 'filter_expr', 'content_type')
 
 
 class CsvDataImportSerializer(serializers.Serializer):
@@ -392,7 +383,6 @@ class CsvDataImportSerializer(serializers.Serializer):
         filetmp = file = validated_data.get('file', None)
 
         if 'scheme' in validated_data:
-
             validated_data['delimiter'] = validated_data['scheme'].delimiter
             validated_data['error_handler'] = validated_data['scheme'].error_handler
             validated_data['mode'] = validated_data['scheme'].mode
@@ -418,7 +408,6 @@ class CsvDataImportSerializer(serializers.Serializer):
                 validated_data['file_path'] = file_path
             else:
                 raise serializers.ValidationError({'file': 'Required field.'})
-
 
         return CsvDataFileImport(**validated_data)
 

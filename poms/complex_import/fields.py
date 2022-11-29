@@ -6,6 +6,7 @@ from django.utils.encoding import smart_text
 
 from poms.common.fields import SlugRelatedFilteredField
 
+
 class ComplexImportContentTypeField(SlugRelatedFilteredField):
     queryset = ContentType.objects
     filter_backends = []

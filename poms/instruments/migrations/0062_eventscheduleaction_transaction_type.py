@@ -21,9 +21,7 @@ def rev(apps, schema_editor):
     pass
 
 
-
 class Migration(migrations.Migration):
-
     dependencies = [
         ('instruments', '0061_auto_20210907_1912'),
     ]

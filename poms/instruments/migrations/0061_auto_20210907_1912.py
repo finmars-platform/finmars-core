@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('instruments', '0060_pricehistory_procedure_modified_datetime'),
     ]

@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from datetime import timedelta
+from logging import getLogger
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
@@ -10,13 +10,10 @@ from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedMo
 from poms.common.utils import date_now
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.currencies.models import Currency
-from poms.instruments.models import PricingPolicy, Instrument, PriceHistory
+from poms.instruments.models import PricingPolicy, Instrument
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser
-
-
-from logging import getLogger
 
 _l = getLogger('poms.portfolios')
 
@@ -76,25 +73,9 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     def save(self, *args, **kwargs):
         super(PortfolioRegister, self).save(*args, **kwargs)
 
-        from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_price_history
-
-
         if self.linked_instrument:
             self.linked_instrument.has_linked_with_portfolio = True
             self.linked_instrument.save()
-
-        # calculate_portfolio_register_record.apply_async(
-        #     link=[
-        #         calculate_portfolio_register_price_history.s()
-        #     ],
-        #     kwargs={'portfolio_register_ids': [self.id], 'master_users': [self.master_user.id]})
-
-        calculate_portfolio_register_record.apply_async(
-            link=[
-                calculate_portfolio_register_price_history.s()
-            ],
-            kwargs={'master_users': [self.master_user.id]})
-
 
         try:
 

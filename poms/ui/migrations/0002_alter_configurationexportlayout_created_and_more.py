@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('ui', '0001_squashed_0057_merge_20220712_2003'),
     ]

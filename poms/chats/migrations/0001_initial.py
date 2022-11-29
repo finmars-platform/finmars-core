@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -74,7 +73,8 @@ class Migration(migrations.Migration):
             ],
             options={
                 'abstract': False,
-                'permissions': [('view_threadgroup', 'Can view thread group'), ('manage_threadgroup', 'Can manage thread group')],
+                'permissions': [('view_threadgroup', 'Can view thread group'),
+                                ('manage_threadgroup', 'Can manage thread group')],
                 'verbose_name': 'thread group',
                 'ordering': ['name'],
                 'verbose_name_plural': 'thread groups',

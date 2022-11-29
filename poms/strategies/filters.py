@@ -1,6 +1,3 @@
-from rest_framework.filters import BaseFilterBackend
-
-
 # class SubgroupOwnerByGroupUserFilter(BaseFilterBackend):
 #     def filter_queryset(self, request, queryset, view):
 #         master_user = request.user.master_user

@@ -1,7 +1,7 @@
+import logging
 import traceback
 
 from celery import shared_task
-
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyUser, ProxyRequest
@@ -17,12 +17,9 @@ from poms.users.models import EcosystemDefault, Member
 from poms.widgets.handlers import StatsHandler
 from poms.widgets.models import BalanceReportHistory, BalanceReportHistoryItem, PLReportHistory, WidgetStats, \
     PLReportHistoryItem
-
 from poms.widgets.utils import find_next_date_to_process, collect_asset_type_category, collect_currency_category, \
     collect_country_category, collect_sector_category, collect_region_category, collect_pl_history, \
     collect_balance_history, collect_widget_stats
-
-import logging
 
 _l = logging.getLogger('poms.widgets')
 

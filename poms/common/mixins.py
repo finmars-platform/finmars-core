@@ -1,17 +1,19 @@
 from __future__ import unicode_literals
 
+import logging
+
 from django.core.exceptions import ObjectDoesNotExist, FieldDoesNotExist
 from django.db.models import ProtectedError
 from django.utils.translation import gettext_lazy
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, ValidationError, PermissionDenied
-from rest_framework.mixins import UpdateModelMixin, DestroyModelMixin, CreateModelMixin, ListModelMixin
+from rest_framework.mixins import UpdateModelMixin, DestroyModelMixin, CreateModelMixin
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 
-import logging
 _l = logging.getLogger('poms.common.mixins')
+
 
 # TODO: Permissions for method and per-object must be verified!!!!
 
@@ -211,7 +213,6 @@ class BulkSaveModelMixin(CreateModelMixin, UpdateModelMixin):
 class BulkDestroyModelMixin(DestroyModelMixin):
     @action(detail=False, methods=['get', 'post'], url_path='bulk-delete')
     def bulk_delete(self, request):
-
         print('Bulk delelete here')
 
         if request.method.lower() == 'get':
@@ -263,6 +264,7 @@ class BulkModelMixin(BulkCreateModelMixin, BulkUpdateModelMixin, BulkDestroyMode
             return self.bulk_delete(request)
 
         raise MethodNotAllowed(request.method)
+
 
 class DestroySystemicModelMixin(DestroyModelMixinExt):
     def perform_destroy(self, instance):

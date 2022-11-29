@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0020_auto_20181102_1426'),
     ]
@@ -15,11 +14,13 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transactiontypeactioninstrumenteventscheduleaction',
             name='is_book_automatic',
-            field=models.CharField(default=False, help_text='If checked - is book automatic', max_length=1024, verbose_name='is book automatic'),
+            field=models.CharField(default=False, help_text='If checked - is book automatic', max_length=1024,
+                                   verbose_name='is book automatic'),
         ),
         migrations.AlterField(
             model_name='transactiontypeactioninstrumenteventscheduleaction',
             name='is_sent_to_pending',
-            field=models.CharField(default=False, help_text='If checked - is sent to pending', max_length=1024, verbose_name='is sent to pending'),
+            field=models.CharField(default=False, help_text='If checked - is sent to pending', max_length=1024,
+                                   verbose_name='is sent to pending'),
         ),
     ]

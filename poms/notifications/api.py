@@ -4,7 +4,6 @@ from django.utils.encoding import force_str
 
 
 def send(recipients, message=None, actor=None, verb=None, action_object=None, target=None, data=None, throttle=False):
-
     from poms.users.models import Member
     from poms.notifications.models import Notification
     from poms.notifications.throttling import allow_notification

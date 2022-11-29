@@ -1,12 +1,11 @@
-from storages.backends.sftpstorage import SFTPStorage
-from storages.backends.s3boto3 import S3Boto3Storage
 from storages.backends.azure_storage import AzureStorage
+from storages.backends.s3boto3 import S3Boto3Storage
+from storages.backends.sftpstorage import SFTPStorage
 
 from poms_app import settings
 
 
 def get_storage():
-
     storage = None
 
     if settings.SFTP_HOST:

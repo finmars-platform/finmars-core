@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('instruments', '0023_auto_20200525_1351'),
     ]
@@ -12,6 +11,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='instrumentclass',
-            options={'base_manager_name': 'objects', 'ordering': ['name'], 'verbose_name': 'instrument class', 'verbose_name_plural': 'instrument classes'},
+            options={'base_manager_name': 'objects', 'ordering': ['name'], 'verbose_name': 'instrument class',
+                     'verbose_name_plural': 'instrument classes'},
         ),
     ]

@@ -1,20 +1,16 @@
-import math
-from collections import OrderedDict
+import calendar
+import copy
 import datetime
-
+import logging
+import math
 from datetime import timedelta
 
 import pandas as pd
 from django.contrib.contenttypes.models import ContentType
-from django.views.generic.dates import timezone_today
 from django.utils.timezone import now
-import calendar
+from django.views.generic.dates import timezone_today
 
-import copy
-
-import logging
 _l = logging.getLogger('poms.common')
-
 
 
 def force_qs_evaluation(qs):
@@ -250,19 +246,20 @@ def get_content_type_by_name(name):
 
     return content_type
 
+
 def is_business_day(date):
     return bool(len(pd.bdate_range(date, date)))
 
-def get_last_business_day(date, to_string=False):
 
+def get_last_business_day(date, to_string=False):
     format = '%Y-%m-%d'
 
     if not isinstance(date, datetime.date):
         date = datetime.datetime.strptime(date, format).date()
 
     weekday = datetime.date.weekday(date)
-    if weekday > 4:      #if it's Saturday or Sunday
-        date = date - datetime.timedelta(days = weekday-4)
+    if weekday > 4:  # if it's Saturday or Sunday
+        date = date - datetime.timedelta(days=weekday - 4)
 
     if to_string:
         return date.strftime("%Y-%m-%d")
@@ -276,8 +273,8 @@ def last_day_of_month(any_day):
     # subtracting the number of the current day brings us back one month
     return next_month - datetime.timedelta(days=next_month.day)
 
-def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
 
+def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
     result = []
     format = '%Y-%m-%d'
 
@@ -300,7 +297,6 @@ def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
 
 
 def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=False):
-
     result = []
     format = '%Y-%m-%d'
 
@@ -326,7 +322,6 @@ def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=Fa
 
 
 def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
-
     result = []
     format = '%Y-%m-%d'
 
@@ -357,9 +352,7 @@ def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
     return result
 
 
-
 def convert_name_to_key(name):
-
     return name.strip().lower().replace(' ', '_')
 
 
@@ -372,14 +365,13 @@ def check_if_last_day_of_month(to_date):
 
 
 def get_first_transaction(portfolio_id):
-
     from poms.transactions.models import Transaction
     transaction = Transaction.objects.filter(portfolio_id=portfolio_id).order_by('accounting_date')[0]
     return transaction
 
 
 def last_business_day_in_month(year: int, month: int, to_string=False):
-    day =  max(calendar.monthcalendar(year, month)[-1:][0][:5])
+    day = max(calendar.monthcalendar(year, month)[-1:][0][:5])
 
     d = datetime.datetime(year, month, day).date()
 
@@ -390,7 +382,6 @@ def last_business_day_in_month(year: int, month: int, to_string=False):
 
 
 def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=False):
-
     months = get_list_of_months_between_two_dates(date_from, date_to)
     end_of_months = []
 
@@ -417,7 +408,6 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
 
 
 def str_to_date(d):
-
     if not isinstance(d, datetime.date):
         d = datetime.datetime.strptime(d, "%Y-%m-%d").date()
 

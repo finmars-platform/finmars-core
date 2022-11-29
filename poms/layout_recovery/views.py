@@ -1,30 +1,24 @@
+import time
+from logging import getLogger
+
 from celery.result import AsyncResult
 from django.core.signing import TimestampSigner
 from django_filters.rest_framework import FilterSet
-
+from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
 
 from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet
 from poms.layout_recovery.models import LayoutArchetype
 from poms.layout_recovery.serializers import LayoutArchetypeSerializer, GenerateLayoutArchetypeSerializer, \
     FixLayoutSerializer
 from poms.layout_recovery.tasks import generate_layout_archetype, fix_layout
-
 from poms.users.filters import OwnerByMasterUserFilter
-from rest_framework.response import Response
-
-import time
-
-from rest_framework import status
-from rest_framework.exceptions import PermissionDenied
-
-
-from logging import getLogger
 
 _l = getLogger('poms.layout_recovery')
 
 
 class LayoutArchetypeFilterSet(FilterSet):
-
     class Meta:
         model = LayoutArchetype
         fields = []
@@ -64,7 +58,6 @@ class GenerateLayoutArchetypeViewSet(AbstractAsyncViewSet):
             st = time.perf_counter()
 
             if res.ready():
-
                 instance = res.result
 
             print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
@@ -118,7 +111,6 @@ class FixLayoutViewSet(AbstractAsyncViewSet):
             st = time.perf_counter()
 
             if res.ready():
-
                 instance = res.result
 
             print('AsyncResult res.ready: %s' % (time.perf_counter() - st))

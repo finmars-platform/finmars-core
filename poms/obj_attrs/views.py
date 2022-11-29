@@ -1,34 +1,25 @@
+from logging import getLogger
+
 import django_filters
 from django.contrib.contenttypes.models import ContentType
-from django.core.signing import TimestampSigner
 from django_filters.rest_framework import FilterSet
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed
+from rest_framework.response import Response
 
-from poms.celery_tasks.models import CeleryTask
 from poms.common.filters import NoOpFilter, CharFilter, ModelExtWithPermissionMultipleChoiceFilter
-from poms.common.formula import safe_eval, ExpressionEvalError
-from poms.common.utils import datetime_now
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.obj_attrs.filters import OwnerByAttributeTypeFilter, AttributeTypeValueTypeFilter
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier, GenericAttribute
-from poms.obj_attrs.serializers import GenericAttributeTypeSerializer, GenericClassifierSerializer, \
-    GenericClassifierNodeSerializer, RecalculateAttributesSerializer
+from poms.obj_attrs.serializers import GenericAttributeTypeSerializer, GenericClassifierNodeSerializer, \
+    RecalculateAttributesSerializer
+from poms.obj_attrs.tasks import recalculate_attributes
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
     ObjectPermissionPermissionFilter
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
 from poms.users.filters import OwnerByMasterUserFilter
-
-
-from poms.obj_attrs.tasks import recalculate_attributes
-
-
-from rest_framework.response import Response
-
-from rest_framework import viewsets, status
-
-from logging import getLogger
 
 _l = getLogger('poms.obj_attrs')
 

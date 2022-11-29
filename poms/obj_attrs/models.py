@@ -45,7 +45,8 @@ class GenericAttributeType(NamedModel):
 
     prefix = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('prefix'))
 
-    expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True, verbose_name=gettext_lazy('expression'))
+    expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
+                            verbose_name=gettext_lazy('expression'))
 
     can_recalculate = models.BooleanField(default=False, verbose_name=gettext_lazy("can recalculate"))
 
@@ -118,7 +119,8 @@ class GenericClassifier(MPTTModel):
 
 
 class GenericAttribute(models.Model):
-    attribute_type = models.ForeignKey(GenericAttributeType, verbose_name=gettext_lazy('attribute type'), on_delete=models.CASCADE)
+    attribute_type = models.ForeignKey(GenericAttributeType, verbose_name=gettext_lazy('attribute type'),
+                                       on_delete=models.CASCADE)
 
     content_type = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type'), on_delete=models.CASCADE)
     object_id = models.BigIntegerField(db_index=True, verbose_name=gettext_lazy('object id'))
@@ -159,7 +161,6 @@ class GenericAttribute(models.Model):
         return None
 
     def set_value(self, value):
-
 
         t = self.attribute_type.value_type
         if t == GenericAttributeType.STRING:

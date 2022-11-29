@@ -1,3 +1,4 @@
+import logging
 import time
 import traceback
 
@@ -7,7 +8,6 @@ from poms.common import formula
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import PriceHistory
 from poms.integrations.providers.base import parse_date_iso
-
 from poms.pricing.currency_handler import PricingCurrencyHandler
 from poms.pricing.instrument_handler import PricingInstrumentHandler
 from poms.pricing.models import PricingProcedureBloombergInstrumentResult, PricingProcedureBloombergCurrencyResult, \
@@ -15,9 +15,6 @@ from poms.pricing.models import PricingProcedureBloombergInstrumentResult, Prici
     CurrencyHistoryError, PricingProcedureFixerCurrencyResult, \
     PricingProcedureAlphavInstrumentResult, PricingProcedureBloombergForwardInstrumentResult, \
     PricingProcedureCbondsInstrumentResult, PricingProcedureCbondsCurrencyResult
-
-import logging
-
 from poms.pricing.utils import roll_price_history_for_n_day_forward, roll_currency_history_for_n_day_forward, \
     convert_results_for_calc_avg_price
 from poms.procedures.models import PricingProcedureInstance, PricingParentProcedureInstance
@@ -28,7 +25,8 @@ _l = logging.getLogger('poms.pricing')
 
 class PricingProcedureProcess(object):
 
-    def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None, member=None, schedule_instance=None):
+    def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None, member=None,
+                 schedule_instance=None):
 
         _l.debug('PricingProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
 
@@ -66,7 +64,8 @@ class PricingProcedureProcess(object):
         _l.debug("Procedure settings - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
         _l.debug("Procedure settings - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)
         _l.debug("Procedure settings - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
-        _l.debug("Procedure settings - Overwrite Principal Prices: %s" % self.procedure.price_overwrite_principal_prices)
+        _l.debug(
+            "Procedure settings - Overwrite Principal Prices: %s" % self.procedure.price_overwrite_principal_prices)
         _l.debug("Procedure settings - Overwrite Accrued Prices: %s" % self.procedure.price_overwrite_accrued_prices)
         _l.debug("Procedure settings - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
         _l.debug("Procedure settings - Roll Days N Forward: %s" % self.procedure.price_fill_days)
@@ -77,7 +76,8 @@ class PricingProcedureProcess(object):
 
         results = Transaction.objects.filter(master_user=self.procedure.master_user)
 
-        results = results.filter(Q(accounting_date__lte=self.procedure.price_date_to) | Q(cash_date__lte=self.procedure.price_date_to))
+        results = results.filter(
+            Q(accounting_date__lte=self.procedure.price_date_to) | Q(cash_date__lte=self.procedure.price_date_to))
 
         # We are looking for transaction with the earliest date from account/settlement dates
         # results = results.filter(Q(accounting_date__gt=self.procedure.price_date_from) | Q(cash_date__gt=self.procedure.price_date_from))
@@ -93,7 +93,6 @@ class PricingProcedureProcess(object):
         # results = results.filter(cash_date__lte=self.procedure.price_date_to)
 
         if self.procedure.portfolio_filters:
-
             portfolio_user_codes = self.procedure.portfolio_filters.split(",")
 
             results = results.filter(portfolio__user_code__in=portfolio_user_codes)
@@ -137,8 +136,6 @@ class FillPricesBrokerBloombergProcess(object):
 
         self.procedure_instance = PricingProcedureInstance.objects.get(pk=self.instance['procedure'])
         self.procedure = self.procedure_instance.procedure
-
-
 
         _l.debug("Broker Bloomberg - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
         _l.debug("Broker Bloomberg - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)
@@ -240,7 +237,7 @@ class FillPricesBrokerBloombergProcess(object):
                                             _l.debug('ask value e %s ' % e)
 
                                         try:
-                                                record.ask_value_error_text = val_obj['error_text']
+                                            record.ask_value_error_text = val_obj['error_text']
                                         except Exception as e:
                                             _l.debug('ask_value_error_text e %s ' % e)
 
@@ -250,7 +247,7 @@ class FillPricesBrokerBloombergProcess(object):
                                         try:
                                             record.bid_value = float(val_obj['value'])
                                         except Exception as e:
-                                             _l.debug('bid value e %s ' % e)
+                                            _l.debug('bid value e %s ' % e)
 
                                         try:
                                             record.bid_value_error_text = val_obj['error_text']
@@ -346,7 +343,6 @@ class FillPricesBrokerBloombergProcess(object):
 
             has_error = False
 
-
             error, created = PriceHistoryError.objects.get_or_create(
                 master_user=self.master_user,
                 procedure_instance_id=self.instance['procedure'],
@@ -373,12 +369,11 @@ class FillPricesBrokerBloombergProcess(object):
 
                     error.error_text = 'Invalid Error Text Expression'
 
-
             _l.debug('principal_price %s' % principal_price)
             _l.debug('instrument %s' % record.instrument.user_code)
             _l.debug('pricing_policy %s' % record.pricing_policy.user_code)
 
-            if pricing_scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
+            if pricing_scheme_parameters.accrual_calculation_method == 2:  # ACCRUAL_PER_SCHEDULE
 
                 try:
                     accrued_price = record.instrument.get_accrued_price(record.date)
@@ -397,7 +392,7 @@ class FillPricesBrokerBloombergProcess(object):
                     except formula.InvalidExpression:
                         error.error_text = 'Invalid Error Text Expression'
 
-            if pricing_scheme_parameters.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
+            if pricing_scheme_parameters.accrual_calculation_method == 3:  # ACCRUAL_PER_FORMULA
 
                 try:
                     accrued_price = formula.safe_eval(accrual_expr, names=values)
@@ -487,34 +482,34 @@ class FillPricesBrokerBloombergProcess(object):
 
                     successful_prices_count = successful_prices_count + 1
 
-                    error.status = PriceHistoryError.STATUS_CREATED # its journal, not error log
+                    error.status = PriceHistoryError.STATUS_CREATED  # its journal, not error log
                     error.save()
 
                     price.save()
 
             if not can_write and exist:
-
                 error_prices_count = error_prices_count + 1
 
-                error.error_text = "Prices already exists. Principal Price: " + str(principal_price) +"; Accrued: "+ str(accrued_price) +"."
+                error.error_text = "Prices already exists. Principal Price: " + str(
+                    principal_price) + "; Accrued: " + str(accrued_price) + "."
 
                 error.status = PriceHistoryError.STATUS_SKIP
                 error.save()
 
             if self.instance['data']['date_to'] == str(record.date):
-
                 _l.debug("Bloomberg Roll Prices for Price History")
 
                 # roll_price_history_for_n_day_forward(self.procedure, price)
 
                 instrument_pp = record.instrument.pricing_policies.filter(pricing_policy=record.pricing_policy)[0]
 
-                roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance, instrument_pp)
+                roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user,
+                                                     self.procedure_instance, instrument_pp)
 
         PricingProcedureBloombergInstrumentResult.objects.filter(master_user=self.master_user,
-                                                       procedure=self.instance['procedure'],
-                                                       date__gte=self.instance['data']['date_from'],
-                                                       date__lte=self.instance['data']['date_to']).delete()
+                                                                 procedure=self.instance['procedure'],
+                                                                 date__gte=self.instance['data']['date_from'],
+                                                                 date__lte=self.instance['data']['date_to']).delete()
 
         _l.debug('bloomberg price procedure_instance %s' % self.procedure_instance)
         _l.debug('bloomberg price successful_prices_count %s' % successful_prices_count)
@@ -527,8 +522,10 @@ class FillPricesBrokerBloombergProcess(object):
 
         self.procedure_instance.save()
 
-        _l.debug('bloomberg price self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
-        _l.debug('bloomberg price self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
+        _l.debug(
+            'bloomberg price self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
+        _l.debug(
+            'bloomberg price self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
 
         if self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
@@ -643,7 +640,7 @@ class FillPricesBrokerBloombergProcess(object):
             if can_write:
 
                 if has_error or price.fx_rate == 0:
-                # if has_error:
+                    # if has_error:
 
                     error_prices_count = error_prices_count + 1
                     error.status = CurrencyHistoryError.STATUS_ERROR
@@ -652,13 +649,12 @@ class FillPricesBrokerBloombergProcess(object):
 
                     successful_prices_count = successful_prices_count + 1
 
-                    error.status = CurrencyHistoryError.STATUS_CREATED # its journal, not error log
+                    error.status = CurrencyHistoryError.STATUS_CREATED  # its journal, not error log
                     error.save()
 
                     price.save()
 
             if not can_write and exist:
-
                 error_prices_count = error_prices_count + 1
 
                 error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
@@ -667,18 +663,18 @@ class FillPricesBrokerBloombergProcess(object):
                 error.save()
 
             if parse_date_iso(self.instance['data']['date_to']) == record.date:
-
                 _l.debug("Bloomberg Roll Prices for Currency History")
 
-                successes, errors = roll_currency_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
+                successes, errors = roll_currency_history_for_n_day_forward(record, self.procedure, price,
+                                                                            self.master_user, self.procedure_instance)
 
                 successful_prices_count = successful_prices_count + successes
                 error_prices_count = error_prices_count + errors
 
         PricingProcedureBloombergCurrencyResult.objects.filter(master_user=self.master_user,
-                                                                 procedure=self.instance['procedure'],
-                                                                 date__gte=self.instance['data']['date_from'],
-                                                                 date__lte=self.instance['data']['date_to']).delete()
+                                                               procedure=self.instance['procedure'],
+                                                               date__gte=self.instance['data']['date_from'],
+                                                               date__lte=self.instance['data']['date_to']).delete()
 
         self.procedure_instance.successful_prices_count = successful_prices_count
         self.procedure_instance.error_prices_count = error_prices_count
@@ -704,8 +700,10 @@ class FillPricesBrokerBloombergForwardsProcess(object):
         _l.debug("Broker Bloomberg Forwards - Get Principal Prices: %s" % self.procedure.price_get_principal_prices)
         _l.debug("Broker Bloomberg Forwards - Get Accrued Prices: %s" % self.procedure.price_get_accrued_prices)
         _l.debug("Broker Bloomberg Forwards - Get FX Rates: %s" % self.procedure.price_get_fx_rates)
-        _l.debug("Broker Bloomberg Forwards - Overwrite Principal Prices: %s" % self.procedure.price_overwrite_principal_prices)
-        _l.debug("Broker Bloomberg Forwards - Overwrite Accrued Prices: %s" % self.procedure.price_overwrite_accrued_prices)
+        _l.debug(
+            "Broker Bloomberg Forwards - Overwrite Principal Prices: %s" % self.procedure.price_overwrite_principal_prices)
+        _l.debug(
+            "Broker Bloomberg Forwards - Overwrite Accrued Prices: %s" % self.procedure.price_overwrite_accrued_prices)
         _l.debug("Broker Bloomberg Forwards - Overwrite FX Rates: %s" % self.procedure.price_overwrite_fx_rates)
         _l.debug("Broker Bloomberg Forwards - Roll Days N Forward: %s" % self.procedure.price_fill_days)
 
@@ -836,12 +834,11 @@ class FillPricesBrokerBloombergForwardsProcess(object):
 
                     error.error_text = 'Invalid Error Text Expression'
 
-
             _l.debug('principal_price %s' % principal_price)
             _l.debug('instrument %s' % record.instrument.user_code)
             _l.debug('pricing_policy %s' % record.pricing_policy.user_code)
 
-            if pricing_scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
+            if pricing_scheme_parameters.accrual_calculation_method == 2:  # ACCRUAL_PER_SCHEDULE
 
                 try:
                     accrued_price = record.instrument.get_accrued_price(record.date)
@@ -857,7 +854,7 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                     except formula.InvalidExpression:
                         error.error_text = 'Invalid Error Text Expression'
 
-            if pricing_scheme_parameters.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
+            if pricing_scheme_parameters.accrual_calculation_method == 3:  # ACCRUAL_PER_FORMULA
 
                 try:
                     accrued_price = formula.safe_eval(accrual_expr, names=values)
@@ -946,27 +943,27 @@ class FillPricesBrokerBloombergForwardsProcess(object):
 
                     successful_prices_count = successful_prices_count + 1
 
-                    error.status = PriceHistoryError.STATUS_CREATED # its journal, not error log
+                    error.status = PriceHistoryError.STATUS_CREATED  # its journal, not error log
                     error.save()
 
                     price.save()
 
             if not can_write and exist:
-
                 error_prices_count = error_prices_count + 1
 
-                error.error_text = "Prices already exists. Principal Price: " + str(principal_price) +"; Accrued: "+ str(accrued_price) +"."
+                error.error_text = "Prices already exists. Principal Price: " + str(
+                    principal_price) + "; Accrued: " + str(accrued_price) + "."
 
                 error.status = PriceHistoryError.STATUS_SKIP
                 error.save()
 
             if self.instance['data']['date_to'] == str(record.date):
-
                 _l.debug("Bloomberg Forwards Roll Prices for Price History")
 
                 # roll_price_history_for_n_day_forward(self.procedure, price)
                 instrument_pp = record.instrument.pricing_policies.filter(pricing_policy=record.pricing_policy)[0]
-                roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance, instrument_pp)
+                roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user,
+                                                     self.procedure_instance, instrument_pp)
 
         PricingProcedureBloombergInstrumentResult.objects.filter(master_user=self.master_user,
                                                                  procedure=self.instance['procedure'],
@@ -987,8 +984,10 @@ class FillPricesBrokerBloombergForwardsProcess(object):
         if self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
 
-        _l.debug('bloomberg forwards price self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
-        _l.debug('bloomberg forwards price self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
+        _l.debug(
+            'bloomberg forwards price self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
+        _l.debug(
+            'bloomberg forwards price self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
 
 
 class FillPricesBrokerWtradeProcess(object):
@@ -1187,12 +1186,11 @@ class FillPricesBrokerWtradeProcess(object):
 
                     error.error_text = 'Invalid Error Text Expression'
 
-
             _l.debug('principal_price %s' % principal_price)
             _l.debug('instrument %s' % record.instrument.user_code)
             _l.debug('pricing_policy %s' % record.pricing_policy.user_code)
 
-            if pricing_scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
+            if pricing_scheme_parameters.accrual_calculation_method == 2:  # ACCRUAL_PER_SCHEDULE
 
                 try:
                     accrued_price = record.instrument.get_accrued_price(record.date)
@@ -1208,7 +1206,7 @@ class FillPricesBrokerWtradeProcess(object):
                     except formula.InvalidExpression:
                         error.error_text = 'Invalid Error Text Expression'
 
-            if pricing_scheme_parameters.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
+            if pricing_scheme_parameters.accrual_calculation_method == 3:  # ACCRUAL_PER_FORMULA
 
                 try:
                     accrued_price = formula.safe_eval(accrual_expr, names=values)
@@ -1297,34 +1295,35 @@ class FillPricesBrokerWtradeProcess(object):
 
                     successful_prices_count = successful_prices_count + 1
 
-                    error.status = PriceHistoryError.STATUS_CREATED # its journal, not error log
+                    error.status = PriceHistoryError.STATUS_CREATED  # its journal, not error log
                     error.save()
 
                     price.save()
 
             if not can_write and exist:
-
                 error_prices_count = error_prices_count + 1
 
-                error.error_text =  "Prices already exists. Principal Price: " + str(principal_price) +"; Accrued: "+ str(accrued_price) +"."
+                error.error_text = "Prices already exists. Principal Price: " + str(
+                    principal_price) + "; Accrued: " + str(accrued_price) + "."
 
                 error.status = PriceHistoryError.STATUS_SKIP
                 error.save()
 
             if self.instance['data']['date_to'] == str(record.date):
-
                 _l.debug("Wtrade Roll Prices for Price History")
 
                 instrument_pp = record.instrument.pricing_policies.filter(pricing_policy=record.pricing_policy)[0]
-                successes, errors = roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance, instrument_pp)
+                successes, errors = roll_price_history_for_n_day_forward(record, self.procedure, price,
+                                                                         self.master_user, self.procedure_instance,
+                                                                         instrument_pp)
 
                 successful_prices_count = successful_prices_count + successes
                 error_prices_count = error_prices_count + errors
 
         PricingProcedureWtradeInstrumentResult.objects.filter(master_user=self.master_user,
-                                                                 procedure=self.instance['procedure'],
-                                                                 date__gte=self.instance['data']['date_from'],
-                                                                 date__lte=self.instance['data']['date_to']).delete()
+                                                              procedure=self.instance['procedure'],
+                                                              date__gte=self.instance['data']['date_from'],
+                                                              date__lte=self.instance['data']['date_to']).delete()
 
         self.procedure_instance.successful_prices_count = successful_prices_count
         self.procedure_instance.error_prices_count = error_prices_count
@@ -1380,7 +1379,6 @@ class FillPricesBrokerCbondsProcess(object):
 
                             _l.info('str(record.date) %s' % str(record.date))
                             _l.info('str(val_obj[value]) %s' % str(val_obj['value']))
-
 
                             if str(record.date) == str(val_obj['date']):
 
@@ -1534,12 +1532,11 @@ class FillPricesBrokerCbondsProcess(object):
 
                     error.error_text = 'Invalid Error Text Expression'
 
-
             _l.debug('principal_price %s' % principal_price)
             _l.debug('instrument %s' % record.instrument.user_code)
             _l.debug('pricing_policy %s' % record.pricing_policy.user_code)
 
-            if pricing_scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
+            if pricing_scheme_parameters.accrual_calculation_method == 2:  # ACCRUAL_PER_SCHEDULE
 
                 try:
                     accrued_price = record.instrument.get_accrued_price(record.date)
@@ -1555,7 +1552,7 @@ class FillPricesBrokerCbondsProcess(object):
                     except formula.InvalidExpression:
                         error.error_text = 'Invalid Error Text Expression'
 
-            if pricing_scheme_parameters.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
+            if pricing_scheme_parameters.accrual_calculation_method == 3:  # ACCRUAL_PER_FORMULA
 
                 try:
                     accrued_price = formula.safe_eval(accrual_expr, names=values)
@@ -1632,7 +1629,6 @@ class FillPricesBrokerCbondsProcess(object):
                 error.error_text = error.error_text + ' Price is 0 or null'
 
             if can_write:
-
                 # if has_error or (price.accrued_price == 0 and price.principal_price == 0):
                 # if has_error:
                 #
@@ -1644,26 +1640,27 @@ class FillPricesBrokerCbondsProcess(object):
 
                 successful_prices_count = successful_prices_count + 1
 
-                error.status = PriceHistoryError.STATUS_CREATED # its journal, not error log
+                error.status = PriceHistoryError.STATUS_CREATED  # its journal, not error log
                 error.save()
 
                 price.save()
 
             if not can_write and exist:
-
                 error_prices_count = error_prices_count + 1
 
-                error.error_text =  "Prices already exists. Principal Price: " + str(principal_price) +"; Accrued: "+ str(accrued_price) +"."
+                error.error_text = "Prices already exists. Principal Price: " + str(
+                    principal_price) + "; Accrued: " + str(accrued_price) + "."
 
                 error.status = PriceHistoryError.STATUS_SKIP
                 error.save()
 
             if self.instance['data']['date_to'] == str(record.date):
-
                 _l.debug("Cbonds Roll Prices for Price History")
 
                 instrument_pp = record.instrument.pricing_policies.filter(pricing_policy=record.pricing_policy)[0]
-                successes, errors = roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance, instrument_pp)
+                successes, errors = roll_price_history_for_n_day_forward(record, self.procedure, price,
+                                                                         self.master_user, self.procedure_instance,
+                                                                         instrument_pp)
 
                 successful_prices_count = successful_prices_count + successes
                 error_prices_count = error_prices_count + errors
@@ -1682,7 +1679,6 @@ class FillPricesBrokerCbondsProcess(object):
 
         if self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
-
 
 
 class FillPricesBrokerFixerProcess(object):
@@ -1780,7 +1776,6 @@ class FillPricesBrokerFixerProcess(object):
                 'id': record.pricing_policy.id,
             }
 
-
             values = {
                 'context_date': record.date,
                 'context_currency': safe_currency,
@@ -1863,7 +1858,7 @@ class FillPricesBrokerFixerProcess(object):
             if can_write:
 
                 if has_error or price.fx_rate == 0:
-                # if has_error:
+                    # if has_error:
 
                     error_prices_count = error_prices_count + 1
                     error.status = CurrencyHistoryError.STATUS_ERROR
@@ -1873,13 +1868,12 @@ class FillPricesBrokerFixerProcess(object):
 
                     successful_prices_count = successful_prices_count + 1
 
-                    error.status = CurrencyHistoryError.STATUS_CREATED # its journal, not error log
+                    error.status = CurrencyHistoryError.STATUS_CREATED  # its journal, not error log
                     error.save()
 
                     price.save()
 
             if not can_write and exist:
-
                 error_prices_count = error_prices_count + 1
 
                 error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
@@ -1888,18 +1882,18 @@ class FillPricesBrokerFixerProcess(object):
                 error.save()
 
             if parse_date_iso(self.instance['data']['date_to']) == record.date:
-
                 _l.debug("Fixer Roll Prices for Currency History")
 
-                successes, errors = roll_currency_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
+                successes, errors = roll_currency_history_for_n_day_forward(record, self.procedure, price,
+                                                                            self.master_user, self.procedure_instance)
 
                 successful_prices_count = successful_prices_count + successes
                 error_prices_count = error_prices_count + errors
 
         PricingProcedureFixerCurrencyResult.objects.filter(master_user=self.master_user,
-                                                               procedure=self.instance['procedure'],
-                                                               date__gte=self.instance['data']['date_from'],
-                                                               date__lte=self.instance['data']['date_to']).delete()
+                                                           procedure=self.instance['procedure'],
+                                                           date__gte=self.instance['data']['date_from'],
+                                                           date__lte=self.instance['data']['date_to']).delete()
 
         _l.debug('fixer self.procedure_instance %s' % self.procedure_instance)
         _l.debug('fixer fx successful_prices_count %s' % successful_prices_count)
@@ -1912,7 +1906,8 @@ class FillPricesBrokerFixerProcess(object):
 
         self.procedure_instance.save()
 
-        _l.debug('fixer self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
+        _l.debug(
+            'fixer self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
         _l.debug('fixer self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
 
         if self.procedure_instance.schedule_instance:
@@ -2013,7 +2008,6 @@ class FillPricesBrokerFxCbondsProcess(object):
                 'id': record.pricing_policy.id,
             }
 
-
             values = {
                 'context_date': record.date,
                 'context_currency': safe_currency,
@@ -2106,13 +2100,12 @@ class FillPricesBrokerFxCbondsProcess(object):
 
                     successful_prices_count = successful_prices_count + 1
 
-                    error.status = CurrencyHistoryError.STATUS_CREATED # its journal, not error log
+                    error.status = CurrencyHistoryError.STATUS_CREATED  # its journal, not error log
                     error.save()
 
                     price.save()
 
             if not can_write and exist:
-
                 error_prices_count = error_prices_count + 1
 
                 error.error_text = "Prices already exists. Fx rate: " + str(fx_rate) + "."
@@ -2121,18 +2114,18 @@ class FillPricesBrokerFxCbondsProcess(object):
                 error.save()
 
             if parse_date_iso(self.instance['data']['date_to']) == record.date:
-
                 _l.debug("Fixer Roll Prices for Currency History")
 
-                successes, errors = roll_currency_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance)
+                successes, errors = roll_currency_history_for_n_day_forward(record, self.procedure, price,
+                                                                            self.master_user, self.procedure_instance)
 
                 successful_prices_count = successful_prices_count + successes
                 error_prices_count = error_prices_count + errors
 
         PricingProcedureCbondsCurrencyResult.objects.filter(master_user=self.master_user,
-                                                           procedure=self.instance['procedure'],
-                                                           date__gte=self.instance['data']['date_from'],
-                                                           date__lte=self.instance['data']['date_to']).delete()
+                                                            procedure=self.instance['procedure'],
+                                                            date__gte=self.instance['data']['date_from'],
+                                                            date__lte=self.instance['data']['date_to']).delete()
 
         _l.debug('cbonds self.procedure_instance %s' % self.procedure_instance)
         _l.debug('cbonds fx successful_prices_count %s' % successful_prices_count)
@@ -2145,12 +2138,12 @@ class FillPricesBrokerFxCbondsProcess(object):
 
         self.procedure_instance.save()
 
-        _l.debug('cbonds self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
+        _l.debug(
+            'cbonds self.procedure_instance.successful_prices_count %s' % self.procedure_instance.successful_prices_count)
         _l.debug('cbonds self.procedure_instance.error_prices_count %s' % self.procedure_instance.error_prices_count)
 
         if self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
-
 
 
 class FillPricesBrokerAlphavProcess(object):
@@ -2289,12 +2282,11 @@ class FillPricesBrokerAlphavProcess(object):
 
                     error.error_text = 'Invalid Error Text Expression'
 
-
             _l.debug('principal_price %s' % principal_price)
             _l.debug('instrument %s' % record.instrument.user_code)
             _l.debug('pricing_policy %s' % record.pricing_policy.user_code)
 
-            if pricing_scheme_parameters.accrual_calculation_method == 2:   # ACCRUAL_PER_SCHEDULE
+            if pricing_scheme_parameters.accrual_calculation_method == 2:  # ACCRUAL_PER_SCHEDULE
 
                 try:
                     accrued_price = record.instrument.get_accrued_price(record.date)
@@ -2310,7 +2302,7 @@ class FillPricesBrokerAlphavProcess(object):
                     except formula.InvalidExpression:
                         error.error_text = 'Invalid Error Text Expression'
 
-            if pricing_scheme_parameters.accrual_calculation_method == 3:   # ACCRUAL_PER_FORMULA
+            if pricing_scheme_parameters.accrual_calculation_method == 3:  # ACCRUAL_PER_FORMULA
 
                 try:
                     accrued_price = formula.safe_eval(accrual_expr, names=values)
@@ -2399,26 +2391,27 @@ class FillPricesBrokerAlphavProcess(object):
 
                     successful_prices_count = successful_prices_count + 1
 
-                    error.status = PriceHistoryError.STATUS_CREATED # its journal, not error log
+                    error.status = PriceHistoryError.STATUS_CREATED  # its journal, not error log
                     error.save()
 
                     price.save()
 
             if not can_write and exist:
-
                 error_prices_count = error_prices_count + 1
 
-                error.error_text =  "Prices already exists. Principal Price: " + str(principal_price) +"; Accrued: "+ str(accrued_price) +"."
+                error.error_text = "Prices already exists. Principal Price: " + str(
+                    principal_price) + "; Accrued: " + str(accrued_price) + "."
 
                 error.status = PriceHistoryError.STATUS_SKIP
                 error.save()
 
             if self.instance['data']['date_to'] == str(record.date):
-
                 _l.debug("Wtrade Roll Prices for Price History")
 
                 instrument_pp = record.instrument.pricing_policies.filter(pricing_policy=record.pricing_policy)[0]
-                successes, errors = roll_price_history_for_n_day_forward(record, self.procedure, price, self.master_user, self.procedure_instance, instrument_pp)
+                successes, errors = roll_price_history_for_n_day_forward(record, self.procedure, price,
+                                                                         self.master_user, self.procedure_instance,
+                                                                         instrument_pp)
 
                 successful_prices_count = successful_prices_count + successes
                 error_prices_count = error_prices_count + errors
@@ -2437,4 +2430,3 @@ class FillPricesBrokerAlphavProcess(object):
 
         if self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
-

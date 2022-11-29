@@ -1,41 +1,27 @@
 import copy
 import logging
-
 import time
 
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import FieldDoesNotExist
-from django.db.models import Q, prefetch_related_objects, Prefetch
 from django.utils.functional import cached_property
 
-from poms.accounts.models import Account, AccountType
+from poms.accounts.models import Account
+from poms.accounts.models import AccountType
+from poms.common.utils import force_qs_evaluation
 from poms.counterparties.models import Responsible, ResponsibleGroup, Counterparty, CounterpartyGroup
 from poms.currencies.models import Currency
-from poms.instruments.models import Instrument, InstrumentType, AccrualCalculationSchedule, InstrumentFactorSchedule
+from poms.instruments.models import Instrument, InstrumentType
 from poms.obj_attrs.models import GenericAttributeType
-from poms.obj_attrs.utils import get_attributes_prefetch, get_attributes_prefetch_simple
+from poms.obj_attrs.utils import get_attributes_prefetch
+from poms.obj_attrs.utils import get_attributes_prefetch_simple
 from poms.obj_perms.models import GenericObjectPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
 from poms.reports.models import BalanceReportCustomField
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2, Strategy2Subgroup, \
     Strategy2Group, Strategy3, Strategy3Subgroup, Strategy3Group
-from poms.transactions.models import ComplexTransaction, TransactionClass, TransactionType, TransactionTypeGroup
-
-from poms.accounts.models import Account
-from poms.accounts.models import AccountType
-from poms.counterparties.models import Responsible, ResponsibleGroup, Counterparty, CounterpartyGroup
-from poms.instruments.models import Instrument, InstrumentType
-from poms.obj_perms.utils import get_permissions_prefetch_lookups
-from poms.obj_attrs.utils import get_attributes_prefetch
-from poms.portfolios.models import Portfolio
-from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2, Strategy2Subgroup, \
-    Strategy2Group, Strategy3, Strategy3Subgroup, Strategy3Group
 from poms.transactions.models import Transaction, ComplexTransaction, TransactionType
-
-from poms.common.utils import force_qs_evaluation
-
-from django.db.models import F
+from poms.transactions.models import TransactionClass, TransactionTypeGroup
 
 _l = logging.getLogger('poms.reports')
 
@@ -710,7 +696,6 @@ class BaseReportBuilder:
     def _refresh_item_instrument_accruals(self, master_user, items, attrs, objects=None):
         return self._refresh_attrs_simple(items=items, attrs=attrs, objects=objects)
 
-
     # SZ LOGIC BELOW
 
     def _refresh_item_accounts(self):
@@ -737,7 +722,8 @@ class BaseReportBuilder:
 
             self.instance.item_accounts = self._get_accounts_by_ids(ids=accounts_ids)
 
-        _l.debug('_refresh_with_perms_optimized item_accounts done: %s', "{:3.3f}".format(time.perf_counter() - item_accounts_st))
+        _l.debug('_refresh_with_perms_optimized item_accounts done: %s',
+                 "{:3.3f}".format(time.perf_counter() - item_accounts_st))
 
         # Handle item_accounts END
 
@@ -796,7 +782,8 @@ class BaseReportBuilder:
 
             self.instance.item_currencies = self._get_currencies_by_ids(ids=currencies_ids)
 
-        _l.debug('_refresh_with_perms_optimized item_currencies done: %s', "{:3.3f}".format(time.perf_counter() - item_currencies_st))
+        _l.debug('_refresh_with_perms_optimized item_currencies done: %s',
+                 "{:3.3f}".format(time.perf_counter() - item_currencies_st))
 
         # Handle item_currencies END
 
@@ -822,7 +809,8 @@ class BaseReportBuilder:
 
             self.instance.item_portfolios = self._get_portfolios_by_ids(ids=portfolios_ids)
 
-        _l.debug('_refresh_with_perms_optimized item_portfolios done: %s', "{:3.3f}".format(time.perf_counter() - item_portfolios_st))
+        _l.debug('_refresh_with_perms_optimized item_portfolios done: %s',
+                 "{:3.3f}".format(time.perf_counter() - item_portfolios_st))
 
         # Handle item_portfolios END
 
@@ -847,7 +835,8 @@ class BaseReportBuilder:
 
             self.instance.item_instruments = self._get_instruments_by_ids(ids=instruments_ids)
 
-        _l.debug('_refresh_with_perms_optimized item_instruments done: %s', "{:3.3f}".format(time.perf_counter() - item_instruments_st))
+        _l.debug('_refresh_with_perms_optimized item_instruments done: %s',
+                 "{:3.3f}".format(time.perf_counter() - item_instruments_st))
 
         # Handle item_instruments END
 
@@ -903,7 +892,8 @@ class BaseReportBuilder:
 
             self.instance.item_strategies1 = self._get_strategies1_by_ids(ids=strategy1_ids)
 
-        _l.debug('_refresh_with_perms_optimized item_strategies1 done: %s', "{:3.3f}".format(time.perf_counter() - item_strategies1_st))
+        _l.debug('_refresh_with_perms_optimized item_strategies1 done: %s',
+                 "{:3.3f}".format(time.perf_counter() - item_strategies1_st))
 
         # Handle item_strategies1 END
 
@@ -930,7 +920,8 @@ class BaseReportBuilder:
 
             self.instance.item_strategies2 = self._get_strategies2_by_ids(ids=strategy2_ids)
 
-        _l.debug('_refresh_with_perms_optimized item_strategies2 done: %s', "{:3.3f}".format(time.perf_counter() - item_strategies2_st))
+        _l.debug('_refresh_with_perms_optimized item_strategies2 done: %s',
+                 "{:3.3f}".format(time.perf_counter() - item_strategies2_st))
 
         # Handle item_strategies2 END
 
@@ -957,10 +948,10 @@ class BaseReportBuilder:
 
             self.instance.item_strategies3 = self._get_strategies3_by_ids(ids=strategy3_ids)
 
-        _l.debug('_refresh_with_perms_optimized item_strategies3 done: %s', "{:3.3f}".format(time.perf_counter() - item_strategies3_st))
+        _l.debug('_refresh_with_perms_optimized item_strategies3 done: %s',
+                 "{:3.3f}".format(time.perf_counter() - item_strategies3_st))
 
         # Handle item_strategies2 END
-
 
     def _get_relation_permissions(self, groups, app_label, model):
 

@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0067_auto_20200818_0856'),
     ]
@@ -18,11 +17,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transactiontype',
             name='transaction_unique_code_expr',
-            field=models.CharField(blank=True, default='', max_length=1024, verbose_name='transaction unique code expr'),
+            field=models.CharField(blank=True, default='', max_length=1024,
+                                   verbose_name='transaction unique code expr'),
         ),
         migrations.AddField(
             model_name='transactiontype',
             name='transaction_unique_code_options',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Book without unique code'), (2, 'Skip')], default=1, verbose_name='transaction unique code options'),
+            field=models.PositiveSmallIntegerField(choices=[(1, 'Book without unique code'), (2, 'Skip')], default=1,
+                                                   verbose_name='transaction unique code options'),
         ),
     ]

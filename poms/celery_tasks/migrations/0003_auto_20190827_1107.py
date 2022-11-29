@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('celery_tasks', '0002_celerytask_task_type'),
     ]

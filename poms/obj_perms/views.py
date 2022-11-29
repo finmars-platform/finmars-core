@@ -1,11 +1,8 @@
 from logging import getLogger
 
-from rest_framework.response import Response
-
 from poms.common.views import AbstractModelViewSet, AbstractEvGroupViewSet
 from poms.obj_perms.filters import ObjectPermissionBackend
 from poms.obj_perms.permissions import PomsObjectPermission
-from poms.obj_perms.utils import obj_perms_prefetch
 
 _l = getLogger('poms.obj_perms')
 

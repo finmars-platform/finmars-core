@@ -4,16 +4,17 @@ from datetime import date
 
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from rest_framework import serializers
-
-from poms.common.utils import date_now
 from poms.reports.builders.cash_flow_projection_item import CashFlowProjectionReport
 from poms.reports.builders.cash_flow_projection_item import CashFlowProjectionReportItem
 from poms.reports.builders.transaction_serializers import TransactionReportItemSerializer, TransactionReportSerializer
+from rest_framework import serializers
+
+from poms.common.utils import date_now
 
 
 class CashFlowProjectionReportItemSerializer(TransactionReportItemSerializer):
-    item_type = serializers.ChoiceField(source='type', read_only=True, choices=CashFlowProjectionReportItem.TYPE_CHOICES)
+    item_type = serializers.ChoiceField(source='type', read_only=True,
+                                        choices=CashFlowProjectionReportItem.TYPE_CHOICES)
     item_type_code = serializers.CharField(source='type_code', read_only=True)
     item_type_name = serializers.CharField(source='type_name', read_only=True)
     cash_consideration_before = serializers.ReadOnlyField()

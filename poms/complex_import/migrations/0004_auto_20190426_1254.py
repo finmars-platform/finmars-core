@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('complex_import', '0003_auto_20190417_1217'),
     ]
@@ -23,11 +22,15 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='compleximportschemeactioncsvimport',
             name='missing_data_handler',
-            field=models.CharField(choices=[['throw_error', 'Treat as Error'], ['set_defaults', 'Replace with Default Value']], default='throw_error', max_length=255),
+            field=models.CharField(
+                choices=[['throw_error', 'Treat as Error'], ['set_defaults', 'Replace with Default Value']],
+                default='throw_error', max_length=255),
         ),
         migrations.AddField(
             model_name='compleximportschemeactiontransactionimport',
             name='missing_data_handler',
-            field=models.CharField(choices=[['throw_error', 'Treat as Error'], ['set_defaults', 'Replace with Default Value']], default='throw_error', max_length=255),
+            field=models.CharField(
+                choices=[['throw_error', 'Treat as Error'], ['set_defaults', 'Replace with Default Value']],
+                default='throw_error', max_length=255),
         ),
     ]

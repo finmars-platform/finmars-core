@@ -1,3 +1,5 @@
+import copy
+import logging
 import time
 
 from django.contrib.contenttypes.models import ContentType
@@ -8,9 +10,6 @@ from poms.layout_recovery.models import LayoutArchetype
 from poms.layout_recovery.utils import recursive_dict_fix
 from poms.ui.models import ListLayout
 from poms.users.models import MasterUser, EcosystemDefault
-
-import logging
-import copy
 
 _l = logging.getLogger('poms.layout_recovery')
 
@@ -23,7 +22,7 @@ class LayoutArchetypeGenerateHandler(object):
         self.entity_viewer_content_types = ContentType.objects.filter(
             model__in=['portfolio', 'account', 'instrument', 'counterparty', 'responsible', 'currency',
                        'complextransaction', 'transaction'
-                       'strategy1', 'strategy2', 'strategy3',
+                                             'strategy1', 'strategy2', 'strategy3',
                        'pricehistory', 'currencyhistory',
                        'type', 'instruenttype', 'transactiontype'])
 
@@ -194,7 +193,6 @@ class LayoutArchetypeGenerateHandler(object):
         self.reset_fix_status()
 
 
-
 class LayoutFixHandler():
 
     def __init__(self):
@@ -230,7 +228,6 @@ class LayoutFixHandler():
             for layout_archetype in layout_archetypes:
 
                 if layout_archetype.content_type == layout.content_type:
-
                     layout.data = recursive_dict_fix(layout_archetype.data, layout.data)
 
                     layout.save()

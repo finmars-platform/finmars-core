@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0083_auto_20210818_1338'),
     ]
@@ -13,6 +12,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='complextransaction',
             name='status',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Production'), (2, 'Pending'), (3, 'Ignore')], db_index=True, default=1, verbose_name='status'),
+            field=models.PositiveSmallIntegerField(choices=[(1, 'Production'), (2, 'Pending'), (3, 'Ignore')],
+                                                   db_index=True, default=1, verbose_name='status'),
         ),
     ]

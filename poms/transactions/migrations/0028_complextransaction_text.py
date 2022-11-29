@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0027_transactiontypeactioninstrumenteventschedule_is_auto_generated'),
     ]

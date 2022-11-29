@@ -3,14 +3,15 @@
 from __future__ import unicode_literals
 
 import datetime
-import django.core.files.storage
-from django.db import migrations, models
+
 import django.utils.timezone
+from django.db import migrations, models
+
 import poms.integrations.models
 import poms.integrations.storage
 
-class Migration(migrations.Migration):
 
+class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
@@ -89,10 +90,15 @@ class Migration(migrations.Migration):
             name='ImportConfig',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('p12cert', models.FileField(blank=True, null=True, storage=poms.integrations.storage.ImportConfigStorage(), upload_to=poms.integrations.models.import_cert_upload_to)),
+                ('p12cert',
+                 models.FileField(blank=True, null=True, storage=poms.integrations.storage.ImportConfigStorage(),
+                                  upload_to=poms.integrations.models.import_cert_upload_to)),
                 ('password', models.CharField(blank=True, max_length=64, null=True)),
-                ('cert', models.FileField(blank=True, null=True, storage=poms.integrations.storage.ImportConfigStorage(), upload_to=poms.integrations.models.import_cert_upload_to)),
-                ('key', models.FileField(blank=True, null=True, storage=poms.integrations.storage.ImportConfigStorage(), upload_to=poms.integrations.models.import_cert_upload_to)),
+                ('cert',
+                 models.FileField(blank=True, null=True, storage=poms.integrations.storage.ImportConfigStorage(),
+                                  upload_to=poms.integrations.models.import_cert_upload_to)),
+                ('key', models.FileField(blank=True, null=True, storage=poms.integrations.storage.ImportConfigStorage(),
+                                         upload_to=poms.integrations.models.import_cert_upload_to)),
             ],
             options={
                 'verbose_name_plural': 'import configs',
@@ -104,7 +110,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('value', models.CharField(max_length=255)),
-                ('value_string', models.CharField(blank=True, default='', max_length=255, verbose_name='value (String)')),
+                ('value_string',
+                 models.CharField(blank=True, default='', max_length=255, verbose_name='value (String)')),
                 ('value_float', models.FloatField(default=0.0, verbose_name='value (Float)')),
                 ('value_date', models.DateField(default=datetime.date(1, 1, 1), verbose_name='value (Date)')),
             ],
@@ -234,7 +241,9 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('is_enabled', models.BooleanField(default=True)),
-                ('cron_expr', models.CharField(blank=True, default='', help_text='Format is "* * * * *" (minute / hour / day_month / month / day_week)', max_length=255, validators=[poms.integrations.models.validate_crontab])),
+                ('cron_expr', models.CharField(blank=True, default='',
+                                               help_text='Format is "* * * * *" (minute / hour / day_month / month / day_week)',
+                                               max_length=255, validators=[poms.integrations.models.validate_crontab])),
                 ('balance_day', models.PositiveSmallIntegerField(default=0)),
                 ('load_days', models.PositiveSmallIntegerField(default=1)),
                 ('fill_days', models.PositiveSmallIntegerField(default=0)),
@@ -276,7 +285,9 @@ class Migration(migrations.Migration):
                 ('created', models.DateTimeField(auto_now_add=True, db_index=True, verbose_name='created')),
                 ('modified', models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified')),
                 ('action', models.CharField(db_index=True, max_length=20)),
-                ('status', models.CharField(choices=[('P', 'PENDING'), ('S', 'REQUEST_SENT'), ('W', 'WAIT_RESPONSE'), ('D', 'DONE'), ('E', 'ERROR'), ('T', 'TIMEOUT')], default='P', max_length=1)),
+                ('status', models.CharField(
+                    choices=[('P', 'PENDING'), ('S', 'REQUEST_SENT'), ('W', 'WAIT_RESPONSE'), ('D', 'DONE'),
+                             ('E', 'ERROR'), ('T', 'TIMEOUT')], default='P', max_length=1)),
                 ('celery_tasks_id', models.CharField(blank=True, default='', max_length=255)),
                 ('options', models.TextField(blank=True, null=True)),
                 ('result', models.TextField(blank=True, null=True)),

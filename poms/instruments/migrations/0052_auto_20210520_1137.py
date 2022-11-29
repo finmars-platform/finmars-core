@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('instruments', '0051_auto_20210520_1128'),
     ]
@@ -13,11 +12,17 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='instrumenttype',
             name='co_directional_exposure_currency_value_type',
-            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'), (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'), (120, 'Button')], default=40, verbose_name='co directional exposure currency value type'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'),
+                         (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'),
+                         (120, 'Button')], default=40, verbose_name='co directional exposure currency value type'),
         ),
         migrations.AddField(
             model_name='instrumenttype',
             name='counter_directional_exposure_currency_value_type',
-            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'), (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'), (120, 'Button')], default=40, verbose_name='counter directional exposure currency value type'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(20, 'Number'), (10, 'String'), (40, 'Date'), (30, 'Classifier'), (50, 'Boolean'),
+                         (60, 'System Attribute'), (70, 'User Attribute'), (100, 'Relation'), (110, 'Selector'),
+                         (120, 'Button')], default=40, verbose_name='counter directional exposure currency value type'),
         ),
     ]

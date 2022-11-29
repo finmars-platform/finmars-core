@@ -3,12 +3,12 @@
 from __future__ import unicode_literals
 
 import datetime
-from django.db import migrations, models
+
 import django.db.models.deletion
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('strategies', '0002_auto_20161205_1227'),
         ('currencies', '0003_auto_20161205_1227'),
@@ -28,21 +28,42 @@ class Migration(migrations.Migration):
                 ('value_string', models.CharField(blank=True, default='', max_length=255)),
                 ('value_float', models.FloatField(default=0.0)),
                 ('value_date', models.DateField(default=datetime.date(1, 1, 1))),
-                ('account', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='accounts.Account')),
-                ('complex_transaction', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='inputs', to='transactions.ComplexTransaction')),
-                ('counterparty', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='counterparties.Counterparty')),
-                ('currency', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='currencies.Currency')),
-                ('daily_pricing_model', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='instruments.DailyPricingModel')),
-                ('instrument', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='instruments.Instrument')),
-                ('instrument_type', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='instruments.InstrumentType')),
-                ('payment_size_detail', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='instruments.PaymentSizeDetail')),
-                ('portfolio', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='portfolios.Portfolio')),
-                ('price_download_scheme', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='integrations.PriceDownloadScheme')),
-                ('responsible', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='counterparties.Responsible')),
-                ('strategy1', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='strategies.Strategy1')),
-                ('strategy2', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='strategies.Strategy2')),
-                ('strategy3', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to='strategies.Strategy3')),
-                ('transaction_type_input', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='+', to='transactions.TransactionTypeInput')),
+                ('account', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                              related_name='+', to='accounts.Account')),
+                ('complex_transaction',
+                 models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='inputs',
+                                   to='transactions.ComplexTransaction')),
+                ('counterparty', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                                   related_name='+', to='counterparties.Counterparty')),
+                ('currency', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                               related_name='+', to='currencies.Currency')),
+                ('daily_pricing_model',
+                 models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                   related_name='+', to='instruments.DailyPricingModel')),
+                ('instrument', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                                 related_name='+', to='instruments.Instrument')),
+                ('instrument_type',
+                 models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                   related_name='+', to='instruments.InstrumentType')),
+                ('payment_size_detail',
+                 models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                   related_name='+', to='instruments.PaymentSizeDetail')),
+                ('portfolio', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                                related_name='+', to='portfolios.Portfolio')),
+                ('price_download_scheme',
+                 models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                   related_name='+', to='integrations.PriceDownloadScheme')),
+                ('responsible', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                                  related_name='+', to='counterparties.Responsible')),
+                ('strategy1', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                                related_name='+', to='strategies.Strategy1')),
+                ('strategy2', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                                related_name='+', to='strategies.Strategy2')),
+                ('strategy3', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                                related_name='+', to='strategies.Strategy3')),
+                ('transaction_type_input',
+                 models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='+',
+                                   to='transactions.TransactionTypeInput')),
             ],
             options={
                 'verbose_name_plural': 'complex transaction inputs',

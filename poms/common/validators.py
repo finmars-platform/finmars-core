@@ -14,9 +14,6 @@ class PhoneNumberValidator(object):
         # raise ValidationError(self.message, code=self.code)
         return True
 
-
-
-
 # class UserCodeUniqueValidator(UniqueTogetherValidator):
 #     def __init__(self, *args, **kwargs):
 #         super(UserCodeUniqueValidator, self).__init__(*args, **kwargs)

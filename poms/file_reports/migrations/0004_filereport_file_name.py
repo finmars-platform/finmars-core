@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('file_reports', '0003_remove_filereport_content_type'),
     ]

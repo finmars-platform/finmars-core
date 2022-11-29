@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('instruments', '0006_auto_20170512_0739'),
     ]
@@ -15,6 +14,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='generatedevent',
             name='status',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'New'), (2, 'Ignored'), (3, 'Book pending'), (4, 'Booked'), (5, 'Book (default)')], db_index=True, default=1, verbose_name='status'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(1, 'New'), (2, 'Ignored'), (3, 'Book pending'), (4, 'Booked'), (5, 'Book (default)')],
+                db_index=True, default=1, verbose_name='status'),
         ),
     ]

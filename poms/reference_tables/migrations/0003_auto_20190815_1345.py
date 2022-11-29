@@ -6,7 +6,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('reference_tables', '0002_auto_20190814_1138'),
     ]

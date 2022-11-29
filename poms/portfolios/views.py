@@ -1,15 +1,18 @@
 from __future__ import unicode_literals
 
-import django_filters
+from logging import getLogger
 
+import django_filters
 from django.db.models import Prefetch
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.settings import api_settings
 
 from poms.accounts.models import Account, AccountType
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
     GroupsAttributeFilter, AttributeFilter, EntitySpecificFilter
-
 from poms.common.pagination import CustomPaginationMixin
 from poms.counterparties.models import Responsible, Counterparty, CounterpartyGroup, ResponsibleGroup
 from poms.obj_attrs.utils import get_attributes_prefetch
@@ -23,22 +26,13 @@ from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEv
 from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord, PortfolioBundle
 from poms.portfolios.serializers import PortfolioSerializer, PortfolioLightSerializer, PortfolioEvSerializer, \
     PortfolioRegisterSerializer, PortfolioRegisterEvSerializer, PortfolioRegisterRecordSerializer, \
-    PortfolioRegisterRecordEvSerializer, CalculateRecordsSerializer, PortfolioBundleSerializer, \
+    PortfolioRegisterRecordEvSerializer, PortfolioBundleSerializer, \
     PortfolioBundleEvSerializer
+from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_price_history
 from poms.transactions.models import TransactionType, TransactionTypeGroup
 from poms.users.filters import OwnerByMasterUserFilter
-from rest_framework.decorators import action
-
-from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_price_history
-
-from rest_framework.settings import api_settings
-from rest_framework.response import Response
-
-from logging import getLogger
 
 _l = getLogger('poms.portfolios')
-
-
 
 
 class PortfolioAttributeTypeViewSet(GenericAttributeTypeViewSet):
@@ -108,6 +102,43 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
     ]
+
+    def create(self, request, *args, **kwargs):
+
+        calculate_portfolio_register_record.apply_async(
+            link=[
+                calculate_portfolio_register_price_history.s()
+            ],
+            kwargs={'master_users': [request.user.master_user.id]})
+
+        _l.info("Create Portfolio")
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def update(self,  request, *args, **kwargs):
+
+        calculate_portfolio_register_record.apply_async(
+            link=[
+                calculate_portfolio_register_price_history.s()
+            ],
+            kwargs={'master_users': [request.user.master_user.id]})
+
+        _l.info("Update Portfolio")
+
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return Response(serializer.data)
+
+
 
 
 class PortfolioLightFilterSet(FilterSet):
@@ -204,9 +235,6 @@ class PortfolioEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, Custom
     ]
 
 
-
-
-
 class PortfolioRegisterAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = PortfolioRegister
     target_model_serializer = PortfolioRegisterSerializer
@@ -224,7 +252,6 @@ class PortfolioRegisterFilterSet(FilterSet):
     short_name = CharFilter()
     public_name = CharFilter()
 
-
     class Meta:
         model = PortfolioRegister
         fields = []
@@ -241,7 +268,6 @@ class PortfolioRegisterEvFilterSet(FilterSet):
     class Meta:
         model = PortfolioRegister
         fields = []
-
 
 
 class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
@@ -271,7 +297,8 @@ class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
 
         master_user = request.user.master_user
 
-        calculate_portfolio_register_record.apply_async(kwargs={'portfolio_register_ids': portfolio_register_ids, 'master_users': [master_user.id]})
+        calculate_portfolio_register_record.apply_async(
+            kwargs={'portfolio_register_ids': portfolio_register_ids, 'master_users': [master_user.id]})
 
         return Response({'status': 'ok'})
 
@@ -302,15 +329,14 @@ class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
 
         if keep_instrument != 'true':
             if linked_instrument_id:
-
                 _l.info("initing fake delete for instrument")
 
                 from poms.instruments.models import Instrument
                 instrument = Instrument.objects.get(id=linked_instrument_id)
                 instrument.fake_delete()
 
-
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class PortfolioRegisterEvViewSet(AbstractWithObjectPermissionViewSet):
     queryset = PortfolioRegister.objects.select_related(
@@ -380,8 +406,6 @@ class PortfolioRegisterRecordViewSet(AbstractWithObjectPermissionViewSet):
     ]
 
 
-
-
 class PortfolioRegisterRecordEvViewSet(AbstractWithObjectPermissionViewSet):
     queryset = PortfolioRegisterRecord.objects.select_related(
         'master_user',
@@ -417,7 +441,6 @@ class PortfolioBundleFilterSet(FilterSet):
         fields = []
 
 
-
 class PortfolioBundleEvFilterSet(FilterSet):
     id = NoOpFilter()
 
@@ -437,8 +460,6 @@ class PortfolioBundleViewSet(AbstractWithObjectPermissionViewSet):
     filter_class = PortfolioBundleFilterSet
     ordering_fields = [
     ]
-
-
 
 
 class PortfolioBundleEvViewSet(AbstractWithObjectPermissionViewSet):

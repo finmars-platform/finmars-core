@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('reports', '0008_auto_20190522_2005'),
     ]
@@ -15,16 +14,19 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='balancereportcustomfield',
             name='value_type',
-            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date')], default=10, verbose_name='value type'),
+            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date')], default=10,
+                                                   verbose_name='value type'),
         ),
         migrations.AddField(
             model_name='plreportcustomfield',
             name='value_type',
-            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date')], default=10, verbose_name='value type'),
+            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date')], default=10,
+                                                   verbose_name='value type'),
         ),
         migrations.AddField(
             model_name='transactionreportcustomfield',
             name='value_type',
-            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date')], default=10, verbose_name='value type'),
+            field=models.PositiveSmallIntegerField(choices=[(20, 'Number'), (10, 'String'), (40, 'Date')], default=10,
+                                                   verbose_name='value type'),
         ),
     ]

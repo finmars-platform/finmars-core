@@ -5,26 +5,23 @@ import calendar
 import datetime
 import logging
 import random
+import re
 import time
+import traceback
+import types
 import uuid
 from collections import OrderedDict
-import types
 
+from celery import Celery
 from dateutil import relativedelta
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
+from django.forms.models import model_to_dict
 from django.utils import numberformat
 from django.utils.functional import Promise, SimpleLazyObject
-
-from celery import Celery
-
-from poms.common.utils import date_now, isclose, get_list_of_dates_between_two_dates
-import re
-
 from pandas.tseries.offsets import BMonthEnd, BYearEnd, BQuarterEnd, BDay
 
-from django.forms.models import model_to_dict
-import traceback
+from poms.common.utils import date_now, isclose, get_list_of_dates_between_two_dates
 
 _l = logging.getLogger('poms.formula')
 
@@ -310,7 +307,6 @@ def _calculate_performance_report(evaluator, name, date_from, date_to, report_cu
         for register in registers:
             registers_instances.append(Instrument.objects.get(master_user=master_user, user_code=register))
 
-
         instance = PerformanceReport(
             report_instance_name=name,
             master_user=master_user,
@@ -326,7 +322,6 @@ def _calculate_performance_report(evaluator, name, date_from, date_to, report_cu
 
         builder = PerformanceReportBuilder(instance=instance)
         instance = builder.build_report()
-
 
         serializer = PerformanceReportSerializer(instance=instance, context=context)
 
@@ -402,7 +397,6 @@ def _calculate_balance_report(evaluator, name, report_date, report_currency, pri
         builder = BalanceReportBuilderSql(instance=instance)
         instance = builder.build_balance()
 
-
         serializer = BalanceReportSerializer(instance=instance, context=context)
 
         serializer.to_representation(instance)
@@ -477,7 +471,6 @@ def _calculate_pl_report(evaluator, name, pl_first_date, report_date, report_cur
 
         builder = PLReportBuilderSql(instance=instance)
         instance = builder.build_balance()
-
 
         serializer = PLReportSerializer(instance=instance, context=context)
 
@@ -1947,7 +1940,6 @@ def _get_instrument_report_data(evaluator, instrument, report_date, report_curre
         builder = BalanceReportBuilderSql(instance=instance)
         instance = builder.build_balance()
 
-
         serializer = BalanceReportSerializer(instance=instance, context=context)
 
         data = serializer.to_representation(instance)
@@ -2381,6 +2373,7 @@ def _get_default_strategy3(evaluator):
 
 _get_default_strategy3.evaluator = True
 
+
 def _create_task(evaluator, name, type='user_task', options=None, function_name=None, notes=None, **kwargs):
     _l.info('_create_task task_name: %s' % name)
 
@@ -2401,7 +2394,6 @@ def _create_task(evaluator, name, type='user_task', options=None, function_name=
                                                 function_name=function_name,
                                                 type=type)
 
-
         celery_task.options_object = options
         celery_task.save()
 
@@ -2414,7 +2406,8 @@ def _create_task(evaluator, name, type='user_task', options=None, function_name=
 _create_task.evaluator = True
 
 
-def _update_task(evaluator, id, name, type=None, status='P', options=None, notes=None, error_message=None, result=None, **kwargs):
+def _update_task(evaluator, id, name, type=None, status='P', options=None, notes=None, error_message=None, result=None,
+                 **kwargs):
     _l.info('_create_task task_name: %s' % name)
 
     try:
@@ -2447,6 +2440,7 @@ def _update_task(evaluator, id, name, type=None, status='P', options=None, notes
 
 
 _update_task.evaluator = True
+
 
 def _run_task(evaluator, task_name, **kwargs):
     _l.info('_run_task task_name: %s' % task_name)
@@ -2586,7 +2580,7 @@ def _run_data_procedure_sync(evaluator, user_code, user_context=None, **kwargs):
         kwargs.pop('user_context', None)
 
         instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member,
-                                                   context=merged_context, **kwargs)
+                                        context=merged_context, **kwargs)
         instance.process()
 
 

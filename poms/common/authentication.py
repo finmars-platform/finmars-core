@@ -1,23 +1,14 @@
-import datetime
-
-import pytz
-from django.conf import settings
-from django.utils import timezone
-from rest_framework.authentication import TokenAuthentication, get_authorization_header
-from rest_framework.exceptions import AuthenticationFailed
-from django.utils.translation import gettext_lazy as _
-from rest_framework import HTTP_HEADER_ENCODING, exceptions
-from django.contrib.auth import user_logged_in, user_login_failed, get_user_model
-
-from poms.auth_tokens.models import AuthToken
-
 import logging
+
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from django.utils.translation import gettext_lazy as _
+from rest_framework import exceptions
+from rest_framework.authentication import TokenAuthentication, get_authorization_header
 
 from poms.common.keycloak import KeycloakConnect
 
 _l = logging.getLogger('poms.common')
-
-
 
 
 class KeycloakAuthentication(TokenAuthentication):
@@ -33,11 +24,10 @@ class KeycloakAuthentication(TokenAuthentication):
             for key, value in request.COOKIES.items():
 
                 if 'access_token' == key:
-
                     auth = ['Token'.encode(), value.encode()]
 
         if not auth or auth[0].lower() != self.keyword.lower().encode():
-                return None
+            return None
 
         if len(auth) == 1:
             msg = _('Invalid token header. No credentials provided.')
@@ -62,7 +52,6 @@ class KeycloakAuthentication(TokenAuthentication):
                                         client_secret_key=settings.KEYCLOAK_CLIENT_SECRET_KEY)
 
         if not self.keycloak.is_token_active(key):
-
             msg = _('Invalid or expired token.')
             raise exceptions.AuthenticationFailed(msg)
 
@@ -73,4 +62,3 @@ class KeycloakAuthentication(TokenAuthentication):
         user = user_model.objects.get(username=userinfo['preferred_username'])
 
         return user, key
-

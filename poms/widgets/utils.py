@@ -1,9 +1,8 @@
 import logging
 import traceback
-from django.db import transaction
-
 
 from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_first_transaction
@@ -29,9 +28,8 @@ def get_total_from_report_items(key, report_instance_items):
 
     return result
 
+
 def collect_asset_type_category(report_type, master_user, instance_serialized, history, key='market_value'):
-
-
     instrument_content_type = ContentType.objects.get(app_label="instruments", model='instrument')
 
     asset_types_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
@@ -39,7 +37,7 @@ def collect_asset_type_category(report_type, master_user, instance_serialized, h
                                                                   user_code='asset_types')
 
     asset_types = GenericClassifier.objects.filter(attribute_type=asset_types_attribute_type).values_list('name',
-                                                                                                       flat=True)
+                                                                                                          flat=True)
 
     # _l.info('collect_asset_type_category.asset_types %s' % asset_types)
     for asset_type in asset_types:
@@ -83,7 +81,6 @@ def collect_asset_type_category(report_type, master_user, instance_serialized, h
         item = PLReportHistoryItem()
         item.pl_report_history = history
 
-
     item.category = 'Asset Types'
     item.key = key
     item.name = 'Other'
@@ -115,7 +112,6 @@ def collect_asset_type_category(report_type, master_user, instance_serialized, h
         item = PLReportHistoryItem()
         item.pl_report_history = history
 
-
     item.category = 'Asset Types'
     item.key = key
     item.name = 'Cash & Equivalents'
@@ -132,7 +128,6 @@ def collect_asset_type_category(report_type, master_user, instance_serialized, h
 
 
 def get_unique_sectors(instance_serialized, master_user):
-
     instrument_content_type = ContentType.objects.get(app_label="instruments", model='instrument')
 
     sector_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
@@ -155,13 +150,13 @@ def get_unique_sectors(instance_serialized, master_user):
 
     return sectors
 
-def collect_sector_category(report_type, master_user, instance_serialized, history, key='market_value'):
 
+def collect_sector_category(report_type, master_user, instance_serialized, history, key='market_value'):
     instrument_content_type = ContentType.objects.get(app_label="instruments", model='instrument')
 
     sector_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
                                                              content_type=instrument_content_type,
-                                                                  user_code='sector')
+                                                             user_code='sector')
 
     sectors = get_unique_sectors(instance_serialized, master_user)
 
@@ -194,7 +189,6 @@ def collect_sector_category(report_type, master_user, instance_serialized, histo
         item.value = get_total_from_report_items(key, sector_items)
 
         item.save()
-
 
     # Get value for No category items
 
@@ -250,8 +244,8 @@ def collect_sector_category(report_type, master_user, instance_serialized, histo
 
     item.save()
 
-def get_unique_countries(instance_serialized):
 
+def get_unique_countries(instance_serialized):
     countries = []
 
     for _item in instance_serialized['items']:
@@ -265,8 +259,8 @@ def get_unique_countries(instance_serialized):
 
     return countries
 
-def collect_country_category(report_type, master_user, instance_serialized, history, key='market_value'):
 
+def collect_country_category(report_type, master_user, instance_serialized, history, key='market_value'):
     countries = get_unique_countries(instance_serialized)
 
     for country in countries:
@@ -318,7 +312,6 @@ def collect_country_category(report_type, master_user, instance_serialized, hist
         if _item.get('instrument_object'):
 
             if not _item['instrument_object'].get('country_object'):
-
                 no_category_items.append(_item)
 
     item.value = get_total_from_report_items(key, no_category_items)
@@ -350,7 +343,6 @@ def collect_country_category(report_type, master_user, instance_serialized, hist
 
 
 def get_unique_regions(instance_serialized):
-
     regions = []
 
     for _item in instance_serialized['items']:
@@ -364,8 +356,8 @@ def get_unique_regions(instance_serialized):
 
     return regions
 
-def collect_region_category(report_type, master_user, instance_serialized, history, key='market_value'):
 
+def collect_region_category(report_type, master_user, instance_serialized, history, key='market_value'):
     # Get values for instrument categorized by region
 
     regions = get_unique_regions(instance_serialized)
@@ -419,7 +411,6 @@ def collect_region_category(report_type, master_user, instance_serialized, histo
         if _item.get('instrument_object'):
 
             if not _item['instrument_object'].get('country_object'):
-
                 no_category_items.append(_item)
 
     item.value = get_total_from_report_items(key, no_category_items)
@@ -448,6 +439,7 @@ def collect_region_category(report_type, master_user, instance_serialized, histo
 
     item.value = get_total_from_report_items(key, asset_type_items)
     item.save()
+
 
 def collect_currency_category(report_type, master_user, instance_serialized, history, key='market_value'):
     currencies_ids = []
@@ -507,16 +499,15 @@ def collect_currency_category(report_type, master_user, instance_serialized, his
 
     for _item in instance_serialized['items']:
 
-            if not _item.get('exposure_currency'):
-
-                no_category_items.append(_item)
+        if not _item.get('exposure_currency'):
+            no_category_items.append(_item)
 
     item.value = get_total_from_report_items(key, no_category_items)
 
     item.save()
 
-def find_next_date_to_process(task):
 
+def find_next_date_to_process(task):
     result = None
 
     task_options_object = task.options_object
@@ -544,12 +535,10 @@ def find_next_date_to_process(task):
     return result
 
 
-
-def collect_balance_history(master_user, member, date_from, date_to, dates, segmentation_type, portfolio_id, report_currency_id,
+def collect_balance_history(master_user, member, date_from, date_to, dates, segmentation_type, portfolio_id,
+                            report_currency_id,
                             cost_method_id, pricing_policy_id, sync=False):
-
     from poms.widgets.tasks import collect_balance_report_history
-
 
     from poms.portfolios.models import Portfolio
     portfolio = Portfolio.objects.get(id=portfolio_id)
@@ -605,9 +594,10 @@ def collect_balance_history(master_user, member, date_from, date_to, dates, segm
                                 options_object['date_from'], options_object['date_to']),
                             )
 
-def collect_pl_history(master_user, member, date_from, date_to, dates, segmentation_type, portfolio_id, report_currency_id, cost_method_id,
-                       pricing_policy_id, sync=False):
 
+def collect_pl_history(master_user, member, date_from, date_to, dates, segmentation_type, portfolio_id,
+                       report_currency_id, cost_method_id,
+                       pricing_policy_id, sync=False):
     from poms.widgets.tasks import collect_pl_report_history
 
     from poms.portfolios.models import Portfolio
@@ -665,8 +655,9 @@ def collect_pl_history(master_user, member, date_from, date_to, dates, segmentat
                                 options_object['date_from'], options_object['date_to']),
                             )
 
-def collect_widget_stats(master_user, member, date_from, date_to, dates, segmentation_type, portfolio_id, benchmark, sync=False):
 
+def collect_widget_stats(master_user, member, date_from, date_to, dates, segmentation_type, portfolio_id, benchmark,
+                         sync=False):
     from poms.widgets.tasks import collect_stats
 
     from poms.portfolios.models import Portfolio

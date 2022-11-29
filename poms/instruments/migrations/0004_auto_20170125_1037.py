@@ -3,14 +3,14 @@
 from __future__ import unicode_literals
 
 import datetime
-from django.db import migrations, models
-import django.db.models.deletion
+
 import django.utils.timezone
+from django.db import migrations, models
+
 import poms.common.utils
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('instruments', '0003_auto_20161205_1227'),
     ]
@@ -19,12 +19,19 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='eventschedule',
             name='accrual_calculation_schedule',
-            field=models.ForeignKey(blank=True, editable=False, help_text='Used for store link when is_auto_generated is True', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='event_schedules', to='instruments.AccrualCalculationSchedule', verbose_name='accrual calculation schedule'),
+            field=models.ForeignKey(blank=True, editable=False,
+                                    help_text='Used for store link when is_auto_generated is True', null=True,
+                                    on_delete=django.db.models.deletion.CASCADE, related_name='event_schedules',
+                                    to='instruments.AccrualCalculationSchedule',
+                                    verbose_name='accrual calculation schedule'),
         ),
         migrations.AlterField(
             model_name='eventschedule',
             name='factor_schedule',
-            field=models.ForeignKey(blank=True, editable=False, help_text='Used for store link when is_auto_generated is True', null=True, on_delete=django.db.models.deletion.CASCADE, related_name='event_schedules', to='instruments.InstrumentFactorSchedule', verbose_name='factor schedule'),
+            field=models.ForeignKey(blank=True, editable=False,
+                                    help_text='Used for store link when is_auto_generated is True', null=True,
+                                    on_delete=django.db.models.deletion.CASCADE, related_name='event_schedules',
+                                    to='instruments.InstrumentFactorSchedule', verbose_name='factor schedule'),
         ),
         migrations.AlterField(
             model_name='eventschedule',
@@ -44,7 +51,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='eventschedule',
             name='periodicity',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, to='instruments.Periodicity', verbose_name='periodicity'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT,
+                                    to='instruments.Periodicity', verbose_name='periodicity'),
         ),
         migrations.AlterField(
             model_name='eventschedule',
@@ -74,7 +82,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='eventscheduleaction',
             name='transaction_type',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='transactions.TransactionType', verbose_name='transaction type'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='transactions.TransactionType',
+                                    verbose_name='transaction type'),
         ),
         migrations.AlterField(
             model_name='eventscheduleconfig',
@@ -89,17 +98,22 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='generatedevent',
             name='account',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='generated_events', to='accounts.Account', verbose_name='account'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT,
+                                    related_name='generated_events', to='accounts.Account', verbose_name='account'),
         ),
         migrations.AlterField(
             model_name='generatedevent',
             name='action',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='generated_events', to='instruments.EventScheduleAction', verbose_name='action'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                    related_name='generated_events', to='instruments.EventScheduleAction',
+                                    verbose_name='action'),
         ),
         migrations.AlterField(
             model_name='generatedevent',
             name='complex_transaction',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='generated_events', to='transactions.ComplexTransaction', verbose_name='complex transaction'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT,
+                                    related_name='generated_events', to='transactions.ComplexTransaction',
+                                    verbose_name='complex transaction'),
         ),
         migrations.AlterField(
             model_name='generatedevent',
@@ -114,22 +128,28 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='generatedevent',
             name='event_schedule',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='generated_events', to='instruments.EventSchedule', verbose_name='event schedule'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                    related_name='generated_events', to='instruments.EventSchedule',
+                                    verbose_name='event schedule'),
         ),
         migrations.AlterField(
             model_name='generatedevent',
             name='instrument',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='generated_events', to='instruments.Instrument', verbose_name='instrument'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT,
+                                    related_name='generated_events', to='instruments.Instrument',
+                                    verbose_name='instrument'),
         ),
         migrations.AlterField(
             model_name='generatedevent',
             name='master_user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='generated_events', to='users.MasterUser', verbose_name='master user'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='generated_events',
+                                    to='users.MasterUser', verbose_name='master user'),
         ),
         migrations.AlterField(
             model_name='generatedevent',
             name='member',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='users.Member', verbose_name='member'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL,
+                                    to='users.Member', verbose_name='member'),
         ),
         migrations.AlterField(
             model_name='generatedevent',
@@ -144,7 +164,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='generatedevent',
             name='portfolio',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='generated_events', to='portfolios.Portfolio', verbose_name='portfolio'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT,
+                                    related_name='generated_events', to='portfolios.Portfolio',
+                                    verbose_name='portfolio'),
         ),
         migrations.AlterField(
             model_name='generatedevent',
@@ -154,7 +176,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='generatedevent',
             name='status',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'New'), (2, 'Ignored'), (3, 'Book pending'), (4, 'Booked')], db_index=True, default=1, verbose_name='status'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(1, 'New'), (2, 'Ignored'), (3, 'Book pending'), (4, 'Booked')], db_index=True, default=1,
+                verbose_name='status'),
         ),
         migrations.AlterField(
             model_name='generatedevent',
@@ -164,22 +188,30 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='generatedevent',
             name='strategy1',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='generated_events', to='strategies.Strategy1', verbose_name='strategy1'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT,
+                                    related_name='generated_events', to='strategies.Strategy1',
+                                    verbose_name='strategy1'),
         ),
         migrations.AlterField(
             model_name='generatedevent',
             name='strategy2',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='generated_events', to='strategies.Strategy2', verbose_name='strategy2'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT,
+                                    related_name='generated_events', to='strategies.Strategy2',
+                                    verbose_name='strategy2'),
         ),
         migrations.AlterField(
             model_name='generatedevent',
             name='strategy3',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='generated_events', to='strategies.Strategy3', verbose_name='strategy3'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT,
+                                    related_name='generated_events', to='strategies.Strategy3',
+                                    verbose_name='strategy3'),
         ),
         migrations.AlterField(
             model_name='generatedevent',
             name='transaction_type',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='generated_events', to='transactions.TransactionType', verbose_name='transaction type'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT,
+                                    related_name='generated_events', to='transactions.TransactionType',
+                                    verbose_name='transaction type'),
         ),
         migrations.AlterField(
             model_name='instrument',
@@ -189,17 +221,20 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='instrument',
             name='user_text_1',
-            field=models.CharField(blank=True, help_text='User specified field 1', max_length=255, null=True, verbose_name='user text 1'),
+            field=models.CharField(blank=True, help_text='User specified field 1', max_length=255, null=True,
+                                   verbose_name='user text 1'),
         ),
         migrations.AlterField(
             model_name='instrument',
             name='user_text_2',
-            field=models.CharField(blank=True, help_text='User specified field 2', max_length=255, null=True, verbose_name='user text 2'),
+            field=models.CharField(blank=True, help_text='User specified field 2', max_length=255, null=True,
+                                   verbose_name='user text 2'),
         ),
         migrations.AlterField(
             model_name='instrument',
             name='user_text_3',
-            field=models.CharField(blank=True, help_text='User specified field 3', max_length=255, null=True, verbose_name='user text 3'),
+            field=models.CharField(blank=True, help_text='User specified field 3', max_length=255, null=True,
+                                   verbose_name='user text 3'),
         ),
         migrations.AlterField(
             model_name='instrumenttype',

@@ -1,5 +1,6 @@
-from poms.currencies.models import CurrencyHistory
 from poms.reports.builders.balance_item import Report
+
+from poms.currencies.models import CurrencyHistory
 
 
 def dictfetchall(cursor):
@@ -306,9 +307,11 @@ def get_transaction_report_date_filter_sql_string(instance):
 
     if 'user_' in instance.date_field or 'date' == instance.date_field:
 
-        result_string = "tc." + instance.date_field + " >= '" + str(instance.begin_date) + "' AND tc." + instance.date_field + "<= '" + str(instance.end_date) + "'"
+        result_string = "tc." + instance.date_field + " >= '" + str(
+            instance.begin_date) + "' AND tc." + instance.date_field + "<= '" + str(instance.end_date) + "'"
 
     else:
-        result_string = "t." + instance.date_field + " >= '" + str(instance.begin_date) + "' AND t." + instance.date_field + " <= '" + str(instance.end_date) + "'"
+        result_string = "t." + instance.date_field + " >= '" + str(
+            instance.begin_date) + "' AND t." + instance.date_field + " <= '" + str(instance.end_date) + "'"
 
     return result_string

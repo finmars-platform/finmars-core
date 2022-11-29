@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('strategies', '0009_auto_20210312_1647'),
     ]
@@ -12,14 +11,17 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='strategy1',
-            options={'ordering': ['user_code'], 'permissions': [('manage_strategy1', 'Can manage strategy1')], 'verbose_name': 'strategy1', 'verbose_name_plural': 'strategies1'},
+            options={'ordering': ['user_code'], 'permissions': [('manage_strategy1', 'Can manage strategy1')],
+                     'verbose_name': 'strategy1', 'verbose_name_plural': 'strategies1'},
         ),
         migrations.AlterModelOptions(
             name='strategy2',
-            options={'ordering': ['user_code'], 'permissions': [('manage_strategy2', 'Can manage strategy2')], 'verbose_name': 'strategy2', 'verbose_name_plural': 'strategies2'},
+            options={'ordering': ['user_code'], 'permissions': [('manage_strategy2', 'Can manage strategy2')],
+                     'verbose_name': 'strategy2', 'verbose_name_plural': 'strategies2'},
         ),
         migrations.AlterModelOptions(
             name='strategy3',
-            options={'ordering': ['user_code'], 'permissions': [('manage_strategy3', 'Can manage strategy3')], 'verbose_name': 'strategy3', 'verbose_name_plural': 'strategies3'},
+            options={'ordering': ['user_code'], 'permissions': [('manage_strategy3', 'Can manage strategy3')],
+                     'verbose_name': 'strategy3', 'verbose_name_plural': 'strategies3'},
         ),
     ]

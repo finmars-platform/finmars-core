@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('pricing', '0058_pricingprocedure_currency_filters'),
     ]
@@ -13,6 +12,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='pricingprocedure',
             name='type',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Created by User'), (2, 'Created by Instrument'), (3, 'Created by Currency')], default=1, verbose_name='type'),
+            field=models.PositiveSmallIntegerField(
+                choices=[(1, 'Created by User'), (2, 'Created by Instrument'), (3, 'Created by Currency')], default=1,
+                verbose_name='type'),
         ),
     ]

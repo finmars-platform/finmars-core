@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('celery_tasks', '0012_auto_20210206_0655'),
     ]
@@ -18,6 +17,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='celerytask',
             name='status',
-            field=models.CharField(choices=[('I', 'INIT'), ('P', 'PENDING'), ('D', 'DONE'), ('E', 'ERROR'), ('T', 'TIMEOUT'), ('C', 'CANCELED')], default='I', max_length=1, null=True, verbose_name='status'),
+            field=models.CharField(
+                choices=[('I', 'INIT'), ('P', 'PENDING'), ('D', 'DONE'), ('E', 'ERROR'), ('T', 'TIMEOUT'),
+                         ('C', 'CANCELED')], default='I', max_length=1, null=True, verbose_name='status'),
         ),
     ]

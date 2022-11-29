@@ -1,10 +1,11 @@
 import logging
+import traceback
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 
 from celery import shared_task
 from django.db import transaction
-from django.db.models import F, Q
+from django.db.models import Q
 from django.utils import timezone
 
 from poms import notifications
@@ -14,8 +15,6 @@ from poms.reports.common import Report, ReportItem
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.transactions.models import NotificationClass
 from poms.users.models import MasterUser, Member
-
-import traceback
 
 _l = logging.getLogger('poms.instruments')
 
@@ -94,7 +93,8 @@ def fill_parameters_from_instrument(event_schedule, instrument):
                 key = 'parameter' + str(parameter['order'])
 
                 result[action.button_position][key] = get_calculated_parameter_by_name_from_event(event_schedule,
-                                                                                                  parameter['event_parameter_name'],
+                                                                                                  parameter[
+                                                                                                      'event_parameter_name'],
                                                                                                   instrument)
 
     return result
@@ -109,7 +109,6 @@ def only_generate_events_at_date(self, master_user_id, date):
         _l.info('generate_events0: master_user=%s', master_user.id)
 
         opened_instrument_items = []
-
 
         instance = Report(master_user=master_user, allocation_mode=Report.MODE_IGNORE, report_date=date)
 
@@ -250,8 +249,8 @@ def only_generate_events_at_date_for_single_instrument(self, master_user_id, dat
         for i in instance.items:
             if i['item_type'] == ReportItem.TYPE_INSTRUMENT and not isclose(i['position_size'], 0.0):
 
-                    if i['instrument_id'] == instrument.id:
-                        opened_instrument_items.append(i)
+                if i['instrument_id'] == instrument.id:
+                    opened_instrument_items.append(i)
 
         _l.info('opened_instrument_items len %s' % len(opened_instrument_items))
 
@@ -308,8 +307,6 @@ def only_generate_events_at_date_for_single_instrument(self, master_user_id, dat
                     'instrument=%s, position=%s, event_schedules=%s',
                     portfolio, account, strategy1, strategy2, strategy3,
                     instrument, position, [e.id for e in event_schedules] if event_schedules else [])
-
-
 
             if not event_schedules:
                 continue
@@ -368,12 +365,12 @@ def only_generate_events_at_date_for_single_instrument(self, master_user_id, dat
         _l.info('only_generate_events_at_date_for_single_instrument exception occurred %s' % e)
         _l.info(traceback.format_exc())
 
+
 @shared_task(name='instruments.generate_events', bind=True)
 def generate_events(self):
-
     from poms.celery_tasks.models import CeleryTask
 
-    master_user = MasterUser.objects.all()[0] # TODO get by base_api_url
+    master_user = MasterUser.objects.all()[0]  # TODO get by base_api_url
 
     member = Member.objects.get(master_user=master_user, is_owner=True)
 
@@ -391,7 +388,7 @@ def generate_events(self):
 
         now = date_now()
 
-        instance = Report(master_user=master_user, allocation_mode=Report.MODE_IGNORE, report_date = now)
+        instance = Report(master_user=master_user, allocation_mode=Report.MODE_IGNORE, report_date=now)
 
         builder = BalanceReportBuilderSql(instance=instance)
         instance = builder.build_balance()
@@ -434,7 +431,6 @@ def generate_events(self):
                 result.append(event_schedule)
 
         if not len(result):
-
             celery_task.status = CeleryTask.STATUS_DONE
             celery_task.verbose_result = 'event schedules not found'
             celery_task.save()
@@ -545,6 +541,7 @@ def generate_events(self):
         _l.info('generate_events0 exception occurred %s' % e)
         _l.info(traceback.format_exc())
 
+
 @shared_task(name='instruments.generate_events_do_not_inform_apply_default', bind=True)
 def generate_events_do_not_inform_apply_default(self):
     try:
@@ -557,7 +554,7 @@ def generate_events_do_not_inform_apply_default(self):
 
         now = date_now()
 
-        instance = Report(master_user=master_user, allocation_mode=Report.MODE_IGNORE, report_date = now)
+        instance = Report(master_user=master_user, allocation_mode=Report.MODE_IGNORE, report_date=now)
 
         builder = BalanceReportBuilderSql(instance=instance)
         instance = builder.build_balance()
@@ -680,13 +677,13 @@ def generate_events_do_not_inform_apply_default(self):
         _l.info('generate_events exception occurred %s' % e)
         _l.info(traceback.format_exc())
 
+
 @shared_task(name='instruments.process_events', bind=True)
 @transaction.atomic()
 def process_events(self):
-
     from poms.celery_tasks.models import CeleryTask
 
-    master_user = MasterUser.objects.all()[0] # TODO refactor to get by base_api_url
+    master_user = MasterUser.objects.all()[0]  # TODO refactor to get by base_api_url
     member = Member.objects.get(master_user=master_user, is_owner=True)
     celery_task = CeleryTask.objects.create(
         master_user=master_user,
@@ -808,7 +805,6 @@ def process_events(self):
                     is_apply_default_on_notification_date or is_apply_default_on_effective_date:
                 gevent.save()
 
-
         celery_task.verbose_result = 'Events Processed: %s' % processed_count
         celery_task.status = CeleryTask.STATUS_DONE
         celery_task.save()
@@ -820,4 +816,3 @@ def process_events(self):
         celery_task.error_message = 'Error %s. Traceback %s' % (e, traceback.format_exc())
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.save()
-

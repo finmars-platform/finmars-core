@@ -43,4 +43,3 @@ class NotificationContentTypeMultipleChoiceFilter(MultipleChoiceFilter):
             ctype = ContentType.objects.get_by_natural_key(*ctype)
             cvalue.append(ctype.id)
         return super(NotificationContentTypeMultipleChoiceFilter, self).filter(qs, cvalue)
-

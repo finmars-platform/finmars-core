@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0037_auto_20190813_1312'),
     ]
@@ -15,6 +14,11 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='transactiontypeinput',
             name='context_property',
-            field=models.PositiveSmallIntegerField(blank=True, choices=[(1, 'Instrument'), (2, 'Pricing Currency'), (3, 'Accrued Currency'), (4, 'Portfolio'), (5, 'Account'), (6, 'Strategy 1'), (7, 'Strategy 2'), (8, 'Strategy 3'), (9, 'Position'), (10, 'Effective Date')], default=None, null=True, verbose_name='context property'),
+            field=models.PositiveSmallIntegerField(blank=True, choices=[(1, 'Instrument'), (2, 'Pricing Currency'),
+                                                                        (3, 'Accrued Currency'), (4, 'Portfolio'),
+                                                                        (5, 'Account'), (6, 'Strategy 1'),
+                                                                        (7, 'Strategy 2'), (8, 'Strategy 3'),
+                                                                        (9, 'Position'), (10, 'Effective Date')],
+                                                   default=None, null=True, verbose_name='context property'),
         ),
     ]

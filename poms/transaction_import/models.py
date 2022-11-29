@@ -1,5 +1,5 @@
-
 import logging
+
 _l = logging.getLogger('poms.transaction_import')
 
 
@@ -7,6 +7,7 @@ class ProcessType(object):
     CSV = 'CSV'
     JSON = 'JSON'
     EXCEL = 'EXCEL'
+
 
 class TransactionImportBookedTransaction(object):
 
@@ -30,6 +31,7 @@ class TransactionImportConversionItem(object):
         self.raw_inputs = raw_inputs
         self.conversion_inputs = conversion_inputs
         self.row_number = row_number
+
 
 class TransactionImportProcessPreprocessItem(object):
 
@@ -78,7 +80,6 @@ class TransactionImportResult(object):
                  file_name=None,
                  file_path=None,
 
-
                  total_rows=None,
                  processed_rows=0,
 
@@ -87,7 +88,6 @@ class TransactionImportResult(object):
 
                  error_message=None,
                  reports=None):
-
         self.task = task
         self.scheme = scheme
         self.file_name = file_name
@@ -99,4 +99,3 @@ class TransactionImportResult(object):
 
         self.error_message = error_message
         self.reports = reports
-

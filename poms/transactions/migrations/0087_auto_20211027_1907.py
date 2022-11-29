@@ -2,6 +2,7 @@
 
 from django.db import migrations
 
+
 def fix_transactions(apps, schema_editor):
     ComplexTransactionStatus = apps.get_model("transactions", "ComplexTransactionStatus")
 
@@ -15,9 +16,7 @@ def rev(apps, schema_editor):
     pass
 
 
-
 class Migration(migrations.Migration):
-
     dependencies = [
         ('transactions', '0086_complextransactionstatus'),
     ]

@@ -5,7 +5,6 @@ from rest_framework import serializers
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
-
 from poms.users.fields import MasterUserField
 
 
@@ -16,7 +15,7 @@ class BalanceReportCustomFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = BalanceReportCustomField
         fields = [
-            'id',  'master_user', 'name', 'user_code', 'expr', 'value_type', 'notes'
+            'id', 'master_user', 'name', 'user_code', 'expr', 'value_type', 'notes'
         ]
 
 

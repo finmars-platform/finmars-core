@@ -1,21 +1,18 @@
 from __future__ import unicode_literals
 
+import json
+import logging
 import traceback
 
+import requests
 from django.apps import AppConfig
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
 
-import requests
-import json
-
-import logging
-
 from poms_app import settings
 
 _l = logging.getLogger('poms.bootstrap')
-
 
 
 class BootstrapConfig(AppConfig):
@@ -24,7 +21,6 @@ class BootstrapConfig(AppConfig):
 
     def ready(self):
         post_migrate.connect(self.bootstrap, sender=self)
-
 
     def bootstrap(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
 
@@ -43,8 +39,8 @@ class BootstrapConfig(AppConfig):
 
     def load_master_user_data(self):
 
-        from poms.users.models import User, Member, MasterUser, Group, UserProfile
-        from django.utils import translation
+        from django.contrib.auth.models import User
+        from poms.users.models import Member, MasterUser, Group, UserProfile
 
         try:
             _l.info("load_master_user_data processing")
@@ -144,10 +140,7 @@ class BootstrapConfig(AppConfig):
             _l.error("load_master_user_data error %s" % e)
             _l.error("load_master_user_data traceback %s" % traceback.format_exc())
 
-
     def register_at_authorizer_service(self):
-
-        from poms.users.models import User, Member, MasterUser
 
         try:
             _l.info("register_at_authorizer_service processing")
@@ -171,9 +164,11 @@ class BootstrapConfig(AppConfig):
         except Exception as e:
             _l.info("register_at_authorizer_service error %s" % e)
 
-
     def sync_users_at_authorizer_service(self):
-        from poms.users.models import User, Member, MasterUser
+
+        from django.contrib.auth.models import User
+
+        from poms.users.models import Member, MasterUser
 
         try:
             _l.info("sync_users_at_authorizer_service processing")
@@ -245,9 +240,8 @@ class BootstrapConfig(AppConfig):
         except Exception as e:
             _l.info("sync_users_at_authorizer_service error %s" % e)
 
-
     def load_init_configuration(self):
-        from poms.users.models import User, Member, MasterUser
+        from poms.users.models import Member, MasterUser
         from poms.celery_tasks.models import CeleryTask
         from django.db import transaction
         from poms.configuration_import.tasks import configuration_import_as_json
@@ -294,7 +288,6 @@ class BootstrapConfig(AppConfig):
 
         except Exception as e:
             _l.info("load_init_configuration error %s" % e)
-
 
     def create_base_folders(self):
         from poms.common.storage import get_storage

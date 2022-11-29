@@ -1,13 +1,12 @@
 from __future__ import unicode_literals
 
+import logging
+
 from django.apps import AppConfig
 from django.db import DEFAULT_DB_ALIAS
+from django.db import connection
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
-
-from django.db import connection
-
-import logging
 
 from poms_app import settings
 
@@ -35,7 +34,6 @@ class ReportsConfig(AppConfig):
         _l.debug("Creating views for SQL reports")
 
         if settings.DROP_VIEWS:
-
             self.create_view_for_positions()
             self.create_view_for_cash_fx_trades()
             self.create_view_for_cash_fx_variations()
@@ -203,7 +201,6 @@ class ReportsConfig(AppConfig):
         _l.debug("create_view_for_cash_fx_trades")
 
         with connection.cursor() as cursor:
-
             query = "DROP VIEW IF EXISTS pl_cash_fx_trades_transactions_with_ttype"
 
             cursor.execute(query)
@@ -322,7 +319,6 @@ class ReportsConfig(AppConfig):
         _l.debug("create_view_for_cash_fx_variations")
 
         with connection.cursor() as cursor:
-
             query = "DROP VIEW IF EXISTS pl_cash_fx_variations_transactions_with_ttype"
 
             cursor.execute(query)
@@ -486,7 +482,6 @@ class ReportsConfig(AppConfig):
         _l.debug("create_view_for_cash_transaction_pl")
 
         with connection.cursor() as cursor:
-
             query = "DROP VIEW IF EXISTS pl_cash_transaction_pl_transactions_with_ttype"
 
             cursor.execute(query)

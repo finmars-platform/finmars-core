@@ -32,6 +32,7 @@ class CountryAdmin(AbstractModelAdmin):
 
 admin.site.register(Country, CountryAdmin)
 
+
 class PricingPolicyAdmin(AbstractModelAdmin):
     model = PricingPolicy
     master_user_path = 'master_user'
@@ -235,7 +236,7 @@ admin.site.register(EventSchedule, EventScheduleAdmin)
 class EventScheduleActionAdmin(AbstractModelAdmin):
     model = EventScheduleAction
     master_user_path = 'event_schedule__instrument__master_user'
-    list_display = ['id', 'master_user', 'instrument', 'event_schedule',  'text',
+    list_display = ['id', 'master_user', 'instrument', 'event_schedule', 'text',
                     'is_sent_to_pending', 'is_book_automatic', 'button_position']
     list_select_related = ['event_schedule', 'event_schedule__instrument', 'event_schedule__instrument__master_user',
                            'transaction_type']
@@ -260,7 +261,8 @@ admin.site.register(EventScheduleAction, EventScheduleActionAdmin)
 class PriceHistoryAdmin(AbstractModelAdmin):
     model = PriceHistory
     master_user_path = 'instrument__master_user'
-    list_display = ['id', 'master_user', 'instrument', 'pricing_policy', 'date', 'principal_price', 'accrued_price', 'long_delta', 'short_delta', 'nav']
+    list_display = ['id', 'master_user', 'instrument', 'pricing_policy', 'date', 'principal_price', 'accrued_price',
+                    'long_delta', 'short_delta', 'nav']
     list_select_related = ['instrument', 'instrument__master_user', 'pricing_policy']
     search_fields = ['instrument__id', 'instrument__user_code', 'instrument__name']
     list_filter = ['date']

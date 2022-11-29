@@ -4,14 +4,12 @@ from collections import defaultdict
 
 from django.db import transaction
 from django.db.models import Q
-
-from poms.common.utils import force_qs_evaluation
-from poms.obj_attrs.models import GenericAttributeType
-from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.reports.builders.base_builder import BaseReportBuilder
 from poms.reports.builders.transaction_item import TransactionReportItem
-from poms.reports.models import BalanceReportCustomField, TransactionReportCustomField
-from poms.transactions.models import Transaction, ComplexTransaction
+
+from poms.obj_attrs.models import GenericAttributeType
+from poms.reports.models import TransactionReportCustomField
+from poms.transactions.models import Transaction
 
 _l = logging.getLogger('poms.reports')
 
@@ -62,7 +60,8 @@ class TransactionReportBuilder(BaseReportBuilder):
 
                 self._items = [TransactionReportItem(self.instance, trn=t) for t in self._transactions]
                 self.instance.items = self._items
-                _l.debug('build to_transaction_report_item done: %s', "{:3.3f}".format(time.perf_counter() - to_transaction_report_item_st))
+                _l.debug('build to_transaction_report_item done: %s',
+                         "{:3.3f}".format(time.perf_counter() - to_transaction_report_item_st))
 
                 _refresh_from_db_st = time.perf_counter()
 
@@ -81,7 +80,6 @@ class TransactionReportBuilder(BaseReportBuilder):
 
             finally:
                 transaction.set_rollback(True)
-
 
         custom_fields_st = time.perf_counter()
 
@@ -223,11 +221,9 @@ class TransactionReportBuilder(BaseReportBuilder):
         filter_obj = {}
 
         if self.instance.begin_date:
-
             filter_obj['complex_transaction__' + self.instance.date_field + '__gte'] = self.instance.begin_date
 
         if self.instance.end_date:
-
             filter_obj['complex_transaction__' + self.instance.date_field + '__lte'] = self.instance.end_date
 
         trn_qs = trn_qs.filter(**filter_obj)

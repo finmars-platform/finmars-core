@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0020_member_deleted_user_code'),
     ]
@@ -13,6 +12,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='group',
             name='role',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Admin'), (2, 'User')], db_index=True, default=2, verbose_name='role'),
+            field=models.PositiveSmallIntegerField(choices=[(1, 'Admin'), (2, 'User')], db_index=True, default=2,
+                                                   verbose_name='role'),
         ),
     ]

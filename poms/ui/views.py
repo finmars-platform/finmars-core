@@ -1,10 +1,12 @@
 import django_filters
 from django_filters.fields import Lookup
 from django_filters.rest_framework import FilterSet
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter
-from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.common.mixins import DestroySystemicModelMixin
+from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, CrossEntityAttributeExtension, \
@@ -16,9 +18,7 @@ from poms.ui.serializers import ListLayoutSerializer, \
     ColorPaletteSerializer, ListLayoutLightSerializer, DashboardLayoutLightSerializer, \
     CrossEntityAttributeExtensionSerializer, ColumnSortDataSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
-from poms.users.permissions import SuperUserOnly
-from rest_framework.decorators import action
-from rest_framework.response import Response
+
 
 class LayoutContentTypeFilter(django_filters.CharFilter):
     def filter(self, qs, value):
@@ -188,7 +188,7 @@ class TemplateLayoutViewSet(AbstractModelViewSet):
     ]
     filter_class = TemplateLayoutFilterSet
     ordering_fields = [
-     'name', 'is_default',
+        'name', 'is_default',
     ]
 
 
@@ -215,7 +215,6 @@ class ContextMenuLayoutViewSet(AbstractModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='ping')
     def ping(self, request, pk=None):
-
         layout = self.get_object()
 
         return Response({
@@ -255,7 +254,6 @@ class ListLayoutViewSet(AbstractModelViewSet, DestroySystemicModelMixin):
 
     @action(detail=True, methods=['get'], url_path='ping')
     def ping(self, request, pk=None):
-
         layout = self.get_object()
 
         return Response({
@@ -279,6 +277,7 @@ class ListLayoutLightViewSet(AbstractModelViewSet):
         'content_type', 'name', 'is_default'
     ]
 
+
 class DashboardLayoutFilterSet(FilterSet):
     id = NoOpFilter()
     is_default = django_filters.BooleanFilter()
@@ -300,11 +299,10 @@ class DashboardLayoutViewSet(AbstractModelViewSet):
     ]
     filter_class = DashboardLayoutFilterSet
     ordering_fields = ['name', 'is_default'
-    ]
+                       ]
 
     @action(detail=True, methods=['get'], url_path='ping')
     def ping(self, request, pk=None):
-
         layout = self.get_object()
 
         return Response({
@@ -325,6 +323,7 @@ class DashboardLayoutLightViewSet(AbstractModelViewSet):
     filter_class = DashboardLayoutFilterSet
     ordering_fields = ['name', 'is_default'
                        ]
+
 
 class ConfigurationExportLayoutFilterSet(FilterSet):
     id = NoOpFilter()
@@ -351,7 +350,6 @@ class ConfigurationExportLayoutViewSet(AbstractModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='ping')
     def ping(self, request, pk=None):
-
         layout = self.get_object()
 
         return Response({
@@ -390,7 +388,6 @@ class EditLayoutViewSet(AbstractModelViewSet):
 
     @action(detail=True, methods=['get'], url_path='ping')
     def ping(self, request, pk=None):
-
         layout = self.get_object()
 
         return Response({

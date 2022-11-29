@@ -1,4 +1,5 @@
 import traceback
+from logging import getLogger
 
 from django_filters import FilterSet
 from rest_framework.decorators import action
@@ -6,19 +7,9 @@ from rest_framework.response import Response
 
 from poms.common.filters import CharFilter
 from poms.common.views import AbstractModelViewSet
-
-from django.utils import timezone
-from django.conf import settings
-
-
-from poms.schedules.models import Schedule, ScheduleInstance
-from poms.schedules.serializers import RunScheduleSerializer, ScheduleSerializer
-
-from poms.system_messages.handlers import send_system_message
-
+from poms.schedules.models import Schedule
+from poms.schedules.serializers import ScheduleSerializer
 from poms.users.filters import OwnerByMasterUserFilter
-
-from logging import getLogger
 
 _l = getLogger('poms.schedules')
 

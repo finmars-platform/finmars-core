@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('schedules', '0004_schedule_scheduleprocedure'),
     ]

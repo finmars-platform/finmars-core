@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('integrations', '0027_auto_20191212_1037'),
     ]
@@ -12,10 +11,12 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='complextransactionimportschemereconscenario',
-            options={'verbose_name': 'complex transaction import scheme recon scenario', 'verbose_name_plural': 'complex transaction import scheme recon scenarios'},
+            options={'verbose_name': 'complex transaction import scheme recon scenario',
+                     'verbose_name_plural': 'complex transaction import scheme recon scenarios'},
         ),
         migrations.AlterModelOptions(
             name='complextransactionimportschemerulescenario',
-            options={'verbose_name': 'complex transaction import scheme rule scenario', 'verbose_name_plural': 'complex transaction import scheme rules scenarios'},
+            options={'verbose_name': 'complex transaction import scheme rule scenario',
+                     'verbose_name_plural': 'complex transaction import scheme rules scenarios'},
         ),
     ]

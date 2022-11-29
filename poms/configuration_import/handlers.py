@@ -1,13 +1,12 @@
 import copy
+import logging
+import time
 
 from django.contrib.contenttypes.models import ContentType
-import time
 
 from poms.configuration_import.data import currency_standard, account_type_standard, instrument_type_standard
 from poms.configuration_import.models import ConfigurationEntityArchetype
 from poms.users.models import MasterUser, EcosystemDefault
-
-import logging
 
 _l = logging.getLogger('poms.configuration_import')
 
@@ -42,10 +41,10 @@ class ConfigurationEntityArchetypeGenerateHandler(object):
 
             try:
                 archetype = ConfigurationEntityArchetype.objects.get(master_user=master_user, name=name,
-                                                               content_type=content_type)
+                                                                     content_type=content_type)
             except ConfigurationEntityArchetype.DoesNotExist:
                 archetype = ConfigurationEntityArchetype(master_user=master_user, name=name,
-                                                   content_type=content_type)
+                                                         content_type=content_type)
 
             archetype.data = currency_standard
 
@@ -108,11 +107,8 @@ class ConfigurationEntityArchetypeGenerateHandler(object):
 
         _l.debug('Generating Instrument Type Archetypes %s' % (time.perf_counter() - st))
 
-
-
     def process(self):
 
         self.generate_currency_archetype()
         self.generate_account_type_archetype()
         self.generate_instrument_type_archetype()
-

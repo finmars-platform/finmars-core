@@ -1,21 +1,3 @@
-from django.contrib.contenttypes.models import ContentType
-from django.test import TestCase
-
-from .views import CsvDataImportViewSet
-from .models import CsvImportScheme, CsvField, EntityField
-from django.contrib.auth.models import User
-from poms.users.models import MasterUser
-
-from poms.counterparties.models import Responsible, Counterparty
-from poms.accounts.models import AccountType, Account
-from poms.portfolios.models import Portfolio
-
-from poms.obj_attrs.models import GenericAttributeType, GenericAttribute, GenericClassifier
-from poms.integrations.models import AccountMapping, ResponsibleMapping, PortfolioMapping, CounterpartyMapping, \
-    ProviderClass, PortfolioClassifierMapping
-
-from .tests_data import TestData
-
 import logging
 
 _l = logging.getLogger('django_test')

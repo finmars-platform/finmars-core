@@ -5,7 +5,6 @@ _l = logging.getLogger('poms.layout_recovery')
 
 
 def recursive_fix(source, target):
-
     for key, value in source.items():
 
         if isinstance(source[key], dict):
@@ -25,7 +24,6 @@ def recursive_fix(source, target):
 
 
 def recursive_dict_fix(source, target):
-
     result = copy.deepcopy(target)
 
     recursive_fix(source, result)

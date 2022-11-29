@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('users', '0029_userprofile_two_factor_verification'),
         ('instruments', '0015_auto_20191003_1346'),
@@ -13,7 +12,8 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='pricingpolicy',
-            options={'ordering': ['user_code'], 'verbose_name': 'pricing policy', 'verbose_name_plural': 'pricing policies'},
+            options={'ordering': ['user_code'], 'verbose_name': 'pricing policy',
+                     'verbose_name_plural': 'pricing policies'},
         ),
         migrations.AlterUniqueTogether(
             name='pricingpolicy',

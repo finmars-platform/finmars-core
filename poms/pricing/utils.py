@@ -1,27 +1,22 @@
+import logging
 from datetime import timedelta
+
+from dateutil.relativedelta import relativedelta
 
 from poms.common import formula
 from poms.common.utils import date_now
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import PriceHistory
-
-from dateutil.relativedelta import relativedelta
-
-import logging
-
 from poms.obj_attrs.models import GenericAttribute
 from poms.pricing.models import PriceHistoryError, CurrencyHistoryError
-
 
 _l = logging.getLogger('poms.pricing')
 
 
 def get_empty_values_for_dates(dates):
-
     result = []
 
     for date in dates:
-
         result.append({
             "date": str(date),
             "value": None
@@ -31,7 +26,6 @@ def get_empty_values_for_dates(dates):
 
 
 def get_unique_pricing_schemes(items):
-
     unique_ids = []
     result = []
 
@@ -61,7 +55,6 @@ def get_list_of_dates_between_two_dates(date_from, date_to):
 
 
 def group_instrument_items_by_provider(items, groups):
-
     result = {}
 
     for group in groups:
@@ -82,14 +75,11 @@ def group_instrument_items_by_provider(items, groups):
     return result
 
 
-
 def group_currency_items_by_provider(items, groups):
-
     result = {}
 
     for item in groups:
         result[item.type.id] = []
-
 
     for item in items:
         if item.policy.pricing_scheme:
@@ -100,9 +90,7 @@ def group_currency_items_by_provider(items, groups):
     return result
 
 
-
 def get_is_yesterday(date_from, date_to):
-
     if date_from == date_to:
 
         yesterday = date_now() - timedelta(days=1)
@@ -112,8 +100,8 @@ def get_is_yesterday(date_from, date_to):
 
     return False
 
-def get_parameter_from_scheme_parameters(item, pricing_policy, scheme_parameters):
 
+def get_parameter_from_scheme_parameters(item, pricing_policy, scheme_parameters):
     parameter = None
 
     try:
@@ -168,7 +156,6 @@ def get_parameter_from_scheme_parameters(item, pricing_policy, scheme_parameters
 
 
 def optimize_items(items):
-
     unique_references = []
     unique_codes = {}
 
@@ -220,7 +207,6 @@ def optimize_items(items):
 
 
 def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_user, procedure_instance):
-
     _l.debug("Roll Currency History for %s " % last_price)
 
     successful_prices_count = 0
@@ -292,7 +278,6 @@ def roll_currency_history_for_n_day_forward(item, procedure, last_price, master_
 
 
 def roll_price_history_for_n_day_forward(item, procedure, last_price, master_user, procedure_instance, instrument_pp):
-
     scheme_parameters = item.pricing_scheme.get_parameters()
     accrual_expr = scheme_parameters.accrual_expr
     _l.debug("Roll Price History for  %s for %s days" % (last_price, procedure.price_fill_days))
@@ -322,7 +307,7 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
                     can_write = False
                     # _l.debug('Roll Price History Skip %s ' % price)
                 # else:
-                    # _l.debug('Roll Price History Overwrite %s ' % price)
+                # _l.debug('Roll Price History Overwrite %s ' % price)
 
             except PriceHistory.DoesNotExist:
 
@@ -345,13 +330,12 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
                 'parameter': parameter
             }
 
-
             if last_price.principal_price is not None:
                 price.principal_price = last_price.principal_price
 
-            if scheme_parameters.accrual_calculation_method == 2: # ACCRUAL_PER_SCHEDULE
+            if scheme_parameters.accrual_calculation_method == 2:  # ACCRUAL_PER_SCHEDULE
                 try:
-                    price.accrued_price  = item.instrument.get_accrued_price(new_date)
+                    price.accrued_price = item.instrument.get_accrued_price(new_date)
                 except Exception:
                     price.accrued_price = 0
 
@@ -388,7 +372,8 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
 
                 )
 
-                error.error_text = "Prices already exists. Principal Price: " + str(price.principal_price) +"; Accrued: "+ str(price.accrued_price) +"."
+                error.error_text = "Prices already exists. Principal Price: " + str(
+                    price.principal_price) + "; Accrued: " + str(price.accrued_price) + "."
 
                 # _l.debug('Roll Price History Error Skip %s ' % error)
 
@@ -396,6 +381,7 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
                 error.save()
 
     return successful_prices_count, error_prices_count
+
 
 tenor_map = {
     "overnight": 1,
@@ -496,7 +482,7 @@ relative_tenor_map = {
         "days": 2,
         "years": 1
     },
-    "15m":{
+    "15m": {
         "days": 2,
         "months": 15
     },
@@ -562,23 +548,23 @@ relative_tenor_map = {
     },
 }
 
-def find_tenor_date(date, tenor_type):
 
+def find_tenor_date(date, tenor_type):
     result_date = date
 
     delta = relativedelta(**relative_tenor_map[tenor_type])
 
     result_date = result_date + delta
 
-    if result_date.weekday == 5: # saturday
+    if result_date.weekday == 5:  # saturday
         result_date = result_date + relativedelta(days=2)
-    elif result_date.weekday == 6: # sunday
-            result_date = result_date + relativedelta(days=1)
-  
+    elif result_date.weekday == 6:  # sunday
+        result_date = result_date + relativedelta(days=1)
+
     return result_date
 
-def get_closest_tenors(maturity_date, date, tenors):
 
+def get_closest_tenors(maturity_date, date, tenors):
     result = []
 
     diff = maturity_date - date
@@ -603,7 +589,6 @@ def get_closest_tenors(maturity_date, date, tenors):
         if tenor_from is None:
 
             if current_tenor_from_date < maturity_date:
-
                 tenor_from = tenor
 
         else:
@@ -613,7 +598,6 @@ def get_closest_tenors(maturity_date, date, tenors):
 
             if current_tenor_from_date > last_tenor_from_date and current_tenor_from_date < maturity_date:
                 tenor_from = tenor
-
 
     # looking for tenor to
 
@@ -628,7 +612,6 @@ def get_closest_tenors(maturity_date, date, tenors):
         if tenor_to is None:
 
             if current_tenor_to_date > maturity_date:
-
                 tenor_to = tenor
 
         else:
@@ -640,7 +623,6 @@ def get_closest_tenors(maturity_date, date, tenors):
                 tenor_to = tenor
 
     if tenor_from and tenor_to:
-
         tenor_from['tenor_clause'] = 'from'
         tenor_to['tenor_clause'] = 'to'
 
@@ -667,14 +649,14 @@ def get_closest_tenors(maturity_date, date, tenors):
 
 
 def convert_results_for_calc_avg_price(records):
-
     result = []
 
     unique_rows = {}
 
     for item in records:
 
-        pattern_list = [str(item.master_user_id), str(item.procedure_id), str(item.instrument_id), str(item.pricing_policy_id), str(item.date)]
+        pattern_list = [str(item.master_user_id), str(item.procedure_id), str(item.instrument_id),
+                        str(item.pricing_policy_id), str(item.date)]
         pattern_key = ".".join(pattern_list)
 
         if pattern_key in unique_rows:
@@ -743,4 +725,3 @@ def convert_results_for_calc_avg_price(records):
         result.append(item)
 
     return result
-

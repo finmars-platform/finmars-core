@@ -509,8 +509,6 @@ def get_coupon(accrual, dt1, dt2, maturity_date=None, factor=False):
     # dt3 = accrual.first_payment_date
     dt3 = datetime.date(datetime.strptime(accrual.first_payment_date, '%Y-%m-%d'))
 
-
-
     d1 = dt1.day
     m1 = dt1.month
     y1 = dt1.year
@@ -1136,8 +1134,10 @@ if __name__ == "__main__":
         _l.debug('data: %s', [(str(d), v) for d, v in data])
         _l.debug('xirr: %s', f_xirr(data, x0=0.0))
 
+
     _test_ytm()
     pass
+
 
     @transaction.atomic()
     def _test_coupons():
@@ -1182,9 +1182,9 @@ if __name__ == "__main__":
                 cpn_date += timedelta(days=1)
 
             _l.debug('get_future_coupons: %s',
-                    [(str(d), v) for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1))])
+                     [(str(d), v) for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1))])
             _l.debug('get_future_coupons: %s',
-                    [(str(d), v) for d, v in i.get_future_coupons(begin_date=date(2007, 1, 1))])
+                     [(str(d), v) for d, v in i.get_future_coupons(begin_date=date(2007, 1, 1))])
 
             for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1)):
                 _l.debug('get_coupon: %s - %s', d, i.get_coupon(d))
@@ -1226,9 +1226,10 @@ if __name__ == "__main__":
                 cpn_date += timedelta(days=1)
 
             _l.debug('get_future_coupons: %s',
-                    [(str(d), v) for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1))])
+                     [(str(d), v) for d, v in i.get_future_coupons(begin_date=date(2000, 1, 1))])
         finally:
             transaction.set_rollback(True)
+
 
     _test_coupons()
     pass

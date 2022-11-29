@@ -23,6 +23,7 @@ from poms.users.filters import OwnerByMasterUserFilter, LinkedWithPortfolioFilte
 
 class InstrumentTypeDefault(object):
     requires_context = True
+
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         self._master_user = request.user.master_user
@@ -41,6 +42,7 @@ class InstrumentTypeField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
 
 class InstrumentDefault(object):
     requires_context = True
+
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
         self._master_user = request.user.master_user
@@ -56,6 +58,7 @@ class InstrumentField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
         OwnerByMasterUserFilter,
     ]
 
+
 class RegisterField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
     queryset = Instrument.objects
     filter_backends = [
@@ -63,12 +66,12 @@ class RegisterField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
         LinkedWithPortfolioFilter
     ]
 
+
 class BundleField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
     queryset = PortfolioBundle.objects
     filter_backends = [
         OwnerByMasterUserFilter
     ]
-
 
 
 class PricingPolicyField(PrimaryKeyRelatedFilteredField):
@@ -85,6 +88,7 @@ class CostMethodField(PrimaryKeyRelatedFilteredField):
 class TransactionTypeInputField(PrimaryKeyRelatedFilteredField):
     queryset = TransactionTypeInput.objects
 
+
 class AccrualCalculationModelField(PrimaryKeyRelatedFilteredField):
     queryset = AccrualCalculationModel.objects
 
@@ -92,11 +96,14 @@ class AccrualCalculationModelField(PrimaryKeyRelatedFilteredField):
 class PeriodicityField(PrimaryKeyRelatedFilteredField):
     queryset = Periodicity.objects
 
+
 class TransactionTypeInputSettingsField(PrimaryKeyRelatedFilteredField):
     queryset = TransactionTypeInputSettings.objects
 
+
 class NotificationClassField(PrimaryKeyRelatedFilteredField):
     queryset = NotificationClass.objects
+
 
 class EventClassField(PrimaryKeyRelatedFilteredField):
     queryset = EventClass.objects

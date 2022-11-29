@@ -1,18 +1,10 @@
 from django.db import models
-from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy
-
-
-from poms.file_reports.storage import file_reports_storage
-from poms.users.models import MasterUser
-
-import io
 
 from poms.common.storage import get_storage
 from poms_app import settings
 
 storage = get_storage()
-
 
 from logging import getLogger
 

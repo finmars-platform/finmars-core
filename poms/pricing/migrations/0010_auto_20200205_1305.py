@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('pricing', '0009_currencypricingpolicy_instrumentpricingpolicy_instrumenttypepricingpolicy'),
     ]

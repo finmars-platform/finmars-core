@@ -22,7 +22,7 @@ def test1(count, show=False):
 def test2(count, show=False):
     v = 0.
     for i in range(0, count):
-        v += simpleeval.simple_eval('100 * rnd + i', names={'rnd': random.random(), 'i': i,})
+        v += simpleeval.simple_eval('100 * rnd + i', names={'rnd': random.random(), 'i': i, })
     if show:
         print('v', v)
     results['test2'] = v
@@ -33,7 +33,7 @@ def test3(count, show=False):
     s = simpleeval.SimpleEval()
     parsed = simpleeval.ast.parse('100 * rnd + i').body[0].value
     for i in range(0, count):
-        s.names = {'rnd': random.random(), 'i': i,}
+        s.names = {'rnd': random.random(), 'i': i, }
         v += s._eval(parsed)
     if show:
         print('v', v)

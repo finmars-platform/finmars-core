@@ -26,6 +26,7 @@ class CurrencyAttributeTypeApiTestCase(BaseAttributeTypeApiTestCase):
 class CurrencyApiTestCase(BaseNamedModelTestCase, BaseApiWithAttributesTestCase):
     # auto created "default"
     model = Currency
+
     # Currency have or not update?
 
     def setUp(self):
