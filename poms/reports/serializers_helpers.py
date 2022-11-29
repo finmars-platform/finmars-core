@@ -287,9 +287,9 @@ def serialize_balance_report_item(item):
         result["exposure_currency"] = item["exposure_currency_id"]
 
     if item["allocation_pl_id"] == -1:
-        result["allocation_pl"] = None
+        result["allocation"] = None
     else:
-        result["allocation_pl"] = item["allocation_pl_id"]
+        result["allocation"] = item["allocation_pl_id"]
 
 
 
@@ -424,9 +424,9 @@ def serialize_pl_report_item(item):
         result["exposure_currency"] = item["exposure_currency_id"]
 
     if item["allocation_pl_id"] == -1:
-        result["allocation_pl"] = None
+        result["allocation"] = None
     else:
-        result["allocation_pl"] = item["allocation_pl_id"]
+        result["allocation"] = item["allocation_pl_id"]
 
     result["account"] = item["account_position_id"]
 
