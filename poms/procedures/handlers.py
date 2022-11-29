@@ -533,7 +533,7 @@ class ExpressionProcedureProcess(object):
 
             if 'execution_context' in self.context:
                 procedure_instance.notes = procedure_instance.notes = 'Executed by: %s %s' % (
-                self.context['execution_context']['source'], self.context['execution_context']['actor'])
+                self.context['execution_context']['source'], self.context['execution_context']['actor']) + '\n'
 
             procedure_instance.notes = procedure_instance.notes + 'Content: \n' + str(names) + '\n'
             procedure_instance.notes = procedure_instance.notes + '==========\n'
