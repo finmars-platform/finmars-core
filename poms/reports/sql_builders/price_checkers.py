@@ -27,6 +27,7 @@ def execute_nav_sql(date, instance, cursor, ecosystem_defaults):
                 portfolio_id,
                 transaction_class_id,
                 
+                
                 transaction_date,
                 accounting_date,
                 cash_date,
@@ -47,7 +48,10 @@ def execute_nav_sql(date, instance, cursor, ecosystem_defaults):
                
                 strategy1_position_id,
                 strategy2_position_id,
-                strategy3_position_id
+                strategy3_position_id,
+                
+                allocation_balance_id,
+                allocation_pl_id
                 
             from pl_transactions_with_ttype
             
@@ -81,7 +85,10 @@ def execute_nav_sql(date, instance, cursor, ecosystem_defaults):
                
                 strategy1_position_id,
                 strategy2_position_id,
-                strategy3_position_id
+                strategy3_position_id,
+                
+                allocation_balance_id,
+                allocation_pl_id
                 
             from pl_cash_fx_trades_transactions_with_ttype
             
@@ -115,7 +122,10 @@ def execute_nav_sql(date, instance, cursor, ecosystem_defaults):
                
                 strategy1_position_id,
                 strategy2_position_id,
-                strategy3_position_id
+                strategy3_position_id,
+                
+                allocation_balance_id,
+                allocation_pl_id
                 
             from pl_cash_fx_variations_transactions_with_ttype
             
@@ -164,7 +174,10 @@ def execute_nav_sql(date, instance, cursor, ecosystem_defaults):
                         then cash_date
                         else accounting_date
                    end
-                   as min_date
+                   as min_date,
+                   
+                   allocation_balance_id,
+                   allocation_pl_id
                    
             -- добавить остальные поля
             from unioned_transactions_for_balance -- USE TOTAL VIEW HERE
@@ -205,7 +218,10 @@ def execute_nav_sql(date, instance, cursor, ecosystem_defaults):
                         then cash_date
                         else accounting_date
                    end
-                   as min_date
+                   as min_date,
+                   
+                   allocation_balance_id,
+                   allocation_pl_id
                    
             from unioned_transactions_for_balance
             where cash_date  <= '{report_date}'  /* REPORTING DATE */
@@ -245,7 +261,10 @@ def execute_nav_sql(date, instance, cursor, ecosystem_defaults):
                         then cash_date
                         else accounting_date
                    end
-                   as min_date
+                   as min_date,
+                   
+                   allocation_balance_id,
+                   allocation_pl_id
                    
             from unioned_transactions_for_balance
             where not (accounting_date <= '{report_date}' /* REPORTING DATE */

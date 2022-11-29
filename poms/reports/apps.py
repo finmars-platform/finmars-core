@@ -81,6 +81,9 @@ class ReportsConfig(AppConfig):
                            reference_fx_rate,
                            ytm_at_cost,
                            
+                           allocation_balance_id,
+                           allocation_pl_id,
+                           
                            case
                              
                              when transaction_class_id = 4
@@ -129,6 +132,9 @@ class ReportsConfig(AppConfig):
                           reference_fx_rate,
                           ytm_at_cost,
                           
+                          allocation_balance_id,
+                          allocation_pl_id,
+                          
                           case
                             when position_size_with_sign < 0
                               then 0
@@ -173,6 +179,9 @@ class ReportsConfig(AppConfig):
                           
                           reference_fx_rate,
                           ytm_at_cost,
+                          
+                          allocation_balance_id,
+                          allocation_pl_id,
                           
                           case
                             when (-position_size_with_sign) < 0 
@@ -243,7 +252,10 @@ class ReportsConfig(AppConfig):
                          strategy2_position_id      as strategy2_cash_id,
                          
                          strategy3_position_id,
-                         strategy3_position_id      as strategy3_cash_id
+                         strategy3_position_id      as strategy3_cash_id,
+                         
+                         allocation_balance_id,
+                         allocation_pl_id
                          
 
                 from transactions_transaction tt
@@ -294,7 +306,9 @@ class ReportsConfig(AppConfig):
                          strategy2_cash_id,
                         
                          strategy3_position_id,
-                         strategy3_cash_id
+                         strategy3_cash_id,
+                         allocation_balance_id,
+                         allocation_pl_id
                      
               /*перечислить все поля*/
 
@@ -359,7 +373,9 @@ class ReportsConfig(AppConfig):
                            strategy2_cash_id,
                            
                            strategy3_position_id,
-                           strategy3_cash_id
+                           strategy3_cash_id,
+                           allocation_balance_id,
+                           allocation_pl_id
                            
 
                     from transactions_transaction as tt
@@ -410,7 +426,10 @@ class ReportsConfig(AppConfig):
                           strategy2_cash_id,
                           
                           (strategy3_cash_id) as strategy3_position_id,
-                          strategy3_cash_id
+                          strategy3_cash_id,
+                          
+                          allocation_balance_id,
+                          allocation_pl_id
                          
                       from transactions_transaction tt
                       where transaction_class_id in (7) and NOT tt.is_canceled
@@ -460,7 +479,10 @@ class ReportsConfig(AppConfig):
                          strategy2_cash_id,
                          
                          (strategy1_cash_id) as strategy1_position_id,
-                         strategy2_cash_id
+                         strategy2_cash_id,
+                         
+                         allocation_balance_id,
+                         allocation_pl_id
                          
                     from transactions_transaction tt
                     where transaction_class_id in (7) and NOT tt.is_canceled
@@ -525,7 +547,10 @@ class ReportsConfig(AppConfig):
                          strategy2_cash_id,
                          
                          strategy3_position_id,
-                         strategy3_cash_id
+                         strategy3_cash_id,
+                         
+                         allocation_balance_id,
+                         allocation_pl_id
                          
 
                 from transactions_transaction tt

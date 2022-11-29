@@ -3145,6 +3145,12 @@ class PLReportBuilderSql:
                 else:
                     result_item_opened['strategy3_position_id'] = item['strategy3_position_id']
 
+
+                if "allocation_pl_id" not in item:
+                    result_item_opened['allocation_pl_id'] = None
+                else:
+                    result_item_opened['allocation_pl_id'] = item['allocation_pl_id']
+
                 if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT:
                     result_item_opened["item_group"] = 10
                     result_item_opened["item_group_code"] = "OPENED"
@@ -3351,6 +3357,12 @@ class PLReportBuilderSql:
                     else:
                         result_item_closed['strategy3_position_id'] = item['strategy3_position_id']
 
+
+                    if "allocation_pl_id" not in item:
+                        result_item_closed['allocation_pl_id'] = None
+                    else:
+                        result_item_closed['allocation_pl_id'] = item['allocation_pl_id']
+
                     result_item_closed["item_group"] = 11
                     result_item_closed["item_group_code"] = "CLOSED"
                     result_item_closed["item_group_name"] = "Closed"
@@ -3540,6 +3552,7 @@ class PLReportBuilderSql:
 
             if 'instrument_id' in item:
                 instrument_ids.append(item['instrument_id'])
+                instrument_ids.append(item['allocation_pl_id'])
 
             if 'account_position_id' in item and item['account_position_id'] != '-':
                 account_ids.append(item['account_position_id'])

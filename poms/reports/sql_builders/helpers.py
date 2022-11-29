@@ -166,6 +166,9 @@ def get_position_consolidation_for_select(instance, prefix=''):
     if instance.strategy3_mode == Report.MODE_INDEPENDENT:
         result.append(prefix + "strategy3_position_id")
 
+    if instance.allocation_mode == Report.MODE_INDEPENDENT:
+        result.append(prefix + "allocation_pl_id")
+
     resultString = ''
 
     if len(result):
@@ -218,6 +221,9 @@ def get_cash_consolidation_for_select(instance):
 
     if instance.strategy3_mode == Report.MODE_INDEPENDENT:
         result.append("strategy3_cash_id")
+
+    if instance.allocation_mode == Report.MODE_INDEPENDENT:
+        result.append("allocation_pl_id")
 
     resultString = ''
 
