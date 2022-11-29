@@ -465,7 +465,7 @@ class ExpressionProcedureProcess(object):
         self.schedule_instance = schedule_instance
         self.context = context
 
-        if self.context:
+        if not self.context:
             self.context = {}
 
         if not 'master_user' in self.context:
