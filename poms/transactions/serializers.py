@@ -3516,7 +3516,9 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
         return obj.transaction_type.book_transaction_layout
 
     def get_complex_transaction(self, obj):
-        return {}
+        return {
+            "transaction_type": obj.transaction_type.id
+        }
 
     def create(self, validated_data):
         return validated_data
