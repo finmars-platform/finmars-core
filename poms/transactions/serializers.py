@@ -3478,8 +3478,13 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
         self.fields['complex_transaction_errors'] = serializers.ReadOnlyField()
         self.fields['transactions_errors'] = serializers.ReadOnlyField()
         self.fields['instruments'] = InstrumentSerializer(many=True, read_only=True, required=False, allow_null=True)
-        self.fields['complex_transaction'] = TransactionTypeComplexTransactionSerializer(
-            read_only=False, required=False, allow_null=True)
+
+        # TODO, refactor some serializer bullshit
+        if self.instance.complex_transaction.id:
+            self.fields['complex_transaction'] = TransactionTypeComplexTransactionSerializer(
+                read_only=False, required=False, allow_null=True)
+        else:
+            self.fields['complex_transaction'] = serializers.SerializerMethodField()
         # self.fields['transactions'] = PhantomTransactionSerializer(many=True, required=False, allow_null=True)
 
         self.fields['transaction_type_object'] = TransactionTypeSerializer(source='transaction_type', read_only=True)
@@ -3509,6 +3514,9 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
 
     def get_book_transaction_layout(self, obj):
         return obj.transaction_type.book_transaction_layout
+
+    def get_complex_transaction(self, obj):
+        return {}
 
     def create(self, validated_data):
         return validated_data
