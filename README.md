@@ -211,7 +211,7 @@ pip install django
 pip install celery
 pip install colorlog
 pip install django-modeltranslation
-pip install django-filter
+pip install django-filter # django-filter==2.4.0, latest version is not work
 pip install django-mptt
 pip install django-crispy-forms
 pip install djangorestframework
