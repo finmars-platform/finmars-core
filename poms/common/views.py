@@ -46,7 +46,11 @@ class AbstractApiView(APIView):
 
         if request.user.is_authenticated:
             try:
-                request.user.member, request.user.master_user = get_master_user_and_member(request)
+                member, master_user = get_master_user_and_member(request)
+
+                request.user.member = member
+                request.user.master_user = master_user
+
             except Exception as e:
 
                 request.user.member, request.user.master_user = None, None

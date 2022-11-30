@@ -3,6 +3,7 @@ from django_filters.fields import Lookup
 from django_filters.rest_framework import FilterSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
 
 from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter
 from poms.common.mixins import DestroySystemicModelMixin
@@ -22,6 +23,9 @@ from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 
 class LayoutContentTypeFilter(django_filters.CharFilter):
     def filter(self, qs, value):
+
+        print("hello? %s" % value)
+
         if isinstance(value, Lookup):
             lookup = str(value.lookup_type)
             value = value.value
@@ -235,7 +239,7 @@ class ListLayoutFilterSet(FilterSet):
 
     class Meta:
         model = ListLayout
-        fields = []
+        fields = ['content_type', 'name']
 
 
 class ListLayoutViewSet(AbstractModelViewSet, DestroySystemicModelMixin):
@@ -251,6 +255,17 @@ class ListLayoutViewSet(AbstractModelViewSet, DestroySystemicModelMixin):
     ordering_fields = [
         'content_type', 'name', 'is_default'
     ]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['get'], url_path='ping')
     def ping(self, request, pk=None):
