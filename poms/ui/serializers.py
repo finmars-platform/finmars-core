@@ -163,33 +163,35 @@ class ListLayoutSerializer(ModelWithTimeStampSerializer):
 
     def to_representation(self, instance):
 
-        if instance.is_fixed:
+        return super(ListLayoutSerializer, self).to_representation(instance)
 
-            # print("Layout %s is already fixed" % instance.name)
-
-            res = super(ListLayoutSerializer, self).to_representation(instance)
-
-            return res
-
-        else:
-
-            try:
-
-                layout_archetype = LayoutArchetype.objects.get(content_type=instance.content_type,
-                                                               master_user=instance.member.master_user)
-
-                instance.data = recursive_dict_fix(layout_archetype.data, instance.data)
-
-                print("Fix Layout %s" % instance.name)
-
-            except Exception as e:
-
-                print("Cant Fix Layout %s" % instance.name)
-                print("Error %s" % e)
-
-            res = super(ListLayoutSerializer, self).to_representation(instance)
-
-            return res
+        # if instance.is_fixed:
+        #
+        #     # print("Layout %s is already fixed" % instance.name)
+        #
+        #     res = super(ListLayoutSerializer, self).to_representation(instance)
+        #
+        #     return res
+        #
+        # else:
+        #
+        #     try:
+        #
+        #         layout_archetype = LayoutArchetype.objects.get(content_type=instance.content_type,
+        #                                                        master_user=instance.member.master_user)
+        #
+        #         instance.data = recursive_dict_fix(layout_archetype.data, instance.data)
+        #
+        #         print("Fix Layout %s" % instance.name)
+        #
+        #     except Exception as e:
+        #
+        #         print("Cant Fix Layout %s" % instance.name)
+        #         print("Error %s" % e)
+        #
+        #     res = super(ListLayoutSerializer, self).to_representation(instance)
+        #
+        #     return res
 
 
 class ListLayoutLightSerializer(ModelWithTimeStampSerializer):
