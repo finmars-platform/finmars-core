@@ -18,6 +18,7 @@ class ValueType:
     NUMBER = '20'
     CLASSIFIER = '30'
     DATE = '40'
+    BOOLEAN = '50'
     FIELD = 'field'
 
 
@@ -1038,6 +1039,24 @@ def add_filter(qs, filter_config):
             qs = qs.filter(Q(**options) | Q(**include_null_options))
 
     # DATE FILTERS END
+
+    # BOOLEAN FILTER
+
+    elif filter_type == FilterType.EQUAL and value_type == ValueType.BOOLEAN:
+
+        if len(filter_config['value']):
+            value = filter_config['value'][0]
+
+        if value:
+
+            options = {}
+            options[key] = value
+
+            include_null_options = {}
+            if not exclude_empty_cells:
+                include_null_options[key + '__isnull'] = True
+
+            qs = qs.filter(Q(**options) | Q(**include_null_options))
 
     # print('qs len after filters %s' % len(list(qs)))
 
