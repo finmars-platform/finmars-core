@@ -26,7 +26,7 @@ class PricingTransport(object):
             _l.debug("Sending request to %s" % (str(self.mediator_url) + 'process/pricing/'))
 
             response = requests.post(url=str(self.mediator_url) + 'process/pricing/', data=json.dumps(data),
-                                     headers=headers)
+                                     headers=headers, verify=settings.VERIFY_SSL)
 
             _l.debug("Response received %s" % response)
 

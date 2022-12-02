@@ -144,7 +144,7 @@ class DataProcedureProcess(object):
                     response = None
 
                     try:
-                        response = requests.post(url=url, json=data, headers=headers)
+                        response = requests.post(url=url, json=data, headers=headers, verify=settings.VERIFY_SSL)
                     except Exception as e:
 
                         procedure_instance.error_message = 'Request To Remote Server Error %s.' % e

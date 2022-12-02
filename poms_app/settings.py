@@ -658,3 +658,7 @@ KEYCLOAK_REALM = os.environ.get('KEYCLOAK_REALM', 'finmars')
 KEYCLOAK_CLIENT_ID = os.environ.get('KEYCLOAK_CLIENT_ID', 'finmars-backend')
 KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY', 'R8BlgeDuXZSzFINMLv8Pf84S8OQ4iONy')
 
+VERIFY_SSL = True
+
+if os.environ.get('VERIFY_SSL', True) == 'False':
+    VERIFY_SSL = False
