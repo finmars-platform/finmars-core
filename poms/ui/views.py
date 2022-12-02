@@ -24,8 +24,6 @@ from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 class LayoutContentTypeFilter(django_filters.CharFilter):
     def filter(self, qs, value):
 
-        print("hello? %s" % value)
-
         if isinstance(value, Lookup):
             lookup = str(value.lookup_type)
             value = value.value

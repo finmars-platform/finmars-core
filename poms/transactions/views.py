@@ -560,6 +560,9 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
                                               context=self.get_serializer_context(), context_values=context_values,
                                               member=request.user.member)
 
+
+            instance.complex_transaction.id = 0
+
             serializer = self.get_serializer(instance=instance)
             return Response(serializer.data)
         else:
