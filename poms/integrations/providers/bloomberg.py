@@ -125,7 +125,7 @@ class RequestsTransport(HttpAuthenticated):
                 headers=request.headers,
                 cert=(cert.name, key.name),
                 verify=True,
-                timeout=self.timeout,
+                timeout=self.timeout
             )
             result = Reply(resp.status_code, resp.headers, resp.content)
             return result

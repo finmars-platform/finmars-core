@@ -1320,7 +1320,7 @@ class SupersetGetSecurityToken(APIView):
         }
 
         url = settings.SUPERSET_URL + 'api/v1/security/login'
-        response = requests.post(url=url, data=json.dumps(data), headers=headers)
+        response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
 
         response_json = response.json()
 
@@ -1334,7 +1334,7 @@ class SupersetGetSecurityToken(APIView):
         }
 
         url = settings.SUPERSET_URL + 'api/v1/security/csrf_token/'
-        response = requests.get(url=url, headers=headers)
+        response = requests.get(url=url, headers=headers, verify=settings.VERIFY_SSL)
 
         response_json = response.json()
 
@@ -1375,7 +1375,7 @@ class SupersetGetSecurityToken(APIView):
 
         _l.info("SupersetGetSecurityToken.Requesting url %s" % url)
 
-        response = requests.post(url=url, data=json.dumps(data), headers=headers)
+        response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
 
         _l.info('SupersetGetSecurityToken.response %s' % response.text)
 

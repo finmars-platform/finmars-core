@@ -948,7 +948,7 @@ class InstrumentDatabaseSearchViewSet(APIView):
             response = None
 
             try:
-                response = requests.get(url=url, headers=headers)
+                response = requests.get(url=url, headers=headers, verify=settings.VERIFY_SSL)
             except Exception as e:
                 _l.info("Request error %s" % e)
                 result = {}
@@ -978,7 +978,7 @@ class InstrumentDatabaseSearchViewSet(APIView):
                         "password": settings.FINMARS_DATABASE_PASSWORD
                     }
 
-                    auth_response = requests.post(url=auth_url, headers=headers, data=json.dumps(auth_request_body))
+                    auth_response = requests.post(url=auth_url, headers=headers, data=json.dumps(auth_request_body), verify=settings.VERIFY_SSL)
 
                     auth_response_json = auth_response.json()
 
@@ -995,7 +995,7 @@ class InstrumentDatabaseSearchViewSet(APIView):
 
                     _l.info("InstrumentDatabaseSearchViewSet.requesting url %s" % instruments_url)
 
-                    response = requests.get(url=instruments_url, headers=headers)
+                    response = requests.get(url=instruments_url, headers=headers, verify=settings.VERIFY_SSL)
 
                     items = response.json()
 

@@ -796,7 +796,7 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
             try:
                 # TODO refactor to /export/currency when available
                 response = requests.get(url=str(settings.CBONDS_BROKER_URL) + 'instr/currency/' + currency_code,
-                                        headers=headers)
+                                        headers=headers, verify=settings.VERIFY_SSL)
                 _l.info('response download_currency_cbond %s' % response)
                 _l.info('data response.text %s ' % response.text)
             except Exception as e:
@@ -871,7 +871,7 @@ def download_instrument_finmars_database(task_id):
             "password": settings.FINMARS_DATABASE_PASSWORD
         }
 
-        auth_response = requests.post(url=auth_url, headers=headers, data=json.dumps(auth_request_body))
+        auth_response = requests.post(url=auth_url, headers=headers, data=json.dumps(auth_request_body), verify=settings.VERIFY_SSL)
 
         _l.info("download_instrument_finmars_database.authorized")
         _l.debug('auth_response %s' % auth_response.text)
@@ -907,7 +907,7 @@ def download_instrument_finmars_database(task_id):
         try:
             response = requests.post(url=settings.FINMARS_DATABASE_URL + 'api/export/instrument',
                                      data=json.dumps(request_options),
-                                     headers=headers, timeout=25)
+                                     headers=headers, timeout=25, verify=settings.VERIFY_SSL)
             _l.debug('download_instrument_finmars_database.response.text %s ' % response.text)
             _l.info('download_instrument_finmars_database.response.status_code %s ' % response.status_code)
 
@@ -1110,7 +1110,7 @@ def download_unified_data(id=None, entity_type=None, master_user=None, member=No
 
             try:
                 response = requests.get(url=str(settings.UNIFIED_DATA_PROVIDER_URL) + 'data/' + path + '/' + id + '/',
-                                        headers=headers)
+                                        headers=headers, verify=settings.VERIFY_SSL)
                 _l.info('response download_unified_data %s' % response)
                 _l.info('data response.text %s ' % response.text)
             except Exception as e:
