@@ -55,7 +55,7 @@ class BootstrapConfig(AppConfig):
 
             _l.info("load_master_user_data url %s" % url)
 
-            response = requests.post(url=url, data=json.dumps(data), headers=headers)
+            response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
 
             _l.info(
                 "load_master_user_data  response.status_code %s" % response.status_code)
@@ -155,7 +155,7 @@ class BootstrapConfig(AppConfig):
 
             _l.info("register_at_authorizer_service url %s" % url)
 
-            response = requests.post(url=url, data=json.dumps(data), headers=headers)
+            response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
 
             _l.info(
                 "register_at_authorizer_service backend-is-ready response.status_code %s" % response.status_code)
@@ -183,7 +183,7 @@ class BootstrapConfig(AppConfig):
 
                 url = settings.AUTHORIZER_URL + '/backend-sync-users/'
 
-                response = requests.post(url=url, data=json.dumps(data), headers=headers)
+                response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
                 _l.info(
                     "sync_users_at_authorizer_service backend-sync-users response.status_code %s" % response.status_code)
                 # _l.info("sync_users_at_authorizer_service backend-sync-users response.text %s" % response.text)
@@ -255,7 +255,7 @@ class BootstrapConfig(AppConfig):
 
                 url = settings.AUTHORIZER_URL + '/backend-get-init-configuration/'
 
-                response = requests.get(url=url, headers=headers)
+                response = requests.get(url=url, headers=headers, verify=settings.VERIFY_SSL)
                 _l.info("load_init_configuration backend-sync-users response.status_code %s" % response.status_code)
                 # _l.info("sync_users_at_authorizer_service backend-sync-users response.text %s" % response.text)
 

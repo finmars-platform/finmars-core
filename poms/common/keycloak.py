@@ -21,6 +21,8 @@ import logging
 
 import requests
 
+from poms_app import settings
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -78,7 +80,7 @@ class KeycloakConnect:
         Returns:
             [type]: [list of keycloak endpoints]
         """
-        response = requests.request("GET", self.well_known_endpoint)
+        response = requests.request("GET", self.well_known_endpoint, verify=settings.VERIFY_SSL)
         error = response.raise_for_status()
         if error:
             LOGGER.error(
@@ -125,7 +127,7 @@ class KeycloakConnect:
             "authorization": "Bearer " + token,
         }
         response = requests.request(
-            "POST", self.token_introspection_endpoint, data=payload, headers=headers
+            "POST", self.token_introspection_endpoint, data=payload, headers=headers, verify=settings.VERIFY_SSL
         )
         error = response.raise_for_status()
         if error:
@@ -193,7 +195,7 @@ class KeycloakConnect:
             json: user info data
         """
         headers = {"authorization": "Bearer " + token}
-        response = requests.request("GET", self.userinfo_endpoint, headers=headers)
+        response = requests.request("GET", self.userinfo_endpoint, headers=headers, verify=settings.VERIFY_SSL)
         error = response.raise_for_status()
         if error:
             LOGGER.error(

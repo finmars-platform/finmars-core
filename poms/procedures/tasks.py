@@ -35,7 +35,7 @@ def procedure_request_data_file(self,
         procedure_instance.request_data = data
 
         try:
-            response = requests.post(url=url, json=data, headers=headers)
+            response = requests.post(url=url, json=data, headers=headers, verify=settings.VERIFY_SSL)
         except requests.exceptions.ReadTimeout:
             _l.debug('Will not wait response')
             return

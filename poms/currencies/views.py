@@ -247,7 +247,7 @@ class CurrencyDatabaseSearchViewSet(APIView):
         response = None
 
         try:
-            response = requests.get(url=url, headers=headers)
+            response = requests.get(url=url, headers=headers, verify=settings.VERIFY_SSL)
         except Exception as e:
             _l.info("Request error %s" % e)
             result = {}
