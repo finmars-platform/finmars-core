@@ -69,7 +69,12 @@ class HistoryNavViewSet(AbstractViewSet):
 
         _l.info('balance_report_histories %s' % len(list(balance_report_histories)))
 
+        result_dates = []
+
         if segmentation_type == 'days':
+
+            result_dates = get_list_of_business_days_between_two_dates(date_from, date_to)
+
             balance_report_histories = balance_report_histories.filter(
                 date__gte=date_from,
                 date__lte=date_to
@@ -78,7 +83,7 @@ class HistoryNavViewSet(AbstractViewSet):
         if segmentation_type == 'months':
 
             end_of_months = get_last_bdays_of_months_between_two_dates(date_from, date_to)
-
+            result_dates = end_of_months
             # _l.info(end_of_months)
 
             q = Q()
@@ -98,39 +103,50 @@ class HistoryNavViewSet(AbstractViewSet):
 
         balance_report_histories = balance_report_histories.order_by('date')
 
-        for history_item in balance_report_histories:
+        for result_date in result_dates:
 
-            result_item = {}
+            found = False
 
-            result_item['date'] = str(history_item.date)
-            result_item['nav'] = history_item.nav
+            for history_item in balance_report_histories:
 
-            categories = []
+                result_item = {}
 
-            for item in history_item.items.all():
+                result_item['date'] = str(history_item.date)
+                result_item['nav'] = history_item.nav
 
-                if item.category not in categories:
-                    categories.append(item.category)
+                categories = []
 
-            result_item['categories'] = []
-            for category in categories:
-                result_item['categories'].append({
-                    "name": category,
-                    "items": []
+                for item in history_item.items.all():
+
+                    if item.category not in categories:
+                        categories.append(item.category)
+
+                result_item['categories'] = []
+                for category in categories:
+                    result_item['categories'].append({
+                        "name": category,
+                        "items": []
+                    })
+
+                for item in history_item.items.all():
+
+                    for category in result_item['categories']:
+
+                        if item.category == category['name']:
+                            category['items'].append({
+                                'name': item.name,
+                                'key': item.key,
+                                'value': item.value
+                            })
+
+                items.append(result_item)
+
+            if not found:
+                items.append({
+                    'date': str(result_date),
+                    'nav': None,
+                    'categories': []
                 })
-
-            for item in history_item.items.all():
-
-                for category in result_item['categories']:
-
-                    if item.category == category['name']:
-                        category['items'].append({
-                            'name': item.name,
-                            'key': item.key,
-                            'value': item.value
-                        })
-
-            items.append(result_item)
 
         currency_object = Currency.objects.get(id=currency)
         pricing_policy_object = PricingPolicy.objects.get(id=pricing_policy)
@@ -229,7 +245,11 @@ class HistoryPlViewSet(AbstractViewSet):
 
             pl_report_histories = pl_report_histories.filter(accounts__in=accounts)
 
+        result_dates = []
+
         if segmentation_type == 'days':
+            result_dates = get_list_of_business_days_between_two_dates(date_from, date_to)
+
             pl_report_histories = pl_report_histories.filter(
                 date__gte=date_from,
                 date__lte=date_to
@@ -238,6 +258,7 @@ class HistoryPlViewSet(AbstractViewSet):
         if segmentation_type == 'months':
 
             end_of_months = get_last_bdays_of_months_between_two_dates(date_from, date_to)
+            result_dates = end_of_months
 
             q = Q()
 
@@ -256,39 +277,54 @@ class HistoryPlViewSet(AbstractViewSet):
 
         items = []
 
-        for history_item in pl_report_histories:
+        for result_date in result_dates:
 
-            result_item = {}
+            found = False
 
-            result_item['date'] = str(history_item.date)
-            result_item['total'] = history_item.total
+            for history_item in pl_report_histories:
 
-            categories = []
+                if result_date == str(history_item.date):
 
-            for item in history_item.items.all():
+                    found = True
 
-                if item.category not in categories:
-                    categories.append(item.category)
+                    result_item = {}
 
-            result_item['categories'] = []
-            for category in categories:
-                result_item['categories'].append({
-                    "name": category,
-                    "items": []
-                })
+                    result_item['date'] = str(history_item.date)
+                    result_item['total'] = history_item.total
 
-            for item in history_item.items.all():
+                    categories = []
 
-                for category in result_item['categories']:
+                    for item in history_item.items.all():
 
-                    if item.category == category['name']:
-                        category['items'].append({
-                            'name': item.name,
-                            'key': item.key,
-                            'value': item.value
+                        if item.category not in categories:
+                            categories.append(item.category)
+
+                    result_item['categories'] = []
+                    for category in categories:
+                        result_item['categories'].append({
+                            "name": category,
+                            "items": []
                         })
 
-            items.append(result_item)
+                    for item in history_item.items.all():
+
+                        for category in result_item['categories']:
+
+                            if item.category == category['name']:
+                                category['items'].append({
+                                    'name': item.name,
+                                    'key': item.key,
+                                    'value': item.value
+                                })
+
+                    items.append(result_item)
+
+            if not found:
+                items.append({
+                    'date': str(result_date),
+                    'total': None,
+                    'categories': []
+                })
 
         currency_object = Currency.objects.get(id=currency)
         pricing_policy_object = PricingPolicy.objects.get(id=pricing_policy)
