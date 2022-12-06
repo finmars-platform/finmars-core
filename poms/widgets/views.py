@@ -109,37 +109,41 @@ class HistoryNavViewSet(AbstractViewSet):
 
             for history_item in balance_report_histories:
 
-                result_item = {}
+                if str(history_item.date) == str(result_date):
 
-                result_item['date'] = str(history_item.date)
-                result_item['nav'] = history_item.nav
+                    found = True
 
-                categories = []
+                    result_item = {}
 
-                for item in history_item.items.all():
+                    result_item['date'] = str(history_item.date)
+                    result_item['nav'] = history_item.nav
 
-                    if item.category not in categories:
-                        categories.append(item.category)
+                    categories = []
 
-                result_item['categories'] = []
-                for category in categories:
-                    result_item['categories'].append({
-                        "name": category,
-                        "items": []
-                    })
+                    for item in history_item.items.all():
 
-                for item in history_item.items.all():
+                        if item.category not in categories:
+                            categories.append(item.category)
 
-                    for category in result_item['categories']:
+                    result_item['categories'] = []
+                    for category in categories:
+                        result_item['categories'].append({
+                            "name": category,
+                            "items": []
+                        })
 
-                        if item.category == category['name']:
-                            category['items'].append({
-                                'name': item.name,
-                                'key': item.key,
-                                'value': item.value
-                            })
+                    for item in history_item.items.all():
 
-                items.append(result_item)
+                        for category in result_item['categories']:
+
+                            if item.category == category['name']:
+                                category['items'].append({
+                                    'name': item.name,
+                                    'key': item.key,
+                                    'value': item.value
+                                })
+
+                    items.append(result_item)
 
             if not found:
                 items.append({
