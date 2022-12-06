@@ -39,6 +39,12 @@ if os.environ.get('DEBUG') == 'True':
 if not DEBUG:
     print('Debug disabled')
 
+
+USE_FILESYSTEM_STORAGE = False
+
+if os.environ.get('USE_FILESYSTEM_STORAGE') == 'True':
+    USE_FILESYSTEM_STORAGE = True
+
 ADMIN = True
 
 ALLOWED_HOSTS = ['*']

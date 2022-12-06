@@ -83,7 +83,7 @@ def collect_asset_type_category(report_type, master_user, instance_serialized, h
 
     item.category = 'Asset Types'
     item.key = key
-    item.name = 'Other'
+    item.name = 'No Category'
 
     null_asset_type_items = []
 
@@ -114,7 +114,7 @@ def collect_asset_type_category(report_type, master_user, instance_serialized, h
 
     item.category = 'Asset Types'
     item.key = key
-    item.name = 'Cash & Equivalents'
+    item.name = 'Cash'
 
     asset_type_items = []
 
@@ -232,7 +232,7 @@ def collect_sector_category(report_type, master_user, instance_serialized, histo
 
     item.category = 'Sector'
     item.key = key
-    item.name = 'Cash & Equivalents'
+    item.name = 'Cash'
 
     asset_type_items = []
 
@@ -330,7 +330,7 @@ def collect_country_category(report_type, master_user, instance_serialized, hist
 
     item.category = 'Country'
     item.key = key
-    item.name = 'Cash & Equivalents'
+    item.name = 'Cash'
 
     asset_type_items = []
 
@@ -429,7 +429,7 @@ def collect_region_category(report_type, master_user, instance_serialized, histo
 
     item.category = 'Region'
     item.key = key
-    item.name = 'Cash & Equivalents'
+    item.name = 'Cash'
 
     asset_type_items = []
 
