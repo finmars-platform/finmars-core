@@ -287,7 +287,7 @@ class HistoryPlViewSet(AbstractViewSet):
 
             for history_item in pl_report_histories:
 
-                if result_date == str(history_item.date):
+                if str(result_date) == str(history_item.date):
 
                     found = True
 
