@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     'healthcheck',
 
     'poms.system',
-    'poms.http_sessions',
+
 
     # 'poms.cache_machine',
 
@@ -69,7 +69,6 @@ INSTALLED_APPS = [
     'poms.notifications',
     'poms.obj_attrs',
     'poms.obj_perms',
-    'poms.chats',
     'poms.ui',
     'poms.accounts',
     'poms.counterparties',
@@ -154,7 +153,6 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'corsheaders.middleware.CorsPostCsrfMiddleware',
 
-    'poms.http_sessions.middleware.SessionMiddleware',
     'poms.common.middleware.CommonMiddleware',
     'poms.common.middleware.CustomExceptionMiddleware',
     # 'poms.users.middleware.AuthenticationMiddleware',
@@ -313,8 +311,8 @@ CACHES = {
 }
 
 # SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
-SESSION_ENGINE = "poms.http_sessions.backends.cached_db"
-SESSION_CACHE_ALIAS = 'http_session'
+# SESSION_ENGINE = "poms.http_sessions.backends.cached_db"
+# SESSION_CACHE_ALIAS = 'http_session'
 
 LOGGING = {
     'version': 1,

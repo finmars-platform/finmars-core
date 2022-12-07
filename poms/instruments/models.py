@@ -4,7 +4,6 @@ import json
 import logging
 import traceback
 from datetime import date, timedelta, datetime
-from math import isnan
 
 from dateutil import relativedelta, rrule
 from django.contrib.contenttypes.fields import GenericRelation
@@ -16,6 +15,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
+from math import isnan
 
 from poms.common import formula
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
@@ -28,7 +28,7 @@ from poms.currencies.models import CurrencyHistory
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.obj_perms.models import GenericObjectPermission
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentPricingPolicy
-from poms.users.models import MasterUser
+from poms.users.models import MasterUser, EcosystemDefault
 
 _l = logging.getLogger('poms.instruments')
 
@@ -1579,7 +1579,7 @@ class PriceHistory(DataTimeStampedModel):
 
         v0 = -(self.principal_price * self.instrument.price_multiplier * self.instrument.get_factor(
             dt) + self.accrued_price * self.instrument.accrued_multiplier * self.instrument.get_factor(dt) * (
-                           self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx))
+                       self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx))
 
         return dt, v0
 
@@ -1706,6 +1706,8 @@ class PriceHistory(DataTimeStampedModel):
         if not self.created:
             self.created = date_now()
 
+        ecosystem_default = EcosystemDefault.objects.get(master_user=self.instrument.master_user)
+
         try:
 
             if self.instrument.accrued_currency_id == self.instrument.pricing_currency_id:
@@ -1715,13 +1717,13 @@ class PriceHistory(DataTimeStampedModel):
 
             else:
 
-                if self.instrument.master_user.system_currency_id == self.instrument.accrued_currency_id:
+                if ecosystem_default.currency_id == self.instrument.accrued_currency_id:
                     self.instr_accrued_ccy_cur_fx = 1
                 else:
                     self.instr_accrued_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date,
                                                                                 currency=self.instrument.accrued_currency).fx_rate
 
-                if self.instrument.master_user.system_currency_id == self.instrument.pricing_currency_id:
+                if ecosystem_default.currency_id == self.instrument.pricing_currency_id:
                     self.instr_pricing_ccy_cur_fx = 1
                 else:
                     self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date,

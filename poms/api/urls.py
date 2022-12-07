@@ -345,11 +345,6 @@ router.register(r'reports/price-history-check', reports.PriceHistoryCheckViewSet
 
 router.register(r'notifications/notification', notifications.NotificationViewSet)
 
-# router.register(r'chats/thread-group', chats.ThreadGroupViewSet)
-# router.register(r'chats/thread', chats.ThreadViewSet)
-# router.register(r'chats/message', chats.MessageViewSet)
-# router.register(r'chats/direct-message', chats.DirectMessageViewSet)
-
 # router.register(r'security/http-session', sessions.SessionViewSet)
 router.register(r'audit/auth-log', audit.AuthLogViewSet)
 router.register(r'audit/history', audit.ObjectHistory4ViewSet)

@@ -10,7 +10,6 @@ from django.db import transaction
 from django.utils import timezone
 
 from poms.accounts.models import AccountType, Account
-from poms.chats.models import ThreadGroup
 from poms.complex_import.models import ComplexImportScheme, ComplexImportSchemeActionCsvImport, \
     ComplexImportSchemeActionTransactionImport
 from poms.configuration_sharing.models import SharedConfigurationFile
@@ -128,7 +127,6 @@ class FullDataCloner(object):
         self._attr_types()
 
         self._accounts()
-        self._chats()
         self._counterparties()
 
         self._pricing_1()
@@ -371,9 +369,6 @@ class FullDataCloner(object):
 
         self._simple_list_clone(Account, None, 'master_user', 'user_code', 'name', 'short_name',
                                 'public_name', 'notes', 'is_deleted', 'type', 'is_valid_for_all_portfolios')
-
-    def _chats(self):
-        self._simple_list_clone(ThreadGroup, None, 'master_user', 'name', 'is_deleted')
 
     def _counterparties(self):
         self._simple_list_clone(CounterpartyGroup, None, 'master_user', 'user_code', 'name', 'short_name',

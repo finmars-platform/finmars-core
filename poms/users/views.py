@@ -31,7 +31,6 @@ from rest_framework.viewsets import ViewSet, ModelViewSet
 
 from poms.accounts.models import AccountType, Account
 from poms.celery_tasks.models import CeleryTask
-from poms.chats.models import ThreadGroup
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtMultipleChoiceFilter
 from poms.common.mixins import UpdateModelMixinExt, DestroyModelFakeMixin
 from poms.common.pagination import BigPagination
@@ -61,7 +60,6 @@ from poms.users.serializers import GroupSerializer, UserSerializer, MasterUserSe
     InviteToMasterUserSerializer, InviteCreateSerializer, EcosystemDefaultSerializer, MasterUserLightSerializer, \
     OtpTokenSerializer, MasterUserCopySerializer, UsercodePrefixSerializer
 from poms.users.tasks import clone_master_user
-from poms.users.utils import set_master_user
 
 _l = getLogger('poms.users')
 
@@ -584,13 +582,6 @@ class MasterUserViewSet(AbstractModelViewSet):
 
         return Response({'status': 'OK'})
 
-    @action(detail=True, methods=('PUT', 'PATCH',), url_path='set-current', permission_classes=[IsAuthenticated],
-            serializer_class=MasterUserSetCurrentSerializer)
-    def set_current(self, request, pk=None):
-        instance = self.get_object()
-        set_master_user(request, instance)
-        return Response({'success': True})
-
 
 class MasterUserLightViewSet(AbstractModelViewSet):
     queryset = MasterUser.objects.prefetch_related('members')
@@ -617,13 +608,6 @@ class MasterUserLightViewSet(AbstractModelViewSet):
 
     def create(self, request, *args, **kwargs):
         raise PermissionDenied()
-
-    @action(detail=True, methods=('PUT', 'PATCH',), url_path='set-current', permission_classes=[IsAuthenticated],
-            serializer_class=MasterUserSetCurrentSerializer)
-    def set_current(self, request, pk=None):
-        instance = self.get_object()
-        set_master_user(request, instance)
-        return Response({'success': True})
 
 
 class OtpTokenViewSet(AbstractModelViewSet):
@@ -769,7 +753,6 @@ class EcosystemDefaultViewSet(AbstractModelViewSet):
             ('strategy3', Strategy3),
             ('strategy3__subgroup', Strategy3Subgroup),
             ('strategy3__subgroup__group', Strategy3Group),
-            ('thread_group', ThreadGroup),
             ('mismatch_portfolio', Portfolio),
             ('mismatch_account', Account),
             ('mismatch_account__type', AccountType),
@@ -1051,8 +1034,6 @@ class DeleteMasterUserViewSet(AbstractApiView, ViewSet, ):
             ecosystem_default.delete()
         except EcosystemDefault.DoesNotExist:
             print("EcosystemDefault Already deleted")
-
-        ThreadGroup.objects.filter(master_user=master_user_id).delete()
 
         Transaction.objects.filter(master_user=master_user_id).delete()
         ComplexTransaction.objects.filter(master_user=master_user_id).delete()

@@ -25,7 +25,7 @@ def _is_accept(model):
     from poms.integrations.models import Task
 
     app_label = getattr(model._meta, 'app_label', None)
-    if app_label not in ['users', 'chats', 'accounts', 'counterparties', 'currencies', 'instruments',
+    if app_label not in ['users', 'accounts', 'counterparties', 'currencies', 'instruments',
                          'integrations', 'portfolios', 'strategies', 'transactions', ]:
         return False
     if issubclass(model, (AbstractClassModel, Task, ObjectHistory4Entry)):
@@ -41,11 +41,10 @@ def _is_send_instance_notifications(instance):
     from poms.instruments.models import Instrument, InstrumentType, PricingPolicy, PriceHistory
     from poms.currencies.models import Currency, CurrencyHistory
     from poms.transactions.models import TransactionType
-    from poms.chats.models import ThreadGroup, Thread
     from poms.strategies.models import Strategy1, Strategy2, Strategy3
     return isinstance(instance, (Portfolio, Account, AccountType, Responsible, Counterparty, Instrument,
                                  InstrumentType, PricingPolicy, Currency, TransactionType, PriceHistory,
-                                 CurrencyHistory, ThreadGroup, Thread, Strategy1, Strategy2, Strategy3,))
+                                 CurrencyHistory, Strategy1, Strategy2, Strategy3,))
 
 
 def _is_has_object_permissions(instance):
@@ -55,10 +54,9 @@ def _is_has_object_permissions(instance):
     from poms.counterparties.models import Responsible, Counterparty
     from poms.instruments.models import Instrument, InstrumentType, PriceHistory
     from poms.transactions.models import TransactionType
-    from poms.chats.models import ThreadGroup, Thread
     from poms.strategies.models import Strategy1, Strategy2, Strategy3
     return isinstance(instance, (Portfolio, Account, AccountType, Responsible, Counterparty, Instrument,
-                                 InstrumentType, TransactionType, PriceHistory, ThreadGroup, Thread, Strategy1,
+                                 InstrumentType, TransactionType, PriceHistory, Strategy1,
                                  Strategy2, Strategy3,))
 
 

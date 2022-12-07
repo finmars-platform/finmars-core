@@ -5,96 +5,9 @@ from django.contrib.auth.models import User
 from rest_framework.exceptions import NotFound, PermissionDenied
 
 from poms.auth_tokens.models import AuthToken
-from poms.http_sessions.models import Session
 from poms.users.models import Member, MasterUser
 
 _l = logging.getLogger('poms.users')
-
-
-def set_master_user(request, master_user):
-    try:
-
-        set_st = time.perf_counter()
-
-        session = Session.objects.get(session_key=request.session.session_key)
-
-        user = User.objects.get(id=request.user.id)
-        member = Member.objects.get(user=user, master_user=master_user)
-
-        session.current_master_user = master_user
-        session.current_member = member
-
-        session.save()
-
-        # DEPRECATED
-        # master_user_id = master_user.id
-        # old_master_user_id = session.current_master_user.id
-        #
-        # sessions = Session.objects.filter(user=request.user.id)
-        # user = User.objects.get(id=request.user.id)
-        # user_profile = UserProfile.objects.get(user=user)
-        #
-        # if old_master_user_id != master_user_id:
-        #     if master_user_id is None:
-        #         del request.session['current_master_user']
-        #
-        #         for session in sessions:
-        #             session.current_master_user = None
-        #
-        #             session.save()
-        #
-        #     else:
-        #         request.session['current_master_user'] = master_user_id
-        #
-        #         for session in sessions:
-        #             session.current_master_user = MasterUser.objects.get(id=master_user_id)
-        #
-        #             user_profile.active_master_user = session.current_master_user
-        #             print("Set active Master user to User Profile")
-        #             user_profile.save()
-        #
-        #             session.save()
-
-        _l.debug('set_master_user done: %s' % (time.perf_counter() - set_st))
-
-    except Session.DoesNotExist:
-
-        _l.debug('set_master_user: session not found')
-
-        raise NotFound()
-
-
-def get_master_user_and_member_old(request):
-    if not request.user.is_authenticated:
-        raise PermissionDenied()
-
-    try:
-        session = Session.objects.get(session_key=request.session.session_key)
-
-        master_user_id = session.current_master_user_id
-        member_id = session.current_member_id
-
-        member = None
-        master_user = None
-
-        if master_user_id is not None:
-            master_user = MasterUser.objects.get(id=master_user_id)
-
-        if member_id is not None:
-
-            try:
-                member = Member.objects.get(user=request.user, master_user=master_user_id)
-            except Member.DoesNotExist:
-                return None, master_user
-
-        return member, master_user
-
-    except Session.DoesNotExist:
-
-        _l.debug('get_master_user_and_member: session not found')
-
-        raise NotFound()
-
 
 def get_master_user_and_member(request):
     if not request.user.is_authenticated:
