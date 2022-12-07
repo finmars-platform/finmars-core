@@ -25,7 +25,7 @@ chmod 777 /var/log/finmars/django.log
 
 ############################################
 
-if [ FAKE_MIGRATE == "True" ];
+if [ $FAKE_MIGRATE == "True" ];
 then
   echo "Fake Migrating"
   python /var/app/manage.py drop_django_migrations
