@@ -29,7 +29,8 @@ echo "Migrating"
 
 if [ FAKE_MIGRATE == "True" ];
 then
-  /var/app/manage.py dbshell -- -c 'drop table django_migrations;'
+  python /var/app/manage.py drop_django_migrations
+  echo "Drop table django_migrations"
   python /var/app/manage.py migrate --fake
 else
   python /var/app/manage.py migrate
