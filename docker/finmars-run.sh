@@ -5,6 +5,7 @@ USE_FILEBEATS="${USE_FILEBEATS:-False}"
 USE_FLOWER="${$USE_FLOWER:-False}"
 BASE_API_URL="${$BASE_API_URL:-False}"
 RABBITMQ_HOST="${$RABBITMQ_HOST:-False}"
+FAKE_MIGRATE="${FAKE_MIGRATE:-False}"
 
 echo "Finmars initialization"
 
@@ -26,8 +27,13 @@ chmod 777 /var/log/finmars/django.log
 
 echo "Migrating"
 
-python /var/app/manage.py migrate
-
+if [ FAKE_MIGRATE == "True" ];
+then
+  /var/app/manage.py dbshell -- -c 'drop table django_migrations;'
+  python /var/app/manage.py migrate --fake
+else
+  python /var/app/manage.py migrate
+fi
 #echo "Create cache table"
 #
 #/var/app-venv/bin/python /var/app/manage.py createcachetable
