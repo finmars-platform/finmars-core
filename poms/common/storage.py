@@ -10,7 +10,7 @@ from poms_app import settings
 def get_storage():
     storage = None
 
-    if settings.SFTP_HOST:
+    if settings.SFTP_STORAGE_HOST:
         storage = SFTPStorage()
 
     if settings.AWS_S3_ACCESS_KEY_ID:
