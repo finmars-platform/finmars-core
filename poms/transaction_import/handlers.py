@@ -936,14 +936,24 @@ class TransactionImportProcess(object):
 
                     import_system_message_title = 'Transaction import from broker (finished)'
 
-                    if self.execution_context['date_from']:
-                        from poms.portfolios.tasks import calculate_portfolio_register_record, \
-                            calculate_portfolio_register_price_history
+                    # if self.execution_context['date_from']:
 
-                        calculate_portfolio_register_record.apply_async(link=[
-                            calculate_portfolio_register_price_history.s(
-                                date_from=str(self.execution_context['date_from']))
-                        ])
+
+                        # TODO too long, need refactor
+                        # from poms.portfolios.tasks import calculate_portfolio_register_record, \
+                        #     calculate_portfolio_register_price_history
+                        #
+                        # calculate_portfolio_register_record.apply_async(link=[
+                        #     calculate_portfolio_register_price_history.s(
+                        #         date_from=str(self.execution_context['date_from']))
+                        # ])
+
+            send_system_message(master_user=self.master_user,
+                                performed_by=system_message_performed_by,
+                                section='import',
+                                type='success',
+                                title="Import Finished. Prices Recalculation Required",
+                                description="Please, run schedule or execute procedures to calculate portfolio prices and nav history")
 
         send_system_message(master_user=self.master_user,
                             performed_by=system_message_performed_by,
