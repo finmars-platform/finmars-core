@@ -25,14 +25,14 @@ chmod 777 /var/log/finmars/django.log
 
 ############################################
 
-echo "Migrating"
-
 if [ FAKE_MIGRATE == "True" ];
 then
+  echo "Fake Migrating"
   python /var/app/manage.py drop_django_migrations
   echo "Drop table django_migrations"
   python /var/app/manage.py migrate --fake
 else
+  echo "Migrating"
   python /var/app/manage.py migrate
 fi
 #echo "Create cache table"
