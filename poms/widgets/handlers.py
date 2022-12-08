@@ -328,7 +328,7 @@ class StatsHandler():
 
         for period in self.performance_report.periods:
 
-            if str_to_date(period['date_to']) >= date_from:  # TODO some mystery
+            if str(period['date_to']) >= str(date_from):  # TODO some mystery
 
                 portfolio_returns.append(period['total_return'])
                 # portfolio_months.append(period['date_to'])
