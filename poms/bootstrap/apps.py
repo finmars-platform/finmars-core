@@ -266,7 +266,7 @@ class BootstrapConfig(AppConfig):
 
                 celery_task = CeleryTask.objects.create(master_user=master_user,
                                                         member=member,
-                                                        verbose_name="Configuration Import",
+                                                        verbose_name="Inital Finmars Configuration Import",
                                                         type='configuration_import')
 
                 options_object = {

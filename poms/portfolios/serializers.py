@@ -21,7 +21,7 @@ from poms.users.models import EcosystemDefault
 _l = getLogger('poms.portfolios')
 
 
-class PortfolioPortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+class PortfolioPortfolioRegisterSerializer(ModelWithAttributesSerializer,
                                            ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
@@ -379,7 +379,7 @@ class CalculateRecordsSerializer(serializers.Serializer):
     portfolio_register_ids = serializers.CharField(allow_blank=False)
 
 
-class PortfolioBundleSerializer(ModelWithObjectPermissionSerializer, ModelWithTimeStampSerializer):
+class PortfolioBundleSerializer(ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
     class Meta:

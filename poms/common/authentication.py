@@ -51,11 +51,14 @@ class KeycloakAuthentication(TokenAuthentication):
                                         client_id=settings.KEYCLOAK_CLIENT_ID,
                                         client_secret_key=settings.KEYCLOAK_CLIENT_SECRET_KEY)
 
-        if not self.keycloak.is_token_active(key):
+        # if not self.keycloak.is_token_active(key):
+        #     msg = _('Invalid or expired token.')
+        #     raise exceptions.AuthenticationFailed(msg)
+        try:
+            userinfo = self.keycloak.userinfo(key)
+        except Exception as e:
             msg = _('Invalid or expired token.')
             raise exceptions.AuthenticationFailed(msg)
-
-        userinfo = self.keycloak.userinfo(key)
 
         user_model = get_user_model()
 
