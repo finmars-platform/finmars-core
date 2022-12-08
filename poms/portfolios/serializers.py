@@ -21,7 +21,7 @@ from poms.users.models import EcosystemDefault
 _l = getLogger('poms.portfolios')
 
 
-class PortfolioPortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+class PortfolioPortfolioRegisterSerializer(ModelWithAttributesSerializer,
                                            ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
