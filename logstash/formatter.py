@@ -29,10 +29,7 @@ class LogstashFormatterBase(logging.Formatter):
             'msecs', 'msecs', 'message', 'msg', 'name', 'pathname', 'process',
             'processName', 'relativeCreated', 'thread', 'threadName', 'extra')
 
-        if sys.version_info < (3, 0):
-            easy_types = (basestring, bool, dict, float, int, long, list, type(None))
-        else:
-            easy_types = (str, bool, dict, float, int, list, type(None))
+        easy_types = (str, bool, dict, float, int, list, type(None))
 
         fields = {}
 
@@ -78,7 +75,10 @@ class LogstashFormatterBase(logging.Formatter):
 
     @classmethod
     def serialize(cls, message):
-        return json.dumps(message)
+        if sys.version_info < (3, 0):
+            return json.dumps(message)
+        else:
+            return bytes(json.dumps(message), 'utf-8')
 
 class LogstashFormatterVersion(LogstashFormatterBase):
 

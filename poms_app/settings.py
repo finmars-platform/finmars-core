@@ -370,7 +370,6 @@ if SEND_LOGS_TO_FINMARS:
         'class': 'logstash.TCPLogstashHandler',
         'host': FINMARS_LOGSTASH_HOST,
         'port': FINMARS_LOGSTASH_PORT,  # Default value: 5959
-        'version': 1,  # Version of logstash event schema. Default value: 0 (for backward compatibility of the library)
         'message_type': 'finmars-backend',  # 'type' field in logstash message. Default value: 'logstash'.
         'fqdn': False,  # Fully qualified domain name. Default value: false.
         # 'tags': ['tag1', 'tag2'],  # list of tags. Default: None.
