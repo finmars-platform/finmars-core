@@ -828,7 +828,6 @@ class MasterUser(models.Model):
         self.strategy3_group = strategy3_group
         self.strategy3_subgroup = strategy3_subgroup
         self.strategy3 = strategy3
-        self.thread_group = thread_group
         self.transaction_type_group = transaction_type_group
         self.mismatch_portfolio = portfolio
         self.mismatch_account = account
@@ -858,7 +857,6 @@ class MasterUser(models.Model):
         ecosystem_defaults.strategy3_group = strategy3_group
         ecosystem_defaults.strategy3_subgroup = strategy3_subgroup
         ecosystem_defaults.strategy3 = strategy3
-        ecosystem_defaults.thread_group = thread_group
         ecosystem_defaults.transaction_type_group = transaction_type_group
         ecosystem_defaults.mismatch_portfolio = portfolio
         ecosystem_defaults.mismatch_account = account
@@ -891,7 +889,7 @@ class MasterUser(models.Model):
 
         for c in [account_type, account, counterparty_group, counterparty, responsible_group, responsible, portfolio,
                   instrument_type, instrument, strategy1_group, strategy1_subgroup, strategy1, strategy2_group,
-                  strategy2_subgroup, strategy2, strategy3_group, strategy3_subgroup, strategy3, thread_group,
+                  strategy2_subgroup, strategy2, strategy3_group, strategy3_subgroup, strategy3,
                   transaction_type_group]:
             for p in get_change_perms(c):
                 assign_perms3(c, perms=[{'group': group, 'permission': p}])
