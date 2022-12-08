@@ -97,7 +97,7 @@ class StatsHandler():
     def get_annualized_return(self):
 
         first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
-        now = datetime.datetime.now()
+        now = datetime.date.today()
 
         _l.info('get_annualized_return.first_transaction.accounting_date %s' % first_transaction.accounting_date)
 
