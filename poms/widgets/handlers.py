@@ -101,12 +101,12 @@ class StatsHandler():
 
         _l.info('get_annualized_return.first_transaction.accounting_date %s' % first_transaction.accounting_date)
 
-        years_from_first_transaction = relativedelta(now, first_transaction.accounting_date).years
+        days_from_first_transaction = relativedelta(now, first_transaction.accounting_date).days
 
-        if years_from_first_transaction == 0:
-            years_from_first_transaction = 1
+        if days_from_first_transaction == 0:
+            return 0
 
-        _l.info('get_annualized_return.years_from_first_transaction %s' % years_from_first_transaction)
+        _l.info('get_annualized_return.years_from_first_transaction %s' % days_from_first_transaction)
 
         cumulative_return = self.get_cumulative_return()
 
@@ -115,7 +115,7 @@ class StatsHandler():
         if cumulative_return < 0:
             sign = - 1
 
-        annualized_return = (abs(cumulative_return) ** (1 / years_from_first_transaction)) * sign
+        annualized_return = (abs(cumulative_return) ** (1 / (days_from_first_transaction / 365))) * sign
 
         return annualized_return
 
