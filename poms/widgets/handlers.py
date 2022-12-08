@@ -328,6 +328,10 @@ class StatsHandler():
 
         for period in self.performance_report.periods:
 
+            _l.info('period %s' % period)
+            _l.info('period.date_to %s' % period['date_to'])
+            _l.info('period.total_return %s' % period['total_return'])
+
             if str(period['date_to']) >= str(date_from):  # TODO some mystery
 
                 portfolio_returns.append(period['total_return'])
