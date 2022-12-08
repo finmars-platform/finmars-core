@@ -69,7 +69,7 @@ then
 
     echo "Run Flower"
 
-    cd /var/app && nohup celery --app poms_app --broker=amqp://guest:guest@$RABBITMQ_HOST:5672// flower --broker_api=http://guest:guest@$RABBITMQ_HOST:15672/api/  --url-prefix=$BASE_API_URL/flower --port=5566 &
+    cd /var/app && nohup celery --app poms_app --broker=amqp://guest:guest@$RABBITMQ_HOST:5672// flower --auto_refresh=False --max_workers=2 --broker_api=http://guest:guest@$RABBITMQ_HOST:15672/api/  --url-prefix=$BASE_API_URL/flower --port=5566 &
 
 fi
 
