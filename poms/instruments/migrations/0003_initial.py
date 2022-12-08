@@ -10,12 +10,12 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('instruments', '0002_initial'),
-        # ('portfolios', '0001_initial'),
+        ('portfolios', '0001_initial'),
         ('accounts', '0002_initial'),
         ('currencies', '0003_initial'),
-        # ('strategies', '0001_initial'),
-        # ('transactions', '0001_initial'),
-        # ('users', '0001_initial'),
+        ('strategies', '0001_initial'),
+        ('transactions', '0001_initial'),
+        ('users', '0001_initial'),
     ]
 
     operations = [
