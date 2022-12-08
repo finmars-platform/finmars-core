@@ -137,14 +137,6 @@ class UserRegisterSerializer(serializers.Serializer):
         # name = validated_data.get('last_name', '')
         # name = name or ('%s %s' % (last_name, first_name))
 
-        # print('settings.REGISTER_ACCESS_KEY %s' % settings.REGISTER_ACCESS_KEY)
-        # print('access_key %s' % access_key)
-        # print('account_type %s' % account_type)
-
-        if settings.REGISTER_ACCESS_KEY != access_key:
-            error = {"access_key": [gettext_lazy('Access key is invalid.')]}
-            raise serializers.ValidationError(error)
-
         user_model = get_user_model()
 
         if user_model.objects.filter(username=username).exists():

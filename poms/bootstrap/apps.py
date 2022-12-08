@@ -266,7 +266,7 @@ class BootstrapConfig(AppConfig):
 
                 celery_task = CeleryTask.objects.create(master_user=master_user,
                                                         member=member,
-                                                        verbose_name="Configuration Import",
+                                                        verbose_name="Inital Finmars Configuration Import",
                                                         type='configuration_import')
 
                 options_object = {
@@ -290,54 +290,61 @@ class BootstrapConfig(AppConfig):
             _l.info("load_init_configuration error %s" % e)
 
     def create_base_folders(self):
-        from poms.common.storage import get_storage
-        from tempfile import NamedTemporaryFile
-        storage = get_storage()
-        from poms_app import settings
-        from poms.users.models import Member
 
-        _l.info("create base folders if not exists")
+        try:
 
-        _l.info('storage %s' % storage)
+            from poms.common.storage import get_storage
+            from tempfile import NamedTemporaryFile
+            storage = get_storage()
+            from poms_app import settings
+            from poms.users.models import Member
 
-        if not storage.exists(settings.BASE_API_URL + '/.system/.init'):
-            path = settings.BASE_API_URL + '/.system/.init'
+            _l.info("create base folders if not exists")
 
-            with NamedTemporaryFile() as tmpf:
-                tmpf.write(b'')
-                tmpf.flush()
-                storage.save(path, tmpf)
+            _l.info('storage %s' % storage)
 
-                _l.info("create .system folder")
-
-        if not storage.exists(settings.BASE_API_URL + '/public/.init'):
-            path = settings.BASE_API_URL + '/public/.init'
-
-            with NamedTemporaryFile() as tmpf:
-                tmpf.write(b'')
-                tmpf.flush()
-                storage.save(path, tmpf)
-
-                _l.info("create public folder")
-
-        if not storage.exists(settings.BASE_API_URL + '/import/.init'):
-            path = settings.BASE_API_URL + '/import/.init'
-
-            with NamedTemporaryFile() as tmpf:
-                tmpf.write(b'')
-                tmpf.flush()
-                storage.save(path, tmpf)
-
-                _l.info("create import folder")
-
-        members = Member.objects.all()
-
-        for member in members:
-
-            if not storage.exists(settings.BASE_API_URL + '/' + member.username + '/.init'):
-                path = settings.BASE_API_URL + '/' + member.username + '/.init'
+            if not storage.exists(settings.BASE_API_URL + '/.system/.init'):
+                path = settings.BASE_API_URL + '/.system/.init'
 
                 with NamedTemporaryFile() as tmpf:
                     tmpf.write(b'')
                     tmpf.flush()
                     storage.save(path, tmpf)
+
+                    _l.info("create .system folder")
+
+            if not storage.exists(settings.BASE_API_URL + '/public/.init'):
+                path = settings.BASE_API_URL + '/public/.init'
+
+                with NamedTemporaryFile() as tmpf:
+                    tmpf.write(b'')
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
+                    _l.info("create public folder")
+
+            if not storage.exists(settings.BASE_API_URL + '/import/.init'):
+                path = settings.BASE_API_URL + '/import/.init'
+
+                with NamedTemporaryFile() as tmpf:
+                    tmpf.write(b'')
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
+                    _l.info("create import folder")
+
+            members = Member.objects.all()
+
+            for member in members:
+
+                if not storage.exists(settings.BASE_API_URL + '/' + member.username + '/.init'):
+                    path = settings.BASE_API_URL + '/' + member.username + '/.init'
+
+                    with NamedTemporaryFile() as tmpf:
+                        tmpf.write(b'')
+                        tmpf.flush()
+                        storage.save(path, tmpf)
+
+        except Exception as e:
+            _l.info("create_base_folders error %s" % e)
+            _l.info("create_base_folders traceback %s" % traceback.format_exc())

@@ -97,25 +97,29 @@ class StatsHandler():
     def get_annualized_return(self):
 
         first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
-        now = datetime.datetime.now()
+        now = datetime.date.today()
 
         _l.info('get_annualized_return.first_transaction.accounting_date %s' % first_transaction.accounting_date)
 
-        years_from_first_transaction = relativedelta(now, first_transaction.accounting_date).years
+        _delta = now - first_transaction.accounting_date
+        days_from_first_transaction = _delta.days
 
-        if years_from_first_transaction == 0:
-            years_from_first_transaction = 1
+        if days_from_first_transaction == 0:
+            return 0
 
-        _l.info('get_annualized_return.years_from_first_transaction %s' % years_from_first_transaction)
+        _l.info('get_annualized_return.years_from_first_transaction %s' % days_from_first_transaction)
 
         cumulative_return = self.get_cumulative_return()
 
-        sign = 1
+        # sign = 1
+        #
+        # if cumulative_return < 0:
+        #     sign = - 1
+        #
+        # annualized_return = (abs(cumulative_return) ** (1 / (days_from_first_transaction / 365))) * sign
 
-        if cumulative_return < 0:
-            sign = - 1
 
-        annualized_return = (abs(cumulative_return) ** (1 / years_from_first_transaction)) * sign
+        annualized_return = (1 + cumulative_return) ** (365 / days_from_first_transaction) -1
 
         return annualized_return
 
@@ -324,7 +328,11 @@ class StatsHandler():
 
         for period in self.performance_report.periods:
 
-            if str_to_date(period['date_to']) >= date_from:  # TODO some mystery
+            _l.info('period %s' % period)
+            _l.info('period.date_to %s' % period['date_to'])
+            _l.info('period.total_return %s' % period['total_return'])
+
+            if str(period['date_to']) >= str(date_from):  # TODO some mystery
 
                 portfolio_returns.append(period['total_return'])
                 # portfolio_months.append(period['date_to'])

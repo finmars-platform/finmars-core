@@ -1,14 +1,16 @@
 """
-Django settings for poms project.
+Django settings for authorizer project.
 
-Checklist: https://docs.djangoproject.com/en/1.9/howto/deployment/checklist/
+For more information on this file, see
+https://docs.djangoproject.com/en/4.0/topics/settings/
 
+For the full list of settings and their values, see
+https://docs.djangoproject.com/en/4.0/ref/settings/
 """
-
-from __future__ import unicode_literals
-
 import os
-import datetime
+from poms_app.utils import ENV_BOOL, ENV_STR, ENV_INT, print_finmars
+
+print_finmars()
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from django.utils.translation import gettext_lazy
@@ -16,30 +18,25 @@ from django.utils.translation import gettext_lazy
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-DJANGO_LOG_LEVEL = os.environ.get('DJANGO_LOG_LEVEL', 'INFO')
+DJANGO_LOG_LEVEL = ENV_STR('DJANGO_LOG_LEVEL', 'INFO')
 
-print('DJANGO_LOG_LEVEL %s' % DJANGO_LOG_LEVEL)
-
-SECRET_KEY = os.environ.get('SECRET_KEY', None)
-
-SERVER_TYPE = os.environ.get('SERVER_TYPE', 'local')
-
-print('SERVER_TYPE %s' % SERVER_TYPE)
-
-BASE_API_URL = os.environ.get('BASE_API_URL', 'client00000')
-HOST_LOCATION = os.environ.get('HOST_LOCATION', 'AWS') # azure, aws, or custom, only log purpose
-
-print('BASE_API_URL %s' % BASE_API_URL)
-
+SECRET_KEY = ENV_STR('SECRET_KEY', None)
+SERVER_TYPE = ENV_STR('SERVER_TYPE', 'local')
+BASE_API_URL = ENV_STR('BASE_API_URL', 'client00000')
+HOST_LOCATION = ENV_STR('HOST_LOCATION', 'AWS') # azure, aws, or custom, only log purpose
+DOMAIN_NAME = ENV_STR('DOMAIN_NAME', 'finmars.com')
+JWT_SECRET_KEY = ENV_STR('JWT_SECRET_KEY', None)
+VERIFY_SSL = ENV_BOOL('VERIFY_SSL', True)
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-if os.environ.get('DEBUG') == 'True':
-    DEBUG = True
-
-if not DEBUG:
-    print('Debug disabled')
-
-ADMIN = True
+DEBUG = ENV_BOOL('DEBUG', False)
+USE_FILESYSTEM_STORAGE = ENV_BOOL('USE_FILESYSTEM_STORAGE', False)
+DROP_VIEWS = ENV_BOOL('DROP_VIEWS', True)
+AUTHORIZER_URL = ENV_STR('AUTHORIZER_URL', None)
+CBONDS_BROKER_URL = os.environ.get('CBONDS_BROKER_URL', None)
+SUPERSET_URL = os.environ.get('SUPERSET_URL', None)
+UNIFIED_DATA_PROVIDER_URL = os.environ.get('UNIFIED_DATA_PROVIDER_URL', None)
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
+ROUND_NDIGITS = ENV_INT('ROUND_NDIGITS', 6)
 
 ALLOWED_HOSTS = ['*']
 
@@ -171,9 +168,7 @@ MIDDLEWARE = [
 if SERVER_TYPE == 'local':
     MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
-PROFILER = False
-if os.environ.get('PROFILER') == 'True':
-    PROFILER = True
+PROFILER = ENV_BOOL('PROFILER', False)
 
 if PROFILER:
     print("Profiler enabled")
@@ -209,27 +204,23 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'poms_app.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/1.9/ref/settings/#databases
-
-AWS_SECRETS_ACCESS_KEY_ID = os.environ.get('AWS_SECRETS_ACCESS_KEY_ID', None)
-AWS_SECRETS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRETS_SECRET_ACCESS_KEY', None)
-AWS_SECRET_NAME = os.environ.get('AWS_SECRET_NAME', None)
+# ============
+# = Database =
+# ============
+# https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
 DATABASES = {
     'default': {
-        # 'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME', None),
-        'USER': os.environ.get('DB_USER', None),
-        'PASSWORD': os.environ.get('DB_PASSWORD', None),
-        'HOST': os.environ.get('DB_HOST', None),
-        'PORT': os.environ.get('DB_PORT', None),
-        # 'ATOMIC_REQUESTS': True,
+        'NAME': ENV_STR('DB_NAME', None),
+        'USER': ENV_STR('DB_USER', None),
+        'PASSWORD': ENV_STR('DB_PASSWORD', None),
+        'HOST': ENV_STR('DB_HOST', None),
+        'PORT': ENV_INT('DB_PORT', 5432)
     }
 }
 
-REGISTER_ACCESS_KEY = os.environ.get('REGISTER_ACCESS_KEY', None)
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 # Password validation
 # https://docs.djangoproject.com/en/1.9/ref/settings/#auth-password-validators
@@ -267,6 +258,8 @@ USE_L10N = True
 USE_TZ = True
 USE_ETAGS = True
 
+# TODO Refactor csrf protection later
+
 ENV_CSRF_COOKIE_DOMAIN = os.environ.get('ENV_CSRF_COOKIE_DOMAIN', '.finmars.com')
 ENV_CSRF_TRUSTED_ORIGINS = os.environ.get('ENV_CSRF_TRUSTED_ORIGINS', 'https://finmars.com')
 
@@ -299,18 +292,13 @@ STATICFILES_DIR = (
     os.path.join(BASE_DIR,  'poms', 'api', 'static')
 )
 
-USE_WEBSOCKETS = False
+# ==============
+# = WEBSOCKETS =
+# ==============
 
-if os.environ.get('USE_WEBSOCKETS', None) == 'True':
-    USE_WEBSOCKETS = True
-
-WEBSOCKET_HOST = os.environ.get('WEBSOCKET_HOST', 'ws://0.0.0.0:6969')
-WEBSOCKET_APP_TOKEN = os.environ.get('WEBSOCKET_APP_TOKEN', '943821230')
-
-print('WEBSOCKET_HOST %s' % WEBSOCKET_HOST)
-
-RABBITMQ_HOST = os.environ.get('RABBITMQ_HOST', 'localhost:5672')
-print('RABBITMQ_HOST %s' % RABBITMQ_HOST)
+USE_WEBSOCKETS = ENV_BOOL('USE_WEBSOCKETS', False)
+WEBSOCKET_HOST = ENV_STR('WEBSOCKET_HOST', 'ws://0.0.0.0:6969')
+WEBSOCKET_APP_TOKEN = ENV_STR('WEBSOCKET_APP_TOKEN', '943821230')
 
 CACHES = {
     'default': {
@@ -425,62 +413,28 @@ AUTHENTICATION_BACKENDS = (
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5mb
 
-DOMAIN_NAME = os.environ.get('DOMAIN_NAME', 'finmars.com')
+# =================
+# = SMTP Settings =
+# =================
 
-print('DOMAIN_NAME %s' % DOMAIN_NAME)
-
-# email config
-
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', '"Finmars Notifications" <no-reply@finmars.com>')
-SERVER_EMAIL = os.environ.get('SERVER_EMAIL', '"ADMIN: FinMars" <no-reply@finmars.com>')
-EMAIL_HOST = os.environ.get('EMAIL_HOST', 'email-smtp.eu-west-1.amazonaws.com')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', "587"))
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', None)
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', None)
-EMAIL_USE_TLS = True
-EMAIL_TIMEOUT = 10
-
-if DEBUG:
-    DEFAULT_FROM_EMAIL = '"DEV: Finmars Notifications" <no-reply@finmars.com>'
-    SERVER_EMAIL = '"DEV-ADMIN: FinMars" <no-reply@finmars.com>'
-
-ADMINS = [
-    ['Site Admins', 'site-admins@finmars.com'],
-]
-MANAGERS = [
-    ['Site Managers', 'site-managers@finmars.com'],
-]
-if DEBUG:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
-# EMAIL_BACKEND = 'backends.smtp.SSLEmailBackend'
-
-# MESSAGE_STORAGE = 'poms.notifications.message_storage.FallbackStorage'
+DEFAULT_FROM_EMAIL = ENV_STR('DEFAULT_FROM_EMAIL', '"Finmars Notifications" <no-reply@finmars.com>')
+SERVER_EMAIL = ENV_STR('SERVER_EMAIL', '"ADMIN: FinMars" <no-reply@finmars.com>')
+EMAIL_HOST = ENV_STR('EMAIL_HOST', 'email-smtp.eu-west-1.amazonaws.com')
+EMAIL_PORT = ENV_INT('EMAIL_PORT', 587)
+EMAIL_HOST_USER = ENV_STR('EMAIL_HOST_USER', None)
+EMAIL_HOST_PASSWORD = ENV_STR('EMAIL_HOST_PASSWORD', None)
 
 GEOIP_PATH = os.path.join(BASE_DIR, 'data')
 GEOIP_COUNTRY = "GeoLite2-Country.mmdb"
 GEOIP_CITY = "GeoLite2-City.mmdb"
 
-# MEDIA_URL = '/api/media/'
-# MEDIA_ROOT = '/opt/finmars-media'
-# MEDIA_SERVE = True
+# ==========
+# = CELERY =
+# ==========
 
-# DEPRECATED
-# DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-# AWS_S3_ACCESS_KEY_ID = os.environ.get('AWS_S3_ACCESS_KEY_ID', None)
-# AWS_S3_SECRET_ACCESS_KEY = os.environ.get('AWS_S3_SECRET_ACCESS_KEY', None)
-# AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', None)
-# AWS_DEFAULT_ACL = 'private'
-# AWS_BUCKET_ACL = 'private'
-# AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME', None)
+# TODO make RABBITMQ_PORT RABBITMQ_USER RABBITMQ_PASSWORD
+RABBITMQ_HOST = ENV_STR('RABBITMQ_HOST', 'localhost:5672')
 
-# CELERY ------------------------------------------------
-
-# CELERYD_LOG_LEVEL = "DEBUG"
-# CELERYD_HIJACK_ROOT_LOGGER = False
 CELERY_EAGER_PROPAGATES = True
 CELERY_ALWAYS_EAGER = True
 CELERY_ACKS_LATE = True
@@ -510,35 +464,18 @@ try:
 except (ValueError, TypeError):
     CELERY_WORKER_CONCURRENCY = 1
 
-# FILE STORAGE ----------------------------------------------
+# ===================
+# = Django Storages =
+# ===================
 
-DEFAULT_FILE_STORAGE = 'storages.backends.sftpstorage.SFTPStorage'
-
-if SERVER_TYPE == 'local':
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-
-print('DEFAULT_FILE_STORAGE %s' % DEFAULT_FILE_STORAGE)
-
-SFTP_HOST = os.environ.get('SFTP_HOST', None)
-if SFTP_HOST:
-    SFTP_HOST = SFTP_HOST.strip()
-
-print("SFTP HOST %s" % SFTP_HOST)
-
-# SFTP_STORAGE_HOST = os.environ.get('SFTP_HOST', None)
-SFTP_STORAGE_HOST = SFTP_HOST
+SFTP_STORAGE_HOST = ENV_STR('SFTP_STORAGE_HOST', None)
 SFTP_STORAGE_ROOT = os.environ.get('SFTP_ROOT', '/finmars/')
-
 SFTP_PKEY_PATH = os.environ.get('SFTP_PKEY_PATH', None)
-
-print('SFTP_PKEY_PATH %s' % SFTP_PKEY_PATH)
-
-print('SFTP_STORAGE_ROOT %s' % SFTP_STORAGE_ROOT)
 
 SFTP_STORAGE_PARAMS = {
     'username': os.environ.get('SFTP_USERNAME', None),
     'password': os.environ.get('SFTP_PASSWORD', None),
-    'port': os.environ.get('SFTP_PORT', 22),
+    'port': ENV_INT('SFTP_PORT', 22),
     'allow_agent': False,
     'look_for_keys': False,
 }
@@ -546,9 +483,7 @@ if SFTP_PKEY_PATH:
     SFTP_STORAGE_PARAMS['key_filename'] = SFTP_PKEY_PATH
 
 SFTP_STORAGE_INTERACTIVE = False
-
 SFTP_KNOWN_HOST_FILE = os.path.join(BASE_DIR, '.ssh/known_hosts')
-
 
 AWS_S3_ACCESS_KEY_ID = os.environ.get('AWS_S3_ACCESS_KEY_ID', None)
 AWS_S3_SECRET_ACCESS_KEY = os.environ.get('AWS_S3_SECRET_ACCESS_KEY', None)
@@ -558,14 +493,13 @@ AWS_S3_VERIFY = os.environ.get('AWS_S3_VERIFY', None)
 if os.environ.get('AWS_S3_VERIFY') == 'False':
     AWS_S3_VERIFY = False
 
-
 AZURE_ACCOUNT_KEY = os.environ.get('AZURE_ACCOUNT_KEY', None)
 AZURE_ACCOUNT_NAME = os.environ.get('AZURE_ACCOUNT_NAME', None)
 AZURE_CONTAINER = os.environ.get('AZURE_CONTAINER', None)
 
 
 # INTEGRATIONS ------------------------------------------------
-
+# DEPRECATED
 BLOOMBERG_WSDL = 'https://service.bloomberg.com/assets/dl/dlws.wsdl'
 BLOOMBERG_RETRY_DELAY = 5
 BLOOMBERG_MAX_RETRIES = 60
@@ -583,11 +517,6 @@ if BLOOMBERG_SANDBOX:
 BLOOMBERG_SANDBOX_SEND_EMPTY = False
 BLOOMBERG_SANDBOX_SEND_FAIL = False
 BLOOMBERG_SANDBOX_WAIT_FAIL = False
-
-ROUND_NDIGITS = 6
-
-# LOGIN_URL = 'two_factor:login'
-# LOGIN_REDIRECT_URL = 'two_factor:profile'
 
 
 # PRICING SECTION
@@ -635,33 +564,11 @@ if SERVER_TYPE == 'local':
         'RESULTS_STORE_SIZE': 100,
     }
 
-TOKEN_TTL = datetime.timedelta(days=15)
+# ========================
+# = KEYCLOAK INTEGRATION =
+# ========================
 
-AUTHORIZER_URL = os.environ.get('AUTHORIZER_URL', None)
-CBONDS_BROKER_URL = os.environ.get('CBONDS_BROKER_URL', None)
-SUPERSET_URL = os.environ.get('SUPERSET_URL', None)
-UNIFIED_DATA_PROVIDER_URL = os.environ.get('UNIFIED_DATA_PROVIDER_URL', None)
-DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
-
-DROP_VIEWS = os.environ.get('DROP_VIEWS', 'True')
-
-if DROP_VIEWS == 'False':
-    DROP_VIEWS = False
-else:
-    DROP_VIEWS = True
-
-JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', None)
-
-
-DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
-
-
-KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'https://auth.finmars.com')
+KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'https://eu-central.finmars.com')
 KEYCLOAK_REALM = os.environ.get('KEYCLOAK_REALM', 'finmars')
 KEYCLOAK_CLIENT_ID = os.environ.get('KEYCLOAK_CLIENT_ID', 'finmars-backend')
-KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY', 'R8BlgeDuXZSzFINMLv8Pf84S8OQ4iONy')
-
-VERIFY_SSL = True
-
-if os.environ.get('VERIFY_SSL', True) == 'False':
-    VERIFY_SSL = False
+KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY', None) # not required anymore, api works in Bearer-only mod
