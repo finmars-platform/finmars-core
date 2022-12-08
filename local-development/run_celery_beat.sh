@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 export DJANGO_SETTINGS_MODULE=poms_app.settings
-REGISTER_ACCESS_KEY=B5A9ZCHA \
 REDIS_HOST=0.0.0.0:6379 \
 DB_NAME=finmars_dev \
 DB_USER=postgres \
