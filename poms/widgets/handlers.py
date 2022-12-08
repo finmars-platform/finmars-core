@@ -101,7 +101,8 @@ class StatsHandler():
 
         _l.info('get_annualized_return.first_transaction.accounting_date %s' % first_transaction.accounting_date)
 
-        days_from_first_transaction = relativedelta(now, first_transaction.accounting_date).days
+        _delta = now - first_transaction.accounting_date
+        days_from_first_transaction = _delta.days
 
         if days_from_first_transaction == 0:
             return 0
