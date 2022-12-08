@@ -111,12 +111,15 @@ class StatsHandler():
 
         cumulative_return = self.get_cumulative_return()
 
-        sign = 1
+        # sign = 1
+        #
+        # if cumulative_return < 0:
+        #     sign = - 1
+        #
+        # annualized_return = (abs(cumulative_return) ** (1 / (days_from_first_transaction / 365))) * sign
 
-        if cumulative_return < 0:
-            sign = - 1
 
-        annualized_return = (abs(cumulative_return) ** (1 / (days_from_first_transaction / 365))) * sign
+        annualized_return = (1 + cumulative_return) ** (365 / days_from_first_transaction) -1
 
         return annualized_return
 
