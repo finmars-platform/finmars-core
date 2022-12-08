@@ -17,6 +17,8 @@ class PomsClassSerializer(serializers.ModelSerializer):
 
 class ModelWithTimeStampSerializer(serializers.ModelSerializer):
 
+    modified = serializers.ReadOnlyField()
+
     def __init__(self, *args, **kwargs):
         super(ModelWithTimeStampSerializer, self).__init__(*args, **kwargs)
         self.fields['modified'] = serializers.DateTimeField(required=False, allow_null=True)

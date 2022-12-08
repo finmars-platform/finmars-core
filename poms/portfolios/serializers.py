@@ -379,7 +379,7 @@ class CalculateRecordsSerializer(serializers.Serializer):
     portfolio_register_ids = serializers.CharField(allow_blank=False)
 
 
-class PortfolioBundleSerializer(ModelWithObjectPermissionSerializer, ModelWithTimeStampSerializer):
+class PortfolioBundleSerializer(ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
     class Meta:
