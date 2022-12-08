@@ -372,6 +372,7 @@ if SEND_LOGS_TO_FINMARS:
         'port': FINMARS_LOGSTASH_PORT,  # Default value: 5959
         'message_type': 'finmars-backend',  # 'type' field in logstash message. Default value: 'logstash'.
         'fqdn': False,  # Fully qualified domain name. Default value: false.
+        'ssl_verify': False,  # Fully qualified domain name. Default value: false.
         # 'tags': ['tag1', 'tag2'],  # list of tags. Default: None.
     }
 
