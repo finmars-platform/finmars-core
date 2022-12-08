@@ -17,6 +17,7 @@ COPY docker/finmars-run.sh /var/app/docker/finmars-run.sh
 COPY data/ /var/app/data/
 COPY poms/ /var/app/poms/
 COPY healthcheck/ /var/app/healthcheck/
+COPY logstash/ /var/app/logstash/
 COPY poms_app/ /var/app/poms_app/
 COPY manage.py /var/app/manage.py
 
