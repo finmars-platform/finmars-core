@@ -30,10 +30,7 @@ class TCPLogstashHandler(SocketHandler, object):
         self.certfile = certfile
         self.ca_certs = ca_certs
 
-        if version == 1:
-            self.formatter = formatter.LogstashFormatterVersion1(message_type, tags, fqdn)
-        else:
-            self.formatter = formatter.LogstashFormatterVersion0(message_type, tags, fqdn)
+        self.formatter = formatter.LogstashFormatterVersion(message_type, tags, fqdn)
 
     def makePickle(self, record):
         return self.formatter.format(record) + b'\n'

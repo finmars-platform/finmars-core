@@ -362,6 +362,9 @@ LOGGING = {
 }
 
 if SEND_LOGS_TO_FINMARS:
+
+    print("Logs will be sending to Finmars")
+
     LOGGING['handlers']['logstash'] = {
         'level': DJANGO_LOG_LEVEL,
         'class': 'logstash.TCPLogstashHandler',
