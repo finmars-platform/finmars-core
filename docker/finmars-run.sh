@@ -61,14 +61,14 @@ then
 
 fi
 
-if [ $USE_FILEBEATS == "True" ];
-then
-
-    echo "Run Filebeat"
-
-    service filebeat start
-
-fi
+#if [ $USE_FILEBEATS == "True" ];
+#then
+#
+#    echo "Run Filebeat"
+#
+#    service filebeat start
+#
+#fi
 
 
 if [ $USE_FLOWER == "True" ];

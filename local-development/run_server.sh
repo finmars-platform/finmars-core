@@ -7,6 +7,7 @@ DB_PASSWORD=postgres \
 DB_HOST=localhost \
 DB_PORT=5434 \
 DEBUG=True \
+SEND_LOGS_TO_FINMARS=True \
 LOCAL=True \
 PROFILER=True \
 ENV_CSRF_TRUSTED_ORIGINS=http://0.0.0.0:8080 \
