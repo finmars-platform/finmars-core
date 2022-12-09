@@ -164,7 +164,7 @@ class FullDataCloner(object):
                            'counterparty', 'responsible_group', 'responsible', 'portfolio', 'instrument_type',
                            'instrument', 'strategy1_group', 'strategy1_subgroup', 'strategy1', 'strategy2_group',
                            'strategy2_subgroup', 'strategy2', 'strategy3_group', 'strategy3_subgroup', 'strategy3',
-                           'thread_group', 'transaction_type_group', 'mismatch_portfolio', 'mismatch_account',
+                            'transaction_type_group', 'mismatch_portfolio', 'mismatch_account',
                            'notification_business_days')
 
         self._ecosystem_defaults()

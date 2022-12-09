@@ -717,7 +717,6 @@ class EcosystemDefaultViewSet(AbstractModelViewSet):
         'strategy3',
         'strategy3__subgroup',
         'strategy3__subgroup__group',
-        'thread_group',
         'mismatch_portfolio',
         'mismatch_account',
     ).prefetch_related(

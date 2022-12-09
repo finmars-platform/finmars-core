@@ -538,7 +538,6 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
             'strategy1_group', 'strategy1_subgroup', 'strategy1',
             'strategy2_group', 'strategy2_subgroup', 'strategy2',
             'strategy3_group', 'strategy3_subgroup', 'strategy3',
-            'thread_group',
             'mismatch_portfolio', 'mismatch_account',
             'pricing_policy', 'transaction_type',
             'instrument_class', 'accrual_calculation_model', 'pricing_condition',
