@@ -3,6 +3,9 @@ import logging
 import socket
 import sys
 from datetime import datetime
+
+from poms_app import settings
+
 try:
     import json
 except ImportError:
@@ -92,10 +95,15 @@ class LogstashFormatterVersion(LogstashFormatterBase):
             'path': record.pathname,
             'tags': self.tags,
             'type': self.message_type,
+            'host_location': settings.HOST_LOCATION,
+            'client_id': settings.BASE_API_URL,
+
 
             # Extra Fields
             'level': record.levelname,
             'logger_name': record.name,
+            'module': record.module,
+            'lineno': record.lineno,
         }
 
         # Add extra fields
