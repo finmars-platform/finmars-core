@@ -4,11 +4,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     vim htop wget \
     supervisor
 
-# Filebeat
-RUN wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
-RUN echo "deb https://artifacts.elastic.co/packages/oss-8.x/apt stable main" | tee -a /etc/apt/sources.list.d/elastic-8.x.list
-RUN apt-get update && apt-get install filebeat
-
 RUN rm -rf /var/app
 COPY requirements.txt /var/app/requirements.txt
 RUN pip install -r /var/app/requirements.txt
@@ -35,8 +30,6 @@ COPY docker/supervisor/celerybeat.conf /etc/supervisor/conf.d/celerybeat.conf
 
 COPY docker/uwsgi-www.ini /etc/uwsgi/apps-enabled/finmars.ini
 
-COPY docker/filebeat-config /etc/filebeat/filebeat.yml
-RUN chmod 501 /etc/filebeat/filebeat.yml
 
 RUN chmod +x /var/app/docker/finmars-run.sh
 

@@ -1,7 +1,6 @@
 #!/bin/sh
 
 USE_CELERY="${USE_CELERY:-False}"
-USE_FILEBEATS="${USE_FILEBEATS:-False}"
 USE_FLOWER="${$USE_FLOWER:-False}"
 BASE_API_URL="${$BASE_API_URL:-False}"
 RABBITMQ_HOST="${$RABBITMQ_HOST:-False}"
@@ -60,16 +59,6 @@ then
     supervisorctl start celerybeat
 
 fi
-
-#if [ $USE_FILEBEATS == "True" ];
-#then
-#
-#    echo "Run Filebeat"
-#
-#    service filebeat start
-#
-#fi
-
 
 if [ $USE_FLOWER == "True" ];
 then
