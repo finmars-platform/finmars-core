@@ -42,19 +42,20 @@ class TCPLogstashHandler(SocketHandler, object):
         if not self.ssl:
             return s
 
-        context = ssl.create_default_context(cafile=self.ca_certs)
-        context.verify_mode = ssl.CERT_REQUIRED
-        if not self.ssl_verify:
-            if self.ca_certs:
-                context.verify_mode = ssl.CERT_OPTIONAL
-            else:
-                context.verify_mode = ssl.CERT_NONE
-                context.check_hostname = False
+        context = ssl.create_default_context()
+        # context.verify_mode = ssl.CERT_REQUIRED
+        # if not self.ssl_verify:
+        #     if self.ca_certs:
+        #         context.verify_mode = ssl.CERT_OPTIONAL
+        #     else:
+        #         context.verify_mode = ssl.CERT_NONE
+        #         context.check_hostname = False
 
         context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
 
         # Client side certificate auth.
-        if self.certfile and self.keyfile:
-            context.load_cert_chain(self.certfile, keyfile=self.keyfile)
+        # if self.certfile and self.keyfile:
+        #     context.load_cert_chain(self.certfile, keyfile=self.keyfile)
 
         return context.wrap_socket(s, server_hostname=self.host)
