@@ -94,6 +94,8 @@ class TransactionTypeProcess(object):
         master_user = self.transaction_type.master_user
         self.member = member
 
+        self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+
         self.complex_transaction = complex_transaction
         if self.complex_transaction is None:
             self.complex_transaction = ComplexTransaction(transaction_type=self.transaction_type, date=None,
@@ -1607,7 +1609,7 @@ class TransactionTypeProcess(object):
                     if action_transaction.instrument_phantom is not None:
                         transaction.instrument = instrument_map[action_transaction.instrument_phantom.order]
 
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.currency,
                                   model=Currency,
                                   target=transaction, target_attr_name='transaction_currency',
                                   source=action_transaction, source_attr_name='transaction_currency')
@@ -1615,7 +1617,7 @@ class TransactionTypeProcess(object):
                                   target=transaction, target_attr_name='position_size_with_sign',
                                   source=action_transaction, source_attr_name='position_size_with_sign')
 
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.currency,
                                   model=Currency,
                                   target=transaction, target_attr_name='settlement_currency',
                                   source=action_transaction, source_attr_name='settlement_currency')

@@ -1,7 +1,7 @@
-import traceback
 import logging
 import socket
 import sys
+import traceback
 from datetime import datetime
 
 from poms_app import settings
@@ -83,21 +83,26 @@ class LogstashFormatterBase(logging.Formatter):
         else:
             return bytes(json.dumps(message), 'utf-8')
 
+
 class LogstashFormatterVersion(LogstashFormatterBase):
+
+    def mask_secret_data(self, message):
+
+
+        return message
 
     def format(self, record):
         # Create message dict
         message = {
             '@timestamp': self.format_timestamp(record.created),
             '@version': '1',
-            'message': record.getMessage(),
+            'message': self.mask_secret_data(record.getMessage()),
             'host': self.host,
             'path': record.pathname,
             'tags': self.tags,
             'type': self.message_type,
             'host_location': settings.HOST_LOCATION,
             'client_id': settings.BASE_API_URL,
-
 
             # Extra Fields
             'level': record.levelname,
