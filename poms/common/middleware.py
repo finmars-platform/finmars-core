@@ -1,12 +1,14 @@
 # coding=utf-8
 from __future__ import unicode_literals
 
+import datetime
 import ipaddress
 import json
 import re
 import traceback
 from http import HTTPStatus
 from threading import local
+from django.utils.timezone import now
 
 from django.conf import settings
 from django.contrib.gis.geoip2 import GeoIP2
@@ -187,13 +189,15 @@ class CustomExceptionMiddleware(MiddlewareMixin):
 
         data = {
             'error': {
+                'url': request.build_absolute_uri(),
                 'details': {
-                    'url': request.build_absolute_uri(),
-                    'trace': '\n'.join(traceback_lines),
-                    'message': repr(exception),
+                    'traceback': '\n'.join(traceback_lines),
+                    'error_message': repr(exception),
                 },
                 'message': http_code_to_message[500],
-                'status_code': 500
+                'status_code': 500,
+                'datetime': str(datetime.datetime.strftime(now(), '%Y-%m-%d %H:%M:%S')),
+                'workspace_id': settings.BASE_API_URL
             }
         }
 

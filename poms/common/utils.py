@@ -11,6 +11,9 @@ from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from rest_framework.views import exception_handler
 from http import HTTPStatus
+from django.utils.timezone import now
+
+from poms_app import settings
 
 _l = logging.getLogger('poms.common')
 
@@ -434,9 +437,12 @@ def finmars_exception_handler(exc, context):
 
         error_payload = {
             "error": {
+                "url": context['request'].build_absolute_uri(),
                 "status_code": 0,
                 "message": "",
                 "details": [],
+                "datetime": str(datetime.datetime.strftime(now(), '%Y-%m-%d %H:%M:%S')),
+                "workspace_id": settings.BASE_API_URL
             }
         }
         error = error_payload["error"]
