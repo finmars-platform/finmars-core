@@ -554,8 +554,22 @@ def _unix_to_date(unix, format=None):
     return datetime.datetime.utcfromtimestamp(unix).strftime(format)
 
 
+def last_business_day(date):
+
+    date = _parse_date(date)
+
+    offset = BDay()
+
+    return offset.rollback(date).date()
+
 def _get_date_last_week_end_business(date):
     date = _parse_date(date)
+
+    # 6 - is a last day of the week, 7 - days in a week
+    subtract_days = (date.weekday() - 6) % 7
+    subtract_delta = datetime.timedelta(days=subtract_days)
+
+    date = date - subtract_delta  # last day of the previous week
 
     offset = BDay()
 
@@ -3318,6 +3332,7 @@ FUNCTIONS = [
     SimpleEval2Def('parse_date', _parse_date),
     SimpleEval2Def('unix_to_date', _unix_to_date),
 
+    SimpleEval2Def('last_business_day', last_business_day),
     SimpleEval2Def('get_date_last_week_end_business', _get_date_last_week_end_business),
     SimpleEval2Def('get_date_last_month_end_business', _get_date_last_month_end_business),
     SimpleEval2Def('get_date_last_quarter_end_business', _get_date_last_quarter_end_business),
