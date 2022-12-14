@@ -55,6 +55,7 @@ then
     echo "Start celery"
 
     export DJANGO_SETTINGS_MODULE=poms_app.settings
+    export C_FORCE_ROOT='true'
 
     supervisord
 
