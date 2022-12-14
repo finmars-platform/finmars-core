@@ -54,10 +54,10 @@ class PortfolioPortfolioRegisterSerializer(ModelWithAttributesSerializer,
 class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
                           ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
-    accounts = AccountField(many=True, allow_null=True, required=False)
-    responsibles = ResponsibleField(many=True, allow_null=True, required=False)
-    counterparties = CounterpartyField(many=True, allow_null=True, required=False)
-    transaction_types = TransactionTypeField(many=True, allow_null=True, required=False)
+    # accounts = AccountField(many=True, allow_null=True, required=False)
+    # responsibles = ResponsibleField(many=True, allow_null=True, required=False)
+    # counterparties = CounterpartyField(many=True, allow_null=True, required=False)
+    # transaction_types = TransactionTypeField(many=True, allow_null=True, required=False)
 
     registers = PortfolioPortfolioRegisterSerializer(many=True, allow_null=True, required=False, read_only=True)
 
@@ -65,7 +65,8 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
         model = Portfolio
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_default',
-            'is_deleted', 'accounts', 'responsibles', 'counterparties', 'transaction_types',
+            'is_deleted',
+            # 'accounts', 'responsibles', 'counterparties', 'transaction_types',
             'is_enabled', 'registers'
 
         ]
