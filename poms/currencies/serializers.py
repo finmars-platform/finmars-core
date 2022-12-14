@@ -225,7 +225,8 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
         model = CurrencyHistory
         fields = [
             'id', 'currency', 'currency_object', 'pricing_policy', 'pricing_policy_object', 'date', 'fx_rate',
-            'procedure_modified_datetime'
+            'procedure_modified_datetime',
+            'modified'
         ]
 
     def __init__(self, *args, **kwargs):

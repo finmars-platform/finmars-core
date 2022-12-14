@@ -22,7 +22,8 @@ class ModelWithTimeStampSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(ModelWithTimeStampSerializer, self).__init__(*args, **kwargs)
         # TODO MOVE TO READONLY FIELD
-        self.fields['modified'] = serializers.DateTimeField(required=False, allow_null=True)
+        # self.fields['modified'] = serializers.DateTimeField(required=False, allow_null=True)
+        # self.fields['modified'] = serializers.DateTimeField(required=False, allow_null=True)
 
     def validate(self, data):
 
