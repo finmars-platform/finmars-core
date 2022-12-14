@@ -25,6 +25,8 @@ try:
 except ImportError:
     MiddlewareMixin = object
 
+import logging
+_l = logging.getLogger('poms.common')
 
 def get_ip(request):
     user_ip = None
@@ -171,15 +173,14 @@ class CustomExceptionMiddleware(MiddlewareMixin):
     def process_exception(self, request, exception):
         # print('exception %s' % exception)
 
-        print(traceback.format_exc())
+        _l.error("CustomExceptionMiddleware process error %s" % request.build_absolute_uri())
+        _l.error(traceback.format_exc())
 
         lines = traceback.format_exc().splitlines()[-6:]
         traceback_lines = []
 
         for line in lines:
             traceback_lines.append(re.sub(r'File ".*[\\/]([^\\/]+.py)"', r'File "\1"', line))
-
-        # print(traceback_lines)
 
         data = {
             'url': request.build_absolute_uri(),
