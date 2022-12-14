@@ -5,6 +5,7 @@ import ipaddress
 import json
 import re
 import traceback
+from http import HTTPStatus
 from threading import local
 
 from django.conf import settings
@@ -179,13 +180,21 @@ class CustomExceptionMiddleware(MiddlewareMixin):
         lines = traceback.format_exc().splitlines()[-6:]
         traceback_lines = []
 
+        http_code_to_message = {v.value: v.description for v in HTTPStatus}
+
         for line in lines:
             traceback_lines.append(re.sub(r'File ".*[\\/]([^\\/]+.py)"', r'File "\1"', line))
 
         data = {
-            'url': request.build_absolute_uri(),
-            'message': repr(exception),
-            'trace': '\n'.join(traceback_lines)
+            'error': {
+                'details': {
+                    'url': request.build_absolute_uri(),
+                    'trace': '\n'.join(traceback_lines),
+                    'message': repr(exception),
+                },
+                'message': http_code_to_message[500],
+                'status_code': 500
+            }
         }
 
         response_json = json.dumps(data, indent=2, sort_keys=True)

@@ -9,6 +9,8 @@ import pandas as pd
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
+from rest_framework.views import exception_handler
+from http import HTTPStatus
 
 _l = logging.getLogger('poms.common')
 
@@ -417,3 +419,31 @@ def str_to_date(d):
 def get_closest_bday_of_yesterday(to_string=False):
     yesterday = datetime.date.today() - timedelta(days=1)
     return get_last_business_day(yesterday, to_string=to_string)
+
+
+def finmars_exception_handler(exc, context):
+    """Custom API exception handler."""
+
+    # Call REST framework's default exception handler first,
+    # to get the standard error response.
+    response = exception_handler(exc, context)
+
+    if response is not None:
+        # Using the description's of the HTTPStatus class as error message.
+        http_code_to_message = {v.value: v.description for v in HTTPStatus}
+
+        error_payload = {
+            "error": {
+                "status_code": 0,
+                "message": "",
+                "details": [],
+            }
+        }
+        error = error_payload["error"]
+        status_code = response.status_code
+
+        error["status_code"] = status_code
+        error["message"] = http_code_to_message[status_code]
+        error["details"] = response.data
+        response.data = error_payload
+    return response
