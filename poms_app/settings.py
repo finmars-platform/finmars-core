@@ -361,6 +361,11 @@ LOGGING = {
             "level": DJANGO_LOG_LEVEL,
             "handlers": ["console", "file"],
             "propagate": True
+        },
+        "finmars": {
+            "level": DJANGO_LOG_LEVEL,
+            "handlers": ["console", "file"],
+            "propagate": True
         }
     }
 }
