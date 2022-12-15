@@ -120,6 +120,8 @@ INSTALLED_APPS = [
     'django_celery_results',
     'django_celery_beat',
 
+    'finmars_standardized_errors',
+
     # ==================================
     # = IMPORTANT LOGIC ON APP STARTUP =
     # ==================================
@@ -152,7 +154,8 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsPostCsrfMiddleware',
 
     'poms.common.middleware.CommonMiddleware',
-    'poms.common.middleware.CustomExceptionMiddleware',
+    'finmars_standardized_errors.middleware.ExceptionMiddleware'
+    # 'poms.common.middleware.CustomExceptionMiddleware',
     # 'poms.users.middleware.AuthenticationMiddleware',
     # 'poms.users.middleware.TimezoneMiddleware',
     # 'poms.users.middleware.LocaleMiddleware',
@@ -385,7 +388,8 @@ REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'poms.common.pagination.PageNumberPaginationExt',
     'PAGE_SIZE': 40,
-    'EXCEPTION_HANDLER': 'poms.common.utils.finmars_exception_handler',
+    # 'EXCEPTION_HANDLER': 'poms.common.utils.finmars_exception_handler',
+    'EXCEPTION_HANDLER': 'finmars_standardized_errors.handler.exception_handler',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # 'rest_framework.authentication.SessionAuthentication',
         # 'rest_framework.authentication.BasicAuthentication',
