@@ -42,7 +42,7 @@ class ExceptionFormatter:
         error_type = self.get_error_type()
         errors = self.get_errors()
 
-        url = str(self.context['request'].build_absolute_uri()),
+        url = str(self.context['request'].build_absolute_uri())
         status_code = self.exc.status_code
         http_code_to_message = {v.value: v.description for v in HTTPStatus}
         message = http_code_to_message[status_code]
