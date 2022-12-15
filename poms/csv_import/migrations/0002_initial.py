@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        # ('users', '0001_initial'),
+        ('users', '0001_initial'),
         ('csv_import', '0001_initial'),
     ]
 

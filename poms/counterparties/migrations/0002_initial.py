@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        # ('users', '0001_initial'),
+        ('users', '0001_initial'),
         ('counterparties', '0001_initial'),
     ]
 

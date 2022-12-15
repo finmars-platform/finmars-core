@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        # ('users', '0001_initial'),
+        ('users', '0001_initial'),
         ('celery_tasks', '0002_initial'),
     ]
 
