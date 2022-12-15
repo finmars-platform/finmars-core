@@ -21,7 +21,7 @@ class AccountTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCo
         model = AccountType
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'show_transaction_details', 'transaction_details_expr', 'is_default', 'is_deleted',
+            'show_transaction_details', 'transaction_details_expr', 'is_deleted',
             'is_enabled'
         ]
 
@@ -65,7 +65,7 @@ class AccountSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributes
         model = Account
         fields = [
             'id', 'master_user', 'type', 'user_code', 'name', 'short_name', 'public_name',
-            'notes', 'is_default', 'is_valid_for_all_portfolios', 'is_deleted', 'portfolios',
+            'notes', 'is_valid_for_all_portfolios', 'is_deleted', 'portfolios',
             'is_enabled'
             # 'type_object',  'portfolios_object',
             # 'attributes'

@@ -50,7 +50,7 @@ class ExceptionFormatter:
         message = http_code_to_message[status_code]
         error_datetime = str(datetime.datetime.strftime(now(), "%Y-%m-%d %H:%M:%S"))
 
-        ErrorRecord.objects.create(url=url, username=username, status_code=500, message=message, details=asdict(ErrorResponseDetails(error_type, errors)))
+        ErrorRecord.objects.create(url=url, username=username, status_code=self.exc.status_code, message=message, details=asdict(ErrorResponseDetails(error_type, errors)))
 
         error_response = self.get_error_response(url, username, status_code, message, error_datetime, error_type, errors)
 

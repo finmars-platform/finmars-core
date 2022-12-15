@@ -3443,7 +3443,7 @@ SAFE_TYPES = (bool, int, float, str, list, tuple, dict, OrderedDict,
 
 class SimpleEval2(object):
     def __init__(self, names=None, max_time=None, add_print=False, allow_assign=False, now=None, context=None):
-        self.max_time = max_time or 60 * 5  # 5 min
+        self.max_time = max_time or 60 * 30  # 30 min
         # self.max_time = 10000000000
         self.start_time = 0
         self.tik_time = 0
