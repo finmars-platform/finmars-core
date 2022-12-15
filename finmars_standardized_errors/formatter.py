@@ -8,6 +8,7 @@ from django.utils.timezone import now
 from rest_framework import exceptions
 from rest_framework.status import is_client_error
 
+from .models import ErrorRecord
 from .settings import package_settings
 from .types import Error, ErrorResponse, ErrorType, ExceptionHandlerContext, ErrorResponseDetails
 
@@ -43,12 +44,15 @@ class ExceptionFormatter:
         errors = self.get_errors()
 
         url = str(self.context['request'].build_absolute_uri())
+        username = str(self.context['request'].user.username)
         status_code = self.exc.status_code
         http_code_to_message = {v.value: v.description for v in HTTPStatus}
         message = http_code_to_message[status_code]
         error_datetime = str(datetime.datetime.strftime(now(), "%Y-%m-%d %H:%M:%S"))
 
-        error_response = self.get_error_response(url, status_code, message, error_datetime, error_type, errors)
+        ErrorRecord.objects.create(url=url, username=username, status_code=500, message=message, details=asdict(ErrorResponseDetails(error_type, errors)))
+
+        error_response = self.get_error_response(url, username, status_code, message, error_datetime, error_type, errors)
 
         return self.format_error_response(error_response)
 
@@ -67,11 +71,11 @@ class ExceptionFormatter:
         """
         return flatten_errors(self.exc.detail)
 
-    def get_error_response(self, url: str, status_code: int, message, error_datetime, error_type: ErrorType, errors: List[Error]):
+    def get_error_response(self, url: str, username: str, status_code: int, message, error_datetime, error_type: ErrorType, errors: List[Error]):
 
         error_response_details = ErrorResponseDetails(error_type, errors)
 
-        return ErrorResponse(url, status_code, message, error_datetime, error_response_details)
+        return ErrorResponse(url, username, status_code, message, error_datetime, error_response_details)
 
     def format_error_response(self, error_response: ErrorResponse):
         return {'error': asdict(error_response)}

@@ -37,6 +37,7 @@ import poms.transactions.views as transactions
 import poms.ui.views as ui
 import poms.users.views as users
 import poms.widgets.views as widgets
+from finmars_standardized_errors.views import ErrorRecordViewSet
 from poms.auth_tokens.views import ObtainAuthToken, SetAuthToken, CreateUser, CreateMasterUser, CreateMember, \
     DeleteMember, RenameMasterUser, MasterUserChangeOwner
 
@@ -512,6 +513,7 @@ router.register(r'explorer/delete', explorer.ExplorerDeleteViewSet, 'explorer_de
 router.register(r'explorer/create_folder', explorer.ExplorerCreateFolderViewSet, 'explorer_create_folder')
 
 router.register(r'debug/logs', common.DebugLogViewSet, 'debug_log')
+router.register(r'errors/error', ErrorRecordViewSet, 'error')
 
 # router.register(r'pricing/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view()), 'pricing_broker_bloomberg')
 

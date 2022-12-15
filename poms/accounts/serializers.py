@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from poms.accounts.fields import AccountTypeField, AccountTypeDefault
+from poms.accounts.fields import AccountTypeField
 from poms.accounts.models import Account, AccountType
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
@@ -53,7 +53,7 @@ class AccountTypeViewSerializer(ModelWithObjectPermissionSerializer):
 class AccountSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
                         ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
-    type = AccountTypeField(default=AccountTypeDefault())
+    type = AccountTypeField()
     portfolios = PortfolioField(many=True, required=False, allow_null=True)
 
     # portfolios_object = serializers.PrimaryKeyRelatedField(source='portfolios', many=True, read_only=True)
@@ -108,7 +108,7 @@ class AccountLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserC
 
 
 class AccountViewSerializer(ModelWithObjectPermissionSerializer):
-    type = AccountTypeField(default=AccountTypeDefault())
+    type = AccountTypeField()
     type_object = AccountTypeViewSerializer(source='type', read_only=True)
 
     class Meta(ModelWithObjectPermissionSerializer.Meta):

@@ -31,11 +31,6 @@ class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             ('manage_accounttype', 'Can manage account type'),
         ]
 
-    @property
-    def is_default(self):
-        return self.master_user.account_type_id == self.id if self.master_user_id else False
-
-
 class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='accounts', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
