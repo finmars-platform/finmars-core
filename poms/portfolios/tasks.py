@@ -353,11 +353,13 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
                     _date_from = first_transaction.accounting_date
 
                 except Exception as e:
-                    task.error_message = "No first transaction"
-                    task.status = CeleryTask.STATUS_ERROR
+                    task.notes = 'Portfolio % has no transactions' % portfolio_register.portfolio.name
                     task.save()
+                    # task.error_message = "No first transaction"
+                    # task.status = CeleryTask.STATUS_ERROR
+                    # task.save()
 
-                    return
+                    continue
 
             date_to = timezone_today() - timedelta(days=1)
 
