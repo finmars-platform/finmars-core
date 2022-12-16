@@ -314,7 +314,8 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
         master_user=master_user,
         member=member,
         verbose_name="Calculate Portfolio Register Prices",
-        type='calculate_portfolio_register_price_history'
+        type='calculate_portfolio_register_price_history',
+        status=CeleryTask.STATUS_PENDING
     )
 
     if not task.notes:
@@ -389,8 +390,7 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
                     registry_record = \
                         PortfolioRegisterRecord.objects.filter(instrument=portfolio_register.linked_instrument,
                                                                transaction_date__lte=date).order_by('-transaction_date',
-                                                                                                    '-transaction_code')[
-                            0]
+                                                                                                    '-transaction_code').first()
 
                     balance_report = calculate_simple_balance_report(date, portfolio_register, true_pricing_policy)
 
