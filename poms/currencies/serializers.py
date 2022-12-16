@@ -48,7 +48,7 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
             'reference_for_pricing',
             'pricing_condition',
             'default_fx_rate',
-            'is_default', 'is_deleted', 'is_enabled',
+            'is_deleted', 'is_enabled',
             'pricing_policies'
         ]
 
@@ -183,7 +183,7 @@ class CurrencyEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribu
         fields = [
             'id', 'master_user',
             'user_code', 'name', 'short_name', 'notes',
-            'is_default', 'is_deleted', 'is_enabled',
+            'is_deleted', 'is_enabled',
 
             'reference_for_pricing', 'default_fx_rate',
             'pricing_condition'
@@ -197,7 +197,7 @@ class CurrencyLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUser
         model = Currency
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name',
-            'is_default', 'is_deleted', 'is_enabled',
+            'is_deleted', 'is_enabled',
         ]
 
 
