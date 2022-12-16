@@ -368,6 +368,7 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
 
                 task.notes = task.notes +  'Portfolio % has no linked instrument' % portfolio_register.portfolio.name + '\n'
                 task.save()
+                continue
 
 
             date_to = timezone_today() - timedelta(days=1)
