@@ -317,6 +317,9 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
         type='calculate_portfolio_register_price_history'
     )
 
+    if not task.notes:
+        task.notes = ''
+
     try:
 
         _l.info('calculate_portfolio_register_nav: master_user=%s date_from=%s', master_user, date_from)
@@ -353,13 +356,19 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
                     _date_from = first_transaction.accounting_date
 
                 except Exception as e:
-                    task.notes = 'Portfolio % has no transactions' % portfolio_register.portfolio.name
+                    task.notes = task.notes +  'Portfolio % has no transactions' % portfolio_register.portfolio.name + '\n'
                     task.save()
                     # task.error_message = "No first transaction"
                     # task.status = CeleryTask.STATUS_ERROR
                     # task.save()
 
                     continue
+
+            if not portfolio_register.linked_instrument:
+
+                task.notes = task.notes +  'Portfolio % has no linked instrument' % portfolio_register.portfolio.name + '\n'
+                task.save()
+
 
             date_to = timezone_today() - timedelta(days=1)
 
@@ -417,6 +426,7 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
 
                 except Exception as e:
                     _l.error('calculate_portfolio_register_price_history.error %s ' % e)
+                    _l.error("calculate_portfolio_register_price_history.exception %s" % traceback.format_exc())
                     _l.error('date %s' % date)
 
         send_system_message(master_user=master_user,
