@@ -90,9 +90,11 @@ class BalanceReportBuilderSql:
             _l.debug(
                 'transactions_all_with_multipliers_where_expression: "%s"' % transactions_all_with_multipliers_where_expression)
 
+
+
             pl_query = pl_query.format(report_date=self.instance.report_date,
                                        master_user_id=self.instance.master_user.id,
-                                       default_currency_id=self.instance.master_user.system_currency_id,
+                                       default_currency_id=self.ecosystem_defaults.currency_id,
                                        report_currency_id=self.instance.report_currency.id,
                                        pricing_policy_id=self.instance.pricing_policy.id,
                                        report_fx_rate=report_fx_rate,
@@ -1439,7 +1441,7 @@ class BalanceReportBuilderSql:
 
             query = query.format(report_date=self.instance.report_date,
                                  master_user_id=self.instance.master_user.id,
-                                 default_currency_id=self.instance.master_user.system_currency_id,
+                                 default_currency_id=self.ecosystem_defaults.currency_id,
                                  report_currency_id=self.instance.report_currency.id,
                                  pricing_policy_id=self.instance.pricing_policy.id,
 

@@ -16,7 +16,6 @@ from rest_framework.fields import empty
 from rest_framework.validators import UniqueValidator
 
 from poms.accounts.fields import AccountTypeField, AccountField
-from poms.chats.fields import ThreadGroupField
 from poms.common.fields import DateTimeTzAwareField
 from poms.counterparties.fields import CounterpartyField, ResponsibleField, CounterpartyGroupField, \
     ResponsibleGroupField
@@ -296,7 +295,6 @@ class MasterUserSerializer(serializers.ModelSerializer):
     # strategy3_group = Strategy3GroupField()
     # strategy3_subgroup = Strategy3SubgroupField()
     # strategy3 = Strategy3Field()
-    # thread_group = ThreadGroupField()
     # mismatch_portfolio = PortfolioField()
     # mismatch_account = AccountField()
     # pricing_policy = PricingPolicyField()
@@ -338,7 +336,6 @@ class MasterUserSerializer(serializers.ModelSerializer):
         #     Strategy1ViewSerializer, Strategy2GroupViewSerializer, Strategy2SubgroupViewSerializer, \
         #     Strategy2ViewSerializer, Strategy3GroupViewSerializer, Strategy3SubgroupViewSerializer, \
         #     Strategy3ViewSerializer
-        # from poms.chats.serializers import ThreadGroupViewSerializer
         # from poms.transactions.serializers import TransactionTypeViewSerializer
         # from poms.instruments.serializers import PricingPolicyViewSerializer
 
@@ -521,7 +518,6 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
     strategy3_group = Strategy3GroupField()
     strategy3_subgroup = Strategy3SubgroupField()
     strategy3 = Strategy3Field()
-    thread_group = ThreadGroupField()
     mismatch_portfolio = PortfolioField()
     mismatch_account = AccountField()
     pricing_policy = PricingPolicyField()
@@ -542,7 +538,6 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
             'strategy1_group', 'strategy1_subgroup', 'strategy1',
             'strategy2_group', 'strategy2_subgroup', 'strategy2',
             'strategy3_group', 'strategy3_subgroup', 'strategy3',
-            'thread_group',
             'mismatch_portfolio', 'mismatch_account',
             'pricing_policy', 'transaction_type',
             'instrument_class', 'accrual_calculation_model', 'pricing_condition',
@@ -567,7 +562,6 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
             Strategy1ViewSerializer, Strategy2GroupViewSerializer, Strategy2SubgroupViewSerializer, \
             Strategy2ViewSerializer, Strategy3GroupViewSerializer, Strategy3SubgroupViewSerializer, \
             Strategy3ViewSerializer
-        from poms.chats.serializers import ThreadGroupViewSerializer
         from poms.transactions.serializers import TransactionTypeViewSerializer
         from poms.instruments.serializers import PricingPolicyViewSerializer
         from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer
@@ -630,8 +624,6 @@ class EcosystemDefaultSerializer(serializers.ModelSerializer):
         self.fields['strategy3_subgroup_object'] = Strategy3SubgroupViewSerializer(source='strategy3_subgroup',
                                                                                    read_only=True)
         self.fields['strategy3_object'] = Strategy3ViewSerializer(source='strategy3', read_only=True)
-
-        self.fields['thread_group_object'] = ThreadGroupViewSerializer(source='thread_group', read_only=True)
 
         self.fields['pricing_policy_object'] = PricingPolicyViewSerializer(source='pricing_policy', read_only=True)
         self.fields['transaction_type_object'] = TransactionTypeViewSerializer(source='transaction_type',

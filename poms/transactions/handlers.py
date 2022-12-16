@@ -94,6 +94,8 @@ class TransactionTypeProcess(object):
         master_user = self.transaction_type.master_user
         self.member = member
 
+        self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+
         self.complex_transaction = complex_transaction
         if self.complex_transaction is None:
             self.complex_transaction = ComplexTransaction(transaction_type=self.transaction_type, date=None,
@@ -1607,7 +1609,7 @@ class TransactionTypeProcess(object):
                     if action_transaction.instrument_phantom is not None:
                         transaction.instrument = instrument_map[action_transaction.instrument_phantom.order]
 
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.currency,
                                   model=Currency,
                                   target=transaction, target_attr_name='transaction_currency',
                                   source=action_transaction, source_attr_name='transaction_currency')
@@ -1615,7 +1617,7 @@ class TransactionTypeProcess(object):
                                   target=transaction, target_attr_name='position_size_with_sign',
                                   source=action_transaction, source_attr_name='position_size_with_sign')
 
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.currency,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.currency,
                                   model=Currency,
                                   target=transaction, target_attr_name='settlement_currency',
                                   source=action_transaction, source_attr_name='settlement_currency')
@@ -1632,19 +1634,19 @@ class TransactionTypeProcess(object):
                                   target=transaction, target_attr_name='overheads_with_sign',
                                   source=action_transaction, source_attr_name='overheads_with_sign')
 
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.portfolio,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.portfolio,
                                   model=Portfolio,
                                   target=transaction, target_attr_name='portfolio',
                                   source=action_transaction, source_attr_name='portfolio')
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.account,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.account,
                                   model=Account,
                                   target=transaction, target_attr_name='account_position',
                                   source=action_transaction, source_attr_name='account_position')
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.account,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.account,
                                   model=Account,
                                   target=transaction, target_attr_name='account_cash',
                                   source=action_transaction, source_attr_name='account_cash')
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.account,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.account,
                                   model=Account,
                                   target=transaction, target_attr_name='account_interim',
                                   source=action_transaction, source_attr_name='account_interim')
@@ -1658,36 +1660,36 @@ class TransactionTypeProcess(object):
                                   source=action_transaction, source_attr_name='cash_date',
                                   validator=formula.validate_date)
 
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.strategy1,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.strategy1,
                                   model=Strategy1,
                                   target=transaction, target_attr_name='strategy1_position',
                                   source=action_transaction, source_attr_name='strategy1_position')
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.strategy1,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.strategy1,
                                   model=Strategy1,
                                   target=transaction, target_attr_name='strategy1_cash',
                                   source=action_transaction, source_attr_name='strategy1_cash')
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.strategy2,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.strategy2,
                                   model=Strategy2,
                                   target=transaction, target_attr_name='strategy2_position',
                                   source=action_transaction, source_attr_name='strategy2_position')
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.strategy2,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.strategy2,
                                   model=Strategy2,
                                   target=transaction, target_attr_name='strategy2_cash',
                                   source=action_transaction, source_attr_name='strategy2_cash')
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.strategy3,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.strategy3,
                                   model=Strategy3,
                                   target=transaction, target_attr_name='strategy3_position',
                                   source=action_transaction, source_attr_name='strategy3_position')
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.strategy3,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.strategy3,
                                   model=Strategy3,
                                   target=transaction, target_attr_name='strategy3_cash',
                                   source=action_transaction, source_attr_name='strategy3_cash')
 
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.responsible,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.responsible,
                                   model=Responsible,
                                   target=transaction, target_attr_name='responsible',
                                   source=action_transaction, source_attr_name='responsible')
-                    self._set_rel(errors=errors, values=self.values, default_value=master_user.counterparty,
+                    self._set_rel(errors=errors, values=self.values, default_value=self.ecosystem_default.counterparty,
                                   model=Counterparty,
                                   target=transaction, target_attr_name='counterparty',
                                   source=action_transaction, source_attr_name='counterparty')

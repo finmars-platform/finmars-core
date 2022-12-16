@@ -130,14 +130,18 @@ class ImportConfig(models.Model):
 
     provider = models.ForeignKey(ProviderClass, verbose_name=gettext_lazy('provider'), on_delete=models.CASCADE)
 
-    p12cert = models.FileField(null=True, blank=True, upload_to=import_cert_upload_to, storage=import_config_storage,
-                               verbose_name=gettext_lazy('p12cert'))
+    # p12cert = models.FileField(null=True, blank=True, upload_to=import_cert_upload_to, storage=import_config_storage,
+    #                            verbose_name=gettext_lazy('p12cert'))
+    p12cert = models.TextField(blank=True, default='', verbose_name=gettext_lazy('p12cert'))
     password = models.CharField(max_length=64, null=True, blank=True, verbose_name=gettext_lazy('password'))
 
-    cert = models.FileField(null=True, blank=True, upload_to=import_cert_upload_to, storage=import_config_storage,
-                            verbose_name=gettext_lazy('cert'))
-    key = models.FileField(null=True, blank=True, upload_to=import_cert_upload_to, storage=import_config_storage,
-                           verbose_name=gettext_lazy('key'))
+    cert = models.TextField(blank=True, default='', verbose_name=gettext_lazy('cert'))
+    key = models.TextField(blank=True, default='', verbose_name=gettext_lazy('key'))
+
+    # cert = models.FileField(null=True, blank=True, upload_to=import_cert_upload_to, storage=import_config_storage,
+    #                         verbose_name=gettext_lazy('cert'))
+    # key = models.FileField(null=True, blank=True, upload_to=import_cert_upload_to, storage=import_config_storage,
+    #                        verbose_name=gettext_lazy('key'))
 
     is_valid = models.BooleanField(default=False, verbose_name=gettext_lazy('is valid'))
 

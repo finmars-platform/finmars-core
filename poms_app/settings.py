@@ -8,13 +8,13 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 import os
+
 from poms_app.utils import ENV_BOOL, ENV_STR, ENV_INT, print_finmars
 
 print_finmars()
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from django.utils.translation import gettext_lazy
-
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -23,13 +23,14 @@ DJANGO_LOG_LEVEL = ENV_STR('DJANGO_LOG_LEVEL', 'INFO')
 SECRET_KEY = ENV_STR('SECRET_KEY', None)
 SERVER_TYPE = ENV_STR('SERVER_TYPE', 'local')
 BASE_API_URL = ENV_STR('BASE_API_URL', 'client00000')
-HOST_LOCATION = ENV_STR('HOST_LOCATION', 'AWS') # azure, aws, or custom, only log purpose
+HOST_LOCATION = ENV_STR('HOST_LOCATION', 'AWS')  # azure, aws, or custom, only log purpose
 DOMAIN_NAME = ENV_STR('DOMAIN_NAME', 'finmars.com')
 JWT_SECRET_KEY = ENV_STR('JWT_SECRET_KEY', None)
 VERIFY_SSL = ENV_BOOL('VERIFY_SSL', True)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = ENV_BOOL('DEBUG', False)
 USE_FILESYSTEM_STORAGE = ENV_BOOL('USE_FILESYSTEM_STORAGE', False)
+MEDIA_ROOT = os.path.join(BASE_DIR, 'finmars_data')
 DROP_VIEWS = ENV_BOOL('DROP_VIEWS', True)
 AUTHORIZER_URL = ENV_STR('AUTHORIZER_URL', None)
 CBONDS_BROKER_URL = os.environ.get('CBONDS_BROKER_URL', None)
@@ -58,18 +59,14 @@ INSTALLED_APPS = [
     'healthcheck',
 
     'poms.system',
-    'poms.http_sessions',
 
     # 'poms.cache_machine',
-
-
 
     'poms.users',
     'poms.audit',
     'poms.notifications',
     'poms.obj_attrs',
     'poms.obj_perms',
-    'poms.chats',
     'poms.ui',
     'poms.accounts',
     'poms.counterparties',
@@ -123,6 +120,8 @@ INSTALLED_APPS = [
     'django_celery_results',
     'django_celery_beat',
 
+    'finmars_standardized_errors',
+
     # ==================================
     # = IMPORTANT LOGIC ON APP STARTUP =
     # ==================================
@@ -154,9 +153,9 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'corsheaders.middleware.CorsPostCsrfMiddleware',
 
-    'poms.http_sessions.middleware.SessionMiddleware',
     'poms.common.middleware.CommonMiddleware',
-    'poms.common.middleware.CustomExceptionMiddleware',
+    'finmars_standardized_errors.middleware.ExceptionMiddleware'
+    # 'poms.common.middleware.CustomExceptionMiddleware',
     # 'poms.users.middleware.AuthenticationMiddleware',
     # 'poms.users.middleware.TimezoneMiddleware',
     # 'poms.users.middleware.LocaleMiddleware',
@@ -194,7 +193,7 @@ TEMPLATES = [
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
             ],
-            'libraries' : {
+            'libraries': {
                 'staticfiles': 'django.templatetags.static',
             }
 
@@ -286,10 +285,10 @@ if SERVER_TYPE == "local":
     CORS_ALLOW_CREDENTIALS = True
 
 STATIC_URL = '/' + BASE_API_URL + '/api/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static') # creates when collectstatic
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')  # creates when collectstatic
 
 STATICFILES_DIR = (
-    os.path.join(BASE_DIR,  'poms', 'api', 'static')
+    os.path.join(BASE_DIR, 'poms', 'api', 'static')
 )
 
 # ==============
@@ -313,19 +312,24 @@ CACHES = {
 }
 
 # SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
-SESSION_ENGINE = "poms.http_sessions.backends.cached_db"
-SESSION_CACHE_ALIAS = 'http_session'
+# SESSION_ENGINE = "poms.http_sessions.backends.cached_db"
+# SESSION_CACHE_ALIAS = 'http_session'
+
+
+SEND_LOGS_TO_FINMARS = ENV_BOOL('SEND_LOGS_TO_FINMARS', False)
+FINMARS_LOGSTASH_HOST = ENV_STR('FINMARS_LOGSTASH_HOST', '3.123.159.169')
+FINMARS_LOGSTASH_PORT = ENV_INT('FINMARS_LOGSTASH_PORT', 5044)
 
 LOGGING = {
     'version': 1,
     'formatters': {
         'verbose': {
             '()': 'colorlog.ColoredFormatter',
-            'format': '%(log_color)s [' + HOST_LOCATION + '] [' + BASE_API_URL + '] [%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
+            'format': '%(log_color)s [%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
             'log_colors': {
-                'DEBUG':    'cyan',
-                'WARNING':  'yellow',
-                'ERROR':    'red',
+                'DEBUG': 'cyan',
+                'WARNING': 'yellow',
+                'ERROR': 'red',
                 'CRITICAL': 'bold_red',
             },
         },
@@ -337,10 +341,10 @@ LOGGING = {
             'formatter': 'verbose'
         },
         'file': {
-              'level': DJANGO_LOG_LEVEL,
-              'class': 'logging.FileHandler',
-              'filename': '/var/log/finmars/django.log',
-              'formatter': 'verbose'
+            'level': DJANGO_LOG_LEVEL,
+            'class': 'logging.FileHandler',
+            'filename': '/var/log/finmars/django.log',
+            'formatter': 'verbose'
         }
     },
     'loggers': {
@@ -357,14 +361,40 @@ LOGGING = {
             "level": DJANGO_LOG_LEVEL,
             "handlers": ["console", "file"],
             "propagate": True
+        },
+        "finmars": {
+            "level": DJANGO_LOG_LEVEL,
+            "handlers": ["console", "file"],
+            "propagate": True
         }
     }
 }
+
+if SEND_LOGS_TO_FINMARS:
+
+    print("Logs will be sending to Finmars")
+
+    LOGGING['handlers']['logstash'] = {
+        'level': DJANGO_LOG_LEVEL,
+        'class': 'logstash.TCPLogstashHandler',
+        'host': FINMARS_LOGSTASH_HOST,
+        'port': FINMARS_LOGSTASH_PORT,  # Default value: 5959
+        'message_type': 'finmars-backend',  # 'type' field in logstash message. Default value: 'logstash'.
+        'fqdn': False,  # Fully qualified domain name. Default value: false.
+        'ssl_verify': False,  # Fully qualified domain name. Default value: false.
+        # 'tags': ['tag1', 'tag2'],  # list of tags. Default: None.
+    }
+
+    LOGGING['loggers']['django.request']['handlers'].append('logstash')
+    LOGGING['loggers']['django']['handlers'].append('logstash')
+    LOGGING['loggers']['poms']['handlers'].append('logstash')
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     'DEFAULT_PAGINATION_CLASS': 'poms.common.pagination.PageNumberPaginationExt',
     'PAGE_SIZE': 40,
+    # 'EXCEPTION_HANDLER': 'poms.common.utils.finmars_exception_handler',
+    'EXCEPTION_HANDLER': 'finmars_standardized_errors.handler.exception_handler',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         # 'rest_framework.authentication.SessionAuthentication',
         # 'rest_framework.authentication.BasicAuthentication',
@@ -432,14 +462,17 @@ GEOIP_CITY = "GeoLite2-City.mmdb"
 # = CELERY =
 # ==========
 
-# TODO make RABBITMQ_PORT RABBITMQ_USER RABBITMQ_PASSWORD
-RABBITMQ_HOST = ENV_STR('RABBITMQ_HOST', 'localhost:5672')
+RABBITMQ_HOST = ENV_STR('RABBITMQ_HOST', 'localhost')
+RABBITMQ_PORT = ENV_INT('RABBITMQ_PORT', 5672)
+RABBITMQ_USER = ENV_STR('RABBITMQ_USER', 'guest')
+RABBITMQ_PASSWORD = ENV_STR('RABBITMQ_PASSWORD', 'guest')
+RABBITMQ_VHOST = ENV_STR('RABBITMQ_VHOST', '')
 
 CELERY_EAGER_PROPAGATES = True
 CELERY_ALWAYS_EAGER = True
 CELERY_ACKS_LATE = True
 
-CELERY_BROKER_URL = 'amqp://%s' % RABBITMQ_HOST
+CELERY_BROKER_URL = 'amqp://%s:%s@%s:%s/%s' % (RABBITMQ_USER, RABBITMQ_PASSWORD, RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_VHOST)
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ENABLE_UTC = True
 CELERY_TIMEZONE = 'UTC'
@@ -497,7 +530,6 @@ AZURE_ACCOUNT_KEY = os.environ.get('AZURE_ACCOUNT_KEY', None)
 AZURE_ACCOUNT_NAME = os.environ.get('AZURE_ACCOUNT_NAME', None)
 AZURE_CONTAINER = os.environ.get('AZURE_CONTAINER', None)
 
-
 # INTEGRATIONS ------------------------------------------------
 # DEPRECATED
 BLOOMBERG_WSDL = 'https://service.bloomberg.com/assets/dl/dlws.wsdl'
@@ -518,7 +550,6 @@ BLOOMBERG_SANDBOX_SEND_EMPTY = False
 BLOOMBERG_SANDBOX_SEND_FAIL = False
 BLOOMBERG_SANDBOX_WAIT_FAIL = False
 
-
 # PRICING SECTION
 
 MEDIATOR_URL = os.environ.get('MEDIATOR_URL', None)
@@ -533,7 +564,6 @@ try:
     from poms_app.settings_local import *
 except ImportError:
     pass
-
 
 INTERNAL_IPS = [
     # ...
@@ -571,4 +601,7 @@ if SERVER_TYPE == 'local':
 KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'https://eu-central.finmars.com')
 KEYCLOAK_REALM = os.environ.get('KEYCLOAK_REALM', 'finmars')
 KEYCLOAK_CLIENT_ID = os.environ.get('KEYCLOAK_CLIENT_ID', 'finmars-backend')
-KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY', None) # not required anymore, api works in Bearer-only mod
+KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY',
+                                            None)  # not required anymore, api works in Bearer-only mod
+
+

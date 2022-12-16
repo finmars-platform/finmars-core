@@ -27,7 +27,7 @@ from poms.obj_perms.models import GenericObjectPermission
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.utils import calc_cash_for_contract_for_difference
-from poms.users.models import MasterUser, FakeSequence
+from poms.users.models import MasterUser, FakeSequence, EcosystemDefault
 
 _l = logging.getLogger('poms.transactions')
 
@@ -1808,6 +1808,8 @@ class Transaction(models.Model):
 
     def calculate_ytm(self):
 
+        ecosystem_default = EcosystemDefault.objects.get(master_user=self.instrument.master_user)
+
         try:
 
             if self.instrument.accrued_currency_id == self.instrument.pricing_currency_id:
@@ -1815,13 +1817,13 @@ class Transaction(models.Model):
                 self.instr_pricing_ccy_cur_fx = 1
             else:
 
-                if self.master_user.system_currency_id == self.instrument.accrued_currency_id:
+                if ecosystem_default.currency_id == self.instrument.accrued_currency_id:
                     self.instr_accrued_ccy_cur_fx = 1
                 else:
                     self.instr_accrued_ccy_cur_fx = CurrencyHistory.objects.get(date=self.accounting_date,
                                                                                 currency=self.instrument.accrued_currency).fx_rate
 
-                if self.master_user.system_currency_id == self.instrument.pricing_currency_id:
+                if ecosystem_default.currency_id == self.instrument.pricing_currency_id:
                     self.instr_pricing_ccy_cur_fx = 1
                 else:
                     self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.accounting_date,

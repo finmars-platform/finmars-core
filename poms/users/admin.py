@@ -78,12 +78,6 @@ class MasterUserAdmin(AbstractModelAdmin):
     list_filter = (MasterUserIsActiveFilter,)
     search_fields = ['id', 'name']
     raw_id_fields = [
-        'system_currency', 'currency', 'account_type', 'account', 'counterparty_group', 'counterparty',
-        'responsible_group', 'responsible', 'instrument_type', 'instrument', 'portfolio',
-        'strategy1_group', 'strategy1_subgroup', 'strategy1',
-        'strategy2_group', 'strategy2_subgroup', 'strategy2',
-        'strategy3_group', 'strategy3_subgroup', 'strategy3',
-        'thread_group', 'transaction_type_group', 'mismatch_portfolio', 'mismatch_account',
     ]
 
     actions = [

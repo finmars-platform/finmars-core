@@ -210,9 +210,15 @@ class ExpressionProcedureViewSet(AbstractModelViewSet):
                             performed_by="System",
                             description=text)
 
-        serializer = self.get_serializer(instance=instance)
+        return Response({
+            'procedure_instance': {
+                'id': instance.procedure_instance.id
+            }
+        })
 
-        return Response(serializer.data)
+        # serializer = self.get_serializer(instance=instance)
+        #
+        # return Response(serializer.data)
 
 
 class ExpressionProcedureInstanceFilterSet(FilterSet):

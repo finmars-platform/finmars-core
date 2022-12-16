@@ -55,10 +55,10 @@ class PortfolioFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
-    account = ModelExtWithPermissionMultipleChoiceFilter(model=Account, field_name='accounts')
-    responsible = ModelExtWithPermissionMultipleChoiceFilter(model=Responsible, field_name='responsibles')
-    counterparty = ModelExtWithPermissionMultipleChoiceFilter(model=Counterparty, field_name='counterparties')
-    transaction_type = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType, field_name='transaction_types')
+    # account = ModelExtWithPermissionMultipleChoiceFilter(model=Account, field_name='accounts')
+    # responsible = ModelExtWithPermissionMultipleChoiceFilter(model=Responsible, field_name='responsibles')
+    # counterparty = ModelExtWithPermissionMultipleChoiceFilter(model=Counterparty, field_name='counterparties')
+    # transaction_type = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType, field_name='transaction_types')
     member = ObjectPermissionMemberFilter(object_permission_model=Portfolio)
     member_group = ObjectPermissionGroupFilter(object_permission_model=Portfolio)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Portfolio)
@@ -74,22 +74,22 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Portfolio.objects.select_related(
         'master_user',
     ).prefetch_related(
-        Prefetch('accounts', queryset=Account.objects.select_related('type')),
-        Prefetch('responsibles', queryset=Responsible.objects.select_related('group')),
-        Prefetch('counterparties', queryset=Counterparty.objects.select_related('group')),
-        Prefetch('transaction_types', queryset=TransactionType.objects.select_related('group')),
+        # Prefetch('accounts', queryset=Account.objects.select_related('type')),
+        # Prefetch('responsibles', queryset=Responsible.objects.select_related('group')),
+        # Prefetch('counterparties', queryset=Counterparty.objects.select_related('group')),
+        # Prefetch('transaction_types', queryset=TransactionType.objects.select_related('group')),
         get_attributes_prefetch(),
-        *get_permissions_prefetch_lookups(
-            (None, Portfolio),
-            ('accounts', Account),
-            ('accounts__type', AccountType),
-            ('counterparties', Counterparty),
-            ('counterparties__group', CounterpartyGroup),
-            ('responsibles', Responsible),
-            ('responsibles__group', ResponsibleGroup),
-            ('transaction_types', TransactionType),
-            ('transaction_types__group', TransactionTypeGroup),
-        )
+        # *get_permissions_prefetch_lookups(
+        #     (None, Portfolio),
+        #     ('accounts', Account),
+        #     ('accounts__type', AccountType),
+        #     ('counterparties', Counterparty),
+        #     ('counterparties__group', CounterpartyGroup),
+        #     ('responsibles', Responsible),
+        #     ('responsibles__group', ResponsibleGroup),
+        #     ('transaction_types', TransactionType),
+        #     ('transaction_types__group', TransactionTypeGroup),
+        # )
     )
     serializer_class = PortfolioSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [

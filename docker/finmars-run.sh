@@ -1,10 +1,10 @@
 #!/bin/sh
 
 USE_CELERY="${USE_CELERY:-False}"
-USE_FILEBEATS="${USE_FILEBEATS:-False}"
 USE_FLOWER="${$USE_FLOWER:-False}"
 BASE_API_URL="${$BASE_API_URL:-False}"
 RABBITMQ_HOST="${$RABBITMQ_HOST:-False}"
+FAKE_MIGRATE="${FAKE_MIGRATE:-False}"
 
 echo "Finmars initialization"
 
@@ -21,13 +21,22 @@ echo "set chmod 777 /var/log/finmars/django.log"
 
 chmod 777 /var/log/finmars/django.log
 
+mkdir /var/app/finmars_data
+chmod 777 /var/app/finmars_data
+
 
 ############################################
 
-echo "Migrating"
-
-python /var/app/manage.py migrate
-
+if [ $FAKE_MIGRATE == "True" ];
+then
+  echo "Fake Migrating"
+  python /var/app/manage.py drop_django_migrations
+  echo "Drop table django_migrations"
+  python /var/app/manage.py migrate --fake
+else
+  echo "Migrating"
+  python /var/app/manage.py migrate
+fi
 #echo "Create cache table"
 #
 #/var/app-venv/bin/python /var/app/manage.py createcachetable
@@ -46,6 +55,7 @@ then
     echo "Start celery"
 
     export DJANGO_SETTINGS_MODULE=poms_app.settings
+    export C_FORCE_ROOT='true'
 
     supervisord
 
@@ -53,16 +63,6 @@ then
     supervisorctl start celerybeat
 
 fi
-
-if [ $USE_FILEBEATS == "True" ];
-then
-
-    echo "Run Filebeat"
-
-    service filebeat start
-
-fi
-
 
 if [ $USE_FLOWER == "True" ];
 then

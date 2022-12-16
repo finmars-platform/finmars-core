@@ -105,7 +105,7 @@ class BootstrapConfig(AppConfig):
 
                     master_user.save()
 
-                    _l.info("Master User From Backup Renamed to new Name and Base API URL")
+                    _l.info("Master User From Backup Renamed to new Name %s and Base API URL %s" % (master_user.name, master_user.base_api_url))
                     # Member.objects.filter(is_owner=False).delete()
 
             except Exception as e:
@@ -122,7 +122,7 @@ class BootstrapConfig(AppConfig):
 
                 master_user.save()
 
-                _l.info("Master user created")
+                _l.info("Master user with name %s and base_api_url %s created" % (master_user.name, master_user.base_api_url))
 
                 member = Member.objects.create(user=user, master_user=master_user, is_owner=True, is_admin=True)
                 member.save()

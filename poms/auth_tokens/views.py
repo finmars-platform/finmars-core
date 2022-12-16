@@ -15,6 +15,7 @@ from poms.auth_tokens.serializers import SetAuthTokenSerializer, CreateUserSeria
     CreateMemberSerializer, DeleteMemberSerializer, RenameMasterUserSerializer, MasterUserChangeOwnerSerializer
 from poms.auth_tokens.utils import generate_random_string
 from poms.users.models import MasterUser, Member, UserProfile, Group
+from poms_app import settings
 
 _l = logging.getLogger('poms.auth_tokens')
 
@@ -369,23 +370,27 @@ class CreateMember(APIView):
         serializer.is_valid(raise_exception=True)
 
         groups = serializer.validated_data['groups']
+        username = serializer.validated_data['username']
 
-        user_id = serializer.validated_data['user_id']
+        # # user_id = serializer.validated_data['user_id']
 
-        user_legacy_id = None
-        if 'user_legacy_id' in serializer.validated_data:
-            user_legacy_id = serializer.validated_data['user_legacy_id']
+        #
+        # user_legacy_id = None
+        # if 'user_legacy_id' in serializer.validated_data:
+        #     user_legacy_id = serializer.validated_data['user_legacy_id']
+        #
+        # master_user_id = serializer.validated_data['master_user_id']
+        #
+        # user_legacy_id = None
+        # if 'master_user_legacy_id' in serializer.validated_data:
+        #     user_legacy_id = serializer.validated_data['master_user_legacy_id']
+        #
+        # user_profile = UserProfile.objects.get(user_unique_id=user_id)
 
-        master_user_id = serializer.validated_data['master_user_id']
 
-        user_legacy_id = None
-        if 'master_user_legacy_id' in serializer.validated_data:
-            user_legacy_id = serializer.validated_data['master_user_legacy_id']
+        user, created = User.objects.get_or_create(username=username)
 
-        user_profile = UserProfile.objects.get(user_unique_id=user_id)
-        user = User.objects.get(id=user_profile.user_id)
-
-        master_user = MasterUser.objects.get(unique_id=master_user_id)
+        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
         try:
             member = Member.objects.create(user=user, master_user=master_user)

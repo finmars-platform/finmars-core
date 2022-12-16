@@ -122,86 +122,6 @@ class MasterUser(models.Model):
                                 verbose_name=gettext_lazy('language'))
     timezone = models.CharField(max_length=TIMEZONE_MAX_LENGTH, default=settings.TIME_ZONE,
                                 verbose_name=gettext_lazy('timezone'))
-    system_currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL,
-                                        related_name='+',
-                                        verbose_name=gettext_lazy('system currency'))
-
-    account_type = models.ForeignKey('accounts.AccountType', null=True, blank=True, on_delete=models.SET_NULL,
-                                     verbose_name=gettext_lazy('account type'))
-    account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.SET_NULL,
-                                verbose_name=gettext_lazy('account'))
-
-    currency = models.ForeignKey('currencies.Currency', null=True, blank=True, on_delete=models.SET_NULL,
-                                 verbose_name=gettext_lazy('currency'))
-    counterparty_group = models.ForeignKey('counterparties.CounterpartyGroup', null=True, blank=True,
-                                           on_delete=models.SET_NULL, verbose_name=gettext_lazy('counterparty group'))
-    counterparty = models.ForeignKey('counterparties.Counterparty', null=True, blank=True, on_delete=models.SET_NULL,
-                                     verbose_name=gettext_lazy('counterparty'))
-    responsible_group = models.ForeignKey('counterparties.ResponsibleGroup', null=True, blank=True,
-                                          on_delete=models.SET_NULL, verbose_name=gettext_lazy('responsible group'))
-    responsible = models.ForeignKey('counterparties.Responsible', null=True, blank=True, on_delete=models.SET_NULL,
-                                    verbose_name=gettext_lazy('responsible'))
-
-    instrument_type = models.ForeignKey('instruments.InstrumentType', null=True, blank=True, on_delete=models.SET_NULL,
-                                        verbose_name=gettext_lazy('instrument type'))
-    instrument = models.ForeignKey('instruments.Instrument', null=True, blank=True, on_delete=models.SET_NULL,
-                                   verbose_name=gettext_lazy('instrument'))
-
-    portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.SET_NULL,
-                                  verbose_name=gettext_lazy('portfolio'))
-
-    strategy1_group = models.ForeignKey('strategies.Strategy1Group', null=True, blank=True, on_delete=models.SET_NULL,
-                                        related_name='master_user_strategy1_group',
-                                        verbose_name=gettext_lazy('strategy1 group'))
-    strategy1_subgroup = models.ForeignKey('strategies.Strategy1Subgroup', null=True, blank=True,
-                                           on_delete=models.SET_NULL, related_name='master_user_strategy1_subgroup',
-                                           verbose_name=gettext_lazy('strategy1 subgroup'))
-    strategy1 = models.ForeignKey('strategies.Strategy1', null=True, blank=True, on_delete=models.SET_NULL,
-                                  related_name='master_user_strategy1', verbose_name=gettext_lazy('strategy1'))
-
-    strategy2_group = models.ForeignKey('strategies.Strategy2Group', null=True, blank=True, on_delete=models.SET_NULL,
-                                        related_name='master_user_strategy2_group',
-                                        verbose_name=gettext_lazy('strategy2 group'))
-    strategy2_subgroup = models.ForeignKey('strategies.Strategy2Subgroup', null=True, blank=True,
-                                           on_delete=models.SET_NULL, related_name='master_user_strategy2_subgroup',
-                                           verbose_name=gettext_lazy('strategy2 subgroup'))
-    strategy2 = models.ForeignKey('strategies.Strategy2', null=True, blank=True, on_delete=models.SET_NULL,
-                                  related_name='master_user_strategy2', verbose_name=gettext_lazy('strategy2'))
-
-    strategy3_group = models.ForeignKey('strategies.Strategy3Group', null=True, blank=True, on_delete=models.SET_NULL,
-                                        related_name='master_user_strategy3_group',
-                                        verbose_name=gettext_lazy('strategy3 group'))
-    strategy3_subgroup = models.ForeignKey('strategies.Strategy3Subgroup', null=True, blank=True,
-                                           on_delete=models.SET_NULL, related_name='master_user_strategy3_subgroup',
-                                           verbose_name=gettext_lazy('strategy3 subgroup'))
-    strategy3 = models.ForeignKey('strategies.Strategy3', null=True, blank=True, on_delete=models.SET_NULL,
-                                  related_name='master_user_strategy3', verbose_name=gettext_lazy('strategy3'))
-
-    thread_group = models.ForeignKey('chats.ThreadGroup', null=True, blank=True, on_delete=models.SET_NULL,
-                                     related_name='master_user_thread_group',
-                                     verbose_name=gettext_lazy('thread group'))
-
-    transaction_type = models.ForeignKey('transactions.TransactionType', null=True, blank=True,
-                                         on_delete=models.SET_NULL,
-                                         verbose_name=gettext_lazy('transaction type'))
-
-    transaction_type_group = models.ForeignKey('transactions.TransactionTypeGroup', null=True, blank=True,
-                                               on_delete=models.SET_NULL,
-                                               verbose_name=gettext_lazy('transaction type group'))
-
-    mismatch_portfolio = models.ForeignKey('portfolios.Portfolio', null=True, blank=True, on_delete=models.SET_NULL,
-                                           related_name='master_user_mismatch_portfolio',
-                                           verbose_name=gettext_lazy('mismatch portfolio'))
-    mismatch_account = models.ForeignKey('accounts.Account', null=True, blank=True, on_delete=models.SET_NULL,
-                                         related_name='master_user_mismatch_account',
-                                         verbose_name=gettext_lazy('mismatch account'))
-
-    pricing_policy = models.ForeignKey('instruments.PricingPolicy', null=True, blank=True, on_delete=models.SET_NULL,
-                                       verbose_name=gettext_lazy('pricing policy'))
-
-    # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', null=True, blank=True,
-    #                                           on_delete=models.SET_NULL,
-    #                                           verbose_name=gettext_lazy('price download scheme'))
 
     # TODO: what is notification_business_days
     notification_business_days = models.IntegerField(default=0)
@@ -793,7 +713,6 @@ class MasterUser(models.Model):
         from poms.integrations.models import PricingAutomatedSchedule, ProviderClass
         from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, \
             Strategy2Subgroup, Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
-        from poms.chats.models import ThreadGroup
         from poms.transactions.models import TransactionTypeGroup, TransactionType
         from poms.obj_perms.utils import get_change_perms, assign_perms3
         from poms.instruments.models import PricingPolicy
@@ -866,8 +785,6 @@ class MasterUser(models.Model):
         strategy3_subgroup = Strategy3Subgroup.objects.create(master_user=self, group=strategy3_group, name='-')
         strategy3 = Strategy3.objects.create(master_user=self, subgroup=strategy3_subgroup, name='-')
 
-        thread_group = ThreadGroup.objects.create(master_user=self, name='-')
-
         transaction_type = TransactionType.objects.create(master_user=self, name='-')
         transaction_type_group = TransactionTypeGroup.objects.create(master_user=self, name='-')
 
@@ -911,7 +828,6 @@ class MasterUser(models.Model):
         self.strategy3_group = strategy3_group
         self.strategy3_subgroup = strategy3_subgroup
         self.strategy3 = strategy3
-        self.thread_group = thread_group
         self.transaction_type_group = transaction_type_group
         self.mismatch_portfolio = portfolio
         self.mismatch_account = account
@@ -941,7 +857,6 @@ class MasterUser(models.Model):
         ecosystem_defaults.strategy3_group = strategy3_group
         ecosystem_defaults.strategy3_subgroup = strategy3_subgroup
         ecosystem_defaults.strategy3 = strategy3
-        ecosystem_defaults.thread_group = thread_group
         ecosystem_defaults.transaction_type_group = transaction_type_group
         ecosystem_defaults.mismatch_portfolio = portfolio
         ecosystem_defaults.mismatch_account = account
@@ -974,7 +889,7 @@ class MasterUser(models.Model):
 
         for c in [account_type, account, counterparty_group, counterparty, responsible_group, responsible, portfolio,
                   instrument_type, instrument, strategy1_group, strategy1_subgroup, strategy1, strategy2_group,
-                  strategy2_subgroup, strategy2, strategy3_group, strategy3_subgroup, strategy3, thread_group,
+                  strategy2_subgroup, strategy2, strategy3_group, strategy3_subgroup, strategy3,
                   transaction_type_group]:
             for p in get_change_perms(c):
                 assign_perms3(c, perms=[{'group': group, 'permission': p}])
@@ -1100,8 +1015,6 @@ class EcosystemDefault(models.Model):
     strategy3 = models.ForeignKey('strategies.Strategy3', null=True, blank=True, on_delete=models.PROTECT,
                                   verbose_name=gettext_lazy('strategy3'))
 
-    thread_group = models.ForeignKey('chats.ThreadGroup', null=True, blank=True, on_delete=models.PROTECT,
-                                     verbose_name=gettext_lazy('thread group'))
 
     transaction_type = models.ForeignKey('transactions.TransactionType', null=True, blank=True,
                                          on_delete=models.PROTECT,
@@ -1397,7 +1310,6 @@ class Group(models.Model):
     def grant_all_permissions_to_public_group(self, instance, master_user):
 
         from poms.accounts.models import Account, AccountType
-        from poms.chats.models import ThreadGroup, Thread
         from poms.counterparties.models import CounterpartyGroup, Counterparty, ResponsibleGroup, Responsible
         from poms.instruments.models import InstrumentType, Instrument
         from poms.obj_attrs.models import GenericAttributeType
@@ -1429,9 +1341,6 @@ class Group(models.Model):
 
         self.grant_all_permissions_to_model_objects(TransactionTypeGroup, master_user, instance)
         self.grant_all_permissions_to_model_objects(TransactionType, master_user, instance)
-
-        self.grant_all_permissions_to_model_objects(ThreadGroup, master_user, instance)
-        self.grant_all_permissions_to_model_objects(Thread, master_user, instance)
 
         self.grant_all_permissions_to_model_objects(Portfolio, master_user, instance)
 

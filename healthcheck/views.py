@@ -67,11 +67,11 @@ class HealthcheckView(APIView):
             status_code = 500
             data['status'] = 'fail'
 
-        for item in self.plugins:
-
-            key = str(item.identifier())
-
-            data['checks'][key] = item.pretty_status()
+        # for item in self.plugins:
+        #
+        #     key = str(item.identifier())
+        #
+        #     data['checks'][key] = item.pretty_status()
 
         return JsonResponse(
             data,
