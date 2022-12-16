@@ -60,13 +60,7 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
             ('manage_currency', 'Can manage currency'),
         ]
 
-    @property
-    def is_system(self):
-        return self.master_user.system_currency_id == self.id if self.master_user_id else False
 
-    @property
-    def is_default(self):
-        return self.master_user.currency_id == self.id if self.master_user_id else False
 
 
 class CurrencyHistory(DataTimeStampedModel):

@@ -93,7 +93,7 @@ class Report(BaseReport):
 
 
         self.report_type = report_type if report_type is not None else Report.TYPE_BALANCE
-        self.report_currency = report_currency or master_user.system_currency
+        self.report_currency = report_currency or self.ecosystem_default.currency
         self.pricing_policy = pricing_policy or self.ecosystem_default.pricing_policy
         self.pl_first_date = pl_first_date
         self.report_date = report_date or (date_now() - timedelta(days=1))
@@ -232,13 +232,6 @@ class Report(BaseReport):
     @property
     def approach_end_multiplier(self):
         return 1.0 - self.approach_multiplier
-
-    @property
-    def system_ccy(self):
-        return self.master_user.system_currency
-
-    def is_system_ccy(self, ccy):
-        return self.master_user.system_currency_id == ccy.id
 
 
 class ReportItem:
@@ -393,7 +386,9 @@ class PerformanceReport(BaseReport):
         # self.begin_date = date.min
         self.end_date = end_date or d
 
-        self.report_currency = report_currency or master_user.system_currency
+        self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+
+        self.report_currency = report_currency or self.ecosystem_default.currency
         self.pricing_policy = pricing_policy
         self.calculation_type = calculation_type
         self.segmentation_type = segmentation_type

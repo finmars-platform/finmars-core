@@ -498,7 +498,7 @@ class ExpressionProcedureProcess(object):
 
         try:
 
-            procedure_instance = ExpressionProcedureInstance.objects.create(procedure=self.procedure,
+            self.procedure_instance = ExpressionProcedureInstance.objects.create(procedure=self.procedure,
                                                                             master_user=self.master_user,
                                                                             member=self.member,
                                                                             status=ExpressionProcedureInstance.STATUS_PENDING,
@@ -513,7 +513,7 @@ class ExpressionProcedureProcess(object):
 
             send_system_message(master_user=self.master_user,
                                 performed_by='System',
-                                description="Procedure %s. Start" % procedure_instance.id,
+                                description="Procedure %s. Start" % self.procedure_instance.id,
                                 )
 
             names = self.procedure.data
@@ -529,15 +529,15 @@ class ExpressionProcedureProcess(object):
             _l.info('ExpressionProcedureProcess.names %s' % names)
             _l.info('ExpressionProcedureProcess.context %s' % self.context)
 
-            procedure_instance.notes = ''
+            self.procedure_instance.notes = ''
 
             if 'execution_context' in self.context:
-                procedure_instance.notes = procedure_instance.notes = 'Executed by: %s %s' % (
+                self.procedure_instance.notes = self.procedure_instance.notes = 'Executed by: %s %s' % (
                 self.context['execution_context']['source'], self.context['execution_context']['actor']) + '\n'
 
-            procedure_instance.notes = procedure_instance.notes + 'Content: \n' + str(names) + '\n'
-            procedure_instance.notes = procedure_instance.notes + '==========\n'
-            procedure_instance.notes = procedure_instance.notes + 'Code: ' + str(self.procedure.code)
+            self.procedure_instance.notes = self.procedure_instance.notes + 'Content: \n' + str(names) + '\n'
+            self.procedure_instance.notes = self.procedure_instance.notes + '==========\n'
+            self.procedure_instance.notes = self.procedure_instance.notes + 'Code: ' + str(self.procedure.code)
 
             try:
 
@@ -546,28 +546,28 @@ class ExpressionProcedureProcess(object):
                 _l.debug('ExpressionProcedureProcess.result %s' % result)
 
                 if result:
-                    procedure_instance.result = result
+                    self.procedure_instance.result = result
 
                 if log:
-                    procedure_instance.log = log
+                    self.procedure_instance.log = log
 
-                procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE
+                self.procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE
 
-                procedure_instance.save()
+                self.procedure_instance.save()
 
             except Exception as e:
 
-                procedure_instance.status = ExpressionProcedureInstance.STATUS_ERROR
+                self.procedure_instance.status = ExpressionProcedureInstance.STATUS_ERROR
 
-                procedure_instance.error_message = str(e)
-                procedure_instance.save()
+                self.procedure_instance.error_message = str(e)
+                self.procedure_instance.save()
 
                 _l.error("ExpressionProcedureProcess.safe_eval error %s" % e)
                 _l.error("ExpressionProcedureProcess.safe_eval traceback %s" % traceback.print_exc())
 
             send_system_message(master_user=self.master_user,
                                 performed_by='System',
-                                description="Procedure %s. Done" % procedure_instance.id,
+                                description="Procedure %s. Done" % self.procedure_instance.id,
                                 )
 
         except Exception as e:

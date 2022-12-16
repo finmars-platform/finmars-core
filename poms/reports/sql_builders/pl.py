@@ -2847,7 +2847,7 @@ class PLReportBuilderSql:
 
         query = query.format(report_date=self.instance.pl_first_date,
                              master_user_id=self.instance.master_user.id,
-                             default_currency_id=self.instance.master_user.system_currency_id,
+                             default_currency_id=self.ecosystem_defaults.currency_id,
                              report_currency_id=self.instance.report_currency.id,
                              pricing_policy_id=self.instance.pricing_policy.id,
                              report_fx_rate=report_fx_rate,
@@ -2884,7 +2884,7 @@ class PLReportBuilderSql:
 
         query = query.format(report_date=self.instance.report_date,
                              master_user_id=self.instance.master_user.id,
-                             default_currency_id=self.instance.master_user.system_currency_id,
+                             default_currency_id=self.ecosystem_defaults.currency_id,
                              report_currency_id=self.instance.report_currency.id,
                              pricing_policy_id=self.instance.pricing_policy.id,
                              report_fx_rate=report_fx_rate,

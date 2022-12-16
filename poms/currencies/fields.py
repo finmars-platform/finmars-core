@@ -17,6 +17,7 @@ class CurrencyDefault(object):
         return self._master_user.currency
 
 
+# TODO, refactor later, get rid of this field
 class SystemCurrencyDefault(object):
     requires_context = True
 
@@ -26,7 +27,12 @@ class SystemCurrencyDefault(object):
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
-        return self._master_user.system_currency
+
+        from poms.users.models import EcosystemDefault
+
+        ecosystem_default = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        return ecosystem_default.currency
 
 
 class CurrencyField(PrimaryKeyRelatedFilteredField):

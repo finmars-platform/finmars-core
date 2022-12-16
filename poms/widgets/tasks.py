@@ -97,9 +97,6 @@ def collect_balance_report_history(self, task_id):
             balance_report_history = BalanceReportHistory.objects.get(
                 master_user=task.master_user,
                 date=report_date,
-                report_currency=report_currency,
-                pricing_policy=pricing_policy,
-                cost_method=cost_method,
                 portfolio=portfolio
             )
 
@@ -283,10 +280,6 @@ def collect_pl_report_history(self, task_id):
             pl_report_history = PLReportHistory.objects.get(
                 master_user=task.master_user,
                 date=report_date,
-                pl_first_date=pl_first_date,
-                report_currency=report_currency,
-                pricing_policy=pricing_policy,
-                cost_method=cost_method,
                 portfolio=portfolio
             )
 

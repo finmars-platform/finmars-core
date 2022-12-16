@@ -314,8 +314,12 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
         master_user=master_user,
         member=member,
         verbose_name="Calculate Portfolio Register Prices",
-        type='calculate_portfolio_register_price_history'
+        type='calculate_portfolio_register_price_history',
+        status=CeleryTask.STATUS_PENDING
     )
+
+    if not task.notes:
+        task.notes = ''
 
     try:
 
@@ -353,11 +357,20 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
                     _date_from = first_transaction.accounting_date
 
                 except Exception as e:
-                    task.error_message = "No first transaction"
-                    task.status = CeleryTask.STATUS_ERROR
+                    task.notes = task.notes +  'Portfolio % has no transactions' % portfolio_register.portfolio.name + '\n'
                     task.save()
+                    # task.error_message = "No first transaction"
+                    # task.status = CeleryTask.STATUS_ERROR
+                    # task.save()
 
-                    return
+                    continue
+
+            if not portfolio_register.linked_instrument:
+
+                task.notes = task.notes +  'Portfolio % has no linked instrument' % portfolio_register.portfolio.name + '\n'
+                task.save()
+                continue
+
 
             date_to = timezone_today() - timedelta(days=1)
 
@@ -377,8 +390,7 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
                     registry_record = \
                         PortfolioRegisterRecord.objects.filter(instrument=portfolio_register.linked_instrument,
                                                                transaction_date__lte=date).order_by('-transaction_date',
-                                                                                                    '-transaction_code')[
-                            0]
+                                                                                                    '-transaction_code').first()
 
                     balance_report = calculate_simple_balance_report(date, portfolio_register, true_pricing_policy)
 
@@ -415,6 +427,7 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
 
                 except Exception as e:
                     _l.error('calculate_portfolio_register_price_history.error %s ' % e)
+                    _l.error("calculate_portfolio_register_price_history.exception %s" % traceback.format_exc())
                     _l.error('date %s' % date)
 
         send_system_message(master_user=master_user,

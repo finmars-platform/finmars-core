@@ -13,7 +13,6 @@
 # from rest_framework.test import APITestCase
 # 
 # from poms.accounts.models import AccountType, Account
-# from poms.chats.models import Thread, Message, DirectMessage, ThreadGroup
 # from poms.counterparties.models import Counterparty, Responsible, CounterpartyGroup, ResponsibleGroup
 # from poms.currencies.models import Currency
 # from poms.instruments.models import InstrumentClass, InstrumentType, Instrument
@@ -362,14 +361,7 @@
 # 
 #     def get_transaction_type(self, name, master_user):
 #         return TransactionType.objects.get(name=name, master_user__name=master_user)
-# 
-#     def create_thread_group(self, name, master_user):
-#         master_user = self.get_master_user(master_user)
-#         thread = ThreadGroup.objects.create(master_user=master_user, name=name)
-#         return thread
-# 
-#     def get_thread_group(self, name, master_user):
-#         return ThreadGroup.objects.get(name=name, master_user__name=master_user)
+#
 # 
 #     def create_thread(self, subject, master_user, thread_group='-', is_closed=False):
 #         thread_group = self.get_thread_group(thread_group, master_user)

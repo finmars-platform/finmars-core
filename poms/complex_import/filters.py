@@ -3,7 +3,6 @@ from django.contrib.contenttypes.models import ContentType
 
 from poms.accounts.models import Account
 from poms.accounts.models import AccountType
-from poms.chats.models import ThreadGroup, Thread
 from poms.counterparties.models import Counterparty, CounterpartyGroup, ResponsibleGroup
 from poms.counterparties.models import Responsible
 from poms.currencies.models import Currency, CurrencyHistory
@@ -21,7 +20,7 @@ def get_scheme_content_types():
               Strategy1Group, Strategy1Subgroup, Strategy1,
               Strategy2Group, Strategy2Subgroup, Strategy2,
               Strategy3Group, Strategy3Subgroup, Strategy3, PriceHistory, CurrencyHistory,
-              TransactionTypeGroup, TransactionType, ThreadGroup, Thread]
+              TransactionTypeGroup, TransactionType]
     return [ContentType.objects.get_for_model(model).pk for model in models]
 
 

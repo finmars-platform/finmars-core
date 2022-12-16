@@ -48,7 +48,7 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
             'reference_for_pricing',
             'pricing_condition',
             'default_fx_rate',
-            'is_default', 'is_deleted', 'is_enabled',
+            'is_deleted', 'is_enabled',
             'pricing_policies'
         ]
 
@@ -183,7 +183,7 @@ class CurrencyEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribu
         fields = [
             'id', 'master_user',
             'user_code', 'name', 'short_name', 'notes',
-            'is_default', 'is_deleted', 'is_enabled',
+            'is_deleted', 'is_enabled',
 
             'reference_for_pricing', 'default_fx_rate',
             'pricing_condition'
@@ -197,7 +197,7 @@ class CurrencyLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUser
         model = Currency
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name',
-            'is_default', 'is_deleted', 'is_enabled',
+            'is_deleted', 'is_enabled',
         ]
 
 
@@ -225,7 +225,8 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
         model = CurrencyHistory
         fields = [
             'id', 'currency', 'currency_object', 'pricing_policy', 'pricing_policy_object', 'date', 'fx_rate',
-            'procedure_modified_datetime'
+            'procedure_modified_datetime',
+            'modified'
         ]
 
     def __init__(self, *args, **kwargs):
