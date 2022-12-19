@@ -3044,10 +3044,9 @@ class PLReportBuilderSql:
                                  final_consolidation_where_filters=self.get_final_consolidation_where_filters_columns()
                                  )
 
-            if settings.DEBUG:
+            if settings.SERVER_TYPE == 'local':
                 with open(os.path.join(settings.BASE_DIR, 'query_result_before_execution_pl.txt'), 'w') as the_file:
-                    the_file. \
-                        write(query)
+                    the_file.write(query)
 
             cursor.execute(query)
 
@@ -3056,7 +3055,7 @@ class PLReportBuilderSql:
             query_str = str(cursor.query, 'utf-8')
 
             if settings.SERVER_TYPE == 'local':
-                with open('/tmp/query_result_pl.txt', 'w') as the_file:
+                with open(os.path.join(settings.BASE_DIR, '/tmp/query_result_pl.txt'), 'w') as the_file:
                     the_file.write(query_str)
 
             result_tmp_raw = dictfetchall(cursor)
@@ -3074,7 +3073,7 @@ class PLReportBuilderSql:
                 item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
 
                 if item['item_type'] == ITEM_TYPE_MISMATCH:
-                    if item['position_size']:
+                    if item['position_size'] and item['total']:
                         result_tmp.append(item)
                 else:
                     result_tmp.append(item)

@@ -1517,20 +1517,25 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
             permission_classes=[IsAuthenticated])
     def view(self, request, pk=None):
 
-        complex_transaction = self.get_object()
+        _st = time.perf_counter()
 
+        complex_transaction = ComplexTransaction.objects.get(id=pk)
+        transaction_type = TransactionType.objects.get(id=complex_transaction.transaction_type_id)
 
         instance = ComplexTransactionViewOnly(complex_transaction,
-                                              transaction_type=complex_transaction.transaction_type,
+                                              transaction_type=transaction_type
                                               )
 
-        _st = time.perf_counter()
+        _serialize_st = time.perf_counter()
         serializer = self.get_serializer(instance=instance)
-
-        result_time = "{:3.3f}".format(time.perf_counter() - _st)
+        response = Response(serializer.data)
+        result_time = "{:3.3f}".format(time.perf_counter() - _serialize_st)
         _l.debug('ComplexTransactionViewOnly.serialize total %s' % result_time)
 
-        return Response(serializer.data)
+        result_time = "{:3.3f}".format(time.perf_counter() - _st)
+        _l.debug('ComplexTransactionViewOnly.response total %s' % result_time)
+
+        return response
 
 
 class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
