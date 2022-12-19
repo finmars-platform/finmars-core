@@ -275,6 +275,22 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         return instance
 
 
+class TransactionTypeInputViewOnlySerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
+    name = serializers.CharField(max_length=255, allow_null=False, allow_blank=False,
+                                 validators=[
+                                     RegexValidator(regex='\A[a-zA-Z_][a-zA-Z0-9_]*\Z'),
+                                 ])
+    content_type = TransactionTypeInputContentTypeField(required=False, allow_null=True, allow_empty=True)
+
+    class Meta:
+        model = TransactionTypeInput
+        fields = [
+            'id', 'name', 'verbose_name', 'value_type', 'content_type', 'order',
+            'tooltip', 'reference_table'
+        ]
+        read_only_fields = ['order']
+
 class TransactionTypeInputViewSerializer(serializers.ModelSerializer):
     content_type = ReadOnlyContentTypeField()
 
@@ -2164,6 +2180,21 @@ class TransactionTypeViewSerializer(ModelWithObjectPermissionSerializer):
         ]
 
 
+class TransactionTypeViewOnlySerializer(ModelWithObjectPermissionSerializer):
+
+    inputs = TransactionTypeInputViewOnlySerializer(required=False, many=True)
+
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
+        model = TransactionType
+        fields = [
+            'id', 'master_user', 'group',
+
+            'user_code', 'name', 'short_name', 'public_name', 'notes',
+
+            'inputs',
+        ]
+
+
 class TransactionSimpleSerializer(ModelWithObjectPermissionSerializer):
     class Meta:
         model = Transaction
@@ -2331,6 +2362,54 @@ class TransactionSerializer(ModelWithObjectPermissionSerializer):
         self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
         self.fields['allocation_balance_object'] = InstrumentViewSerializer(source='allocation_balance', read_only=True)
         self.fields['allocation_pl_object'] = InstrumentViewSerializer(source='allocation_pl', read_only=True)
+
+
+# TODO check permissions?
+class TransactionViewOnlySerializer(serializers.ModelSerializer):
+    master_user = MasterUserField()
+    complex_transaction = serializers.PrimaryKeyRelatedField(read_only=True)
+    complex_transaction_order = serializers.IntegerField(read_only=True)
+
+    instrument = InstrumentField(required=False, allow_null=True)
+    settlement_currency = CurrencyField(default=SystemCurrencyDefault())
+    portfolio = PortfolioField(default=PortfolioDefault())
+    account_position = AccountField(default=AccountDefault())
+
+    class Meta:
+        model = Transaction
+        fields = [
+            'id',
+            'master_user',
+            'transaction_code',
+            'complex_transaction',
+            'complex_transaction_order',
+            'transaction_class',
+            'instrument',
+            'settlement_currency',
+            'portfolio',
+            'account_position'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        skip_complex_transaction = kwargs.pop('skip_complex_transaction', False)
+        super(TransactionViewOnlySerializer, self).__init__(*args, **kwargs)
+
+        from poms.currencies.serializers import CurrencyViewSerializer
+        from poms.instruments.serializers import InstrumentViewSerializer
+        from poms.portfolios.serializers import PortfolioViewSerializer
+        from poms.accounts.serializers import AccountViewSerializer
+
+        self.fields['transaction_class_object'] = TransactionClassSerializer(source='transaction_class', read_only=True)
+
+        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
+        self.fields['settlement_currency_object'] = CurrencyViewSerializer(source='settlement_currency', read_only=True)
+
+        self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
+
+        self.fields['account_position_object'] = AccountViewSerializer(source='account_position', read_only=True)
+
+
+
 
 
 class InstrumentSimpleViewSerializer(ModelWithObjectPermissionSerializer):
@@ -3094,6 +3173,8 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
     def __init__(self, **kwargs):
         super(TransactionTypeProcessValuesSerializer, self).__init__(**kwargs)
 
+        _st = time.perf_counter()
+
         from poms.accounts.serializers import AccountViewSerializer
         from poms.currencies.serializers import CurrencyViewSerializer
         from poms.instruments.serializers import InstrumentViewSerializer
@@ -3250,6 +3331,8 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
             else:
                 raise RuntimeError('Unknown value type %s' % i.value_type)
 
+        result_time = "{:3.3f}".format(time.perf_counter() - _st)
+        _l.info('TransactionTypeProcessValuesSerializer serialize %s' % result_time)
 
 class PhantomInstrumentField(InstrumentField):
     def to_internal_value(self, data):
@@ -3416,6 +3499,163 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
 
         return data
 
+
+
+
+class ComplexTransactionViewOnlyComplexTransactionSerializer(serializers.ModelSerializer):
+
+    def __init__(self, *args, **kwargs):
+        super(ComplexTransactionViewOnlyComplexTransactionSerializer, self).__init__(*args, **kwargs)
+
+        # self.fields['transaction_type_object'] = TransactionTypeViewSerializer(
+        #     source='transaction_type', read_only=True)
+
+        self.fields['transactions_object'] = TransactionViewOnlySerializer(
+            source='transactions', many=True, read_only=True)
+
+        self.fields['object_permissions'] = GenericObjectPermissionSerializer(many=True, required=False,
+                                                                              allow_null=True, read_only=True)
+
+    class Meta:
+        model = ComplexTransaction
+        fields = [
+            'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'transactions', 'master_user',
+
+            'is_locked', 'is_canceled', 'error_code', 'visibility_status',
+
+            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
+            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
+
+            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
+            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
+            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
+
+            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
+            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
+            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
+
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
+            'object_permissions',
+
+            'execution_log'
+
+        ]
+
+
+class ComplexTransactionViewOnly(object):
+
+    def __init__(self, complex_transaction, transaction_type):
+
+        _st = time.perf_counter()
+
+        self.complex_transaction = complex_transaction
+        self.transaction_type = transaction_type
+
+
+        self.inputs = list(self.transaction_type.inputs.all())
+
+        self.values = {}
+
+        for ci in self.complex_transaction.inputs.all():
+            i = ci.transaction_type_input
+            value = None
+            if i.value_type == TransactionTypeInput.STRING or i.value_type == TransactionTypeInput.SELECTOR:
+                value = ci.value_string
+            elif i.value_type == TransactionTypeInput.NUMBER:
+                value = ci.value_float
+            elif i.value_type == TransactionTypeInput.DATE:
+                value = ci.value_date
+            elif i.value_type == TransactionTypeInput.RELATION:
+                value = self._get_val_by_model_cls_for_complex_transaction_input(self.complex_transaction.master_user,
+                                                                            ci, i.content_type.model_class())
+            if value is not None:
+                self.values[i.name] = value
+
+        result_time = "{:3.3f}".format(time.perf_counter() - _st)
+        _l.debug('ComplexTransactionViewOnly.init %s' % result_time)
+
+    def _get_val_by_model_cls_for_complex_transaction_input(self, master_user, obj, model_class):
+            try:
+                if issubclass(model_class, Account):
+                    return Account.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Currency):
+                    return Currency.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Instrument):
+                    return Instrument.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, InstrumentType):
+                    return InstrumentType.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Counterparty):
+                    return Counterparty.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Responsible):
+                    return Responsible.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Strategy1):
+                    return Strategy1.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Strategy2):
+                    return Strategy2.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Strategy3):
+                    return Strategy3.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, PaymentSizeDetail):
+                    return PaymentSizeDetail.objects.get(user_code=obj.value_relation)
+                elif issubclass(model_class, Portfolio):
+                    return Portfolio.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, PricingPolicy):
+                    return PricingPolicy.objects.get(master_user=master_user, user_code=obj.value_relation)
+                elif issubclass(model_class, Periodicity):
+                    return Periodicity.objects.get(user_code=obj.value_relation)
+                elif issubclass(model_class, AccrualCalculationModel):
+                    return AccrualCalculationModel.objects.get(user_code=obj.value_relation)
+                elif issubclass(model_class, EventClass):
+                    return EventClass.objects.get(user_code=obj.value_relation)
+                elif issubclass(model_class, NotificationClass):
+                    return NotificationClass.objects.get(user_code=obj.value_relation)
+            except Exception:
+                _l.info("Could not find default value relation %s " % obj.value_relation)
+                return None
+
+
+class ComplexTransactionViewOnlySerializer(serializers.Serializer):
+    def __init__(self, **kwargs):
+
+        kwargs['context'] = context = kwargs.get('context', {}) or {}
+        super(ComplexTransactionViewOnlySerializer, self).__init__(**kwargs)
+        context['instance'] = self.instance
+
+
+        self.fields['transaction_type'] = serializers.PrimaryKeyRelatedField(read_only=True)
+        self.fields['transaction_type_object'] = TransactionTypeViewOnlySerializer(source='transaction_type', read_only=True)
+        self.fields['book_transaction_layout'] = serializers.SerializerMethodField()
+
+        self.fields['complex_transaction_status'] = serializers.ChoiceField(
+            required=False,
+            allow_null=True,
+            initial=ComplexTransaction.PRODUCTION,
+            default=ComplexTransaction.PRODUCTION,
+            choices=(
+                (ComplexTransaction.PRODUCTION, 'Production'),
+                (ComplexTransaction.PENDING, 'Pending'),
+                (ComplexTransaction.IGNORE, 'Ignore'),
+            )
+        )
+
+        self.fields['complex_transaction'] = ComplexTransactionViewOnlyComplexTransactionSerializer(
+            read_only=False, required=False, allow_null=True)
+
+
+        self.fields['values'] = TransactionTypeProcessValuesSerializer(instance=self.instance, required=False)
+
+
+
+    def get_book_transaction_layout(self, obj):
+        return obj.transaction_type.book_transaction_layout
+
+    # def get_complex_transaction(self, obj):
+    #     return {
+    #         "transaction_type": obj.transaction_type.id
+    #     }
 
 class TransactionTypeProcessSerializer(serializers.Serializer):
     def __init__(self, **kwargs):
