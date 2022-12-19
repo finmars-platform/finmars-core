@@ -1562,6 +1562,8 @@ class PriceHistory(DataTimeStampedModel):
     procedure_modified_datetime = models.DateTimeField(null=True, blank=True,
                                                        verbose_name=gettext_lazy('procedure_modified_datetime'))
 
+    is_temporary_price = models.BooleanField(default=False, verbose_name=gettext_lazy('is temporary price'))
+
     class Meta:
         verbose_name = gettext_lazy('price history')
         verbose_name_plural = gettext_lazy('price histories')

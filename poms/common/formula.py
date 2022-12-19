@@ -1188,7 +1188,7 @@ def _add_fx_rate(evaluator, date, currency, pricing_policy, fx_rate=0, overwrite
 _add_fx_rate.evaluator = True
 
 
-def _add_price_history(evaluator, date, instrument, pricing_policy, principal_price=0, accrued_price=0, overwrite=True):
+def _add_price_history(evaluator, date, instrument, pricing_policy, principal_price=0, accrued_price=0, is_temporary_price=False, overwrite=True):
     from poms.users.utils import get_master_user_from_context
     from poms.instruments.models import PriceHistory
 
@@ -1220,6 +1220,7 @@ def _add_price_history(evaluator, date, instrument, pricing_policy, principal_pr
     except PriceHistory.DoesNotExist:
 
         result = PriceHistory.objects.create(date=date, instrument=instrument,
+                                             is_temporary_price=is_temporary_price,
                                              pricing_policy=pricing_policy, principal_price=principal_price,
                                              accrued_price=accrued_price)
 

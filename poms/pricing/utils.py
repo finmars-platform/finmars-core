@@ -314,7 +314,8 @@ def roll_price_history_for_n_day_forward(item, procedure, last_price, master_use
                 price = PriceHistory(
                     instrument=last_price.instrument,
                     pricing_policy=last_price.pricing_policy,
-                    date=new_date
+                    date=new_date,
+                    is_temporary_price=True
                 )
 
                 # _l.debug('Roll Price History Create new %s ' % price)
