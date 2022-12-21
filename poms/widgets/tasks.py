@@ -5,7 +5,7 @@ from celery import shared_task
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyUser, ProxyRequest
-from poms.common.utils import get_closest_bday_of_yesterday
+from poms.common.utils import get_closest_bday_of_yesterday, get_list_of_dates_between_two_dates
 from poms.currencies.models import Currency
 from poms.instruments.models import CostMethod, PricingPolicy
 from poms.portfolios.models import Portfolio
@@ -521,20 +521,28 @@ def collect_stats(self, task_id):
 
 
 @shared_task(name='widgets.calculate_historical', bind=True)
-def calculate_historical(self):
+def calculate_historical(self, date_from=None, date_to=None, portfolios=None):
     try:
 
         from poms.transactions.models import Transaction
 
-        portfolios = Portfolio.objects.all()
+        if portfolios:
+            portfolios = Portfolio.objects.filter(id__in=portfolios)
+        else:
+            portfolios = Portfolio.objects.all()
 
         bday_yesterday = get_closest_bday_of_yesterday()
 
         _l.info("widgets.calculate_historical for %s portfolios for %s" % (len(portfolios), bday_yesterday))
 
-        date_from = bday_yesterday
-        date_to = bday_yesterday
-        dates = [bday_yesterday]
+        if not date_from:
+            date_from = bday_yesterday
+
+        if not date_to:
+            date_to = bday_yesterday
+
+        # dates = [bday_yesterday]
+        dates = get_list_of_dates_between_two_dates(date_from, date_to)
 
         member = Member.objects.get(is_owner=True)
         master_user = member.master_user
