@@ -98,7 +98,8 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
 # TODO Refactor to task_id
 @shared_task(name='portfolios.calculate_portfolio_register_record', bind=True)
 def calculate_portfolio_register_record(self, portfolios=None):
-    _l.info('calculate_portfolio_register_record')
+    _l.info('calculate_portfolio_register_record.init')
+    _l.info('calculate_portfolio_register_record.portfolios %s' % portfolios)
 
     try:
 

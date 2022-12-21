@@ -2457,7 +2457,7 @@ def _update_task(evaluator, id, name, type=None, status='P', options=None, notes
 _update_task.evaluator = True
 
 
-def _run_task(evaluator, task_name, **kwargs):
+def _run_task(evaluator, task_name, options):
     _l.info('_run_task task_name: %s' % task_name)
 
     try:
@@ -2468,7 +2468,7 @@ def _run_task(evaluator, task_name, **kwargs):
 
         app.autodiscover_tasks()
 
-        app.send_task(task_name, [], kwargs)
+        app.send_task(task_name, kwargs=options)
 
     except Exception as e:
         _l.debug("_run_task.exception %s" % e)
