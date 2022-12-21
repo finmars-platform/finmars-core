@@ -395,7 +395,8 @@ class TransactionImportProcess(object):
                     default_values=fields,
                     context=self.context,
                     uniqueness_reaction=self.scheme.book_uniqueness_settings,
-                    member=self.member
+                    member=self.member,
+                    execution_context="import"
                 )
 
                 transaction_type_process_instance.process()
