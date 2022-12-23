@@ -1839,7 +1839,7 @@ class Transaction(models.Model):
 
             if self.instrument.maturity_date is None or \
                     self.instrument.maturity_date == date.max or str(
-                self.instrument.maturity_date) == '2999-01-01' or self.instrument.maturity_date == '2099-01-01':
+                self.instrument.maturity_date) == '2999-01-01' or str(self.instrument.maturity_date) == '2099-01-01':
 
                 _l.debug('Transaction.calculate_ytm: instrument has maturity_date')
 
