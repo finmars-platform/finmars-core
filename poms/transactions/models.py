@@ -4,7 +4,6 @@ import json
 import logging
 import traceback
 from datetime import date
-from math import isnan
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -12,6 +11,7 @@ from django.core.cache import cache
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
+from math import isnan
 
 from poms.accounts.models import Account
 from poms.common.formula_accruals import f_xirr
@@ -1837,7 +1837,9 @@ class Transaction(models.Model):
             _l.debug('Transaction.calculate_ytm: dt %s' % dt)
             _l.debug('Transaction.calculate_ytm: date.max %s' % date.max)
 
-            if self.instrument.maturity_date is None or self.instrument.maturity_date == date.max or str(self.instrument.maturity_date) == '2999-01-01':
+            if self.instrument.maturity_date is None or \
+                    self.instrument.maturity_date == date.max or str(
+                self.instrument.maturity_date) == '2999-01-01' or self.instrument.maturity_date == '2099-01-01':
 
                 _l.debug('Transaction.calculate_ytm: instrument has maturity_date')
 
@@ -1846,9 +1848,11 @@ class Transaction(models.Model):
                     accrual_size = self.instrument.get_accrual_size(dt)
 
                     _l.debug('Transaction.calculate_ytm: accrual_size %s' % accrual_size)
-                    _l.debug('Transaction.calculate_ytm: self.instrument.accrued_multiplier %s' % self.instrument.accrued_multiplier)
+                    _l.debug(
+                        'Transaction.calculate_ytm: self.instrument.accrued_multiplier %s' % self.instrument.accrued_multiplier)
                     _l.debug('Transaction.calculate_ytm: self.trade_price %s' % self.trade_price)
-                    _l.debug('Transaction.calculate_ytm: self.instrument.price_multiplier %s' % self.instrument.price_multiplier)
+                    _l.debug(
+                        'Transaction.calculate_ytm: self.instrument.price_multiplier %s' % self.instrument.price_multiplier)
 
                     # TODO  * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) happens in sql report
                     ytm = (accrual_size * self.instrument.accrued_multiplier) / \
