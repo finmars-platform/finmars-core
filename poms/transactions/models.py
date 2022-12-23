@@ -1881,7 +1881,7 @@ class Transaction(models.Model):
         try:
             self.ytm_at_cost = self.calculate_ytm()
         except Exception as error:
-            _l.debug("Cant calculate transaction ytm_at_cost %s" % error)
+            _l.error("Transaction.save: Cant calculate transaction ytm_at_cost %s" % error)
 
         if self.ytm_at_cost is None:
             self.ytm_at_cost = 0
