@@ -3074,7 +3074,8 @@ class PLReportBuilderSql:
 
                 if item['item_type'] == ITEM_TYPE_MISMATCH:
                     if item['position_size'] and item['total']:
-                        result_tmp.append(item)
+                        if item['instrument_id'] != self.ecosystem_defaults.instrument_id:
+                            result_tmp.append(item)
                 else:
                     result_tmp.append(item)
 
