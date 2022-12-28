@@ -537,7 +537,7 @@ class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedM
                                                                                             'counter directional exposure currency value type'))
 
     default_price = models.FloatField(default=0.0, verbose_name=gettext_lazy('default price'))
-    maturity_date = models.DateField(default=date.max, null=True, verbose_name=gettext_lazy('maturity date'))
+    maturity_date = models.DateField(null=True, verbose_name=gettext_lazy('maturity date'))
     maturity_price = models.FloatField(default=0.0, verbose_name=gettext_lazy('maturity price'))
 
     DIRECT_POSITION = 1
@@ -812,7 +812,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
     # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
     #                                           blank=True, verbose_name=gettext_lazy('price download scheme'))
-    maturity_date = models.DateField(default=date.max, null=True, verbose_name=gettext_lazy('maturity date'))
+    maturity_date = models.DateField(null=True, verbose_name=gettext_lazy('maturity date'))
     maturity_price = models.FloatField(default=0.0, verbose_name=gettext_lazy('maturity price'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
