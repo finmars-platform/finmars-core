@@ -1653,7 +1653,9 @@ class PriceHistory(DataTimeStampedModel):
 
         _l.debug('Calculating ytm for %s for %s' % (self.instrument.name, self.date))
 
-        if self.instrument.maturity_date is None or self.instrument.maturity_date == date.max:
+        if self.instrument.maturity_date is None or \
+                self.instrument.maturity_date == date.max or str(
+            self.instrument.maturity_date) == '2999-01-01' or str(self.instrument.maturity_date) == '2099-01-01':
             try:
                 accrual_size = self.instrument.get_accrual_size(dt)
                 ytm = (accrual_size * self.instrument.accrued_multiplier) * \
