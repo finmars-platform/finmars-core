@@ -72,7 +72,6 @@ class HistoryNavViewSet(AbstractViewSet):
         result_dates = []
 
         if segmentation_type == 'days':
-
             result_dates = get_list_of_business_days_between_two_dates(date_from, date_to)
 
             balance_report_histories = balance_report_histories.filter(
@@ -407,6 +406,9 @@ class CollectHistoryViewSet(AbstractViewSet):
         cost_method_id = request.data.get('cost_method', None)
         segmentation_type = request.data.get('segmentation_type', None)
 
+        if not portfolio_id:
+            raise ValidationError("Portfolio is required")
+
         ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
 
         if not report_currency_id:
@@ -425,6 +427,14 @@ class CollectHistoryViewSet(AbstractViewSet):
 
         _l.info('CollectHistoryViewSet.date_from %s' % date_from)
         _l.info('CollectHistoryViewSet.date_to %s' % date_to)
+
+        if not date_from:
+            transaction = get_first_transaction(portfolio_id)
+
+            date_from = transaction.accounting_date
+
+        if not date_to:
+            date_to = get_closest_bday_of_yesterday()
 
         if segmentation_type == 'days':
             dates = get_list_of_business_days_between_two_dates(date_from, date_to, to_string=True)
