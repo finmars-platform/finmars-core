@@ -1557,7 +1557,9 @@ class PriceHistorySerializer(serializers.ModelSerializer):
             'long_delta',
             'short_delta',
 
-            'is_temporary_price'
+            'is_temporary_price',
+
+            'ytm'
         ]
 
     def __init__(self, *args, **kwargs):
