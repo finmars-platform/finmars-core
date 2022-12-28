@@ -3097,6 +3097,7 @@ class PLReportBuilderSql:
                 result_item_opened['exposure_loc'] = item['exposure_loc']
 
                 result_item_opened['ytm'] = item['ytm']
+                result_item_opened['ytm_at_cost'] = item['ytm_at_cost']
                 result_item_opened['modified_duration'] = item['modified_duration']
                 result_item_opened['time_invested'] = item['time_invested']
 
@@ -3283,6 +3284,7 @@ class PLReportBuilderSql:
                     result_item_closed['exposure_loc'] = item['exposure_loc']
 
                     result_item_closed['ytm'] = item['ytm']
+                    result_item_closed['ytm_at_cost'] = item['ytm_at_cost']
                     result_item_closed['modified_duration'] = item['modified_duration']
                     result_item_closed['time_invested'] = item['time_invested']
 
@@ -3309,6 +3311,7 @@ class PLReportBuilderSql:
 
                     result_item_closed['exposure'] = item['exposure']
                     result_item_closed['ytm'] = item['ytm']
+                    result_item_closed['ytm_at_cost'] = item['ytm_at_cost']
                     result_item_closed['modified_duration'] = item['modified_duration']
                     result_item_closed['time_invested'] = item['time_invested']
 

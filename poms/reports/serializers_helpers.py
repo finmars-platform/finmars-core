@@ -492,6 +492,7 @@ def serialize_pl_report_item(item):
     result["mismatch"] = item["mismatch"]
 
     result["ytm"] = item["ytm"]
+    result["ytm_at_cost"] = item["ytm_at_cost"]
 
     result["market_value"] = item["market_value"]
     result["market_value_loc"] = item["market_value_loc"]
