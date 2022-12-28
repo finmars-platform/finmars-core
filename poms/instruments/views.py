@@ -984,7 +984,7 @@ class InstrumentDatabaseSearchViewSet(APIView):
                     #
                     # auth_token = auth_response_json['id_token']
 
-                    # TODO REFACTOR ALL
+                    # TODO FINMARS_DATABASE_REFACTOR
 
                     name = request.query_params.get('name', '')
                     size = request.query_params.get('size', 40)
