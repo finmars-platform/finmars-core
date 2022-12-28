@@ -82,7 +82,7 @@ class PerformanceReportBuilder:
 
         if self.instance.end_date > timezone_today():
             # end_date = timezone_today() - timedelta(days=1)
-            self.end_date = timezone_today()
+            self.end_date = timezone_today() # maybe we steel need it at yeaterday
 
         self.instance.first_transaction_date = self.get_first_transaction()
 

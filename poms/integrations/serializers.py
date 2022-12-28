@@ -1175,69 +1175,42 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
 
     def create(self, validated_data):
 
-        if settings.CBONDS_BROKER_URL:
-            task_result_overrides = validated_data.get('task_result_overrides', None)
-            instance = ImportInstrumentEntry(**validated_data)
+        if settings.FINMARS_DATABASE_URL:
 
-            task, errors = download_instrument_cbond(
-                instrument_code=instance.instrument_code,
-                instrument_name=instance.instrument_name,
-                instrument_type_code=instance.instrument_type_code,
-                master_user=instance.master_user,
-                member=instance.member
-            )
-            instance.task_object = task
-            instance.errors = errors
+            if settings.FINMARS_DATABASE_USER and settings.FINMARS_DATABASE_PASSWORD:
 
-            if task and task.result_object:
-                instance.result_id = task.result_object['instrument_id']
+                task_result_overrides = validated_data.get('task_result_overrides', None)
+                instance = ImportInstrumentEntry(**validated_data)
 
-            return instance
+                task = CeleryTask.objects.create(
+                    master_user=instance.master_user,
+                    member=instance.member,
+                    verbose_name="Download Instrument From Finmars Database",
+                    type='download_instrument_from_finmars_database'
+                )
 
-        else:
+                options = {
+                    'reference': instance.instrument_code,
+                    'instrument_name': instance.instrument_name,
+                    'instrument_type_user_code': instance.instrument_type_code
+                }
 
-            if settings.FINMARS_DATABASE_URL:
+                task.options_object = options
 
-                if settings.FINMARS_DATABASE_USER and settings.FINMARS_DATABASE_PASSWORD:
+                task.save()
 
-                    task_result_overrides = validated_data.get('task_result_overrides', None)
-                    instance = ImportInstrumentEntry(**validated_data)
+                instance.task_object = task
 
-                    # instrument_code=instance.instrument_code,
-                    # instrument_name=instance.instrument_name,
-                    # instrument_type_code=instance.instrument_type_code,
-                    # master_user=instance.master_user,
-                    # member=instance.member
+                _l.info("ImportInstrumentCbondsSerializer create task id %s" % task.id)
 
-                    task = CeleryTask.objects.create(
-                        master_user=instance.master_user,
-                        member=instance.member,
-                        verbose_name="Download Instrument From Finmars Database",
-                        type='download_instrument_from_finmars_database'
-                    )
+                download_instrument_finmars_database(task.id)
 
-                    options = {
-                        'reference': instance.instrument_code,
-                        'instrument_name': instance.instrument_name,
-                        'instrument_type_user_code': instance.instrument_type_code
-                    }
+                task = CeleryTask.objects.get(id=task.id)
 
-                    task.options_object = options
+                if task and task.result_object:
+                    instance.result_id = task.result_object['instrument_id']
 
-                    task.save()
-
-                    instance.task_object = task
-
-                    _l.info("ImportInstrumentCbondsSerializer create task id %s" % task.id)
-
-                    download_instrument_finmars_database(task.id)
-
-                    task = CeleryTask.objects.get(id=task.id)
-
-                    if task and task.result_object:
-                        instance.result_id = task.result_object['instrument_id']
-
-                    return instance
+                return instance
 
 
 class ImportCurrencyCbondsSerializer(serializers.Serializer):
