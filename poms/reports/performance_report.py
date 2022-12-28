@@ -78,11 +78,11 @@ class PerformanceReportBuilder:
 
         self.instance.items = []
 
-        end_date = self.instance.end_date
+        self.end_date = self.instance.end_date
 
         if self.instance.end_date > timezone_today():
             # end_date = timezone_today() - timedelta(days=1)
-            end_date = timezone_today()
+            self.end_date = timezone_today() # maybe we steel need it at yeaterday
 
         self.instance.first_transaction_date = self.get_first_transaction()
 
@@ -92,12 +92,12 @@ class PerformanceReportBuilder:
         #     begin_date = first_transaction_date
 
         _l.info('build_report.begin_date %s' % begin_date)
-        _l.info('build_report.end_date %s' % end_date)
+        _l.info('build_report.end_date %s' % self.end_date)
 
-        if end_date < begin_date:
-            end_date = begin_date
+        if self.end_date < begin_date:
+            self.end_date = begin_date
 
-        self.instance.periods = self.get_periods(begin_date, end_date, self.instance.segmentation_type)
+        self.instance.periods = self.get_periods(begin_date, self.end_date, self.instance.segmentation_type)
 
         cumulative_return = 0
         for period in self.instance.periods:
@@ -367,8 +367,8 @@ class PerformanceReportBuilder:
             # month_end = datetime.date(year, month, calendar.monthrange(year, month)[1])
             month_end = last_business_day_in_month(year, month)
 
-            if month_end >= timezone_today():
-                month_end = timezone_today() - timedelta(days=1)
+            if month_end >= self.end_date:
+                month_end = self.end_date
 
                 if not is_business_day(month_end):
                     month_end = get_last_business_day(month_end)

@@ -893,7 +893,8 @@ def download_instrument_finmars_database(task_id):
         task.save()
 
         request_options = {
-            'isin': options['reference'],
+            'isin': options['reference'], # deprecated
+            'reference': options['reference'],
             'request_id': options['request_id'],
             'base_api_url': options['base_api_url'],
             'callback_url': options['callback_url'],
