@@ -9,7 +9,7 @@ from django.views.generic.dates import timezone_today
 
 from poms.accounts.models import Account
 from poms.common.utils import get_list_of_business_days_between_two_dates, \
-    last_business_day_in_month, is_business_day, get_last_business_day
+    last_business_day_in_month, is_business_day, get_last_business_day, get_closest_bday_of_yesterday
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, InstrumentType, PriceHistory
 from poms.portfolios.models import Portfolio, PortfolioRegisterRecord, PortfolioRegister
@@ -80,9 +80,8 @@ class PerformanceReportBuilder:
 
         self.end_date = self.instance.end_date
 
-        if self.instance.end_date > timezone_today():
-            # end_date = timezone_today() - timedelta(days=1)
-            self.end_date = timezone_today() # maybe we steel need it at yeaterday
+        if not self.instance.end_date:
+            self.end_date = get_closest_bday_of_yesterday()
 
         self.instance.first_transaction_date = self.get_first_transaction()
 
