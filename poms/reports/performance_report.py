@@ -2,7 +2,7 @@ import datetime
 import json
 import logging
 import time
-from datetime import timedelta
+from datetime import timedelta,date
 
 from django.forms import model_to_dict
 from django.views.generic.dates import timezone_today
@@ -86,6 +86,9 @@ class PerformanceReportBuilder:
         self.instance.first_transaction_date = self.get_first_transaction()
 
         begin_date = self.instance.begin_date
+
+        if not begin_date or begin_date == date.min:
+            begin_date = self.instance.first_transaction_date
 
         # if begin_date < first_transaction_date:
         #     begin_date = first_transaction_date
