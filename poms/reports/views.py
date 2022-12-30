@@ -95,7 +95,7 @@ class TransactionReportCustomFieldViewSet(AbstractModelViewSet):
         'name',
     ]
 
-
+# TODO implement Pure Balance Report as separate module
 class BalanceReportViewSet(AbstractViewSet):
     serializer_class = BalanceReportSerializer
 

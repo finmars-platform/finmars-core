@@ -169,6 +169,12 @@ class ReportSerializer(ReportSerializerWithLogs):
                                              required=False,
                                              help_text='Strategy3 consolidation')
 
+    allocation_mode = serializers.ChoiceField(default=Report.MODE_INDEPENDENT,
+                                             initial=Report.MODE_INDEPENDENT,
+                                             choices=Report.MODE_CHOICES,
+                                             required=False,
+                                             help_text='Allocation consolidation')
+
     show_transaction_details = serializers.BooleanField(default=False, initial=False)
     show_balance_exposure_details = serializers.BooleanField(default=False, initial=False)
     approach_multiplier = serializers.FloatField(default=0.5, initial=0.5, min_value=0.0, max_value=1.0, required=False)
@@ -440,6 +446,9 @@ class ReportSerializer(ReportSerializerWithLogs):
 
 
 class BalanceReportSerializer(ReportSerializer):
+
+    calculate_pl = serializers.BooleanField(default=True, initial=True)
+
     items = serializers.SerializerMethodField()
 
     item_instruments = serializers.SerializerMethodField()

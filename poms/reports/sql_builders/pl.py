@@ -69,6 +69,9 @@ class PLReportBuilderSql:
         if self.instance.strategy3_mode == Report.MODE_INDEPENDENT:
             result.append("(q2.strategy3_position_id) as strategy3_position_id")
 
+        if self.instance.allocation_mode == Report.MODE_INDEPENDENT:
+            result.append("(q2.allocation_pl_id) as allocation_pl_id")
+
         resultString = ''
 
         if len(result):
@@ -3041,10 +3044,9 @@ class PLReportBuilderSql:
                                  final_consolidation_where_filters=self.get_final_consolidation_where_filters_columns()
                                  )
 
-            if settings.DEBUG:
+            if settings.SERVER_TYPE == 'local':
                 with open(os.path.join(settings.BASE_DIR, 'query_result_before_execution_pl.txt'), 'w') as the_file:
-                    the_file. \
-                        write(query)
+                    the_file.write(query)
 
             cursor.execute(query)
 
@@ -3053,7 +3055,7 @@ class PLReportBuilderSql:
             query_str = str(cursor.query, 'utf-8')
 
             if settings.SERVER_TYPE == 'local':
-                with open('/tmp/query_result_pl.txt', 'w') as the_file:
+                with open(os.path.join(settings.BASE_DIR, '/tmp/query_result_pl.txt'), 'w') as the_file:
                     the_file.write(query_str)
 
             result_tmp_raw = dictfetchall(cursor)
@@ -3071,8 +3073,9 @@ class PLReportBuilderSql:
                 item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
 
                 if item['item_type'] == ITEM_TYPE_MISMATCH:
-                    if item['position_size']:
-                        result_tmp.append(item)
+                    if item['position_size'] and item['total']:
+                        if item['instrument_id'] != self.ecosystem_defaults.instrument_id:
+                            result_tmp.append(item)
                 else:
                     result_tmp.append(item)
 
@@ -3094,6 +3097,7 @@ class PLReportBuilderSql:
                 result_item_opened['exposure_loc'] = item['exposure_loc']
 
                 result_item_opened['ytm'] = item['ytm']
+                result_item_opened['ytm_at_cost'] = item['ytm_at_cost']
                 result_item_opened['modified_duration'] = item['modified_duration']
                 result_item_opened['time_invested'] = item['time_invested']
 
@@ -3144,6 +3148,12 @@ class PLReportBuilderSql:
                     result_item_opened['strategy3_position_id'] = self.ecosystem_defaults.strategy3_id
                 else:
                     result_item_opened['strategy3_position_id'] = item['strategy3_position_id']
+
+
+                if "allocation_pl_id" not in item:
+                    result_item_opened['allocation_pl_id'] = None
+                else:
+                    result_item_opened['allocation_pl_id'] = item['allocation_pl_id']
 
                 if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT:
                     result_item_opened["item_group"] = 10
@@ -3274,6 +3284,7 @@ class PLReportBuilderSql:
                     result_item_closed['exposure_loc'] = item['exposure_loc']
 
                     result_item_closed['ytm'] = item['ytm']
+                    result_item_closed['ytm_at_cost'] = item['ytm_at_cost']
                     result_item_closed['modified_duration'] = item['modified_duration']
                     result_item_closed['time_invested'] = item['time_invested']
 
@@ -3300,6 +3311,7 @@ class PLReportBuilderSql:
 
                     result_item_closed['exposure'] = item['exposure']
                     result_item_closed['ytm'] = item['ytm']
+                    result_item_closed['ytm_at_cost'] = item['ytm_at_cost']
                     result_item_closed['modified_duration'] = item['modified_duration']
                     result_item_closed['time_invested'] = item['time_invested']
 
@@ -3350,6 +3362,12 @@ class PLReportBuilderSql:
                         result_item_closed['strategy3_position_id'] = self.ecosystem_defaults.strategy3_id
                     else:
                         result_item_closed['strategy3_position_id'] = item['strategy3_position_id']
+
+
+                    if "allocation_pl_id" not in item:
+                        result_item_closed['allocation_pl_id'] = None
+                    else:
+                        result_item_closed['allocation_pl_id'] = item['allocation_pl_id']
 
                     result_item_closed["item_group"] = 11
                     result_item_closed["item_group_code"] = "CLOSED"
@@ -3540,6 +3558,7 @@ class PLReportBuilderSql:
 
             if 'instrument_id' in item:
                 instrument_ids.append(item['instrument_id'])
+                instrument_ids.append(item['allocation_pl_id'])
 
             if 'account_position_id' in item and item['account_position_id'] != '-':
                 account_ids.append(item['account_position_id'])

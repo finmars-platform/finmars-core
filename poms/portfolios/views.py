@@ -412,7 +412,9 @@ class PortfolioRegisterRecordEvViewSet(AbstractWithObjectPermissionViewSet):
     )
     serializer_class = PortfolioRegisterRecordEvSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter
+        OwnerByMasterUserFilter,
+        AttributeFilter,
+        GroupsAttributeFilter
     ]
     filter_class = PortfolioRegisterRecordEvFilterSet
     ordering_fields = [

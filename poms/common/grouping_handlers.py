@@ -99,6 +99,8 @@ def is_relation(item):
                     'instrument_type', 'group',
                     'pricing_policy', 'portfolio',
                     'transaction_type', 'transaction_currency',
+                    'cash_currency', 'valuation_currency',
+                    'portfolio_register',
                     'settlement_currency', 'account_cash',
                     'account_interim', 'account_position',
                     'accrued_currency', 'pricing_currency',

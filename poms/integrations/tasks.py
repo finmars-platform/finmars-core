@@ -864,23 +864,23 @@ def download_instrument_finmars_database(task_id):
             'Content-type': 'application/json'
         }
 
-        auth_url = settings.FINMARS_DATABASE_URL + 'api/authenticate'
+        # auth_url = settings.FINMARS_DATABASE_URL + 'api/authenticate'
+        #
+        # auth_request_body = {
+        #     "username": settings.FINMARS_DATABASE_USER,
+        #     "password": settings.FINMARS_DATABASE_PASSWORD
+        # }
+        #
+        # auth_response = requests.post(url=auth_url, headers=headers, data=json.dumps(auth_request_body), verify=settings.VERIFY_SSL)
+        #
+        # _l.info("download_instrument_finmars_database.authorized")
+        # _l.debug('auth_response %s' % auth_response.text)
+        #
+        # auth_response_json = auth_response.json()
+        #
+        # auth_token = auth_response_json['id_token']
 
-        auth_request_body = {
-            "username": settings.FINMARS_DATABASE_USER,
-            "password": settings.FINMARS_DATABASE_PASSWORD
-        }
-
-        auth_response = requests.post(url=auth_url, headers=headers, data=json.dumps(auth_request_body), verify=settings.VERIFY_SSL)
-
-        _l.info("download_instrument_finmars_database.authorized")
-        _l.debug('auth_response %s' % auth_response.text)
-
-        auth_response_json = auth_response.json()
-
-        auth_token = auth_response_json['id_token']
-
-        headers['Authorization'] = 'Bearer ' + auth_token
+        # headers['Authorization'] = 'Bearer ' + get_access_token(request)
 
         options['request_id'] = task.pk
         options['base_api_url'] = settings.BASE_API_URL
@@ -906,7 +906,7 @@ def download_instrument_finmars_database(task_id):
         _l.info('download_instrument_finmars_database.options %s' % request_options)
 
         try:
-            response = requests.post(url=settings.FINMARS_DATABASE_URL + 'api/export/instrument',
+            response = requests.post(url=settings.FINMARS_DATABASE_URL + 'api/v1/export/instrument',
                                      data=json.dumps(request_options),
                                      headers=headers, timeout=25, verify=settings.VERIFY_SSL)
             _l.debug('download_instrument_finmars_database.response.text %s ' % response.text)

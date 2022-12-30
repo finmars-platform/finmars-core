@@ -74,6 +74,7 @@ class Report(BaseReport):
                  date_field=None,
                  custom_fields=None,
                  custom_fields_to_calculate=None,
+                 calculate_pl=True,
                  items=None):
         super(Report, self).__init__(id=id, master_user=master_user, member=member,
                                      task_id=task_id, task_status=task_status)
@@ -89,6 +90,7 @@ class Report(BaseReport):
         # }
 
         self.ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
+
 
         self.report_type = report_type if report_type is not None else Report.TYPE_BALANCE
         self.report_currency = report_currency or self.ecosystem_default.currency
@@ -148,6 +150,7 @@ class Report(BaseReport):
         self.item_currency_fx_rates = []
         self.item_instrument_pricings = []
         self.item_instrument_accruals = []
+        self.calculate_pl = calculate_pl
 
     def __str__(self):
         return "%s for %s/%s @ %s" % (self.__class__.__name__, self.master_user, self.member, self.report_date)

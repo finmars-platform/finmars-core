@@ -49,7 +49,8 @@ from poms.transactions.serializers import TransactionClassSerializer, Transactio
     ComplexTransactionLightSerializer, ComplexTransactionSimpleSerializer, \
     RecalculatePermissionTransactionSerializer, RecalculatePermissionComplexTransactionSerializer, \
     TransactionTypeLightSerializerWithInputs, TransactionTypeEvSerializer, ComplexTransactionEvSerializer, \
-    TransactionEvSerializer, TransactionTypeRecalculateSerializer, RecalculateUserFieldsSerializer
+    TransactionEvSerializer, TransactionTypeRecalculateSerializer, RecalculateUserFieldsSerializer, \
+    ComplexTransactionViewOnlySerializer, ComplexTransactionViewOnly
 from poms.transactions.tasks import recalculate_permissions_transaction, recalculate_permissions_complex_transaction, \
     recalculate_user_fields
 from poms.users.filters import OwnerByMasterUserFilter
@@ -559,7 +560,6 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
             instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
                                               context=self.get_serializer_context(), context_values=context_values,
                                               member=request.user.member)
-
 
             instance.complex_transaction.id = 0
 
@@ -1512,6 +1512,30 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
             ret_serializer = self.get_serializer(
                 instance=queryset.filter(pk__in=(i.id for i in instances)), many=True)
             return Response(list(ret_serializer.data), status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['get'], url_path='view', serializer_class=ComplexTransactionViewOnlySerializer,
+            permission_classes=[IsAuthenticated])
+    def view(self, request, pk=None):
+
+        _st = time.perf_counter()
+
+        complex_transaction = ComplexTransaction.objects.get(id=pk)
+        transaction_type = TransactionType.objects.get(id=complex_transaction.transaction_type_id)
+
+        instance = ComplexTransactionViewOnly(complex_transaction,
+                                              transaction_type=transaction_type
+                                              )
+
+        _serialize_st = time.perf_counter()
+        serializer = self.get_serializer(instance=instance)
+        response = Response(serializer.data)
+        result_time = "{:3.3f}".format(time.perf_counter() - _serialize_st)
+        _l.debug('ComplexTransactionViewOnly.serialize total %s' % result_time)
+
+        result_time = "{:3.3f}".format(time.perf_counter() - _st)
+        _l.debug('ComplexTransactionViewOnly.response total %s' % result_time)
+
+        return response
 
 
 class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):

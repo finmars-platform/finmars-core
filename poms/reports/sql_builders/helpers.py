@@ -140,6 +140,10 @@ def get_where_expression_for_position_consolidation(instance, prefix, prefix_sec
     if instance.strategy3_mode == Report.MODE_INDEPENDENT:
         result.append(prefix + "strategy3_position_id = " + prefix_second + "strategy3_position_id")
 
+    if instance.strategy3_mode == Report.MODE_INDEPENDENT:
+        result.append(prefix + "allocation_pl_id = " + prefix_second + "allocation_pl_id")
+
+
     resultString = ''
 
     if len(result):
@@ -166,6 +170,9 @@ def get_position_consolidation_for_select(instance, prefix=''):
     if instance.strategy3_mode == Report.MODE_INDEPENDENT:
         result.append(prefix + "strategy3_position_id")
 
+    if instance.allocation_mode == Report.MODE_INDEPENDENT:
+        result.append(prefix + "allocation_pl_id")
+
     resultString = ''
 
     if len(result):
@@ -191,6 +198,9 @@ def get_pl_left_join_consolidation(instance):
 
     if instance.strategy3_mode == Report.MODE_INDEPENDENT:
         result.append("balance_q.strategy3_position_id = pl_q.strategy3_position_id")
+
+    if instance.strategy3_mode == Report.MODE_INDEPENDENT:
+        result.append("balance_q.allocation_pl_id = pl_q.allocation_pl_id")
 
     resultString = ''
 
@@ -219,6 +229,9 @@ def get_cash_consolidation_for_select(instance):
     if instance.strategy3_mode == Report.MODE_INDEPENDENT:
         result.append("strategy3_cash_id")
 
+    if instance.allocation_mode == Report.MODE_INDEPENDENT:
+        result.append("allocation_pl_id")
+
     resultString = ''
 
     if len(result):
@@ -244,6 +257,9 @@ def get_cash_as_position_consolidation_for_select(instance):
 
     if instance.strategy3_mode == Report.MODE_INDEPENDENT:
         result.append("strategy3_cash_id as strategy3_position_id")
+
+    if instance.allocation_mode == Report.MODE_INDEPENDENT:
+        result.append("allocation_pl_id as allocation_pl_id")
 
     resultString = ''
 

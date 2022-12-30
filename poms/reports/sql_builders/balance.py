@@ -1,5 +1,6 @@
 import logging
 import time
+import os
 
 from django.conf import settings
 from django.db import connection
@@ -144,7 +145,10 @@ class BalanceReportBuilderSql:
                         
                         strategy1_position_id,
                         strategy2_position_id,
-                        strategy3_position_id
+                        strategy3_position_id,
+                        
+                        allocation_balance_id,
+                        allocation_pl_id
                         
                     from pl_transactions_with_ttype
                     
@@ -178,7 +182,9 @@ class BalanceReportBuilderSql:
                         
                         strategy1_position_id,
                         strategy2_position_id,
-                        strategy3_position_id
+                        strategy3_position_id,
+                        allocation_balance_id,
+                        allocation_pl_id
                         
                     from pl_cash_fx_trades_transactions_with_ttype
                     
@@ -212,7 +218,10 @@ class BalanceReportBuilderSql:
                         
                         strategy1_position_id,
                         strategy2_position_id,
-                        strategy3_position_id
+                        strategy3_position_id,
+                        allocation_balance_id,
+                        allocation_pl_id
+                        
                         
                     from pl_cash_fx_variations_transactions_with_ttype
                     
@@ -246,7 +255,10 @@ class BalanceReportBuilderSql:
                         
                         strategy1_position_id,
                         strategy2_position_id,
-                        strategy3_position_id
+                        strategy3_position_id,
+                        
+                        allocation_balance_id,
+                        allocation_pl_id
                         
                     from pl_cash_transaction_pl_transactions_with_ttype
                   
@@ -292,7 +304,10 @@ class BalanceReportBuilderSql:
                                 then cash_date
                                 else accounting_date
                            end
-                           as min_date
+                           as min_date,
+                           
+                           allocation_balance_id,
+                           allocation_pl_id
                            
                     -- добавить остальные поля
                     from unioned_transactions_for_balance -- USE TOTAL VIEW HERE
@@ -335,7 +350,9 @@ class BalanceReportBuilderSql:
                                 then cash_date
                                 else accounting_date
                            end
-                           as min_date
+                           as min_date,
+                           allocation_balance_id,
+                           allocation_pl_id
                            
                     from unioned_transactions_for_balance
                     where cash_date  <= '{report_date}'  /* REPORTING DATE */
@@ -375,7 +392,10 @@ class BalanceReportBuilderSql:
                                 then cash_date
                                 else accounting_date
                            end
-                           as min_date
+                           as min_date,
+                           
+                           allocation_balance_id,
+                           allocation_pl_id
                            
                     from unioned_transactions_for_balance
                     --where not (accounting_date <= '{report_date}' /* REPORTING DATE */
@@ -1457,9 +1477,10 @@ class BalanceReportBuilderSql:
                                  fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string
                                  )
 
-            if settings.SERVER_TYPE == 'local':
-                with open('/tmp/query_raw.txt', 'w') as the_file:
-                    the_file.write(query)
+            if settings.DEBUG:
+                with open(os.path.join(settings.BASE_DIR, 'balance_query_result_before_execution.txt'), 'w') as the_file:
+                    the_file. \
+                        write(query)
 
             cursor.execute(query)
 
@@ -1544,6 +1565,11 @@ class BalanceReportBuilderSql:
                     result_item["strategy3_position_id"] = self.ecosystem_defaults.strategy3_id
                 else:
                     result_item["strategy3_position_id"] = item['strategy3_position_id']
+
+                if "allocation_pl_id" not in item:
+                    result_item["allocation_pl_id"] = None
+                else:
+                    result_item["allocation_pl_id"] = item['allocation_pl_id']
 
                 result_item["exposure_currency_id"] = item["co_directional_exposure_currency_id"]
                 result_item['instrument_id'] = item['instrument_id']
@@ -1873,6 +1899,9 @@ class BalanceReportBuilderSql:
 
             if 'instrument_id' in item:
                 instrument_ids.append(item['instrument_id'])
+
+            if 'allocation_pl_id' in item:
+                instrument_ids.append(item['allocation_pl_id'])
 
             if 'account_position_id' in item and item['account_position_id'] != '-':
                 account_ids.append(item['account_position_id'])

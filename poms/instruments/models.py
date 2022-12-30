@@ -537,7 +537,7 @@ class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedM
                                                                                             'counter directional exposure currency value type'))
 
     default_price = models.FloatField(default=0.0, verbose_name=gettext_lazy('default price'))
-    maturity_date = models.DateField(default=date.max, null=True, verbose_name=gettext_lazy('maturity date'))
+    maturity_date = models.DateField(null=True, verbose_name=gettext_lazy('maturity date'))
     maturity_price = models.FloatField(default=0.0, verbose_name=gettext_lazy('maturity price'))
 
     DIRECT_POSITION = 1
@@ -812,7 +812,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
     # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
     #                                           blank=True, verbose_name=gettext_lazy('price download scheme'))
-    maturity_date = models.DateField(default=date.max, null=True, verbose_name=gettext_lazy('maturity date'))
+    maturity_date = models.DateField(null=True, verbose_name=gettext_lazy('maturity date'))
     maturity_price = models.FloatField(default=0.0, verbose_name=gettext_lazy('maturity price'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
@@ -1562,6 +1562,8 @@ class PriceHistory(DataTimeStampedModel):
     procedure_modified_datetime = models.DateTimeField(null=True, blank=True,
                                                        verbose_name=gettext_lazy('procedure_modified_datetime'))
 
+    is_temporary_price = models.BooleanField(default=False, verbose_name=gettext_lazy('is temporary price'))
+
     class Meta:
         verbose_name = gettext_lazy('price history')
         verbose_name_plural = gettext_lazy('price histories')
@@ -1651,7 +1653,9 @@ class PriceHistory(DataTimeStampedModel):
 
         _l.debug('Calculating ytm for %s for %s' % (self.instrument.name, self.date))
 
-        if self.instrument.maturity_date is None or self.instrument.maturity_date == date.max:
+        if self.instrument.maturity_date is None or \
+                self.instrument.maturity_date == date.max or str(
+            self.instrument.maturity_date) == '2999-01-01' or str(self.instrument.maturity_date) == '2099-01-01':
             try:
                 accrual_size = self.instrument.get_accrual_size(dt)
                 ytm = (accrual_size * self.instrument.accrued_multiplier) * \

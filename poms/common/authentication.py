@@ -10,6 +10,18 @@ from poms.common.keycloak import KeycloakConnect
 
 _l = logging.getLogger('poms.common')
 
+def get_access_token(request):
+
+    auth = get_authorization_header(request).split()
+
+    try:
+        token = auth[1].decode()
+    except UnicodeError:
+        msg = _('Invalid token header. Token string should not contain invalid characters.')
+        raise exceptions.AuthenticationFailed(msg)
+
+    return token
+
 
 class KeycloakAuthentication(TokenAuthentication):
 

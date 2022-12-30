@@ -428,6 +428,11 @@ class FillPricesBrokerBloombergProcess(object):
                 else:
                     _l.debug('Overwrite existing %s' % price)
 
+                # If price was rolled, then we can overwrite it even in Skip Mode
+                if price.is_temporary_price:
+                    price.is_temporary_price = False
+                    can_write = True
+
             except PriceHistory.DoesNotExist:
 
                 price = PriceHistory(
@@ -889,6 +894,11 @@ class FillPricesBrokerBloombergForwardsProcess(object):
                     _l.debug('Skip %s' % price)
                 else:
                     _l.debug('Overwrite existing %s' % price)
+
+                # If price was rolled, then we can overwrite it even in Skip Mode
+                if price.is_temporary_price:
+                    price.is_temporary_price = False
+                    can_write = True
 
             except PriceHistory.DoesNotExist:
 
@@ -1587,6 +1597,11 @@ class FillPricesBrokerCbondsProcess(object):
                     _l.debug('Skips %s' % price)
                 else:
                     _l.debug('Overwrite existing %s' % price)
+
+                # If price was rolled, then we can overwrite it even in Skip Mode
+                if price.is_temporary_price:
+                    price.is_temporary_price = False
+                    can_write = True
 
             except PriceHistory.DoesNotExist:
 

@@ -1177,40 +1177,40 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
 
         if settings.FINMARS_DATABASE_URL:
 
-            if settings.FINMARS_DATABASE_USER and settings.FINMARS_DATABASE_PASSWORD:
+            # TODO FINMARS_DATABASE_REFACTOR
 
-                task_result_overrides = validated_data.get('task_result_overrides', None)
-                instance = ImportInstrumentEntry(**validated_data)
+            task_result_overrides = validated_data.get('task_result_overrides', None)
+            instance = ImportInstrumentEntry(**validated_data)
 
-                task = CeleryTask.objects.create(
-                    master_user=instance.master_user,
-                    member=instance.member,
-                    verbose_name="Download Instrument From Finmars Database",
-                    type='download_instrument_from_finmars_database'
-                )
+            task = CeleryTask.objects.create(
+                master_user=instance.master_user,
+                member=instance.member,
+                verbose_name="Download Instrument From Finmars Database",
+                type='download_instrument_from_finmars_database'
+            )
 
-                options = {
-                    'reference': instance.instrument_code,
-                    'instrument_name': instance.instrument_name,
-                    'instrument_type_user_code': instance.instrument_type_code
-                }
+            options = {
+                'reference': instance.instrument_code,
+                'instrument_name': instance.instrument_name,
+                'instrument_type_user_code': instance.instrument_type_code
+            }
 
-                task.options_object = options
+            task.options_object = options
 
-                task.save()
+            task.save()
 
-                instance.task_object = task
+            instance.task_object = task
 
-                _l.info("ImportInstrumentCbondsSerializer create task id %s" % task.id)
+            _l.info("ImportInstrumentCbondsSerializer create task id %s" % task.id)
 
-                download_instrument_finmars_database(task.id)
+            download_instrument_finmars_database(task.id)
 
-                task = CeleryTask.objects.get(id=task.id)
+            task = CeleryTask.objects.get(id=task.id)
 
-                if task and task.result_object:
-                    instance.result_id = task.result_object['instrument_id']
+            if task and task.result_object:
+                instance.result_id = task.result_object['instrument_id']
 
-                return instance
+            return instance
 
 
 class ImportCurrencyCbondsSerializer(serializers.Serializer):

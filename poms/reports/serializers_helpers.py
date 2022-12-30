@@ -286,6 +286,13 @@ def serialize_balance_report_item(item):
     else:
         result["exposure_currency"] = item["exposure_currency_id"]
 
+    if item["allocation_pl_id"] == -1:
+        result["allocation"] = None
+    else:
+        result["allocation"] = item["allocation_pl_id"]
+
+
+
     # Check if logic is right
     result["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
     result["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
@@ -416,6 +423,11 @@ def serialize_pl_report_item(item):
     else:
         result["exposure_currency"] = item["exposure_currency_id"]
 
+    if item["allocation_pl_id"] == -1:
+        result["allocation"] = None
+    else:
+        result["allocation"] = item["allocation_pl_id"]
+
     result["account"] = item["account_position_id"]
 
     result["strategy1"] = item["strategy1_position_id"]
@@ -480,6 +492,7 @@ def serialize_pl_report_item(item):
     result["mismatch"] = item["mismatch"]
 
     result["ytm"] = item["ytm"]
+    result["ytm_at_cost"] = item["ytm_at_cost"]
 
     result["market_value"] = item["market_value"]
     result["market_value_loc"] = item["market_value_loc"]

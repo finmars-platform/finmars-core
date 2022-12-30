@@ -67,4 +67,4 @@ class ExceptionMiddleware(MiddlewareMixin):
 
         response_json = json.dumps(data, indent=2, sort_keys=True)
 
-        return HttpResponse(response_json, status=500)
+        return HttpResponse(response_json, status=500, content_type="application/json")

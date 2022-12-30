@@ -23,6 +23,7 @@ from rest_framework.views import APIView
 from poms.accounts.models import Account
 from poms.accounts.models import AccountType
 from poms.audit import history
+from poms.common.authentication import get_access_token
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
     ModelExtMultipleChoiceFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter
 from poms.common.jwt import encode_with_jwt
@@ -965,39 +966,47 @@ class InstrumentDatabaseSearchViewSet(APIView):
 
             if settings.FINMARS_DATABASE_URL:
 
-                if settings.FINMARS_DATABASE_USER and settings.FINMARS_DATABASE_PASSWORD:
                     headers = {
                         'Accept': 'application/json',
                         'Content-type': 'application/json'
                     }
 
-                    auth_url = settings.FINMARS_DATABASE_URL + 'api/authenticate'
+                    # auth_url = settings.FINMARS_DATABASE_URL + 'api/authenticate'
+                    #
+                    # auth_request_body = {
+                    #     "username": settings.FINMARS_DATABASE_USER,
+                    #     "password": settings.FINMARS_DATABASE_PASSWORD
+                    # }
+                    #
+                    # auth_response = requests.post(url=auth_url, headers=headers, data=json.dumps(auth_request_body), verify=settings.VERIFY_SSL)
+                    #
+                    # auth_response_json = auth_response.json()
+                    #
+                    # auth_token = auth_response_json['id_token']
 
-                    auth_request_body = {
-                        "username": settings.FINMARS_DATABASE_USER,
-                        "password": settings.FINMARS_DATABASE_PASSWORD
-                    }
-
-                    auth_response = requests.post(url=auth_url, headers=headers, data=json.dumps(auth_request_body), verify=settings.VERIFY_SSL)
-
-                    auth_response_json = auth_response.json()
-
-                    auth_token = auth_response_json['id_token']
+                    # TODO FINMARS_DATABASE_REFACTOR
 
                     name = request.query_params.get('name', '')
                     size = request.query_params.get('size', 40)
-                    page = request.query_params.get('page', 0)
+                    page = request.query_params.get('page', 1)
 
-                    instruments_url = settings.FINMARS_DATABASE_URL + 'api/instrument-narrows?page=' + str(
-                        page) + '&size=' + str(size) + '&query.contains=' + name
+                    page = int(page)
 
-                    headers['Authorization'] = 'Bearer ' + auth_token
+                    if page == 0:
+                        page = 1
+
+                    instruments_url = settings.FINMARS_DATABASE_URL + 'api/v1/instrument-narrow/?page=' + str(
+                        page) + '&page_size=' + str(size) + '&query=' + name
+
+                    headers['Authorization'] = 'Bearer ' + get_access_token(request)
 
                     _l.info("InstrumentDatabaseSearchViewSet.requesting url %s" % instruments_url)
 
                     response = requests.get(url=instruments_url, headers=headers, verify=settings.VERIFY_SSL)
 
-                    items = response.json()
+                    response_json = response.json()
+
+                    _l.info('response_json %s' % response_json)
 
                     # TODO refactor Interface and refactor mappedItems
                     # foundItems
@@ -1007,13 +1016,14 @@ class InstrumentDatabaseSearchViewSet(APIView):
 
                     mappedItems = []
 
-                    for item in items:
+
+                    for item in response_json['results']:
                         mappedItem = {}
 
-                        mappedItem['instrumentType'] = item['instrument_type']['user_code']
+                        mappedItem['instrumentType'] = item['instrument_type']
                         mappedItem['issueName'] = item['name']
                         mappedItem['referenceId'] = item['isin']
-                        mappedItem['last_cbonds_update'] = item['modified_at'].split('T')[0]
+                        # mappedItem['last_cbonds_update'] = item['modified_at'].split('T')[0]
 
                         mappedItem['commonCode'] = ''
                         mappedItem['figi'] = ''
@@ -1026,7 +1036,7 @@ class InstrumentDatabaseSearchViewSet(APIView):
                         'foundItems': mappedItems,
                         'pageNum': int(page),
                         'pageSize': int(size),
-                        'resultCount': int(response.headers['X-Total-Count'])
+                        'resultCount': response_json['count']
                     }
 
         return Response(result)

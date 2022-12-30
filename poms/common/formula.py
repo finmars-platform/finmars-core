@@ -554,8 +554,22 @@ def _unix_to_date(unix, format=None):
     return datetime.datetime.utcfromtimestamp(unix).strftime(format)
 
 
+def _last_business_day(date):
+
+    date = _parse_date(date)
+
+    offset = BDay()
+
+    return offset.rollback(date).date()
+
 def _get_date_last_week_end_business(date):
     date = _parse_date(date)
+
+    # 6 - is a last day of the week, 7 - days in a week
+    subtract_days = (date.weekday() - 6) % 7
+    subtract_delta = datetime.timedelta(days=subtract_days)
+
+    date = date - subtract_delta  # last day of the previous week
 
     offset = BDay()
 
@@ -1174,7 +1188,7 @@ def _add_fx_rate(evaluator, date, currency, pricing_policy, fx_rate=0, overwrite
 _add_fx_rate.evaluator = True
 
 
-def _add_price_history(evaluator, date, instrument, pricing_policy, principal_price=0, accrued_price=0, overwrite=True):
+def _add_price_history(evaluator, date, instrument, pricing_policy, principal_price=0, accrued_price=0, is_temporary_price=False, overwrite=True):
     from poms.users.utils import get_master_user_from_context
     from poms.instruments.models import PriceHistory
 
@@ -1206,6 +1220,7 @@ def _add_price_history(evaluator, date, instrument, pricing_policy, principal_pr
     except PriceHistory.DoesNotExist:
 
         result = PriceHistory.objects.create(date=date, instrument=instrument,
+                                             is_temporary_price=is_temporary_price,
                                              pricing_policy=pricing_policy, principal_price=principal_price,
                                              accrued_price=accrued_price)
 
@@ -2442,7 +2457,7 @@ def _update_task(evaluator, id, name, type=None, status='P', options=None, notes
 _update_task.evaluator = True
 
 
-def _run_task(evaluator, task_name, **kwargs):
+def _run_task(evaluator, task_name, options):
     _l.info('_run_task task_name: %s' % task_name)
 
     try:
@@ -2453,7 +2468,7 @@ def _run_task(evaluator, task_name, **kwargs):
 
         app.autodiscover_tasks()
 
-        app.send_task(task_name, [], kwargs)
+        app.send_task(task_name, kwargs=options)
 
     except Exception as e:
         _l.debug("_run_task.exception %s" % e)
@@ -3318,6 +3333,7 @@ FUNCTIONS = [
     SimpleEval2Def('parse_date', _parse_date),
     SimpleEval2Def('unix_to_date', _unix_to_date),
 
+    SimpleEval2Def('last_business_day', _last_business_day),
     SimpleEval2Def('get_date_last_week_end_business', _get_date_last_week_end_business),
     SimpleEval2Def('get_date_last_month_end_business', _get_date_last_month_end_business),
     SimpleEval2Def('get_date_last_quarter_end_business', _get_date_last_quarter_end_business),
