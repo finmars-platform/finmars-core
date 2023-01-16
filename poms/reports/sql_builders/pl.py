@@ -3073,7 +3073,7 @@ class PLReportBuilderSql:
                 item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
 
                 if item['item_type'] == ITEM_TYPE_MISMATCH:
-                    if item['position_size'] and item['total']:
+                    if item['position_size'] and item['total_opened']:
                         if item['instrument_id'] != self.ecosystem_defaults.instrument_id:
                             result_tmp.append(item)
                 else:
