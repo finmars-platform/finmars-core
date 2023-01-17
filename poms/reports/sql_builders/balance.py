@@ -10,6 +10,7 @@ from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, InstrumentType, LongUnderlyingExposure, ShortUnderlyingExposure, \
     ExposureCalculationModel
 from poms.portfolios.models import Portfolio
+from poms.reports.common import Report
 from poms.reports.models import BalanceReportCustomField
 from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
     get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
@@ -29,6 +30,8 @@ class BalanceReportBuilderSql:
         _l.debug('ReportBuilderSql init')
 
         self.instance = instance
+
+        self.instance.allocation_mode = Report.MODE_IGNORE
 
         self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self.instance.master_user)
 
