@@ -199,7 +199,7 @@ def get_pl_left_join_consolidation(instance):
     if instance.strategy3_mode == Report.MODE_INDEPENDENT:
         result.append("balance_q.strategy3_position_id = pl_q.strategy3_position_id")
 
-    if instance.strategy3_mode == Report.MODE_INDEPENDENT:
+    if instance.allocation_mode == Report.MODE_INDEPENDENT:
         result.append("balance_q.allocation_pl_id = pl_q.allocation_pl_id")
 
     resultString = ''
