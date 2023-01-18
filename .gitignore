@@ -151,3 +151,4 @@ pylint_result.json
 dump.sql
 requirements-old.txt
 Dockerfile-old.txt
+balance_query_result_before_execution.txt
