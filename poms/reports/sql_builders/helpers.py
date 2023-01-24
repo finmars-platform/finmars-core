@@ -122,7 +122,7 @@ def get_fx_trades_and_fx_variations_transaction_filter_sql_string(instance):
     return result_string
 
 
-def get_where_expression_for_position_consolidation(instance, prefix, prefix_second):
+def get_where_expression_for_position_consolidation(instance, prefix, prefix_second, use_allocation=True):
     result = []
 
     if instance.portfolio_mode == Report.MODE_INDEPENDENT:
@@ -140,7 +140,7 @@ def get_where_expression_for_position_consolidation(instance, prefix, prefix_sec
     if instance.strategy3_mode == Report.MODE_INDEPENDENT:
         result.append(prefix + "strategy3_position_id = " + prefix_second + "strategy3_position_id")
 
-    if instance.strategy3_mode == Report.MODE_INDEPENDENT:
+    if instance.allocation_mode == Report.MODE_INDEPENDENT:
         result.append(prefix + "allocation_pl_id = " + prefix_second + "allocation_pl_id")
 
 
@@ -199,7 +199,7 @@ def get_pl_left_join_consolidation(instance):
     if instance.strategy3_mode == Report.MODE_INDEPENDENT:
         result.append("balance_q.strategy3_position_id = pl_q.strategy3_position_id")
 
-    if instance.strategy3_mode == Report.MODE_INDEPENDENT:
+    if instance.allocation_mode == Report.MODE_INDEPENDENT:
         result.append("balance_q.allocation_pl_id = pl_q.allocation_pl_id")
 
     resultString = ''

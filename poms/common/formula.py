@@ -2457,7 +2457,7 @@ def _update_task(evaluator, id, name, type=None, status='P', options=None, notes
 _update_task.evaluator = True
 
 
-def _run_task(evaluator, task_name, options):
+def _run_task(evaluator, task_name, options={}):
     _l.info('_run_task task_name: %s' % task_name)
 
     try:

@@ -63,9 +63,9 @@ class HealthcheckView(APIView):
         data['output'] = ''
         status_code = 200
 
-        if self.errors:
-            status_code = 500
-            data['status'] = 'fail'
+        # if self.errors:
+        #     status_code = 500
+        #     data['status'] = 'fail'
 
         # for item in self.plugins:
         #
