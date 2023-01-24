@@ -22,4 +22,5 @@ SECRET_KEY=mv83o5mq \
 FINMARS_DATABASE_URL=https://database.finmars.com/ \
 FINMARS_DATABASE_USER=finmars \
 FINMARS_DATABASE_PASSWORD=8ah9o7zq2nw10oud2ictqvgxw6ja81007m \
+DIRECTOR_DATABASE_URI="sqlite:////Users/szhitenev/projects/finmars/repositories/backend/poms_director/director.db" \
 celery --app=poms_app worker --autoscale=4,2  --loglevel=INFO

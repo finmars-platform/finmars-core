@@ -323,15 +323,15 @@ class BootstrapConfig(AppConfig):
 
                     _l.info("create public folder")
 
-            if not storage.exists(settings.BASE_API_URL + '/import/.init'):
-                path = settings.BASE_API_URL + '/import/.init'
+            if not storage.exists(settings.BASE_API_URL + '/workflows/.init'):
+                path = settings.BASE_API_URL + '/workflows/.init'
 
                 with NamedTemporaryFile() as tmpf:
                     tmpf.write(b'')
                     tmpf.flush()
                     storage.save(path, tmpf)
 
-                    _l.info("create import folder")
+                    _l.info("create workflows folder")
 
             members = Member.objects.all()
 

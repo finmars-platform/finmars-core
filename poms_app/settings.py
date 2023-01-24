@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'mptt',
 
     'healthcheck',
+    'director',
 
     'poms.system',
 
