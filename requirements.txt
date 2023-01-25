@@ -103,3 +103,4 @@ vine==5.0.0
 wcwidth==0.2.5
 websockets==10.4
 yarl==1.8.1
+pexpect==4.8.0

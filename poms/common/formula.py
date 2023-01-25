@@ -2335,6 +2335,7 @@ def _get_default_strategy1(evaluator):
     except Exception as e:
         print("get_default_strategy1 error %s" % e)
 
+
     return None
 
 
@@ -2497,6 +2498,7 @@ def _run_pricing_procedure(evaluator, user_code, **kwargs):
 
     except Exception as e:
         _l.debug("_run_pricing_procedure.exception %s" % e)
+        raise Exception(e)
 
 
 _run_pricing_procedure.evaluator = True
@@ -2559,6 +2561,7 @@ def _run_data_procedure(evaluator, user_code, user_context=None, linked_task_kwa
     except Exception as e:
         _l.error("_run_data_procedure.exception %s" % e)
         _l.error("_run_data_procedure.exception traceback %s" % traceback.format_exc())
+        raise Exception(e)
 
 
 _run_data_procedure.evaluator = True
@@ -2602,6 +2605,7 @@ def _run_data_procedure_sync(evaluator, user_code, user_context=None, **kwargs):
     except Exception as e:
         _l.error("_run_data_procedure_sync.exception %s" % e)
         _l.error("_run_data_procedure_sync.exception traceback %s" % traceback.format_exc())
+        raise Exception(e)
 
 
 _run_data_procedure_sync.evaluator = True

@@ -22,7 +22,7 @@ DJANGO_LOG_LEVEL = ENV_STR('DJANGO_LOG_LEVEL', 'INFO')
 
 SECRET_KEY = ENV_STR('SECRET_KEY', None)
 SERVER_TYPE = ENV_STR('SERVER_TYPE', 'local')
-BASE_API_URL = ENV_STR('BASE_API_URL', 'client00000')
+BASE_API_URL = ENV_STR('BASE_API_URL', 'space00000')
 HOST_LOCATION = ENV_STR('HOST_LOCATION', 'AWS')  # azure, aws, or custom, only log purpose
 DOMAIN_NAME = ENV_STR('DOMAIN_NAME', 'finmars.com')
 JWT_SECRET_KEY = ENV_STR('JWT_SECRET_KEY', None)
@@ -57,7 +57,6 @@ INSTALLED_APPS = [
     'mptt',
 
     'healthcheck',
-    'director',
 
     'poms.system',
 

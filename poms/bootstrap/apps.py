@@ -301,7 +301,6 @@ class BootstrapConfig(AppConfig):
 
             _l.info("create base folders if not exists")
 
-            _l.info('storage %s' % storage)
 
             if not storage.exists(settings.BASE_API_URL + '/.system/.init'):
                 path = settings.BASE_API_URL + '/.system/.init'
@@ -332,6 +331,26 @@ class BootstrapConfig(AppConfig):
                     storage.save(path, tmpf)
 
                     _l.info("create workflows folder")
+
+            if not storage.exists(settings.BASE_API_URL + '/workflows/schemas/.init'):
+                path = settings.BASE_API_URL + '/workflows/schemas/.init'
+
+                with NamedTemporaryFile() as tmpf:
+                    tmpf.write(b'')
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
+                    _l.info("create workflows schemas folder")
+
+            if not storage.exists(settings.BASE_API_URL + '/workflows/tasks/.init'):
+                path = settings.BASE_API_URL + '/workflows/tasks/.init'
+
+                with NamedTemporaryFile() as tmpf:
+                    tmpf.write(b'')
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
+                    _l.info("create workflows tasks folder")
 
             members = Member.objects.all()
 
