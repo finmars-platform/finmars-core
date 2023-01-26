@@ -31,6 +31,19 @@ def transaction_import(self, task_id, procedure_instance_id=None):
             )
             instance.fill_with_raw_items()
 
+            if instance.preprocess_file:
+                try:
+
+                    _l.info("Going to execute %s" % instance.scheme.data_preprocess_expression)
+
+                    new_raw_items = instance.whole_file_preprocess()
+                    instance.raw_items = new_raw_items
+
+                except Exception as e:
+                    _l.error('transaction_import.preprocess errors %s' % e)
+                    raise Exception ("Could not preprocess raw items %s" % e)
+
+
             celery_task.update_progress(
                 {
                     'current': 0,

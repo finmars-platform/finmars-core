@@ -90,6 +90,7 @@ class TransactionImportProcess(object):
 
         self.execution_context = self.task.options_object['execution_context']
         self.file_path = self.task.options_object['file_path']
+        self.preprocess_file = self.task.options_object['preprocess_file']
 
         self.ecosystem_default = EcosystemDefault.objects.get(master_user=self.master_user)
 
