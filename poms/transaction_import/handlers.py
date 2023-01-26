@@ -445,7 +445,7 @@ class TransactionImportProcess(object):
 
                 transaction.set_rollback(True)
 
-    def fill_with_raw_items(self):
+    def fill_with_file_items(self):
 
         _l.info('TransactionImportProcess.Task %s. fill_with_raw_items INIT %s' % (self.task, self.process_type))
 
@@ -459,20 +459,6 @@ class TransactionImportProcess(object):
                     self.result.total_rows = len(items)
 
                     self.file_items = items
-                    self.raw_items = []
-
-                    for file_item in self.file_items:
-
-                        item = {}
-
-                        for scheme_input in self.scheme.inputs.all():
-
-                            try:
-                                item[scheme_input.name] = file_item[scheme_input.column_name]
-                            except Exception as e:
-                                item[scheme_input.name] = None
-
-                        self.raw_items.append(item)
 
                 except Exception as e:
                     _l.info("Trying to get json items from file")
@@ -480,20 +466,6 @@ class TransactionImportProcess(object):
                     with storage.open(self.file_path, 'rb') as f:
 
                         self.file_items = json.loads(f.read())
-                        self.raw_items = []
-
-                        for file_item in self.file_items:
-
-                            item = {}
-
-                            for scheme_input in self.scheme.inputs.all():
-
-                                try:
-                                    item[scheme_input.name] = file_item[scheme_input.column_name]
-                                except Exception as e:
-                                    item[scheme_input.name] = None
-
-                            self.raw_items.append(item)
 
             if self.process_type == ProcessType.CSV:
 
@@ -524,19 +496,15 @@ class TransactionImportProcess(object):
                                 else:
 
                                     file_item = {}
-                                    item = {}
 
                                     for column_index, value in enumerate(row):
                                         key = column_row[column_index]
                                         file_item[key] = value
 
-                                    for scheme_input in self.scheme.inputs.all():
-                                        item[scheme_input.name] = file_item[scheme_input.column_name]
-
                                     self.file_items.append(file_item)
-                                    self.raw_items.append(item)
 
-                            self.result.total_rows = len(self.raw_items)
+
+                            self.result.total_rows = len(self.file_items)
 
             if self.process_type == ProcessType.EXCEL:
 
@@ -601,20 +569,44 @@ class TransactionImportProcess(object):
                             else:
 
                                 file_item = {}
-                                item = {}
 
                                 for column_index, value in enumerate(row):
                                     key = column_row[column_index]
                                     file_item[key] = value
 
-                                for scheme_input in self.scheme.inputs.all():
-                                    item[scheme_input.name] = file_item[scheme_input.column_name]
-
                                 self.file_items.append(file_item)
-                                self.raw_items.append(item)
 
-                        self.result.total_rows = len(self.raw_items)
+                        self.result.total_rows = len(self.file_items)
 
+            _l.info(
+                'TransactionImportProcess.Task %s. fill_with_raw_items %s DONE items %s' % (
+                    self.task, self.process_type, len(self.raw_items)))
+
+        except Exception as e:
+
+            _l.error('TransactionImportProcess.Task %s. fill_with_raw_items %s Exception %s' % (
+                self.task, self.process_type, e))
+            _l.error('TransactionImportProcess.Task %s. fill_with_raw_items %s Traceback %s' % (
+                self.task, self.process_type, traceback.format_exc()))
+
+    def fill_with_raw_items(self):
+
+        _l.info('TransactionImportProcess.Task %s. fill_with_raw_items INIT %s' % (self.task, self.process_type))
+
+        try:
+
+            for file_item in self.file_items:
+
+                item = {}
+
+                for scheme_input in self.scheme.inputs.all():
+
+                    try:
+                        item[scheme_input.name] = file_item[scheme_input.column_name]
+                    except Exception as e:
+                        item[scheme_input.name] = None
+
+                self.raw_items.append(item)
             _l.info(
                 'TransactionImportProcess.Task %s. fill_with_raw_items %s DONE items %s' % (
                     self.task, self.process_type, len(self.raw_items)))
@@ -991,7 +983,7 @@ class TransactionImportProcess(object):
 
             names = {}
 
-            names['data'] = self.raw_items
+            names['data'] = self.file_items
 
             try:
 
