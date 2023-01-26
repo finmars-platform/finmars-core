@@ -997,7 +997,7 @@ class TransactionImportProcess(object):
 
                 _l.info("whole_file_preprocess  names %s" % names)
 
-                self.raw_items = formula.safe_eval(self.scheme.data_preprocess_expression, names=names)
+                self.raw_items = formula.safe_eval(self.scheme.data_preprocess_expression, names=names, context=self.context)
 
                 _l.info("whole_file_preprocess  self.raw_items %s" % self.raw_items)
 
