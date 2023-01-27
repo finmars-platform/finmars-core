@@ -32,7 +32,7 @@ def transaction_import(self, task_id, procedure_instance_id=None):
 
             instance.fill_with_file_items()
 
-            if instance.preprocess_file:
+            if instance.scheme.data_preprocess_expression:
                 try:
 
                     _l.info("Going to execute %s" % instance.scheme.data_preprocess_expression)
