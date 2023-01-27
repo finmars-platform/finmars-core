@@ -979,7 +979,7 @@ class TransactionImportProcess(object):
 
     def whole_file_preprocess(self):
 
-        if self.scheme.data_preprocess_expression and self.task.options_object['preprocess_file']:
+        if self.scheme.data_preprocess_expression:
 
             names = {}
 
