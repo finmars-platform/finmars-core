@@ -37,8 +37,8 @@ def transaction_import(self, task_id, procedure_instance_id=None):
 
                     _l.info("Going to execute %s" % instance.scheme.data_preprocess_expression)
 
-                    new_raw_items = instance.whole_file_preprocess()
-                    instance.raw_items = new_raw_items
+                    new_file_items = instance.whole_file_preprocess()
+                    instance.file_items = new_file_items
 
                 except Exception as e:
                     _l.error('transaction_import.preprocess errors %s' % e)

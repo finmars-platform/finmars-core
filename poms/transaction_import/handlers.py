@@ -997,4 +997,6 @@ class TransactionImportProcess(object):
 
                 _l.error("Could not execute preoprocess expression. Error %s" % e)
 
+        _l.info("whole_file_preprocess.file_items %s" % len(self.file_items))
+
         return self.file_items
