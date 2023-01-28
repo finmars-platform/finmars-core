@@ -400,7 +400,7 @@ REST_FRAMEWORK = {
         # 'rest_framework.authentication.BasicAuthentication',
         # 'rest_framework.authentication.TokenAuthentication',
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-        # "poms.common.authentication.KeycloakAuthentication",
+        "poms.common.authentication.KeycloakAuthentication",
 
         # "poms.auth_tokens.authentication.ExpiringTokenAuthentication",
     ),
