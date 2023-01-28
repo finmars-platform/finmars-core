@@ -86,7 +86,12 @@ class TransactionImportProcess(object):
         self.proxy_user = ProxyUser(self.member, self.master_user)
         self.proxy_request = ProxyRequest(self.proxy_user)
 
-        self.scheme = ComplexTransactionImportScheme.objects.get(pk=self.task.options_object['scheme_id'])
+        if self.task.options_object.get('scheme_id', None):
+            self.scheme = ComplexTransactionImportScheme.objects.get(pk=self.task.options_object['scheme_id'])
+        elif self.task.options_object.get('scheme_user_code', None):
+            self.scheme = ComplexTransactionImportScheme.objects.get(user_code=self.task.options_object['scheme_user_code'])
+        else:
+            raise Exception("Import Scheme not found")
 
         self.execution_context = self.task.options_object['execution_context']
         self.file_path = self.task.options_object['file_path']

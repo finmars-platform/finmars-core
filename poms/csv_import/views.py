@@ -18,6 +18,7 @@ from .filters import SchemeContentTypeFilter
 from .models import CsvImportScheme
 from .serializers import CsvDataImportSerializer, CsvImportSchemeSerializer, CsvImportSchemeLightSerializer
 from ..system_messages.handlers import send_system_message
+from rest_framework.decorators import action
 
 _l = getLogger('poms.csv_import')
 
@@ -109,6 +110,38 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
         return Response({"task_id": celery_task.pk, "task_status": celery_task.status}, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['post'], url_path='execute')
+    def execute(self, request, *args, **kwargs):
+
+        st = time.perf_counter()
+
+        _l.info("TransactionImportViewSet.execute")
+        options_object = {}
+        # options_object['file_name'] = request.data['file_name']
+        options_object['file_path'] = request.data['file_path']
+        options_object['scheme_user_code'] = request.data['scheme_user_code']
+        options_object['execution_context'] = None
+
+        _l.info('options_object %s' % options_object)
+
+        celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                member=request.user.member,
+                                                options_object=options_object,
+                                                verbose_name="Simple Import",
+                                                type='simple_import')
+
+        _l.info('celery_task %s created ' % celery_task.pk)
+
+        send_system_message(master_user=request.user.master_user,
+                            performed_by='System',
+                            description='Member %s started Transaction Import (scheme %s)' % (
+                                request.user.member.username, options_object['scheme_user_code']))
+
+        data_csv_file_import.apply_async(kwargs={'task_id': celery_task.pk})
+
+        _l.info('CsvDataImportViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
+        return Response({"task_id": celery_task.pk, "task_status": celery_task.status}, status=status.HTTP_200_OK)
 
 class CsvDataImportValidateViewSet(AbstractAsyncViewSet):
     serializer_class = CsvDataImportSerializer

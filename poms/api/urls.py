@@ -250,6 +250,7 @@ router.register(r'strategies/3/strategy-attribute-type', strategies.Strategy3Att
 
 router.register(r'reference-tables/reference-table', reference_table.ReferenceTableViewSet, 'reference_table')
 router.register(r'active_processes/active_processes', celery_tasks.CeleryTaskViewSet, 'celery_tasks')
+router.register(r'tasks/task', celery_tasks.CeleryTaskViewSet, 'celery_tasks')
 
 router.register(r'transactions/event-class', transactions.EventClassViewSet)
 router.register(r'transactions/notification-class', transactions.NotificationClassViewSet)
@@ -405,6 +406,11 @@ router.register(r'import/complex-transaction-import-scheme-light',
                 integrations.ComplexTransactionImportSchemeLightViewSet)
 router.register(r'import/complex-transaction-csv-file-import', integrations.ComplexTransactionCsvFileImportViewSet,
                 'complextransactioncsvfileimport')
+
+router.register(r'import/transaction-import', integrations.TransactionImportViewSet,
+                'transactionimportviewset')
+router.register(r'import/simple-import', csv_import.CsvDataImportViewSet,
+                'simpleimportviewset')
 
 router.register(r'import/complex-transaction-preprocess-file', integrations.ComplexTransactionFilePreprocessViewSet,
                 'complextransactionfilepreprocessviewSet')

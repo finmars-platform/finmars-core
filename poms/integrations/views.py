@@ -83,6 +83,7 @@ _l = logging.getLogger('poms.integrations')
 
 from rest_framework import status
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.decorators import action
 
 import requests
 import json
@@ -828,6 +829,166 @@ class ComplexTransactionImportSchemeViewSet(AbstractApiView, UpdateModelMixinExt
         'scheme_name',
     ]
 
+class TransactionImportViewSet(AbstractAsyncViewSet):
+    serializer_class = ComplexTransactionCsvFileImportSerializer
+
+    permission_classes = AbstractModelViewSet.permission_classes + [
+    ]
+
+    def get_serializer_context(self):
+        context = super(AbstractAsyncViewSet, self).get_serializer_context()
+        context['show_object_permissions'] = False
+        return context
+
+    def get_status(self, request, *args, **kwargs):
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        task_id = instance.task_id
+
+        if task_id:
+
+            # res = AsyncResult(signer.unsign(task_id))
+            res = AsyncResult(task_id)
+
+            try:
+                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, celery_task_id=task_id)
+            except CeleryTask.DoesNotExist:
+                celery_task = None
+                raise PermissionDenied()
+
+            st = time.perf_counter()
+
+            if res.ready():
+
+                instance = res.result
+                if celery_task:
+                    celery_task.finished_at = datetime_now()
+                    celery_task.file_report_id = instance.stats_file_report
+
+            else:
+
+                if res.result:
+
+                    if 'processed_rows' in res.result:
+                        instance.processed_rows = res.result['processed_rows']
+                    if 'total_rows' in res.result:
+                        instance.total_rows = res.result['total_rows']
+
+                    if celery_task:
+
+                        celery_task_data = {}
+
+                        if 'total_rows' in res.result:
+                            celery_task_data["total_rows"] = res.result['total_rows']
+
+                        if 'processed_rows' in res.result:
+                            celery_task_data["processed_rows"] = res.result['processed_rows']
+
+                        if 'scheme_name' in res.result:
+                            celery_task_data["scheme_name"] = res.result['scheme_name']
+
+                        if 'file_name' in res.result:
+                            celery_task_data["file_name"] = res.result['file_name']
+
+                        celery_task.data = celery_task_data
+
+                # print('TASK ITEMS LEN %s' % len(res.result.items))
+
+            print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
+
+            if instance.master_user.id != request.user.master_user.id:
+                raise PermissionDenied()
+
+            print('TASK RESULT %s' % res.result)
+            print('TASK STATUS %s' % res.status)
+
+            if celery_task:
+                celery_task.task_status = res.status
+                celery_task.save()
+
+            instance.task_id = task_id
+            instance.task_status = res.status
+
+            serializer = self.get_serializer(instance=instance, many=False)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        else:
+
+            return Response({"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+    def create(self, request, *args, **kwargs):
+
+        st = time.perf_counter()
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        # REFACTOR THIS
+
+        options_object = {}
+        options_object['file_name'] = instance.file_name # posiblly optional
+        options_object['file_path'] = instance.file_path
+        options_object['preprocess_file'] = instance.preprocess_file
+        options_object['scheme_id'] = instance.scheme.id
+        options_object['execution_context'] = None
+
+        _l.info('options_object %s' % options_object)
+
+        celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                member=request.user.member,
+                                                options_object=options_object,
+                                                verbose_name="Transaction Import by %s" % request.user.member.username,
+                                                type='transaction_import')
+
+        _l.info('celery_task %s created ' % celery_task.pk)
+
+        send_system_message(master_user=request.user.master_user,
+                            performed_by='System',
+                            description='Member %s started Transaction Import (scheme %s)' % (
+                                request.user.member.username, instance.scheme.name))
+
+        transaction_import.apply_async(kwargs={"task_id": celery_task.pk})
+
+        _l.info('ComplexTransactionCsvFileImportViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
+        return Response({"task_id": celery_task.pk, "task_status": celery_task.status}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], url_path='execute')
+    def execute(self, request, *args, **kwargs):
+
+        st = time.perf_counter()
+
+        _l.info("TransactionImportViewSet.execute")
+        options_object = {}
+        # options_object['file_name'] = request.data['file_name']
+        options_object['file_path'] = request.data['file_path']
+        options_object['scheme_user_code'] = request.data['scheme_user_code']
+        options_object['execution_context'] = None
+
+        _l.info('options_object %s' % options_object)
+
+        celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                member=request.user.member,
+                                                options_object=options_object,
+                                                verbose_name="Transaction Import by %s" % request.user.member.username,
+                                                type='transaction_import')
+
+        _l.info('celery_task %s created ' % celery_task.pk)
+
+        send_system_message(master_user=request.user.master_user,
+                            performed_by='System',
+                            description='Member %s started Transaction Import (scheme %s)' % (
+                                request.user.member.username, options_object['scheme_user_code']))
+
+        transaction_import.apply_async(kwargs={"task_id": celery_task.pk})
+
+        _l.info('ComplexTransactionCsvFileImportViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
+        return Response({"task_id": celery_task.pk, "task_status": celery_task.status}, status=status.HTTP_200_OK)
 
 class ComplexTransactionImportSchemeLightViewSet(AbstractModelViewSet):
     queryset = ComplexTransactionImportScheme.objects

@@ -1621,7 +1621,12 @@ class ImportHandler:
 
         _l.debug('ImportHandler.process: initialized')
 
-        scheme = CsvImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
+        if (celery_task.options_object.get('scheme_id', None)):
+            scheme = CsvImportScheme.objects.get(pk=celery_task.options_object['scheme_id'])
+        elif (celery_task.options_object.get('scheme_user_code', None)):
+            scheme = CsvImportScheme.objects.get(user_code=celery_task.options_object['scheme_user_code'])
+        else:
+            raise Exception("Scheme not found")
 
         instance = CsvDataFileImport(task_id=celery_task.id,
                                      master_user=celery_task.master_user,
