@@ -399,7 +399,9 @@ REST_FRAMEWORK = {
         # 'rest_framework.authentication.SessionAuthentication',
         # 'rest_framework.authentication.BasicAuthentication',
         # 'rest_framework.authentication.TokenAuthentication',
-        "poms.common.authentication.KeycloakAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        # "poms.common.authentication.KeycloakAuthentication",
+
         # "poms.auth_tokens.authentication.ExpiringTokenAuthentication",
     ),
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
@@ -604,4 +606,6 @@ KEYCLOAK_CLIENT_ID = os.environ.get('KEYCLOAK_CLIENT_ID', 'finmars-backend')
 KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY',
                                             None)  # not required anymore, api works in Bearer-only mod
 
+
+SIMPLE_JWT = {"SIGNING_KEY": os.getenv("SIGNING_KEY", SECRET_KEY), 'USER_ID_FIELD': 'username'}
 

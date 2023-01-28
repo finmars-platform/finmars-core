@@ -26,12 +26,27 @@ class BootstrapConfig(AppConfig):
 
         _l.info("Bootstrapping Finmars Application")
 
+        self.create_finmars_bot()
         self.add_view_and_manage_permissions()
         self.load_master_user_data()
         self.sync_users_at_authorizer_service()
         self.load_init_configuration()
         self.create_base_folders()
         self.register_at_authorizer_service()
+
+    def create_finmars_bot(self):
+
+        from django.contrib.auth.models import User
+
+        try:
+
+            user = User.objects.get(username='finmars_bot')
+
+        except Exception as e:
+
+            user = User.objects.create(username='finmars_bot')
+
+            _l.info("Finmars bot created")
 
     def add_view_and_manage_permissions(self):
         from poms.common.utils import add_view_and_manage_permissions
