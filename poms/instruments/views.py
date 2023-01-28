@@ -1328,7 +1328,7 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
                     then=Value(True)
                 ),
                 default=Value(False),
-                output_field=BooleanField(),
+                # output_field=BooleanField(),
             )
         )
         return qs

@@ -46,7 +46,18 @@ class BootstrapConfig(AppConfig):
 
             user = User.objects.create(username='finmars_bot')
 
-            _l.info("Finmars bot created")
+
+        try:
+            from poms.users.models import Member
+            member = Member.objects.get(user__username='finmars_bot')
+        except Exception as e:
+
+            from poms.users.models import MasterUser
+            master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+            member = Member.objects.create(user=user, master_user=master_user)
+
+        _l.info("Finmars bot created")
 
     def add_view_and_manage_permissions(self):
         from poms.common.utils import add_view_and_manage_permissions
