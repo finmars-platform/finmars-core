@@ -66,7 +66,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
     celery_task = data_csv_file_import
 
     permission_classes = AbstractModelViewSet.permission_classes + [
-        PomsFunctionPermission
+        # PomsFunctionPermission
     ]
 
     def get_serializer_context(self):
