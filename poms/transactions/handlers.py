@@ -1698,23 +1698,26 @@ class TransactionTypeProcess(object):
                                   model=Instrument,
                                   target=transaction, target_attr_name='linked_instrument',
                                   source=action_transaction, source_attr_name='linked_instrument')
+
                     if action_transaction.linked_instrument_phantom is not None:
-                        transaction.linked_instrument = instrument_map[action_transaction.linked_instrument_phantom_id]
+                        # transaction.linked_instrument = instrument_map[action_transaction.linked_instrument_phantom_id]
+                        transaction.linked_instrument = instrument_map[action_transaction.linked_instrument_phantom.order]
 
                     self._set_rel(errors=errors, values=self.values, default_value=None,
                                   model=Instrument,
                                   target=transaction, target_attr_name='allocation_balance',
                                   source=action_transaction, source_attr_name='allocation_balance')
                     if action_transaction.allocation_balance_phantom is not None:
-                        transaction.allocation_balance = instrument_map[
-                            action_transaction.allocation_balance_phantom_id]
+                        # transaction.allocation_balance = instrument_map[action_transaction.allocation_balance_phantom_id]
+                        transaction.allocation_balance = instrument_map[action_transaction.allocation_balance_phantom.order]
 
                     self._set_rel(errors=errors, values=self.values, default_value=None,
                                   model=Instrument,
                                   target=transaction, target_attr_name='allocation_pl',
                                   source=action_transaction, source_attr_name='allocation_pl')
                     if action_transaction.allocation_pl_phantom is not None:
-                        transaction.allocation_pl = instrument_map[action_transaction.allocation_pl_phantom_id]
+                        # transaction.allocation_pl = instrument_map[action_transaction.allocation_pl_phantom_id]
+                        transaction.allocation_pl = instrument_map[action_transaction.allocation_pl_phantom.order]
 
                     self._set_val(errors=errors, values=self.values, default_value=0.0,
                                   target=transaction, target_attr_name='reference_fx_rate',
