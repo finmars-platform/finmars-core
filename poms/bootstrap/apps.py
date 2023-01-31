@@ -26,9 +26,10 @@ class BootstrapConfig(AppConfig):
 
         _l.info("Bootstrapping Finmars Application")
 
-        self.create_finmars_bot()
+
         self.add_view_and_manage_permissions()
         self.load_master_user_data()
+        self.create_finmars_bot()
         self.sync_users_at_authorizer_service()
         self.load_init_configuration()
         self.create_base_folders()
@@ -51,6 +52,7 @@ class BootstrapConfig(AppConfig):
             from poms.users.models import Member
             member = Member.objects.get(user__username='finmars_bot')
         except Exception as e:
+            _l.info("Member not found, going to create it")
 
             from poms.users.models import MasterUser
             master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
