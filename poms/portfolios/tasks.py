@@ -2,6 +2,8 @@ from __future__ import unicode_literals, print_function
 
 import logging
 from datetime import timedelta, datetime
+from dateutil import parser
+
 
 from celery import shared_task
 from django.views.generic.dates import timezone_today
@@ -360,7 +362,8 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
 
             if date_from and isinstance(date_from, str) and date_from != 'None':
                 format = '%Y-%m-%d'
-                _date_from = datetime.strptime(date_from, format).date()
+                # _date_from = datetime.strptime(date_from, format).date()
+                _date_from = parser.parse(date_from).date()
             else:
                 try:
                     first_transaction = \
