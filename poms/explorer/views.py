@@ -66,7 +66,7 @@ class ExplorerViewSet(AbstractViewSet):
             results.append({
                 'type': 'file',
                 'name': file,
-                'file_path': path + '/' + file,
+                'file_path': path + file, # path already has / in end of str
                 'size': storage.size(path + '/' + file),
                 'last_modified': storage.modified_time(path + '/' + file)
             })
