@@ -66,6 +66,7 @@ class ExplorerViewSet(AbstractViewSet):
             results.append({
                 'type': 'file',
                 'name': file,
+                'file_path': path + '/' + file,
                 'size': storage.size(path + '/' + file),
                 'last_modified': storage.modified_time(path + '/' + file)
             })
