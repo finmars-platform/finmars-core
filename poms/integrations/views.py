@@ -958,7 +958,8 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         return Response({"task_id": celery_task.pk, "task_status": celery_task.status}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='execute')
-    def execute(self, request, *args, **kwargs):
+    def \
+            execute(self, request, *args, **kwargs):
 
         st = time.perf_counter()
 
@@ -966,6 +967,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         options_object = {}
         # options_object['file_name'] = request.data['file_name']
         options_object['file_path'] = request.data['file_path']
+        options_object['filename'] = request.data['file_path'].split('/')[:-1] # TODO refactor to file_name
         options_object['scheme_user_code'] = request.data['scheme_user_code']
         options_object['execution_context'] = None
 
