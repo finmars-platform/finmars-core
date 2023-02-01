@@ -342,8 +342,11 @@ LOGGING = {
         },
         'file': {
             'level': DJANGO_LOG_LEVEL,
-            'class': 'logging.FileHandler',
-            'filename': '/var/log/finmars/django.log',
+            # 'class': 'logging.FileHandler',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'interval': 1,
+            'when': 'D',
+            'filename': '/var/log/finmars/backend/django.log',
             'formatter': 'verbose'
         }
     },

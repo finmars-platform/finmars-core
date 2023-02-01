@@ -8,18 +8,21 @@ FAKE_MIGRATE="${FAKE_MIGRATE:-False}"
 
 echo "Finmars initialization"
 
-
 echo "set chmod 777 /var/log/finmars/"
 
 chmod 777 /var/log/finmars/
 
-echo "Create django log file /var/log/finmars/django.log"
+echo "set chmod 777 /var/log/finmars/backend"
 
-touch /var/log/finmars/django.log
+chmod 777 /var/log/finmars/backend
 
-echo "set chmod 777 /var/log/finmars/django.log"
+echo "Create django log file /var/log/finmars/backend/django.log"
 
-chmod 777 /var/log/finmars/django.log
+touch /var/log/finmars/backend/django.log
+
+echo "set chmod 777 /var/log/finmars/backend/django.log"
+
+chmod 777 /var/log/finmars/backend/django.log
 
 mkdir /var/app/finmars_data
 chmod 777 /var/app/finmars_data
