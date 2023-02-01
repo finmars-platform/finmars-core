@@ -1160,8 +1160,9 @@ class ValidateHandler:
             _l.debug('Can\'t process file', exc_info=True)
             instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
         finally:
+            pass
             # import_file_storage.delete(instance.file_path)
-            storage.delete(instance.file_path)
+            # storage.delete(instance.file_path)
 
         if instance.stats and len(instance.stats):
             instance.stats_file_report = generate_file_report(instance, master_user, scheme, 'csv_import.validate',
@@ -1738,9 +1739,10 @@ class ImportHandler:
             _l.debug('Can\'t process file', exc_info=True)
             instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
         finally:
+            pass
             # import_file_storage.delete(instance.file_path)
-            if instance.file_path:
-                storage.delete(instance.file_path)
+            # if instance.file_path:
+            #     storage.delete(instance.file_path)
 
         if instance.stats and len(instance.stats):
             instance.stats_file_report = generate_file_report(instance, master_user, scheme, 'csv_import.import',
@@ -2220,8 +2222,9 @@ class UnifiedImportHandler():
             _l.debug('Can\'t process file', exc_info=True)
             self.instance.error_message = gettext_lazy("Invalid file format or file already deleted.")
         finally:
+            pass
             # import_file_storage.delete(instance.file_path)
-            storage.delete(self.instance.file_path)
+            # storage.delete(self.instance.file_path)
 
         _l.info("Import here? %s" % len(self.instance.items))
 

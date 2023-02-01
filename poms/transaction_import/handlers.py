@@ -889,7 +889,8 @@ class TransactionImportProcess(object):
             if self.task.options_object and 'items' in self.task.options_object:
                 pass
             else:
-                storage.delete(self.file_path)
+                pass
+                # storage.delete(self.file_path)
 
             send_websocket_message(data={
                 'type': 'transaction_import_status',
