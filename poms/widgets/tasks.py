@@ -607,7 +607,7 @@ def calculate_historical(self, date_from=None, date_to=None, portfolios=None):
                     index = index + 1
                 except Exception as e:
 
-                    send_system_message(master_user=master_user, action_status="required", type="warn",
+                    send_system_message(master_user=master_user, action_status="required", type="warning",
                                         title='Calculate Historical Partial Failed.', description=str(e))
 
                     _l.error("Portfolio %s index %s widget calculation error %s" % (portfolio.name, index, e))

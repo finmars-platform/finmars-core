@@ -557,7 +557,7 @@ class ExpressionProcedureProcess(object):
 
             except Exception as e:
 
-                send_system_message(master_user=self.master_user, action_status="required", type="warn",
+                send_system_message(master_user=self.master_user, action_status="required", type="warning",
                                     title='Expression Procedure Failed. User Code: %s' % self.procedure.user_code,
                                     description=str(e))
 
