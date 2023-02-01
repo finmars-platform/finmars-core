@@ -9,6 +9,7 @@ _l = logging.getLogger('poms.system_messages')
 
 
 def send_system_message(master_user, title=None, description=None, attachments=[], section='other', type='info',
+                        action_status='not_required',
                         performed_by=None, target=None, linked_event=None):
     try:
 
@@ -44,12 +45,19 @@ def send_system_message(master_user, title=None, description=None, attachments=[
             'other': SystemMessage.SECTION_OTHER,
         }
 
+        action_status_mapping = {
+            'not_required': SystemMessage.ACTION_STATUS_REQUIRED,
+            'required': SystemMessage.ACTION_STATUS_REQUIRED,
+            'solved': SystemMessage.ACTION_STATUS_SOLVED
+        }
+
         system_message = SystemMessage.objects.create(master_user=master_user,
                                                       performed_by=performed_by,
                                                       target=target,
                                                       title=title,
                                                       description=description,
                                                       section=section_mapping[section],
+                                                      action_status=action_status_mapping[action_status],
                                                       type=type_mapping[type],
                                                       linked_event=linked_event
                                                       )

@@ -20,7 +20,7 @@ class SystemMessageAttachmentSerializer(serializers.ModelSerializer):
 class SystemMessageSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
 
-    attachments = SystemMessageAttachmentSerializer(many=True)
+    attachments = SystemMessageAttachmentSerializer(many=True, read_only=True)
 
     class Meta:
 
