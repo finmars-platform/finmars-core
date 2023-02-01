@@ -248,7 +248,9 @@ class DataProcedureProcess(object):
                 _l.error("universal broker traceback %s" % traceback.format_exc())
                 send_system_message(master_user=self.master_user,
                                     performed_by="System",
-                                    description="universal Broker. Procedure is not created.  Something went wrong %s" % e,
+                                    action_status="required", type="error",
+                                    title="Data Procedure Failed. User Code: %s " % self.procedure.user_code,
+                                    description="Universal Broker. Procedure is not created.  Something went wrong %s" % e,
                                     )
 
 
