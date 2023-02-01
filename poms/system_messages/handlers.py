@@ -46,7 +46,7 @@ def send_system_message(master_user, title=None, description=None, attachments=[
         }
 
         action_status_mapping = {
-            'not_required': SystemMessage.ACTION_STATUS_REQUIRED,
+            'not_required': SystemMessage.ACTION_STATUS_NOT_REQUIRED,
             'required': SystemMessage.ACTION_STATUS_REQUIRED,
             'solved': SystemMessage.ACTION_STATUS_SOLVED
         }
