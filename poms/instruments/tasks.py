@@ -13,6 +13,7 @@ from poms.common.utils import date_now, isclose
 from poms.instruments.models import EventSchedule, Instrument, GeneratedEvent
 from poms.reports.common import Report, ReportItem
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
+from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import NotificationClass
 from poms.users.models import MasterUser, Member
 
@@ -534,6 +535,9 @@ def generate_events(self):
 
     except Exception as e:
 
+        send_system_message(master_user=master_user, action_status="required", type="warning",
+                            title='Generate Events Failed.', description=str(e))
+
         celery_task.error_message = 'Error %s. Traceback %s' % (e, traceback.format_exc())
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.save()
@@ -810,6 +814,9 @@ def process_events(self):
         celery_task.save()
 
     except Exception as e:
+
+        send_system_message(master_user=master_user, action_status="required", type="warning",
+                            title='Process Events Failed.', description=str(e))
 
         _l.error('process_events0 exception occurred %s' % e)
         _l.error(traceback.format_exc())

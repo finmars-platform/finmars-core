@@ -1,11 +1,10 @@
 from __future__ import unicode_literals, print_function
 
 import logging
-from datetime import timedelta, datetime
-from dateutil import parser
-
+from datetime import timedelta
 
 from celery import shared_task
+from dateutil import parser
 from django.views.generic.dates import timezone_today
 
 from poms.common.utils import get_list_of_dates_between_two_dates
@@ -97,17 +96,18 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
 
     return cash_flow
 
+
 # TODO Refactor to task_id
 @shared_task(name='portfolios.calculate_portfolio_register_record', bind=True)
 def calculate_portfolio_register_record(self, portfolios=None):
     _l.info('calculate_portfolio_register_record.init')
     _l.info('calculate_portfolio_register_record.portfolios %s' % portfolios)
 
-    try:
+    master_user = MasterUser.objects.prefetch_related(
+        'members'
+    ).all().first()
 
-        master_user = MasterUser.objects.prefetch_related(
-            'members'
-        ).all().first()
+    try:
 
         send_system_message(master_user=master_user,
                             performed_by='system',
@@ -300,8 +300,12 @@ def calculate_portfolio_register_record(self, portfolios=None):
 
     except Exception as e:
 
+        send_system_message(master_user=master_user, action_status="required", type="error",
+                            title='Task Failed. Name: calculate_portfolio_register_record', description=str(e))
+
         _l.error('calculate_portfolio_register_records error %s' % e)
         _l.error(traceback.format_exc())
+
 
 # TODO Refactor to task_id
 @shared_task(name='portfolios.calculate_portfolio_register_price_history', bind=True)
@@ -453,6 +457,9 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
         task.save()
 
     except Exception as e:
+
+        send_system_message(master_user=master_user, action_status="required", type="error",
+                            title='Task Failed. Name: calculate_portfolio_register_price_history', description=str(e))
 
         task.error_message = 'Error %s. Traceback %s' % (e, traceback.format_exc())
         task.status = CeleryTask.STATUS_ERROR

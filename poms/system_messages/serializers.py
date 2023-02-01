@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from poms.system_messages.models import SystemMessage, SystemMessageAttachment
+from poms.system_messages.models import SystemMessage, SystemMessageAttachment, SystemMessageComment
 from poms.users.fields import MasterUserField
 from poms.users.utils import get_member_from_context
 
@@ -17,10 +17,25 @@ class SystemMessageAttachmentSerializer(serializers.ModelSerializer):
         self.fields['file_report_object'] = FileReportSerializer(source='file_report', read_only=True)
 
 
+class SystemMessageCommentSerializer(serializers.ModelSerializer):
+    member_object = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SystemMessageComment
+        fields = ('id', 'member', 'member_object', 'comment', 'created', 'modified')
+
+    def get_member_object(self, instance):
+        return {
+            'id': instance.member.id,
+            'username': instance.member.username
+        }
+
+
 class SystemMessageSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
 
     attachments = SystemMessageAttachmentSerializer(many=True, read_only=True)
+    comments = SystemMessageCommentSerializer(many=True, read_only=True)
 
     class Meta:
 
@@ -31,6 +46,7 @@ class SystemMessageSerializer(serializers.ModelSerializer):
                   'created',
                   'linked_event',
                   'performed_by', 'created',
+                  'comments',
                   'attachments')
 
     def to_representation(self, instance):

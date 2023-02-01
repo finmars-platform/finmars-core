@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from poms.common.filters import CharFilter
 from poms.common.views import AbstractModelViewSet
 from poms.system_messages.filters import SystemMessageOnlyNewFilter, OwnerBySystemMessageMember
-from poms.system_messages.models import SystemMessage
+from poms.system_messages.models import SystemMessage, SystemMessageComment
 from poms.system_messages.serializers import SystemMessageSerializer, SystemMessageActionSerializer
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -22,7 +22,7 @@ class SystemMessageFilterSet(FilterSet):
     created = django_filters.DateFromToRangeFilter()
     # section = django_filters.MultipleChoiceFilter(choices = SystemMessage.SECTION_CHOICES)
     # type = django_filters.MultipleChoiceFilter(choices = SystemMessage.TYPE_CHOICES)
-    action_status = django_filters.MultipleChoiceFilter(choices=SystemMessage.ACTION_STATUS_CHOICES)
+    # action_status = django_filters.MultipleChoiceFilter(choices=SystemMessage.ACTION_STATUS_CHOICES)
 
     class Meta:
         model = SystemMessage
@@ -55,6 +55,7 @@ class MessageViewSet(AbstractModelViewSet):
         ordering = request.GET.get('ordering', None)
         type = request.GET.get('type', None)
         section = request.GET.get('section', None)
+        action_status = request.GET.get('action_status', None)
         query = request.GET.get('query', None)
         page = request.GET.get('page', None)
         only_new = request.GET.get('only_new', False)
@@ -76,6 +77,10 @@ class MessageViewSet(AbstractModelViewSet):
         if section:
             section = section.split(',')
             queryset = queryset.filter(section__in=section)
+
+        if action_status:
+            action_status = action_status.split(',')
+            queryset = queryset.filter(action_status__in=action_status)
 
         if query:
             queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
@@ -362,3 +367,39 @@ class MessageViewSet(AbstractModelViewSet):
                 member_message.save()
 
         return Response({'status': 'ok'})
+
+    @action(detail=True, methods=['put'], url_path='solve')
+    def solve(self, request, pk=None):
+
+        system_message = SystemMessage.objects.get(id=pk)
+        context = {'request': request, 'master_user': request.user.master_user}
+        system_message.action_status = SystemMessage.ACTION_STATUS_SOLVED
+        system_message.save()
+
+        comment = request.data.get('comment', None)
+
+        if comment:
+            SystemMessageComment.objects.create(comment=comment, system_message=system_message,
+                                                member=request.user.member)
+
+        serializer = SystemMessageSerializer(instance=system_message, context=context)
+
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['put'], url_path='comment')
+    def comment(self, request, pk=None):
+
+        system_message = SystemMessage.objects.get(id=pk)
+        context = {'request': request, 'master_user': request.user.master_user}
+
+        _l.info('request.data %s' % request.data)
+
+        comment = request.data.get('comment', None)
+
+        if comment:
+            SystemMessageComment.objects.create(comment=comment, system_message=system_message,
+                                                member=request.user.member)
+
+        serializer = SystemMessageSerializer(instance=system_message, context=context)
+
+        return Response(serializer.data)

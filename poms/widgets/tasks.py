@@ -522,6 +522,10 @@ def collect_stats(self, task_id):
 
 @shared_task(name='widgets.calculate_historical', bind=True)
 def calculate_historical(self, date_from=None, date_to=None, portfolios=None):
+
+    member = Member.objects.get(is_owner=True)
+    master_user = member.master_user
+
     try:
 
         from poms.transactions.models import Transaction
@@ -544,8 +548,7 @@ def calculate_historical(self, date_from=None, date_to=None, portfolios=None):
         # dates = [bday_yesterday]
         dates = get_list_of_dates_between_two_dates(date_from, date_to)
 
-        member = Member.objects.get(is_owner=True)
-        master_user = member.master_user
+
 
         ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
 
@@ -604,6 +607,9 @@ def calculate_historical(self, date_from=None, date_to=None, portfolios=None):
                     index = index + 1
                 except Exception as e:
 
+                    send_system_message(master_user=master_user, action_status="required", type="warn",
+                                        title='Calculate Historical Partial Failed.', description=str(e))
+
                     _l.error("Portfolio %s index %s widget calculation error %s" % (portfolio.name, index, e))
                     _l.error(traceback.format_exc())
                     pass
@@ -612,3 +618,6 @@ def calculate_historical(self, date_from=None, date_to=None, portfolios=None):
 
         _l.error("widgets.calculate_historical %s" % e)
         _l.error("widgets.calculate_historical %s" % traceback.format_exc())
+
+        send_system_message(master_user=master_user, action_status="required", type="error",
+                            title='Calculate Historical Failed.', description=str(e))
