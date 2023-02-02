@@ -1,6 +1,7 @@
 """Gunicorn *development* config file"""
 
 # The granularity of Error log outputs
+chdir = "/var/app/"
 loglevel = "info"
 # The number of worker processes for handling requests
 workers = 2
