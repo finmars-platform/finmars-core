@@ -932,7 +932,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         options_object = {}
         options_object['file_name'] = instance.file_name # posiblly optional
         options_object['file_path'] = instance.file_path
-        options_object['preprocess_file'] = instance.preprocess_file
+        # options_object['preprocess_file'] = instance.preprocess_file
         options_object['scheme_id'] = instance.scheme.id
         options_object['execution_context'] = None
 
@@ -1033,7 +1033,7 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
         options_object['file_name'] = instance.file_name
         options_object['file_path'] = instance.file_path
         options_object['scheme_id'] = instance.scheme.id
-        options_object['preprocess_file'] = True
+        # options_object['preprocess_file'] = True
         options_object['execution_context'] = None
 
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
@@ -1159,7 +1159,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         options_object = {}
         options_object['file_name'] = instance.file_name
         options_object['file_path'] = instance.file_path
-        options_object['preprocess_file'] = instance.preprocess_file
+        # options_object['preprocess_file'] = instance.preprocess_file
         options_object['scheme_id'] = instance.scheme.id
         options_object['execution_context'] = None
 
