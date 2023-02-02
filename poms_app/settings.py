@@ -52,6 +52,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
 
+
+
     'django_filters',
 
     'mptt',
@@ -135,32 +137,35 @@ if SERVER_TYPE == 'local':
 # MIDDLEWARE_CLASSES = [
 MIDDLEWARE = [
 
-    'django.middleware.gzip.GZipMiddleware',
-    'django.middleware.http.ConditionalGetMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'django.middleware.cache.UpdateCacheMiddleware',
-    # 'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
-    # 'django_otp.middleware.OTPMiddleware',
-    # 'django.middleware.cache.FetchFromCacheMiddleware',
+
+    "whitenoise.middleware.WhiteNoiseMiddleware", # for static files
+
+    # Possibly Deprecated
+    # 'django.middleware.gzip.GZipMiddleware',
+    # 'django.middleware.http.ConditionalGetMiddleware',
+    # 'django.middleware.security.SecurityMiddleware',
+    # 'django.contrib.sessions.middleware.SessionMiddleware',
+    # 'django.middleware.locale.LocaleMiddleware',
+    # 'django.middleware.common.CommonMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # 'django.contrib.messages.middleware.MessageMiddleware',
+    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
 
     'corsheaders.middleware.CorsMiddleware',
     'corsheaders.middleware.CorsPostCsrfMiddleware',
 
-    'poms.common.middleware.CommonMiddleware',
+    # 'poms.common.middleware.CommonMiddleware', # probably deprecated
+    # 'poms.common.middleware.LogRequestsMiddleware',
     'finmars_standardized_errors.middleware.ExceptionMiddleware'
-    # 'poms.common.middleware.CustomExceptionMiddleware',
-    # 'poms.users.middleware.AuthenticationMiddleware',
-    # 'poms.users.middleware.TimezoneMiddleware',
-    # 'poms.users.middleware.LocaleMiddleware',
-    # 'poms.notifications.middleware.NotificationMiddleware',
-    # 'poms.common.middleware.NoCacheMiddleware',
 
 ]
 
@@ -304,13 +309,17 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },
-    'throttling': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-    },
-    'http_session': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-    }
 }
+
+# Maybe in future, we will return to Redis
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+#         'LOCATION': 'redis://127.0.0.1:6379',
+#     },
+# }
+
+
 
 # SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 # SESSION_ENGINE = "poms.http_sessions.backends.cached_db"
@@ -360,6 +369,10 @@ LOGGING = {
             "handlers": ["file"],
             "level": "ERROR",
             "propagate": True
+        },
+        "gunicorn": {
+            "level": "ERROR",
+            "handlers": ["console", "file"]
         },
         "poms": {
             "level": DJANGO_LOG_LEVEL,
@@ -422,10 +435,10 @@ REST_FRAMEWORK = {
     #     'rest_framework.parsers.FormParser',
     #     'rest_framework.parsers.MultiPartParser',
     # ),
-    'DEFAULT_THROTTLE_CLASSES': (
-        'poms.api.throttling.AnonRateThrottleExt',
-        'poms.api.throttling.UserRateThrottleExt'
-    ),
+    # 'DEFAULT_THROTTLE_CLASSES': (
+    #     'poms.api.throttling.AnonRateThrottleExt',
+    #     'poms.api.throttling.UserRateThrottleExt'
+    # ),
     'DEFAULT_THROTTLE_RATES': {
         # 'anon': '5/second',
         # 'user': '50/second',

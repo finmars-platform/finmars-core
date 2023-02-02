@@ -12,6 +12,7 @@ from __future__ import unicode_literals
 import os
 import sys
 from django.core.wsgi import get_wsgi_application
+# from whitenoise.django import DjangoWhiteNoise
 
 # import djcelery
 # djcelery.setup_loader()

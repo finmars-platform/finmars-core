@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import logging
+import traceback
 
 from django.core.cache import cache
 from django_filters.rest_framework import FilterSet
@@ -100,7 +101,6 @@ class BalanceReportViewSet(AbstractViewSet):
     serializer_class = BalanceReportSerializer
 
     def create(self, request, *args, **kwargs):
-        serialize_report_st = time.perf_counter()
 
         key = generate_report_unique_hash('report', 'balance', request.data, request.user.master_user,
                                           request.user.member)
@@ -110,9 +110,14 @@ class BalanceReportViewSet(AbstractViewSet):
         if not cached_data:
             _l.info("Could not find in cache")
 
+            parse_report_st = time.perf_counter()
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
+
+            instance.auth_time = self.auth_time
+
+            _l.debug('Balance Parse done: %s' % "{:3.3f}".format(time.perf_counter() - parse_report_st))
 
             builder = BalanceReportBuilderSql(instance=instance)
             instance = builder.build_balance()
@@ -120,11 +125,14 @@ class BalanceReportViewSet(AbstractViewSet):
             instance.task_id = 1
             instance.task_status = "SUCCESS"
 
+            serialize_report_st = time.perf_counter()
             serializer = self.get_serializer(instance=instance, many=False)
 
-            _l.debug('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
-
             cached_data = serializer.data
+
+            _l.info('serializer.data.auth_time %s' % serializer.data['auth_time'])
+            _l.info('serializer.data.execution_time %s' % serializer.data['execution_time'])
+            _l.info('serializer.data.serialization_time %s' % serializer.data['serialization_time'])
 
             cache.set(key, cached_data)
 

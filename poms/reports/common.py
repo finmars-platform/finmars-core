@@ -75,7 +75,12 @@ class Report(BaseReport):
                  custom_fields=None,
                  custom_fields_to_calculate=None,
                  calculate_pl=True,
-                 items=None):
+                 items=None,
+
+                 execution_time=None,
+                 serialization_time=None
+
+                 ):
         super(Report, self).__init__(id=id, master_user=master_user, member=member,
                                      task_id=task_id, task_status=task_status)
 

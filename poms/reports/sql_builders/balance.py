@@ -38,6 +38,7 @@ class BalanceReportBuilderSql:
         _l.debug('self.instance master_user %s' % self.instance.master_user)
         _l.debug('self.instance report_date %s' % self.instance.report_date)
 
+
     def build_balance(self):
         st = time.perf_counter()
 
@@ -47,9 +48,10 @@ class BalanceReportBuilderSql:
 
         _l.debug('items total %s' % len(self.instance.items))
 
-        _l.debug('build_st done: %s', "{:3.3f}".format(time.perf_counter() - st))
-
         self.add_data_items()
+
+        self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
+        _l.debug('build_st done: %s' % self.instance.execution_time)
 
         return self.instance
 
@@ -79,20 +81,20 @@ class BalanceReportBuilderSql:
             fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
                 self.instance)
 
-            _l.debug('report_date: "%s"' % self.instance.report_date)
-            _l.debug('report_fx_rate: "%s"' % report_fx_rate)
-            _l.debug('default_currency_id: "%s"' % self.ecosystem_defaults.currency_id)
-            _l.debug('report_currency: "%s"' % self.instance.report_currency.id)
-            _l.debug('pricing_policy: "%s"' % self.instance.pricing_policy.id)
-            _l.debug('transaction_filter_sql_string: "%s"' % transaction_filter_sql_string)
-            _l.debug(
-                'fx_trades_and_fx_variations_filter_sql_string: "%s"' % fx_trades_and_fx_variations_filter_sql_string)
-            _l.debug('consolidation_columns: "%s"' % consolidation_columns)
-            _l.debug('balance_q_consolidated_select_columns: "%s"' % balance_q_consolidated_select_columns)
-            _l.debug('tt_consolidation_columns: "%s"' % tt_consolidation_columns)
-            _l.debug('tt_in1_consolidation_columns: "%s"' % tt_in1_consolidation_columns)
-            _l.debug(
-                'transactions_all_with_multipliers_where_expression: "%s"' % transactions_all_with_multipliers_where_expression)
+            # _l.debug('report_date: "%s"' % self.instance.report_date)
+            # _l.debug('report_fx_rate: "%s"' % report_fx_rate)
+            # _l.debug('default_currency_id: "%s"' % self.ecosystem_defaults.currency_id)
+            # _l.debug('report_currency: "%s"' % self.instance.report_currency.id)
+            # _l.debug('pricing_policy: "%s"' % self.instance.pricing_policy.id)
+            # _l.debug('transaction_filter_sql_string: "%s"' % transaction_filter_sql_string)
+            # _l.debug(
+            #     'fx_trades_and_fx_variations_filter_sql_string: "%s"' % fx_trades_and_fx_variations_filter_sql_string)
+            # _l.debug('consolidation_columns: "%s"' % consolidation_columns)
+            # _l.debug('balance_q_consolidated_select_columns: "%s"' % balance_q_consolidated_select_columns)
+            # _l.debug('tt_consolidation_columns: "%s"' % tt_consolidation_columns)
+            # _l.debug('tt_in1_consolidation_columns: "%s"' % tt_in1_consolidation_columns)
+            # _l.debug(
+            #     'transactions_all_with_multipliers_where_expression: "%s"' % transactions_all_with_multipliers_where_expression)
 
 
 

@@ -179,8 +179,10 @@ class PortfolioEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttrib
         fields = [
             'id', 'master_user',
             'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'is_default', 'is_deleted', 'is_enabled'
+            'is_default', 'is_deleted', 'is_enabled',
+            'attributes', 'object_permissions'
         ]
+        read_only_fields = fields
 
 
 class PortfolioLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):

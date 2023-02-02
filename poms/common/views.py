@@ -42,6 +42,8 @@ class AbstractApiView(APIView):
 
     def perform_authentication(self, request):
 
+        auth_st = time.perf_counter()
+
         super(AbstractApiView, self).perform_authentication(request)
 
         if request.user.is_authenticated:
@@ -55,6 +57,8 @@ class AbstractApiView(APIView):
 
                 request.user.member, request.user.master_user = None, None
                 _l.debug("perform_authentication exception %s" % e)
+
+        self.auth_time = float("{:3.3f}".format(time.perf_counter() - auth_st))
 
     def initial(self, request, *args, **kwargs):
         super(AbstractApiView, self).initial(request, *args, **kwargs)
