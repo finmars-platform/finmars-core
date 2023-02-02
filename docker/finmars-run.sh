@@ -83,6 +83,6 @@ python /var/app/manage.py generate_super_user
 echo "Run uwsgi"
 
 #uwsgi /etc/uwsgi/apps-enabled/finmars.ini
-gunicorn --config poms_app/gunicorn-prod.py poms_app.wsgi
+gunicorn --config /var/app/poms_app/gunicorn-prod.py poms_app.wsgi
 
 echo "Initialized"
