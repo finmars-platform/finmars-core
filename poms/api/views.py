@@ -4,6 +4,8 @@ from datetime import date, datetime
 from functools import lru_cache
 
 import croniter
+import pexpect
+import psutil
 import pytz
 from babel import Locale
 from babel.dates import get_timezone, get_timezone_gmt, get_timezone_name
@@ -500,6 +502,135 @@ class StatsViewSet(AbstractViewSet):
 
         else:
             result['error_message'] = 'No Transactions'
+
+        return Response(result)
+
+
+class SystemInfoViewSet(AbstractViewSet):
+
+    def list(self, request, *args, **kwargs):
+        result = {}
+
+        items = []
+
+        uptime = datetime.now() - datetime.fromtimestamp(psutil.boot_time())
+
+        items.append({
+            'name': 'Uptime',
+            'user_code': 'uptime',
+            'values': [
+                {
+                    'key': 'days',
+                    'name': 'Days',
+                    'value': str(uptime)
+                }
+            ]
+        })
+
+        memory = psutil.virtual_memory()
+
+        items.append({
+            'name': 'Memory',
+            'user_code': 'memory',
+            'values': [
+                {
+                    'key': 'total',
+                    'name': 'Total (MB)',
+                    'value': round(memory.total / 1024 / 1024)
+                },
+                {
+                    'key': 'used',
+                    'name': 'Used (MB)',
+                    'value': round(memory.used / 1024 / 1024)
+                },
+                {
+                    'key': 'available',
+                    'name': 'Available (MB)',
+                    'value': round(memory.available / 1024 / 1024)
+                },
+                {
+                    'key': 'percent',
+                    'name': 'Percent',
+                    'value': memory.percent
+                }
+            ]
+        })
+
+        disk = psutil.disk_usage('/')
+
+        items.append({
+            'name': 'Disk',
+            'user_code': 'disk',
+            'values': [
+                {
+                    'key': 'total',
+                    'name': 'Total (MB)',
+                    'value': round(disk.total / 1024 / 1024)
+                },
+                {
+                    'key': 'used',
+                    'name': 'Used (MB)',
+                    'value': round(disk.used / 1024 / 1024)
+                },
+                {
+                    'key': 'free',
+                    'name': 'Free (MB)',
+                    'value': round(disk.free / 1024 / 1024)
+                },
+                {
+                    'key': 'percent',
+                    'name': 'Percent',
+                    'value': disk.percent
+                }
+            ]
+        })
+
+        shell_cmd = 'ps aux | grep [b]ackend'
+        c = pexpect.spawn('/bin/bash', ['-c', shell_cmd])
+        pexpect_result = c.read()
+
+        celery_worker_state = True
+
+        if not pexpect_result:
+            celery_worker_state = False
+
+        items.append({
+            'name': 'Celery Worker',
+            'user_code': 'celery_worker',
+            'values': [
+                {
+                    'key': 'active',
+                    'name': 'Active',
+                    'value': celery_worker_state
+                },
+            ]
+        })
+
+
+        shell_cmd = 'ps aux | grep [d]jango_celery_beat'
+        c = pexpect.spawn('/bin/bash', ['-c', shell_cmd])
+        pexpect_result = c.read()
+
+        celery_beat_state = True
+
+        if not pexpect_result:
+            celery_beat_state = False
+
+        items.append({
+            'name': 'Celery Beat',
+            'user_code': 'celery_beat',
+            'values': [
+                {
+                    'key': 'active',
+                    'name': 'Active',
+                    'value': celery_beat_state
+                },
+            ]
+        })
+
+        _l.info('pexpect_result read %s' % pexpect_result)
+
+        result['items'] = items
 
         return Response(result)
 
