@@ -80,7 +80,7 @@ echo "Create admin user"
 
 python /var/app/manage.py generate_super_user
 
-echo "Run uwsgi"
+echo "Run gunicorn"
 
 #uwsgi /etc/uwsgi/apps-enabled/finmars.ini
 gunicorn --config /var/app/poms_app/gunicorn-prod.py poms_app.wsgi

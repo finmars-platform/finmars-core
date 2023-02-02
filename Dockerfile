@@ -35,6 +35,8 @@ COPY docker/uwsgi-www.ini /etc/uwsgi/apps-enabled/finmars.ini
 
 RUN chmod +x /var/app/docker/finmars-run.sh
 
+#RUN mkdir -p /var/run/gunicorn/
+
 # create celery user
 RUN mkdir -p /var/log/celery/
 #RUN useradd -N -M --system -s /bin/bash celery  && \
