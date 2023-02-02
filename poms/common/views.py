@@ -640,7 +640,7 @@ class DebugLogViewSet(AbstractViewSet):
 
     def list(self, request):
 
-        log_file = '/var/log/finmars/django.log'
+        log_file = '/var/log/finmars/backend/django.log'
 
         seek_to = request.query_params.get('seek_to', 0)
 

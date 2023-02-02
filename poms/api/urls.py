@@ -422,6 +422,7 @@ router.register(r'import/complex-transaction-csv-file-import-validate',
 router.register(r'utils/expression', api.ExpressionViewSet, 'expression')
 router.register(r'utils/stats', api.StatsViewSet, 'stats')
 router.register(r'utils/system-info', api.SystemInfoViewSet, 'system-info')
+router.register(r'utils/system-logs', api.SystemLogsViewSet, 'system-logs')
 router.register(r'utils/calendar-events', api.CalendarEventsViewSet, 'calendar-events')
 
 router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
@@ -519,7 +520,8 @@ router.register(r'explorer/upload', explorer.ExplorerUploadViewSet, 'explorer_up
 router.register(r'explorer/delete', explorer.ExplorerDeleteViewSet, 'explorer_delete')
 router.register(r'explorer/create_folder', explorer.ExplorerCreateFolderViewSet, 'explorer_create_folder')
 
-router.register(r'debug/logs', common.DebugLogViewSet, 'debug_log')
+
+router.register(r'debug/logs', common.DebugLogViewSet, 'debug_log') # Deprecated
 router.register(r'errors/error', ErrorRecordViewSet, 'error')
 
 # router.register(r'pricing/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view()), 'pricing_broker_bloomberg')

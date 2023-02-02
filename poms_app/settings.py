@@ -283,6 +283,7 @@ if SERVER_TYPE == "development":
 if SERVER_TYPE == "local":
     CORS_ORIGIN_ALLOW_ALL = True
     CORS_ALLOW_CREDENTIALS = True
+    print("LOCAL development. CORS disabled")
 
 STATIC_URL = '/' + BASE_API_URL + '/api/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')  # creates when collectstatic

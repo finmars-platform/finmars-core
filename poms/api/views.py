@@ -14,6 +14,8 @@ from django.utils import translation, timezone
 from rest_framework import response, schemas
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.decorators import action
+from django.http import HttpResponse, Http404
 
 from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer
 from poms.common.utils import get_list_of_business_days_between_two_dates, get_closest_bday_of_yesterday, \
@@ -630,9 +632,49 @@ class SystemInfoViewSet(AbstractViewSet):
 
         _l.info('pexpect_result read %s' % pexpect_result)
 
-        result['items'] = items
+        result['results'] = items
 
         return Response(result)
+
+
+class SystemLogsViewSet(AbstractViewSet):
+
+    def list(self, request, *args, **kwargs):
+        result = {}
+
+
+        shell_cmd = 'ls -la /var/log/finmars/backend/  | awk \'{print $9}\''
+        c = pexpect.spawn('/bin/bash', ['-c', shell_cmd])
+        pexpect_result = c.read().decode('utf-8')
+
+        # items = pexpect_result.split('\')
+
+        lines = pexpect_result.splitlines()
+
+        items = []
+        for line in lines:
+            if line not in ['', '.', '..']:
+                items.append(line)
+
+        _l.info('SystemInfoLogsViewSet.items %s' % items)
+
+        result['results'] = items
+
+        return Response(result)
+
+    @action(detail=False, methods=['get'], url_path='view-log')
+    def view_log(self, request):
+
+        log_file = request.query_params.get('log_file', 'django.log')
+
+        log_file = '/var/log/finmars/backend/' + log_file
+
+        file = open(log_file, 'r')
+
+        return HttpResponse(
+            file,
+            content_type='plain/text'
+        )
 
 
 class CalendarEventsViewSet(AbstractViewSet):
