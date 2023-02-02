@@ -12,7 +12,6 @@ import types
 import uuid
 from collections import OrderedDict
 
-from celery import Celery
 from dateutil import relativedelta
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -543,6 +542,21 @@ def _parse_date(date_string, format=None):
     return result
 
 
+def _universal_parse_date(date_string):
+    # from dateutil.parser import parse
+    # dt = parse('Mon Feb 15 2010')
+    # print(dt)
+    # # datetime.datetime(2010, 2, 15, 0, 0)
+    # print(dt.strftime('%d/%m/%Y'))
+    # # 15/02/2010
+
+    from dateutil.parser import parse
+
+    dt = parse(date_string)
+
+    return dt.strftime('%Y-%m-%d')
+
+
 def _unix_to_date(unix, format=None):
     if not unix:
         return None
@@ -557,12 +571,12 @@ def _unix_to_date(unix, format=None):
 
 
 def _last_business_day(date):
-
     date = _parse_date(date)
 
     offset = BDay()
 
     return offset.rollback(date).date()
+
 
 def _get_date_last_week_end_business(date):
     date = _parse_date(date)
@@ -1190,7 +1204,8 @@ def _add_fx_rate(evaluator, date, currency, pricing_policy, fx_rate=0, overwrite
 _add_fx_rate.evaluator = True
 
 
-def _add_price_history(evaluator, date, instrument, pricing_policy, principal_price=0, accrued_price=0, is_temporary_price=False, overwrite=True):
+def _add_price_history(evaluator, date, instrument, pricing_policy, principal_price=0, accrued_price=0,
+                       is_temporary_price=False, overwrite=True):
     from poms.users.utils import get_master_user_from_context
     from poms.instruments.models import PriceHistory
 
@@ -2337,7 +2352,6 @@ def _get_default_strategy1(evaluator):
     except Exception as e:
         print("get_default_strategy1 error %s" % e)
 
-
     return None
 
 
@@ -3333,6 +3347,7 @@ FUNCTIONS = [
     SimpleEval2Def('format_date', _format_date),
     SimpleEval2Def('get_list_of_dates_between_two_dates', _get_list_of_dates_between_two_dates),
     SimpleEval2Def('parse_date', _parse_date),
+    SimpleEval2Def('universal_parse_date', _universal_parse_date),
     SimpleEval2Def('unix_to_date', _unix_to_date),
 
     SimpleEval2Def('last_business_day', _last_business_day),
