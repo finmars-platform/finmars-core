@@ -99,9 +99,9 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
 
 # TODO Refactor to task_id
 @shared_task(name='portfolios.calculate_portfolio_register_record', bind=True)
-def calculate_portfolio_register_record(self, portfolios=None):
+def calculate_portfolio_register_record(self, portfolio_ids=[]):
     _l.info('calculate_portfolio_register_record.init')
-    _l.info('calculate_portfolio_register_record.portfolios %s' % portfolios)
+    _l.info('calculate_portfolio_register_record.portfolios %s' % portfolio_ids)
 
     master_user = MasterUser.objects.prefetch_related(
         'members'
@@ -119,9 +119,9 @@ def calculate_portfolio_register_record(self, portfolios=None):
 
         _l.info("calculate_portfolio_register_record0 master_user %s" % master_user)
 
-        if portfolios:
+        if portfolio_ids:
 
-            portfolio_registers = PortfolioRegister.objects.filter(master_user_id=master_user, portfolio__in=portfolios)
+            portfolio_registers = PortfolioRegister.objects.filter(master_user_id=master_user, portfolio_id__in=portfolio_ids)
 
         else:
             portfolio_registers = PortfolioRegister.objects.filter(master_user_id=master_user)
