@@ -3282,10 +3282,12 @@ def configuration_import_as_json(self, task_id):
 
     except Exception as e:
 
+        send_system_message(master_user=self.master_user, action_status="required", type="warning",
+                            title='Configuration Import Failed. Task id: %s' % task_id,
+                            description=str(e))
+
         _l.error("configuration_import_as_json. Error occurred %s" % e)
         _l.error("configuration_import_as_json %s" % traceback.format_exc())
-
-    return task
 
 
 @shared_task(name='configuration_import.generate_configuration_entity_archetype', bind=True)
