@@ -7,7 +7,7 @@ loglevel = "info"
 workers = 2
 threads = 6
 # The socket to bind
-bind = "0.0.0.0:8000"
+bind = "0.0.0.0:8080"
 # PID file so you can easily fetch process ID
 #pidfile = "/var/run/gunicorn/prod.pid"
 # Daemonize the Gunicorn process (detach & enter background)
