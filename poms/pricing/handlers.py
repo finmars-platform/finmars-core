@@ -18,6 +18,7 @@ from poms.pricing.models import PricingProcedureBloombergInstrumentResult, Prici
 from poms.pricing.utils import roll_price_history_for_n_day_forward, roll_currency_history_for_n_day_forward, \
     convert_results_for_calc_avg_price
 from poms.procedures.models import PricingProcedureInstance, PricingParentProcedureInstance
+from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import Transaction
 
 _l = logging.getLogger('poms.pricing')
@@ -526,6 +527,13 @@ class FillPricesBrokerBloombergProcess(object):
 
         self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
+        if self.procedure_instance.error_prices_count != 0:
+            description = 'Price History Procedure finished with %s errors' % self.procedure_instance.error_prices_count
+
+            send_system_message(master_user=self.master_user, action_status="required", type="warning",
+                                title='Pricing Partial Error. Broker: Bloomberg. Procedure id %s' % self.procedure_instance.id,
+                                description=description)
+
         self.procedure_instance.save()
 
         _l.debug(
@@ -688,6 +696,13 @@ class FillPricesBrokerBloombergProcess(object):
         self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
         self.procedure_instance.save()
+
+        if self.procedure_instance.error_prices_count != 0:
+            description = 'Currency History Procedure finished with %s errors' % self.procedure_instance.error_prices_count
+
+            send_system_message(master_user=self.master_user, action_status="required", type="warning",
+                                title='Pricing Partial Error. Broker: Bloomberg. Procedure id %s' % self.procedure_instance.id,
+                                description=description)
 
         if self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
@@ -991,6 +1006,13 @@ class FillPricesBrokerBloombergForwardsProcess(object):
         self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
         self.procedure_instance.save()
+
+        if self.procedure_instance.error_prices_count != 0:
+            description = 'Price History Procedure finished with %s errors' % self.procedure_instance.error_prices_count
+
+            send_system_message(master_user=self.master_user, action_status="required", type="warning",
+                                title='Pricing Partial Error. Broker: Bloomberg Forwards. Procedure id %s' % self.procedure_instance.id,
+                                description=description)
 
         if self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
@@ -1692,6 +1714,13 @@ class FillPricesBrokerCbondsProcess(object):
         self.procedure_instance.status = PricingProcedureInstance.STATUS_DONE
 
         self.procedure_instance.save()
+
+        if self.procedure_instance.error_prices_count != 0:
+            description = 'Price History Procedure finished with %s errors' % self.procedure_instance.error_prices_count
+
+            send_system_message(master_user=self.master_user, action_status="required", type="warning",
+                                title='Pricing Partial Error. Broker: Finmars. Procedure id %s' % self.procedure_instance.id,
+                                description=description)
 
         if self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
