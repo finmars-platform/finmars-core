@@ -2465,13 +2465,9 @@ def _run_task(evaluator, task_name, options={}):
 
     try:
 
-        app = Celery('poms_app')
+        from poms_app import celery_app
 
-        app.config_from_object('django.conf:settings', namespace='CELERY')
-
-        app.autodiscover_tasks()
-
-        app.send_task(task_name, kwargs=options)
+        celery_app.send_task(task_name, kwargs=options)
 
     except Exception as e:
         _l.debug("_run_task.exception %s" % e)
