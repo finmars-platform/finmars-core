@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import datetime
 import ipaddress
 import json
+import os
 import re
 import time
 import traceback
@@ -267,6 +268,8 @@ class LogRequestsMiddleware:
 
     def __call__(self, request):
 
+        _l.info("Going to handle %s " % request.build_absolute_uri())
+
         self.log_middleware_start = time.perf_counter()
 
         start = time.perf_counter()
@@ -275,6 +278,11 @@ class LogRequestsMiddleware:
 
         elapsed = float("{:3.3f}".format(end - start))
 
+        # for line in traceback.format_stack():
+        #     print(line.strip())
+
+        # _l.info("Worker pid %s" % os.getpid())
+        _l.info("Finish to handle %s " % request.build_absolute_uri())
         _l.info('LogRequestsMiddleware. response time %s' % elapsed)
 
         return response

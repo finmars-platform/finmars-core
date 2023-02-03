@@ -46,11 +46,16 @@ class BalanceReportBuilderSql:
 
         self.build()
 
+        self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
+
         _l.debug('items total %s' % len(self.instance.items))
+
+        relation_prefetch_st = time.perf_counter()
 
         self.add_data_items()
 
-        self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
+        self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
+
         _l.debug('build_st done: %s' % self.instance.execution_time)
 
         return self.instance
@@ -1980,4 +1985,15 @@ class BalanceReportBuilderSql:
         _l.info('_refresh_with_perms_optimized item relations done: %s',
                 "{:3.3f}".format(time.perf_counter() - item_relations_st))
 
-        _l.info('add_data_items_strategies1 %s ' % self.instance.item_strategies1)
+        # Execute lazy fetch?
+
+        self.instance.item_instruments = list(self.instance.item_instruments)
+        self.instance.item_portfolios = list(self.instance.item_portfolios)
+        self.instance.item_accounts = list(self.instance.item_accounts)
+        self.instance.item_currencies = list(self.instance.item_currencies)
+        self.instance.item_strategies1 = list(self.instance.item_strategies1)
+        self.instance.item_strategies2 = list(self.instance.item_strategies2)
+        self.instance.item_strategies3 = list(self.instance.item_strategies3)
+        self.instance.item_account_types = list(self.instance.item_account_types)
+        self.instance.item_instrument_types = list(self.instance.item_instrument_types)
+

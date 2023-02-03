@@ -187,6 +187,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
 
     execution_time = serializers.FloatField(allow_null=True, required=False, read_only=True)
+    relation_prefetch_time = serializers.FloatField(allow_null=True, required=False, read_only=True)
     serialization_time = serializers.FloatField(allow_null=True, required=False, read_only=True)
     auth_time = serializers.FloatField(allow_null=True, required=False, read_only=True)
 
@@ -252,6 +253,9 @@ class ReportSerializer(ReportSerializerWithLogs):
         super(ReportSerializer, self).__init__(*args, **kwargs)
 
     def validate(self, attrs):
+
+        _l.info("Report Serializer validate start")
+
         if not attrs.get('report_date', None):
             if settings.DEBUG:
                 attrs['report_date'] = date(2017, 2, 12)
@@ -288,7 +292,7 @@ class ReportSerializer(ReportSerializerWithLogs):
         _l.debug('ReportSerializer to_representation_st done: %s' % "{:3.3f}".format(
             time.perf_counter() - to_representation_st))
 
-        _l.debug('data["custom_fields_to_calculate"] %s' % data["custom_fields_to_calculate"])
+        # _l.debug('data["custom_fields_to_calculate"] %s' % data["custom_fields_to_calculate"])
 
         st = time.perf_counter()
 
@@ -601,10 +605,9 @@ class BalanceReportSerializer(ReportSerializer):
 
                 instance_item.save()
 
-            _l.debug('BalanceReportSqlSerializer.to_representation done: %s' % "{:3.3f}".format(
-                time.perf_counter() - to_representation_st))
-
         data['report_uuid'] = report_uuid
+
+        data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 
         return data
 

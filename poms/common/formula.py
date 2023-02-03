@@ -1295,22 +1295,22 @@ def _get_latest_principal_price_date(evaluator, instrument, pricing_policy, defa
         instrument = _safe_get_instrument(evaluator, instrument)
         pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
 
-        _l.info("_get_latest_principal_price instrument %s " % instrument)
-        _l.info("_get_latest_principal_price  pricing_policy %s " % pricing_policy)
+        # _l.info("_get_latest_principal_price instrument %s " % instrument)
+        # _l.info("_get_latest_principal_price  pricing_policy %s " % pricing_policy)
 
         results = PriceHistory.objects.exclude(principal_price=0).filter(instrument=instrument,
                                                                          pricing_policy=pricing_policy).order_by(
             '-date')
 
-        _l.info("_get_latest_principal_price_date results %s " % results)
+        # _l.info("_get_latest_principal_price_date results %s " % results)
 
         if len(list(results)):
             return results[0].date
 
         return default_value
     except Exception as e:
-        _l.error("_get_latest_principal_price_date exception %s " % str(e))
-        _l.error("_get_latest_principal_price_date exception %s " % traceback.format_exc())
+        # _l.error("_get_latest_principal_price_date exception %s " % str(e))
+        # _l.error("_get_latest_principal_price_date exception %s " % traceback.format_exc())
         return default_value
 
 

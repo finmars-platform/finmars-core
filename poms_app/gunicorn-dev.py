@@ -3,7 +3,7 @@
 # The granularity of Error log outputs
 loglevel = "debug"
 # The number of worker processes for handling requests
-workers = 2
+workers = 1
 threads = 6
 # The socket to bind
 bind = "0.0.0.0:8000"

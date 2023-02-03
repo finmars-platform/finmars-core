@@ -22,6 +22,7 @@ DJANGO_LOG_LEVEL = ENV_STR('DJANGO_LOG_LEVEL', 'INFO')
 
 SECRET_KEY = ENV_STR('SECRET_KEY', None)
 SERVER_TYPE = ENV_STR('SERVER_TYPE', 'local')
+USE_DEBUGGER = ENV_STR('USE_DEBUGGER', False)
 BASE_API_URL = ENV_STR('BASE_API_URL', 'space00000')
 HOST_LOCATION = ENV_STR('HOST_LOCATION', 'AWS')  # azure, aws, or custom, only log purpose
 DOMAIN_NAME = ENV_STR('DOMAIN_NAME', 'finmars.com')
@@ -131,7 +132,7 @@ INSTALLED_APPS = [
 
 ]
 
-if SERVER_TYPE == 'local':
+if SERVER_TYPE == 'local' and USE_DEBUGGER:
     INSTALLED_APPS.append('debug_toolbar')
 
 # MIDDLEWARE_CLASSES = [
@@ -169,7 +170,7 @@ MIDDLEWARE = [
 
 ]
 
-if SERVER_TYPE == 'local':
+if SERVER_TYPE == 'local' and USE_DEBUGGER:
     MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 PROFILER = ENV_BOOL('PROFILER', False)
@@ -592,7 +593,7 @@ INTERNAL_IPS = [
     # ...
 ]
 
-if SERVER_TYPE == 'local':
+if SERVER_TYPE == 'local' and USE_DEBUGGER:
     DEBUG_TOOLBAR_PANELS = [
         'debug_toolbar.panels.versions.VersionsPanel',
         'debug_toolbar.panels.timer.TimerPanel',
