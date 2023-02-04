@@ -42,3 +42,11 @@ class HistoricalRecord(models.Model):
 
     def __str__(self):
         return self.member.username + ' changed ' + self.user_code + ' (' + str(self.content_type) + ') at ' + str(self.created.strftime("%Y-%m-%d, %H:%M:%S"))
+
+    class Meta:
+        verbose_name = gettext_lazy('history record')
+        verbose_name_plural = gettext_lazy('history records')
+        index_together = [
+            ['user_code', 'content_type']
+        ]
+        ordering = ['-created']
