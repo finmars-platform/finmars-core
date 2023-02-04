@@ -2,7 +2,7 @@ import django_filters
 from django_filters import FilterSet
 from django_filters.fields import Lookup
 
-from poms.common.filters import NoOpFilter, CharFilter
+from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter
 from poms.common.views import AbstractModelViewSet
 from poms.history.models import HistoricalRecord
 from poms.history.serializers import HistoricalRecordSerializer
@@ -35,7 +35,7 @@ class ContentTypeFilter(django_filters.CharFilter):
 
 class HistoricalRecordFilterSet(FilterSet):
     id = NoOpFilter()
-    user_code = CharFilter()
+    user_code = CharExactFilter()
 
     class Meta:
         model = HistoricalRecord
