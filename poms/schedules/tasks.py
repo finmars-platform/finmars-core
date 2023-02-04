@@ -71,6 +71,10 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
 
             except Exception as e:
 
+                send_system_message(master_user=master_user, action_status="required", type="warning",
+                                    title='Schedule Pricing Procedure Failed. User Code: %s' % procedure.user_code,
+                                    description=str(e))
+
                 _l.info("Can't find Pricing Procedure error %s" % e)
                 _l.info("Can't find Pricing Procedure  user_code %s" % procedure.user_code)
 
@@ -86,7 +90,11 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
                                                 schedule_instance=schedule_instance)
                 instance.process()
 
-            except RequestDataFileProcedure.DoesNotExist:
+            except Exception as e:
+
+                send_system_message(master_user=master_user, action_status="required", type="warning",
+                                    title='Schedule Data Procedure Failed. User Code: %s' % procedure.user_code,
+                                    description=str(e))
 
                 _l.info("Can't find Request Data File Procedure %s" % procedure.user_code)
 
@@ -96,10 +104,15 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
 
                 item = ExpressionProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
 
-                instance = ExpressionProcedureProcess(procedure=item, master_user=master_user, member=owner_member, context=context)
+                instance = ExpressionProcedureProcess(procedure=item, master_user=master_user, member=owner_member,
+                                                      context=context)
                 instance.process()
 
-            except ExpressionProcedure.DoesNotExist:
+            except Exception as e:
+
+                send_system_message(master_user=master_user, action_status="required", type="warning",
+                                    title='Schedule Expression Procedure Failed. User Code: %s' % procedure.user_code,
+                                    description=str(e))
 
                 _l.info("Can't find ExpressionProcedure %s" % procedure.user_code)
 
@@ -110,17 +123,17 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
 
 @shared_task(name='schedules.process', bind=True)
 def process(self, schedule_user_code):
+    _l.info('schedule_user_code %s' % schedule_user_code)
+
+    s = Schedule.objects.select_related('master_user').get(
+        user_code=schedule_user_code
+    )
+
+    procedures_count = 0
+
+    master_user = s.master_user
+
     try:
-
-        _l.info('schedule_user_code %s' % schedule_user_code)
-
-        s = Schedule.objects.select_related('master_user').get(
-            user_code=schedule_user_code
-        )
-
-        procedures_count = 0
-
-        master_user = s.master_user
 
         with timezone.override(master_user.timezone or settings.TIME_ZONE):
             next_run_at = timezone.localtime(s.next_run_at)
@@ -167,6 +180,10 @@ def process(self, schedule_user_code):
 
                 except Exception as e:
 
+                    send_system_message(master_user=master_user, action_status="required", type="warning",
+                                        title='Schedule Instance Failed. User Code: %s' % schedule_user_code,
+                                        description=str(e))
+
                     schedule_instance.status = ScheduleInstance.STATUS_ERROR
                     schedule_instance.save()
 
@@ -192,5 +209,9 @@ def process(self, schedule_user_code):
             _l.info('Schedules Finished. Procedures initialized: %s' % procedures_count)
 
     except Exception as e:
+
+        send_system_message(master_user=master_user, action_status="required", type="error",
+                            title='Schedule Failed. User Code: %s' % schedule_user_code, description=str(e))
+
         _l.error('schedules.process. error %s' % e)
         _l.error('schedules.process. traceback %s' % traceback.format_exc())

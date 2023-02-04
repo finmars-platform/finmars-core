@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-flower --broker=redis://localhost:6379/1
+celery flower --broker=amqp://guest:guest@localhost:5672/

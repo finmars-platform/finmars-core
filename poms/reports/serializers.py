@@ -85,44 +85,45 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 
 class ReportSerializerWithLogs(serializers.Serializer):
 
-    def to_representation(self, instance):
-        """
-        Object instance -> Dict of primitive datatypes.
-        """
-        ret = OrderedDict()
-        fields = self._readable_fields
-
-        st = time.perf_counter()
-
-        for field in fields:
-            try:
-                attribute = field.get_attribute(instance)
-            except SkipField:
-                continue
-
-            field_st = time.perf_counter()
-
-            # We skip `to_representation` for `None` values so that fields do
-            # not have to explicitly deal with that case.
-            #
-            # For related fields with `use_pk_only_optimization` we need to
-            # resolve the pk value.
-            check_for_none = attribute.pk if isinstance(attribute, PKOnlyObject) else attribute
-            if check_for_none is None:
-                ret[field.field_name] = None
-            else:
-                ret[field.field_name] = field.to_representation(attribute)
-
-            if 'item_' in field.field_name:
-                if hasattr(instance, 'is_report'):
-                    result_time = "{:3.3f}".format(time.perf_counter() - field_st)
-
-                    _l.debug('field %s to representation done %s' % (field.field_name, result_time))
-
-        if hasattr(instance, 'is_report'):
-            _l.debug('report to representation done %s' % "{:3.3f}".format(time.perf_counter() - st))
-
-        return ret
+    pass
+    # def to_representation(self, instance):
+    #     """
+    #     Object instance -> Dict of primitive datatypes.
+    #     """
+    #     ret = OrderedDict()
+    #     fields = self._readable_fields
+    #
+    #     st = time.perf_counter()
+    #
+    #     for field in fields:
+    #         try:
+    #             attribute = field.get_attribute(instance)
+    #         except SkipField:
+    #             continue
+    #
+    #         field_st = time.perf_counter()
+    #
+    #         # We skip `to_representation` for `None` values so that fields do
+    #         # not have to explicitly deal with that case.
+    #         #
+    #         # For related fields with `use_pk_only_optimization` we need to
+    #         # resolve the pk value.
+    #         check_for_none = attribute.pk if isinstance(attribute, PKOnlyObject) else attribute
+    #         if check_for_none is None:
+    #             ret[field.field_name] = None
+    #         else:
+    #             ret[field.field_name] = field.to_representation(attribute)
+    #
+    #         if 'item_' in field.field_name:
+    #             if hasattr(instance, 'is_report'):
+    #                 result_time = "{:3.3f}".format(time.perf_counter() - field_st)
+    #
+    #                 _l.debug('field %s to representation done %s' % (field.field_name, result_time))
+    #
+    #     if hasattr(instance, 'is_report'):
+    #         _l.debug('report to representation done %s' % "{:3.3f}".format(time.perf_counter() - st))
+    #
+    #     return ret
 
 
 class ReportSerializer(ReportSerializerWithLogs):
@@ -170,20 +171,25 @@ class ReportSerializer(ReportSerializerWithLogs):
                                              help_text='Strategy3 consolidation')
 
     allocation_mode = serializers.ChoiceField(default=Report.MODE_INDEPENDENT,
-                                             initial=Report.MODE_INDEPENDENT,
-                                             choices=Report.MODE_CHOICES,
-                                             required=False,
-                                             help_text='Allocation consolidation')
+                                              initial=Report.MODE_INDEPENDENT,
+                                              choices=Report.MODE_CHOICES,
+                                              required=False,
+                                              help_text='Allocation consolidation')
 
     show_transaction_details = serializers.BooleanField(default=False, initial=False)
     show_balance_exposure_details = serializers.BooleanField(default=False, initial=False)
     approach_multiplier = serializers.FloatField(default=0.5, initial=0.5, min_value=0.0, max_value=1.0, required=False)
     allocation_detailing = serializers.BooleanField(default=True, initial=True)
     pl_include_zero = serializers.BooleanField(default=False, initial=False)
+    custom_fields_to_calculate = serializers.CharField(allow_null=True, allow_blank=True, required=False)
 
     custom_fields = BalanceReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
 
-    custom_fields_to_calculate = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+
+    execution_time = serializers.FloatField(allow_null=True, required=False, read_only=True)
+    relation_prefetch_time = serializers.FloatField(allow_null=True, required=False, read_only=True)
+    serialization_time = serializers.FloatField(allow_null=True, required=False, read_only=True)
+    auth_time = serializers.FloatField(allow_null=True, required=False, read_only=True)
 
     portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
     accounts = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
@@ -247,6 +253,9 @@ class ReportSerializer(ReportSerializerWithLogs):
         super(ReportSerializer, self).__init__(*args, **kwargs)
 
     def validate(self, attrs):
+
+        _l.info("Report Serializer validate start")
+
         if not attrs.get('report_date', None):
             if settings.DEBUG:
                 attrs['report_date'] = date(2017, 2, 12)
@@ -283,7 +292,7 @@ class ReportSerializer(ReportSerializerWithLogs):
         _l.debug('ReportSerializer to_representation_st done: %s' % "{:3.3f}".format(
             time.perf_counter() - to_representation_st))
 
-        _l.debug('data["custom_fields_to_calculate"] %s' % data["custom_fields_to_calculate"])
+        # _l.debug('data["custom_fields_to_calculate"] %s' % data["custom_fields_to_calculate"])
 
         st = time.perf_counter()
 
@@ -440,13 +449,12 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                     item['custom_fields'] = cfv
 
-        _l.debug('ReportSerializer custom fields execution done: %s' % "{:3.3f}".format(time.perf_counter() - st))
+        data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 
         return data
 
 
 class BalanceReportSerializer(ReportSerializer):
-
     calculate_pl = serializers.BooleanField(default=True, initial=True)
 
     items = serializers.SerializerMethodField()
@@ -597,10 +605,9 @@ class BalanceReportSerializer(ReportSerializer):
 
                 instance_item.save()
 
-            _l.debug('BalanceReportSqlSerializer.to_representation done: %s' % "{:3.3f}".format(
-                time.perf_counter() - to_representation_st))
-
         data['report_uuid'] = report_uuid
+
+        data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 
         return data
 

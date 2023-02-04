@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy
 
+from poms.common.models import TimeStampedModel
 from poms.file_reports.models import FileReport
 from poms.users.models import Member
 
@@ -121,3 +122,13 @@ class SystemMessageMember(models.Model):
 
     is_read = models.BooleanField(default=False, verbose_name=gettext_lazy('is read'))
     is_pinned = models.BooleanField(default=False, verbose_name=gettext_lazy('is pinned'))
+
+
+class SystemMessageComment(TimeStampedModel):
+    system_message = models.ForeignKey(SystemMessage, verbose_name=gettext_lazy('system message'),
+                                       related_name='comments',
+                                       on_delete=models.CASCADE)
+
+    member = models.ForeignKey(Member, verbose_name=gettext_lazy('member'), on_delete=models.CASCADE)
+
+    comment = models.TextField(null=True, blank=True, default='', verbose_name=gettext_lazy('comment'))

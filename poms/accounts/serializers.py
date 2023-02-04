@@ -37,7 +37,7 @@ class AccountTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithUser
         fields = [
             'id', 'master_user',
             'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'is_default', 'is_deleted', 'is_enabled',
+            'is_deleted', 'is_enabled',
             'show_transaction_details', 'transaction_details_expr',
         ]
 
@@ -90,7 +90,7 @@ class AccountEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
         fields = [
             'id', 'master_user',
             'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'is_default', 'is_deleted', 'is_enabled',
+            'is_deleted', 'is_enabled',
             'type', 'type_object'
         ]
 
@@ -102,7 +102,7 @@ class AccountLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserC
         model = Account
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name',
-            'is_default', 'is_deleted',
+            'is_deleted',
             'is_enabled'
         ]
 

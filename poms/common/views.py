@@ -30,6 +30,7 @@ from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend, Ord
 from poms.common.grouping_handlers import handle_groups, count_groups
 from poms.common.mixins import BulkModelMixin, DestroyModelFakeMixin, UpdateModelMixinExt
 from poms.common.sorting import sort_by_dynamic_attrs
+from poms.history.mixins import HistoryMixin
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.utils import get_master_user_and_member
 
@@ -41,6 +42,8 @@ from django.http import HttpResponse, Http404
 class AbstractApiView(APIView):
 
     def perform_authentication(self, request):
+
+        auth_st = time.perf_counter()
 
         super(AbstractApiView, self).perform_authentication(request)
 
@@ -56,43 +59,47 @@ class AbstractApiView(APIView):
                 request.user.member, request.user.master_user = None, None
                 _l.debug("perform_authentication exception %s" % e)
 
-    def initial(self, request, *args, **kwargs):
-        super(AbstractApiView, self).initial(request, *args, **kwargs)
+        self.auth_time = float("{:3.3f}".format(time.perf_counter() - auth_st))
 
-        timezone.activate(settings.TIME_ZONE)
-        if request.user.is_authenticated:
+    # Possibly Deprecated
+    # def initial(self, request, *args, **kwargs):
+    #     super(AbstractApiView, self).initial(request, *args, **kwargs)
+    #
+    #     timezone.activate(settings.TIME_ZONE)
+    #     if request.user.is_authenticated:
+    #
+    #         if hasattr(request.user, 'master_user'):
+    #
+    #             master_user = request.user.master_user
+    #             if master_user and master_user.timezone:
+    #                 timezone.activate(master_user.timezone)
 
-            if hasattr(request.user, 'master_user'):
-
-                master_user = request.user.master_user
-                if master_user and master_user.timezone:
-                    timezone.activate(master_user.timezone)
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.method.upper() in permissions.SAFE_METHODS:
-            response = super(AbstractApiView, self).dispatch(request, *args, **kwargs)
-            return self._mini_if_need(request, response)
-        else:
-            with transaction.atomic():
-                response = super(AbstractApiView, self).dispatch(request, *args, **kwargs)
-                return self._mini_if_need(request, response)
-
-    def _mini_if_need(self, request, response):
-        if '_mini' in request.GET:
-            self._remove_object(response.data)
-        return response
-
-    def _remove_object(self, data):
-        if isinstance(data, (list, tuple)):
-            for i, v in enumerate(data):
-                data[i] = self._remove_object(v)
-        elif isinstance(data, (dict, OrderedDict)):
-            for k, v in list(data.items()):
-                if k.endswith('_object') or k in ['user_object_permissions', 'group_object_permissions']:
-                    del data[k]
-                else:
-                    data[k] = self._remove_object(v)
-        return data
+    # Possibly Deprecated
+    # def dispatch(self, request, *args, **kwargs):
+    #     if request.method.upper() in permissions.SAFE_METHODS:
+    #         response = super(AbstractApiView, self).dispatch(request, *args, **kwargs)
+    #         return self._mini_if_need(request, response)
+    #     else:
+    #         with transaction.atomic():
+    #             response = super(AbstractApiView, self).dispatch(request, *args, **kwargs)
+    #             return self._mini_if_need(request, response)
+    #
+    # def _mini_if_need(self, request, response):
+    #     if '_mini' in request.GET:
+    #         self._remove_object(response.data)
+    #     return response
+    #
+    # def _remove_object(self, data):
+    #     if isinstance(data, (list, tuple)):
+    #         for i, v in enumerate(data):
+    #             data[i] = self._remove_object(v)
+    #     elif isinstance(data, (dict, OrderedDict)):
+    #         for k, v in list(data.items()):
+    #             if k.endswith('_object') or k in ['user_object_permissions', 'group_object_permissions']:
+    #                 del data[k]
+    #             else:
+    #                 data[k] = self._remove_object(v)
+    #     return data
 
 
 class AbstractViewSet(AbstractApiView, ViewSet):
@@ -117,7 +124,7 @@ class AbstractViewSet(AbstractApiView, ViewSet):
         }
 
 
-class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMixinExt, DestroyModelFakeMixin,
+class AbstractEvGroupViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelFakeMixin,
                              BulkModelMixin, ModelViewSet):
     permission_classes = [
         IsAuthenticated
@@ -240,7 +247,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         return Response(filtered_qs)
 
 
-class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMixinExt, DestroyModelFakeMixin,
+class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, HistoryMixin, UpdateModelMixinExt, DestroyModelFakeMixin,
                            BulkModelMixin, ModelViewSet):
     permission_classes = [
         IsAuthenticated
@@ -368,7 +375,7 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         return Response(serializer.data)
 
 
-class AbstractReadOnlyModelViewSet(AbstractApiView, HistoricalModelMixin, ReadOnlyModelViewSet):
+class AbstractReadOnlyModelViewSet(AbstractApiView, ReadOnlyModelViewSet):
     permission_classes = [
         IsAuthenticated
     ]
@@ -640,7 +647,7 @@ class DebugLogViewSet(AbstractViewSet):
 
     def list(self, request):
 
-        log_file = '/var/log/finmars/django.log'
+        log_file = '/var/log/finmars/backend/django.log'
 
         seek_to = request.query_params.get('seek_to', 0)
 

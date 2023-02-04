@@ -178,6 +178,8 @@ class CurrencyEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribu
                            ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
+    pricing_condition_object = serializers.SerializerMethodField()
+
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = Currency
         fields = [
@@ -186,8 +188,18 @@ class CurrencyEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribu
             'is_deleted', 'is_enabled',
 
             'reference_for_pricing', 'default_fx_rate',
-            'pricing_condition'
+            'pricing_condition', 'pricing_condition_object'
         ]
+
+    def get_pricing_condition_object(self, instance):
+
+        if instance.pricing_condition:
+            return {
+                'id': instance.pricing_condition.id,
+                'user_code': instance.pricing_condition.user_code,
+                'name': instance.pricing_condition.name
+            }
+        return None
 
 
 class CurrencyLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):

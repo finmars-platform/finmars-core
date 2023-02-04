@@ -4,6 +4,8 @@ from datetime import date, datetime
 from functools import lru_cache
 
 import croniter
+import pexpect
+import psutil
 import pytz
 from babel import Locale
 from babel.dates import get_timezone, get_timezone_gmt, get_timezone_name
@@ -12,6 +14,8 @@ from django.utils import translation, timezone
 from rest_framework import response, schemas
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.decorators import action
+from django.http import HttpResponse, Http404
 
 from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer
 from poms.common.utils import get_list_of_business_days_between_two_dates, get_closest_bday_of_yesterday, \
@@ -502,6 +506,175 @@ class StatsViewSet(AbstractViewSet):
             result['error_message'] = 'No Transactions'
 
         return Response(result)
+
+
+class SystemInfoViewSet(AbstractViewSet):
+
+    def list(self, request, *args, **kwargs):
+        result = {}
+
+        items = []
+
+        uptime = datetime.now() - datetime.fromtimestamp(psutil.boot_time())
+
+        items.append({
+            'name': 'Uptime',
+            'user_code': 'uptime',
+            'values': [
+                {
+                    'key': 'days',
+                    'name': 'Days',
+                    'value': str(uptime)
+                }
+            ]
+        })
+
+        memory = psutil.virtual_memory()
+
+        items.append({
+            'name': 'Memory',
+            'user_code': 'memory',
+            'values': [
+                {
+                    'key': 'total',
+                    'name': 'Total (MB)',
+                    'value': round(memory.total / 1024 / 1024)
+                },
+                {
+                    'key': 'used',
+                    'name': 'Used (MB)',
+                    'value': round(memory.used / 1024 / 1024)
+                },
+                {
+                    'key': 'available',
+                    'name': 'Available (MB)',
+                    'value': round(memory.available / 1024 / 1024)
+                },
+                {
+                    'key': 'percent',
+                    'name': 'Percent',
+                    'value': memory.percent
+                }
+            ]
+        })
+
+        disk = psutil.disk_usage('/')
+
+        items.append({
+            'name': 'Disk',
+            'user_code': 'disk',
+            'values': [
+                {
+                    'key': 'total',
+                    'name': 'Total (MB)',
+                    'value': round(disk.total / 1024 / 1024)
+                },
+                {
+                    'key': 'used',
+                    'name': 'Used (MB)',
+                    'value': round(disk.used / 1024 / 1024)
+                },
+                {
+                    'key': 'free',
+                    'name': 'Free (MB)',
+                    'value': round(disk.free / 1024 / 1024)
+                },
+                {
+                    'key': 'percent',
+                    'name': 'Percent',
+                    'value': disk.percent
+                }
+            ]
+        })
+
+        shell_cmd = 'ps aux | grep [b]ackend'
+        c = pexpect.spawn('/bin/bash', ['-c', shell_cmd])
+        pexpect_result = c.read()
+
+        celery_worker_state = True
+
+        if not pexpect_result:
+            celery_worker_state = False
+
+        items.append({
+            'name': 'Celery Worker',
+            'user_code': 'celery_worker',
+            'values': [
+                {
+                    'key': 'active',
+                    'name': 'Active',
+                    'value': celery_worker_state
+                },
+            ]
+        })
+
+
+        shell_cmd = 'ps aux | grep [d]jango_celery_beat'
+        c = pexpect.spawn('/bin/bash', ['-c', shell_cmd])
+        pexpect_result = c.read()
+
+        celery_beat_state = True
+
+        if not pexpect_result:
+            celery_beat_state = False
+
+        items.append({
+            'name': 'Celery Beat',
+            'user_code': 'celery_beat',
+            'values': [
+                {
+                    'key': 'active',
+                    'name': 'Active',
+                    'value': celery_beat_state
+                },
+            ]
+        })
+
+        _l.info('pexpect_result read %s' % pexpect_result)
+
+        result['results'] = items
+
+        return Response(result)
+
+
+class SystemLogsViewSet(AbstractViewSet):
+
+    def list(self, request, *args, **kwargs):
+        result = {}
+
+
+        shell_cmd = 'ls -la /var/log/finmars/backend/  | awk \'{print $9}\''
+        c = pexpect.spawn('/bin/bash', ['-c', shell_cmd])
+        pexpect_result = c.read().decode('utf-8')
+
+        # items = pexpect_result.split('\')
+
+        lines = pexpect_result.splitlines()
+
+        items = []
+        for line in lines:
+            if line not in ['', '.', '..']:
+                items.append(line)
+
+        _l.info('SystemInfoLogsViewSet.items %s' % items)
+
+        result['results'] = items
+
+        return Response(result)
+
+    @action(detail=False, methods=['get'], url_path='view-log')
+    def view_log(self, request):
+
+        log_file = request.query_params.get('log_file', 'django.log')
+
+        log_file = '/var/log/finmars/backend/' + log_file
+
+        file = open(log_file, 'r')
+
+        return HttpResponse(
+            file,
+            content_type='plain/text'
+        )
 
 
 class CalendarEventsViewSet(AbstractViewSet):

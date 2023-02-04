@@ -248,7 +248,9 @@ class DataProcedureProcess(object):
                 _l.error("universal broker traceback %s" % traceback.format_exc())
                 send_system_message(master_user=self.master_user,
                                     performed_by="System",
-                                    description="universal Broker. Procedure is not created.  Something went wrong %s" % e,
+                                    action_status="required", type="error",
+                                    title="Data Procedure Failed. User Code: %s " % self.procedure.user_code,
+                                    description="Universal Broker. Procedure is not created.  Something went wrong %s" % e,
                                     )
 
 
@@ -499,17 +501,17 @@ class ExpressionProcedureProcess(object):
         try:
 
             self.procedure_instance = ExpressionProcedureInstance.objects.create(procedure=self.procedure,
-                                                                            master_user=self.master_user,
-                                                                            member=self.member,
-                                                                            status=ExpressionProcedureInstance.STATUS_PENDING,
-                                                                            schedule_instance=self.schedule_instance,
-                                                                            action='execute_expression_procedure',
-                                                                            provider='finmars',
+                                                                                 master_user=self.master_user,
+                                                                                 member=self.member,
+                                                                                 status=ExpressionProcedureInstance.STATUS_PENDING,
+                                                                                 schedule_instance=self.schedule_instance,
+                                                                                 action='execute_expression_procedure',
+                                                                                 provider='finmars',
 
-                                                                            action_verbose='Execute Expression Procedure',
-                                                                            provider_verbose='Finmars'
+                                                                                 action_verbose='Execute Expression Procedure',
+                                                                                 provider_verbose='Finmars'
 
-                                                                            )
+                                                                                 )
 
             send_system_message(master_user=self.master_user,
                                 performed_by='System',
@@ -533,7 +535,7 @@ class ExpressionProcedureProcess(object):
 
             if 'execution_context' in self.context:
                 self.procedure_instance.notes = self.procedure_instance.notes = 'Executed by: %s %s' % (
-                self.context['execution_context']['source'], self.context['execution_context']['actor']) + '\n'
+                    self.context['execution_context']['source'], self.context['execution_context']['actor']) + '\n'
 
             self.procedure_instance.notes = self.procedure_instance.notes + 'Content: \n' + str(names) + '\n'
             self.procedure_instance.notes = self.procedure_instance.notes + '==========\n'
@@ -557,6 +559,10 @@ class ExpressionProcedureProcess(object):
 
             except Exception as e:
 
+                send_system_message(master_user=self.master_user, action_status="required", type="warning",
+                                    title='Expression Procedure Failed. User Code: %s' % self.procedure.user_code,
+                                    description=str(e))
+
                 self.procedure_instance.status = ExpressionProcedureInstance.STATUS_ERROR
 
                 self.procedure_instance.error_message = str(e)
@@ -573,3 +579,7 @@ class ExpressionProcedureProcess(object):
         except Exception as e:
             _l.error("ExpressionProcedureProcess.process error %s" % e)
             _l.error(traceback.print_exc())
+
+            send_system_message(master_user=self.master_user, action_status="required", type="error",
+                                title='Expression Procedure Unknown Exception. User Code: %s' % self.procedure.user_code,
+                                description=str(e))

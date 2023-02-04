@@ -16,3 +16,9 @@ services:
       - "5672:5672"
     stdin_open: true
     tty: true
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    stdin_open: true
+    tty: true

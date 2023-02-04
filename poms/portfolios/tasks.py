@@ -1,9 +1,10 @@
 from __future__ import unicode_literals, print_function
 
 import logging
-from datetime import timedelta, datetime
+from datetime import timedelta
 
 from celery import shared_task
+from dateutil import parser
 from django.views.generic.dates import timezone_today
 
 from poms.common.utils import get_list_of_dates_between_two_dates
@@ -95,17 +96,18 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
 
     return cash_flow
 
+
 # TODO Refactor to task_id
 @shared_task(name='portfolios.calculate_portfolio_register_record', bind=True)
-def calculate_portfolio_register_record(self, portfolios=None):
+def calculate_portfolio_register_record(self, portfolio_ids=[]):
     _l.info('calculate_portfolio_register_record.init')
-    _l.info('calculate_portfolio_register_record.portfolios %s' % portfolios)
+    _l.info('calculate_portfolio_register_record.portfolios %s' % portfolio_ids)
+
+    master_user = MasterUser.objects.prefetch_related(
+        'members'
+    ).all().first()
 
     try:
-
-        master_user = MasterUser.objects.prefetch_related(
-            'members'
-        ).all().first()
 
         send_system_message(master_user=master_user,
                             performed_by='system',
@@ -117,9 +119,9 @@ def calculate_portfolio_register_record(self, portfolios=None):
 
         _l.info("calculate_portfolio_register_record0 master_user %s" % master_user)
 
-        if portfolios:
+        if portfolio_ids:
 
-            portfolio_registers = PortfolioRegister.objects.filter(master_user_id=master_user, portfolio__in=portfolios)
+            portfolio_registers = PortfolioRegister.objects.filter(master_user_id=master_user, portfolio_id__in=portfolio_ids)
 
         else:
             portfolio_registers = PortfolioRegister.objects.filter(master_user_id=master_user)
@@ -298,8 +300,12 @@ def calculate_portfolio_register_record(self, portfolios=None):
 
     except Exception as e:
 
+        send_system_message(master_user=master_user, action_status="required", type="error",
+                            title='Task Failed. Name: calculate_portfolio_register_record', description=str(e))
+
         _l.error('calculate_portfolio_register_records error %s' % e)
         _l.error(traceback.format_exc())
+
 
 # TODO Refactor to task_id
 @shared_task(name='portfolios.calculate_portfolio_register_price_history', bind=True)
@@ -360,7 +366,8 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
 
             if date_from and isinstance(date_from, str) and date_from != 'None':
                 format = '%Y-%m-%d'
-                _date_from = datetime.strptime(date_from, format).date()
+                # _date_from = datetime.strptime(date_from, format).date()
+                _date_from = parser.parse(date_from).date()
             else:
                 try:
                     first_transaction = \
@@ -450,6 +457,9 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
         task.save()
 
     except Exception as e:
+
+        send_system_message(master_user=master_user, action_status="required", type="error",
+                            title='Task Failed. Name: calculate_portfolio_register_price_history', description=str(e))
 
         task.error_message = 'Error %s. Traceback %s' % (e, traceback.format_exc())
         task.status = CeleryTask.STATUS_ERROR

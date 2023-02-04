@@ -25,3 +25,8 @@ div.breadcrumbs {
 .button, input[type=submit], input[type=button], .submit-row input, a.button {
     background: rgba(240, 90, 34, .4);
 }
+
+span.s2 {
+    background-color: transparent;
+    color: yellow;
+}

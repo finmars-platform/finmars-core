@@ -12,7 +12,6 @@ import types
 import uuid
 from collections import OrderedDict
 
-from celery import Celery
 from dateutil import relativedelta
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -250,6 +249,7 @@ def _get_list_of_dates_between_two_dates(date_from, date_to):
 
 
 def _send_system_message(evaluator, title=None, description=None, type='info', section='other',
+                         action_status='not_required',
                          performed_by="Expression Engine"):
     try:
         from poms.system_messages.handlers import send_system_message
@@ -264,6 +264,7 @@ def _send_system_message(evaluator, title=None, description=None, type='info', s
                             performed_by=performed_by,
                             type=type,
                             section=section,
+                            action_status=action_status,
                             title=title,
                             description=description)
 
@@ -541,6 +542,21 @@ def _parse_date(date_string, format=None):
     return result
 
 
+def _universal_parse_date(date_string):
+    # from dateutil.parser import parse
+    # dt = parse('Mon Feb 15 2010')
+    # print(dt)
+    # # datetime.datetime(2010, 2, 15, 0, 0)
+    # print(dt.strftime('%d/%m/%Y'))
+    # # 15/02/2010
+
+    from dateutil.parser import parse
+
+    dt = parse(date_string)
+
+    return dt.strftime('%Y-%m-%d')
+
+
 def _unix_to_date(unix, format=None):
     if not unix:
         return None
@@ -555,12 +571,12 @@ def _unix_to_date(unix, format=None):
 
 
 def _last_business_day(date):
-
     date = _parse_date(date)
 
     offset = BDay()
 
     return offset.rollback(date).date()
+
 
 def _get_date_last_week_end_business(date):
     date = _parse_date(date)
@@ -1188,7 +1204,8 @@ def _add_fx_rate(evaluator, date, currency, pricing_policy, fx_rate=0, overwrite
 _add_fx_rate.evaluator = True
 
 
-def _add_price_history(evaluator, date, instrument, pricing_policy, principal_price=0, accrued_price=0, is_temporary_price=False, overwrite=True):
+def _add_price_history(evaluator, date, instrument, pricing_policy, principal_price=0, accrued_price=0,
+                       is_temporary_price=False, overwrite=True):
     from poms.users.utils import get_master_user_from_context
     from poms.instruments.models import PriceHistory
 
@@ -1278,22 +1295,22 @@ def _get_latest_principal_price_date(evaluator, instrument, pricing_policy, defa
         instrument = _safe_get_instrument(evaluator, instrument)
         pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
 
-        _l.info("_get_latest_principal_price instrument %s " % instrument)
-        _l.info("_get_latest_principal_price  pricing_policy %s " % pricing_policy)
+        # _l.info("_get_latest_principal_price instrument %s " % instrument)
+        # _l.info("_get_latest_principal_price  pricing_policy %s " % pricing_policy)
 
         results = PriceHistory.objects.exclude(principal_price=0).filter(instrument=instrument,
                                                                          pricing_policy=pricing_policy).order_by(
             '-date')
 
-        _l.info("_get_latest_principal_price_date results %s " % results)
+        # _l.info("_get_latest_principal_price_date results %s " % results)
 
         if len(list(results)):
             return results[0].date
 
         return default_value
     except Exception as e:
-        _l.error("_get_latest_principal_price_date exception %s " % str(e))
-        _l.error("_get_latest_principal_price_date exception %s " % traceback.format_exc())
+        # _l.error("_get_latest_principal_price_date exception %s " % str(e))
+        # _l.error("_get_latest_principal_price_date exception %s " % traceback.format_exc())
         return default_value
 
 
@@ -2462,13 +2479,9 @@ def _run_task(evaluator, task_name, options={}):
 
     try:
 
-        app = Celery('poms_app')
+        from poms_app import celery_app
 
-        app.config_from_object('django.conf:settings', namespace='CELERY')
-
-        app.autodiscover_tasks()
-
-        app.send_task(task_name, kwargs=options)
+        celery_app.send_task(task_name, kwargs=options)
 
     except Exception as e:
         _l.debug("_run_task.exception %s" % e)
@@ -2497,6 +2510,7 @@ def _run_pricing_procedure(evaluator, user_code, **kwargs):
 
     except Exception as e:
         _l.debug("_run_pricing_procedure.exception %s" % e)
+        raise Exception(e)
 
 
 _run_pricing_procedure.evaluator = True
@@ -2559,6 +2573,7 @@ def _run_data_procedure(evaluator, user_code, user_context=None, linked_task_kwa
     except Exception as e:
         _l.error("_run_data_procedure.exception %s" % e)
         _l.error("_run_data_procedure.exception traceback %s" % traceback.format_exc())
+        raise Exception(e)
 
 
 _run_data_procedure.evaluator = True
@@ -2602,6 +2617,7 @@ def _run_data_procedure_sync(evaluator, user_code, user_context=None, **kwargs):
     except Exception as e:
         _l.error("_run_data_procedure_sync.exception %s" % e)
         _l.error("_run_data_procedure_sync.exception traceback %s" % traceback.format_exc())
+        raise Exception(e)
 
 
 _run_data_procedure_sync.evaluator = True
@@ -3331,6 +3347,7 @@ FUNCTIONS = [
     SimpleEval2Def('format_date', _format_date),
     SimpleEval2Def('get_list_of_dates_between_two_dates', _get_list_of_dates_between_two_dates),
     SimpleEval2Def('parse_date', _parse_date),
+    SimpleEval2Def('universal_parse_date', _universal_parse_date),
     SimpleEval2Def('unix_to_date', _unix_to_date),
 
     SimpleEval2Def('last_business_day', _last_business_day),

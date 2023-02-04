@@ -1,12 +1,14 @@
 from __future__ import unicode_literals
 
 import logging
+import traceback
 
 from django.core.cache import cache
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.serializers import Serializer
 
 from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
@@ -95,12 +97,16 @@ class TransactionReportCustomFieldViewSet(AbstractModelViewSet):
         'name',
     ]
 
+
 # TODO implement Pure Balance Report as separate module
 class BalanceReportViewSet(AbstractViewSet):
     serializer_class = BalanceReportSerializer
 
     def create(self, request, *args, **kwargs):
-        serialize_report_st = time.perf_counter()
+
+        _l.info("Create start")
+
+        st = time.perf_counter()
 
         key = generate_report_unique_hash('report', 'balance', request.data, request.user.master_user,
                                           request.user.member)
@@ -110,9 +116,14 @@ class BalanceReportViewSet(AbstractViewSet):
         if not cached_data:
             _l.info("Could not find in cache")
 
+
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             instance = serializer.save()
+
+            instance.auth_time = self.auth_time
+
+
 
             builder = BalanceReportBuilderSql(instance=instance)
             instance = builder.build_balance()
@@ -120,13 +131,19 @@ class BalanceReportViewSet(AbstractViewSet):
             instance.task_id = 1
             instance.task_status = "SUCCESS"
 
+            serialize_report_st = time.perf_counter()
             serializer = self.get_serializer(instance=instance, many=False)
-
-            _l.debug('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
             cached_data = serializer.data
 
+            _l.info('serializer.data.auth_time %s' % serializer.data['auth_time'])
+            _l.info('serializer.data.execution_time %s' % serializer.data['execution_time'])
+            _l.info('serializer.data.relation_prefetch_time %s' % serializer.data['relation_prefetch_time'])
+            _l.info('serializer.data.serialization_time %s' % serializer.data['serialization_time'])
+
             cache.set(key, cached_data)
+
+        _l.debug('BalanceReportViewSet done: %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         return Response(cached_data, status=status.HTTP_200_OK)
 
@@ -200,7 +217,7 @@ class PriceHistoryCheckViewSet(AbstractViewSet):
     serializer_class = PriceHistoryCheckSerializer
 
     def create(self, request, *args, **kwargs):
-        serialize_report_st = time.perf_counter()
+        st = time.perf_counter()
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -214,7 +231,7 @@ class PriceHistoryCheckViewSet(AbstractViewSet):
 
         serializer = self.get_serializer(instance=instance, many=False)
 
-        _l.debug('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        _l.debug('PriceHistoryCheckerSql done: %s' % "{:3.3f}".format(time.perf_counter() - st))
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 

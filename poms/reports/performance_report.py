@@ -7,7 +7,7 @@ from datetime import timedelta,date
 from django.forms import model_to_dict
 from django.views.generic.dates import timezone_today
 
-from poms.accounts.models import Account
+from poms.accounts.models import Account, AccountType
 from poms.common.utils import get_list_of_business_days_between_two_dates, \
     last_business_day_in_month, is_business_day, get_last_business_day, get_closest_bday_of_yesterday
 from poms.currencies.models import Currency, CurrencyHistory
@@ -1152,6 +1152,20 @@ class PerformanceReportBuilder:
             'attributes__classifier',
         ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
 
+    def add_data_items_account_types(self, accounts):
+
+        ids = []
+
+        for account in accounts:
+            ids.append(account.type_id)
+
+        self.instance.item_account_types = AccountType.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).filter(master_user=self.instance.master_user) \
+            .filter(id__in=ids)
+
     def add_data_items_currencies(self, ids):
 
         self.instance.item_currencies = Currency.objects.prefetch_related(
@@ -1260,6 +1274,7 @@ class PerformanceReportBuilder:
         # _l.info('add_data_items_strategies1 %s ' % self.instance.item_strategies1)
 
         self.add_data_items_instrument_types(self.instance.item_instruments)
+        self.add_data_items_account_types(self.instance.item_accounts)
 
         self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
 

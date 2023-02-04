@@ -22,6 +22,7 @@ RUN mkdir -p /var/app-data/media/
 RUN mkdir -p /var/app-data/import/configs/
 RUN mkdir -p /var/app-data/import/files/
 RUN mkdir -p /var/log/finmars
+RUN mkdir -p /var/log/finmars/backend
 #RUN chown -R www-data:www-data /var/log/finmars/
 #RUN chown -R www-data:www-data /var/app
 #RUN chown -R www-data:www-data /var/app-data
@@ -33,6 +34,8 @@ COPY docker/uwsgi-www.ini /etc/uwsgi/apps-enabled/finmars.ini
 
 
 RUN chmod +x /var/app/docker/finmars-run.sh
+
+#RUN mkdir -p /var/run/gunicorn/
 
 # create celery user
 RUN mkdir -p /var/log/celery/

@@ -5,7 +5,7 @@ import time
 from django.conf import settings
 from django.db import connection
 
-from poms.accounts.models import Account
+from poms.accounts.models import Account, AccountType
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, CostMethod, InstrumentType
 from poms.portfolios.models import Portfolio
@@ -3499,6 +3499,20 @@ class PLReportBuilderSql:
             'attributes__classifier',
         ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
 
+    def add_data_items_account_types(self, accounts):
+
+        ids = []
+
+        for account in accounts:
+            ids.append(account.type_id)
+
+        self.instance.item_account_types = AccountType.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).filter(master_user=self.instance.master_user) \
+            .filter(id__in=ids)
+
     def add_data_items_currencies(self, ids):
 
         self.instance.item_currencies = Currency.objects.prefetch_related(
@@ -3591,13 +3605,17 @@ class PLReportBuilderSql:
         _l.debug('len instrument_ids %s' % len(instrument_ids))
 
         self.add_data_items_instruments(instrument_ids)
-        self.add_data_items_instrument_types(self.instance.item_instruments)
         self.add_data_items_portfolios(portfolio_ids)
         self.add_data_items_accounts(account_ids)
+
+
         self.add_data_items_currencies(currencies_ids)
         self.add_data_items_strategies1(strategies1_ids)
         self.add_data_items_strategies2(strategies2_ids)
         self.add_data_items_strategies3(strategies3_ids)
+
+        self.add_data_items_instrument_types(self.instance.item_instruments)
+        self.add_data_items_account_types(self.instance.item_accounts)
 
         self.instance.custom_fields = PLReportCustomField.objects.filter(master_user=self.instance.master_user)
 

@@ -1,4 +1,4 @@
-import os
+import csv
 import csv
 import json
 import os
@@ -86,7 +86,13 @@ class TransactionImportProcess(object):
         self.proxy_user = ProxyUser(self.member, self.master_user)
         self.proxy_request = ProxyRequest(self.proxy_user)
 
-        self.scheme = ComplexTransactionImportScheme.objects.get(pk=self.task.options_object['scheme_id'])
+        if self.task.options_object.get('scheme_id', None):
+            self.scheme = ComplexTransactionImportScheme.objects.get(pk=self.task.options_object['scheme_id'])
+        elif self.task.options_object.get('scheme_user_code', None):
+            self.scheme = ComplexTransactionImportScheme.objects.get(
+                user_code=self.task.options_object['scheme_user_code'])
+        else:
+            raise Exception("Import Scheme not found")
 
         self.execution_context = self.task.options_object['execution_context']
         self.file_path = self.task.options_object['file_path']
@@ -503,7 +509,6 @@ class TransactionImportProcess(object):
 
                                     self.file_items.append(file_item)
 
-
                             self.result.total_rows = len(self.file_items)
 
             if self.process_type == ProcessType.EXCEL:
@@ -884,7 +889,8 @@ class TransactionImportProcess(object):
             if self.task.options_object and 'items' in self.task.options_object:
                 pass
             else:
-                storage.delete(self.file_path)
+                pass
+                # storage.delete(self.file_path)
 
             send_websocket_message(data={
                 'type': 'transaction_import_status',
@@ -913,6 +919,17 @@ class TransactionImportProcess(object):
             self.result.reports.append(self.generate_file_report())
             self.result.reports.append(self.generate_json_report())
 
+            error_rows_count = 0
+            for result_item in self.result.items:
+
+                if result_item.status == 'error':
+                    error_rows_count = error_rows_count + 1
+
+            if error_rows_count != 0:
+                send_system_message(master_user=self.master_user, action_status="required", type="warning",
+                                    title='Transaction Import Partially Failed. Task id: %s' % self.task.id,
+                                    description="Error rows %s/%s" % (error_rows_count, len(self.result.items)))
+
             system_message_title = 'New transactions (import from file)'
             system_message_description = 'New transactions created (Import scheme - ' + str(
                 self.scheme.name) + ') - ' + str(len(self.items))
@@ -924,7 +941,6 @@ class TransactionImportProcess(object):
             if self.process_type == ProcessType.JSON:
 
                 if self.execution_context and self.execution_context["started_by"] == 'procedure':
-
                     system_message_title = 'New transactions (import from broker)'
                     system_message_performed_by = 'System'
 
@@ -932,15 +948,14 @@ class TransactionImportProcess(object):
 
                     # if self.execution_context['date_from']:
 
-
-                        # TODO too long, need refactor
-                        # from poms.portfolios.tasks import calculate_portfolio_register_record, \
-                        #     calculate_portfolio_register_price_history
-                        #
-                        # calculate_portfolio_register_record.apply_async(link=[
-                        #     calculate_portfolio_register_price_history.s(
-                        #         date_from=str(self.execution_context['date_from']))
-                        # ])
+                    # TODO too long, need refactor
+                    # from poms.portfolios.tasks import calculate_portfolio_register_record, \
+                    #     calculate_portfolio_register_price_history
+                    #
+                    # calculate_portfolio_register_record.apply_async(link=[
+                    #     calculate_portfolio_register_price_history.s(
+                    #         date_from=str(self.execution_context['date_from']))
+                    # ])
 
             send_system_message(master_user=self.master_user,
                                 performed_by=system_message_performed_by,
@@ -989,7 +1004,8 @@ class TransactionImportProcess(object):
 
                 _l.info("whole_file_preprocess  names %s" % names)
 
-                self.file_items = formula.safe_eval(self.scheme.data_preprocess_expression, names=names, context=self.context)
+                self.file_items = formula.safe_eval(self.scheme.data_preprocess_expression, names=names,
+                                                    context=self.context)
 
                 _l.info("whole_file_preprocess  self.raw_items %s" % self.raw_items)
 

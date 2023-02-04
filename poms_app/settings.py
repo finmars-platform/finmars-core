@@ -22,7 +22,8 @@ DJANGO_LOG_LEVEL = ENV_STR('DJANGO_LOG_LEVEL', 'INFO')
 
 SECRET_KEY = ENV_STR('SECRET_KEY', None)
 SERVER_TYPE = ENV_STR('SERVER_TYPE', 'local')
-BASE_API_URL = ENV_STR('BASE_API_URL', 'client00000')
+USE_DEBUGGER = ENV_STR('USE_DEBUGGER', False)
+BASE_API_URL = ENV_STR('BASE_API_URL', 'space00000')
 HOST_LOCATION = ENV_STR('HOST_LOCATION', 'AWS')  # azure, aws, or custom, only log purpose
 DOMAIN_NAME = ENV_STR('DOMAIN_NAME', 'finmars.com')
 JWT_SECRET_KEY = ENV_STR('JWT_SECRET_KEY', None)
@@ -51,6 +52,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+
+
 
     'django_filters',
 
@@ -100,7 +103,7 @@ INSTALLED_APPS = [
 
     'poms.auth_tokens',
     'poms.widgets',
-    'poms.workflows',
+    'poms.history',
 
     'django.contrib.admin',
     'django.contrib.admindocs',
@@ -129,42 +132,45 @@ INSTALLED_APPS = [
 
 ]
 
-if SERVER_TYPE == 'local':
+if SERVER_TYPE == 'local' and USE_DEBUGGER:
     INSTALLED_APPS.append('debug_toolbar')
 
 # MIDDLEWARE_CLASSES = [
 MIDDLEWARE = [
 
-    'django.middleware.gzip.GZipMiddleware',
-    'django.middleware.http.ConditionalGetMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'django.middleware.cache.UpdateCacheMiddleware',
-    # 'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
-    # 'django_otp.middleware.OTPMiddleware',
-    # 'django.middleware.cache.FetchFromCacheMiddleware',
+
+    "whitenoise.middleware.WhiteNoiseMiddleware", # for static files
+
+    # Possibly Deprecated
+    # 'django.middleware.gzip.GZipMiddleware',
+    # 'django.middleware.http.ConditionalGetMiddleware',
+    # 'django.middleware.security.SecurityMiddleware',
+    # 'django.contrib.sessions.middleware.SessionMiddleware',
+    # 'django.middleware.locale.LocaleMiddleware',
+    # 'django.middleware.common.CommonMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.contrib.auth.middleware.AuthenticationMiddleware',
+    # 'django.contrib.messages.middleware.MessageMiddleware',
+    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
 
     'corsheaders.middleware.CorsMiddleware',
     'corsheaders.middleware.CorsPostCsrfMiddleware',
 
-    'poms.common.middleware.CommonMiddleware',
+    'poms.common.middleware.CommonMiddleware', # required for getting request object anywhere
+    # 'poms.common.middleware.LogRequestsMiddleware',
     'finmars_standardized_errors.middleware.ExceptionMiddleware'
-    # 'poms.common.middleware.CustomExceptionMiddleware',
-    # 'poms.users.middleware.AuthenticationMiddleware',
-    # 'poms.users.middleware.TimezoneMiddleware',
-    # 'poms.users.middleware.LocaleMiddleware',
-    # 'poms.notifications.middleware.NotificationMiddleware',
-    # 'poms.common.middleware.NoCacheMiddleware',
 
 ]
 
-if SERVER_TYPE == 'local':
+if SERVER_TYPE == 'local' and USE_DEBUGGER:
     MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 PROFILER = ENV_BOOL('PROFILER', False)
@@ -283,6 +289,7 @@ if SERVER_TYPE == "development":
 if SERVER_TYPE == "local":
     CORS_ORIGIN_ALLOW_ALL = True
     CORS_ALLOW_CREDENTIALS = True
+    print("LOCAL development. CORS disabled")
 
 STATIC_URL = '/' + BASE_API_URL + '/api/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')  # creates when collectstatic
@@ -303,13 +310,17 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },
-    'throttling': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-    },
-    'http_session': {
-        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-    }
 }
+
+# Maybe in future, we will return to Redis
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+#         'LOCATION': 'redis://127.0.0.1:6379',
+#     },
+# }
+
+
 
 # SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 # SESSION_ENGINE = "poms.http_sessions.backends.cached_db"
@@ -342,8 +353,11 @@ LOGGING = {
         },
         'file': {
             'level': DJANGO_LOG_LEVEL,
-            'class': 'logging.FileHandler',
-            'filename': '/var/log/finmars/django.log',
+            # 'class': 'logging.FileHandler',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'interval': 1,
+            'when': 'D',
+            'filename': '/var/log/finmars/backend/django.log',
             'formatter': 'verbose'
         }
     },
@@ -356,6 +370,10 @@ LOGGING = {
             "handlers": ["file"],
             "level": "ERROR",
             "propagate": True
+        },
+        "gunicorn": {
+            "level": "ERROR",
+            "handlers": ["console", "file"]
         },
         "poms": {
             "level": DJANGO_LOG_LEVEL,
@@ -399,7 +417,9 @@ REST_FRAMEWORK = {
         # 'rest_framework.authentication.SessionAuthentication',
         # 'rest_framework.authentication.BasicAuthentication',
         # 'rest_framework.authentication.TokenAuthentication',
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "poms.common.authentication.KeycloakAuthentication",
+
         # "poms.auth_tokens.authentication.ExpiringTokenAuthentication",
     ),
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
@@ -416,10 +436,10 @@ REST_FRAMEWORK = {
     #     'rest_framework.parsers.FormParser',
     #     'rest_framework.parsers.MultiPartParser',
     # ),
-    'DEFAULT_THROTTLE_CLASSES': (
-        'poms.api.throttling.AnonRateThrottleExt',
-        'poms.api.throttling.UserRateThrottleExt'
-    ),
+    # 'DEFAULT_THROTTLE_CLASSES': (
+    #     'poms.api.throttling.AnonRateThrottleExt',
+    #     'poms.api.throttling.UserRateThrottleExt'
+    # ),
     'DEFAULT_THROTTLE_RATES': {
         # 'anon': '5/second',
         # 'user': '50/second',
@@ -573,7 +593,7 @@ INTERNAL_IPS = [
     # ...
 ]
 
-if SERVER_TYPE == 'local':
+if SERVER_TYPE == 'local' and USE_DEBUGGER:
     DEBUG_TOOLBAR_PANELS = [
         'debug_toolbar.panels.versions.VersionsPanel',
         'debug_toolbar.panels.timer.TimerPanel',
@@ -604,4 +624,6 @@ KEYCLOAK_CLIENT_ID = os.environ.get('KEYCLOAK_CLIENT_ID', 'finmars-backend')
 KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY',
                                             None)  # not required anymore, api works in Bearer-only mod
 
+
+SIMPLE_JWT = {"SIGNING_KEY": os.getenv("SIGNING_KEY", SECRET_KEY), 'USER_ID_FIELD': 'username'}
 

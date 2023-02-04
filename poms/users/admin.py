@@ -70,124 +70,13 @@ class MasterUserAdmin(AbstractModelAdmin):
     model = MasterUser
     master_user_path = 'id'
     inlines = [
-        PricingAutomatedScheduleInline,
-        EventScheduleConfigInline,
         MemberInline,
     ]
-    list_display = ['id', 'name', 'set_activate_link']
+    list_display = ['id', 'name']
     list_filter = (MasterUserIsActiveFilter,)
     search_fields = ['id', 'name']
     raw_id_fields = [
     ]
-
-    actions = [
-        'generate_events', 'clone_data',
-        'patch_currencies', 'patch_currencies_with_overwrites',
-        'patch_bloomberg_currency_mappings', 'patch_bloomberg_currency_mappings_with_overwrites',
-    ]
-
-    def get_queryset(self, request):
-        from django.contrib.admin.options import IS_POPUP_VAR
-        if IS_POPUP_VAR in request.GET:
-            self.master_user_path = 'id'
-        else:
-            self.master_user_path = None
-        qs = super(MasterUserAdmin, self).get_queryset(request)
-        qs = qs.annotate(id_check=F('id') - self.get_active_master_user(request))
-        return qs
-
-    def save_model(self, request, obj, form, change):
-        super(MasterUserAdmin, self).save_model(request, obj, form, change)
-
-        if not change:
-            obj.create_defaults()
-
-    def clone_data(self, request, queryset):
-        from poms.users.cloner import FullDataCloner
-        for mu in queryset:
-            cloner = FullDataCloner(mu)
-            cloner.clone()
-
-    clone_data.short_description = gettext_lazy("Clone selected master users")
-
-    def generate_events(self, request, queryset):
-        from poms.instruments.tasks import generate_events
-        generate_events.apply_async()
-
-    generate_events.short_description = gettext_lazy("Generate and check events")
-
-    def patch_currencies(self, request, queryset):
-        for mu in queryset:
-            mu.patch_currencies()
-
-    patch_currencies.short_description = gettext_lazy("Patch currencies")
-
-    def patch_currencies_with_overwrites(self, request, queryset):
-        for mu in queryset:
-            mu.patch_currencies(True, True)
-
-    patch_currencies_with_overwrites.short_description = gettext_lazy(
-        "Patch currencies (and overwrite names and reference_for_pricing)")
-
-    def patch_bloomberg_currency_mappings(self, request, queryset):
-        for mu in queryset:
-            mu.patch_bloomberg_currency_mappings()
-
-    patch_bloomberg_currency_mappings.short_description = gettext_lazy("Patch bloomberg mapping")
-
-    def patch_bloomberg_currency_mappings_with_overwrites(self, request, queryset):
-        for mu in queryset:
-            mu.patch_bloomberg_currency_mappings(True)
-
-    patch_bloomberg_currency_mappings_with_overwrites.short_description = gettext_lazy(
-        "Patch bloomberg mapping (and overwrite value)")
-
-    def set_activate_link(self, obj):
-        if getattr(obj, 'id_check', 1) == 0:
-            return '<a href="%s">Unset</a>' % (
-                reverse("admin:users_masteruser_clearactive", args=(obj.id,))
-            )
-        else:
-            return '<a href="%s">Set</a>' % (
-                reverse("admin:users_masteruser_setactive", args=(obj.id,))
-            )
-
-    set_activate_link.allow_tags = True
-    set_activate_link.short_description = 'Is Active'
-
-    def get_urls(self):
-        urls = super(MasterUserAdmin, self).get_urls()
-
-        def wrap(view):
-            def wrapper(*args, **kwargs):
-                return self.admin_site.admin_view(view)(*args, **kwargs)
-
-            wrapper.model_admin = self
-            return update_wrapper(wrapper, view)
-
-        info = self.model._meta.app_label, self.model._meta.model_name
-
-        urls = [
-                   re_path(r'^(.+)/set_active/$', wrap(self.set_active_view), name='%s_%s_setactive' % info),
-                   re_path(r'^(.+)/clear_active/$', wrap(self.clear_active_view), name='%s_%s_clearactive' % info),
-               ] + urls
-        return urls
-
-    def set_active_view(self, request, object_id, form_url='', extra_context=None):
-        self.set_active_master_user(request, object_id)
-        self.message_user(request, gettext_lazy("Active master user successful set."))
-        if 'HTTP_REFERER' in request.META:
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-        else:
-            return HttpResponseRedirect(redirect_to=reverse("admin:users_masteruser_changelist"))
-
-    def clear_active_view(self, request, object_id, form_url='', extra_context=None):
-        self.set_active_master_user(request, None)
-        self.message_user(request, gettext_lazy("Active master user successful unset."))
-        if 'HTTP_REFERER' in request.META:
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
-        else:
-            return HttpResponseRedirect(redirect_to=reverse("admin:users_masteruser_changelist"))
 
 
 admin.site.register(MasterUser, MasterUserAdmin)

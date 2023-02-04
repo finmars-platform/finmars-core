@@ -37,6 +37,7 @@ import poms.transactions.views as transactions
 import poms.ui.views as ui
 import poms.users.views as users
 import poms.widgets.views as widgets
+import poms.history.views as history
 from finmars_standardized_errors.views import ErrorRecordViewSet
 from poms.auth_tokens.views import ObtainAuthToken, SetAuthToken, CreateUser, CreateMasterUser, CreateMember, \
     DeleteMember, RenameMasterUser, MasterUserChangeOwner
@@ -250,6 +251,7 @@ router.register(r'strategies/3/strategy-attribute-type', strategies.Strategy3Att
 
 router.register(r'reference-tables/reference-table', reference_table.ReferenceTableViewSet, 'reference_table')
 router.register(r'active_processes/active_processes', celery_tasks.CeleryTaskViewSet, 'celery_tasks')
+router.register(r'tasks/task', celery_tasks.CeleryTaskViewSet, 'celery_tasks')
 
 router.register(r'transactions/event-class', transactions.EventClassViewSet)
 router.register(r'transactions/notification-class', transactions.NotificationClassViewSet)
@@ -406,6 +408,11 @@ router.register(r'import/complex-transaction-import-scheme-light',
 router.register(r'import/complex-transaction-csv-file-import', integrations.ComplexTransactionCsvFileImportViewSet,
                 'complextransactioncsvfileimport')
 
+router.register(r'import/transaction-import', integrations.TransactionImportViewSet,
+                'transactionimportviewset')
+router.register(r'import/simple-import', csv_import.CsvDataImportViewSet,
+                'simpleimportviewset')
+
 router.register(r'import/complex-transaction-preprocess-file', integrations.ComplexTransactionFilePreprocessViewSet,
                 'complextransactionfilepreprocessviewSet')
 
@@ -415,6 +422,8 @@ router.register(r'import/complex-transaction-csv-file-import-validate',
 
 router.register(r'utils/expression', api.ExpressionViewSet, 'expression')
 router.register(r'utils/stats', api.StatsViewSet, 'stats')
+router.register(r'utils/system-info', api.SystemInfoViewSet, 'system-info')
+router.register(r'utils/system-logs', api.SystemLogsViewSet, 'system-logs')
 router.register(r'utils/calendar-events', api.CalendarEventsViewSet, 'calendar-events')
 
 router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
@@ -512,8 +521,11 @@ router.register(r'explorer/upload', explorer.ExplorerUploadViewSet, 'explorer_up
 router.register(r'explorer/delete', explorer.ExplorerDeleteViewSet, 'explorer_delete')
 router.register(r'explorer/create_folder', explorer.ExplorerCreateFolderViewSet, 'explorer_create_folder')
 
-router.register(r'debug/logs', common.DebugLogViewSet, 'debug_log')
+
+router.register(r'debug/logs', common.DebugLogViewSet, 'debug_log') # Deprecated
 router.register(r'errors/error', ErrorRecordViewSet, 'error')
+
+router.register(r'history/historical-record', history.HistoricalRecordViewSet, 'historical-record')
 
 # router.register(r'pricing/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view()), 'pricing_broker_bloomberg')
 

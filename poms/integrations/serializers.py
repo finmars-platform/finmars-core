@@ -1943,7 +1943,7 @@ class ComplexTransactionCsvFileImport:
                  scheme=None, file_path=None, skip_first_line=None, delimiter=None, quotechar=None, encoding=None,
                  error_handling=None, missing_data_handler=None, error=None, error_message=None, error_row_index=None,
                  error_rows=None,
-                 total_rows=None, processed_rows=None, file_name=None, stats_file_report=None, preprocess_file=True):
+                 total_rows=None, processed_rows=None, file_name=None, stats_file_report=None):
         self.task_id = task_id
         self.task_status = task_status
 
@@ -1968,7 +1968,7 @@ class ComplexTransactionCsvFileImport:
         self.total_rows = total_rows
         self.processed_rows = processed_rows
         self.stats_file_report = stats_file_report
-        self.preprocess_file = preprocess_file
+        # self.preprocess_file = preprocess_file
 
     def __str__(self):
         return '%s-%s:%s' % (getattr(self.master_user, 'id', None), getattr(self.member, 'id', None), self.file_path)
@@ -1986,7 +1986,7 @@ class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
     task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)
     task_status = serializers.ReadOnlyField()
 
-    preprocess_file = serializers.BooleanField(required=False, allow_null=True)
+    # preprocess_file = serializers.BooleanField(required=False, allow_null=True)
 
     master_user = MasterUserField()
     member = HiddenMemberField()

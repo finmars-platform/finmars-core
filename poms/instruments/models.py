@@ -1324,6 +1324,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         content_type = ContentType.objects.get(app_label="instruments", model='instrument')
         instrument_pricing_policies = InstrumentPricingPolicy.objects.filter(instrument=self)
 
+
+
         for ipp in instrument_pricing_policies:
 
             pp = ipp.pricing_policy
@@ -1476,7 +1478,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
         except Exception as error:
 
-            _l.debug('Instrument save error %s' % error)
+            _l.error('Instrument save error %s' % error)
+            _l.error('Instrument save traceback %s' % traceback.format_exc())
 
 
 # DEPRECTATED (25.05.2020) delete soon

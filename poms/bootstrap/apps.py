@@ -26,12 +26,40 @@ class BootstrapConfig(AppConfig):
 
         _l.info("Bootstrapping Finmars Application")
 
+
         self.add_view_and_manage_permissions()
         self.load_master_user_data()
+        self.create_finmars_bot()
         self.sync_users_at_authorizer_service()
         self.load_init_configuration()
         self.create_base_folders()
         self.register_at_authorizer_service()
+
+    def create_finmars_bot(self):
+
+        from django.contrib.auth.models import User
+
+        try:
+
+            user = User.objects.get(username='finmars_bot')
+
+        except Exception as e:
+
+            user = User.objects.create(username='finmars_bot')
+
+
+        try:
+            from poms.users.models import Member
+            member = Member.objects.get(user__username='finmars_bot')
+        except Exception as e:
+            _l.info("Member not found, going to create it")
+
+            from poms.users.models import MasterUser
+            master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+            member = Member.objects.create(user=user, master_user=master_user)
+
+        _l.info("Finmars bot created")
 
     def add_view_and_manage_permissions(self):
         from poms.common.utils import add_view_and_manage_permissions
@@ -301,7 +329,6 @@ class BootstrapConfig(AppConfig):
 
             _l.info("create base folders if not exists")
 
-            _l.info('storage %s' % storage)
 
             if not storage.exists(settings.BASE_API_URL + '/.system/.init'):
                 path = settings.BASE_API_URL + '/.system/.init'
@@ -323,15 +350,35 @@ class BootstrapConfig(AppConfig):
 
                     _l.info("create public folder")
 
-            if not storage.exists(settings.BASE_API_URL + '/import/.init'):
-                path = settings.BASE_API_URL + '/import/.init'
+            if not storage.exists(settings.BASE_API_URL + '/workflows/.init'):
+                path = settings.BASE_API_URL + '/workflows/.init'
 
                 with NamedTemporaryFile() as tmpf:
                     tmpf.write(b'')
                     tmpf.flush()
                     storage.save(path, tmpf)
 
-                    _l.info("create import folder")
+                    _l.info("create workflows folder")
+
+            if not storage.exists(settings.BASE_API_URL + '/workflows/schemas/.init'):
+                path = settings.BASE_API_URL + '/workflows/schemas/.init'
+
+                with NamedTemporaryFile() as tmpf:
+                    tmpf.write(b'')
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
+                    _l.info("create workflows schemas folder")
+
+            if not storage.exists(settings.BASE_API_URL + '/workflows/tasks/.init'):
+                path = settings.BASE_API_URL + '/workflows/tasks/.init'
+
+                with NamedTemporaryFile() as tmpf:
+                    tmpf.write(b'')
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
+                    _l.info("create workflows tasks folder")
 
             members = Member.objects.all()
 

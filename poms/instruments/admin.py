@@ -84,6 +84,14 @@ class AccrualCalculationScheduleInline(admin.TabularInline):
     }
 
 
+class EventScheduleInline(admin.TabularInline):
+    model = EventSchedule
+    extra = 0
+    formfield_overrides = {
+        models.TextField: {'widget': widgets.Textarea(attrs={'cols': '40', 'rows': '3'})},
+    }
+
+
 class InstrumentFactorScheduleInline(admin.TabularInline):
     model = InstrumentFactorSchedule
     extra = 0
@@ -102,7 +110,7 @@ class InstrumentAdmin(AbstractModelAdmin):
         ManualPricingFormulaInline,
         AccrualCalculationScheduleInline,
         InstrumentFactorScheduleInline,
-        # EventScheduleInline,
+        EventScheduleInline,
         GenericAttributeInline,
         GenericObjectPermissionInline,
         # UserObjectPermissionInline,

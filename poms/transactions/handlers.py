@@ -120,7 +120,8 @@ class TransactionTypeProcess(object):
         if self.process_mode is None:
             self.process_mode = TransactionTypeProcess.MODE_BOOK
 
-        _l.debug('self.process_mode %s' % self.process_mode)
+        _l.debug('TransactionTypeProcess.transaction_type %s' % self.transaction_type)
+        _l.debug('TransactionTypeProcess.process_mode %s' % self.process_mode)
 
         self.default_values = default_values or {}
         self.context_values = context_values or {}
@@ -1698,23 +1699,28 @@ class TransactionTypeProcess(object):
                                   model=Instrument,
                                   target=transaction, target_attr_name='linked_instrument',
                                   source=action_transaction, source_attr_name='linked_instrument')
+
                     if action_transaction.linked_instrument_phantom is not None:
-                        transaction.linked_instrument = instrument_map[action_transaction.linked_instrument_phantom_id]
+                        # transaction.linked_instrument = instrument_map[action_transaction.linked_instrument_phantom_id]
+                        transaction.linked_instrument = instrument_map[
+                            action_transaction.linked_instrument_phantom.order]
 
                     self._set_rel(errors=errors, values=self.values, default_value=None,
                                   model=Instrument,
                                   target=transaction, target_attr_name='allocation_balance',
                                   source=action_transaction, source_attr_name='allocation_balance')
                     if action_transaction.allocation_balance_phantom is not None:
+                        # transaction.allocation_balance = instrument_map[action_transaction.allocation_balance_phantom_id]
                         transaction.allocation_balance = instrument_map[
-                            action_transaction.allocation_balance_phantom_id]
+                            action_transaction.allocation_balance_phantom.order]
 
                     self._set_rel(errors=errors, values=self.values, default_value=None,
                                   model=Instrument,
                                   target=transaction, target_attr_name='allocation_pl',
                                   source=action_transaction, source_attr_name='allocation_pl')
                     if action_transaction.allocation_pl_phantom is not None:
-                        transaction.allocation_pl = instrument_map[action_transaction.allocation_pl_phantom_id]
+                        # transaction.allocation_pl = instrument_map[action_transaction.allocation_pl_phantom_id]
+                        transaction.allocation_pl = instrument_map[action_transaction.allocation_pl_phantom.order]
 
                     self._set_val(errors=errors, values=self.values, default_value=0.0,
                                   target=transaction, target_attr_name='reference_fx_rate',
@@ -2398,7 +2404,11 @@ class TransactionTypeProcess(object):
 
         self.execute_recon_fields_expressions()
 
-        self.execute_uniqueness_expression()
+        if self.transaction_type.transaction_unique_code_options == TransactionType.BOOK_WITH_UNIQUE_CODE_CHOICES:
+            _l.info("Going to execute unique code")
+            self.execute_uniqueness_expression()
+        else:
+            _l.info("Not going to execute unique code")
 
         if self.linked_import_task:
             self.record_execution_progress('Transaction Booked during Task %s' % self.linked_import_task)
@@ -2427,6 +2437,35 @@ class TransactionTypeProcess(object):
 
         if self.complex_transaction.transaction_type.type == TransactionType.TYPE_PROCEDURE:
             self.complex_transaction.delete()
+            self.complex_transaction = None
+
+        if self.complex_transaction:
+
+            try:
+
+                from poms.history.models import HistoricalRecord
+                from django.contrib.contenttypes.models import ContentType
+                from poms.transactions.serializers import ComplexTransactionSerializer
+
+                _l.info('self._context %s' % self._context)
+
+                serializer = ComplexTransactionSerializer(instance=self.complex_transaction, context=self._context)
+
+                user_code = self.complex_transaction.code
+
+                if self.complex_transaction.transaction_unique_code:
+                    user_code = self.complex_transaction.transaction_unique_code
+
+                HistoricalRecord.objects.create(
+                    master_user=self.transaction_type.master_user,
+                    member=self.member,
+                    data=serializer.data,
+                    user_code=user_code,
+                    content_type=ContentType.objects.get_for_model(ComplexTransaction)
+                )
+            except Exception as e:
+                _l.error("Could not save history for complex transaction. Error %s" % e)
+
 
     def process_recalculate(self):
         if not self.recalculate_inputs:

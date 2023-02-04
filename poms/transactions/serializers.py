@@ -2951,6 +2951,8 @@ class ComplexTransactionEvSerializer(ModelWithObjectPermissionSerializer, ModelW
 
         ]
 
+        read_only_fields = fields
+
     def to_representation(self, instance):
 
         st = time.perf_counter()

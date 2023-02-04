@@ -66,6 +66,7 @@ class ExplorerViewSet(AbstractViewSet):
             results.append({
                 'type': 'file',
                 'name': file,
+                'file_path': path + file, # path already has / in end of str
                 'size': storage.size(path + '/' + file),
                 'last_modified': storage.modified_time(path + '/' + file)
             })
@@ -91,8 +92,9 @@ class ExplorerViewFileViewSet(AbstractViewSet):
             else:
                 path = settings.BASE_API_URL + '/' + path
 
-        if path[-1] != '/':
-            path = path + '/'
+        if settings.AZURE_ACCOUNT_KEY:
+            if path[-1] != '/':
+                path = path + '/'
 
         # TODO validate path that eiher public/import/system or user home folder
 
@@ -110,6 +112,12 @@ class ExplorerViewFileViewSet(AbstractViewSet):
 
             if '.json' in file.name:
                 file_content_type = 'application/json'
+
+            if '.yml' in file.name or '.yaml' in file.name:
+                file_content_type = 'application/yaml'
+
+            if '.py' in file.name:
+                file_content_type = 'text/x-python'
 
             if '.png' in file.name:
                 file_content_type = 'image/png'

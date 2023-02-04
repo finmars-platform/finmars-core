@@ -5,7 +5,7 @@ import os
 from django.conf import settings
 from django.db import connection
 
-from poms.accounts.models import Account
+from poms.accounts.models import Account, AccountType
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, InstrumentType, LongUnderlyingExposure, ShortUnderlyingExposure, \
     ExposureCalculationModel
@@ -38,6 +38,7 @@ class BalanceReportBuilderSql:
         _l.debug('self.instance master_user %s' % self.instance.master_user)
         _l.debug('self.instance report_date %s' % self.instance.report_date)
 
+
     def build_balance(self):
         st = time.perf_counter()
 
@@ -45,11 +46,17 @@ class BalanceReportBuilderSql:
 
         self.build()
 
+        self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
+
         _l.debug('items total %s' % len(self.instance.items))
 
-        _l.debug('build_st done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        relation_prefetch_st = time.perf_counter()
 
         self.add_data_items()
+
+        self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
+
+        _l.debug('build_st done: %s' % self.instance.execution_time)
 
         return self.instance
 
@@ -79,20 +86,20 @@ class BalanceReportBuilderSql:
             fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
                 self.instance)
 
-            _l.debug('report_date: "%s"' % self.instance.report_date)
-            _l.debug('report_fx_rate: "%s"' % report_fx_rate)
-            _l.debug('default_currency_id: "%s"' % self.ecosystem_defaults.currency_id)
-            _l.debug('report_currency: "%s"' % self.instance.report_currency.id)
-            _l.debug('pricing_policy: "%s"' % self.instance.pricing_policy.id)
-            _l.debug('transaction_filter_sql_string: "%s"' % transaction_filter_sql_string)
-            _l.debug(
-                'fx_trades_and_fx_variations_filter_sql_string: "%s"' % fx_trades_and_fx_variations_filter_sql_string)
-            _l.debug('consolidation_columns: "%s"' % consolidation_columns)
-            _l.debug('balance_q_consolidated_select_columns: "%s"' % balance_q_consolidated_select_columns)
-            _l.debug('tt_consolidation_columns: "%s"' % tt_consolidation_columns)
-            _l.debug('tt_in1_consolidation_columns: "%s"' % tt_in1_consolidation_columns)
-            _l.debug(
-                'transactions_all_with_multipliers_where_expression: "%s"' % transactions_all_with_multipliers_where_expression)
+            # _l.debug('report_date: "%s"' % self.instance.report_date)
+            # _l.debug('report_fx_rate: "%s"' % report_fx_rate)
+            # _l.debug('default_currency_id: "%s"' % self.ecosystem_defaults.currency_id)
+            # _l.debug('report_currency: "%s"' % self.instance.report_currency.id)
+            # _l.debug('pricing_policy: "%s"' % self.instance.pricing_policy.id)
+            # _l.debug('transaction_filter_sql_string: "%s"' % transaction_filter_sql_string)
+            # _l.debug(
+            #     'fx_trades_and_fx_variations_filter_sql_string: "%s"' % fx_trades_and_fx_variations_filter_sql_string)
+            # _l.debug('consolidation_columns: "%s"' % consolidation_columns)
+            # _l.debug('balance_q_consolidated_select_columns: "%s"' % balance_q_consolidated_select_columns)
+            # _l.debug('tt_consolidation_columns: "%s"' % tt_consolidation_columns)
+            # _l.debug('tt_in1_consolidation_columns: "%s"' % tt_in1_consolidation_columns)
+            # _l.debug(
+            #     'transactions_all_with_multipliers_where_expression: "%s"' % transactions_all_with_multipliers_where_expression)
 
 
 
@@ -1844,6 +1851,20 @@ class BalanceReportBuilderSql:
             'attributes__classifier',
         ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
 
+    def add_data_items_account_types(self, accounts):
+
+        ids = []
+
+        for account in accounts:
+            ids.append(account.type_id)
+
+        self.instance.item_account_types = AccountType.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).filter(master_user=self.instance.master_user) \
+            .filter(id__in=ids)
+
     def add_data_items_currencies(self, ids):
 
         self.instance.item_currencies = Currency.objects.prefetch_related(
@@ -1957,10 +1978,22 @@ class BalanceReportBuilderSql:
         _l.info('add_data_items_strategies1 %s ' % self.instance.item_strategies1)
 
         self.add_data_items_instrument_types(self.instance.item_instruments)
+        self.add_data_items_account_types(self.instance.item_accounts)
 
         self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
 
         _l.info('_refresh_with_perms_optimized item relations done: %s',
                 "{:3.3f}".format(time.perf_counter() - item_relations_st))
 
-        _l.info('add_data_items_strategies1 %s ' % self.instance.item_strategies1)
+        # Execute lazy fetch?
+
+        self.instance.item_instruments = list(self.instance.item_instruments)
+        self.instance.item_portfolios = list(self.instance.item_portfolios)
+        self.instance.item_accounts = list(self.instance.item_accounts)
+        self.instance.item_currencies = list(self.instance.item_currencies)
+        self.instance.item_strategies1 = list(self.instance.item_strategies1)
+        self.instance.item_strategies2 = list(self.instance.item_strategies2)
+        self.instance.item_strategies3 = list(self.instance.item_strategies3)
+        self.instance.item_account_types = list(self.instance.item_account_types)
+        self.instance.item_instrument_types = list(self.instance.item_instrument_types)
+

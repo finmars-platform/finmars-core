@@ -3,18 +3,17 @@ from __future__ import unicode_literals
 from logging import getLogger
 
 import django_filters
-from django.db.models import Prefetch
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 
-from poms.accounts.models import Account, AccountType
+from poms.accounts.models import Account
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
     GroupsAttributeFilter, AttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
-from poms.counterparties.models import Responsible, Counterparty, CounterpartyGroup, ResponsibleGroup
+from poms.counterparties.models import Responsible, Counterparty
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
@@ -29,7 +28,7 @@ from poms.portfolios.serializers import PortfolioSerializer, PortfolioLightSeria
     PortfolioRegisterRecordEvSerializer, PortfolioBundleSerializer, \
     PortfolioBundleEvSerializer
 from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_price_history
-from poms.transactions.models import TransactionType, TransactionTypeGroup
+from poms.transactions.models import TransactionType
 from poms.users.filters import OwnerByMasterUserFilter
 
 _l = getLogger('poms.portfolios')
@@ -104,12 +103,10 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
     ]
 
     def create(self, request, *args, **kwargs):
-
         calculate_portfolio_register_record.apply_async(
             link=[
                 calculate_portfolio_register_price_history.s()
-            ],
-            kwargs={'master_users': [request.user.master_user.id]})
+            ])
 
         _l.info("Create Portfolio")
 
@@ -120,13 +117,11 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
 
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
-    def update(self,  request, *args, **kwargs):
-
+    def update(self, request, *args, **kwargs):
         calculate_portfolio_register_record.apply_async(
             link=[
                 calculate_portfolio_register_price_history.s()
-            ],
-            kwargs={'master_users': [request.user.master_user.id]})
+            ])
 
         _l.info("Update Portfolio")
 
@@ -137,8 +132,6 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
         self.perform_update(serializer)
 
         return Response(serializer.data)
-
-
 
 
 class PortfolioLightFilterSet(FilterSet):
@@ -293,12 +286,12 @@ class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
 
         _l.debug("Run Calculate Portfolio Registry Records data %s" % request.data)
 
-        portfolio_register_ids = request.data['portfolio_register_ids']
+        portfolio_ids = request.data['portfolio_ids']
 
         master_user = request.user.master_user
 
         calculate_portfolio_register_record.apply_async(
-            kwargs={'portfolio_register_ids': portfolio_register_ids, 'master_users': [master_user.id]})
+            kwargs={'portfolio_ids': portfolio_ids})
 
         return Response({'status': 'ok'})
 

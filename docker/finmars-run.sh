@@ -8,18 +8,21 @@ FAKE_MIGRATE="${FAKE_MIGRATE:-False}"
 
 echo "Finmars initialization"
 
-
 echo "set chmod 777 /var/log/finmars/"
 
 chmod 777 /var/log/finmars/
 
-echo "Create django log file /var/log/finmars/django.log"
+echo "set chmod 777 /var/log/finmars/backend"
 
-touch /var/log/finmars/django.log
+chmod 777 /var/log/finmars/backend
 
-echo "set chmod 777 /var/log/finmars/django.log"
+echo "Create django log file /var/log/finmars/backend/django.log"
 
-chmod 777 /var/log/finmars/django.log
+touch /var/log/finmars/backend/django.log
+
+echo "set chmod 777 /var/log/finmars/backend/django.log"
+
+chmod 777 /var/log/finmars/backend/django.log
 
 mkdir /var/app/finmars_data
 chmod 777 /var/app/finmars_data
@@ -77,8 +80,9 @@ echo "Create admin user"
 
 python /var/app/manage.py generate_super_user
 
-echo "Run uwsgi"
+echo "Run gunicorn"
 
-uwsgi /etc/uwsgi/apps-enabled/finmars.ini
+#uwsgi /etc/uwsgi/apps-enabled/finmars.ini
+gunicorn --config /var/app/poms_app/gunicorn-prod.py poms_app.wsgi
 
 echo "Initialized"

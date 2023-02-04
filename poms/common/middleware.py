@@ -4,7 +4,9 @@ from __future__ import unicode_literals
 import datetime
 import ipaddress
 import json
+import os
 import re
+import time
 import traceback
 from http import HTTPStatus
 from threading import local
@@ -127,6 +129,9 @@ def deactivate():
 
 
 def get_request():
+
+    # _l.info('get_request._active %s' % _active)
+
     request = getattr(_active, "request", None)
     # assert request is not None, "CommonMiddleware is not installed"
     return request
@@ -258,3 +263,29 @@ class KeycloakMiddleware:
 
         # Add to userinfo to the view
         request.userinfo = self.keycloak.userinfo(token)
+
+
+class LogRequestsMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+
+        _l.info("Going to handle %s " % request.build_absolute_uri())
+
+        self.log_middleware_start = time.perf_counter()
+
+        start = time.perf_counter()
+        response = self.get_response(request)
+        end = time.perf_counter()
+
+        elapsed = float("{:3.3f}".format(end - start))
+
+        # for line in traceback.format_stack():
+        #     print(line.strip())
+
+        # _l.info("Worker pid %s" % os.getpid())
+        _l.info("Finish to handle %s " % request.build_absolute_uri())
+        _l.info('LogRequestsMiddleware. response time %s' % elapsed)
+
+        return response
