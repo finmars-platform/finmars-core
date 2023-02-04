@@ -2437,6 +2437,35 @@ class TransactionTypeProcess(object):
 
         if self.complex_transaction.transaction_type.type == TransactionType.TYPE_PROCEDURE:
             self.complex_transaction.delete()
+            self.complex_transaction = None
+
+        if self.complex_transaction:
+
+            try:
+
+                from poms.history.models import HistoricalRecord
+                from django.contrib.contenttypes.models import ContentType
+                from poms.transactions.serializers import ComplexTransactionSerializer
+
+                _l.info('self._context %s' % self._context)
+
+                serializer = ComplexTransactionSerializer(instance=self.complex_transaction, context=self._context)
+
+                user_code = self.complex_transaction.code
+
+                if self.complex_transaction.transaction_unique_code:
+                    user_code = self.complex_transaction.transaction_unique_code
+
+                HistoricalRecord.objects.create(
+                    master_user=self.transaction_type.master_user,
+                    member=self.member,
+                    data=serializer.data,
+                    user_code=user_code,
+                    content_type=ContentType.objects.get_for_model(ComplexTransaction)
+                )
+            except Exception as e:
+                _l.error("Could not save history for complex transaction. Error %s" % e)
+
 
     def process_recalculate(self):
         if not self.recalculate_inputs:
