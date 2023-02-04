@@ -958,8 +958,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         return Response({"task_id": celery_task.pk, "task_status": celery_task.status}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], url_path='execute')
-    def \
-            execute(self, request, *args, **kwargs):
+    def execute(self, request, *args, **kwargs):
 
         st = time.perf_counter()
 

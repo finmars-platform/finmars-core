@@ -129,6 +129,9 @@ def deactivate():
 
 
 def get_request():
+
+    _l.info('get_request._active %s' % _active)
+
     request = getattr(_active, "request", None)
     # assert request is not None, "CommonMiddleware is not installed"
     return request

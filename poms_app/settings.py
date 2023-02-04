@@ -164,7 +164,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'corsheaders.middleware.CorsPostCsrfMiddleware',
 
-    # 'poms.common.middleware.CommonMiddleware', # probably deprecated
+    'poms.common.middleware.CommonMiddleware', # required for getting request object anywhere
     # 'poms.common.middleware.LogRequestsMiddleware',
     'finmars_standardized_errors.middleware.ExceptionMiddleware'
 
