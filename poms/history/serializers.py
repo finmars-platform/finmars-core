@@ -24,7 +24,8 @@ class HistoricalRecordSerializer(serializers.ModelSerializer):
             'notes',
             'user_code',
             'data',
-            'content_type'
+            'content_type',
+            'created'
         )
 
         read_only_fields = fields
