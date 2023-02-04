@@ -103,7 +103,7 @@ INSTALLED_APPS = [
 
     'poms.auth_tokens',
     'poms.widgets',
-    'poms.workflows',
+    'poms.history',
 
     'django.contrib.admin',
     'django.contrib.admindocs',

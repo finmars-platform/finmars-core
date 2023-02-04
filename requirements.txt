@@ -107,3 +107,4 @@ pexpect==4.8.0
 djangorestframework-simplejwt==5.2.2
 gunicorn==20.0.4
 whitenoise==6.3.0
+pygments==2.14

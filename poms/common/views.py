@@ -30,6 +30,7 @@ from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend, Ord
 from poms.common.grouping_handlers import handle_groups, count_groups
 from poms.common.mixins import BulkModelMixin, DestroyModelFakeMixin, UpdateModelMixinExt
 from poms.common.sorting import sort_by_dynamic_attrs
+from poms.history.mixins import HistoryMixin
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.utils import get_master_user_and_member
 
@@ -123,7 +124,7 @@ class AbstractViewSet(AbstractApiView, ViewSet):
         }
 
 
-class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMixinExt, DestroyModelFakeMixin,
+class AbstractEvGroupViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelFakeMixin,
                              BulkModelMixin, ModelViewSet):
     permission_classes = [
         IsAuthenticated
@@ -246,7 +247,7 @@ class AbstractEvGroupViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelM
         return Response(filtered_qs)
 
 
-class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMixinExt, DestroyModelFakeMixin,
+class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, HistoryMixin, UpdateModelMixinExt, DestroyModelFakeMixin,
                            BulkModelMixin, ModelViewSet):
     permission_classes = [
         IsAuthenticated
@@ -374,7 +375,7 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, UpdateModelMix
         return Response(serializer.data)
 
 
-class AbstractReadOnlyModelViewSet(AbstractApiView, HistoricalModelMixin, ReadOnlyModelViewSet):
+class AbstractReadOnlyModelViewSet(AbstractApiView, ReadOnlyModelViewSet):
     permission_classes = [
         IsAuthenticated
     ]
