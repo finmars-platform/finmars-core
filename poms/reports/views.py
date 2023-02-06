@@ -169,6 +169,8 @@ class PLReportViewSet(AbstractViewSet):
             instance.task_id = 1
             instance.task_status = "SUCCESS"
 
+            instance.auth_time = self.auth_time
+
             serializer = self.get_serializer(instance=instance, many=False)
 
             _l.debug('PL Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
@@ -199,6 +201,8 @@ class TransactionReportViewSet(AbstractViewSet):
             builder = TransactionReportBuilderSql(instance=instance)
             instance = builder.build_transaction()
 
+            instance.auth_time = self.auth_time
+
             instance.task_id = 1
             instance.task_status = "SUCCESS"
 
@@ -225,6 +229,8 @@ class PriceHistoryCheckViewSet(AbstractViewSet):
 
         builder = PriceHistoryCheckerSql(instance=instance)
         instance = builder.process()
+
+        instance.auth_time = self.auth_time
 
         instance.task_id = 1
         instance.task_status = "SUCCESS"

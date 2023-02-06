@@ -1017,8 +1017,10 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
 
                     item['custom_fields'] = cfv
 
-        _l.debug(
-            'TransactionReportSerializer custom fields execution done: %s' % "{:3.3f}".format(time.perf_counter() - st))
+        # _l.debug(
+        #     'TransactionReportSerializer custom fields execution done: %s' % "{:3.3f}".format(time.perf_counter() - st))
+
+        data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 
         return data
 
@@ -1195,6 +1197,8 @@ class PerformanceReportSerializer(serializers.Serializer):
                 instance_item.save()
 
         data['report_uuid'] = report_uuid
+
+        data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 
         return data
 

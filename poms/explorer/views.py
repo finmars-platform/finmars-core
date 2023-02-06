@@ -174,6 +174,15 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
             _l.info('going to save %s' % filepath)
 
+            try:
+
+                storage.delete(filepath)
+
+                _l.info("File exist, going to delete")
+
+            except Exception as e:
+                _l.info("File is not exists, going to create")
+
             storage.save(filepath, file)
 
         _l.info('path %s' % path)

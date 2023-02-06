@@ -141,15 +141,6 @@ class RequestDataFileProcedureSerializer(ModelWithTimeStampSerializer):
         ]
 
 
-class RunRequestDataFileProcedureSerializer(serializers.Serializer):
-    def __init__(self, **kwargs):
-        kwargs['context'] = context = kwargs.get('context', {}) or {}
-        super(RunRequestDataFileProcedureSerializer, self).__init__(**kwargs)
-        context['instance'] = self.instance
-
-        self.fields['procedure'] = serializers.PrimaryKeyRelatedField(read_only=True)
-
-
 class RequestDataFileProcedureInstanceSerializer(serializers.ModelSerializer):
     procedure_object = RequestDataFileProcedureSerializer(source='procedure', read_only=True)
 
