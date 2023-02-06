@@ -11,7 +11,7 @@ from poms.pricing.handlers import PricingProcedureProcess
 from poms.procedures.handlers import DataProcedureProcess, ExpressionProcedureProcess
 from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, PricingParentProcedureInstance, \
     RequestDataFileProcedureInstance, ExpressionProcedure, ExpressionProcedureInstance, PricingProcedureInstance
-from poms.procedures.serializers import RequestDataFileProcedureSerializer, RunRequestDataFileProcedureSerializer, \
+from poms.procedures.serializers import RequestDataFileProcedureSerializer, \
     PricingProcedureSerializer, RunProcedureSerializer, PricingParentProcedureInstanceSerializer, \
     RequestDataFileProcedureInstanceSerializer, ExpressionProcedureSerializer, RunExpressionProcedureSerializer, \
     ExpressionProcedureInstanceSerializer, PricingProcedureInstanceSerializer
@@ -126,8 +126,7 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
 
     permission_classes = []
 
-    @action(detail=True, methods=['post'], url_path='run-procedure',
-            serializer_class=RunRequestDataFileProcedureSerializer)
+    @action(detail=True, methods=['post'], url_path='run-procedure')
     def run_procedure(self, request, pk=None):
         _l.debug("Run Procedure %s" % pk)
 
@@ -149,8 +148,39 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
 
         serializer = self.get_serializer(instance=instance)
 
-        return Response(serializer.data)
+        return Response({
+            'procedure_id': pk,
+            'procedure_instance_id': instance.procedure_instance.id
+        })
 
+    @action(detail=False, methods=['post'], url_path='execute')
+    def execute(self, request, pk=None):
+        _l.debug("Run Procedure %s" % pk)
+
+        _l.debug("Run Procedure data %s" % request.data)
+
+        user_code = request.data['user_code']
+
+        procedure = RequestDataFileProcedure.objects.get(user_code=user_code)
+
+        master_user = request.user.master_user
+        member = request.user.member
+
+        instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member)
+        instance.process()
+
+        text = "Data File Procedure %s. Start processing" % procedure.name
+
+        send_system_message(master_user=master_user,
+                            performed_by='System',
+                            description=text)
+
+        serializer = self.get_serializer(instance=instance)
+
+        return Response({
+            'procedure_id': pk,
+            'procedure_instance_id': instance.procedure_instance.id
+        })
 
 class RequestDataFileProcedureInstanceFilterSet(FilterSet):
     id = NoOpFilter()

@@ -68,22 +68,22 @@ class DataProcedureProcess(object):
 
                 with transaction.atomic():
 
-                    procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
-                                                                                         master_user=self.master_user,
-                                                                                         status=RequestDataFileProcedureInstance.STATUS_PENDING,
-                                                                                         schedule_instance=self.schedule_instance,
-                                                                                         action='request_transaction_file',
-                                                                                         provider='universal',
-                                                                                         date_from=self.procedure.date_from,
-                                                                                         date_to=self.procedure.date_to,
-                                                                                         action_verbose='Request file with Transactions',
-                                                                                         provider_verbose='Universal'
+                    self.procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
+                                                                                              master_user=self.master_user,
+                                                                                              status=RequestDataFileProcedureInstance.STATUS_PENDING,
+                                                                                              schedule_instance=self.schedule_instance,
+                                                                                              action='request_transaction_file',
+                                                                                              provider='universal',
+                                                                                              date_from=self.procedure.date_from,
+                                                                                              date_to=self.procedure.date_to,
+                                                                                              action_verbose='Request file with Transactions',
+                                                                                              provider_verbose='Universal'
 
-                                                                                         )
+                                                                                              )
 
                     send_system_message(master_user=self.master_user,
                                         performed_by='System',
-                                        description="universal Broker.  Procedure %s. Start" % procedure_instance.id,
+                                        description="universal Broker.  Procedure %s. Start" % self.procedure_instance.id,
                                         )
 
                     headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
@@ -99,7 +99,7 @@ class DataProcedureProcess(object):
 
                         data = {
                             'security_token': security_token,
-                            "id": procedure_instance.id,
+                            "id": self.procedure_instance.id,
                             "user": {
                                 "token": self.master_user.token,
                                 "credentials": {}
@@ -134,12 +134,12 @@ class DataProcedureProcess(object):
                         _l.info('request universal data %s' % data)
                         _l.info('request universal self.context %s' % self.context)
 
-                        procedure_instance.request_data = data
-                        procedure_instance.save()
+                        self.procedure_instance.request_data = data
+                        self.procedure_instance.save()
                     except Exception as e:
-                        procedure_instance.error_message = 'Data Config Error %s' % e
-                        procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
-                        procedure_instance.save()
+                        self.procedure_instance.error_message = 'Data Config Error %s' % e
+                        self.procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+                        self.procedure_instance.save()
 
                     response = None
 
@@ -147,9 +147,9 @@ class DataProcedureProcess(object):
                         response = requests.post(url=url, json=data, headers=headers, verify=settings.VERIFY_SSL)
                     except Exception as e:
 
-                        procedure_instance.error_message = 'Request To Remote Server Error %s.' % e
-                        procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
-                        procedure_instance.save()
+                        self.procedure_instance.error_message = 'Request To Remote Server Error %s.' % e
+                        self.procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+                        self.procedure_instance.save()
 
                         return
 
@@ -159,7 +159,7 @@ class DataProcedureProcess(object):
 
                     file_report = FileReport()
 
-                    file_name = "Universal Broker Response %s %s.json" % (procedure_instance.id, current_date_time)
+                    file_name = "Universal Broker Response %s %s.json" % (self.procedure_instance.id, current_date_time)
 
                     file_content = ''
 
@@ -168,16 +168,16 @@ class DataProcedureProcess(object):
                         response_data = response.json()
 
                         file_content = json.dumps(response_data, indent=4)
-                        procedure_instance.response_data = file_content
-                        procedure_instance.save()
+                        self.procedure_instance.response_data = file_content
+                        self.procedure_instance.save()
 
                     except Exception as e:
 
-                        procedure_instance.response_data = response.text
+                        self.procedure_instance.response_data = response.text
 
-                        procedure_instance.error_message = 'Received JSON Error %s' % e
-                        procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
-                        procedure_instance.save()
+                        self.procedure_instance.error_message = 'Received JSON Error %s' % e
+                        self.procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+                        self.procedure_instance.save()
 
                         _l.info('response %s' % response.text)
                         _l.info("Response parse error %s" % e)
@@ -193,9 +193,9 @@ class DataProcedureProcess(object):
 
                     file_report.save()
 
-                    send_system_message(master_user=procedure_instance.master_user,
+                    send_system_message(master_user=self.procedure_instance.master_user,
                                         performed_by='System',
-                                        description="universal Broker. Procedure %s. Response Received" % procedure_instance.id,
+                                        description="universal Broker. Procedure %s. Response Received" % self.procedure_instance.id,
                                         attachments=[file_report.id])
 
                     procedure_id = response_data['id']
@@ -258,45 +258,46 @@ class DataProcedureProcess(object):
 
             with transaction.atomic():
 
-                procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
-                                                                                     master_user=self.master_user,
-                                                                                     status=RequestDataFileProcedureInstance.STATUS_PENDING,
-                                                                                     schedule_instance=self.schedule_instance,
-                                                                                     action='request_transaction_file',
-                                                                                     provider='finmars',
+                self.procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
+                                                                                          master_user=self.master_user,
+                                                                                          status=RequestDataFileProcedureInstance.STATUS_PENDING,
+                                                                                          schedule_instance=self.schedule_instance,
+                                                                                          action='request_transaction_file',
+                                                                                          provider='finmars',
 
-                                                                                     action_verbose='Request file with Transactions',
-                                                                                     provider_verbose='Finmars'
+                                                                                          action_verbose='Request file with Transactions',
+                                                                                          provider_verbose='Finmars'
 
-                                                                                     )
+                                                                                          )
 
                 if self.member:
-                    procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_MEMBER
-                    procedure_instance.member = self.member
+                    self.procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_MEMBER
+                    self.procedure_instance.member = self.member
 
                 if self.schedule_instance:
                     member = Member.objects.get(master_user=self.master_user, is_owner=True)
 
-                    procedure_instance.member = member  # Add owner of ecosystem as member who stared schedule (Need to transaction expr execution)
-                    procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_SCHEDULE
-                    procedure_instance.schedule_instance = self.schedule_instance
+                    self.procedure_instance.member = member  # Add owner of ecosystem as member who stared schedule (Need to transaction expr execution)
+                    self.procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_SCHEDULE
+                    self.procedure_instance.schedule_instance = self.schedule_instance
 
                 rsa_cipher = RSACipher()
                 private_key, public_key = rsa_cipher.createKey()
 
-                procedure_instance.private_key = private_key
-                procedure_instance.public_key = public_key
+                self.procedure_instance.private_key = private_key
+                self.procedure_instance.public_key = public_key
 
-                procedure_instance.save()
+                self.procedure_instance.save()
 
-                _l.debug("RequestDataFileProcedureInstance procedure_instance created id: %s" % procedure_instance.id)
+                _l.debug(
+                    "RequestDataFileProcedureInstance procedure_instance created id: %s" % self.procedure_instance.id)
 
             _l.debug(
                 "DataProcedureProcess: Request_transaction_file. Master User: %s. Provider: %s, Scheme name: %s" % (
                     self.master_user, self.procedure.provider, self.procedure.scheme_user_code))
 
             item = TransactionFileResult.objects.create(
-                procedure_instance=procedure_instance,
+                procedure_instance=self.procedure_instance,
                 master_user=self.master_user,
                 provider=self.procedure.provider,
                 scheme_user_code=self.procedure.scheme_user_code,
@@ -407,7 +408,7 @@ class DataProcedureProcess(object):
             callback_url = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/api/internal/data/transactions/callback/'
 
             data = {
-                "id": procedure_instance.id,
+                "id": self.procedure_instance.id,
                 "user": {
                     "token": self.master_user.token,
                     # "base_api_url": settings.BASE_API_URL,
@@ -441,7 +442,7 @@ class DataProcedureProcess(object):
             _l.debug("Executing procedure_request_data_file")
             procedure_request_data_file.apply_async(kwargs={
                 'master_user': self.master_user,
-                'procedure_instance': procedure_instance,
+                'procedure_instance': self.procedure_instance,
                 'transaction_file_result': item,
                 'data': data})
 

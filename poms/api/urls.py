@@ -495,6 +495,7 @@ router.register(r'procedures/pricing-parent-procedure-instance', procedures.Pric
                 'pricing_parent_procedure_instance')
 
 router.register(r'procedures/request-data-procedure', procedures.RequestDataFileProcedureViewSet)
+router.register(r'procedures/data-procedure', procedures.RequestDataFileProcedureViewSet)
 router.register(r'procedures/data-procedure-instance', procedures.RequestDataFileProcedureInstanceViewSet)
 
 router.register(r'procedures/expression-procedure', procedures.ExpressionProcedureViewSet)
