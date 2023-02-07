@@ -2404,11 +2404,11 @@ class TransactionTypeProcess(object):
 
         self.execute_recon_fields_expressions()
 
-        if self.transaction_type.transaction_unique_code_options == TransactionType.BOOK_WITH_UNIQUE_CODE_CHOICES:
-            _l.info("Going to execute unique code")
-            self.execute_uniqueness_expression()
-        else:
-            _l.info("Not going to execute unique code")
+        # if self.transaction_type.transaction_unique_code_options == TransactionType.BOOK_WITH_UNIQUE_CODE_CHOICES:
+        #     _l.info("Going to execute unique code")
+        self.execute_uniqueness_expression()
+        # else:
+        #     _l.info("Not going to execute unique code")
 
         if self.linked_import_task:
             self.record_execution_progress('Transaction Booked during Task %s' % self.linked_import_task)
