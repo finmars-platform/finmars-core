@@ -30,7 +30,7 @@ RUN mkdir -p /var/log/finmars/backend
 COPY docker/supervisor/celery.conf /etc/supervisor/conf.d/celery.conf
 COPY docker/supervisor/celerybeat.conf /etc/supervisor/conf.d/celerybeat.conf
 
-COPY docker/uwsgi-www.ini /etc/uwsgi/apps-enabled/finmars.ini
+#COPY docker/uwsgi-www.ini /etc/uwsgi/apps-enabled/finmars.ini
 
 
 RUN chmod +x /var/app/docker/finmars-run.sh
