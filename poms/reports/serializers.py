@@ -829,6 +829,11 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
     strategies2_object = Strategy2ViewSerializer(source='strategies2', read_only=True, many=True)
     strategies3_object = Strategy3ViewSerializer(source='strategies3', read_only=True, many=True)
 
+    execution_time = serializers.FloatField(allow_null=True, required=False, read_only=True)
+    relation_prefetch_time = serializers.FloatField(allow_null=True, required=False, read_only=True)
+    serialization_time = serializers.FloatField(allow_null=True, required=False, read_only=True)
+    auth_time = serializers.FloatField(allow_null=True, required=False, read_only=True)
+
     items = serializers.SerializerMethodField()
     item_transaction_classes = TransactionClassSerializer(many=True, read_only=True)
     item_complex_transactions = ReportComplexTransactionSerializer(many=True, read_only=True)
