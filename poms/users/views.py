@@ -36,7 +36,7 @@ from poms.common.mixins import UpdateModelMixinExt, DestroyModelFakeMixin
 from poms.common.pagination import BigPagination
 from poms.common.utils import datetime_now
 from poms.common.views import AbstractModelViewSet, AbstractApiView, AbstractViewSet, AbstractAsyncViewSet
-from poms.common.websockets import send_websocket_message
+# from poms.common.websockets import send_websocket_message
 from poms.complex_import.models import ComplexImportScheme
 from poms.counterparties.models import CounterpartyGroup, Counterparty, ResponsibleGroup, Responsible
 from poms.currencies.models import Currency
