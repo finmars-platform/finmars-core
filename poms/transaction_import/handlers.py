@@ -18,7 +18,7 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common import formula
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.storage import get_storage
-from poms.common.websockets import send_websocket_message
+# from poms.common.websockets import send_websocket_message
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.file_reports.models import FileReport
@@ -812,18 +812,19 @@ class TransactionImportProcess(object):
 
                 self.result.processed_rows = self.result.processed_rows + 1
 
-                send_websocket_message(data={
-                    'type': 'transaction_import_status',
-                    'payload': {
-                        'parent_task_id': self.task.parent_id,
-                        'task_id': self.task.id,
-                        'state': CeleryTask.STATUS_PENDING,
-                        'processed_rows': self.result.processed_rows,
-                        'total_rows': self.result.total_rows,
-                        'scheme_name': self.scheme.user_code,
-                        'file_name': self.result.file_name}
-                }, level="member",
-                    context=self.context)
+                # DEPRECATED
+                # send_websocket_message(data={
+                #     'type': 'transaction_import_status',
+                #     'payload': {
+                #         'parent_task_id': self.task.parent_id,
+                #         'task_id': self.task.id,
+                #         'state': CeleryTask.STATUS_PENDING,
+                #         'processed_rows': self.result.processed_rows,
+                #         'total_rows': self.result.total_rows,
+                #         'scheme_name': self.scheme.user_code,
+                #         'file_name': self.result.file_name}
+                # }, level="member",
+                #     context=self.context)
 
                 self.task.update_progress(
                     {
@@ -892,25 +893,26 @@ class TransactionImportProcess(object):
                 pass
                 # storage.delete(self.file_path)
 
-            send_websocket_message(data={
-                'type': 'transaction_import_status',
-                'payload': {
-                    'parent_task_id': self.task.parent_id,
-                    'task_id': self.task.id,
-                    'state': CeleryTask.STATUS_DONE,
-                    'processed_rows': self.result.processed_rows,
-                    'total_rows': self.result.total_rows,
-                    'file_name': self.result.file_name,
-                    'scheme': self.scheme.id,
-                    'scheme_object': {
-                        'id': self.scheme.id,
-                        'scheme_name': self.scheme.user_code,
-                        'delimiter': self.scheme.delimiter,
-                        'error_handler': self.scheme.error_handler,
-                        'missing_data_handler': self.scheme.missing_data_handler
-                    }}
-            }, level="member",
-                context=self.context)
+            # DEPRECATED
+            # send_websocket_message(data={
+            #     'type': 'transaction_import_status',
+            #     'payload': {
+            #         'parent_task_id': self.task.parent_id,
+            #         'task_id': self.task.id,
+            #         'state': CeleryTask.STATUS_DONE,
+            #         'processed_rows': self.result.processed_rows,
+            #         'total_rows': self.result.total_rows,
+            #         'file_name': self.result.file_name,
+            #         'scheme': self.scheme.id,
+            #         'scheme_object': {
+            #             'id': self.scheme.id,
+            #             'scheme_name': self.scheme.user_code,
+            #             'delimiter': self.scheme.delimiter,
+            #             'error_handler': self.scheme.error_handler,
+            #             'missing_data_handler': self.scheme.missing_data_handler
+            #         }}
+            # }, level="member",
+            #     context=self.context)
 
             self.task.result_object = TransactionImportResultSerializer(instance=self.result, context=self.context).data
 

@@ -106,20 +106,21 @@ class PingViewSet(AbstractApiView, ViewSet):
         })
         return Response(serializer.data)
 
-    @action(detail=False, methods=('Get',), url_path='ws')
-    def send_message(self, request):
-
-        send_websocket_message(data={"type": 'simple_message', "payload": {"message": "pong"}}, level="master_user",
-                               context={"request": request})
-
-        serializer = PingSerializer(instance={
-            'message': 'pong',
-            'version': request.version,
-            'is_authenticated': request.user.is_authenticated,
-            'is_anonymous': request.user.is_anonymous,
-            'now': timezone.template_localtime(timezone.now()),
-        })
-        return Response(serializer.data)
+    # DEPRECATED
+    # @action(detail=False, methods=('Get',), url_path='ws')
+    # def send_message(self, request):
+    #
+    #     send_websocket_message(data={"type": 'simple_message', "payload": {"message": "pong"}}, level="master_user",
+    #                            context={"request": request})
+    #
+    #     serializer = PingSerializer(instance={
+    #         'message': 'pong',
+    #         'version': request.version,
+    #         'is_authenticated': request.user.is_authenticated,
+    #         'is_anonymous': request.user.is_anonymous,
+    #         'now': timezone.template_localtime(timezone.now()),
+    #     })
+    #     return Response(serializer.data)
 
 
 class ProtectedPingViewSet(PingViewSet):

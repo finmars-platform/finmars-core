@@ -1,7 +1,7 @@
 import logging
 import traceback
 
-from poms.common.websockets import send_websocket_message
+# from poms.common.websockets import send_websocket_message
 from poms.system_messages.models import SystemMessage, SystemMessageAttachment, SystemMessageMember
 from poms.users.models import Member
 
@@ -85,19 +85,20 @@ def send_system_message(master_user, title=None, description=None, attachments=[
 
             _l.debug("Send message to %s members " % len(system_message_members))
 
-            for member in members:
-                send_websocket_message(data={
-                    'type': 'new_system_message',
-                    'payload': {
-                        'id': system_message.id,
-                        'type': system_message.type,
-                        'section': system_message.section,
-                        'title': system_message.title,
-                        'description': system_message.description,
-                        'created': str(system_message.created)
-                    }
-                }, level="member",
-                    context={"master_user": master_user, "member": member})
+            # DEPRECATED
+            # for member in members:
+            #     send_websocket_message(data={
+            #         'type': 'new_system_message',
+            #         'payload': {
+            #             'id': system_message.id,
+            #             'type': system_message.type,
+            #             'section': system_message.section,
+            #             'title': system_message.title,
+            #             'description': system_message.description,
+            #             'created': str(system_message.created)
+            #         }
+            #     }, level="member",
+            #         context={"master_user": master_user, "member": member})
 
     except Exception as e:
         _l.info("Error send system message: exception %s" % e)
