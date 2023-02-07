@@ -40,11 +40,17 @@ class PLReportBuilderSql:
 
         self.build_positions()
 
+        self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
+
         _l.debug('items total %s' % len(self.instance.items))
 
         _l.debug('build_st done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
+        relation_prefetch_st = time.perf_counter()
+
         self.add_data_items()
+
+        self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
 
         return self.instance
 
