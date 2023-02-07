@@ -310,6 +310,12 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     },
+    'throttling': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    'http_session': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
 }
 
 # Maybe in future, we will return to Redis
@@ -436,10 +442,10 @@ REST_FRAMEWORK = {
     #     'rest_framework.parsers.FormParser',
     #     'rest_framework.parsers.MultiPartParser',
     # ),
-    # 'DEFAULT_THROTTLE_CLASSES': (
-    #     'poms.api.throttling.AnonRateThrottleExt',
-    #     'poms.api.throttling.UserRateThrottleExt'
-    # ),
+    'DEFAULT_THROTTLE_CLASSES': (
+        'poms.api.throttling.AnonRateThrottleExt',
+        'poms.api.throttling.UserRateThrottleExt'
+    ),
     'DEFAULT_THROTTLE_RATES': {
         # 'anon': '5/second',
         # 'user': '50/second',
