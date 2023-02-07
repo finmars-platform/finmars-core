@@ -1091,6 +1091,9 @@ class PerformanceReportSerializer(serializers.Serializer):
         return PerformanceReport(**validated_data)
 
     def to_representation(self, instance):
+
+        to_representation_st = time.perf_counter()
+
         data = super(PerformanceReportSerializer, self).to_representation(instance)
 
         report_uuid = str(uuid.uuid4())
