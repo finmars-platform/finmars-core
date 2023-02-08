@@ -20,20 +20,16 @@ from poms.counterparties.fields import ResponsibleField, CounterpartyField, Resp
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.fields import CurrencyField, CurrencyDefault, SystemCurrencyDefault
 from poms.currencies.models import Currency
-from poms.currencies.serializers import CurrencyViewSerializer
 from poms.instruments.fields import InstrumentField, InstrumentTypeField, InstrumentDefault, PricingPolicyField, \
     AccrualCalculationModelField, PeriodicityField, NotificationClassField, EventClassField, EventScheduleField
 from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
     Periodicity, AccrualCalculationModel, EventSchedule
-from poms.instruments.serializers import PeriodicitySerializer, \
-    AccrualCalculationModelSerializer, InstrumentViewSerializer
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer, GenericObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField, PortfolioDefault
 from poms.portfolios.models import Portfolio
-from poms.portfolios.serializers import PortfolioViewSerializer
 from poms.reconciliation.models import TransactionTypeReconField
 from poms.reconciliation.serializers import TransactionTypeReconFieldSerializer, \
     ReconciliationComplexTransactionFieldSerializer
@@ -182,6 +178,9 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, \
             Strategy3ViewSerializer
 
+        from poms.instruments.serializers import PeriodicitySerializer
+        from poms.instruments.serializers import AccrualCalculationModelSerializer
+
         self.fields['account_object'] = AccountViewSerializer(source='account', read_only=True)
 
         self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
@@ -204,7 +203,9 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
 
         self.fields['pricing_policy_object'] = PricingPolicySerializer(source="pricing_policy", read_only=True)
 
+
         self.fields['periodicity_object'] = PeriodicitySerializer(source="periodicity", read_only=True)
+
         self.fields['accrual_calculation_model_object'] = AccrualCalculationModelSerializer(
             source="accrual_calculation_model",
             read_only=True)
@@ -798,6 +799,7 @@ class TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(seria
 
         master_user = instance.transaction_type.master_user
 
+        from poms.instruments.serializers import InstrumentViewSerializer
         data['instrument_object'] = self.lookup_for_relation_object(master_user, data, 'instrument', Instrument,
                                                                     InstrumentViewSerializer)
 
@@ -894,6 +896,7 @@ class TransactionTypeActionInstrumentEventScheduleSerializer(serializers.ModelSe
 
         master_user = instance.transaction_type.master_user
 
+        from poms.instruments.serializers import InstrumentViewSerializer
         data['instrument_object'] = self.lookup_for_relation_object(master_user, data, 'instrument', Instrument,
                                                                     InstrumentViewSerializer)
 
@@ -2479,10 +2482,9 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
     allocation_balance_object = InstrumentSimpleViewSerializer(source='allocation_balance', read_only=True)
     allocation_pl_object = InstrumentSimpleViewSerializer(source='allocation_pl', read_only=True)
 
-    portfolio_object = PortfolioViewSerializer(source='portfolio', read_only=True)
 
-    transaction_currency_object = CurrencyViewSerializer(source='transaction_currency', read_only=True)
-    settlement_currency_object = CurrencyViewSerializer(source='settlement_currency', read_only=True)
+
+
 
     account_position_object = AccountSimpleViewSerializer(source='account_position', read_only=True)
     account_cash_object = AccountSimpleViewSerializer(source='account_cash', read_only=True)
@@ -2550,6 +2552,14 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
 
     def __init__(self, *args, **kwargs):
         super(TransactionEvSerializer, self).__init__(*args, **kwargs)
+
+        from poms.currencies.serializers import CurrencyViewSerializer
+
+        from poms.portfolios.serializers import PortfolioViewSerializer
+        self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
+
+        self.fields['transaction_currency_object'] = CurrencyViewSerializer(source='transaction_currency', read_only=True)
+        self.fields['settlement_currency_object'] = CurrencyViewSerializer(source='settlement_currency', read_only=True)
 
         self.fields['transaction_class_object'] = TransactionClassSerializer(source='transaction_class', read_only=True)
 
@@ -3300,11 +3310,13 @@ class TransactionTypeProcessValuesSerializer(serializers.Serializer):
                 elif issubclass(model_class, Periodicity):
                     field = PeriodicityField(required=False, allow_null=True,
                                              label=i.name, help_text=i.verbose_name)
+                    from poms.instruments.serializers import PeriodicitySerializer
                     field_object = PeriodicitySerializer(source=name, read_only=True)
 
                 elif issubclass(model_class, AccrualCalculationModel):
                     field = AccrualCalculationModelField(required=False, allow_null=True,
                                                          label=i.name, help_text=i.verbose_name)
+                    from poms.instruments.serializers import AccrualCalculationModelSerializer
                     field_object = AccrualCalculationModelSerializer(source=name, read_only=True)
 
                 elif issubclass(model_class, EventClass):

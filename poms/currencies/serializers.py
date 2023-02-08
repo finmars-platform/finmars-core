@@ -13,7 +13,7 @@ from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, ModelWithAttributesOnlySerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.pricing.models import CurrencyPricingPolicy, CurrencyHistoryError
-from poms.pricing.serializers import CurrencyPricingPolicySerializer
+
 from poms.system_messages.handlers import send_system_message
 from poms.users.fields import MasterUserField
 from poms.users.utils import get_member_from_context, get_master_user_from_context
@@ -39,7 +39,7 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
                          ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
-    pricing_policies = CurrencyPricingPolicySerializer(allow_null=True, many=True, required=False)
+
 
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = Currency
@@ -54,6 +54,10 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
 
     def __init__(self, *args, **kwargs):
         super(CurrencySerializer, self).__init__(*args, **kwargs)
+
+        from poms.pricing.serializers import CurrencyPricingPolicySerializer
+
+        self.fields['pricing_policies'] = CurrencyPricingPolicySerializer(allow_null=True, many=True, required=False)
 
     def create(self, validated_data):
 

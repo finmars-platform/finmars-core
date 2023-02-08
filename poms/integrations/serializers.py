@@ -1614,10 +1614,9 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
         super(ComplexTransactionImportSchemeRuleScenarioSerializer, self).__init__(*args, **kwargs)
 
         # TODO: circular import error
-        # from poms.transactions.serializers import TransactionTypeViewSerializer
-        # self.fields['transaction_type_object'] = TransactionTypeViewSerializer(source='transaction_type',
+        # from poms.transactions.serializers import TransactionTypeViewOnlySerializer
+        # self.fields['transaction_type_object'] = TransactionTypeViewOnlySerializer(source='transaction_type',
         #                                                                        read_only=True)
-        pass
 
     def to_representation(self, instance):
         ret = super(ComplexTransactionImportSchemeRuleScenarioSerializer, self).to_representation(instance)
@@ -1628,6 +1627,27 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
             selector_values.append(item.value)
 
         ret['selector_values'] = selector_values
+
+        inputs = []
+
+        for input in instance.transaction_type.inputs.all():
+
+            result = {
+                'id': input.id,
+                'name': input.name,
+                'verbose_name': input.verbose_name,
+                'value_type': input.value_type
+            }
+
+            inputs.append(result)
+
+        ret['transaction_type_object'] = {
+            'id': instance.transaction_type.id,
+            'name': instance.transaction_type.name,
+            'user_code': instance.transaction_type.user_code,
+            'inputs': inputs
+        }
+
 
         return ret
 
