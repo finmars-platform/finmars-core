@@ -3066,7 +3066,7 @@ class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, Mod
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'master_user',
+            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'master_user',
 
             'visibility_status', 'is_locked', 'is_canceled', 'transaction_unique_code',
 
