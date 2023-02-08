@@ -89,6 +89,10 @@ import requests
 import json
 import time
 
+from poms.common.storage import get_storage
+
+storage = get_storage()
+
 
 class ProviderClassViewSet(AbstractClassModelViewSet):
     queryset = ProviderClass.objects
@@ -1036,6 +1040,8 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
 
         from poms.transactions.models import ComplexTransaction
         complex_transactions = ComplexTransaction.objects.filter(linked_import_task=celery_task.pk).delete()
+
+        storage.delete(instance.file_path)
 
         return Response({"task_id": celery_task.pk, "task_status": celery_task.status, "result": result,
                          "error_message": error_message})
