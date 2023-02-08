@@ -1496,7 +1496,9 @@ class ImportHandler:
 
         except Exception as e:
 
-            _l.info("save_instance Exception %s" % e)
+            _l.error("save_instance Exception %s" % instance)
+            _l.error("save_instance Exception %s" % e)
+            _l.error("save_instance Traceback %s" % traceback.format_exc())
 
             error_row['error_reaction'] = 'Continue import'
             error_row['level'] = 'error'
