@@ -2651,7 +2651,7 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
     class Meta(ModelWithObjectPermissionSerializer.Meta):
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'transactions', 'master_user',
+            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'transactions', 'master_user',
 
             'transaction_unique_code',
 
