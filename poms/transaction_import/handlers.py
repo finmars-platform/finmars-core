@@ -406,6 +406,16 @@ class TransactionImportProcess(object):
                     execution_context="import"
                 )
 
+                if not item.transaction_inputs:
+                    item.transaction_inputs = {}
+
+                fields_dict = {}
+
+                for key, value in fields.items():
+                    fields_dict[key] = str(value)
+
+                item.transaction_inputs[rule_scenario.transaction_type.user_code] = fields_dict
+
                 transaction_type_process_instance.process()
 
                 if transaction_type_process_instance.uniqueness_status == 'skip':
