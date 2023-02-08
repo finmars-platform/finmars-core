@@ -1154,7 +1154,7 @@ def handle_global_table_search(qs, global_table_search, model, content_type):
         q = q | query
 
     if content_type.model not in ['currencyhistory', 'pricehistory', 'transaction', 'currencyhistoryerror',
-                                  'pricehistoryerror', 'generatedevent', 'portfolioregisterrecord']:
+                                  'pricehistoryerror', 'generatedevent', 'portfolioregisterrecord', 'complextransaction']:
         string_attr_query = Q(**{'attributes__value_float__icontains': global_table_search})
         date_attr_query = Q(**{'attributes__value_date__icontains': global_table_search})
         float_attr_query = Q(**{'attributes__value_float__icontains': global_table_search})

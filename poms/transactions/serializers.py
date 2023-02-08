@@ -2933,7 +2933,6 @@ class ComplexTransactionEvSerializer(ModelWithObjectPermissionSerializer, ModelW
         fields = [
             'id', 'master_user',
             'date', 'status', 'code', 'text',
-            'is_deleted',
 
             'is_locked', 'is_canceled',
 
@@ -3395,7 +3394,7 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'transactions', 'master_user',
+            'id', 'date', 'status', 'code', 'text',  'transaction_type', 'transactions', 'master_user',
 
             'is_locked', 'is_canceled', 'error_code', 'visibility_status',
 
@@ -3533,7 +3532,7 @@ class ComplexTransactionViewOnlyComplexTransactionSerializer(serializers.ModelSe
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'transactions', 'master_user',
+            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'transactions', 'master_user',
 
             'is_locked', 'is_canceled', 'error_code', 'visibility_status',
 
