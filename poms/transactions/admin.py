@@ -414,9 +414,9 @@ class ComplexTransactionInputInline(admin.TabularInline):
 class ComplexTransactionAdmin(AbstractModelAdmin):
     model = ComplexTransaction
     master_user_path = 'transaction_type__master_user'
-    list_display = ['id', 'master_user', 'date', 'transaction_type', 'code', 'status', 'is_deleted', ]
+    list_display = ['id', 'master_user', 'date', 'transaction_type', 'code', 'status' ]
     list_select_related = ['transaction_type', 'transaction_type__master_user']
-    list_filter = ['is_deleted', 'date', ]
+    list_filter = ['date', ]
     search_fields = ['id']
     raw_id_fields = ['transaction_type']
     inlines = [GenericAttributeInline, TransactionInline, ComplexTransactionInputInline,

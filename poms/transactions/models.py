@@ -1288,7 +1288,7 @@ class EventToHandle(NamedModel):
         verbose_name_plural = gettext_lazy('events to handle')
 
 
-class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
+class ComplexTransaction(DataTimeStampedModel):
     PRODUCTION = 1
     PENDING = 2
     IGNORE = 3
