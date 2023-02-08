@@ -225,6 +225,8 @@ class BulkDestroyModelMixin(DestroyModelMixin):
 
         if queryset.model._meta.get_field('is_deleted'):
 
+            queryset = queryset.filter(id__in=data['ids'])
+
             for instance in queryset:
                 # try:
                 #     self.check_object_permissions(request, instance)
