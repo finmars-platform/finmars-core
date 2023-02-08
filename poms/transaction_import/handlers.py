@@ -418,13 +418,14 @@ class TransactionImportProcess(object):
 
                 item.processed_rule_scenarios.append(rule_scenario)
 
-                trn = TransactionImportBookedTransaction(
-                    code=transaction_type_process_instance.complex_transaction.code,
-                    text=transaction_type_process_instance.complex_transaction.text,
-                    transaction_unique_code=transaction_type_process_instance.complex_transaction.transaction_unique_code,
-                )
+                if transaction_type_process_instance.complex_transaction:
+                    trn = TransactionImportBookedTransaction(
+                        code=transaction_type_process_instance.complex_transaction.code,
+                        text=transaction_type_process_instance.complex_transaction.text,
+                        transaction_unique_code=transaction_type_process_instance.complex_transaction.transaction_unique_code,
+                    )
 
-                item.booked_transactions.append(trn)
+                    item.booked_transactions.append(trn)
 
                 item.status = 'success'
                 item.message = "Transaction Booked %s" % transaction_type_process_instance.complex_transaction
