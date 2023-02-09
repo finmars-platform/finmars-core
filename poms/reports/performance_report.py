@@ -90,6 +90,13 @@ class PerformanceReportBuilder:
         if not begin_date or begin_date == date.min:
             begin_date = self.instance.first_transaction_date
 
+        if not begin_date:
+            self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
+            self.instance.items = []
+            self.instance.error_message = "Could not find begin date. Please, check if portfolio has transactions"
+
+            return self.instance
+
         # if begin_date < first_transaction_date:
         #     begin_date = first_transaction_date
 
