@@ -2483,9 +2483,6 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
     allocation_pl_object = InstrumentSimpleViewSerializer(source='allocation_pl', read_only=True)
 
 
-
-
-
     account_position_object = AccountSimpleViewSerializer(source='account_position', read_only=True)
     account_cash_object = AccountSimpleViewSerializer(source='account_cash', read_only=True)
     account_interim_object = AccountSimpleViewSerializer(source='account_interim', read_only=True)
@@ -2513,15 +2510,15 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
 
             'instrument', 'instrument_object',
 
-            'transaction_currency', 'transaction_currency_object',
-            'settlement_currency', 'settlement_currency_object',
+            'transaction_currency',
+            'settlement_currency',
 
             'position_size_with_sign', 'cash_consideration', 'principal_with_sign',
             'carry_with_sign', 'overheads_with_sign', 'reference_fx_rate',
 
             'accounting_date', 'cash_date', 'transaction_date',
 
-            'portfolio', 'portfolio_object',
+            'portfolio',
 
             'account_cash', 'account_cash_object',
             'account_position', 'account_position_object',
