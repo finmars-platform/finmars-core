@@ -31,7 +31,7 @@ extensions = [
 
 templates_path = ['_templates']
 exclude_patterns = ['build']
-apidoc_excluded_paths = ['../../poms_app/portfolios/migrations']
+apidoc_excluded_paths = []
 
 source_parsers = {
     '.md': CommonMarkParser,

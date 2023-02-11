@@ -11,6 +11,9 @@ from finmars_standardized_errors.serializers import ErrorRecordSerializer
 from django.http import HttpResponse
 
 class ErrorRecordViewSet(ModelViewSet):
+    '''
+        Viewseet for getting recorded 500 errors
+    '''
     queryset = ErrorRecord.objects.all()
     serializer_class = ErrorRecordSerializer
     permission_classes = [

@@ -40,7 +40,7 @@ python /var/app/manage.py collectstatic -c --noinput
 
 if [ x"${ENABLE_DEV_DOCUMENTATION}" == "True" ]; then
    echo "Generating dev documentation"
-   cd /var/app/docs/source && sphinx-apidoc -o ./files ../../ ../../*migrations* ../../*tests* --separate --module-first
+   cd /var/app/docs/source && sphinx-apidoc -o ./files ../../ ../../*migrations* ../../*tests* ../../*admin* ../../*apps* --separate --module-first
    echo "Documentation generated. Going to create html"
    cd /var/app/docs && make html
    echo "HTML Documentation generated"

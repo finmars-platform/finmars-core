@@ -23,6 +23,16 @@ class BootstrapConfig(AppConfig):
         post_migrate.connect(self.bootstrap, sender=self)
 
     def bootstrap(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
+        '''
+        In idea it should be the first methods that should be executed on backend server startup
+
+
+        :param app_config:
+        :param verbosity:
+        :param using:
+        :param kwargs:
+        :return:
+        '''
 
         _l.info("Bootstrapping Finmars Application")
 

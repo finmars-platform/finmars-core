@@ -50,6 +50,16 @@ def start_new_balance_history_collect(task):
 
 @shared_task(name='widgets.collect_balance_report_history', bind=True)
 def collect_balance_report_history(self, task_id):
+    '''
+
+    ==== Hope this thing will move into workflow/olap ASAP ====
+
+    Purpose of this task is collect Balance Reports for specific period of dates
+    Important notice. Some results of aggregations (such as sectors, asset types, currencies, etc) is HARDCODED
+    So whole this code is a temporary solution for Widget Dashboard
+
+    '''
+
     _l.info('collect_balance_report_history init task_id %s' % task_id)
 
     task = CeleryTask.objects.get(id=task_id)
@@ -232,6 +242,17 @@ def start_new_pl_history_collect(task):
 
 @shared_task(name='widgets.collect_pl_report_history', bind=True)
 def collect_pl_report_history(self, task_id):
+    '''
+
+    ==== Hope this thing will move into workflow/olap ASAP ====
+
+    Purpose of this task is collect PL Reports for specific period of dates
+    Important notice. Some results of aggregations (such as sectors, asset types, currencies, etc) is HARDCODED
+    So whole this code is a temporary solution for Widget Dashboard
+
+    It same logic as Collect Balance Report
+
+    '''
     _l.info('collect_pl_report_history init task_id %s' % task_id)
 
     task = CeleryTask.objects.get(id=task_id)
@@ -413,6 +434,18 @@ def start_new_collect_stats(task):
 
 @shared_task(name='widgets.collect_stats', bind=True)
 def collect_stats(self, task_id):
+
+    '''
+
+    ==== Hope this thing will move into workflow/olap ASAP ====
+
+    Task that calculates fancy metrics on portfolio for each day
+    It has some heavy calculations such as  'max_annualized_drawdown_month' or 'betta'
+
+    Serve the same purpose as tasks above, demo for Widgets Dashboard
+
+    '''
+
     task = CeleryTask.objects.get(id=task_id)
 
     date = find_next_date_to_process(task)
