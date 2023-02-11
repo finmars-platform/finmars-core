@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from datetime import date, datetime
 from functools import lru_cache
+from django.views.static import serve
 
 import croniter
 import pexpect
@@ -1016,3 +1017,11 @@ class CalendarEventsViewSet(AbstractViewSet):
         response['results'] = results
 
         return Response(response)
+
+
+def serve_docs(request, path, **kwargs):
+
+    kwargs['document_root'] = settings.DOCS_ROOT
+
+
+    return serve(request, path, **kwargs)
