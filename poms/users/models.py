@@ -97,6 +97,18 @@ class MasterUserManager(models.Manager):
 
 
 class MasterUser(models.Model):
+    '''
+    Master User
+
+    One of core entities, and its most important.
+    Its a Finmars Installation instance, it uses Space Id (base_api_url) which make each Finmars installation unique
+    Sometimes master_user called as ecosystem, workspace, space or even ledger
+
+    In old days, Finmars Installation was a single Django App and Single Database, and inside one database
+    to be able have multiple Installations this entity was created. And this why almost any Entity has a Relation to MasterUser or Member
+
+    '''
+
     STATUS_ONLINE = 1
     STATUS_OFFLINE = 2
     STATUS_BACKUP = 3

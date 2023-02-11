@@ -363,7 +363,8 @@ def get_item(scheme, result):
 
         try:
 
-            item_result = Model.objects.get(currency=result['currency'], pricing_policy=result['pricing_policy'],
+            item_result = Model.objects.get(currency=result['currency'],
+                                            pricing_policy=result['pricing_policy'],
                                             date=result['date'])
 
         except Exception as e:
@@ -1577,7 +1578,7 @@ class ImportHandler:
 
         if mode == 'overwrite' and item:
 
-            # _l.debug('Overwrite instance')
+            _l.debug('Overwrite instance')
 
             self.overwrite_instance(scheme, result_item, item, error_handler, error_row, member, master_user)
 
@@ -2017,6 +2018,9 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
             procedure_instance.save()
 
+
+
+# DEPRECATED DELETE SOON
 
 class UnifiedImportHandler():
 
