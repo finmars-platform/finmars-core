@@ -12,6 +12,14 @@ from poms.users.models import MasterUser
 
 
 class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+    '''
+
+    Meta Entity, part of Finmars Configuration
+
+    Mostly used for extra fragmentation of Reports
+    Maybe in future would have extra logic
+
+    '''
     master_user = models.ForeignKey(MasterUser, related_name='account_types', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
     show_transaction_details = models.BooleanField(default=False,
@@ -32,6 +40,10 @@ class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         ]
 
 class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+    '''
+    One of core entities - Account
+    Could stand for anything that could hold money in real world e.g. Bank Accounts, Broker Accounts, Transit Accounts, Insturance Accounts
+    '''
     master_user = models.ForeignKey(MasterUser, related_name='accounts', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
     type = models.ForeignKey(AccountType, on_delete=models.PROTECT, null=True, blank=True,

@@ -11,6 +11,30 @@ from poms.users.models import MasterUser, Member
 
 
 class GenericAttributeType(NamedModel):
+    '''
+    Important Entity, which allows users to create own columns
+    it support following data types
+        String(text,char) = 10
+        Number(actually its float) = 20
+        Classifier(Nested Dictionaries) = 30
+        Date(yyyy-mm-dd format) = 40
+
+    GenericAttributeType is Entity depended
+    it means that
+        Instrument.attributes.country
+    is not the same GenericAttributeType as
+        Currency.attributes.country
+
+    So each entity has own namespace for user attributes
+
+    Sometimes User Attributes could contain formula instead of value
+    In that case we call in Calculated User Attribute (look at can_recalculate checkbox)
+
+    ==== Important ====
+    This entity is part of Configuration Engine
+    Also it relates to Finmars Marketplace
+
+    '''
     STRING = 10
     NUMBER = 20
     CLASSIFIER = 30
@@ -82,6 +106,9 @@ class GenericAttributeType(NamedModel):
 
 
 class GenericAttributeTypeOption(models.Model):
+    '''
+    Really weird entity, probably need refactor
+    '''
     attribute_type = models.ForeignKey(GenericAttributeType, related_name='options',
                                        verbose_name=gettext_lazy('attribute type'), on_delete=models.CASCADE)
     member = models.ForeignKey(Member, verbose_name=gettext_lazy('member'), on_delete=models.CASCADE)
@@ -98,6 +125,23 @@ class GenericAttributeTypeOption(models.Model):
 
 
 class GenericClassifier(MPTTModel):
+    '''
+        This Nested-dictionary entity, most of the time is headache
+        poor concept and poor implementation
+
+        Most of the time there was an example of Country
+            USA (country level)
+               NY (city level)
+            Russia
+               Moscow
+
+        But not ironically Country becomes system Relation field, and now most of the use cases are just flat lists
+
+        I wish there will be another value_type for AttributeType like: List
+        and its just list of values
+
+
+    '''
     attribute_type = models.ForeignKey(GenericAttributeType, related_name='classifiers',
                                        verbose_name=gettext_lazy('attribute type'), on_delete=models.CASCADE)
 
@@ -119,6 +163,31 @@ class GenericClassifier(MPTTModel):
 
 
 class GenericAttribute(models.Model):
+    '''
+    Actual Instance of AttributeType linked with instance of Entity
+
+    so whole picture looks like this
+
+    "instrument": {
+        "id": 1,
+        "user_code": "FMRS"
+        "name": "Finmars SA"
+        "attributes": [
+            {
+              "id": 1,
+              "attribute_type": {
+                "id": 1,
+                "user_code": "asset_type",
+                "name": "Asset Type"
+                "value_type": 10
+              },
+              value_string: "Stock"
+            }
+        ]
+
+    }
+
+    '''
     attribute_type = models.ForeignKey(GenericAttributeType, verbose_name=gettext_lazy('attribute type'),
                                        on_delete=models.CASCADE)
 

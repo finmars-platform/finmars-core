@@ -12,6 +12,22 @@ _l = logging.getLogger('poms.celery_tasks')
 
 
 class CeleryTask(TimeStampedModel):
+    '''
+
+    Maybe should be rename just to Task (like in Workflow)
+    Kinda legacy functionality (everything to background processes should be moved to Workflow/Olap microservices)
+    But still its in use
+    Most important tasks are:
+        Transaction Import (transactions itself, sometimes instruments)
+        Simple Import (Portfolios, Accounts, Instruments, Prices, FXrates)
+        Configuration Import (Account Type, Instrument Types, Transaction Types, UI layouts)
+        Portfolio Records and Portfolio Prices
+
+    Also we have poms.procedures, and poms.pricings and somehow it different entities but they do the same thing as CeleryTask
+    Maybe in future procedures/pricing will be refactored and one day they will be just CeleryTask
+    And in far future even that will be moved to Workflow/Olap
+
+    '''
     STATUS_INIT = 'I'
     STATUS_PENDING = 'P'
     STATUS_DONE = 'D'

@@ -31,6 +31,12 @@ class CounterpartyGroup(NamedModel, FakeDeletableModel):
 
 
 class Counterparty(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+
+    '''
+    One of Core Finmars entities, real world meaning is hold here
+    information about Company, Bank, Broker, StockExchange or other entity who envolved into transaction
+    e.g. Revolut
+    '''
     master_user = models.ForeignKey(MasterUser, related_name='counterparties',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(CounterpartyGroup, related_name='counterparties', null=True, blank=True,
@@ -75,6 +81,9 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
 
 
 class Responsible(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+    '''
+    One of Core Finmars entities, real world meaning is to indicate who is executing/initiator of Transaction
+    '''
     master_user = models.ForeignKey(MasterUser, related_name='responsibles', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
     group = models.ForeignKey(ResponsibleGroup, related_name='responsibles', null=True, blank=True,

@@ -168,6 +168,17 @@ def get_configuration_access_table(member):
 
 class ConfigurationImportManager(object):
 
+    '''ConfigurationImportManager
+    Import is moved as background process which is good
+    Now just loads .fcfg file and tries to import all data as it is
+    .fcfg consists of json objects which Backend REST API could process
+
+    Code is old and should be refactored/cleaned
+
+    TODO: Refactor Needed
+    TODO: Part of Finmars Marketplace
+    '''
+
     def __init__(self, instance):
 
         # _l.info('master_user %s ' % instance.master_user)

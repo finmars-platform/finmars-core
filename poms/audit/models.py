@@ -9,6 +9,10 @@ from django.utils.translation import gettext_lazy
 
 
 class AuthLogEntry(models.Model):
+    '''
+    Deprecated, need to be deleted someday, but probably AK related logic
+    Also, this code from ancient Quadrogroup times
+    '''
     date = models.DateTimeField(auto_now_add=True, db_index=True, verbose_name=gettext_lazy('date'))
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=gettext_lazy('user'), on_delete=models.CASCADE)
     user_ip = models.GenericIPAddressField(null=True, blank=True, verbose_name=gettext_lazy('user ip'))
@@ -40,6 +44,10 @@ class AuthLogEntry(models.Model):
 
 
 class ObjectHistory4Entry(models.Model):
+    '''
+    Deprecated, need to be deleted someday, but probably AK related logic
+    Also, this code from ancient Quadrogroup times
+    '''
     ADDITION = 1
     DELETION = 2
     CHANGE = 3
@@ -227,6 +235,10 @@ class ObjectHistory4Entry(models.Model):
 
 
 class InstrumentAudit(models.Model):
+    '''
+    Deprecated, need to be deleted someday, but probably AK related logic
+    Also, this code from ancient Quadrogroup times
+    '''
     master_user = models.ForeignKey('users.MasterUser', related_name='+', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
@@ -236,6 +248,10 @@ class InstrumentAudit(models.Model):
 
 
 class TransactionAudit(models.Model):
+    '''
+    Deprecated, need to be deleted someday, but probably AK related logic
+    Also, this code from ancient Quadrogroup times
+    '''
     master_user = models.ForeignKey('users.MasterUser', related_name='+', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 

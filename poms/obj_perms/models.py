@@ -50,6 +50,14 @@ from poms.users.models import Member, Group
 
 
 class GenericObjectPermission(models.Model):
+    '''
+        Permission Engine, now in poor state
+        Needs concept refresh and implementation improvement
+
+        There was an issue with performance
+        Check permissions for all nested objects dramatically increases response time
+
+    '''
     group = models.ForeignKey(Group, null=True, blank=True, verbose_name=gettext_lazy('group'),
                               on_delete=models.CASCADE)
     member = models.ForeignKey(Member, null=True, blank=True, verbose_name=gettext_lazy('member'),

@@ -102,6 +102,14 @@ class TransactionReportCustomField(models.Model):
 
 
 class BalanceReport(models.Model):
+    '''
+    Old Quadrogroup implementation of Report Engine
+    They are were based in python which makes them so slow
+    Modern reports are executed with Enormous SQL query
+    and python only serializes output.
+
+    Should be deleted soon
+    '''
     master_user = models.ForeignKey(MasterUser, related_name='balance_reports',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -111,6 +119,14 @@ class BalanceReport(models.Model):
 
 
 class PLReport(models.Model):
+    '''
+    Old Quadrogroup implementation of Report Engine
+    They are were based in python which makes them so slow
+    Modern reports are executed with Enormous SQL query
+    and python only serializes output.
+
+    Should be deleted soon
+    '''
     master_user = models.ForeignKey(MasterUser, related_name='pl_reports', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
@@ -120,6 +136,14 @@ class PLReport(models.Model):
 
 
 class PerformanceReport(models.Model):
+    '''
+    Old Quadrogroup implementation of Report Engine
+    They are were based in python which makes them so slow
+    Modern reports are executed with Enormous SQL query
+    and python only serializes output.
+
+    Should be deleted soon
+    '''
     master_user = models.ForeignKey(MasterUser, related_name='performance_reports',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -129,6 +153,14 @@ class PerformanceReport(models.Model):
 
 
 class CashFlowReport(models.Model):
+    '''
+    Old Quadrogroup implementation of Report Engine
+    They are were based in python which makes them so slow
+    Modern reports are executed with Enormous SQL query
+    and python only serializes output.
+
+    Should be deleted soon
+    '''
     master_user = models.ForeignKey(MasterUser, related_name='cashflow_reports',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -138,6 +170,14 @@ class CashFlowReport(models.Model):
 
 
 class TransactionReport(models.Model):
+    '''
+    Old Quadrogroup implementation of Report Engine
+    They are were based in python which makes them so slow
+    Modern reports are executed with Enormous SQL query
+    and python only serializes output.
+
+    Should be deleted soon
+    '''
     master_user = models.ForeignKey(MasterUser, related_name='transaction_reports',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 

@@ -9,6 +9,11 @@ from poms.users.models import MasterUser, Member
 
 
 class SharedConfigurationFile(models.Model):
+    '''
+    Probably Deprecated, really old feature which gives members ability to share their ui.ListLayout and ui.DashboardLayout
+    TODO: refactor
+    TODO: Part of Finmars Marketplace
+    '''
     name = models.CharField(max_length=255)
 
     PUBLIC = 1
