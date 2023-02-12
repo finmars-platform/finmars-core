@@ -150,6 +150,7 @@ class RequestDataFileProcedureInstanceSerializer(serializers.ModelSerializer):
         model = RequestDataFileProcedureInstance
         fields = ('master_user', 'id', 'request_data',
                   'status', 'error_code', 'error_message',
+                  'linked_import_task',
                   'created', 'modified',
                   'procedure', 'procedure_object')
 

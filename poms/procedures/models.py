@@ -376,6 +376,10 @@ class RequestDataFileProcedureInstance(BaseProcedureInstance):
     json_request_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
     response_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('response data'))
 
+    linked_import_task = models.ForeignKey('celery_tasks.CeleryTask', on_delete=models.SET_NULL,
+                                           null=True, blank=True,
+                                           verbose_name=gettext_lazy("linked import task"))
+
     class Meta:
         ordering = ['-created']
 
