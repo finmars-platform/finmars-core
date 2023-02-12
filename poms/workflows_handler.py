@@ -1,3 +1,4 @@
+import logging
 
 import requests
 from django.contrib.auth import get_user_model
@@ -5,12 +6,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from poms_app import settings
 
-import logging
-
 _l = logging.getLogger('poms.api')
 
 
-def get_workflows_list():
+def get_workflows_list(date_from, date_to):
     '''
     Requesting list of workflows from Finmars Workflow microservice
     Serves in Finmars Calendar web intrerface page
@@ -26,7 +25,8 @@ def get_workflows_list():
     headers = {'Content-type': 'application/json', 'Accept': 'application/json',
                'Authorization': 'Bearer %s' % refresh.access_token}
 
-    url = settings.HOST_URL + '/' + settings.BASE_API_URL + '/workflow/api/workflow/'
+    url = settings.HOST_URL + '/' + settings.BASE_API_URL + '/workflow/api/workflow/?created_after=' + str(
+        date_from) + '&created_before=' + str(date_to)
 
     response = requests.get(url, headers)
 

@@ -1007,7 +1007,7 @@ class CalendarEventsViewSet(AbstractViewSet):
 
             try:
 
-               workflows = get_workflows_list()
+               workflows = get_workflows_list(date_from, date_to)
 
                for workflow in workflows:
                    item = {
