@@ -25,6 +25,7 @@ from poms.common.views import AbstractViewSet, AbstractApiView
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory, PricingPolicy, Instrument
 from poms.schedules.models import ScheduleInstance
+from poms.workflows_handler import get_workflows_list
 
 _languages = [Language(code, name) for code, name in settings.LANGUAGES]
 
@@ -1002,30 +1003,45 @@ class CalendarEventsViewSet(AbstractViewSet):
 
                 results.append(item)
 
-        # Manual System Message
+        if 'workflow' in filter:
 
-        if 'system_message' in filter:
+            try:
 
-            messages = SystemMessage.objects.filter(created__gte=date_from, created__lte=date_to,
-                                                    title__icontains='manual')
+               workflows = get_workflows_list()
 
-            for message in messages:
-                item = {
-                    'title': message.title,
-                    'start': message.created,
-                    'classNames': ['user'],
-                    'extendedProps': {
-                        'type': 'system_message',
-                        'id': message.id,
-                        'payload': {
-                            'type': message.type,
-                            'section': message.section,
-                            'description': message.description
-                        }
-                    }
-                }
+               for workflow in workflows:
+                   item = {
+                       'start': workflow['created'],
+                       'classNames': ['user'],
+                       'extendedProps': {
+                           'type': 'workflow',
+                           'id': workflow['id'],
+                           'payload': {
+                               'status': workflow['status'],
+                               'payload': workflow['payload']
+                           }
+                       }
+                   }
 
-                results.append(item)
+                   if workflow['status'] == 'error':
+                       item['backgroundColor'] = 'red'
+
+                   if workflow['status'] == 'pending':
+                       item['backgroundColor'] = 'blue'
+
+                   if workflow['status'] == 'success':
+                       item['backgroundColor'] = 'green'
+
+                   title = workflow['project'] + '.' + workflow['name']
+                   title = title + ' [' + str(workflow['id']) + ']'
+
+                   item['title'] = title
+
+                   results.append(item)
+
+            except Exception as e:
+                _l.error("Could not fetch workflows")
+
 
         response = {}
 
