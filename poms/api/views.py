@@ -1040,7 +1040,7 @@ class CalendarEventsViewSet(AbstractViewSet):
                    results.append(item)
 
             except Exception as e:
-                _l.error("Could not fetch workflows")
+                _l.error("Could not fetch workflows %s" % e)
 
 
         response = {}
