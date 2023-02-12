@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 
 from datetime import date, datetime
 from functools import lru_cache
-from django.views.static import serve
 
 import croniter
 import pexpect
@@ -11,12 +10,13 @@ import pytz
 from babel import Locale
 from babel.dates import get_timezone, get_timezone_gmt, get_timezone_name
 from django.conf import settings
+from django.http import HttpResponse
 from django.utils import translation, timezone
+from django.views.static import serve
 from rest_framework import response, schemas
 from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.decorators import action
-from django.http import HttpResponse, Http404
+from rest_framework.response import Response
 
 from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer
 from poms.common.utils import get_list_of_business_days_between_two_dates, get_closest_bday_of_yesterday, \
@@ -609,7 +609,6 @@ class SystemInfoViewSet(AbstractViewSet):
             ]
         })
 
-
         shell_cmd = 'ps aux | grep [d]jango_celery_beat'
         c = pexpect.spawn('/bin/bash', ['-c', shell_cmd])
         pexpect_result = c.read()
@@ -642,7 +641,6 @@ class SystemLogsViewSet(AbstractViewSet):
 
     def list(self, request, *args, **kwargs):
         result = {}
-
 
         shell_cmd = 'ls -la /var/log/finmars/backend/  | awk \'{print $9}\''
         c = pexpect.spawn('/bin/bash', ['-c', shell_cmd])
@@ -681,6 +679,15 @@ class SystemLogsViewSet(AbstractViewSet):
 class CalendarEventsViewSet(AbstractViewSet):
 
     def list(self, request, *args, **kwargs):
+        '''
+        Method to create Events list for Finmars Web Interface Calendar Page
+        It is aggregates Celery Tasks, Data Procedures, Pricing Procedures, Schedules
+        and Workflows in future
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        '''
 
         from poms.schedules.models import Schedule
         from poms.celery_tasks.models import CeleryTask
@@ -825,18 +832,22 @@ class CalendarEventsViewSet(AbstractViewSet):
 
                 if instance.action_verbose:
                     if instance.provider_verbose:
-                        item['title'] = instance.provider_verbose + ': ' + instance.action_verbose
+                        title = instance.provider_verbose + ': ' + instance.action_verbose
                     else:
-                        item['title'] = instance.action_verbose
+                        title = instance.action_verbose
                 else:
-                    title = '[' + str(instance.id) + ']'
+
+                    title = ''
 
                     if instance.action:
                         title = title + ' ' + instance.action
-                    if instance.member:
-                        title = title + ' by ' + instance.member.username
 
-                    item['title'] = title
+                if instance.member:
+                    title = title + ' by ' + instance.member.username
+
+                title = title + ' [' + str(instance.id) + ']'
+
+                item['title'] = title
 
                 results.append(item)
 
@@ -874,18 +885,21 @@ class CalendarEventsViewSet(AbstractViewSet):
 
                 if instance.action_verbose:
                     if instance.provider_verbose:
-                        item['title'] = instance.provider_verbose + ': ' + instance.action_verbose
+                        title = instance.provider_verbose + ': ' + instance.action_verbose
                     else:
-                        item['title'] = instance.action_verbose
+                        title = instance.action_verbose
                 else:
-                    title = '[' + str(instance.id) + ']'
+                    title = ''
 
                     if instance.action:
                         title = title + ' ' + instance.action
-                    if instance.member:
-                        title = title + ' by ' + instance.member.username
 
-                    item['title'] = title
+                if instance.member:
+                    title = title + ' by ' + instance.member.username
+
+                title = title + ' [' + str(instance.id) + ']'
+
+                item['title'] = title
 
                 results.append(item)
 
@@ -924,18 +938,20 @@ class CalendarEventsViewSet(AbstractViewSet):
 
                 if instance.action_verbose:
                     if instance.provider_verbose:
-                        item['title'] = instance.provider_verbose + ': ' + instance.action_verbose
+                        title = instance.provider_verbose + ': ' + instance.action_verbose
                     else:
-                        item['title'] = instance.action_verbose
+                        title = instance.action_verbose
                 else:
-
-                    title = '[' + str(instance.id) + ']'
+                    title = ''
                     if instance.action:
                         title = title + ' ' + instance.action
-                    if instance.member:
-                        title = title + ' by ' + instance.member.username
 
-                    item['title'] = title
+                if instance.member:
+                    title = title + ' by ' + instance.member.username
+
+                title = title + ' [' + str(instance.id) + ']'
+
+                item['title'] = title
 
                 results.append(item)
 
@@ -969,7 +985,7 @@ class CalendarEventsViewSet(AbstractViewSet):
                     item['backgroundColor'] = 'blue'
 
                 if task.verbose_name:
-                    item['title'] = task.verbose_name
+                    title = task.verbose_name
                 else:
 
                     title = ''
@@ -977,13 +993,12 @@ class CalendarEventsViewSet(AbstractViewSet):
                     if task.type:
                         title = title + ' ' + task.type
 
-                    if task.member:
-                        title = title + ' by ' + task.member.username
+                if task.member:
+                    title = title + ' by ' + task.member.username
 
-                    if not title:
-                        title = '[' + str(task.id) + ']'
+                title = title + ' [' + str(task.id) + ']'
 
-                    item['title'] = title
+                item['title'] = title
 
                 results.append(item)
 
@@ -1020,8 +1035,6 @@ class CalendarEventsViewSet(AbstractViewSet):
 
 
 def serve_docs(request, path, **kwargs):
-
     kwargs['document_root'] = settings.DOCS_ROOT
-
 
     return serve(request, path, **kwargs)
