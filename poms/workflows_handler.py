@@ -28,7 +28,7 @@ def get_workflows_list(date_from, date_to):
     url = settings.HOST_URL + '/' + settings.BASE_API_URL + '/workflow/api/workflow/?created_after=' + str(
         date_from) + '&created_before=' + str(date_to)
 
-    response = requests.get(url, headers)
+    response = requests.get(url, headers=headers)
 
     if response.status_code != 200:
         _l.info('get_workflows_list.response.status_code %s' % response.status_code)
