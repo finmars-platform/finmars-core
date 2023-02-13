@@ -708,12 +708,12 @@ class CalendarEventsViewSet(AbstractViewSet):
         if not date_from:
             date_from = datetime.today().replace(day=1)
         else:
-            date_from = datetime.strptime(date_from, '%Y-%m-%d')
+            date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
 
         if not date_to:
             date_to = last_day_of_month(date_from)
         else:
-            date_to = datetime.strptime(date_to, '%Y-%m-%d')
+            date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
 
         if not filter:
             filter = ['data_procedure', 'expression_procedure', 'pricing_procedure', 'celery_task']
