@@ -182,7 +182,6 @@ class CreateUser(APIView):
 
         username = serializer.validated_data['username']
         email = serializer.validated_data['email']
-        user_unique_id = serializer.validated_data['user_unique_id']
 
         _l.info('Create user validated data %s' % serializer.validated_data)
 
@@ -205,8 +204,6 @@ class CreateUser(APIView):
 
         if user:
             user_profile, created = UserProfile.objects.get_or_create(user_id=user.pk)
-
-            user_profile.user_unique_id = user_unique_id
             user_profile.save()
 
         return Response({'status': 'ok'})
