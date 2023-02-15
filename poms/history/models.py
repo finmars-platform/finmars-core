@@ -9,6 +9,12 @@ from poms.users.models import MasterUser, Member
 
 
 class HistoricalRecord(models.Model):
+    '''
+    2023.01 Feature
+    It listen changes of models and store JSON output after save
+    In Finmars Web interface users can check history of changes for specific entity e.g. Instrument, Complex Transaction
+    TODO: probably need to store only diff with change, not the whole JSON output
+    '''
     master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     member = models.ForeignKey(Member, null=True, blank=True, verbose_name=gettext_lazy('member'),
                                on_delete=models.SET_NULL)

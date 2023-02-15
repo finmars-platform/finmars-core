@@ -59,10 +59,12 @@ class TransactionImportProcessItem(object):
                  file_inputs=None,
                  raw_inputs=None,
                  inputs=None,
+                 transaction_inputs=None,
                  row_number=None):
         self.file_inputs = file_inputs
         self.raw_inputs = raw_inputs
         self.inputs = inputs
+        self.transaction_inputs = transaction_inputs
         self.row_number = row_number
 
         self.status = status

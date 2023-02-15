@@ -25,6 +25,16 @@ def get_access_token(request):
 
 class KeycloakAuthentication(TokenAuthentication):
 
+    '''
+
+    Important piece of code, here we override default authentication handler in django
+    Each user request that django processes, it make request to Keycloak server with users Bearer Token
+    And Keycloak response decide if user has permission or not
+
+    look at method authenticate_credentials
+
+    '''
+
     def authenticate(self, request):
 
         # print('KeycloakAuthentication.authenticate')
@@ -57,6 +67,13 @@ class KeycloakAuthentication(TokenAuthentication):
         return self.authenticate_credentials(token)
 
     def authenticate_credentials(self, key, request=None):
+        '''
+        Validate user Berarer token in keycloak
+
+        :param key:
+        :param request:
+        :return:
+        '''
 
         self.keycloak = KeycloakConnect(server_url=settings.KEYCLOAK_SERVER_URL,
                                         realm_name=settings.KEYCLOAK_REALM,

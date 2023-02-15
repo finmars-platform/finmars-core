@@ -1073,6 +1073,7 @@ class PerformanceReportSerializer(serializers.Serializer):
     bundle = BundleField(required=False, allow_null=True, allow_empty=True)
     report_currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
     report_currency_object = CurrencyViewSerializer(source='report_currency', read_only=True)
+    error_message = serializers.CharField(read_only=True)
 
     items = PerformanceReportItemSerializer(many=True, read_only=True)
     raw_items = serializers.JSONField(allow_null=True, required=False, read_only=True)

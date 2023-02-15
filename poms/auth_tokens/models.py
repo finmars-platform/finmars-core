@@ -21,6 +21,11 @@ _l = logging.getLogger('poms.auth_tokens')
 
 
 class AuthToken(models.Model):
+    '''
+        Probably Deprecated
+        Since Keycloak integration now in no use
+
+    '''
     key = models.CharField("Key", max_length=40, db_index=True, unique=True)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,

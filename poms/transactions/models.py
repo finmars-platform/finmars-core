@@ -4,6 +4,7 @@ import json
 import logging
 import traceback
 from datetime import date
+from math import isnan
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -11,7 +12,6 @@ from django.core.cache import cache
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
-from math import isnan
 
 from poms.accounts.models import Account
 from poms.common.formula_accruals import f_xirr
@@ -1288,7 +1288,7 @@ class EventToHandle(NamedModel):
         verbose_name_plural = gettext_lazy('events to handle')
 
 
-class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
+class ComplexTransaction(DataTimeStampedModel):
     PRODUCTION = 1
     PENDING = 2
     IGNORE = 3
@@ -1448,7 +1448,7 @@ class ComplexTransaction(FakeDeletableModel, DataTimeStampedModel):
 
     object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
-    linked_import_task = models.ForeignKey('celery_tasks.CeleryTask', on_delete=models.PROTECT,
+    linked_import_task = models.ForeignKey('celery_tasks.CeleryTask', on_delete=models.SET_NULL,
                                            null=True, blank=True,
                                            verbose_name=gettext_lazy("linked import task"))
 

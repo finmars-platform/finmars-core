@@ -7,6 +7,11 @@ from poms.users.models import MasterUser
 
 
 class Credentials(NamedModel, DataTimeStampedModel):
+    '''
+    Deprecated, probably not in use
+    Need to be moved in separate microservices which stores credentials in secure way
+    TODO: Part of Finmars Vault project
+    '''
     USERNAME_WITH_PASSWORD = 1
     SSH_USERNAME_WITH_PRIVATE_KEY = 2
     USERNAME_WITH_PASSWORD_AND_PRIVATE_KEY = 3

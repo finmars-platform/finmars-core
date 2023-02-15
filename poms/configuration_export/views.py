@@ -184,9 +184,20 @@ def get_access_table(member):
 
 
 class ConfigurationExportViewSet(AbstractModelViewSet):
+
     serializer_class = EmptySerializer
 
     def list(self, request):
+        '''ConfigurationExportViewSet.list
+        very old functionanliy and now works not that efficient since it tries to export everything Configuration
+        related in runtime
+
+        TODO: Refactor needed
+        TODO: Part of Finmars Marketplace
+
+        :param request:
+        :return:
+        '''
 
         self._master_user = request.user.master_user
         self._member = request.user.member

@@ -517,7 +517,7 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
             if content_type.model not in ['portfolioregisterrecord']:
                 if ev_options['entity_filters']:
 
-                    if content_type.model not in ['objecthistory4entry', 'generatedevent']:
+                    if content_type.model not in ['objecthistory4entry', 'generatedevent', 'complextransaction']:
 
                         if 'deleted' not in ev_options['entity_filters']:
                             options['is_deleted'] = False

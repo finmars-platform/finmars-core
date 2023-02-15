@@ -20,6 +20,12 @@ _l = logging.getLogger('finmars')
 
 
 class ExceptionMiddleware(MiddlewareMixin):
+    '''Finmars Error Handler Middleware
+    Idea is unify all error responses of all backend microservices
+
+    check process_exception method
+
+    '''
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -29,6 +35,12 @@ class ExceptionMiddleware(MiddlewareMixin):
         return response
 
     def process_exception(self, request, exception):
+        ''' Method that overrides default exception response
+
+        :param request: Request object
+        :param exception: Application error
+        :return: Return is object with fixed error structure in JSON
+        '''
         # print('exception %s' % exception)
 
         _l.error("ExceptionMiddleware process error %s" % request.build_absolute_uri())

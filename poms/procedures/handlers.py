@@ -227,6 +227,9 @@ class DataProcedureProcess(object):
 
                     celery_task.save()
 
+                    procedure_instance.linked_import_task = celery_task
+                    procedure_instance.save()
+
                     def run_tasks():
 
                         if procedure_instance.procedure.scheme_type == 'transaction_import':

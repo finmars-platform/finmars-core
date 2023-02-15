@@ -340,7 +340,7 @@ class ReportComplexTransactionSerializer(ModelWithAttributesSerializer):
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'is_deleted', 'transaction_type', 'master_user',
+            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'master_user',
 
             'is_locked', 'is_canceled', 'error_code',
 

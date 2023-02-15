@@ -89,6 +89,10 @@ import requests
 import json
 import time
 
+from poms.common.storage import get_storage
+
+storage = get_storage()
+
 
 class ProviderClassViewSet(AbstractClassModelViewSet):
     queryset = ProviderClass.objects
@@ -829,6 +833,7 @@ class ComplexTransactionImportSchemeViewSet(AbstractApiView, UpdateModelMixinExt
         'scheme_name',
     ]
 
+
 class TransactionImportViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
 
@@ -930,7 +935,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         # REFACTOR THIS
 
         options_object = {}
-        options_object['file_name'] = instance.file_name # posiblly optional
+        options_object['file_name'] = instance.file_name  # posiblly optional
         options_object['file_path'] = instance.file_path
         # options_object['preprocess_file'] = instance.preprocess_file
         options_object['scheme_id'] = instance.scheme.id
@@ -966,7 +971,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         options_object = {}
         # options_object['file_name'] = request.data['file_name']
         options_object['file_path'] = request.data['file_path']
-        options_object['filename'] = request.data['file_path'].split('/')[-1] # TODO refactor to file_name
+        options_object['filename'] = request.data['file_path'].split('/')[-1]  # TODO refactor to file_name
         options_object['scheme_user_code'] = request.data['scheme_user_code']
         options_object['execution_context'] = None
 
@@ -990,6 +995,57 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         _l.info('ComplexTransactionCsvFileImportViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         return Response({"task_id": celery_task.pk, "task_status": celery_task.status}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], url_path='dry-run')
+    def dry_run(self, request, *args, **kwargs):
+
+        _l.info('TransactionImportViewSet Dry Run')
+
+        st = time.perf_counter()
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        # REFACTOR THIS
+
+        options_object = {}
+        options_object['file_name'] = instance.file_name  # posiblly optional
+        options_object['file_path'] = instance.file_path
+        # options_object['preprocess_file'] = instance.preprocess_file
+        options_object['scheme_id'] = instance.scheme.id
+        options_object['execution_context'] = None
+
+        _l.info('options_object %s' % options_object)
+
+        celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
+                                                member=request.user.member,
+                                                options_object=options_object,
+                                                verbose_name="Transaction Import by %s" % request.user.member.username,
+                                                type='transaction_import')
+
+        _l.info('celery_task %s created ' % celery_task.pk)
+
+        import_instance = transaction_import.apply(kwargs={"task_id": celery_task.pk})
+
+        result = []
+        error_message = None
+
+        try:
+            result = import_instance.result.task.result_object
+        except Exception as e:
+            error_message = str(e)
+
+        _l.info('ComplexTransaction Dry Run done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
+        from poms.transactions.models import ComplexTransaction
+        complex_transactions = ComplexTransaction.objects.filter(linked_import_task=celery_task.pk).delete()
+
+        storage.delete(instance.file_path)
+
+        return Response({"task_id": celery_task.pk, "task_status": celery_task.status, "result": result,
+                         "error_message": error_message})
+
 
 class ComplexTransactionImportSchemeLightViewSet(AbstractModelViewSet):
     queryset = ComplexTransactionImportScheme.objects

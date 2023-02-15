@@ -18,21 +18,26 @@ from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser
 
-
-def _load_currencies_data():
-    ccy_path = os.path.join(settings.BASE_DIR, 'data', 'currencies.csv')
-    ret = {}
-    with open(ccy_path) as csvfile:
-        reader = csv.DictReader(csvfile, delimiter=';')
-        for row in reader:
-            ret[row['user_code']] = row
-    return ret
-
-
-currencies_data = SimpleLazyObject(_load_currencies_data)
+# Probably Deprecated
+# def _load_currencies_data():
+#     ccy_path = os.path.join(settings.BASE_DIR, 'data', 'currencies.csv')
+#     ret = {}
+#     with open(ccy_path) as csvfile:
+#         reader = csv.DictReader(csvfile, delimiter=';')
+#         for row in reader:
+#             ret[row['user_code']] = row
+#     return ret
+#
+#
+# currencies_data = SimpleLazyObject(_load_currencies_data)
 
 
 class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+    '''
+    Entity for Currency itself, e.g. USD, EUR, CHF
+    Used in Transactions, in Reports, in Pricing,
+    Very core Entity and very important
+    '''
     master_user = models.ForeignKey(MasterUser, related_name='currencies', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
     reference_for_pricing = models.CharField(max_length=100, blank=True, default='',
@@ -61,9 +66,15 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
         ]
 
 
-
-
 class CurrencyHistory(DataTimeStampedModel):
+    '''
+    FX rate of Currencies for specific date
+    Finmars is not bound to USD as base currency (Base Currency could be set in poms.users.EcosystemDefault)
+
+    Example of currency history (ecosystem_default.currency = USD)
+    EUR 2023-01-01 1.07
+
+    '''
     currency = models.ForeignKey(Currency, related_name='histories', verbose_name=gettext_lazy('currency'),
                                  on_delete=models.CASCADE)
     pricing_policy = models.ForeignKey('instruments.PricingPolicy', on_delete=models.CASCADE, null=True, blank=True,

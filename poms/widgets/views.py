@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 from django.db.models import Q
 from rest_framework.exceptions import ValidationError
@@ -23,176 +24,185 @@ class HistoryNavViewSet(AbstractViewSet):
 
     def list(self, request):
 
-        date_from = request.query_params.get('date_from', None)
-        date_to = request.query_params.get('date_to', None)
-        currency = request.query_params.get('currency', None)
-        pricing_policy = request.query_params.get('pricing_policy', None)
-        cost_method = request.query_params.get('cost_method', None)
-        portfolio = request.query_params.get('portfolio', None)
-        segmentation_type = request.query_params.get('segmentation_type', None)
+        try:
 
-        if not portfolio:
-            raise ValidationError("Portfolio is no set")
+            date_from = request.query_params.get('date_from', None)
+            date_to = request.query_params.get('date_to', None)
+            currency = request.query_params.get('currency', None)
+            pricing_policy = request.query_params.get('pricing_policy', None)
+            cost_method = request.query_params.get('cost_method', None)
+            portfolio = request.query_params.get('portfolio', None)
+            segmentation_type = request.query_params.get('segmentation_type', None)
 
-        if not date_from:
-            # date_from = str(datetime.datetime.now().year) + "-01-01"
-            date_from = get_first_transaction(portfolio).accounting_date.strftime("%Y-%m-%d")
+            if not portfolio:
+                raise ValidationError("Portfolio is no set")
 
-        if not date_to:
-            date_to = get_closest_bday_of_yesterday(to_string=True)
+            if not date_from:
+                # date_from = str(datetime.datetime.now().year) + "-01-01"
+                date_from = get_first_transaction(portfolio).accounting_date.strftime("%Y-%m-%d")
 
-        _l.info('date_from %s ' % date_from)
-        _l.info('date_to %s ' % date_to)
+            if not date_to:
+                date_to = get_closest_bday_of_yesterday(to_string=True)
 
-        ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
+            _l.info('date_from %s ' % date_from)
+            _l.info('date_to %s ' % date_to)
 
-        if not currency:
-            currency = ecosystem_default.currency_id
+            ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
 
-        if not pricing_policy:
-            pricing_policy = ecosystem_default.pricing_policy_id
+            if not currency:
+                currency = ecosystem_default.currency_id
 
-        if not cost_method:
-            cost_method = CostMethod.AVCO
+            if not pricing_policy:
+                pricing_policy = ecosystem_default.pricing_policy_id
 
-        if not segmentation_type:
-            segmentation_type = 'months'
+            if not cost_method:
+                cost_method = CostMethod.AVCO
 
-        balance_report_histories = BalanceReportHistory.objects.filter(
-            master_user=request.user.master_user,
-            cost_method=cost_method,
-            pricing_policy=pricing_policy,
-            report_currency=currency
-        )
+            if not segmentation_type:
+                segmentation_type = 'months'
 
-        balance_report_histories = balance_report_histories.filter(portfolio_id=portfolio)
-
-        _l.info('balance_report_histories %s' % len(list(balance_report_histories)))
-
-        result_dates = []
-
-        if segmentation_type == 'days':
-            result_dates = get_list_of_business_days_between_two_dates(date_from, date_to)
-
-            balance_report_histories = balance_report_histories.filter(
-                date__gte=date_from,
-                date__lte=date_to
+            balance_report_histories = BalanceReportHistory.objects.filter(
+                master_user=request.user.master_user,
+                cost_method=cost_method,
+                pricing_policy=pricing_policy,
+                report_currency=currency
             )
 
-        if segmentation_type == 'months':
+            balance_report_histories = balance_report_histories.filter(portfolio_id=portfolio)
 
-            end_of_months = get_last_bdays_of_months_between_two_dates(date_from, date_to)
-            result_dates = end_of_months
-            # _l.info(end_of_months)
+            _l.info('balance_report_histories %s' % len(list(balance_report_histories)))
 
-            q = Q()
+            result_dates = []
 
-            for date in end_of_months:
-                query = Q(**{'date': date})
+            if segmentation_type == 'days':
+                result_dates = get_list_of_business_days_between_two_dates(date_from, date_to)
 
-                q = q | query
+                balance_report_histories = balance_report_histories.filter(
+                    date__gte=date_from,
+                    date__lte=date_to
+                )
 
-            balance_report_histories = balance_report_histories.filter(q)
+            if segmentation_type == 'months':
 
-            _l.info('balance_report_histories %s' % balance_report_histories.count())
+                end_of_months = get_last_bdays_of_months_between_two_dates(date_from, date_to)
+                result_dates = end_of_months
+                # _l.info(end_of_months)
 
-        balance_report_histories = balance_report_histories.prefetch_related('items')
+                q = Q()
 
-        items = []
+                for date in end_of_months:
+                    query = Q(**{'date': date})
 
-        balance_report_histories = balance_report_histories.order_by('date')
+                    q = q | query
 
-        for result_date in result_dates:
+                balance_report_histories = balance_report_histories.filter(q)
 
-            found = False
+                _l.info('balance_report_histories %s' % balance_report_histories.count())
 
-            for history_item in balance_report_histories:
+            balance_report_histories = balance_report_histories.prefetch_related('items')
 
-                if str(history_item.date) == str(result_date):
+            items = []
 
-                    found = True
+            balance_report_histories = balance_report_histories.order_by('date')
 
-                    result_item = {}
+            for result_date in result_dates:
 
-                    result_item['date'] = str(history_item.date)
-                    result_item['nav'] = history_item.nav
+                found = False
 
-                    categories = []
+                for history_item in balance_report_histories:
 
-                    for item in history_item.items.all():
+                    if str(history_item.date) == str(result_date):
 
-                        if item.category not in categories:
-                            categories.append(item.category)
+                        found = True
 
-                    result_item['categories'] = []
-                    for category in categories:
-                        result_item['categories'].append({
-                            "name": category,
-                            "items": []
-                        })
+                        result_item = {}
 
-                    for item in history_item.items.all():
+                        result_item['date'] = str(history_item.date)
+                        result_item['nav'] = history_item.nav
 
-                        for category in result_item['categories']:
+                        categories = []
 
-                            if item.category == category['name']:
-                                category['items'].append({
-                                    'name': item.name,
-                                    'key': item.key,
-                                    'value': item.value
-                                })
+                        for item in history_item.items.all():
 
-                    items.append(result_item)
+                            if item.category not in categories:
+                                categories.append(item.category)
 
-            if not found:
-                items.append({
-                    'date': str(result_date),
-                    'nav': None,
-                    'categories': []
-                })
+                        result_item['categories'] = []
+                        for category in categories:
+                            result_item['categories'].append({
+                                "name": category,
+                                "items": []
+                            })
 
-        currency_object = Currency.objects.get(id=currency)
-        pricing_policy_object = PricingPolicy.objects.get(id=pricing_policy)
-        cost_method_object = CostMethod.objects.get(id=cost_method)
+                        for item in history_item.items.all():
 
-        portfolio_instance = Portfolio.objects.get(id__in=portfolio)
+                            for category in result_item['categories']:
 
-        portfolio_instance_json = {
-            "id": portfolio_instance.id,
-            "name": portfolio_instance.name,
-            "user_code": portfolio_instance.user_code
-        }
+                                if item.category == category['name']:
+                                    category['items'].append({
+                                        'name': item.name,
+                                        'key': item.key,
+                                        'value': item.value
+                                    })
 
-        result = {
-            "date_from": str(date_from),
-            "date_to": str(date_to),
-            "segmentation_type": segmentation_type,
-            "currency": currency,
-            "currency_object": {
-                "id": currency_object.id,
-                "name": currency_object.name,
-                "user_code": currency_object.user_code
-            },
-            "pricing_policy": pricing_policy,
-            "pricing_policy_object": {
-                "id": pricing_policy_object.id,
-                "name": pricing_policy_object.name,
-                "user_code": pricing_policy_object.user_code
-            },
-            "cost_method": cost_method,
-            "cost_method_object": {
-                "id": cost_method_object.id,
-                "name": cost_method_object.name,
-                "user_code": cost_method_object.user_code
-            },
-            "portfolio": portfolio,
-            "portfolio_object": portfolio_instance_json,
+                        items.append(result_item)
 
-            "items": items
+                if not found:
+                    items.append({
+                        'date': str(result_date),
+                        'nav': None,
+                        'categories': []
+                    })
 
-        }
+            currency_object = Currency.objects.get(id=currency)
+            pricing_policy_object = PricingPolicy.objects.get(id=pricing_policy)
+            cost_method_object = CostMethod.objects.get(id=cost_method)
 
-        return Response(result)
+            portfolio_instance = Portfolio.objects.get(id=portfolio)
+
+            portfolio_instance_json = {
+                "id": portfolio_instance.id,
+                "name": portfolio_instance.name,
+                "user_code": portfolio_instance.user_code
+            }
+
+            result = {
+                "date_from": str(date_from),
+                "date_to": str(date_to),
+                "segmentation_type": segmentation_type,
+                "currency": currency,
+                "currency_object": {
+                    "id": currency_object.id,
+                    "name": currency_object.name,
+                    "user_code": currency_object.user_code
+                },
+                "pricing_policy": pricing_policy,
+                "pricing_policy_object": {
+                    "id": pricing_policy_object.id,
+                    "name": pricing_policy_object.name,
+                    "user_code": pricing_policy_object.user_code
+                },
+                "cost_method": cost_method,
+                "cost_method_object": {
+                    "id": cost_method_object.id,
+                    "name": cost_method_object.name,
+                    "user_code": cost_method_object.user_code
+                },
+                "portfolio": portfolio,
+                "portfolio_object": portfolio_instance_json,
+
+                "items": items
+
+            }
+
+            return Response(result)
+
+        except Exception as e:
+
+            _l.error("HistoryNavViewSet.e %s" % e)
+            _l.error("HistoryNavViewSet.traceback %s" % traceback.format_exc())
+
+            raise Exception(e)
 
 
 class HistoryPlViewSet(AbstractViewSet):

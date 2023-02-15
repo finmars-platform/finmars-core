@@ -19,6 +19,12 @@ _l = getLogger('poms.portfolios')
 
 
 class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+    '''
+    Portfolio Entity
+
+    Way of grouping transactions in user-defined way.
+
+    '''
     master_user = models.ForeignKey(MasterUser, related_name='portfolios', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
     accounts = models.ManyToManyField('accounts.Account', related_name='portfolios', blank=True,
@@ -47,6 +53,15 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
 
 
 class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+
+    '''
+        Portfolio Register
+
+        Entity that create link between portfolio and instrument - That allow us to treat portfolio as an instrument
+        It means it appears as a position in reports, and also we could calculate performance of that instrument
+
+    '''
+
     master_user = models.ForeignKey(MasterUser, related_name='portfolio_registers',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -91,6 +106,20 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
 
 class PortfolioRegisterRecord(DataTimeStampedModel):
+
+    '''
+
+    Portfolio Register RECORD
+
+    Basically it is a copy of transactions.BaseTransaction, but with few extra features
+    For Calculate Performance Report we need only Cash In/Cash Out Transactions, so we filter them out and save as Register Record
+
+    Its also contains NAV of the portfolio in previous date
+    And we also counting number of shares. In portfolio share it is position_size
+
+    '''
+
+
     master_user = models.ForeignKey(MasterUser, related_name='portfolio_register_records',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 

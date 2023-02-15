@@ -6,6 +6,12 @@ from poms.users.models import MasterUser
 
 
 class ComplexImportScheme(NamedModel, DataTimeStampedModel):
+    '''
+    Probably Deprecated
+    Synthetic Entity which idea was is to mix SimpleImport and TransactionImport into one process
+    Deprecated since we got DataProcedures and ExpressionProcedures
+    Will be more deprecated when it would be moved to Workflow
+    '''
     user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
     master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)

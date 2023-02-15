@@ -24,6 +24,19 @@ def validate_crontab(value):
 
 
 class Schedule(NamedModel):
+    '''
+        Simply schedules, User Defined
+
+        User chooses time (server UTC) and setting up Actions and their order
+        When its time, actions just executes one after another (Thanks to Celery Beat)
+
+        Possibly be deprecated soon. Everything background-task related will move to Workflow/Olap
+
+        ==== Important ====
+        Part of Finmars Configuration
+        Part of FInmars Marketplace
+
+    '''
     ERROR_HANDLER_CHOICES = [
         ['break', 'Break'],
         ['continue', 'Continue'],
@@ -102,6 +115,12 @@ class Schedule(NamedModel):
 
 
 class ScheduleProcedure(models.Model):
+    '''
+    Schedule Action itself, for now we support 3 types
+    1 - Data Procedure (which executes transaction import/simple import -> generates Intstruments and Transactions)
+    2 - Pricing Procedure (runs pricing and fetching PriceHistory and CurrencyHistory)
+    3 - Expression Procedure (user defined scripts, executes rolling of prices, or other finmars tasks)
+    '''
     schedule = models.ForeignKey(Schedule, verbose_name=gettext_lazy('schedule'), related_name="procedures",
                                  on_delete=models.CASCADE)
     type = models.CharField(max_length=25, null=True, blank=True, verbose_name=gettext_lazy('type'))
@@ -115,6 +134,12 @@ class ScheduleProcedure(models.Model):
 
 
 class ScheduleInstance(DataTimeStampedModel):
+    '''
+        Actual Instance of schedule
+        Needs just to be control of Schedule Status
+        Its really important to keep track of Pricing Procedures/Data Procedures daily
+        External data feeds keeps our Reports in latest state. And we should be sure that schedules processed correctly
+    '''
     STATUS_INIT = 'I'
     STATUS_PENDING = 'P'
     STATUS_DONE = 'D'

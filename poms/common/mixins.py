@@ -213,7 +213,7 @@ class BulkSaveModelMixin(CreateModelMixin, UpdateModelMixin):
 class BulkDestroyModelMixin(DestroyModelMixin):
     @action(detail=False, methods=['get', 'post'], url_path='bulk-delete')
     def bulk_delete(self, request):
-        print('Bulk delelete here')
+        # print('Bulk delelete here')
 
         if request.method.lower() == 'get':
             return self.list(request)
@@ -223,7 +223,24 @@ class BulkDestroyModelMixin(DestroyModelMixin):
         queryset = self.filter_queryset(self.get_queryset())
         # is_fake = bool(request.query_params.get('is_fake'))
 
-        queryset.filter(id__in=data['ids']).delete()
+
+
+        try:
+            if queryset.model._meta.get_field('is_deleted'):
+
+                # _l.info('bulk delete %s'  % queryset.model._meta.get_field('is_deleted'))
+
+                queryset = queryset.filter(id__in=data['ids'])
+
+                for instance in queryset:
+                    # try:
+                    #     self.check_object_permissions(request, instance)
+                    # except PermissionDenied:
+                    #     raise
+                    self.perform_destroy(instance)
+        except Exception as e:
+
+                queryset.filter(id__in=data['ids']).delete()
 
         # for pk in data['ids']:
         #

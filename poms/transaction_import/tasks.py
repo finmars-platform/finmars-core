@@ -75,7 +75,12 @@ def transaction_import(self, task_id, procedure_instance_id=None):
             )
             instance.process()
 
+            return instance
+
         except Exception as e:
+
+            _l.error("transaction_import error %s" % e)
+            _l.error("transaction_import traceback %s" % traceback.format_exc())
 
             celery_task.error_message = "Error %s. \n Traceback: %s" % (e, traceback.format_exc())
             celery_task.status = CeleryTask.STATUS_ERROR

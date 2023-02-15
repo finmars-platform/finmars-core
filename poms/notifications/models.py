@@ -15,6 +15,12 @@ from poms.notifications import LEVELS
 
 
 class NotificationSetting(models.Model):
+    '''
+    Something very old
+    Not sure what this poms.notifications actually do
+
+    Probably should be deleted soon
+    '''
     user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='notification_settings', on_delete=models.CASCADE)
     member = models.ForeignKey('users.Member', related_name='notification_settings', null=True,
                                on_delete=models.SET_NULL)
@@ -41,6 +47,12 @@ class NotificationSetting(models.Model):
 # Action Object :  The object linked to the action itself.
 # Target        :  The object to which the activity was performed.
 class Notification(models.Model):
+    '''
+    Something very old
+    Not sure what this poms.notifications actually do
+
+    Probably should be deleted soon
+    '''
     recipient = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='notifications', blank=False,
                                   verbose_name=gettext_lazy('recipient'), on_delete=models.CASCADE)
     recipient_member = models.ForeignKey('users.Member', related_name='notifications', null=True, blank=True,
@@ -165,6 +177,12 @@ class Notification4Setting(models.Model):
 
 
 class Notification4(models.Model):
+    '''
+    Something very old
+    Not sure what this poms.notifications actually do
+
+    Probably should be deleted soon
+    '''
     recipient = models.ForeignKey('users.Member', related_name='notifications4', on_delete=models.SET_NULL)
     notification_class = models.ForeignKey(Notification4Class, related_name='notifications4', on_delete=models.PROTECT)
     message = models.TextField(blank=True, null=True)

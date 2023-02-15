@@ -13,6 +13,10 @@ _l = logging.getLogger('poms.configuration_import')
 
 class ConfigurationEntityArchetypeGenerateHandler(object):
 
+    '''
+    Something very old. 100% Deprecated
+    '''
+
     def __init__(self):
 
         self.master_users = MasterUser.objects.all()

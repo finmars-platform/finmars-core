@@ -5,9 +5,11 @@ from django.urls import re_path, include
 from django.contrib import admin
 from django.views import static
 
+from django.views.static import serve
 from healthcheck.views import HealthcheckView
-from django.views.generic import TemplateView
 from rest_framework.schemas import get_schema_view
+
+from poms.api.views import serve_docs
 
 urlpatterns = []
 
@@ -27,6 +29,11 @@ urlpatterns += [
     # ), name='openapi-schema'),
     re_path(r'^' + settings.BASE_API_URL + '/healthcheck', HealthcheckView.as_view()),
 ]
+
+if settings.ENABLE_DEV_DOCUMENTATION:
+    urlpatterns += [
+        re_path(r'^' + settings.BASE_API_URL + '/docs/(?P<path>.*)$', serve_docs, name='serve-docs')
+    ]
 
 if settings.DEBUG:
     import debug_toolbar

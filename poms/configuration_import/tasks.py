@@ -15,7 +15,7 @@ from poms.accounts.serializers import AccountTypeSerializer
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import get_content_type_by_name
-from poms.common.websockets import send_websocket_message
+# from poms.common.websockets import send_websocket_message
 from poms.complex_import.models import ComplexImportScheme
 from poms.complex_import.serializers import ComplexImportSchemeSerializer
 from poms.configuration_import.handlers import ConfigurationEntityArchetypeGenerateHandler
@@ -168,6 +168,17 @@ def get_configuration_access_table(member):
 
 class ConfigurationImportManager(object):
 
+    '''ConfigurationImportManager
+    Import is moved as background process which is good
+    Now just loads .fcfg file and tries to import all data as it is
+    .fcfg consists of json objects which Backend REST API could process
+
+    Code is old and should be refactored/cleaned
+
+    TODO: Refactor Needed
+    TODO: Part of Finmars Marketplace
+    '''
+
     def __init__(self, instance):
 
         # _l.info('master_user %s ' % instance.master_user)
@@ -225,14 +236,15 @@ class ConfigurationImportManager(object):
 
         self.instance.total_rows = total_rows
 
-        send_websocket_message(data={
-            'type': 'configuration_import_status',
-            'payload': {'task_id': self.instance.task_id,
-                        'state': Task.STATUS_PENDING,
-                        'processed_rows': self.instance.processed_rows,
-                        'total_rows': self.instance.total_rows}
-        }, level="member",
-            context={"master_user": self.master_user, "member": self.member})
+        # Deprecatd
+        # send_websocket_message(data={
+        #     'type': 'configuration_import_status',
+        #     'payload': {'task_id': self.instance.task_id,
+        #                 'state': Task.STATUS_PENDING,
+        #                 'processed_rows': self.instance.processed_rows,
+        #                 'total_rows': self.instance.total_rows}
+        # }, level="member",
+        #     context={"master_user": self.master_user, "member": self.member})
 
     def update_progress(self, message=''):
 
@@ -250,14 +262,15 @@ class ConfigurationImportManager(object):
             }
         )
 
-        send_websocket_message(data={
-            'type': 'configuration_import_status',
-            'payload': {'task_id': self.instance.task_id,
-                        'state': Task.STATUS_PENDING,
-                        'processed_rows': self.instance.processed_rows,
-                        'total_rows': self.instance.total_rows}
-        }, level="member",
-            context={"master_user": self.master_user, "member": self.member})
+        # Deprecated
+        # send_websocket_message(data={
+        #     'type': 'configuration_import_status',
+        #     'payload': {'task_id': self.instance.task_id,
+        #                 'state': Task.STATUS_PENDING,
+        #                 'processed_rows': self.instance.processed_rows,
+        #                 'total_rows': self.instance.total_rows}
+        # }, level="member",
+        #     context={"master_user": self.master_user, "member": self.member})
 
     def get_serializer_context(self):
 

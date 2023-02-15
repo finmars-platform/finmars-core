@@ -2113,7 +2113,7 @@ class TransactionTypeProcess(object):
                 exist = ComplexTransaction.objects.exclude(transaction_unique_code=None).get(
                     master_user=self.transaction_type.master_user,
                     transaction_unique_code=self.complex_transaction.transaction_unique_code)
-            except ComplexTransaction.DoesNotExist:
+            except Exception as e:
                 exist = None
 
             if self.uniqueness_reaction == 1 and exist and self.complex_transaction.transaction_unique_code:

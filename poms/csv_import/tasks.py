@@ -24,7 +24,7 @@ from poms.common.crypto.AESCipher import AESCipher
 from poms.common.crypto.RSACipher import RSACipher
 from poms.common.formula import safe_eval, ExpressionEvalError
 from poms.common.models import ProxyUser, ProxyRequest
-from poms.common.websockets import send_websocket_message
+# from poms.common.websockets import send_websocket_message
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.file_reports.models import FileReport
@@ -363,7 +363,8 @@ def get_item(scheme, result):
 
         try:
 
-            item_result = Model.objects.get(currency=result['currency'], pricing_policy=result['pricing_policy'],
+            item_result = Model.objects.get(currency=result['currency'],
+                                            pricing_policy=result['pricing_policy'],
                                             date=result['date'])
 
         except Exception as e:
@@ -871,16 +872,17 @@ def process_csv_file(master_user,
 
                 _l.debug('task_instance.processed_rows: %s', task_instance.processed_rows)
 
-                send_websocket_message(data={
-                    'type': 'simple_import_status',
-                    'payload': {'task_id': task_instance.task_id,
-                                'state': Task.STATUS_PENDING,
-                                'processed_rows': task_instance.processed_rows,
-                                'total_rows': task_instance.total_rows,
-                                'user_code': scheme.user_code,
-                                'file_name': task_instance.filename}
-                }, level="member",
-                    context={"master_user": master_user, "member": member})
+                # deprecated
+                # send_websocket_message(data={
+                #     'type': 'simple_import_status',
+                #     'payload': {'task_id': task_instance.task_id,
+                #                 'state': Task.STATUS_PENDING,
+                #                 'processed_rows': task_instance.processed_rows,
+                #                 'total_rows': task_instance.total_rows,
+                #                 'user_code': scheme.user_code,
+                #                 'file_name': task_instance.filename}
+                # }, level="member",
+                #     context={"master_user": master_user, "member": member})
 
                 # Deprecated
                 update_state(task_id=task_instance.task_id, state=Task.STATUS_PENDING,
@@ -1168,27 +1170,28 @@ class ValidateHandler:
             instance.stats_file_report = generate_file_report(instance, master_user, scheme, 'csv_import.validate',
                                                               'Simple Data Import Validation')
 
-            send_websocket_message(data={
-                'type': 'simple_import_status',
-                'payload': {'task_id': instance.task_id,
-                            'state': Task.STATUS_DONE,
-                            'processed_rows': instance.processed_rows,
-                            'total_rows': instance.total_rows,
-                            'file_name': instance.filename,
-                            'stats': instance.stats,
-                            'stats_file_report': instance.stats_file_report,
-                            'scheme': scheme.id,
-                            'scheme_object': {
-                                'id': scheme.id,
-                                'user_code': scheme.user_code,
-                                'classifier_handler': scheme.classifier_handler,
-                                'delimiter': scheme.delimiter,
-                                'error_handler': scheme.error_handler,
-                                'missing_data_handler': scheme.missing_data_handler,
-                                'mode': scheme.mode,
-                            }}
-            }, level="member",
-                context={"master_user": master_user, "member": member})
+            # deprecated
+            # send_websocket_message(data={
+            #     'type': 'simple_import_status',
+            #     'payload': {'task_id': instance.task_id,
+            #                 'state': Task.STATUS_DONE,
+            #                 'processed_rows': instance.processed_rows,
+            #                 'total_rows': instance.total_rows,
+            #                 'file_name': instance.filename,
+            #                 'stats': instance.stats,
+            #                 'stats_file_report': instance.stats_file_report,
+            #                 'scheme': scheme.id,
+            #                 'scheme_object': {
+            #                     'id': scheme.id,
+            #                     'user_code': scheme.user_code,
+            #                     'classifier_handler': scheme.classifier_handler,
+            #                     'delimiter': scheme.delimiter,
+            #                     'error_handler': scheme.error_handler,
+            #                     'missing_data_handler': scheme.missing_data_handler,
+            #                     'mode': scheme.mode,
+            #                 }}
+            # }, level="member",
+            #     context={"master_user": master_user, "member": member})
 
         return instance
 
@@ -1494,7 +1497,9 @@ class ImportHandler:
 
         except Exception as e:
 
-            _l.info("save_instance Exception %s" % e)
+            _l.error("save_instance Exception %s" % result)
+            _l.error("save_instance Exception %s" % e)
+            _l.error("save_instance Traceback %s" % traceback.format_exc())
 
             error_row['error_reaction'] = 'Continue import'
             error_row['level'] = 'error'
@@ -1573,7 +1578,7 @@ class ImportHandler:
 
         if mode == 'overwrite' and item:
 
-            # _l.debug('Overwrite instance')
+            _l.debug('Overwrite instance')
 
             self.overwrite_instance(scheme, result_item, item, error_handler, error_row, member, master_user)
 
@@ -1748,33 +1753,34 @@ class ImportHandler:
             instance.stats_file_report = generate_file_report(instance, master_user, scheme, 'csv_import.import',
                                                               'Simple Data Import', procedure_instance)
 
-            send_websocket_message(data={
-                'type': 'simple_import_status',
-                'payload': {'task_id': instance.task_id,
-                            'state': Task.STATUS_DONE,
-                            'processed_rows': instance.processed_rows,
-                            'total_rows': instance.total_rows,
-                            'file_name': instance.filename,
-                            'stats': instance.stats,
-                            'stats_file_report': instance.stats_file_report,
-                            'scheme': scheme.id,
-                            'scheme_object': {
-                                'id': scheme.id,
-                                'user_code': scheme.user_code,
-                                'classifier_handler': scheme.classifier_handler,
-                                'delimiter': scheme.delimiter,
-                                'error_handler': scheme.error_handler,
-                                'missing_data_handler': scheme.missing_data_handler,
-                                'mode': scheme.mode,
-                            }}
-            }, level="member",
-                context={"master_user": master_user, "member": member})
+            # DEPRECATED
+            # send_websocket_message(data={
+            #     'type': 'simple_import_status',
+            #     'payload': {'task_id': instance.task_id,
+            #                 'state': Task.STATUS_DONE,
+            #                 'processed_rows': instance.processed_rows,
+            #                 'total_rows': instance.total_rows,
+            #                 'file_name': instance.filename,
+            #                 'stats': instance.stats,
+            #                 'stats_file_report': instance.stats_file_report,
+            #                 'scheme': scheme.id,
+            #                 'scheme_object': {
+            #                     'id': scheme.id,
+            #                     'user_code': scheme.user_code,
+            #                     'classifier_handler': scheme.classifier_handler,
+            #                     'delimiter': scheme.delimiter,
+            #                     'error_handler': scheme.error_handler,
+            #                     'missing_data_handler': scheme.missing_data_handler,
+            #                     'mode': scheme.mode,
+            #                 }}
+            # }, level="member",
+            #     context={"master_user": master_user, "member": member})
 
-            send_websocket_message(data={'type': "simple_message",
-                                         'payload': {
-                                             'message': "Member %s imported data with Simple Import Service" % member.username
-                                         }
-                                         }, level="master_user", context={"master_user": master_user, "member": member})
+            # send_websocket_message(data={'type': "simple_message",
+            #                              'payload': {
+            #                                  'message': "Member %s imported data with Simple Import Service" % member.username
+            #                              }
+            #                              }, level="master_user", context={"master_user": master_user, "member": member})
 
             if execution_context and execution_context["started_by"] == 'procedure':
                 send_system_message(master_user=instance.master_user,
@@ -2013,6 +2019,9 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
             procedure_instance.save()
 
 
+
+# DEPRECATED DELETE SOON
+
 class UnifiedImportHandler():
 
     def __init__(self, instance, update_state, execution_context):
@@ -2130,15 +2139,16 @@ class UnifiedImportHandler():
 
             self.instance.processed_rows = item['original_row_index']
 
-            send_websocket_message(data={
-                'type': 'simple_import_status',
-                'payload': {'task_id': self.instance.task_id,
-                            'state': Task.STATUS_PENDING,
-                            'processed_rows': self.instance.processed_rows,
-                            'total_rows': self.instance.total_rows,
-                            'file_name': self.instance.filename}
-            }, level="member",
-                context={"master_user": self.instance.master_user, "member": self.instance.member})
+            # Deprecated
+            # send_websocket_message(data={
+            #     'type': 'simple_import_status',
+            #     'payload': {'task_id': self.instance.task_id,
+            #                 'state': Task.STATUS_PENDING,
+            #                 'processed_rows': self.instance.processed_rows,
+            #                 'total_rows': self.instance.total_rows,
+            #                 'file_name': self.instance.filename}
+            # }, level="member",
+            #     context={"master_user": self.instance.master_user, "member": self.instance.member})
 
     def unified_process_csv_file(self, file):
 
@@ -2235,24 +2245,25 @@ class UnifiedImportHandler():
 
             _l.info('self.instance.stats_file_report %s' % self.instance.stats_file_report)
 
-            send_websocket_message(data={
-                'type': 'simple_import_status',
-                'payload': {'task_id': self.instance.task_id,
-                            'state': Task.STATUS_DONE,
-                            'processed_rows': self.instance.processed_rows,
-                            'total_rows': self.instance.total_rows,
-                            'file_name': self.instance.filename,
-                            'stats': self.instance.stats,
-                            'stats_file_report': self.instance.stats_file_report
-                            }
-            }, level="member",
-                context={"master_user": master_user, "member": member})
+            # Deprecated
+            # send_websocket_message(data={
+            #     'type': 'simple_import_status',
+            #     'payload': {'task_id': self.instance.task_id,
+            #                 'state': Task.STATUS_DONE,
+            #                 'processed_rows': self.instance.processed_rows,
+            #                 'total_rows': self.instance.total_rows,
+            #                 'file_name': self.instance.filename,
+            #                 'stats': self.instance.stats,
+            #                 'stats_file_report': self.instance.stats_file_report
+            #                 }
+            # }, level="member",
+            #     context={"master_user": master_user, "member": member})
 
-            send_websocket_message(data={'type': "simple_message",
-                                         'payload': {
-                                             'message': "Member %s imported data with Simple Import Service" % member.username
-                                         }
-                                         }, level="master_user", context={"master_user": master_user, "member": member})
+            # send_websocket_message(data={'type': "simple_message",
+            #                              'payload': {
+            #                                  'message': "Member %s imported data with Simple Import Service" % member.username
+            #                              }
+            #                              }, level="master_user", context={"master_user": master_user, "member": member})
 
             if self.execution_context and self.execution_context["started_by"] == 'procedure':
                 send_system_message(master_user=self.instance.master_user,

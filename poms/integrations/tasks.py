@@ -39,7 +39,7 @@ from poms.common.crypto.RSACipher import RSACipher
 from poms.common.formula import ExpressionEvalError
 from poms.common.jwt import encode_with_jwt
 from poms.common.models import ProxyUser, ProxyRequest
-from poms.common.websockets import send_websocket_message
+# from poms.common.websockets import send_websocket_message
 from poms.counterparties.models import Counterparty, Responsible
 from poms.counterparties.serializers import CounterpartySerializer
 from poms.csv_import.handlers import handler_instrument_object
@@ -1982,24 +1982,25 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
 
         # TODO Generate File Report Here
 
-        send_websocket_message(data={
-            'type': 'transaction_import_status',
-            'payload': {'task_id': task_id,
-                        'state': Task.STATUS_DONE,
-                        'error_rows': result_object['error_rows'],
-                        'total_rows': result_object['total_rows'],
-                        'processed_rows': result_object['processed_rows'],
-                        'stats_file_report': result_object['stats_file_report'],
-                        'scheme': scheme.id,
-                        'scheme_object': {
-                            'id': scheme.id,
-                            'scheme_name': scheme.user_code,
-                            'delimiter': scheme.delimiter,
-                            'error_handler': scheme.error_handler,
-                            'missing_data_handler': scheme.missing_data_handler
-                        }}
-        }, level="member",
-            context={"master_user": master_user, "member": member})
+        # DEPRECATED
+        # send_websocket_message(data={
+        #     'type': 'transaction_import_status',
+        #     'payload': {'task_id': task_id,
+        #                 'state': Task.STATUS_DONE,
+        #                 'error_rows': result_object['error_rows'],
+        #                 'total_rows': result_object['total_rows'],
+        #                 'processed_rows': result_object['processed_rows'],
+        #                 'stats_file_report': result_object['stats_file_report'],
+        #                 'scheme': scheme.id,
+        #                 'scheme_object': {
+        #                     'id': scheme.id,
+        #                     'scheme_name': scheme.user_code,
+        #                     'delimiter': scheme.delimiter,
+        #                     'error_handler': scheme.error_handler,
+        #                     'missing_data_handler': scheme.missing_data_handler
+        #                 }}
+        # }, level="member",
+        #     context={"master_user": master_user, "member": member})
 
         celery_task.result_object = result_object
 
@@ -2669,19 +2670,20 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                 else:
                     total_rows = instance.total_rows
 
-                send_websocket_message(data={
-                    'type': 'transaction_import_status',
-                    'payload': {
-                        'parent_task_id': celery_task.parent_id,
-                        'task_id': instance.task_id,
-                        'state': Task.STATUS_PENDING,
-                        'processed_rows': instance.processed_rows,
-                        'parent_total_rows': total_rows,
-                        'total_rows': instance.total_rows,
-                        'scheme_name': scheme.user_code,
-                        'file_name': instance.file_name}
-                }, level="member",
-                    context={"master_user": master_user, "member": member})
+                # DEPRECATED
+                # send_websocket_message(data={
+                #     'type': 'transaction_import_status',
+                #     'payload': {
+                #         'parent_task_id': celery_task.parent_id,
+                #         'task_id': instance.task_id,
+                #         'state': Task.STATUS_PENDING,
+                #         'processed_rows': instance.processed_rows,
+                #         'parent_total_rows': total_rows,
+                #         'total_rows': instance.total_rows,
+                #         'scheme_name': scheme.user_code,
+                #         'file_name': instance.file_name}
+                # }, level="member",
+                #     context={"master_user": master_user, "member": member})
 
         def _row_count_csv(file):
 
@@ -2806,28 +2808,29 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
             else:
                 total_rows = instance.total_rows
 
-            send_websocket_message(data={
-                'type': 'transaction_import_status',
-                'payload': {
-                    'parent_task_id': celery_task.parent_id,
-                    'task_id': instance.task_id,
-                    'state': Task.STATUS_DONE,
-                    'processed_rows': instance.processed_rows,
-                    'parent_total_rows': total_rows,
-                    'total_rows': instance.total_rows,
-                    'file_name': instance.file_name,
-                    'error_rows': instance.error_rows,
-                    'stats_file_report': instance.stats_file_report,
-                    'scheme': scheme.id,
-                    'scheme_object': {
-                        'id': scheme.id,
-                        'scheme_name': scheme.user_code,
-                        'delimiter': scheme.delimiter,
-                        'error_handler': scheme.error_handler,
-                        'missing_data_handler': scheme.missing_data_handler
-                    }}
-            }, level="member",
-                context={"master_user": master_user, "member": member})
+            # DEPRECATED
+            # send_websocket_message(data={
+            #     'type': 'transaction_import_status',
+            #     'payload': {
+            #         'parent_task_id': celery_task.parent_id,
+            #         'task_id': instance.task_id,
+            #         'state': Task.STATUS_DONE,
+            #         'processed_rows': instance.processed_rows,
+            #         'parent_total_rows': total_rows,
+            #         'total_rows': instance.total_rows,
+            #         'file_name': instance.file_name,
+            #         'error_rows': instance.error_rows,
+            #         'stats_file_report': instance.stats_file_report,
+            #         'scheme': scheme.id,
+            #         'scheme_object': {
+            #             'id': scheme.id,
+            #             'scheme_name': scheme.user_code,
+            #             'delimiter': scheme.delimiter,
+            #             'error_handler': scheme.error_handler,
+            #             'missing_data_handler': scheme.missing_data_handler
+            #         }}
+            # }, level="member",
+            #     context={"master_user": master_user, "member": member})
 
             result_object = {
                 'processed_rows': instance.processed_rows,
@@ -3070,24 +3073,25 @@ def complex_transaction_csv_file_import_validate_parallel_finish(self, task_id):
                                                                   'transaction_import.validate',
                                                                   'Transaction Import Validation', False)
 
-        send_websocket_message(data={
-            'type': 'transaction_import_status',
-            'payload': {'task_id': task_id,
-                        'state': Task.STATUS_DONE,
-                        'error_rows': result_object['error_rows'],
-                        'total_rows': result_object['total_rows'],
-                        'processed_rows': result_object['processed_rows'],
-                        'stats_file_report': result_object['stats_file_report'],
-                        'scheme': scheme.id,
-                        'scheme_object': {
-                            'id': scheme.id,
-                            'scheme_name': scheme.user_code,
-                            'delimiter': scheme.delimiter,
-                            'error_handler': scheme.error_handler,
-                            'missing_data_handler': scheme.missing_data_handler
-                        }}
-        }, level="member",
-            context={"master_user": master_user, "member": member})
+        # DEPRECATED
+        # send_websocket_message(data={
+        #     'type': 'transaction_import_status',
+        #     'payload': {'task_id': task_id,
+        #                 'state': Task.STATUS_DONE,
+        #                 'error_rows': result_object['error_rows'],
+        #                 'total_rows': result_object['total_rows'],
+        #                 'processed_rows': result_object['processed_rows'],
+        #                 'stats_file_report': result_object['stats_file_report'],
+        #                 'scheme': scheme.id,
+        #                 'scheme_object': {
+        #                     'id': scheme.id,
+        #                     'scheme_name': scheme.user_code,
+        #                     'delimiter': scheme.delimiter,
+        #                     'error_handler': scheme.error_handler,
+        #                     'missing_data_handler': scheme.missing_data_handler
+        #                 }}
+        # }, level="member",
+        #     context={"master_user": master_user, "member": member})
 
         celery_task.result_object = result_object
 
@@ -3619,19 +3623,20 @@ def complex_transaction_csv_file_import_validate(self, task_id):
                 instance.processed_rows = instance.processed_rows + 1
                 # instance.save()
 
-                send_websocket_message(data={
-                    'type': 'transaction_import_status',
-                    'payload': {
-                        'parent_task_id': celery_task.parent_id,
-                        'task_id': instance.task_id,
-                        'state': Task.STATUS_PENDING,
-                        'processed_rows': instance.processed_rows,
-                        'parent_total_rows': parent_celery_task.options_object['total_rows'],
-                        'total_rows': instance.total_rows,
-                        'scheme_name': scheme.user_code,
-                        'file_name': instance.file_name}
-                }, level="member",
-                    context={"master_user": master_user, "member": member})
+                # DEPRECATED
+                # send_websocket_message(data={
+                #     'type': 'transaction_import_status',
+                #     'payload': {
+                #         'parent_task_id': celery_task.parent_id,
+                #         'task_id': instance.task_id,
+                #         'state': Task.STATUS_PENDING,
+                #         'processed_rows': instance.processed_rows,
+                #         'parent_total_rows': parent_celery_task.options_object['total_rows'],
+                #         'total_rows': instance.total_rows,
+                #         'scheme_name': scheme.user_code,
+                #         'file_name': instance.file_name}
+                # }, level="member",
+                #     context={"master_user": master_user, "member": member})
 
         def _row_count_xlsx(file):
 
@@ -3708,28 +3713,29 @@ def complex_transaction_csv_file_import_validate(self, task_id):
         # instance.stats_file_report = generate_file_report(instance, master_user, 'transaction_import.validate',
         #                                                   'Transaction Import Validation')
 
-        send_websocket_message(data={
-            'type': 'transaction_import_status',
-            'payload': {
-                'parent_task_id': celery_task.parent_id,
-                'task_id': instance.task_id,
-                'state': Task.STATUS_DONE,
-                'processed_rows': instance.processed_rows,
-                'parent_total_rows': parent_celery_task.options_object['total_rows'],
-                'total_rows': instance.total_rows,
-                'file_name': instance.file_name,
-                'error_rows': instance.error_rows,
-                'stats_file_report': instance.stats_file_report,
-                'scheme': scheme.id,
-                'scheme_object': {
-                    'id': scheme.id,
-                    'scheme_name': scheme.user_code,
-                    'delimiter': scheme.delimiter,
-                    'error_handler': scheme.error_handler,
-                    'missing_data_handler': scheme.missing_data_handler
-                }}
-        }, level="member",
-            context={"master_user": master_user, "member": member})
+        # DEPRECATED
+        # send_websocket_message(data={
+        #     'type': 'transaction_import_status',
+        #     'payload': {
+        #         'parent_task_id': celery_task.parent_id,
+        #         'task_id': instance.task_id,
+        #         'state': Task.STATUS_DONE,
+        #         'processed_rows': instance.processed_rows,
+        #         'parent_total_rows': parent_celery_task.options_object['total_rows'],
+        #         'total_rows': instance.total_rows,
+        #         'file_name': instance.file_name,
+        #         'error_rows': instance.error_rows,
+        #         'stats_file_report': instance.stats_file_report,
+        #         'scheme': scheme.id,
+        #         'scheme_object': {
+        #             'id': scheme.id,
+        #             'scheme_name': scheme.user_code,
+        #             'delimiter': scheme.delimiter,
+        #             'error_handler': scheme.error_handler,
+        #             'missing_data_handler': scheme.missing_data_handler
+        #         }}
+        # }, level="member",
+        #     context={"master_user": master_user, "member": member})
 
         result_object = {
             'processed_rows': instance.processed_rows,

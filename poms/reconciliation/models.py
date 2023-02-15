@@ -7,6 +7,10 @@ from poms.users.models import MasterUser
 
 
 class TransactionTypeReconField(models.Model):
+    '''
+        Quite old code, now possibly deprecated
+        Need new concept and implementation
+    '''
     transaction_type = models.ForeignKey(TransactionType, related_name='recon_fields',
                                          verbose_name=gettext_lazy('transaction type'), on_delete=models.CASCADE)
 

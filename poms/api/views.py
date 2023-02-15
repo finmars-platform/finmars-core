@@ -10,12 +10,13 @@ import pytz
 from babel import Locale
 from babel.dates import get_timezone, get_timezone_gmt, get_timezone_name
 from django.conf import settings
+from django.http import HttpResponse
 from django.utils import translation, timezone
+from django.views.static import serve
 from rest_framework import response, schemas
 from rest_framework import status
-from rest_framework.response import Response
 from rest_framework.decorators import action
-from django.http import HttpResponse, Http404
+from rest_framework.response import Response
 
 from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer
 from poms.common.utils import get_list_of_business_days_between_two_dates, get_closest_bday_of_yesterday, \
@@ -24,6 +25,7 @@ from poms.common.views import AbstractViewSet, AbstractApiView
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory, PricingPolicy, Instrument
 from poms.schedules.models import ScheduleInstance
+from poms.workflows_handler import get_workflows_list
 
 _languages = [Language(code, name) for code, name in settings.LANGUAGES]
 
@@ -608,7 +610,6 @@ class SystemInfoViewSet(AbstractViewSet):
             ]
         })
 
-
         shell_cmd = 'ps aux | grep [d]jango_celery_beat'
         c = pexpect.spawn('/bin/bash', ['-c', shell_cmd])
         pexpect_result = c.read()
@@ -641,7 +642,6 @@ class SystemLogsViewSet(AbstractViewSet):
 
     def list(self, request, *args, **kwargs):
         result = {}
-
 
         shell_cmd = 'ls -la /var/log/finmars/backend/  | awk \'{print $9}\''
         c = pexpect.spawn('/bin/bash', ['-c', shell_cmd])
@@ -680,6 +680,15 @@ class SystemLogsViewSet(AbstractViewSet):
 class CalendarEventsViewSet(AbstractViewSet):
 
     def list(self, request, *args, **kwargs):
+        '''
+        Method to create Events list for Finmars Web Interface Calendar Page
+        It is aggregates Celery Tasks, Data Procedures, Pricing Procedures, Schedules
+        and Workflows in future
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        '''
 
         from poms.schedules.models import Schedule
         from poms.celery_tasks.models import CeleryTask
@@ -699,12 +708,12 @@ class CalendarEventsViewSet(AbstractViewSet):
         if not date_from:
             date_from = datetime.today().replace(day=1)
         else:
-            date_from = datetime.strptime(date_from, '%Y-%m-%d')
+            date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
 
         if not date_to:
             date_to = last_day_of_month(date_from)
         else:
-            date_to = datetime.strptime(date_to, '%Y-%m-%d')
+            date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
 
         if not filter:
             filter = ['data_procedure', 'expression_procedure', 'pricing_procedure', 'celery_task']
@@ -824,18 +833,22 @@ class CalendarEventsViewSet(AbstractViewSet):
 
                 if instance.action_verbose:
                     if instance.provider_verbose:
-                        item['title'] = instance.provider_verbose + ': ' + instance.action_verbose
+                        title = instance.provider_verbose + ': ' + instance.action_verbose
                     else:
-                        item['title'] = instance.action_verbose
+                        title = instance.action_verbose
                 else:
-                    title = '[' + str(instance.id) + ']'
+
+                    title = ''
 
                     if instance.action:
                         title = title + ' ' + instance.action
-                    if instance.member:
-                        title = title + ' by ' + instance.member.username
 
-                    item['title'] = title
+                if instance.member:
+                    title = title + ' by ' + instance.member.username
+
+                title = title + ' [' + str(instance.id) + ']'
+
+                item['title'] = title
 
                 results.append(item)
 
@@ -873,18 +886,21 @@ class CalendarEventsViewSet(AbstractViewSet):
 
                 if instance.action_verbose:
                     if instance.provider_verbose:
-                        item['title'] = instance.provider_verbose + ': ' + instance.action_verbose
+                        title = instance.provider_verbose + ': ' + instance.action_verbose
                     else:
-                        item['title'] = instance.action_verbose
+                        title = instance.action_verbose
                 else:
-                    title = '[' + str(instance.id) + ']'
+                    title = ''
 
                     if instance.action:
                         title = title + ' ' + instance.action
-                    if instance.member:
-                        title = title + ' by ' + instance.member.username
 
-                    item['title'] = title
+                if instance.member:
+                    title = title + ' by ' + instance.member.username
+
+                title = title + ' [' + str(instance.id) + ']'
+
+                item['title'] = title
 
                 results.append(item)
 
@@ -923,18 +939,20 @@ class CalendarEventsViewSet(AbstractViewSet):
 
                 if instance.action_verbose:
                     if instance.provider_verbose:
-                        item['title'] = instance.provider_verbose + ': ' + instance.action_verbose
+                        title = instance.provider_verbose + ': ' + instance.action_verbose
                     else:
-                        item['title'] = instance.action_verbose
+                        title = instance.action_verbose
                 else:
-
-                    title = '[' + str(instance.id) + ']'
+                    title = ''
                     if instance.action:
                         title = title + ' ' + instance.action
-                    if instance.member:
-                        title = title + ' by ' + instance.member.username
 
-                    item['title'] = title
+                if instance.member:
+                    title = title + ' by ' + instance.member.username
+
+                title = title + ' [' + str(instance.id) + ']'
+
+                item['title'] = title
 
                 results.append(item)
 
@@ -968,7 +986,7 @@ class CalendarEventsViewSet(AbstractViewSet):
                     item['backgroundColor'] = 'blue'
 
                 if task.verbose_name:
-                    item['title'] = task.verbose_name
+                    title = task.verbose_name
                 else:
 
                     title = ''
@@ -976,43 +994,63 @@ class CalendarEventsViewSet(AbstractViewSet):
                     if task.type:
                         title = title + ' ' + task.type
 
-                    if task.member:
-                        title = title + ' by ' + task.member.username
+                if task.member:
+                    title = title + ' by ' + task.member.username
 
-                    if not title:
-                        title = '[' + str(task.id) + ']'
+                title = title + ' [' + str(task.id) + ']'
 
-                    item['title'] = title
-
-                results.append(item)
-
-        # Manual System Message
-
-        if 'system_message' in filter:
-
-            messages = SystemMessage.objects.filter(created__gte=date_from, created__lte=date_to,
-                                                    title__icontains='manual')
-
-            for message in messages:
-                item = {
-                    'title': message.title,
-                    'start': message.created,
-                    'classNames': ['user'],
-                    'extendedProps': {
-                        'type': 'system_message',
-                        'id': message.id,
-                        'payload': {
-                            'type': message.type,
-                            'section': message.section,
-                            'description': message.description
-                        }
-                    }
-                }
+                item['title'] = title
 
                 results.append(item)
+
+        if 'workflow' in filter:
+
+            try:
+
+               workflows = get_workflows_list(date_from, date_to)
+
+               for workflow in workflows:
+                   item = {
+                       'start': workflow['created'],
+                       'classNames': ['user'],
+                       'extendedProps': {
+                           'type': 'workflow',
+                           'id': workflow['id'],
+                           'payload': {
+                               'status': workflow['status'],
+                               'payload': workflow['payload']
+                           }
+                       }
+                   }
+
+                   if workflow['status'] == 'error':
+                       item['backgroundColor'] = 'red'
+
+                   if workflow['status'] == 'pending':
+                       item['backgroundColor'] = 'blue'
+
+                   if workflow['status'] == 'success':
+                       item['backgroundColor'] = 'green'
+
+                   title = workflow['project'] + '.' + workflow['name']
+                   title = title + ' [' + str(workflow['id']) + ']'
+
+                   item['title'] = title
+
+                   results.append(item)
+
+            except Exception as e:
+                _l.error("Could not fetch workflows %s" % e)
+
 
         response = {}
 
         response['results'] = results
 
         return Response(response)
+
+
+def serve_docs(request, path, **kwargs):
+    kwargs['document_root'] = settings.DOCS_ROOT
+
+    return serve(request, path, **kwargs)

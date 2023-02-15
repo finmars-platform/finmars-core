@@ -25,13 +25,16 @@ SERVER_TYPE = ENV_STR('SERVER_TYPE', 'local')
 USE_DEBUGGER = ENV_STR('USE_DEBUGGER', False)
 BASE_API_URL = ENV_STR('BASE_API_URL', 'space00000')
 HOST_LOCATION = ENV_STR('HOST_LOCATION', 'AWS')  # azure, aws, or custom, only log purpose
-DOMAIN_NAME = ENV_STR('DOMAIN_NAME', 'finmars.com')
+DOMAIN_NAME = ENV_STR('DOMAIN_NAME', 'finmars.com') # looks like HOST_URL, maybe refactor required
+HOST_URL = ENV_STR('HOST_URL', 'https://finmars.com') #
 JWT_SECRET_KEY = ENV_STR('JWT_SECRET_KEY', None)
 VERIFY_SSL = ENV_BOOL('VERIFY_SSL', True)
+ENABLE_DEV_DOCUMENTATION = ENV_BOOL('ENABLE_DEV_DOCUMENTATION', False)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = ENV_BOOL('DEBUG', False)
 USE_FILESYSTEM_STORAGE = ENV_BOOL('USE_FILESYSTEM_STORAGE', False)
 MEDIA_ROOT = os.path.join(BASE_DIR, 'finmars_data')
+DOCS_ROOT = os.path.join(BASE_DIR, 'docs/build/html')
 DROP_VIEWS = ENV_BOOL('DROP_VIEWS', True)
 AUTHORIZER_URL = ENV_STR('AUTHORIZER_URL', None)
 CBONDS_BROKER_URL = os.environ.get('CBONDS_BROKER_URL', None)
@@ -626,7 +629,7 @@ if SERVER_TYPE == 'local' and USE_DEBUGGER:
 
 KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'https://eu-central.finmars.com')
 KEYCLOAK_REALM = os.environ.get('KEYCLOAK_REALM', 'finmars')
-KEYCLOAK_CLIENT_ID = os.environ.get('KEYCLOAK_CLIENT_ID', 'finmars-backend')
+KEYCLOAK_CLIENT_ID = os.environ.get('KEYCLOAK_CLIENT_ID', 'finmars-backend') # not required anymore, api works in Bearer-only mod
 KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY',
                                             None)  # not required anymore, api works in Bearer-only mod
 

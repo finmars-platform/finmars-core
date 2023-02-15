@@ -9,6 +9,14 @@ from poms.users.models import MasterUser
 
 
 class LayoutArchetype(models.Model):
+    '''
+    Extremely Deprecated entity
+    Once there was an Idea to fix users layouts (because we still do not have backward compatibility with layouts)
+    So this entity is provide actual information of layout, and if users layout is out of date, it initing process of syncing
+    which was extremely buggy
+
+    Need to be deleted soon
+    '''
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=gettext_lazy('name'))
     json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
     master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)

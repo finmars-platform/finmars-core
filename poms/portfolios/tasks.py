@@ -26,6 +26,16 @@ celery_logger = get_task_logger(__name__)
 
 
 def calculate_simple_balance_report(report_date, portfolio_register, pricing_policy):
+    '''
+
+    Probably is duplicated method. Here we just getting Balance Report instance
+    on specific date, portfolio and pricing policy
+
+    :param report_date:
+    :param portfolio_register:
+    :param pricing_policy:
+    :return:
+    '''
     instance = Report(master_user=portfolio_register.master_user)
 
     _l.info('calculate_simple_balance_report.report_date %s' % report_date)
@@ -100,6 +110,18 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
 # TODO Refactor to task_id
 @shared_task(name='portfolios.calculate_portfolio_register_record', bind=True)
 def calculate_portfolio_register_record(self, portfolio_ids=[]):
+    '''
+
+    ==== Hope this thing will move into workflow/olap ASAP ====
+
+    Now as it a part of Finmars Backend project its specific task over portfolio
+    The idea is to collect all Cash In/Cash Out transactions and create from them RegisterRecord instances
+    at this points we also calculate number of shares for each Register Record
+
+    :param self:
+    :param portfolio_ids:
+    :return:
+    '''
     _l.info('calculate_portfolio_register_record.init')
     _l.info('calculate_portfolio_register_record.portfolios %s' % portfolio_ids)
 
@@ -310,6 +332,27 @@ def calculate_portfolio_register_record(self, portfolio_ids=[]):
 # TODO Refactor to task_id
 @shared_task(name='portfolios.calculate_portfolio_register_price_history', bind=True)
 def calculate_portfolio_register_price_history(self, member=None, date_from=None, date_to=None, portfolios=None):
+
+    '''
+
+    ==== Hope this thing will move into workflow/olap ASAP ====
+
+    It should be triggered after calculate_portfolio_register_record finished
+
+    This purpose of this task is to get PriceHistory.principal_price of Portfolio
+
+    Later on it would be used in Performance Report
+
+    Also it calculates NAV and Cash Flows and saves it in Price History
+
+    :param self:
+    :param member:
+    :param date_from:
+    :param date_to:
+    :param portfolios:
+    :return:
+    '''
+
     from poms.celery_tasks.models import CeleryTask
 
     _l.info('calculate_portfolio_register_price_history.date_from %s' % date_from)

@@ -36,7 +36,7 @@ from poms.common.mixins import UpdateModelMixinExt, DestroyModelFakeMixin
 from poms.common.pagination import BigPagination
 from poms.common.utils import datetime_now
 from poms.common.views import AbstractModelViewSet, AbstractApiView, AbstractViewSet, AbstractAsyncViewSet
-from poms.common.websockets import send_websocket_message
+# from poms.common.websockets import send_websocket_message
 from poms.complex_import.models import ComplexImportScheme
 from poms.counterparties.models import CounterpartyGroup, Counterparty, ResponsibleGroup, Responsible
 from poms.currencies.models import Currency
@@ -106,20 +106,21 @@ class PingViewSet(AbstractApiView, ViewSet):
         })
         return Response(serializer.data)
 
-    @action(detail=False, methods=('Get',), url_path='ws')
-    def send_message(self, request):
-
-        send_websocket_message(data={"type": 'simple_message', "payload": {"message": "pong"}}, level="master_user",
-                               context={"request": request})
-
-        serializer = PingSerializer(instance={
-            'message': 'pong',
-            'version': request.version,
-            'is_authenticated': request.user.is_authenticated,
-            'is_anonymous': request.user.is_anonymous,
-            'now': timezone.template_localtime(timezone.now()),
-        })
-        return Response(serializer.data)
+    # DEPRECATED
+    # @action(detail=False, methods=('Get',), url_path='ws')
+    # def send_message(self, request):
+    #
+    #     send_websocket_message(data={"type": 'simple_message', "payload": {"message": "pong"}}, level="master_user",
+    #                            context={"request": request})
+    #
+    #     serializer = PingSerializer(instance={
+    #         'message': 'pong',
+    #         'version': request.version,
+    #         'is_authenticated': request.user.is_authenticated,
+    #         'is_anonymous': request.user.is_anonymous,
+    #         'now': timezone.template_localtime(timezone.now()),
+    #     })
+    #     return Response(serializer.data)
 
 
 class ProtectedPingViewSet(PingViewSet):

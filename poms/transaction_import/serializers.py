@@ -36,6 +36,7 @@ class TransactionImportProcessItemSerializer(serializers.Serializer):
     raw_inputs = serializers.JSONField(allow_null=False)
     conversion_inputs = serializers.JSONField(allow_null=False)
     inputs = serializers.JSONField(allow_null=False)
+    transaction_inputs = serializers.JSONField(allow_null=False)
 
     processed_rule_scenarios = TransactionImportRuleScenarioSerializer(many=True)
     booked_transactions = TransactionImportBookedTransactionSerializer(many=True)

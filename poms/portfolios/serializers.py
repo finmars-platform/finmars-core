@@ -7,7 +7,6 @@ from rest_framework import serializers
 from poms.accounts.fields import AccountField
 from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.counterparties.fields import ResponsibleField, CounterpartyField
-from poms.currencies.serializers import CurrencyViewSerializer
 from poms.instruments.handlers import InstrumentTypeProcess
 from poms.instruments.models import InstrumentType, Instrument
 from poms.instruments.serializers import InstrumentViewSerializer, PricingPolicySerializer, InstrumentSerializer
@@ -44,6 +43,7 @@ class PortfolioPortfolioRegisterSerializer(ModelWithAttributesSerializer,
     def __init__(self, *args, **kwargs):
         super(PortfolioPortfolioRegisterSerializer, self).__init__(*args, **kwargs)
 
+        from poms.currencies.serializers import CurrencyViewSerializer
         self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
 
         self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
@@ -234,6 +234,7 @@ class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWith
         super(PortfolioRegisterSerializer, self).__init__(*args, **kwargs)
 
         from poms.portfolios.serializers import PortfolioViewSerializer
+        from poms.currencies.serializers import CurrencyViewSerializer
         self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
         self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
         self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
@@ -315,6 +316,7 @@ class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWi
         super(PortfolioRegisterEvSerializer, self).__init__(*args, **kwargs)
 
         from poms.portfolios.serializers import PortfolioViewSerializer
+        from poms.currencies.serializers import CurrencyViewSerializer
         self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
         self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
         self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
@@ -374,6 +376,7 @@ class PortfolioRegisterRecordEvSerializer(ModelWithObjectPermissionSerializer, M
         self.fields['portfolio_register_object'] = PortfolioRegisterSerializer(source='portfolio_register',
                                                                                read_only=True)
 
+        from poms.currencies.serializers import CurrencyViewSerializer
         self.fields['cash_currency_object'] = CurrencyViewSerializer(source='cash_currency', read_only=True)
         self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
 
