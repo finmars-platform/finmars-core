@@ -251,6 +251,12 @@ def serialize_transaction_report_item(item):
 
     result['complex_transaction.status.name'] = item['complex_transaction_status_name']
 
+    result['entry_account'] = item['entry_account']
+    result['entry_strategy'] = item['entry_strategy']
+    result['entry_item'] = item['entry_item']
+    result['entry_amount'] = item['entry_amount']
+    result['entry_item_type'] = item['entry_item_type']
+
     return result
 
 

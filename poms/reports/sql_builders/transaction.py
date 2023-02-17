@@ -59,9 +59,9 @@ class TransactionReportBuilderSql:
 
         return self.instance
 
-    def build_items(self):
+    def build_complex_transaction_level_items(self):
 
-        _l.debug("build items")
+        _l.info("build_complex_transaction_level_items")
 
         with connection.cursor() as cursor:
 
@@ -69,84 +69,85 @@ class TransactionReportBuilderSql:
             date_filter_sql_string = get_transaction_report_date_filter_sql_string(self.instance)
 
             query = """
-                SELECT
-                  -- transaction fields
-                  t.*,
-                  -- complex transaction fields
-                  tc.status_id as complex_transaction_status,
-                  tc.code as complex_transaction_code,
-                  tc.text as complex_transaction_text,
-                  tc.date as complex_transaction_date,
-                  tc.transaction_unique_code as transaction_unique_code,
-                  tc.is_locked as is_locked,
-                  tc.is_canceled as is_canceled,
-                  -- complex transaction user fields
-                  tc.user_text_1 as complex_transaction_user_text_1,
-                  tc.user_text_2 as complex_transaction_user_text_2,
-                  tc.user_text_3 as complex_transaction_user_text_3,
-                  tc.user_text_4 as complex_transaction_user_text_4,
-                  tc.user_text_5 as complex_transaction_user_text_5,
-                  tc.user_text_6 as complex_transaction_user_text_6,
-                  tc.user_text_7 as complex_transaction_user_text_7,
-                  tc.user_text_8 as complex_transaction_user_text_8,
-                  tc.user_text_9 as complex_transaction_user_text_9,
-                  tc.user_text_10 as complex_transaction_user_text_10,
-                  tc.user_text_11 as complex_transaction_user_text_11,
-                  tc.user_text_12 as complex_transaction_user_text_12,
-                  tc.user_text_13 as complex_transaction_user_text_13,
-                  tc.user_text_14 as complex_transaction_user_text_14,
-                  tc.user_text_15 as complex_transaction_user_text_15,
-                  tc.user_text_16 as complex_transaction_user_text_16,
-                  tc.user_text_17 as complex_transaction_user_text_17,
-                  tc.user_text_18 as complex_transaction_user_text_18,
-                  tc.user_text_19 as complex_transaction_user_text_19,
-                  tc.user_text_20 as complex_transaction_user_text_20,
-                  
-                  tc.user_number_1 as complex_transaction_user_number_1,
-                  tc.user_number_2 as complex_transaction_user_number_2,
-                  tc.user_number_3 as complex_transaction_user_number_3,
-                  tc.user_number_4 as complex_transaction_user_number_4,
-                  tc.user_number_5 as complex_transaction_user_number_5,
-                  tc.user_number_6 as complex_transaction_user_number_6,
-                  tc.user_number_7 as complex_transaction_user_number_7,
-                  tc.user_number_8 as complex_transaction_user_number_8,
-                  tc.user_number_9 as complex_transaction_user_number_9,
-                  tc.user_number_10 as complex_transaction_user_number_10,
-                  tc.user_number_11 as complex_transaction_user_number_11,
-                  tc.user_number_12 as complex_transaction_user_number_12,
-                  tc.user_number_13 as complex_transaction_user_number_13,
-                  tc.user_number_14 as complex_transaction_user_number_14,
-                  tc.user_number_15 as complex_transaction_user_number_15,
-                  tc.user_number_16 as complex_transaction_user_number_16,
-                  tc.user_number_17 as complex_transaction_user_number_17,
-                  tc.user_number_18 as complex_transaction_user_number_18,
-                  tc.user_number_19 as complex_transaction_user_number_19,
-                  tc.user_number_20 as complex_transaction_user_number_20,
-                  
-                  tc.user_date_1 as complex_transaction_user_date_1,
-                  tc.user_date_2 as complex_transaction_user_date_2,
-                  tc.user_date_3 as complex_transaction_user_date_3,
-                  tc.user_date_4 as complex_transaction_user_date_4,
-                  tc.user_date_5 as complex_transaction_user_date_5,
-                  
-                  -- complex transaction transaction type fields
-                  tt.id as transaction_type_id,
-                  tt.user_code as transaction_type_user_code,
-                  tt.name as transaction_type_name,
-                  tt.short_name as transaction_type_short_name,
-                  -- complex transaction transaction type group fields
-                  tt2.name as transaction_type_group_name,
-                  
-                  cts.name as complex_transaction_status_name
-                FROM transactions_transaction as t
-                INNER JOIN transactions_complextransaction tc on t.complex_transaction_id = tc.id
-                INNER JOIN transactions_transactiontype tt on tc.transaction_type_id = tt.id
-                INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
-                INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
-                WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND tc.status_id IN {statuses} {filter_sql_string}
-                
-                
-            """
+                    SELECT
+                      -- transaction fields
+                      -- t.*,-- exclude transaction fields, only complex transaction fields left
+                      -- complex transaction fields
+                      tc.status_id as complex_transaction_status,
+                      tc.code as complex_transaction_code,
+                      tc.text as complex_transaction_text,
+                      tc.date as complex_transaction_date,
+                      tc.transaction_unique_code as transaction_unique_code,
+                      tc.is_locked as is_locked,
+                      tc.is_canceled as is_canceled,
+                      -- complex transaction user fields
+                      tc.user_text_1 as complex_transaction_user_text_1,
+                      tc.user_text_2 as complex_transaction_user_text_2,
+                      tc.user_text_3 as complex_transaction_user_text_3,
+                      tc.user_text_4 as complex_transaction_user_text_4,
+                      tc.user_text_5 as complex_transaction_user_text_5,
+                      tc.user_text_6 as complex_transaction_user_text_6,
+                      tc.user_text_7 as complex_transaction_user_text_7,
+                      tc.user_text_8 as complex_transaction_user_text_8,
+                      tc.user_text_9 as complex_transaction_user_text_9,
+                      tc.user_text_10 as complex_transaction_user_text_10,
+                      tc.user_text_11 as complex_transaction_user_text_11,
+                      tc.user_text_12 as complex_transaction_user_text_12,
+                      tc.user_text_13 as complex_transaction_user_text_13,
+                      tc.user_text_14 as complex_transaction_user_text_14,
+                      tc.user_text_15 as complex_transaction_user_text_15,
+                      tc.user_text_16 as complex_transaction_user_text_16,
+                      tc.user_text_17 as complex_transaction_user_text_17,
+                      tc.user_text_18 as complex_transaction_user_text_18,
+                      tc.user_text_19 as complex_transaction_user_text_19,
+                      tc.user_text_20 as complex_transaction_user_text_20,
+                      
+                      tc.user_number_1 as complex_transaction_user_number_1,
+                      tc.user_number_2 as complex_transaction_user_number_2,
+                      tc.user_number_3 as complex_transaction_user_number_3,
+                      tc.user_number_4 as complex_transaction_user_number_4,
+                      tc.user_number_5 as complex_transaction_user_number_5,
+                      tc.user_number_6 as complex_transaction_user_number_6,
+                      tc.user_number_7 as complex_transaction_user_number_7,
+                      tc.user_number_8 as complex_transaction_user_number_8,
+                      tc.user_number_9 as complex_transaction_user_number_9,
+                      tc.user_number_10 as complex_transaction_user_number_10,
+                      tc.user_number_11 as complex_transaction_user_number_11,
+                      tc.user_number_12 as complex_transaction_user_number_12,
+                      tc.user_number_13 as complex_transaction_user_number_13,
+                      tc.user_number_14 as complex_transaction_user_number_14,
+                      tc.user_number_15 as complex_transaction_user_number_15,
+                      tc.user_number_16 as complex_transaction_user_number_16,
+                      tc.user_number_17 as complex_transaction_user_number_17,
+                      tc.user_number_18 as complex_transaction_user_number_18,
+                      tc.user_number_19 as complex_transaction_user_number_19,
+                      tc.user_number_20 as complex_transaction_user_number_20,
+                      
+                      tc.user_date_1 as complex_transaction_user_date_1,
+                      tc.user_date_2 as complex_transaction_user_date_2,
+                      tc.user_date_3 as complex_transaction_user_date_3,
+                      tc.user_date_4 as complex_transaction_user_date_4,
+                      tc.user_date_5 as complex_transaction_user_date_5,
+                      
+                      -- complex transaction transaction type fields
+                      tt.id as transaction_type_id,
+                      tt.user_code as transaction_type_user_code,
+                      tt.name as transaction_type_name,
+                      tt.short_name as transaction_type_short_name,
+                      -- complex transaction transaction type group fields
+                      tt2.name as transaction_type_group_name,
+                      
+                      cts.name as complex_transaction_status_name
+                      
+                    FROM transactions_transaction as t
+                    INNER JOIN transactions_complextransaction tc on t.complex_transaction_id = tc.id
+                    INNER JOIN transactions_transactiontype tt on tc.transaction_type_id = tt.id
+                    INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
+                    INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
+                    WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND tc.status_id IN {statuses} {filter_sql_string}
+                    
+                    
+                """
 
             statuses = ['1', '3']
 
@@ -180,7 +181,385 @@ class TransactionReportBuilderSql:
 
             result = dictfetchall(cursor)
 
+            for result_item in result:
+                result_item['entry_account'] = None
+                result_item['entry_strategy'] = None
+                result_item['entry_item'] = None
+                result_item['entry_amount'] = None
+                result_item['entry_item_type'] = None
+
             self.instance.items = result
+
+    def build_base_transaction_level_items(self):
+
+        _l.info("build_base_transaction_level_items")
+
+        with connection.cursor() as cursor:
+
+            filter_sql_string = get_transaction_report_filter_sql_string(self.instance)
+            date_filter_sql_string = get_transaction_report_date_filter_sql_string(self.instance)
+
+            query = """
+                    SELECT
+                      -- transaction fields
+                      t.*,
+                      -- complex transaction fields
+                      tc.status_id as complex_transaction_status,
+                      tc.code as complex_transaction_code,
+                      tc.text as complex_transaction_text,
+                      tc.date as complex_transaction_date,
+                      tc.transaction_unique_code as transaction_unique_code,
+                      tc.is_locked as is_locked,
+                      tc.is_canceled as is_canceled,
+                      -- complex transaction user fields
+                      tc.user_text_1 as complex_transaction_user_text_1,
+                      tc.user_text_2 as complex_transaction_user_text_2,
+                      tc.user_text_3 as complex_transaction_user_text_3,
+                      tc.user_text_4 as complex_transaction_user_text_4,
+                      tc.user_text_5 as complex_transaction_user_text_5,
+                      tc.user_text_6 as complex_transaction_user_text_6,
+                      tc.user_text_7 as complex_transaction_user_text_7,
+                      tc.user_text_8 as complex_transaction_user_text_8,
+                      tc.user_text_9 as complex_transaction_user_text_9,
+                      tc.user_text_10 as complex_transaction_user_text_10,
+                      tc.user_text_11 as complex_transaction_user_text_11,
+                      tc.user_text_12 as complex_transaction_user_text_12,
+                      tc.user_text_13 as complex_transaction_user_text_13,
+                      tc.user_text_14 as complex_transaction_user_text_14,
+                      tc.user_text_15 as complex_transaction_user_text_15,
+                      tc.user_text_16 as complex_transaction_user_text_16,
+                      tc.user_text_17 as complex_transaction_user_text_17,
+                      tc.user_text_18 as complex_transaction_user_text_18,
+                      tc.user_text_19 as complex_transaction_user_text_19,
+                      tc.user_text_20 as complex_transaction_user_text_20,
+                      
+                      tc.user_number_1 as complex_transaction_user_number_1,
+                      tc.user_number_2 as complex_transaction_user_number_2,
+                      tc.user_number_3 as complex_transaction_user_number_3,
+                      tc.user_number_4 as complex_transaction_user_number_4,
+                      tc.user_number_5 as complex_transaction_user_number_5,
+                      tc.user_number_6 as complex_transaction_user_number_6,
+                      tc.user_number_7 as complex_transaction_user_number_7,
+                      tc.user_number_8 as complex_transaction_user_number_8,
+                      tc.user_number_9 as complex_transaction_user_number_9,
+                      tc.user_number_10 as complex_transaction_user_number_10,
+                      tc.user_number_11 as complex_transaction_user_number_11,
+                      tc.user_number_12 as complex_transaction_user_number_12,
+                      tc.user_number_13 as complex_transaction_user_number_13,
+                      tc.user_number_14 as complex_transaction_user_number_14,
+                      tc.user_number_15 as complex_transaction_user_number_15,
+                      tc.user_number_16 as complex_transaction_user_number_16,
+                      tc.user_number_17 as complex_transaction_user_number_17,
+                      tc.user_number_18 as complex_transaction_user_number_18,
+                      tc.user_number_19 as complex_transaction_user_number_19,
+                      tc.user_number_20 as complex_transaction_user_number_20,
+                      
+                      tc.user_date_1 as complex_transaction_user_date_1,
+                      tc.user_date_2 as complex_transaction_user_date_2,
+                      tc.user_date_3 as complex_transaction_user_date_3,
+                      tc.user_date_4 as complex_transaction_user_date_4,
+                      tc.user_date_5 as complex_transaction_user_date_5,
+                      
+                      -- complex transaction transaction type fields
+                      tt.id as transaction_type_id,
+                      tt.user_code as transaction_type_user_code,
+                      tt.name as transaction_type_name,
+                      tt.short_name as transaction_type_short_name,
+                      -- complex transaction transaction type group fields
+                      tt2.name as transaction_type_group_name,
+                      
+                      cts.name as complex_transaction_status_name
+                    FROM transactions_transaction as t
+                    INNER JOIN transactions_complextransaction tc on t.complex_transaction_id = tc.id
+                    INNER JOIN transactions_transactiontype tt on tc.transaction_type_id = tt.id
+                    INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
+                    INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
+                    WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND tc.status_id IN {statuses} {filter_sql_string}
+                    
+                    
+                """
+
+            statuses = ['1', '3']
+
+            _l.info('complex_transaction_statuses_filter %s ' % self.instance.complex_transaction_statuses_filter)
+
+            if self.instance.complex_transaction_statuses_filter:
+
+                pieces = self.instance.complex_transaction_statuses_filter.split(',')
+
+                if len(pieces):
+
+                    statuses = []
+                    if 'booked' in pieces:
+                        statuses.append('1')
+                    if 'ignored' in pieces:
+                        statuses.append('3')
+
+            statuses_str = (',').join(statuses)
+            statuses_str = '(' + statuses_str + ')'
+
+            query = query.format(begin_date=self.instance.begin_date,
+                                 end_date=self.instance.end_date,
+                                 master_user_id=self.instance.master_user.id,
+                                 statuses=statuses_str,
+                                 filter_sql_string=filter_sql_string,
+                                 date_filter_sql_string=date_filter_sql_string
+                                 )
+
+            # cursor.execute(query, [self.instance.begin_date, self.instance.end_date, self.instance.master_user.id, statuses, filter_sql_string])
+            cursor.execute(query)
+
+            result = dictfetchall(cursor)
+
+            for result_item in result:
+                result_item['entry_account'] = None
+                result_item['entry_strategy'] = None
+                result_item['entry_item'] = None
+                result_item['entry_amount'] = None
+                result_item['entry_item_type'] = None
+
+            self.instance.items = result
+
+    def build_entry_level_items(self):
+
+        _l.info("build_entry_level_items")
+
+        with connection.cursor() as cursor:
+
+            filter_sql_string = get_transaction_report_filter_sql_string(self.instance)
+            date_filter_sql_string = get_transaction_report_date_filter_sql_string(self.instance)
+
+            query = """
+                    SELECT
+                      -- transaction fields
+                      t.*,
+                      -- complex transaction fields
+                      tc.status_id as complex_transaction_status,
+                      tc.code as complex_transaction_code,
+                      tc.text as complex_transaction_text,
+                      tc.date as complex_transaction_date,
+                      tc.transaction_unique_code as transaction_unique_code,
+                      tc.is_locked as is_locked,
+                      tc.is_canceled as is_canceled,
+                      -- complex transaction user fields
+                      tc.user_text_1 as complex_transaction_user_text_1,
+                      tc.user_text_2 as complex_transaction_user_text_2,
+                      tc.user_text_3 as complex_transaction_user_text_3,
+                      tc.user_text_4 as complex_transaction_user_text_4,
+                      tc.user_text_5 as complex_transaction_user_text_5,
+                      tc.user_text_6 as complex_transaction_user_text_6,
+                      tc.user_text_7 as complex_transaction_user_text_7,
+                      tc.user_text_8 as complex_transaction_user_text_8,
+                      tc.user_text_9 as complex_transaction_user_text_9,
+                      tc.user_text_10 as complex_transaction_user_text_10,
+                      tc.user_text_11 as complex_transaction_user_text_11,
+                      tc.user_text_12 as complex_transaction_user_text_12,
+                      tc.user_text_13 as complex_transaction_user_text_13,
+                      tc.user_text_14 as complex_transaction_user_text_14,
+                      tc.user_text_15 as complex_transaction_user_text_15,
+                      tc.user_text_16 as complex_transaction_user_text_16,
+                      tc.user_text_17 as complex_transaction_user_text_17,
+                      tc.user_text_18 as complex_transaction_user_text_18,
+                      tc.user_text_19 as complex_transaction_user_text_19,
+                      tc.user_text_20 as complex_transaction_user_text_20,
+                      
+                      tc.user_number_1 as complex_transaction_user_number_1,
+                      tc.user_number_2 as complex_transaction_user_number_2,
+                      tc.user_number_3 as complex_transaction_user_number_3,
+                      tc.user_number_4 as complex_transaction_user_number_4,
+                      tc.user_number_5 as complex_transaction_user_number_5,
+                      tc.user_number_6 as complex_transaction_user_number_6,
+                      tc.user_number_7 as complex_transaction_user_number_7,
+                      tc.user_number_8 as complex_transaction_user_number_8,
+                      tc.user_number_9 as complex_transaction_user_number_9,
+                      tc.user_number_10 as complex_transaction_user_number_10,
+                      tc.user_number_11 as complex_transaction_user_number_11,
+                      tc.user_number_12 as complex_transaction_user_number_12,
+                      tc.user_number_13 as complex_transaction_user_number_13,
+                      tc.user_number_14 as complex_transaction_user_number_14,
+                      tc.user_number_15 as complex_transaction_user_number_15,
+                      tc.user_number_16 as complex_transaction_user_number_16,
+                      tc.user_number_17 as complex_transaction_user_number_17,
+                      tc.user_number_18 as complex_transaction_user_number_18,
+                      tc.user_number_19 as complex_transaction_user_number_19,
+                      tc.user_number_20 as complex_transaction_user_number_20,
+                      
+                      tc.user_date_1 as complex_transaction_user_date_1,
+                      tc.user_date_2 as complex_transaction_user_date_2,
+                      tc.user_date_3 as complex_transaction_user_date_3,
+                      tc.user_date_4 as complex_transaction_user_date_4,
+                      tc.user_date_5 as complex_transaction_user_date_5,
+                      
+                      -- complex transaction transaction type fields
+                      tt.id as transaction_type_id,
+                      tt.user_code as transaction_type_user_code,
+                      tt.name as transaction_type_name,
+                      tt.short_name as transaction_type_short_name,
+                      -- complex transaction transaction type group fields
+                      tt2.name as transaction_type_group_name,
+                      
+                      cts.name as complex_transaction_status_name
+                    FROM transactions_transaction as t
+                    INNER JOIN transactions_complextransaction tc on t.complex_transaction_id = tc.id
+                    INNER JOIN transactions_transactiontype tt on tc.transaction_type_id = tt.id
+                    INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
+                    INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
+                    WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND tc.status_id IN {statuses} {filter_sql_string}
+                    
+                    
+                """
+
+            statuses = ['1', '3']
+
+            _l.info('complex_transaction_statuses_filter %s ' % self.instance.complex_transaction_statuses_filter)
+
+            if self.instance.complex_transaction_statuses_filter:
+
+                pieces = self.instance.complex_transaction_statuses_filter.split(',')
+
+                if len(pieces):
+
+                    statuses = []
+                    if 'booked' in pieces:
+                        statuses.append('1')
+                    if 'ignored' in pieces:
+                        statuses.append('3')
+
+            statuses_str = (',').join(statuses)
+            statuses_str = '(' + statuses_str + ')'
+
+            query = query.format(begin_date=self.instance.begin_date,
+                                 end_date=self.instance.end_date,
+                                 master_user_id=self.instance.master_user.id,
+                                 statuses=statuses_str,
+                                 filter_sql_string=filter_sql_string,
+                                 date_filter_sql_string=date_filter_sql_string
+                                 )
+
+            # cursor.execute(query, [self.instance.begin_date, self.instance.end_date, self.instance.master_user.id, statuses, filter_sql_string])
+            cursor.execute(query)
+
+            result = dictfetchall(cursor)
+
+            ITEM_TYPE_INSTRUMENT = 1
+            ITEM_TYPE_CURRENCY = 2
+            ITEM_TYPE_FX_VARIATIONS = 3
+            ITEM_TYPE_FX_TRADES = 4
+            ITEM_TYPE_TRANSACTION_PL = 5
+            ITEM_TYPE_MISMATCH = 6
+            ITEM_TYPE_EXPOSURE_COPY = 7
+
+            for result_item in result:
+
+                result_item['entry_account'] = None
+                result_item['entry_strategy'] = None
+                result_item['entry_item'] = None
+                result_item['entry_amount'] = None
+                result_item['entry_item_type'] = None
+
+                if result_item['transaction_class'] == TransactionClass.CASH_INFLOW or result_item[
+                    'transaction_class'] == TransactionClass.CASH_OUTFLOW:
+                    result_item['entry_account'] = result['account_cash_id']
+                    result_item['entry_strategy'] = result['strategy1_cash_id']
+                    result_item['entry_item'] = result['settlement_currency_id']
+                    result_item['entry_amount'] = result['cash_consideration']
+                    result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
+
+                if result_item['transaction_class'] == TransactionClass.INSTRUMENT_PL:
+                    result_item['entry_account'] = result['account_cash_id']
+                    result_item['entry_strategy'] = result['strategy1_cash_id']
+                    result_item['entry_item'] = result['settlement_currency_id']
+                    result_item['entry_amount'] = result['cash_consideration']
+                    result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
+
+                if result_item['transaction_class'] == TransactionClass.TRANSACTION_PL:
+                    result_item['entry_account'] = result['account_cash_id']
+                    result_item['entry_strategy'] = result['strategy1_cash_id']
+                    result_item['entry_item'] = result['settlement_currency_id']
+                    result_item['entry_amount'] = result['cash_consideration']
+                    result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
+
+                if result_item['transaction_class'] == TransactionClass.BUY or result_item[
+                    'transaction_class'] == TransactionClass.SELL:
+
+                    if result['account_position_id']:
+                        result_item['entry_account'] = result['account_position_id']
+                        result_item['entry_strategy'] = result['strategy1_position_id']
+                        result_item['entry_item'] = result['instrument_id']
+                        result_item['entry_amount'] = result['position_size_with_sign']
+                        result_item['entry_item_type'] = ITEM_TYPE_INSTRUMENT
+
+                    if result['account_cash_id']:
+                        result_item['entry_account'] = result['account_cash_id']
+                        result_item['entry_strategy'] = result['strategy1_cash_id']
+                        result_item['entry_item'] = result['settlement_currency_id']
+                        result_item['entry_amount'] = result['cash_consideration']
+                        result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
+
+                if result_item['transaction_class'] == TransactionClass.FX_TRADE:
+
+                    if result['account_position_id']:
+                        result_item['entry_account'] = result['account_position_id']
+                        result_item['entry_strategy'] = result['strategy1_cash_id']
+                        result_item['entry_item'] = result['transaction_currency_id']
+                        result_item['entry_amount'] = result['position_size_with_sign']
+                        result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
+
+                    if result['account_cash_id']:
+                        result_item['entry_account'] = result['account_cash_id']
+                        result_item['entry_strategy'] = result['strategy1_cash_id']
+                        result_item['entry_item'] = result['settlement_currency_id']
+                        result_item['entry_amount'] = result['cash_consideration']
+                        result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
+
+                if result_item['transaction_class'] == TransactionClass.FX_TRANSFER:
+
+                    if result['account_position_id']:  # from
+
+                        result_item['entry_account'] = result['account_position_id']
+                        result_item['entry_strategy'] = result['strategy1_cash_id']
+                        result_item['entry_item'] = result['settlement_currency_id']
+                        result_item['entry_amount'] = result['cash_consideration'] * -1  # Important see FN-1077
+                        result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
+
+                    if result['account_cash_id']:  # to
+
+                        result_item['entry_account'] = result['account_cash_id']
+                        result_item['entry_strategy'] = result['strategy1_position_id']
+                        result_item['entry_item'] = result['settlement_currency_id']
+                        result_item['entry_amount'] = result['cash_consideration']
+                        result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
+
+                if result_item['transaction_class'] == TransactionClass.TRANSFER:
+
+                    if result['account_cash_id']:  # from
+
+                        result_item['entry_account'] = result['account_position_id']
+                        result_item['entry_strategy'] = result['strategy1_position_id']
+                        result_item['entry_item'] = result['instrument_id']
+                        result_item['entry_amount'] = result['position_size_with_sign'] * -1  # Important see FN-1077
+                        result_item['entry_item_type'] = ITEM_TYPE_INSTRUMENT
+
+                    if result['account_position_id']:  # to
+
+                        result_item['entry_account'] = result['account_position_id']
+                        result_item['entry_strategy'] = result['strategy1_cash_id']
+                        result_item['entry_item'] = result['settlement_currency_id']
+                        result_item['entry_amount'] = result['position_size_with_sign']
+                        result_item['entry_item_type'] = ITEM_TYPE_INSTRUMENT
+
+            self.instance.items = result
+
+    def build_items(self):
+
+        if self.instance.depth_level == 'complex_transaction':
+            self.build_complex_transaction_level_items()
+
+        if self.instance.depth_level == 'base_transaction':
+            self.build_base_transaction_level_items()
+
+        if self.instance.depth_level == 'entry':
+            self.build_entry_level_items()
 
     def add_data_items_instruments(self, ids):
 

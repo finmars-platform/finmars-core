@@ -802,6 +802,13 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
                                              # ('user_date_10', gettext_lazy('User Date 10')),
                                          ))
 
+    depth_level = serializers.ChoiceField(required=False, allow_null=True,
+                                         choices=(
+                                                     ('complex_transaction', gettext_lazy('Complex Transaction')),
+                                                     ('base_transaction', gettext_lazy('Base Transaction')),
+                                                     ('entry', gettext_lazy('Entry')),
+                                         ))
+
     begin_date = serializers.DateField(required=False, allow_null=True, initial=date_now() - timedelta(days=365),
                                        default=date_now() - timedelta(days=365))
     end_date = serializers.DateField(required=False, allow_null=True, initial=date_now, default=date_now)
