@@ -3373,10 +3373,18 @@ class PLReportBuilderSql:
                         result_item_closed['strategy3_position_id'] = item['strategy3_position_id']
 
 
+                    # if "allocation_pl_id" not in item:
+                    #     result_item_closed['allocation_pl_id'] = None
+                    # else:
+                    #     result_item_closed['allocation_pl_id'] = item['instrument_id']
+
                     if "allocation_pl_id" not in item:
                         result_item_closed['allocation_pl_id'] = None
                     else:
-                        result_item_closed['allocation_pl_id'] = item['instrument_id']
+                        if not item['allocation_pl_id']:
+                            result_item_closed['allocation_pl_id'] = item['instrument_id']
+                        else:
+                            result_item_closed['allocation_pl_id'] = item['allocation_pl_id']
 
                     result_item_closed["item_group"] = 11
                     result_item_closed["item_group_code"] = "CLOSED"
