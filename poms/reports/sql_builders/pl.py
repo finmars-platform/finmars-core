@@ -3159,7 +3159,7 @@ class PLReportBuilderSql:
                 if "allocation_pl_id" not in item:
                     result_item_opened['allocation_pl_id'] = None
                 else:
-                    if not result_item_opened['allocation_pl_id']:
+                    if not item['allocation_pl_id']:
                         result_item_opened['allocation_pl_id'] = item['instrument_id']
                     else:
                         result_item_opened['allocation_pl_id'] = item['allocation_pl_id']
