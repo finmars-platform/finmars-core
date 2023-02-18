@@ -256,6 +256,7 @@ def serialize_transaction_report_item(item):
     result['entry_item'] = item['entry_item']
     result['entry_amount'] = item['entry_amount']
     result['entry_item_type'] = item['entry_item_type']
+    result['entry_item_type_name'] = item['entry_item_type_name']
 
     return result
 

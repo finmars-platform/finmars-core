@@ -53,9 +53,7 @@ class TransactionReportBuilderSql:
 
         relation_prefetch_st = time.perf_counter()
 
-
         if self.instance.depth_level != 'complex_transaction':
-
             self.add_data_items()
 
         self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
@@ -541,7 +539,8 @@ class TransactionReportBuilderSql:
                         result_item['entry_account'] = result_item['account_position_id']
                         result_item['entry_strategy'] = result_item['strategy1_position_id']
                         result_item['entry_item'] = result_item['instrument_id']
-                        result_item['entry_amount'] = result_item['position_size_with_sign'] * -1  # Important see FN-1077
+                        result_item['entry_amount'] = result_item[
+                                                          'position_size_with_sign'] * -1  # Important see FN-1077
                         result_item['entry_item_type'] = ITEM_TYPE_INSTRUMENT
 
                     if result_item['account_position_id']:  # to
@@ -551,6 +550,13 @@ class TransactionReportBuilderSql:
                         result_item['entry_item'] = result_item['settlement_currency_id']
                         result_item['entry_amount'] = result_item['position_size_with_sign']
                         result_item['entry_item_type'] = ITEM_TYPE_INSTRUMENT
+
+                if result_item['entry_item_type']:
+
+                    if result_item['entry_item_type'] == ITEM_TYPE_INSTRUMENT:
+                        result_item['entry_item_type_name'] = 'Instrument'
+                    if result_item['entry_item_type'] == ITEM_TYPE_CURRENCY:
+                        result_item['entry_item_type_name'] = 'Currency'
 
             self.instance.items = results
 
