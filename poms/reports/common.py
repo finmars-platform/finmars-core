@@ -321,6 +321,8 @@ class TransactionReport(BaseReport):
         else:
             self.date_field = 'date'
 
+        print('====depth_level %s' % depth_level)
+
         if depth_level:
             self.depth_level = depth_level
         else:

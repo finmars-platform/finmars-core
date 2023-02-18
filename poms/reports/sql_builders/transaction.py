@@ -439,7 +439,7 @@ class TransactionReportBuilderSql:
             # cursor.execute(query, [self.instance.begin_date, self.instance.end_date, self.instance.master_user.id, statuses, filter_sql_string])
             cursor.execute(query)
 
-            result = dictfetchall(cursor)
+            results = dictfetchall(cursor)
 
             ITEM_TYPE_INSTRUMENT = 1
             ITEM_TYPE_CURRENCY = 2
@@ -449,7 +449,7 @@ class TransactionReportBuilderSql:
             ITEM_TYPE_MISMATCH = 6
             ITEM_TYPE_EXPOSURE_COPY = 7
 
-            for result_item in result:
+            for result_item in results:
 
                 result_item['entry_account'] = None
                 result_item['entry_strategy'] = None
@@ -457,100 +457,102 @@ class TransactionReportBuilderSql:
                 result_item['entry_amount'] = None
                 result_item['entry_item_type'] = None
 
-                if result_item['transaction_class'] == TransactionClass.CASH_INFLOW or result_item[
-                    'transaction_class'] == TransactionClass.CASH_OUTFLOW:
-                    result_item['entry_account'] = result['account_cash_id']
-                    result_item['entry_strategy'] = result['strategy1_cash_id']
-                    result_item['entry_item'] = result['settlement_currency_id']
-                    result_item['entry_amount'] = result['cash_consideration']
+                if result_item['transaction_class_id'] == TransactionClass.CASH_INFLOW or result_item[
+                    'transaction_class_id'] == TransactionClass.CASH_OUTFLOW:
+                    result_item['entry_account'] = result_item['account_cash_id']
+                    result_item['entry_strategy'] = result_item['strategy1_cash_id']
+                    result_item['entry_item'] = result_item['settlement_currency_id']
+                    result_item['entry_amount'] = result_item['cash_consideration']
                     result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
-                if result_item['transaction_class'] == TransactionClass.INSTRUMENT_PL:
-                    result_item['entry_account'] = result['account_cash_id']
-                    result_item['entry_strategy'] = result['strategy1_cash_id']
-                    result_item['entry_item'] = result['settlement_currency_id']
-                    result_item['entry_amount'] = result['cash_consideration']
+                if result_item['transaction_class_id'] == TransactionClass.INSTRUMENT_PL:
+                    result_item['entry_account'] = result_item['account_cash_id']
+                    result_item['entry_strategy'] = result_item['strategy1_cash_id']
+                    result_item['entry_item'] = result_item['settlement_currency_id']
+                    result_item['entry_amount'] = result_item['cash_consideration']
                     result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
-                if result_item['transaction_class'] == TransactionClass.TRANSACTION_PL:
-                    result_item['entry_account'] = result['account_cash_id']
-                    result_item['entry_strategy'] = result['strategy1_cash_id']
-                    result_item['entry_item'] = result['settlement_currency_id']
-                    result_item['entry_amount'] = result['cash_consideration']
+                if result_item['transaction_class_id'] == TransactionClass.TRANSACTION_PL:
+                    result_item['entry_account'] = result_item['account_cash_id']
+                    result_item['entry_strategy'] = result_item['strategy1_cash_id']
+                    result_item['entry_item'] = result_item['settlement_currency_id']
+                    result_item['entry_amount'] = result_item['cash_consideration']
                     result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
-                if result_item['transaction_class'] == TransactionClass.BUY or result_item[
-                    'transaction_class'] == TransactionClass.SELL:
+                if result_item['transaction_class_id'] == TransactionClass.BUY or result_item[
+                    'transaction_class_id'] == TransactionClass.SELL:
 
-                    if result['account_position_id']:
-                        result_item['entry_account'] = result['account_position_id']
-                        result_item['entry_strategy'] = result['strategy1_position_id']
-                        result_item['entry_item'] = result['instrument_id']
-                        result_item['entry_amount'] = result['position_size_with_sign']
+                    if result_item['account_position_id']:
+                        result_item['entry_account'] = result_item['account_position_id']
+                        result_item['entry_strategy'] = result_item['strategy1_position_id']
+                        result_item['entry_item'] = result_item['instrument_id']
+                        result_item['entry_amount'] = result_item['position_size_with_sign']
                         result_item['entry_item_type'] = ITEM_TYPE_INSTRUMENT
 
-                    if result['account_cash_id']:
-                        result_item['entry_account'] = result['account_cash_id']
-                        result_item['entry_strategy'] = result['strategy1_cash_id']
-                        result_item['entry_item'] = result['settlement_currency_id']
-                        result_item['entry_amount'] = result['cash_consideration']
+                    if result_item['account_cash_id']:
+                        result_item['entry_account'] = result_item['account_cash_id']
+                        result_item['entry_strategy'] = result_item['strategy1_cash_id']
+                        result_item['entry_item'] = result_item['settlement_currency_id']
+                        result_item['entry_amount'] = result_item['cash_consideration']
                         result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
-                if result_item['transaction_class'] == TransactionClass.FX_TRADE:
+                if result_item['transaction_class_id'] == TransactionClass.FX_TRADE:
 
-                    if result['account_position_id']:
-                        result_item['entry_account'] = result['account_position_id']
-                        result_item['entry_strategy'] = result['strategy1_cash_id']
-                        result_item['entry_item'] = result['transaction_currency_id']
-                        result_item['entry_amount'] = result['position_size_with_sign']
+                    if result_item['account_position_id']:
+                        result_item['entry_account'] = result_item['account_position_id']
+                        result_item['entry_strategy'] = result_item['strategy1_cash_id']
+                        result_item['entry_item'] = result_item['transaction_currency_id']
+                        result_item['entry_amount'] = result_item['position_size_with_sign']
                         result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
-                    if result['account_cash_id']:
-                        result_item['entry_account'] = result['account_cash_id']
-                        result_item['entry_strategy'] = result['strategy1_cash_id']
-                        result_item['entry_item'] = result['settlement_currency_id']
-                        result_item['entry_amount'] = result['cash_consideration']
+                    if result_item['account_cash_id']:
+                        result_item['entry_account'] = result_item['account_cash_id']
+                        result_item['entry_strategy'] = result_item['strategy1_cash_id']
+                        result_item['entry_item'] = result_item['settlement_currency_id']
+                        result_item['entry_amount'] = result_item['cash_consideration']
                         result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
-                if result_item['transaction_class'] == TransactionClass.FX_TRANSFER:
+                if result_item['transaction_class_id'] == TransactionClass.FX_TRANSFER:
 
-                    if result['account_position_id']:  # from
+                    if result_item['account_position_id']:  # from
 
-                        result_item['entry_account'] = result['account_position_id']
-                        result_item['entry_strategy'] = result['strategy1_cash_id']
-                        result_item['entry_item'] = result['settlement_currency_id']
-                        result_item['entry_amount'] = result['cash_consideration'] * -1  # Important see FN-1077
+                        result_item['entry_account'] = result_item['account_position_id']
+                        result_item['entry_strategy'] = result_item['strategy1_cash_id']
+                        result_item['entry_item'] = result_item['settlement_currency_id']
+                        result_item['entry_amount'] = result_item['cash_consideration'] * -1  # Important see FN-1077
                         result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
-                    if result['account_cash_id']:  # to
+                    if result_item['account_cash_id']:  # to
 
-                        result_item['entry_account'] = result['account_cash_id']
-                        result_item['entry_strategy'] = result['strategy1_position_id']
-                        result_item['entry_item'] = result['settlement_currency_id']
-                        result_item['entry_amount'] = result['cash_consideration']
+                        result_item['entry_account'] = result_item['account_cash_id']
+                        result_item['entry_strategy'] = result_item['strategy1_position_id']
+                        result_item['entry_item'] = result_item['settlement_currency_id']
+                        result_item['entry_amount'] = result_item['cash_consideration']
                         result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
-                if result_item['transaction_class'] == TransactionClass.TRANSFER:
+                if result_item['transaction_class_id'] == TransactionClass.TRANSFER:
 
-                    if result['account_cash_id']:  # from
+                    if result_item['account_cash_id']:  # from
 
-                        result_item['entry_account'] = result['account_position_id']
-                        result_item['entry_strategy'] = result['strategy1_position_id']
-                        result_item['entry_item'] = result['instrument_id']
-                        result_item['entry_amount'] = result['position_size_with_sign'] * -1  # Important see FN-1077
+                        result_item['entry_account'] = result_item['account_position_id']
+                        result_item['entry_strategy'] = result_item['strategy1_position_id']
+                        result_item['entry_item'] = result_item['instrument_id']
+                        result_item['entry_amount'] = result_item['position_size_with_sign'] * -1  # Important see FN-1077
                         result_item['entry_item_type'] = ITEM_TYPE_INSTRUMENT
 
-                    if result['account_position_id']:  # to
+                    if result_item['account_position_id']:  # to
 
-                        result_item['entry_account'] = result['account_position_id']
-                        result_item['entry_strategy'] = result['strategy1_cash_id']
-                        result_item['entry_item'] = result['settlement_currency_id']
-                        result_item['entry_amount'] = result['position_size_with_sign']
+                        result_item['entry_account'] = result_item['account_position_id']
+                        result_item['entry_strategy'] = result_item['strategy1_cash_id']
+                        result_item['entry_item'] = result_item['settlement_currency_id']
+                        result_item['entry_amount'] = result_item['position_size_with_sign']
                         result_item['entry_item_type'] = ITEM_TYPE_INSTRUMENT
 
-            self.instance.items = result
+            self.instance.items = results
 
     def build_items(self):
+
+        _l.info('TransactionReportBuilderSql.build_items: depth_level %s' % self.instance.depth_level)
 
         if self.instance.depth_level == 'complex_transaction':
             self.build_complex_transaction_level_items()

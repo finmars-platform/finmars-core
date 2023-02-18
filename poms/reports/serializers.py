@@ -9,9 +9,6 @@ from django.db.models import ForeignKey
 from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import SkipField
-from rest_framework.relations import PKOnlyObject
-from simplejson import OrderedDict
 
 from poms.accounts.fields import AccountField
 from poms.accounts.serializers import AccountViewSerializer
@@ -84,7 +81,6 @@ class TransactionReportCustomFieldSerializer(serializers.ModelSerializer):
 
 
 class ReportSerializerWithLogs(serializers.Serializer):
-
     pass
     # def to_representation(self, instance):
     #     """
@@ -184,7 +180,6 @@ class ReportSerializer(ReportSerializerWithLogs):
     custom_fields_to_calculate = serializers.CharField(allow_null=True, allow_blank=True, required=False)
 
     custom_fields = BalanceReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
-
 
     execution_time = serializers.FloatField(allow_null=True, required=False, read_only=True)
     relation_prefetch_time = serializers.FloatField(allow_null=True, required=False, read_only=True)
@@ -803,11 +798,11 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
                                          ))
 
     depth_level = serializers.ChoiceField(required=False, allow_null=True,
-                                         choices=(
-                                                     ('complex_transaction', gettext_lazy('Complex Transaction')),
-                                                     ('base_transaction', gettext_lazy('Base Transaction')),
-                                                     ('entry', gettext_lazy('Entry')),
-                                         ))
+                                          choices=(
+                                              ('complex_transaction', gettext_lazy('Complex Transaction')),
+                                              ('base_transaction', gettext_lazy('Base Transaction')),
+                                              ('entry', gettext_lazy('Entry')),
+                                          ))
 
     begin_date = serializers.DateField(required=False, allow_null=True, initial=date_now() - timedelta(days=365),
                                        default=date_now() - timedelta(days=365))

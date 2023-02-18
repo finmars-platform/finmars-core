@@ -16,7 +16,7 @@ class HistoryMixin(APIView):
 
         try:
 
-            _l.info('save_change_in_history.serializer.validated_data %s' % serializer.validated_data)
+            # _l.info('save_change_in_history.serializer.validated_data %s' % serializer.validated_data)
 
             user_code = None
 
