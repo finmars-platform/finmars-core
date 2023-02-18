@@ -189,6 +189,7 @@ class TransactionReportBuilderSql:
                 result_item['entry_item'] = None
                 result_item['entry_amount'] = None
                 result_item['entry_item_type'] = None
+                result_item['entry_item_type_name'] = None
 
             self.instance.items = result
 
@@ -319,6 +320,7 @@ class TransactionReportBuilderSql:
                 result_item['entry_item'] = None
                 result_item['entry_amount'] = None
                 result_item['entry_item_type'] = None
+                result_item['entry_item_type_name'] = None
 
             self.instance.items = result
 
@@ -458,6 +460,7 @@ class TransactionReportBuilderSql:
                 result_item['entry_item'] = None
                 result_item['entry_amount'] = None
                 result_item['entry_item_type'] = None
+                result_item['entry_item_type_name'] = None
 
                 if result_item['transaction_class_id'] == TransactionClass.CASH_INFLOW or result_item[
                     'transaction_class_id'] == TransactionClass.CASH_OUTFLOW:
