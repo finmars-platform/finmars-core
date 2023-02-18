@@ -254,6 +254,8 @@ def serialize_transaction_report_item(item):
     result['entry_account'] = item['entry_account']
     result['entry_strategy'] = item['entry_strategy']
     result['entry_item'] = item['entry_item']
+    result['entry_currency'] = item['entry_currency']
+    result['entry_instrument'] = item['entry_instrument']
     result['entry_amount'] = item['entry_amount']
     result['entry_item_type'] = item['entry_item_type']
     result['entry_item_type_name'] = item['entry_item_type_name']

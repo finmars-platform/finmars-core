@@ -187,6 +187,8 @@ class TransactionReportBuilderSql:
                 result_item['entry_account'] = None
                 result_item['entry_strategy'] = None
                 result_item['entry_item'] = None
+                result_item['entry_currency'] = None
+                result_item['entry_instrument'] = None
                 result_item['entry_amount'] = None
                 result_item['entry_item_type'] = None
                 result_item['entry_item_type_name'] = None
@@ -318,6 +320,8 @@ class TransactionReportBuilderSql:
                 result_item['entry_account'] = None
                 result_item['entry_strategy'] = None
                 result_item['entry_item'] = None
+                result_item['entry_currency'] = None
+                result_item['entry_instrument'] = None
                 result_item['entry_amount'] = None
                 result_item['entry_item_type'] = None
                 result_item['entry_item_type_name'] = None
@@ -457,7 +461,9 @@ class TransactionReportBuilderSql:
 
                 result_item['entry_account'] = None
                 result_item['entry_strategy'] = None
-                result_item['entry_item'] = None
+                result_item['entry_item'] = None  # Should be filled later
+                result_item['entry_currency'] = None
+                result_item['entry_instrument'] = None
                 result_item['entry_amount'] = None
                 result_item['entry_item_type'] = None
                 result_item['entry_item_type_name'] = None
@@ -466,21 +472,21 @@ class TransactionReportBuilderSql:
                     'transaction_class_id'] == TransactionClass.CASH_OUTFLOW:
                     result_item['entry_account'] = result_item['account_cash_id']
                     result_item['entry_strategy'] = result_item['strategy1_cash_id']
-                    result_item['entry_item'] = result_item['settlement_currency_id']
+                    result_item['entry_currency'] = result_item['settlement_currency_id']
                     result_item['entry_amount'] = result_item['cash_consideration']
                     result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
                 if result_item['transaction_class_id'] == TransactionClass.INSTRUMENT_PL:
                     result_item['entry_account'] = result_item['account_cash_id']
                     result_item['entry_strategy'] = result_item['strategy1_cash_id']
-                    result_item['entry_item'] = result_item['settlement_currency_id']
+                    result_item['entry_currency'] = result_item['settlement_currency_id']
                     result_item['entry_amount'] = result_item['cash_consideration']
                     result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
                 if result_item['transaction_class_id'] == TransactionClass.TRANSACTION_PL:
                     result_item['entry_account'] = result_item['account_cash_id']
                     result_item['entry_strategy'] = result_item['strategy1_cash_id']
-                    result_item['entry_item'] = result_item['settlement_currency_id']
+                    result_item['entry_currency'] = result_item['settlement_currency_id']
                     result_item['entry_amount'] = result_item['cash_consideration']
                     result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
@@ -490,14 +496,14 @@ class TransactionReportBuilderSql:
                     if result_item['account_position_id']:
                         result_item['entry_account'] = result_item['account_position_id']
                         result_item['entry_strategy'] = result_item['strategy1_position_id']
-                        result_item['entry_item'] = result_item['instrument_id']
+                        result_item['entry_instrument'] = result_item['instrument_id']
                         result_item['entry_amount'] = result_item['position_size_with_sign']
                         result_item['entry_item_type'] = ITEM_TYPE_INSTRUMENT
 
                     if result_item['account_cash_id']:
                         result_item['entry_account'] = result_item['account_cash_id']
                         result_item['entry_strategy'] = result_item['strategy1_cash_id']
-                        result_item['entry_item'] = result_item['settlement_currency_id']
+                        result_item['entry_currency'] = result_item['settlement_currency_id']
                         result_item['entry_amount'] = result_item['cash_consideration']
                         result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
@@ -506,14 +512,14 @@ class TransactionReportBuilderSql:
                     if result_item['account_position_id']:
                         result_item['entry_account'] = result_item['account_position_id']
                         result_item['entry_strategy'] = result_item['strategy1_cash_id']
-                        result_item['entry_item'] = result_item['transaction_currency_id']
+                        result_item['entry_currency'] = result_item['transaction_currency_id']
                         result_item['entry_amount'] = result_item['position_size_with_sign']
                         result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
                     if result_item['account_cash_id']:
                         result_item['entry_account'] = result_item['account_cash_id']
                         result_item['entry_strategy'] = result_item['strategy1_cash_id']
-                        result_item['entry_item'] = result_item['settlement_currency_id']
+                        result_item['entry_currency'] = result_item['settlement_currency_id']
                         result_item['entry_amount'] = result_item['cash_consideration']
                         result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
@@ -523,7 +529,7 @@ class TransactionReportBuilderSql:
 
                         result_item['entry_account'] = result_item['account_position_id']
                         result_item['entry_strategy'] = result_item['strategy1_cash_id']
-                        result_item['entry_item'] = result_item['settlement_currency_id']
+                        result_item['entry_currency'] = result_item['settlement_currency_id']
                         result_item['entry_amount'] = result_item['cash_consideration'] * -1  # Important see FN-1077
                         result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
@@ -531,7 +537,7 @@ class TransactionReportBuilderSql:
 
                         result_item['entry_account'] = result_item['account_cash_id']
                         result_item['entry_strategy'] = result_item['strategy1_position_id']
-                        result_item['entry_item'] = result_item['settlement_currency_id']
+                        result_item['entry_currency'] = result_item['settlement_currency_id']
                         result_item['entry_amount'] = result_item['cash_consideration']
                         result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
 
@@ -541,7 +547,7 @@ class TransactionReportBuilderSql:
 
                         result_item['entry_account'] = result_item['account_position_id']
                         result_item['entry_strategy'] = result_item['strategy1_position_id']
-                        result_item['entry_item'] = result_item['instrument_id']
+                        result_item['entry_instrument'] = result_item['instrument_id']
                         result_item['entry_amount'] = result_item[
                                                           'position_size_with_sign'] * -1  # Important see FN-1077
                         result_item['entry_item_type'] = ITEM_TYPE_INSTRUMENT
@@ -550,7 +556,7 @@ class TransactionReportBuilderSql:
 
                         result_item['entry_account'] = result_item['account_position_id']
                         result_item['entry_strategy'] = result_item['strategy1_cash_id']
-                        result_item['entry_item'] = result_item['settlement_currency_id']
+                        result_item['entry_currency'] = result_item['settlement_currency_id']
                         result_item['entry_amount'] = result_item['position_size_with_sign']
                         result_item['entry_item_type'] = ITEM_TYPE_INSTRUMENT
 
@@ -684,6 +690,24 @@ class TransactionReportBuilderSql:
         self.add_data_items_transaction_classes()
         self.add_data_items_complex_transaction_status()
         # self.add_data_items_complex_transactions(complex_transactions_ids)  # too slow
+
+        if self.instance.depth_level == 'entry':
+
+            for item in self.instance.items:
+
+                if item['entry_currency']:
+
+                    for currency in self.instance.item_currencies:
+
+                        if item['entry_currency'] == currency.id:
+                            item['entry_item'] = currency.short_name
+
+                if item['entry_instrument']:
+
+                    for instrument in self.instance.item_instruments:
+
+                        if item['entry_instrument'] == instrument.id:
+                            item['entry_item'] = instrument.user_code
 
         self.instance.custom_fields = TransactionReportCustomField.objects.filter(master_user=self.instance.master_user)
 
