@@ -53,7 +53,10 @@ class TransactionReportBuilderSql:
 
         relation_prefetch_st = time.perf_counter()
 
-        self.add_data_items()
+
+        if self.instance.depth_level != 'complex_transaction':
+
+            self.add_data_items()
 
         self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
 
@@ -182,6 +185,7 @@ class TransactionReportBuilderSql:
             result = dictfetchall(cursor)
 
             for result_item in result:
+                result_item['id'] = result_item['complex_transaction_code']
                 result_item['entry_account'] = None
                 result_item['entry_strategy'] = None
                 result_item['entry_item'] = None
