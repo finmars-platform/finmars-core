@@ -183,7 +183,7 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         serializer = self.get_serializer(instance=instance)
 
         return Response({
-            'procedure_id': pk,
+            'procedure_id': procedure.id,
             'procedure_instance_id': instance.procedure_instance.id
         })
 
