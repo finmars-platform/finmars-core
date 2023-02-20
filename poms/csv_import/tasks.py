@@ -29,7 +29,7 @@ from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.file_reports.models import FileReport
 from poms.instruments.handlers import InstrumentTypeProcess
-from poms.instruments.models import PricingPolicy, Instrument, InstrumentType
+from poms.instruments.models import PricingPolicy, Instrument, InstrumentType, Country
 from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping, \
     PortfolioClassifierMapping, AccountClassifierMapping, ResponsibleClassifierMapping, CounterpartyClassifierMapping, \
     PricingPolicyMapping, InstrumentMapping, CurrencyMapping, InstrumentTypeMapping, PaymentSizeDetailMapping, \
@@ -620,7 +620,8 @@ def process_csv_file(master_user,
                         'type': AccountType,
                         'currency': Currency,
                         'pricing_currency': Currency,
-                        'accrued_currency': Currency
+                        'accrued_currency': Currency,
+                        'country': Country
                     }
 
                     classifier_mapping_map = {
