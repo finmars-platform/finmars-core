@@ -69,7 +69,7 @@ class BootstrapConfig(AppConfig):
                 from poms.users.models import MasterUser
                 master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
-                member = Member.objects.create(user=user, master_user=master_user)
+                member = Member.objects.create(user=user, master_user=master_user, is_admin=True)
             except Exception as e:
                 _l.error("Warning. Could not creat finmars_bot")
 
