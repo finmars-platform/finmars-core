@@ -1298,6 +1298,9 @@ class ImportHandler:
                 if 'pricing_currency' in result_without_many_to_many:
                     result_without_many_to_many['pricing_currency'] = result_without_many_to_many['pricing_currency'].id
 
+                if 'country' in result_without_many_to_many:
+                    result_without_many_to_many['country'] = result_without_many_to_many['country'].id
+
                 serializer = InstrumentSerializer(data=result_without_many_to_many, context=self.context)
 
                 is_valid = serializer.is_valid()
