@@ -96,7 +96,7 @@ class PricingConditionSerializer(PomsClassSerializer):
 class CountrySerializer(serializers.ModelSerializer):
     class Meta(PomsClassSerializer.Meta):
         fields = ['id', 'name', 'user_code', 'country_code',
-                  'region', 'region_code',
+                  'region', 'region_code', 'alpha_2', 'alpha_3',
                   'sub_region', 'sub_region_code']
         model = Country
 
