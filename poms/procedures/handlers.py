@@ -60,6 +60,17 @@ class DataProcedureProcess(object):
             except formula.InvalidExpression as e:
                 _l.error("Cant execute date to expression %s " % e)
 
+    def update_procedure_options(self, options):
+
+        if self.procedure.data:
+            self.procedure.data.update(options)
+
+    def update_procedure_date_from(self, date_from):
+        self.procedure.date_from = date_from
+
+    def update_procedure_date_to(self, date_to):
+        self.procedure.date_to = date_to
+
     def process(self):
 
         if self.procedure.provider.user_code == 'universal':
