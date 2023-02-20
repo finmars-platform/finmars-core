@@ -447,7 +447,8 @@ class TransactionReportBuilderSql:
             # cursor.execute(query, [self.instance.begin_date, self.instance.end_date, self.instance.master_user.id, statuses, filter_sql_string])
             cursor.execute(query)
 
-            results = dictfetchall(cursor)
+            raw_results = dictfetchall(cursor)
+            results = []
 
             ITEM_TYPE_INSTRUMENT = 1
             ITEM_TYPE_CURRENCY = 2
@@ -457,7 +458,9 @@ class TransactionReportBuilderSql:
             ITEM_TYPE_MISMATCH = 6
             ITEM_TYPE_EXPOSURE_COPY = 7
 
-            for result_item in results:
+            for raw_item in raw_results:
+
+                result_item = raw_item.copy()
 
                 result_item['entry_account'] = None
                 result_item['entry_strategy'] = None
@@ -475,97 +478,139 @@ class TransactionReportBuilderSql:
                     result_item['entry_currency'] = result_item['settlement_currency_id']
                     result_item['entry_amount'] = result_item['cash_consideration']
                     result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
+                    result_item['entry_item_type_name'] = 'Currency'
 
-                if result_item['transaction_class_id'] == TransactionClass.INSTRUMENT_PL:
+                    results.append(result_item)
+
+
+                elif result_item['transaction_class_id'] == TransactionClass.INSTRUMENT_PL:
                     result_item['entry_account'] = result_item['account_cash_id']
                     result_item['entry_strategy'] = result_item['strategy1_cash_id']
                     result_item['entry_currency'] = result_item['settlement_currency_id']
                     result_item['entry_amount'] = result_item['cash_consideration']
                     result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
+                    result_item['entry_item_type_name'] = 'Currency'
 
-                if result_item['transaction_class_id'] == TransactionClass.TRANSACTION_PL:
+                    results.append(result_item)
+
+                elif result_item['transaction_class_id'] == TransactionClass.TRANSACTION_PL:
                     result_item['entry_account'] = result_item['account_cash_id']
                     result_item['entry_strategy'] = result_item['strategy1_cash_id']
                     result_item['entry_currency'] = result_item['settlement_currency_id']
                     result_item['entry_amount'] = result_item['cash_consideration']
                     result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
+                    result_item['entry_item_type_name'] = 'Currency'
 
-                if result_item['transaction_class_id'] == TransactionClass.BUY or result_item[
+                    results.append(result_item)
+
+                elif result_item['transaction_class_id'] == TransactionClass.BUY or result_item[
                     'transaction_class_id'] == TransactionClass.SELL:
 
-                    if result_item['account_position_id']:
-                        result_item['entry_account'] = result_item['account_position_id']
-                        result_item['entry_strategy'] = result_item['strategy1_position_id']
-                        result_item['entry_instrument'] = result_item['instrument_id']
-                        result_item['entry_amount'] = result_item['position_size_with_sign']
-                        result_item['entry_item_type'] = ITEM_TYPE_INSTRUMENT
-
-                    if result_item['account_cash_id']:
-                        result_item['entry_account'] = result_item['account_cash_id']
-                        result_item['entry_strategy'] = result_item['strategy1_cash_id']
-                        result_item['entry_currency'] = result_item['settlement_currency_id']
-                        result_item['entry_amount'] = result_item['cash_consideration']
-                        result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
-
-                if result_item['transaction_class_id'] == TransactionClass.FX_TRADE:
+                    entry1 = result_item.copy()
+                    entry2 = result_item.copy()
 
                     if result_item['account_position_id']:
-                        result_item['entry_account'] = result_item['account_position_id']
-                        result_item['entry_strategy'] = result_item['strategy1_cash_id']
-                        result_item['entry_currency'] = result_item['transaction_currency_id']
-                        result_item['entry_amount'] = result_item['position_size_with_sign']
-                        result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
+                        entry1['entry_account'] = result_item['account_position_id']
+                        entry1['entry_strategy'] = result_item['strategy1_position_id']
+                        entry1['entry_instrument'] = result_item['instrument_id']
+                        entry1['entry_amount'] = result_item['position_size_with_sign']
+                        entry1['entry_item_type'] = ITEM_TYPE_INSTRUMENT
+                        entry1['entry_item_type_name'] = 'Instrument'
+
+                        results.append(entry1)
 
                     if result_item['account_cash_id']:
-                        result_item['entry_account'] = result_item['account_cash_id']
-                        result_item['entry_strategy'] = result_item['strategy1_cash_id']
-                        result_item['entry_currency'] = result_item['settlement_currency_id']
-                        result_item['entry_amount'] = result_item['cash_consideration']
-                        result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
+                        entry2['entry_account'] = result_item['account_cash_id']
+                        entry2['entry_strategy'] = result_item['strategy1_cash_id']
+                        entry2['entry_currency'] = result_item['settlement_currency_id']
+                        entry2['entry_amount'] = result_item['cash_consideration']
+                        entry2['entry_item_type'] = ITEM_TYPE_CURRENCY
+                        entry2['entry_item_type_name'] = 'Currency'
 
-                if result_item['transaction_class_id'] == TransactionClass.FX_TRANSFER:
+                        results.append(entry2)
+
+                elif result_item['transaction_class_id'] == TransactionClass.FX_TRADE:
+
+                    entry1 = result_item.copy()
+                    entry2 = result_item.copy()
+
+                    if result_item['account_position_id']:
+                        entry1['entry_account'] = result_item['account_position_id']
+                        entry1['entry_strategy'] = result_item['strategy1_cash_id']
+                        entry1['entry_currency'] = result_item['transaction_currency_id']
+                        entry1['entry_amount'] = result_item['position_size_with_sign']
+                        entry1['entry_item_type'] = ITEM_TYPE_CURRENCY
+                        entry1['entry_item_type_name'] = 'Currency'
+
+                        results.append(entry1)
+
+                    if result_item['account_cash_id']:
+                        entry2['entry_account'] = result_item['account_cash_id']
+                        entry2['entry_strategy'] = result_item['strategy1_cash_id']
+                        entry2['entry_currency'] = result_item['settlement_currency_id']
+                        entry2['entry_amount'] = result_item['cash_consideration']
+                        entry2['entry_item_type'] = ITEM_TYPE_CURRENCY
+                        entry2['entry_item_type_name'] = 'Currency'
+
+                        results.append(entry2)
+
+                elif result_item['transaction_class_id'] == TransactionClass.FX_TRANSFER:
+
+                    entry1 = result_item.copy()
+                    entry2 = result_item.copy()
 
                     if result_item['account_position_id']:  # from
 
-                        result_item['entry_account'] = result_item['account_position_id']
-                        result_item['entry_strategy'] = result_item['strategy1_cash_id']
-                        result_item['entry_currency'] = result_item['settlement_currency_id']
-                        result_item['entry_amount'] = result_item['cash_consideration'] * -1  # Important see FN-1077
-                        result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
+                        entry1['entry_account'] = result_item['account_position_id']
+                        entry1['entry_strategy'] = result_item['strategy1_cash_id']
+                        entry1['entry_currency'] = result_item['settlement_currency_id']
+                        entry1['entry_amount'] = result_item['cash_consideration'] * -1  # Important see FN-1077
+                        entry1['entry_item_type'] = ITEM_TYPE_CURRENCY
+                        entry1['entry_item_type_name'] = 'Currency'
+
+                        results.append(entry1)
 
                     if result_item['account_cash_id']:  # to
 
-                        result_item['entry_account'] = result_item['account_cash_id']
-                        result_item['entry_strategy'] = result_item['strategy1_position_id']
-                        result_item['entry_currency'] = result_item['settlement_currency_id']
-                        result_item['entry_amount'] = result_item['cash_consideration']
-                        result_item['entry_item_type'] = ITEM_TYPE_CURRENCY
+                        entry2['entry_account'] = result_item['account_cash_id']
+                        entry2['entry_strategy'] = result_item['strategy1_position_id']
+                        entry2['entry_currency'] = result_item['settlement_currency_id']
+                        entry2['entry_amount'] = result_item['cash_consideration']
+                        entry2['entry_item_type'] = ITEM_TYPE_CURRENCY
+                        entry2['entry_item_type_name'] = 'Currency'
 
-                if result_item['transaction_class_id'] == TransactionClass.TRANSFER:
+                        results.append(entry2)
+
+                elif result_item['transaction_class_id'] == TransactionClass.TRANSFER:
+
+                    entry1 = result_item.copy()
+                    entry2 = result_item.copy()
 
                     if result_item['account_cash_id']:  # from
 
-                        result_item['entry_account'] = result_item['account_position_id']
-                        result_item['entry_strategy'] = result_item['strategy1_position_id']
-                        result_item['entry_instrument'] = result_item['instrument_id']
-                        result_item['entry_amount'] = result_item[
+                        entry1['entry_account'] = result_item['account_position_id']
+                        entry1['entry_strategy'] = result_item['strategy1_position_id']
+                        entry1['entry_instrument'] = result_item['instrument_id']
+                        entry1['entry_amount'] = result_item[
                                                           'position_size_with_sign'] * -1  # Important see FN-1077
-                        result_item['entry_item_type'] = ITEM_TYPE_INSTRUMENT
+                        entry1['entry_item_type'] = ITEM_TYPE_INSTRUMENT
+                        entry1['entry_item_type_name'] = 'Instrument'
+
+                        results.append(entry1)
 
                     if result_item['account_position_id']:  # to
 
-                        result_item['entry_account'] = result_item['account_position_id']
-                        result_item['entry_strategy'] = result_item['strategy1_cash_id']
-                        result_item['entry_currency'] = result_item['settlement_currency_id']
-                        result_item['entry_amount'] = result_item['position_size_with_sign']
-                        result_item['entry_item_type'] = ITEM_TYPE_INSTRUMENT
+                        entry2['entry_account'] = result_item['account_position_id']
+                        entry2['entry_strategy'] = result_item['strategy1_cash_id']
+                        entry2['entry_currency'] = result_item['settlement_currency_id']
+                        entry2['entry_amount'] = result_item['position_size_with_sign']
+                        entry2['entry_item_type'] = ITEM_TYPE_INSTRUMENT
+                        entry2['entry_item_type_name'] = 'Instrument'
 
-                if result_item['entry_item_type']:
+                        results.append(entry2)
 
-                    if result_item['entry_item_type'] == ITEM_TYPE_INSTRUMENT:
-                        result_item['entry_item_type_name'] = 'Instrument'
-                    if result_item['entry_item_type'] == ITEM_TYPE_CURRENCY:
-                        result_item['entry_item_type_name'] = 'Currency'
+                else:
+                    results.append(result_item)
 
             self.instance.items = results
 
