@@ -65,6 +65,8 @@ class DataProcedureProcess(object):
         if self.procedure.data:
             self.procedure.data.update(options)
 
+        _l.info('update_procedure_options.procedure.data %s' % self.procedure.data)
+
     def update_procedure_date_from(self, date_from):
         self.procedure.date_from = date_from
 
