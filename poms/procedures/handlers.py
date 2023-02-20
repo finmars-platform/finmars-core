@@ -63,7 +63,12 @@ class DataProcedureProcess(object):
     def update_procedure_options(self, options):
 
         if self.procedure.data:
-            self.procedure.data.update(options)
+
+            # Warning, do not refactor, it works only that way
+            data = self.procedure.data
+            data.update(options)
+
+            self.procedure.data = data
 
         _l.info('update_procedure_options.procedure.data %s' % self.procedure.data)
 

@@ -156,7 +156,7 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
     @action(detail=False, methods=['post'], url_path='execute')
     def execute(self, request):
 
-        _l.debug("RequestDataFileProcedureViewSet.execute.data %s" % request.data)
+        _l.info("RequestDataFileProcedureViewSet.execute.data %s" % request.data)
 
         user_code = request.data['user_code']
 
