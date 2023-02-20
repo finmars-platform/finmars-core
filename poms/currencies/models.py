@@ -19,17 +19,17 @@ from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser
 
 # Probably Deprecated
-# def _load_currencies_data():
-#     ccy_path = os.path.join(settings.BASE_DIR, 'data', 'currencies.csv')
-#     ret = {}
-#     with open(ccy_path) as csvfile:
-#         reader = csv.DictReader(csvfile, delimiter=';')
-#         for row in reader:
-#             ret[row['user_code']] = row
-#     return ret
-#
-#
-# currencies_data = SimpleLazyObject(_load_currencies_data)
+def _load_currencies_data():
+    ccy_path = os.path.join(settings.BASE_DIR, 'data', 'currencies.csv')
+    ret = {}
+    with open(ccy_path) as csvfile:
+        reader = csv.DictReader(csvfile, delimiter=';')
+        for row in reader:
+            ret[row['user_code']] = row
+    return ret
+
+
+currencies_data = SimpleLazyObject(_load_currencies_data)
 
 
 class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
