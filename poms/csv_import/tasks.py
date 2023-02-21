@@ -676,9 +676,14 @@ def process_csv_file(master_user,
 
                                                 try:
 
-                                                    instance[key] = relation_map[key].objects.get(
-                                                        master_user=master_user,
-                                                        user_code=executed_expression)
+                                                    if key == 'country':
+                                                        relation_map[key].objects.get(
+                                                            user_code=executed_expression)
+                                                    else:
+
+                                                        instance[key] = relation_map[key].objects.get(
+                                                            master_user=master_user,
+                                                            user_code=executed_expression)
 
                                                 except (relation_map[key].DoesNotExist, KeyError):
 
@@ -2024,7 +2029,6 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
 
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
             procedure_instance.save()
-
 
 
 # DEPRECATED DELETE SOON
