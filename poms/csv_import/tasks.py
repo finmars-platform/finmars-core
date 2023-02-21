@@ -606,8 +606,7 @@ def process_csv_file(master_user,
                         'pricing_condition': PricingConditionMapping,
                         'currency': CurrencyMapping,
                         'pricing_currency': CurrencyMapping,
-                        'accrued_currency': CurrencyMapping,
-                        'country': None
+                        'accrued_currency': CurrencyMapping
                     }
 
                     relation_map = {
@@ -621,8 +620,7 @@ def process_csv_file(master_user,
                         'type': AccountType,
                         'currency': Currency,
                         'pricing_currency': Currency,
-                        'accrued_currency': Currency,
-                        'country': Country
+                        'accrued_currency': Currency
                     }
 
                     classifier_mapping_map = {
@@ -672,18 +670,15 @@ def process_csv_file(master_user,
                                                 instance[key] = mapping_map[key].objects.get(master_user=master_user,
                                                                                              value=executed_expression).content_object
 
-                                            except (Exception):
+                                            except (Exception) as e:
+
+                                                _l.error("No mapping found, trying to match by user_code")
 
                                                 try:
 
-                                                    if key == 'country':
-                                                        relation_map[key].objects.get(
-                                                            user_code=executed_expression)
-                                                    else:
-
-                                                        instance[key] = relation_map[key].objects.get(
-                                                            master_user=master_user,
-                                                            user_code=executed_expression)
+                                                    instance[key] = relation_map[key].objects.get(
+                                                        master_user=master_user,
+                                                        user_code=executed_expression)
 
                                                 except (relation_map[key].DoesNotExist, KeyError):
 
@@ -713,6 +708,15 @@ def process_csv_file(master_user,
 
                                             if key == 'maturity_date':
                                                 instance[key] = str(executed_expression)
+                                            elif key == 'country':
+                                                try:
+                                                    instance[key] = Country.objects.get(
+                                                        user_code=executed_expression)
+
+                                                except Exception as e:
+                                                    instance[key] = None
+                                                    _l.error("Could not find country %s. Error %s " % (
+                                                    executed_expression, e))
                                             else:
                                                 instance[key] = executed_expression
 
