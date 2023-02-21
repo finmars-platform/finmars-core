@@ -711,7 +711,7 @@ def process_csv_file(master_user,
                                             else:
                                                 instance[key] = executed_expression
 
-                                except (ExpressionEvalError, TypeError, Exception, KeyError):
+                                except (ExpressionEvalError, TypeError, Exception, KeyError) as e:
 
                                     if missing_data_handler == 'set_defaults':
 
@@ -729,6 +729,8 @@ def process_csv_file(master_user,
                                             _l.debug("Can't set default value for %s" % key)
 
                                     else:
+
+                                        _l.error('ExpressionEvalError.e %s' % e)
 
                                         _l.debug('ExpressionEvalError Appending Error %s key %s' % (
                                             ExpressionEvalError, key))
