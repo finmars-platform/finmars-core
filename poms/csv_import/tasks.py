@@ -606,7 +606,8 @@ def process_csv_file(master_user,
                         'pricing_condition': PricingConditionMapping,
                         'currency': CurrencyMapping,
                         'pricing_currency': CurrencyMapping,
-                        'accrued_currency': CurrencyMapping
+                        'accrued_currency': CurrencyMapping,
+                        'country': None
                     }
 
                     relation_map = {
@@ -671,7 +672,7 @@ def process_csv_file(master_user,
                                                 instance[key] = mapping_map[key].objects.get(master_user=master_user,
                                                                                              value=executed_expression).content_object
 
-                                            except (mapping_map[key].DoesNotExist, KeyError):
+                                            except (Exception):
 
                                                 try:
 
