@@ -188,7 +188,10 @@ class TransactionReportBuilderSql:
                 result_item['id'] = result_item['complex_transaction_code']
                 result_item['entry_account'] = None
                 result_item['entry_strategy'] = None
-                result_item['entry_item'] = None
+                result_item['entry_item_name'] = None  # Should be filled later
+                result_item['entry_item_short_name'] = None  # Should be filled later
+                result_item['entry_item_user_code'] = None  # Should be filled later
+                result_item['entry_item_public_name'] = None  # Should be filled later
                 result_item['entry_currency'] = None
                 result_item['entry_instrument'] = None
                 result_item['entry_amount'] = None
@@ -321,7 +324,10 @@ class TransactionReportBuilderSql:
             for result_item in result:
                 result_item['entry_account'] = None
                 result_item['entry_strategy'] = None
-                result_item['entry_item'] = None
+                result_item['entry_item_name'] = None  # Should be filled later
+                result_item['entry_item_short_name'] = None  # Should be filled later
+                result_item['entry_item_user_code'] = None  # Should be filled later
+                result_item['entry_item_public_name'] = None  # Should be filled later
                 result_item['entry_currency'] = None
                 result_item['entry_instrument'] = None
                 result_item['entry_amount'] = None
@@ -466,7 +472,10 @@ class TransactionReportBuilderSql:
 
                 result_item['entry_account'] = None
                 result_item['entry_strategy'] = None
-                result_item['entry_item'] = None  # Should be filled later
+                result_item['entry_item_name'] = None  # Should be filled later
+                result_item['entry_item_short_name'] = None  # Should be filled later
+                result_item['entry_item_user_code'] = None  # Should be filled later
+                result_item['entry_item_public_name'] = None  # Should be filled later
                 result_item['entry_currency'] = None
                 result_item['entry_instrument'] = None
                 result_item['entry_amount'] = None
