@@ -6,12 +6,14 @@ from django.db import connection
 from django.views.generic.dates import timezone_today
 
 from poms.accounts.models import Account
+from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument
 from poms.portfolios.models import Portfolio
 from poms.reports.models import TransactionReportCustomField
 from poms.reports.sql_builders.helpers import dictfetchall, \
     get_transaction_report_filter_sql_string, get_transaction_report_date_filter_sql_string
+from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import ComplexTransaction, TransactionClass, ComplexTransactionStatus
 from poms.users.models import EcosystemDefault
 
@@ -612,6 +614,13 @@ class TransactionReportBuilderSql:
                 else:
                     results.append(result_item)
 
+            # test_results = []
+            #
+            # for i in range(1, 100):
+            #
+            #     test_results = test_results + results
+
+            # self.instance.items = test_results # only test purpose
             self.instance.items = results
 
     def build_items(self):
@@ -672,6 +681,44 @@ class TransactionReportBuilderSql:
             'attributes__classifier',
         ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
+    def add_data_items_counterparties(self, ids):
+
+        self.instance.item_counterparties = Counterparty.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+
+    def add_data_items_responsibles(self, ids):
+
+        self.instance.item_responsibles = Responsible.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+
+    def add_data_items_strategies1(self, ids):
+        self.instance.item_strategies1 = Strategy1.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+
+    def add_data_items_strategies2(self, ids):
+        self.instance.item_strategies2 = Strategy2.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+
+    def add_data_items_strategies3(self, ids):
+        self.instance.item_strategies3 = Strategy3.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+
+
     def add_data_items_complex_transactions(self, ids):
 
         self.instance.item_complex_transactions = ComplexTransaction.objects.prefetch_related(
@@ -708,6 +755,11 @@ class TransactionReportBuilderSql:
         portfolio_ids = []
         account_ids = []
         currencies_ids = []
+        counterparty_ids = []
+        responsibles_ids = []
+        strategies1_ids = []
+        strategies2_ids = []
+        strategies3_ids = []
 
         complex_transactions_ids = []
 
@@ -724,6 +776,29 @@ class TransactionReportBuilderSql:
 
             currencies_ids.append(item['settlement_currency_id'])
             currencies_ids.append(item['transaction_currency_id'])
+            counterparty_ids.append(item['counterparty_id'])
+            responsibles_ids.append(item['responsible_id'])
+
+            if 'entry_strategy' in item:
+                strategies1_ids.append(item['entry_strategy'])
+
+            if 'strategy1_position_id' in item:
+                strategies1_ids.append(item['strategy1_position_id'])
+
+            if 'strategy2_position_id' in item:
+                strategies2_ids.append(item['strategy2_position_id'])
+
+            if 'strategy3_position_id' in item:
+                strategies3_ids.append(item['strategy3_position_id'])
+
+            if 'strategy1_cash_id' in item:
+                strategies1_ids.append(item['strategy1_cash_id'])
+
+            if 'strategy2_cash_id' in item:
+                strategies2_ids.append(item['strategy2_cash_id'])
+
+            if 'strategy3_cash_id' in item:
+                strategies3_ids.append(item['strategy3_cash_id'])
 
             # if item['complex_transaction_id'] not in complex_transactions_ids:
             #     complex_transactions_ids.append(item['complex_transaction_id'])
@@ -732,6 +807,11 @@ class TransactionReportBuilderSql:
         self.add_data_items_portfolios(portfolio_ids)
         self.add_data_items_accounts(account_ids)
         self.add_data_items_currencies(currencies_ids)
+        self.add_data_items_counterparties(counterparty_ids)
+        self.add_data_items_responsibles(responsibles_ids)
+        self.add_data_items_strategies1(strategies1_ids)
+        self.add_data_items_strategies2(strategies2_ids)
+        self.add_data_items_strategies3(strategies3_ids)
         self.add_data_items_transaction_classes()
         self.add_data_items_complex_transaction_status()
         # self.add_data_items_complex_transactions(complex_transactions_ids)  # too slow
