@@ -825,14 +825,20 @@ class TransactionReportBuilderSql:
                     for currency in self.instance.item_currencies:
 
                         if item['entry_currency'] == currency.id:
-                            item['entry_item'] = currency.short_name
+                            item['entry_item_short_name'] = currency.short_name
+                            item['entry_item_user_code'] = currency.user_code
+                            item['entry_item_name'] = currency.name
+                            item['entry_item_public_name'] = currency.public_name
 
                 if item['entry_instrument']:
 
                     for instrument in self.instance.item_instruments:
 
                         if item['entry_instrument'] == instrument.id:
-                            item['entry_item'] = instrument.user_code
+                            item['entry_item_short_name'] = instrument.short_name
+                            item['entry_item_user_code'] = instrument.user_code
+                            item['entry_item_name'] = instrument.name
+                            item['entry_item_public_name'] = instrument.public_name
 
         self.instance.custom_fields = TransactionReportCustomField.objects.filter(master_user=self.instance.master_user)
 
