@@ -485,9 +485,9 @@ class TransactionReportBuilderSql:
                 if result_item['transaction_class_id'] == TransactionClass.CASH_INFLOW or result_item[
                     'transaction_class_id'] == TransactionClass.CASH_OUTFLOW:
 
-                    if (self.instance.end_date < result_item['trade_date'] and self.instance.end_date < result_item[
+                    if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date < result_item[
                         'settlement_date']) or \
-                            (self.instance.end_date > result_item['trade_date'] and self.instance.end_date >
+                            (self.instance.end_date > result_item['accounting_date'] and self.instance.end_date >
                              result_item['settlement_date']):
 
                         result_item['entry_account'] = result_item['account_cash_id']
@@ -501,7 +501,7 @@ class TransactionReportBuilderSql:
 
                     else:
 
-                        if result_item['trade_date'] < result_item['settlement_date']:
+                        if result_item['accounting_date'] < result_item['settlement_date']:
 
                             result_item['entry_account'] = result_item['account_interim_id']
                             result_item['entry_strategy'] = result_item['strategy1_cash_id']
@@ -550,9 +550,9 @@ class TransactionReportBuilderSql:
                     entry1 = result_item.copy()
                     entry2 = result_item.copy()
 
-                    if (self.instance.end_date < result_item['trade_date'] and self.instance.end_date < result_item[
+                    if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date < result_item[
                         'settlement_date']) or \
-                            (self.instance.end_date > result_item['trade_date'] and self.instance.end_date >
+                            (self.instance.end_date > result_item['accounting_date'] and self.instance.end_date >
                              result_item['settlement_date']):
 
                         if result_item['account_position_id']:
@@ -577,7 +577,7 @@ class TransactionReportBuilderSql:
 
                     else:
 
-                        if result_item['trade_date'] < result_item['settlement_date']:
+                        if result_item['accounting_date'] < result_item['settlement_date']:
 
                             if result_item['account_position_id']:
                                 entry1['entry_account'] = result_item['account_position_id']
@@ -627,9 +627,9 @@ class TransactionReportBuilderSql:
                     entry1 = result_item.copy()
                     entry2 = result_item.copy()
 
-                    if (self.instance.end_date < result_item['trade_date'] and self.instance.end_date < result_item[
+                    if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date < result_item[
                         'settlement_date']) or \
-                            (self.instance.end_date > result_item['trade_date'] and self.instance.end_date >
+                            (self.instance.end_date > result_item['accounting_date'] and self.instance.end_date >
                              result_item['settlement_date']):
 
                         if result_item['account_position_id']:
@@ -654,7 +654,7 @@ class TransactionReportBuilderSql:
 
                     else: # in between
 
-                        if result_item['trade_date'] < result_item['settlement_date']:
+                        if result_item['accounting_date'] < result_item['settlement_date']:
 
                             if result_item['account_position_id']:
                                 entry1['entry_account'] = result_item['account_position_id']
@@ -703,9 +703,9 @@ class TransactionReportBuilderSql:
                     entry1 = result_item.copy()
                     entry2 = result_item.copy()
 
-                    if (self.instance.end_date < result_item['trade_date'] and self.instance.end_date < result_item[
+                    if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date < result_item[
                         'settlement_date']) or \
-                            (self.instance.end_date > result_item['trade_date'] and self.instance.end_date >
+                            (self.instance.end_date > result_item['accounting_date'] and self.instance.end_date >
                              result_item['settlement_date']):
 
                         if result_item['account_position_id']:  # from
@@ -732,7 +732,7 @@ class TransactionReportBuilderSql:
 
                     else: # in between
 
-                        if result_item['trade_date'] < result_item['settlement_date']:
+                        if result_item['accounting_date'] < result_item['settlement_date']:
 
                             if result_item['account_position_id']:  # from
 
@@ -787,9 +787,9 @@ class TransactionReportBuilderSql:
                     entry1 = result_item.copy()
                     entry2 = result_item.copy()
 
-                    if (self.instance.end_date < result_item['trade_date'] and self.instance.end_date < result_item[
+                    if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date < result_item[
                         'settlement_date']) or \
-                            (self.instance.end_date > result_item['trade_date'] and self.instance.end_date >
+                            (self.instance.end_date > result_item['accounting_date'] and self.instance.end_date >
                              result_item['settlement_date']):
 
                         if result_item['account_position_id']:  # to
@@ -817,7 +817,7 @@ class TransactionReportBuilderSql:
 
                     else: # in between
 
-                        if result_item['trade_date'] < result_item['settlement_date']:
+                        if result_item['accounting_date'] < result_item['settlement_date']:
 
                             if result_item['account_position_id']:  # to
 
