@@ -106,10 +106,11 @@ class TransactionReportBuilderSql:
                                 if value == portfolio[field_key]:
                                     portfolio_ids.append(str(portfolio['id']))
 
-                        res = "'" + "\',\'".join(portfolio_ids)
-                        res = res + "'"
+                        if portfolio_ids:
+                            res = "'" + "\',\'".join(portfolio_ids)
+                            res = res + "'"
 
-                        result = result + 'and t.portfolio_id IN (%s)' % res
+                            result = result + 'and t.portfolio_id IN (%s)' % res
 
                     if filter['key'] in ['instrument.user_code', 'instrument.name', 'instrument.short_name', 'instrument.public_name']:
 
@@ -124,10 +125,12 @@ class TransactionReportBuilderSql:
                                 if value == instrument[field_key]:
                                     instrument_ids.append(str(instrument['id']))
 
-                        res = "'" + "\',\'".join(instrument_ids)
-                        res = res + "'"
+                        if instrument_ids:
 
-                        result = result + 'and t.instrument_id IN (%s)' % res
+                            res = "'" + "\',\'".join(instrument_ids)
+                            res = res + "'"
+
+                            result = result + 'and t.instrument_id IN (%s)' % res
 
         except Exception as e:
 
