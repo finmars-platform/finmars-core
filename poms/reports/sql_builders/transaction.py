@@ -83,8 +83,9 @@ class TransactionReportBuilderSql:
         # }]
 
         portfolios = list(Portfolio.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
+        instruments = list(Instrument.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
 
-        _l.info("add_user_filters.portfolios %s" % portfolios)
+        _l.info("add_user_filters.instruments %s" % len(instruments))
 
         try:
 
@@ -110,6 +111,23 @@ class TransactionReportBuilderSql:
 
                         result = result + 'and t.portfolio_id IN (%s)' % res
 
+                    if filter['key'] in ['instrument.user_code', 'instrument.name', 'instrument.short_name', 'instrument.public_name']:
+
+                        field_key = filter['key'].split('.')[1]
+
+                        instrument_ids = []
+
+                        for instrument in instruments:
+
+                            for value in filter['options']['filter_values']:
+
+                                if value == instrument[field_key]:
+                                    instrument_ids.append(str(instrument['id']))
+
+                        res = "'" + "\',\'".join(instrument_ids)
+                        res = res + "'"
+
+                        result = result + 'and t.instrument_id IN (%s)' % res
 
         except Exception as e:
 
