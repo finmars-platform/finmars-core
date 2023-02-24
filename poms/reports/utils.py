@@ -110,6 +110,9 @@ def generate_report_unique_hash(app, action, data, master_user, member):
     if 'depth_level' in _data:
         report_options['depth_level'] = _data['depth_level']
 
+    if 'filters' in _data:
+        report_options['filters'] = str(_data['filters'])
+
     result = app + '_' + action + '_' + str(master_user.id) + '_' + str(member.id) + '_' + hashlib.md5(
         json.dumps(report_options, sort_keys=True).encode('utf-8')).hexdigest()
 
