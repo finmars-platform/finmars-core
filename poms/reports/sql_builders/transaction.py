@@ -92,23 +92,23 @@ class TransactionReportBuilderSql:
 
                 if filter['options']['enabled'] and filter['options']['filter_values']:
 
-                if filter['key'] in ['portfolio.user_code', 'portfolio.name', 'portfolio.short_name', 'portfolio.public_name']:
+                    if filter['key'] in ['portfolio.user_code', 'portfolio.name', 'portfolio.short_name', 'portfolio.public_name']:
 
-                    field_key = filter['key'].split('.')[1]
+                        field_key = filter['key'].split('.')[1]
 
-                    portfolio_ids = []
+                        portfolio_ids = []
 
-                    for portfolio in portfolios:
+                        for portfolio in portfolios:
 
-                        for value in filter['options']['filter_values']:
+                            for value in filter['options']['filter_values']:
 
-                            if value == portfolio[field_key]:
-                                portfolio_ids.append(str(portfolio['id']))
+                                if value == portfolio[field_key]:
+                                    portfolio_ids.append(str(portfolio['id']))
 
-                    res = "'" + "\',\'".join(portfolio_ids)
-                    res = res + "'"
+                        res = "'" + "\',\'".join(portfolio_ids)
+                        res = res + "'"
 
-                    result = result + 'and t.portfolio_id IN (%s)' % res
+                        result = result + 'and t.portfolio_id IN (%s)' % res
 
 
         except Exception as e:
