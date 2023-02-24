@@ -82,6 +82,33 @@ class TransactionReportBuilderSql:
         #     "value_type": 10
         # }]
 
+        portfolios = list(Portfolio.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
+
+        _l.info("add_user_filters.portfolios %s" % portfolios)
+
+        for filter in self.instance.filters:
+
+            if filter['options']['enabled'] and filter['options']['filter_values']:
+
+                if filter['key'] in ['portfolio.user_code', 'portfolio.name', 'portfolio.short_name', 'portfolio.public_name']:
+
+                    field_key = filter['key'].split('.')[1]
+
+                    portfolio_ids = []
+
+                    for portfolio in portfolios:
+
+                        for value in filter['options']['filter_values']:
+
+                            if value == portfolio[field_key]:
+                                portfolio_ids.append(str(portfolio['id']))
+
+                    res = "'" + "\',\'".join(portfolio_ids)
+                    res = res + "'"
+
+                    result = result + 'and t.portfolio_id IN (%s)' % res
+
+
         # accounts = Account.objects.all.values_list('id', 'user_code', 'short_name', 'name', 'public_name', flat=True)
         #
         # accounts_dict = {}
@@ -102,9 +129,7 @@ class TransactionReportBuilderSql:
         #
         #         result = result + 'and (account_interim_id IN (%s) or account_position_id IN (%s) or account_cash_id IN (%s))' % res
 
-
-
-
+        _l.info('add_user_filters result %s' %  result)
 
         return result
 
@@ -363,7 +388,8 @@ class TransactionReportBuilderSql:
                                  master_user_id=self.instance.master_user.id,
                                  statuses=statuses_str,
                                  filter_sql_string=filter_sql_string,
-                                 date_filter_sql_string=date_filter_sql_string
+                                 date_filter_sql_string=date_filter_sql_string,
+                                 user_filters=user_filters
                                  )
 
             # cursor.execute(query, [self.instance.begin_date, self.instance.end_date, self.instance.master_user.id, statuses, filter_sql_string])
@@ -394,6 +420,8 @@ class TransactionReportBuilderSql:
 
             filter_sql_string = get_transaction_report_filter_sql_string(self.instance)
             date_filter_sql_string = get_transaction_report_date_filter_sql_string(self.instance)
+            user_filters = self.add_user_filters()
+
 
             query = """
                     SELECT
@@ -471,6 +499,7 @@ class TransactionReportBuilderSql:
                     INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
                     INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
                     WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND tc.status_id IN {statuses} {filter_sql_string}
+                    {user_filters}
                     
                     
                 """
@@ -499,7 +528,8 @@ class TransactionReportBuilderSql:
                                  master_user_id=self.instance.master_user.id,
                                  statuses=statuses_str,
                                  filter_sql_string=filter_sql_string,
-                                 date_filter_sql_string=date_filter_sql_string
+                                 date_filter_sql_string=date_filter_sql_string,
+                                 user_filters=user_filters
                                  )
 
             # cursor.execute(query, [self.instance.begin_date, self.instance.end_date, self.instance.master_user.id, statuses, filter_sql_string])
