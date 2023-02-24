@@ -62,6 +62,52 @@ class TransactionReportBuilderSql:
 
         return self.instance
 
+    def add_user_filters(self):
+
+        result = ''
+
+        # [{
+        #     "content_type": "transactions.transactiontype",
+        #     "key": "complex_transaction.transaction_type.name",
+        #     "name": "Complex Transaction. Transaction Type. Name",
+        #     "options": {
+        #         "enabled": true,
+        #         "exclude_empty_cells": false,
+        #         "filter_type": "selector",
+        #         "filter_values": [
+        #             "Buy/Sell"
+        #         ],
+        #         "use_from_above": {}
+        #     },
+        #     "value_type": 10
+        # }]
+
+        # accounts = Account.objects.all.values_list('id', 'user_code', 'short_name', 'name', 'public_name', flat=True)
+        #
+        # accounts_dict = {}
+        #
+        # for account in accounts:
+        #     accounts_dict[account[2]] = account[1] # account[2] - user code
+        #
+        # for filter in self.instance.filters:
+        #
+        #     if filter['key'] == 'entry_account.user_code':
+        #
+        #         # "'acc1', 'acc2'"
+        #
+        #         accounts = ['acc1', 'acc2']
+        #         res = "'" + "\',\'".join(accounts)
+        #         res = res + "'"
+        #
+        #
+        #         result = result + 'and (account_interim_id IN (%s) or account_position_id IN (%s) or account_cash_id IN (%s))' % res
+
+
+
+
+
+        return result
+
     def build_complex_transaction_level_items(self):
 
         _l.info("build_complex_transaction_level_items")
@@ -70,6 +116,8 @@ class TransactionReportBuilderSql:
 
             filter_sql_string = get_transaction_report_filter_sql_string(self.instance)
             date_filter_sql_string = get_transaction_report_date_filter_sql_string(self.instance)
+
+
 
             query = """
                     SELECT
@@ -209,6 +257,8 @@ class TransactionReportBuilderSql:
             filter_sql_string = get_transaction_report_filter_sql_string(self.instance)
             date_filter_sql_string = get_transaction_report_date_filter_sql_string(self.instance)
 
+            user_filters = self.add_user_filters()
+
             query = """
                     SELECT
                       -- transaction fields
@@ -285,7 +335,7 @@ class TransactionReportBuilderSql:
                     INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
                     INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
                     WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND tc.status_id IN {statuses} {filter_sql_string}
-                    
+                    {user_filters}
                     
                 """
 

@@ -852,6 +852,8 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
     item_responsibles = ReportResponsibleSerializer(many=True, read_only=True)
     item_counterparties = ReportCounterpartySerializer(many=True, read_only=True)
 
+    filters = serializers.JSONField(allow_null=True, required=False)
+
     def __init__(self, *args, **kwargs):
         super(TransactionReportSerializer, self).__init__(*args, **kwargs)
 

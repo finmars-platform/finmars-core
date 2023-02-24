@@ -271,7 +271,8 @@ class TransactionReport(BaseReport):
                  complex_transaction_statuses_filter=None,
                  items=None,
                  date_field=None,
-                 depth_level=None):
+                 depth_level=None,
+                 filters=None):
         super(TransactionReport, self).__init__(id=id, master_user=master_user, member=member,
                                                 task_id=task_id, task_status=task_status)
 
@@ -315,6 +316,7 @@ class TransactionReport(BaseReport):
         self.item_strategies3 = []
         self.item_responsibles = []
         self.item_counterparties = []
+        self.filters = filters
 
         if date_field:
             self.date_field = date_field
@@ -322,6 +324,7 @@ class TransactionReport(BaseReport):
             self.date_field = 'date'
 
         print('====depth_level %s' % depth_level)
+        print('====filters %s' % filters)
 
         if depth_level:
             self.depth_level = depth_level
