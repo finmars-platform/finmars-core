@@ -86,9 +86,11 @@ class TransactionReportBuilderSql:
 
         _l.info("add_user_filters.portfolios %s" % portfolios)
 
-        for filter in self.instance.filters:
+        try:
 
-            if filter['options']['enabled'] and filter['options']['filter_values']:
+            for filter in self.instance.filters:
+
+                if filter['options']['enabled'] and filter['options']['filter_values']:
 
                 if filter['key'] in ['portfolio.user_code', 'portfolio.name', 'portfolio.short_name', 'portfolio.public_name']:
 
@@ -108,6 +110,10 @@ class TransactionReportBuilderSql:
 
                     result = result + 'and t.portfolio_id IN (%s)' % res
 
+
+        except Exception as e:
+
+            _l.error("User filters layou error %s" % e)
 
         # accounts = Account.objects.all.values_list('id', 'user_code', 'short_name', 'name', 'public_name', flat=True)
         #
