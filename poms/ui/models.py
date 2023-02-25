@@ -292,6 +292,11 @@ class ColumnSortData(models.Model):
 
     json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['member', 'user_code'], name='unique user code for column sort data')
+        ]
+
     @property
     def data(self):
         if self.json_data:
