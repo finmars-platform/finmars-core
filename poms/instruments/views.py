@@ -964,6 +964,10 @@ class InstrumentDatabaseSearchViewSet(APIView):
 
         else:
 
+            name = request.query_params.get('name', '')
+            size = request.query_params.get('size', 40)
+            page = request.query_params.get('page', 1)
+
             if settings.FINMARS_DATABASE_URL:
 
                     headers = {
@@ -1038,6 +1042,13 @@ class InstrumentDatabaseSearchViewSet(APIView):
                         'pageSize': int(size),
                         'resultCount': response_json['count']
                     }
+            else:
+                result = {
+                    'foundItems': [],
+                    'pageNum': 1,
+                    'pageSize': int(size),
+                    'resultCount': 0
+                }
 
         return Response(result)
 
