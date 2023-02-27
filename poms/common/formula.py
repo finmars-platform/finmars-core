@@ -557,6 +557,36 @@ def _universal_parse_date(date_string):
     return dt.strftime('%Y-%m-%d')
 
 
+def _universal_parse_country(value):
+
+    result = None
+
+    from poms.instruments.models import Country
+
+    try:
+        country = Country.objects.filter(name=value)[0]
+        result = country
+        return result
+    except Exception as e:
+        pass
+
+    try:
+        country = Country.objects.filter(alpha_3=value)[0]
+        result = country
+        return result
+    except Exception as e:
+        pass
+
+    try:
+        country = Country.objects.filter(alpha_2=value)[0]
+        result = country
+        return result
+    except Exception as e:
+        pass
+
+    return result
+
+
 def _unix_to_date(unix, format=None):
     if not unix:
         return None
@@ -3348,6 +3378,7 @@ FUNCTIONS = [
     SimpleEval2Def('get_list_of_dates_between_two_dates', _get_list_of_dates_between_two_dates),
     SimpleEval2Def('parse_date', _parse_date),
     SimpleEval2Def('universal_parse_date', _universal_parse_date),
+    SimpleEval2Def('universal_parse_country', _universal_parse_country),
     SimpleEval2Def('unix_to_date', _unix_to_date),
 
     SimpleEval2Def('last_business_day', _last_business_day),
@@ -4088,9 +4119,9 @@ def _get_supported_models_serializer_class():
     from poms.accounts.serializers import AccountSerializer
     from poms.counterparties.models import Counterparty, Responsible
     from poms.counterparties.serializers import CounterpartySerializer, ResponsibleSerializer
-    from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, GeneratedEvent, InstrumentType
+    from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, GeneratedEvent, Country, InstrumentType
     from poms.instruments.serializers import InstrumentSerializer, DailyPricingModelSerializer, \
-        InstrumentTypeSerializer, \
+        InstrumentTypeSerializer, CountrySerializer, \
         PaymentSizeDetailSerializer, GeneratedEventSerializer
     from poms.currencies.models import Currency
     from poms.currencies.serializers import CurrencySerializer
@@ -4120,7 +4151,8 @@ def _get_supported_models_serializer_class():
         Transaction: TransactionTextRenderSerializer,
         ComplexTransaction: ComplexTransactionEvalSerializer,
         GeneratedEvent: GeneratedEventSerializer,
-        Member: MemberSerializer
+        Member: MemberSerializer,
+        Country: CountrySerializer
     }
 
 
