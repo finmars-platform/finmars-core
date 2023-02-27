@@ -29,7 +29,7 @@ from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.file_reports.models import FileReport
 from poms.instruments.handlers import InstrumentTypeProcess
-from poms.instruments.models import PricingPolicy, Instrument, InstrumentType
+from poms.instruments.models import PricingPolicy, Instrument, InstrumentType, Country
 from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping, \
     PortfolioClassifierMapping, AccountClassifierMapping, ResponsibleClassifierMapping, CounterpartyClassifierMapping, \
     PricingPolicyMapping, InstrumentMapping, CurrencyMapping, InstrumentTypeMapping, PaymentSizeDetailMapping, \
@@ -670,7 +670,9 @@ def process_csv_file(master_user,
                                                 instance[key] = mapping_map[key].objects.get(master_user=master_user,
                                                                                              value=executed_expression).content_object
 
-                                            except (mapping_map[key].DoesNotExist, KeyError):
+                                            except (Exception) as e:
+
+                                                _l.error("No mapping found, trying to match by user_code")
 
                                                 try:
 
@@ -706,10 +708,19 @@ def process_csv_file(master_user,
 
                                             if key == 'maturity_date':
                                                 instance[key] = str(executed_expression)
+                                            elif key == 'country':
+                                                try:
+                                                    instance[key] = Country.objects.get(
+                                                        user_code=executed_expression)
+
+                                                except Exception as e:
+                                                    instance[key] = None
+                                                    _l.error("Could not find country %s. Error %s " % (
+                                                    executed_expression, e))
                                             else:
                                                 instance[key] = executed_expression
 
-                                except (ExpressionEvalError, TypeError, Exception, KeyError):
+                                except (ExpressionEvalError, TypeError, Exception, KeyError) as e:
 
                                     if missing_data_handler == 'set_defaults':
 
@@ -727,6 +738,8 @@ def process_csv_file(master_user,
                                             _l.debug("Can't set default value for %s" % key)
 
                                     else:
+
+                                        _l.error('ExpressionEvalError.e %s' % e)
 
                                         _l.debug('ExpressionEvalError Appending Error %s key %s' % (
                                             ExpressionEvalError, key))
@@ -1296,6 +1309,12 @@ class ImportHandler:
 
                 if 'pricing_currency' in result_without_many_to_many:
                     result_without_many_to_many['pricing_currency'] = result_without_many_to_many['pricing_currency'].id
+
+                try:
+                    if 'country' in result_without_many_to_many:
+                        result_without_many_to_many['country'] = result_without_many_to_many['country'].id
+                except Exception as e:
+                    _l.error("Could not set country to instance %s " % e)
 
                 serializer = InstrumentSerializer(data=result_without_many_to_many, context=self.context)
 
@@ -2017,7 +2036,6 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
 
             procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
             procedure_instance.save()
-
 
 
 # DEPRECATED DELETE SOON

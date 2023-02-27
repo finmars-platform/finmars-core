@@ -144,6 +144,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
             ],
             'instruments.instrument': [
                 'name', 'user_code', 'short_name', 'public_name', 'notes',
+                'country',
                 'reference_for_pricing',
                 'instrument_type',
                 'pricing_currency', 'accrued_currency',

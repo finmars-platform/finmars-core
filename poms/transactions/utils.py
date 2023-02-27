@@ -20,9 +20,9 @@ def calc_cash_for_contract_for_difference(transaction, instrument, portfolio, ac
              is_calculate_for_newer, is_calculate_for_all, save)
 
     from poms.instruments.models import CostMethod
-    from poms.reports.builders.balance_item import Report
-    from poms.reports.builders.balance_pl import ReportBuilder
-    from poms.reports.builders.balance_virt_trn import VirtualTransaction
+    # from poms.reports.builders.balance_item import Report
+    # from poms.reports.builders.balance_pl import ReportBuilder
+    # from poms.reports.builders.balance_virt_trn import VirtualTransaction
 
     def _get_id(obj):
         if obj is None:

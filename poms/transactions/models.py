@@ -1927,17 +1927,18 @@ class Transaction(models.Model):
                and self.instrument.instrument_type.instrument_class_id == InstrumentClass.CONTRACT_FOR_DIFFERENCE
 
     def calc_cash_by_formulas(self, save=True):
-        if self.is_can_calc_cash_by_formulas():
-            calc_cash_for_contract_for_difference(
-                transaction=self,
-                instrument=self.instrument,
-                portfolio=self.portfolio,
-                account=self.account_position,
-                member=None,
-                is_calculate_for_newer=True,
-                is_calculate_for_all=False,
-                save=save
-            )
+        pass
+        # if self.is_can_calc_cash_by_formulas():
+        #     calc_cash_for_contract_for_difference(
+        #         transaction=self,
+        #         instrument=self.instrument,
+        #         portfolio=self.portfolio,
+        #         account=self.account_position,
+        #         member=None,
+        #         is_calculate_for_newer=True,
+        #         is_calculate_for_all=False,
+        #         save=save
+        #     )
 
 
 class ExternalCashFlow(models.Model):

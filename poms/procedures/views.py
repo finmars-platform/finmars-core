@@ -154,10 +154,9 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         })
 
     @action(detail=False, methods=['post'], url_path='execute')
-    def execute(self, request, pk=None):
-        _l.debug("Run Procedure %s" % pk)
+    def execute(self, request):
 
-        _l.debug("Run Procedure data %s" % request.data)
+        _l.info("RequestDataFileProcedureViewSet.execute.data %s" % request.data)
 
         user_code = request.data['user_code']
 
@@ -167,6 +166,12 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         member = request.user.member
 
         instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member)
+        if  request.data.get('date_from', None):
+            instance.update_procedure_date_from(request.data['date_from'])
+        if request.data.get('date_to', None):
+            instance.update_procedure_date_to(request.data['date_to'])
+
+        instance.update_procedure_options(request.data['options'])
         instance.process()
 
         text = "Data File Procedure %s. Start processing" % procedure.name
@@ -178,9 +183,10 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         serializer = self.get_serializer(instance=instance)
 
         return Response({
-            'procedure_id': pk,
+            'procedure_id': procedure.id,
             'procedure_instance_id': instance.procedure_instance.id
         })
+
 
 class RequestDataFileProcedureInstanceFilterSet(FilterSet):
     id = NoOpFilter()

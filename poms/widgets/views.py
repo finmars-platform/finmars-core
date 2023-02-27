@@ -343,7 +343,7 @@ class HistoryPlViewSet(AbstractViewSet):
         pricing_policy_object = PricingPolicy.objects.get(id=pricing_policy)
         cost_method_object = CostMethod.objects.get(id=cost_method)
 
-        portfolio_instance = Portfolio.objects.get(id__in=portfolio)
+        portfolio_instance = Portfolio.objects.get(id=portfolio)
 
         portfolio_instance_json = {
             "id": portfolio_instance.id,

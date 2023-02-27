@@ -62,12 +62,16 @@ class BootstrapConfig(AppConfig):
             from poms.users.models import Member
             member = Member.objects.get(user__username='finmars_bot')
         except Exception as e:
-            _l.info("Member not found, going to create it")
 
-            from poms.users.models import MasterUser
-            master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+            try:
+                _l.info("Member not found, going to create it")
 
-            member = Member.objects.create(user=user, master_user=master_user)
+                from poms.users.models import MasterUser
+                master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+                member = Member.objects.create(user=user, master_user=master_user, is_admin=True)
+            except Exception as e:
+                _l.error("Warning. Could not creat finmars_bot")
 
         _l.info("Finmars bot created")
 
@@ -173,6 +177,17 @@ class BootstrapConfig(AppConfig):
 
                 _l.info("Admin Group Created")
 
+            try:
+
+                master_user = MasterUser.objects.all().first() # TODO, carefull if someday return to multi master user inside one db
+
+                master_user.base_api_url = settings.BASE_API_URL
+                master_user.save()
+
+                _l.info("Master User base_api_url synced")
+
+            except Exception as e:
+                _l.error("Could not sync base_api_url %s" % e)
 
         except Exception as e:
             _l.error("load_master_user_data error %s" % e)
