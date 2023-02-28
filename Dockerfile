@@ -17,6 +17,9 @@ COPY logstash/ /var/app/logstash/
 COPY poms_app/ /var/app/poms_app/
 COPY manage.py /var/app/manage.py
 
+RUN mkdir -p /var/app/finmars_data
+RUN chmod 777 /var/app/finmars_data
+
 RUN mkdir -p /var/app-data/
 RUN mkdir -p /var/app-data/media/
 RUN mkdir -p /var/app-data/import/configs/

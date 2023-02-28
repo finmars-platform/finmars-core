@@ -18,8 +18,8 @@ echo "set chmod 777 /var/log/finmars/backend/django.log"
 
 chmod 777 /var/log/finmars/backend/django.log
 
-mkdir /var/app/finmars_data
-chmod 777 /var/app/finmars_data
+#mkdir /var/app/finmars_data
+#chmod 777 /var/app/finmars_data
 
 ############################################
 
