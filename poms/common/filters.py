@@ -329,8 +329,8 @@ class AttributeFilter(BaseFilterBackend):
 
         # print('AttributeFilter init')
 
-        # print('AttributeFilter.groups_types %s' % groups_types)
-        # print('AttributeFilter.groups_values %s' % groups_values)
+        _l.info('AttributeFilter.groups_types %s' % groups_types)
+        _l.info('AttributeFilter.groups_values %s' % groups_values)
 
         master_user = request.user.master_user
 

@@ -1136,6 +1136,7 @@ class ComplexTransactionImportSchemeSelectorValue(models.Model):
 
 class ComplexTransactionImportSchemeRuleScenario(models.Model):
     is_default_rule_scenario = models.BooleanField(default=False, verbose_name=gettext_lazy('is default rule scenario'))
+    is_error_rule_scenario = models.BooleanField(default=False, verbose_name=gettext_lazy('is error rule scenario'))
 
     scheme = models.ForeignKey(ComplexTransactionImportScheme, related_name='rule_scenarios',
                                verbose_name=gettext_lazy('scheme'), on_delete=models.CASCADE)

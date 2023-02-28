@@ -101,6 +101,7 @@ class TransactionImportProcess(object):
         self.ecosystem_default = EcosystemDefault.objects.get(master_user=self.master_user)
 
         self.find_default_rule_scenario()
+        self.find_error_rule_scenario()
 
         self.result = TransactionImportResult()
         self.result.task = self.task
@@ -305,6 +306,17 @@ class TransactionImportProcess(object):
             if scenario.is_default_rule_scenario:
                 self.default_rule_scenario = scenario
 
+    def find_error_rule_scenario(self):
+
+        rule_scenarios = self.scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
+                                                                     'fields__transaction_type_input').all()
+
+        self.error_rule_scenario = None
+
+        for scenario in rule_scenarios:
+            if scenario.is_error_rule_scenario:
+                self.error_rule_scenario = scenario
+
     def get_rule_value_for_item(self, item):
 
         try:
@@ -385,7 +397,7 @@ class TransactionImportProcess(object):
 
         return fields
 
-    def book(self, item, rule_scenario):
+    def book(self, item, rule_scenario, raise_exception=False, error=None):
 
         _l.info(
             'TransactionImportProcess.Task %s. book INIT item %s rule_scenario %s' % (self.task, item, rule_scenario))
@@ -413,6 +425,10 @@ class TransactionImportProcess(object):
 
                 for key, value in fields.items():
                     fields_dict[key] = str(value)
+
+
+                if error:
+                    fields_dict['error_message'] = str(error)
 
                 item.transaction_inputs[rule_scenario.transaction_type.user_code] = fields_dict
 
@@ -461,6 +477,8 @@ class TransactionImportProcess(object):
                 _l.error("TransactionImportProcess.Task %s. book Traceback %s " % (self.task, traceback.format_exc()))
 
                 transaction.set_rollback(True)
+                if raise_exception:
+                    raise Exception(e)
 
     def fill_with_file_items(self):
 
@@ -806,17 +824,25 @@ class TransactionImportProcess(object):
 
                     for rule_scenario in self.scheme.rule_scenarios.all():
 
-                        selector_values = rule_scenario.selector_values.all()
+                        if rule_scenario.status != 'skip':
 
-                        for selector_value in selector_values:
+                            selector_values = rule_scenario.selector_values.all()
 
-                            if selector_value.value == rule_value:
-                                found = True
-                                self.book(item, rule_scenario)
+                            for selector_value in selector_values:
+
+                                if selector_value.value == rule_value:
+                                    found = True
+                                    try:
+                                        self.book(item, rule_scenario, raise_exception=True)
+                                    except Exception as e:
+                                        self.book(item, self.error_rule_scenario, error=e)
+                        else:
+                            found = True
 
                     if not found:
                         item.status = 'skip'
                         item.message = 'Selector %s does not match anything in scheme' % rule_value
+                        self.book(item, self.default_rule_scenario)
                 else:
 
                     self.book(item, self.default_rule_scenario)
