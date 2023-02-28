@@ -1608,7 +1608,7 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 
     class Meta:
         model = ComplexTransactionImportSchemeRuleScenario
-        fields = ['id', 'is_default_rule_scenario', 'is_error_rule_scenario', 'name', 'selector_values', 'transaction_type', 'fields']
+        fields = ['id', 'is_default_rule_scenario', 'is_error_rule_scenario', 'name', 'selector_values', 'transaction_type', 'fields', 'status']
 
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionImportSchemeRuleScenarioSerializer, self).__init__(*args, **kwargs)
