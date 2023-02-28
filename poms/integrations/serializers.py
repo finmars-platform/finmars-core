@@ -1824,6 +1824,12 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
                     _l.info("Set default transaction type to default scenario")
                     rule_values['transaction_type'] = default_transaction_type
 
+            if rule_values['is_error_rule_scenario']:
+
+                if 'transaction_type' not in rule_values:
+                    _l.info("Set error transaction type to default scenario")
+                    rule_values['transaction_type'] = default_transaction_type
+
             rule_id = rule_values.pop('id', None)
             rule = None
             if rule_id:
