@@ -1608,7 +1608,7 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 
     class Meta:
         model = ComplexTransactionImportSchemeRuleScenario
-        fields = ['id', 'is_default_rule_scenario', 'name', 'selector_values', 'transaction_type', 'fields']
+        fields = ['id', 'is_default_rule_scenario', 'is_error_rule_scenario', 'name', 'selector_values', 'transaction_type', 'fields', 'status']
 
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionImportSchemeRuleScenarioSerializer, self).__init__(*args, **kwargs)
@@ -1822,6 +1822,12 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
 
                 if 'transaction_type' not in rule_values:
                     _l.info("Set default transaction type to default scenario")
+                    rule_values['transaction_type'] = default_transaction_type
+
+            if rule_values['is_error_rule_scenario']:
+
+                if 'transaction_type' not in rule_values:
+                    _l.info("Set error transaction type to default scenario")
                     rule_values['transaction_type'] = default_transaction_type
 
             rule_id = rule_values.pop('id', None)

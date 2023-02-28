@@ -1135,13 +1135,22 @@ class ComplexTransactionImportSchemeSelectorValue(models.Model):
 
 
 class ComplexTransactionImportSchemeRuleScenario(models.Model):
+
+    MODE_CHOICES = [
+        ['active', 'active'],
+        ['skip', 'skip'],
+    ]
+
     is_default_rule_scenario = models.BooleanField(default=False, verbose_name=gettext_lazy('is default rule scenario'))
+    is_error_rule_scenario = models.BooleanField(default=False, verbose_name=gettext_lazy('is error rule scenario'))
 
     scheme = models.ForeignKey(ComplexTransactionImportScheme, related_name='rule_scenarios',
                                verbose_name=gettext_lazy('scheme'), on_delete=models.CASCADE)
     # order = models.SmallIntegerField(default=0)
 
     name = models.CharField(max_length=255, verbose_name=gettext_lazy('name'), null=True, blank=True, )
+
+    status = models.CharField(max_length=255, choices=MODE_CHOICES, default='active')
 
     # value = models.CharField(max_length=255, blank=True, default='', verbose_name=gettext_lazy('mapping value'))
     transaction_type = models.ForeignKey('transactions.TransactionType', on_delete=models.CASCADE,

@@ -242,3 +242,19 @@ pip install pyotp # possibly can be removed
 pip install uwsgi
 pip install django-cprofile-middleware
 pip install flower
+
+==== TODO ====
+Move generated documentation to another project
+
+How to generate documentation
+```
+if [ "${ENABLE_DEV_DOCUMENTATION}" == "True" ]; then
+echo "Generating dev documentation"
+cd /var/app/docs/source && sphinx-apidoc -o ./files ../../ ../../*migrations* ../../*tests* ../../*admin* ../../*apps* --separate --module-first
+echo "Documentation generated. Going to create html"
+cd /var/app/docs && make html
+echo "HTML Documentation generated"
+else
+echo "Dev documentation skip"
+fi
+```

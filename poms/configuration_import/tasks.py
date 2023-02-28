@@ -1663,35 +1663,45 @@ class ConfigurationImportManager(object):
                         }
 
                         try:
-                            serializer.is_valid(raise_exception=True)
 
-                            # _l.info('Layout import name %s ' % content_object['name'])
+                            try:
+                                serializer.is_valid(raise_exception=True)
 
-                            serializer.save()
-                        except ValidationError:
+                                # _l.info('Layout import name %s ' % content_object['name'])
 
-                            if self.instance.mode == 'overwrite':
+                                serializer.save()
+                            except ValidationError:
 
-                                try:
+                                if self.instance.mode == 'overwrite':
 
-                                    layout = ColumnSortData.objects.get(member=self.member,
-                                                                        user_code=content_object['user_code'],
-                                                                        type=content_object['type'])
+                                    try:
 
-                                    layout.data = content_object['data']
+                                        layout = ColumnSortData.objects.get(member=self.member,
+                                                                            user_code=content_object['user_code'],
+                                                                            )
 
-                                    layout.save()
+                                        layout.name = content_object['name']
+                                        layout.column_key = content_object['column_key']
+                                        layout.data = content_object['data']
+                                        layout.is_common = content_object['is_common']
 
-                                except Exception as error:
+                                        layout.save()
+
+                                    except Exception as error:
+                                        stats['status'] = 'error'
+                                        stats['error'][
+                                            'message'] = 'Error. Can\'t Overwrite Column Sort Data Layout for %s' % \
+                                                         content_object['user_code']
+                                else:
+
                                     stats['status'] = 'error'
-                                    stats['error'][
-                                        'message'] = 'Error. Can\'t Overwrite Column Sort Data Layout for %s' % \
-                                                     content_object['user_code']
-                            else:
+                                    stats['error']['message'] = 'Column Sort Data Layout %s already exists' % \
+                                                                    content_object['user_code']
+                        except Exception as e:
 
-                                stats['status'] = 'error'
-                                stats['error']['message'] = 'Column Sort Data Layout %s already exists' % \
-                                                            content_object['user_code']
+                            stats['status'] = 'error'
+                            stats['error']['message'] = str(e)
+
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 

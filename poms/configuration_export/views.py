@@ -2911,6 +2911,7 @@ class ConfigurationDuplicateCheckViewSet(AbstractModelViewSet):
                 for item in entity['content']:
 
                     if entity['entity'] in ['ui.bookmark', 'ui.listlayout', 'ui.reportlayout', 'ui.editlayout',
+                                            'ui.columnsortdata',
                                             'ui.dashboardlayout', 'ui.templatelayout', 'ui.contextmenulayout']:
 
                         if 'user_code' in item:

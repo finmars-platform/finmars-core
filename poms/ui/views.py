@@ -138,7 +138,7 @@ class ColumnSortDataFilterSet(FilterSet):
     id = NoOpFilter()
 
     name = CharFilter()
-    user_code = CharFilter()
+    user_code = CharExactFilter()
     column_key = CharFilter()
 
     is_common = django_filters.BooleanFilter()

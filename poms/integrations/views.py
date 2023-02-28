@@ -970,8 +970,12 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         _l.info("TransactionImportViewSet.execute")
         options_object = {}
         # options_object['file_name'] = request.data['file_name']
+        options_object['items'] = request.data.get('items', None)
         options_object['file_path'] = request.data['file_path']
-        options_object['filename'] = request.data['file_path'].split('/')[-1]  # TODO refactor to file_name
+        if options_object['file_path']:
+            options_object['filename'] = request.data['file_path'].split('/')[-1]  # TODO refactor to file_name
+        else:
+            options_object['filename'] = None
         options_object['scheme_user_code'] = request.data['scheme_user_code']
         options_object['execution_context'] = None
 
