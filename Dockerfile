@@ -2,7 +2,7 @@ FROM python:3.10-buster
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     vim htop wget \
-    supervisor
+    supervisor nfs-common
 
 RUN rm -rf /var/app
 COPY requirements.txt /var/app/requirements.txt
