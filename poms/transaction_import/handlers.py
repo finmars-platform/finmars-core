@@ -395,7 +395,7 @@ class TransactionImportProcess(object):
                 _l.error('TransactionImportProcess.Task %s. get_fields_for_item %s field %s Traceback %s' % (
                     self.task, item, field, traceback.format_exc()))
 
-                raise Exception(e)
+                # raise Exception(e) # Uncomment when apetrushkin will be ready
 
         return fields
 
