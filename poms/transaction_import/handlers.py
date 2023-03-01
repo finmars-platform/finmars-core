@@ -407,6 +407,8 @@ class TransactionImportProcess(object):
             try:
 
                 fields = self.get_fields_for_item(item, rule_scenario)
+                if error:
+                    fields['error_message'] = str(error)
 
                 transaction_type_process_instance = TransactionTypeProcess(
                     linked_import_task=self.task,
@@ -849,6 +851,9 @@ class TransactionImportProcess(object):
                         item.message = 'Selector %s does not match anything in scheme' % rule_value
                         self.book(item, self.default_rule_scenario)
                 else:
+
+                    item.status = 'skip'
+                    item.message = 'Selector %s does not match anything in scheme' % rule_value
 
                     self.book(item, self.default_rule_scenario)
 
