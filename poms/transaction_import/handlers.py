@@ -837,7 +837,12 @@ class TransactionImportProcess(object):
                                     except Exception as e:
                                         self.book(item, self.error_rule_scenario, error=e)
                         else:
-                            found = True
+                            selector_values = rule_scenario.selector_values.all()
+
+                            for selector_value in selector_values:
+
+                                if selector_value.value == rule_value:
+                                    found = True
 
                     if not found:
                         item.status = 'skip'
