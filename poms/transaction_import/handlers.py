@@ -395,6 +395,8 @@ class TransactionImportProcess(object):
                 _l.error('TransactionImportProcess.Task %s. get_fields_for_item %s field %s Traceback %s' % (
                     self.task, item, field, traceback.format_exc()))
 
+                raise Exception(e)
+
         return fields
 
     def book(self, item, rule_scenario, raise_exception=False, error=None):
