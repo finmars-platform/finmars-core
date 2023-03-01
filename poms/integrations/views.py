@@ -971,7 +971,8 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         options_object = {}
         # options_object['file_name'] = request.data['file_name']
         options_object['items'] = request.data.get('items', None)
-        options_object['file_path'] = request.data['file_path']
+        options_object['file_path'] = request.data.get('file_path', None)
+
         if options_object['file_path']:
             options_object['filename'] = request.data['file_path'].split('/')[-1]  # TODO refactor to file_name
         else:
