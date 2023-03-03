@@ -401,8 +401,8 @@ class TransactionImportProcess(object):
 
     def book(self, item, rule_scenario, raise_exception=False, error=None):
 
-        _l.info(
-            'TransactionImportProcess.Task %s. book INIT item %s rule_scenario %s' % (self.task, item, rule_scenario))
+        # _l.info(
+        #     'TransactionImportProcess.Task %s. book INIT item %s rule_scenario %s' % (self.task, item, rule_scenario))
 
         with transaction.atomic():
 
@@ -460,8 +460,8 @@ class TransactionImportProcess(object):
                 item.status = 'success'
                 item.message = "Transaction Booked %s" % transaction_type_process_instance.complex_transaction
 
-                _l.info('TransactionImportProcess.Task %s. book SUCCESS item %s rule_scenario %s' % (
-                    self.task, item, rule_scenario))
+                # _l.info('TransactionImportProcess.Task %s. book SUCCESS item %s rule_scenario %s' % (
+                #     self.task, item, rule_scenario))
 
                 self.task.update_progress(
                     {
@@ -1053,12 +1053,12 @@ class TransactionImportProcess(object):
 
             try:
 
-                _l.info("whole_file_preprocess  names %s" % names)
+                # _l.info("whole_file_preprocess  names %s" % names)
 
                 self.file_items = formula.safe_eval(self.scheme.data_preprocess_expression, names=names,
                                                     context=self.context)
 
-                _l.info("whole_file_preprocess  self.raw_items %s" % self.raw_items)
+                # _l.info("whole_file_preprocess  self.raw_items %s" % self.raw_items)
 
             except Exception as e:
 
