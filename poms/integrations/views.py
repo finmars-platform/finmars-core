@@ -941,7 +941,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         options_object['scheme_id'] = instance.scheme.id
         options_object['execution_context'] = None
 
-        _l.info('options_object %s' % options_object)
+        # _l.info('options_object %s' % options_object)
 
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
@@ -980,7 +980,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         options_object['scheme_user_code'] = request.data['scheme_user_code']
         options_object['execution_context'] = None
 
-        _l.info('options_object %s' % options_object)
+        # _l.info('options_object %s' % options_object)
 
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
@@ -1223,7 +1223,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         options_object['scheme_id'] = instance.scheme.id
         options_object['execution_context'] = None
 
-        _l.info('options_object %s' % options_object)
+        # _l.info('options_object %s' % options_object)
 
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
