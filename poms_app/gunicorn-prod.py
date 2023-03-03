@@ -12,3 +12,5 @@ bind = "0.0.0.0:8080"
 #pidfile = "/var/run/gunicorn/prod.pid"
 # Daemonize the Gunicorn process (detach & enter background)
 # daemon = True
+accesslog = "/var/log/finmars/backend/gunicorn.access.log"
+errorlog = "/var/log/finmars/backend/gunicorn.error.log"

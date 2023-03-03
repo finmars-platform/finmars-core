@@ -346,6 +346,7 @@ FINMARS_LOGSTASH_PORT = ENV_INT('FINMARS_LOGSTASH_PORT', 5044)
 
 LOGGING = {
     'version': 1,
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             '()': 'colorlog.ColoredFormatter',
@@ -356,7 +357,7 @@ LOGGING = {
                 'ERROR': 'red',
                 'CRITICAL': 'bold_red',
             },
-        },
+        }
     },
     'handlers': {
         'console': {
@@ -383,10 +384,6 @@ LOGGING = {
             "handlers": ["file"],
             "level": "ERROR",
             "propagate": True
-        },
-        "gunicorn": {
-            "level": "ERROR",
-            "handlers": ["console", "file"]
         },
         "poms": {
             "level": DJANGO_LOG_LEVEL,
