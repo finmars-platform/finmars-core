@@ -165,7 +165,7 @@ def calculate_portfolio_register_record(self, portfolio_ids=[]):
 
         transactions_dict = {}
 
-        PortfolioRegisterRecord.objects.filter(master_user=master_user).delete()
+        PortfolioRegisterRecord.objects.filter(master_user=master_user).delete() # TODO refactor, why we delete everything?
 
         count = 0
 
