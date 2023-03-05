@@ -206,8 +206,8 @@ class TransactionTypeProcess(object):
         _l.info('execute_action_condition.action.order %s' % action.order)
         _l.info('execute_action_condition.action.condition_expr')
         _l.info(action.condition_expr)
-        _l.info('execute_action_condition.action.condition_expr values')
-        _l.info(self.values)
+        _l.debug('execute_action_condition.action.condition_expr values')
+        _l.debug(self.values)
 
         if action is None:
             return False
@@ -317,7 +317,7 @@ class TransactionTypeProcess(object):
         for i in range(10):
             self.values['phantom_instrument_%s' % i] = None
 
-        _l.info("Transaction type values %s" % self.values)
+        _l.debug("Transaction type values %s" % self.values)
 
         # if complex transaction already exists
         if self.complex_transaction and self.complex_transaction.id is not None and self.complex_transaction.id > 0:
@@ -2092,8 +2092,8 @@ class TransactionTypeProcess(object):
 
             try:
 
-                _l.info('names %s' % names)
-                _l.info('self._context %s' % self._context)
+                _l.debug('names %s' % names)
+                _l.debug('self._context %s' % self._context)
 
                 self.complex_transaction.transaction_unique_code = formula.safe_eval(
                     self.complex_transaction.transaction_type.transaction_unique_code_expr, names=names,
