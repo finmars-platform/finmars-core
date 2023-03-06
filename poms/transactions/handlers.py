@@ -44,6 +44,9 @@ _l = logging.getLogger('poms.transactions')
 #     10: 'effective_date',
 # }
 
+class UniqueCodeError(ValidationError):
+
+    message = "Unique code already exists"
 
 class TransactionTypeProcess(object):
     # if store is false then operations must be rollback outside, for example in view...
@@ -2122,7 +2125,7 @@ class TransactionTypeProcess(object):
 
                 self.uniqueness_status = 'skip'
 
-                raise ValidationError({
+                raise UniqueCodeError({
                     "reason": 410,
                     "message": "Skipped book. Transaction Unique code error"
                 })
@@ -2148,7 +2151,7 @@ class TransactionTypeProcess(object):
 
                 self.complex_transaction.delete()
 
-                raise ValidationError({
+                raise UniqueCodeError({
                     "reason": 410,
                     "message": "Skipped book. Transaction Unique code error"
                 })

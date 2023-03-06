@@ -33,7 +33,7 @@ from poms.transaction_import.models import ProcessType, TransactionImportResult,
     TransactionImportProcessItem, TransactionImportProcessPreprocessItem, TransactionImportBookedTransaction, \
     TransactionImportConversionItem
 from poms.transaction_import.serializers import TransactionImportResultSerializer
-from poms.transactions.handlers import TransactionTypeProcess
+from poms.transactions.handlers import TransactionTypeProcess, UniqueCodeError
 from poms.transactions.models import TransactionTypeInput
 from poms.users.models import EcosystemDefault
 
@@ -482,7 +482,11 @@ class TransactionImportProcess(object):
 
                 transaction.set_rollback(True)
                 if raise_exception:
-                    raise Exception(e)
+
+                    if not isinstance(e, UniqueCodeError):
+                        raise Exception(e)
+                    else:
+                        _l.error("Code is not unique, skip %s" % str(e))
 
     def fill_with_file_items(self):
 
