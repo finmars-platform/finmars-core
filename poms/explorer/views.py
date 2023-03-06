@@ -1,6 +1,7 @@
 import json
 import logging
 from tempfile import NamedTemporaryFile
+from django.http import HttpResponse
 
 from django.http import FileResponse
 from rest_framework import status
@@ -107,7 +108,7 @@ class ExplorerViewFileViewSet(AbstractViewSet):
 
         with storage.open(path, 'rb') as file:
 
-            # result = file.read()
+            result = file.read()
 
             file_content_type = None
 
@@ -147,10 +148,15 @@ class ExplorerViewFileViewSet(AbstractViewSet):
             if '.xlsx' in file.name:
                 file_content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
+            # if file_content_type:
+            #     response = FileResponse(result, content_type=file_content_type)
+            # else:
+            #     response = FileResponse(result)
+
             if file_content_type:
-                response = FileResponse(file, content_type=file_content_type)
+                response = HttpResponse(result, content_type=file_content_type)
             else:
-                response = FileResponse(file)
+                response = HttpResponse(result)
 
         return response
 
