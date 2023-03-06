@@ -63,13 +63,20 @@ class ExplorerViewSet(AbstractViewSet):
                 })
 
         for file in items[1]:
-            results.append({
+
+            item = {
                 'type': 'file',
                 'name': file,
                 'file_path': path + file, # path already has / in end of str
                 'size': storage.size(path + '/' + file),
-                'last_modified': storage.modified_time(path + '/' + file)
-            })
+            }
+
+            try:
+                item['last_modified']: storage.modified_time(path + '/' + file)
+            except Exception as e:
+                _l.error("Modfied date is not avaialbel")
+
+            results.append(item)
 
         return Response({
             "path": path,
