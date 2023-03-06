@@ -152,7 +152,7 @@ class ExplorerViewFileViewSet(AbstractViewSet):
             else:
                 response = FileResponse(file)
 
-            return response
+        return response
 
 
 class ExplorerUploadViewSet(AbstractViewSet):
