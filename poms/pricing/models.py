@@ -1081,6 +1081,9 @@ class PriceHistoryError(DataTimeStampedModel):
     created = models.DateTimeField(db_index=True, null=True, blank=True, default=None,
                                    verbose_name=gettext_lazy('created'))
 
+    def __str__(self):
+        return '%s: @%s' % (self.date, self.error_text)
+
 
 class CurrencyHistoryError(DataTimeStampedModel):
     STATUS_ERROR = 'E'
@@ -1123,6 +1126,9 @@ class CurrencyHistoryError(DataTimeStampedModel):
 
     created = models.DateTimeField(db_index=True, null=True, blank=True, default=None,
                                    verbose_name=gettext_lazy('created'))
+
+    def __str__(self):
+        return '%s: @%s' % (self.date, self.error_text)
 
 
 class PricingProcedureBloombergInstrumentResult(models.Model):

@@ -1578,7 +1578,7 @@ class PriceHistory(DataTimeStampedModel):
     def __str__(self):
         # return '%s:%s:%s:%s:%s' % (
         #     self.instrument_id, self.pricing_policy_id, self.date, self.principal_price, self.accrued_price)
-        return '%s;%s @%s' % (self.principal_price, self.accrued_price, self.date)
+        return '%s - %s;%s @%s' % (self.instrument.user_code, self.principal_price, self.accrued_price, self.date)
 
     def get_instr_ytm_data_d0_v0(self, dt):
 

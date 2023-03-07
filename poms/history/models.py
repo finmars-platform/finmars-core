@@ -1,14 +1,38 @@
 import json
-from django.contrib.contenttypes.models import ContentType
+import logging
+import traceback
 
+from deepdiff import DeepDiff
+from django.contrib.contenttypes.models import ContentType
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
 
+from poms.common.middleware import get_request
 from poms.users.models import MasterUser, Member
+
+_l = logging.getLogger('poms.history')
+
+
+# TODO important to keep this list up to date
+# Just not to log history for too meta models
+excluded_to_track_history_models = ['system_messages.systemmessage', 'obj_attrs.genericattribute',
+                                    'pricing.instrumentpricingpolicy', 'pricing.currencypricingpolicy',
+
+                                    'finmars_standardized_errors.errorrecord']
 
 
 class HistoricalRecord(models.Model):
+    ACTION_CREATE = 'create'
+    ACTION_CHANGE = 'change'
+    ACTION_DELETE = 'delete'
+
+    ACTION_CHOICES = (
+        (ACTION_CREATE, gettext_lazy('Create')),
+        (ACTION_CHANGE, gettext_lazy('Change')),
+        (ACTION_DELETE, gettext_lazy('Delete')),
+    )
+
     '''
     2023.01 Feature
     It listen changes of models and store JSON output after save
@@ -20,6 +44,8 @@ class HistoricalRecord(models.Model):
                                on_delete=models.SET_NULL)
 
     user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+    action = models.CharField(max_length=25, default=ACTION_CHANGE, choices=ACTION_CHOICES,
+                              verbose_name='action')
     content_type = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type'), on_delete=models.CASCADE)
 
     notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
@@ -47,7 +73,8 @@ class HistoricalRecord(models.Model):
             self.json_data = None
 
     def __str__(self):
-        return self.member.username + ' changed ' + self.user_code + ' (' + str(self.content_type) + ') at ' + str(self.created.strftime("%Y-%m-%d, %H:%M:%S"))
+        return self.member.username + ' changed ' + self.user_code + ' (' + str(self.content_type) + ') at ' + str(
+            self.created.strftime("%Y-%m-%d, %H:%M:%S"))
 
     class Meta:
         verbose_name = gettext_lazy('history record')
@@ -56,3 +83,208 @@ class HistoricalRecord(models.Model):
             ['user_code', 'content_type']
         ]
         ordering = ['-created']
+
+
+def get_user_code_from_instance(instance):
+    user_code = None
+
+    if getattr(instance, 'transaction_unique_code', None):
+        user_code = instance.transaction_unique_code
+    elif getattr(instance, 'code', None):
+        user_code = instance.code
+    elif getattr(instance, 'user_code', None):
+        user_code = instance.user_code
+    elif getattr(instance, 'name', None):
+        user_code = instance.name
+
+    if not user_code:
+        user_code = str(instance)
+
+    return user_code
+
+
+def get_model_content_type_as_text(sender):
+    content_type = ContentType.objects.get_for_model(sender)
+    return content_type.app_label + '.' + content_type.model
+
+
+def get_serialized_data(sender, instance):
+    content_type_key = get_model_content_type_as_text(sender)
+
+    context = {
+        'request': get_request()
+    }
+
+
+
+    from poms.accounts.serializers import AccountSerializer
+    from poms.accounts.serializers import AccountTypeSerializer
+
+    from poms.instruments.serializers import InstrumentSerializer
+    from poms.currencies.serializers import CurrencySerializer
+    from poms.currencies.serializers import CurrencyHistorySerializer
+
+    from poms.portfolios.serializers import PortfolioSerializer
+    from poms.counterparties.serializers import CounterpartySerializer
+    from poms.counterparties.serializers import ResponsibleSerializer
+
+    from poms.instruments.serializers import InstrumentTypeSerializer
+    from poms.instruments.serializers import PriceHistorySerializer
+    from poms.instruments.serializers import PricingPolicySerializer
+    from poms.instruments.serializers import GeneratedEventSerializer
+    from poms.integrations.serializers import InstrumentDownloadSchemeSerializer
+    from poms.integrations.serializers import ComplexTransactionImportSchemeSerializer
+    from poms.portfolios.serializers import PortfolioRegisterSerializer
+    from poms.transactions.serializers import ComplexTransactionSerializer
+    from poms.transactions.serializers import TransactionTypeSerializer
+    from poms.csv_import.serializers import CsvImportSchemeSerializer
+    from poms.procedures.serializers import PricingProcedureSerializer
+    from poms.procedures.serializers import RequestDataFileProcedureSerializer
+    from poms.procedures.serializers import ExpressionProcedureSerializer
+    from poms.schedules.serializers import ScheduleSerializer
+    model_serializer_map = {
+        'accounts.account': AccountSerializer,
+        'accounts.accounttype': AccountTypeSerializer,
+
+        'counterparties.counterparty': CounterpartySerializer,
+        'counterparties.responsible': ResponsibleSerializer,
+        'portfolios.portfolio': PortfolioSerializer,
+        'portfolios.portfolioregister': PortfolioRegisterSerializer,
+
+        'currencies.currency': CurrencySerializer,
+        'currencies.currencyhistory': CurrencyHistorySerializer,
+
+
+        'instruments.instrument': InstrumentSerializer,
+        'instruments.instrumenttype': InstrumentTypeSerializer,
+        'instruments.pricehistory': PriceHistorySerializer,
+        'instruments.pricingpolicy': PricingPolicySerializer,
+        'instruments.generatedevent': GeneratedEventSerializer,
+
+        'integrations.instrumentdownloadscheme': InstrumentDownloadSchemeSerializer,
+        'integrations.complextransactionimportscheme': ComplexTransactionImportSchemeSerializer,
+
+        'csv_import.csvimportscheme': CsvImportSchemeSerializer,
+
+        'transactions.complextransaction': ComplexTransactionSerializer,
+        'transactions.transactiontype': TransactionTypeSerializer,
+
+        'procedures.pricingprocedure': PricingProcedureSerializer,
+        'procedures.requestdatafileprocedure': RequestDataFileProcedureSerializer,
+        'procedures.expressionprocedure': ExpressionProcedureSerializer,
+
+        'schedules.schedule': ScheduleSerializer
+
+    }
+
+    result = None
+
+    try:
+        result = model_serializer_map[content_type_key](instance=instance, context=context).data
+    except Exception as e:
+        try:
+            result = json.dumps(instance, default=str)
+        except Exception as e:
+            pass
+
+    return result
+
+
+def get_notes_for_history_record(user_code, content_type, serialized_data):
+    notes = None
+
+    try:
+
+        last_record = \
+            HistoricalRecord.objects.filter(user_code=user_code, content_type=content_type).order_by('-created')[0]
+
+        everything_is_dict = json.loads(
+            json.dumps(serialized_data))  # because deep diff counts different Dict and Ordered dict
+
+        result = DeepDiff(everything_is_dict, last_record.data,
+                          ignore_string_type_changes=True,
+                          ignore_order=True,
+                          ignore_type_subclasses=True)
+
+        _l.info('result %s' % result)
+
+        notes = result.to_json()
+
+    except Exception as e:
+        _l.error('get_notes_for_history_record e %s' % e)
+        _l.error('get_notes_for_history_record traceback %s' % traceback.format_exc())
+        pass
+
+    return notes
+
+
+def post_save(sender, instance, created, using=None, update_fields=None, **kwargs):
+    _l.info('post_save.sender %s' % sender)
+    _l.info('post_save.update_fields %s' % update_fields)
+
+    try:
+
+        request = get_request()
+        content_type = ContentType.objects.get_for_model(sender)
+
+        action = HistoricalRecord.ACTION_CHANGE
+        if created:
+            action = HistoricalRecord.ACTION_CREATE
+
+        user_code = get_user_code_from_instance(instance)
+
+        data = get_serialized_data(sender, instance)
+
+        notes = get_notes_for_history_record(user_code, content_type, data)
+
+        HistoricalRecord.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            action=action,
+            data=data,
+            notes=notes,
+            user_code=user_code,
+            content_type=content_type
+        )
+
+    except Exception as e:
+        _l.error("Could not save history exception %s" % e)
+        _l.error("Could not save history traceback %s" % traceback.format_exc())
+
+
+def post_delete(sender, instance, using=None, **kwargs):
+    try:
+
+        action = HistoricalRecord.ACTION_DELETE
+        request = get_request()
+        content_type = ContentType.objects.get_for_model(sender)
+
+        user_code = get_user_code_from_instance(instance)
+
+        data = get_serialized_data(sender, instance)
+
+        HistoricalRecord.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            action=action,
+            data=data,
+            user_code=user_code,
+            content_type=content_type
+        )
+
+    except Exception as e:
+        _l.error("Could not save history record exception %s" % e)
+        _l.error("Could not save history record tracback %s " % traceback.format_exc())
+
+
+def add_history_listeners(sender, **kwargs):
+    # _l.debug("History listener registered Entity %s" % sender)
+
+    content_type_key = get_model_content_type_as_text(sender)
+
+    if content_type_key not in excluded_to_track_history_models:
+        models.signals.post_save.connect(post_save, sender=sender, weak=False)
+        models.signals.post_delete.connect(post_delete, sender=sender, weak=False)
+
+
+models.signals.class_prepared.connect(add_history_listeners, weak=False)

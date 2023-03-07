@@ -11,7 +11,7 @@ class ContentTypeSerializer(serializers.ModelSerializer):
 
 
 class HistoricalRecordSerializer(serializers.ModelSerializer):
-    data = serializers.JSONField(allow_null=False)
+    # data = serializers.JSONField(allow_null=False)
     member_object = serializers.SerializerMethodField()
     content_type = serializers.SerializerMethodField()
 
@@ -23,7 +23,7 @@ class HistoricalRecordSerializer(serializers.ModelSerializer):
             'id',
             'notes',
             'user_code',
-            'data',
+            'action',
             'content_type',
             'created'
         )

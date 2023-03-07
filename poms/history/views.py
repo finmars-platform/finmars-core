@@ -1,13 +1,15 @@
 import django_filters
-from django_filters import FilterSet
+from django_filters.rest_framework import FilterSet
 from django_filters.fields import Lookup
 
 from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter
 from poms.common.views import AbstractModelViewSet
+from poms.history.filters import HistoryQueryFilter
 from poms.history.models import HistoricalRecord
 from poms.history.serializers import HistoricalRecordSerializer
 from poms.users.filters import OwnerByMasterUserFilter
-
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 class ContentTypeFilter(django_filters.CharFilter):
     def filter(self, qs, value):
@@ -33,9 +35,10 @@ class ContentTypeFilter(django_filters.CharFilter):
         return qs
 
 
+
 class HistoricalRecordFilterSet(FilterSet):
     id = NoOpFilter()
-    user_code = CharExactFilter()
+    created = django_filters.DateFromToRangeFilter()
 
     class Meta:
         model = HistoricalRecord
@@ -47,13 +50,21 @@ class HistoricalRecordFilterSet(FilterSet):
 class HistoricalRecordViewSet(AbstractModelViewSet):
     queryset = HistoricalRecord.objects.select_related(
         'master_user',
+        'member',
+        'content_type'
     )
     serializer_class = HistoricalRecordSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        HistoryQueryFilter
     ]
     filter_class = HistoricalRecordFilterSet
 
     ordering_fields = [
         'created', 'user_code', 'member'
     ]
+
+    @action(detail=True, methods=['get'], url_path='data')
+    def get_data(self, request, pk):
+        instance = self.get_object()
+        return Response(instance.data)

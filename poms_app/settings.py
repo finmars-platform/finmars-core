@@ -68,6 +68,8 @@ INSTALLED_APPS = [
 
     # 'poms.cache_machine',
 
+    'poms.history', # order is important because it registers models to listen to
+
     'poms.users',
     'poms.audit',
     'poms.notifications',
@@ -106,7 +108,7 @@ INSTALLED_APPS = [
 
     'poms.auth_tokens',
     'poms.widgets',
-    'poms.history',
+
 
     'django.contrib.admin',
     'django.contrib.admindocs',
