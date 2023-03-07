@@ -115,7 +115,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
         st = time.perf_counter()
 
-        _l.info("TransactionImportViewSet.execute")
+        _l.info("SimpleImportViewSet.execute")
         options_object = {}
         # options_object['file_name'] = request.data['file_name']
 
@@ -131,7 +131,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
         options_object['scheme_user_code'] = request.data['scheme_user_code']
         options_object['execution_context'] = None
 
-        _l.info('options_object %s' % options_object)
+        # _l.info('options_object %s' % options_object)
 
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
@@ -143,7 +143,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
 
         send_system_message(master_user=request.user.master_user,
                             performed_by='System',
-                            description='Member %s started Transaction Import (scheme %s)' % (
+                            description='Member %s started Simple Import (scheme %s)' % (
                                 request.user.member.username, options_object['scheme_user_code']))
 
         data_csv_file_import.apply_async(kwargs={'task_id': celery_task.pk})

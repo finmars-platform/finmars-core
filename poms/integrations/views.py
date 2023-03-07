@@ -941,7 +941,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         options_object['scheme_id'] = instance.scheme.id
         options_object['execution_context'] = None
 
-        _l.info('options_object %s' % options_object)
+        # _l.info('options_object %s' % options_object)
 
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
@@ -971,7 +971,8 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         options_object = {}
         # options_object['file_name'] = request.data['file_name']
         options_object['items'] = request.data.get('items', None)
-        options_object['file_path'] = request.data['file_path']
+        options_object['file_path'] = request.data.get('file_path', None)
+
         if options_object['file_path']:
             options_object['filename'] = request.data['file_path'].split('/')[-1]  # TODO refactor to file_name
         else:
@@ -979,7 +980,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         options_object['scheme_user_code'] = request.data['scheme_user_code']
         options_object['execution_context'] = None
 
-        _l.info('options_object %s' % options_object)
+        # _l.info('options_object %s' % options_object)
 
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
@@ -1222,7 +1223,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         options_object['scheme_id'] = instance.scheme.id
         options_object['execution_context'] = None
 
-        _l.info('options_object %s' % options_object)
+        # _l.info('options_object %s' % options_object)
 
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,

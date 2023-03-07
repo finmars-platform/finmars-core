@@ -3,6 +3,7 @@ from __future__ import unicode_literals, print_function, division
 import ast
 import calendar
 import datetime
+import hashlib
 import logging
 import random
 import re
@@ -510,6 +511,9 @@ def _transaction_import__find_row(evaluator, **kwargs):
 
 _transaction_import__find_row.evaluator = True
 
+
+def _md5(text):
+    return hashlib.md5(text.encode('utf-8')).hexdigest()
 
 def _parse_date(date_string, format=None):
     if not date_string:
@@ -3380,6 +3384,7 @@ FUNCTIONS = [
     SimpleEval2Def('universal_parse_date', _universal_parse_date),
     SimpleEval2Def('universal_parse_country', _universal_parse_country),
     SimpleEval2Def('unix_to_date', _unix_to_date),
+    SimpleEval2Def('md5', _md5),
 
     SimpleEval2Def('last_business_day', _last_business_day),
     SimpleEval2Def('get_date_last_week_end_business', _get_date_last_week_end_business),

@@ -75,7 +75,7 @@ def transaction_import(self, task_id, procedure_instance_id=None):
             )
             instance.process()
 
-            return instance
+            return {"message": "import finished"}
 
         except Exception as e:
 

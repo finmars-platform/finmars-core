@@ -33,7 +33,7 @@ from poms.transaction_import.models import ProcessType, TransactionImportResult,
     TransactionImportProcessItem, TransactionImportProcessPreprocessItem, TransactionImportBookedTransaction, \
     TransactionImportConversionItem
 from poms.transaction_import.serializers import TransactionImportResultSerializer
-from poms.transactions.handlers import TransactionTypeProcess
+from poms.transactions.handlers import TransactionTypeProcess, UniqueCodeError
 from poms.transactions.models import TransactionTypeInput
 from poms.users.models import EcosystemDefault
 
@@ -395,18 +395,22 @@ class TransactionImportProcess(object):
                 _l.error('TransactionImportProcess.Task %s. get_fields_for_item %s field %s Traceback %s' % (
                     self.task, item, field, traceback.format_exc()))
 
+                # raise Exception(e) # Uncomment when apetrushkin will be ready
+
         return fields
 
     def book(self, item, rule_scenario, raise_exception=False, error=None):
 
-        _l.info(
-            'TransactionImportProcess.Task %s. book INIT item %s rule_scenario %s' % (self.task, item, rule_scenario))
+        # _l.info(
+        #     'TransactionImportProcess.Task %s. book INIT item %s rule_scenario %s' % (self.task, item, rule_scenario))
 
         with transaction.atomic():
 
             try:
 
                 fields = self.get_fields_for_item(item, rule_scenario)
+                if error:
+                    fields['error_message'] = str(error)
 
                 transaction_type_process_instance = TransactionTypeProcess(
                     linked_import_task=self.task,
@@ -456,8 +460,8 @@ class TransactionImportProcess(object):
                 item.status = 'success'
                 item.message = "Transaction Booked %s" % transaction_type_process_instance.complex_transaction
 
-                _l.info('TransactionImportProcess.Task %s. book SUCCESS item %s rule_scenario %s' % (
-                    self.task, item, rule_scenario))
+                # _l.info('TransactionImportProcess.Task %s. book SUCCESS item %s rule_scenario %s' % (
+                #     self.task, item, rule_scenario))
 
                 self.task.update_progress(
                     {
@@ -478,7 +482,11 @@ class TransactionImportProcess(object):
 
                 transaction.set_rollback(True)
                 if raise_exception:
-                    raise Exception(e)
+
+                    if not isinstance(e, UniqueCodeError):
+                        raise Exception(e)
+                    else:
+                        _l.error("Code is not unique, skip %s" % str(e))
 
     def fill_with_file_items(self):
 
@@ -837,13 +845,21 @@ class TransactionImportProcess(object):
                                     except Exception as e:
                                         self.book(item, self.error_rule_scenario, error=e)
                         else:
-                            found = True
+                            selector_values = rule_scenario.selector_values.all()
+
+                            for selector_value in selector_values:
+
+                                if selector_value.value == rule_value:
+                                    found = True
 
                     if not found:
                         item.status = 'skip'
                         item.message = 'Selector %s does not match anything in scheme' % rule_value
                         self.book(item, self.default_rule_scenario)
                 else:
+
+                    item.status = 'skip'
+                    item.message = 'Selector %s does not match anything in scheme' % rule_value
 
                     self.book(item, self.default_rule_scenario)
 
@@ -1041,12 +1057,12 @@ class TransactionImportProcess(object):
 
             try:
 
-                _l.info("whole_file_preprocess  names %s" % names)
+                # _l.info("whole_file_preprocess  names %s" % names)
 
                 self.file_items = formula.safe_eval(self.scheme.data_preprocess_expression, names=names,
                                                     context=self.context)
 
-                _l.info("whole_file_preprocess  self.raw_items %s" % self.raw_items)
+                # _l.info("whole_file_preprocess  self.raw_items %s" % self.raw_items)
 
             except Exception as e:
 

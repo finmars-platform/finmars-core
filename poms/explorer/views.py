@@ -1,6 +1,7 @@
 import json
 import logging
 from tempfile import NamedTemporaryFile
+from django.http import HttpResponse
 
 from django.http import FileResponse
 from rest_framework import status
@@ -63,13 +64,20 @@ class ExplorerViewSet(AbstractViewSet):
                 })
 
         for file in items[1]:
-            results.append({
+
+            item = {
                 'type': 'file',
                 'name': file,
                 'file_path': path + file, # path already has / in end of str
                 'size': storage.size(path + '/' + file),
-                'last_modified': storage.modified_time(path + '/' + file)
-            })
+            }
+
+            try:
+                item['last_modified']: storage.modified_time(path + '/' + file)
+            except Exception as e:
+                _l.error("Modfied date is not avaialbel")
+
+            results.append(item)
 
         return Response({
             "path": path,
@@ -100,7 +108,7 @@ class ExplorerViewFileViewSet(AbstractViewSet):
 
         with storage.open(path, 'rb') as file:
 
-            # result = file.read()
+            result = file.read()
 
             file_content_type = None
 
@@ -140,12 +148,17 @@ class ExplorerViewFileViewSet(AbstractViewSet):
             if '.xlsx' in file.name:
                 file_content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-            if file_content_type:
-                response = FileResponse(file, content_type=file_content_type)
-            else:
-                response = FileResponse(file)
+            # if file_content_type:
+            #     response = FileResponse(result, content_type=file_content_type)
+            # else:
+            #     response = FileResponse(result)
 
-            return response
+            if file_content_type:
+                response = HttpResponse(result, content_type=file_content_type)
+            else:
+                response = HttpResponse(result)
+
+        return response
 
 
 class ExplorerUploadViewSet(AbstractViewSet):
