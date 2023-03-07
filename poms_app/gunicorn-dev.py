@@ -1,7 +1,7 @@
 """Gunicorn *development* config file"""
 
 # The granularity of Error log outputs
-loglevel = "debug"
+loglevel = "info"
 # The number of worker processes for handling requests
 workers = 1
 threads = 6
@@ -13,3 +13,5 @@ reload = True
 # pidfile = "/var/run/gunicorn/dev.pid"
 # Daemonize the Gunicorn process (detach & enter background)
 # daemon = True
+accesslog = "/var/log/finmars/backend/gunicorn.access.log"
+errorlog = "/var/log/finmars/backend/gunicorn.error.log"

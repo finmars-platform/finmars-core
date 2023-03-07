@@ -1032,7 +1032,7 @@ class CalendarEventsViewSet(AbstractViewSet):
                    if workflow['status'] == 'success':
                        item['backgroundColor'] = 'green'
 
-                   title = workflow['project'] + '.' + workflow['name']
+                   title = workflow['project'] + '.' + workflow['user_code']
                    title = title + ' [' + str(workflow['id']) + ']'
 
                    item['title'] = title

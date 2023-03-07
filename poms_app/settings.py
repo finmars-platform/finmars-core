@@ -346,6 +346,7 @@ FINMARS_LOGSTASH_PORT = ENV_INT('FINMARS_LOGSTASH_PORT', 5044)
 
 LOGGING = {
     'version': 1,
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             '()': 'colorlog.ColoredFormatter',
@@ -356,7 +357,7 @@ LOGGING = {
                 'ERROR': 'red',
                 'CRITICAL': 'bold_red',
             },
-        },
+        }
     },
     'handlers': {
         'console': {
@@ -383,10 +384,6 @@ LOGGING = {
             "handlers": ["file"],
             "level": "ERROR",
             "propagate": True
-        },
-        "gunicorn": {
-            "level": "ERROR",
-            "handlers": ["console", "file"]
         },
         "poms": {
             "level": DJANGO_LOG_LEVEL,
@@ -633,7 +630,7 @@ if SERVER_TYPE == 'local' and USE_DEBUGGER:
 
 KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'https://eu-central.finmars.com')
 KEYCLOAK_REALM = os.environ.get('KEYCLOAK_REALM', 'finmars')
-KEYCLOAK_CLIENT_ID = os.environ.get('KEYCLOAK_CLIENT_ID', 'finmars-backend') # not required anymore, api works in Bearer-only mod
+KEYCLOAK_CLIENT_ID = os.environ.get('KEYCLOAK_CLIENT_ID', 'finmars')
 KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY',
                                             None)  # not required anymore, api works in Bearer-only mod
 
