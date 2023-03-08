@@ -24,6 +24,7 @@ excluded_to_track_history_models = ['system_messages.systemmessage', 'obj_attrs.
                                     'transactions.complextransactioninput',
 
                                     'django_celery_results.taskresult',
+                                    'django_celery_beat.periodictask',
 
                                     'finmars_standardized_errors.errorrecord']
 

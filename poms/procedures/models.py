@@ -29,6 +29,8 @@ class BaseProcedure(NamedModel, DataTimeStampedModel):
         ordering = ['user_code']
 
 
+
+
 class BaseProcedureInstance(DataTimeStampedModel):
     STATUS_INIT = 'I'
     STATUS_PENDING = 'P'
@@ -76,6 +78,8 @@ class BaseProcedureInstance(DataTimeStampedModel):
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return '{}: {} {} by {}'.format(self.provider, self.action, self.started_by, self.member)
 
 class PricingProcedure(BaseProcedure):
     CREATED_BY_USER = 1
@@ -319,6 +323,10 @@ class PricingProcedureInstance(BaseProcedureInstance):
         super(PricingProcedureInstance, self).save(*args, **kwargs)
 
 
+    def __str__(self):
+        return '%s [%s] by %s'.format(self.procedure, self.id, self.member)
+
+
 SCHEME_TYPE_CHOICES = [
     ['transaction_import', 'Transaction Import'],
     ['simple_import', 'Simple Import'],
@@ -362,6 +370,8 @@ class RequestDataFileProcedure(BaseProcedure):
             self.json_data = None
 
 
+
+
 class RequestDataFileProcedureInstance(BaseProcedureInstance):
     procedure = models.ForeignKey(RequestDataFileProcedure, on_delete=models.CASCADE,
                                   verbose_name=gettext_lazy('procedure'))
@@ -399,6 +409,9 @@ class RequestDataFileProcedureInstance(BaseProcedureInstance):
             self.json_request_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
         else:
             self.json_request_data = None
+
+    def __str__(self):
+        return '%s [%s] by %s'.format(self.procedure, self.id, self.member)
 
 
 class ExpressionProcedure(BaseProcedure):
@@ -467,3 +480,6 @@ class ExpressionProcedureInstance(BaseProcedureInstance):
             self.calculated_options_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
         else:
             self.calculated_options_data = None
+
+    def __str__(self):
+        return '%s [%s] by %s'.format(self.procedure, self.id, self.member)
