@@ -36,6 +36,8 @@ def cancel_existing_tasks(celery_app):
         except Exception as e:
             _l.error("Something went wrong %s" % e)
 
+        task.save()
+
     _l.info("Canceled %s tasks " % len(tasks))
 
 @task_prerun.connect
