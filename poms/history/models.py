@@ -54,6 +54,7 @@ excluded_to_track_history_models = ['system_messages.systemmessage', 'obj_attrs.
                                     'instruments.dailypricingmodel',
                                     'instruments.instrumentclass',
                                     'ui.portalinterfaceaccessmodel',
+                                    'instruments.accrualcalculationmodel',
 
                                     'finmars_standardized_errors.errorrecord']
 
