@@ -324,7 +324,7 @@ class PricingProcedureInstance(BaseProcedureInstance):
 
 
     def __str__(self):
-        return '%s [%s] by %s'.format(self.procedure, self.id, self.member)
+        return '%s [%s] by %s' % (self.procedure, self.id, self.member)
 
 
 SCHEME_TYPE_CHOICES = [
@@ -411,7 +411,7 @@ class RequestDataFileProcedureInstance(BaseProcedureInstance):
             self.json_request_data = None
 
     def __str__(self):
-        return '%s [%s] by %s'.format(self.procedure, self.id, self.member)
+        return '%s [%s] by %s' % (self.procedure, self.id, self.member)
 
 
 class ExpressionProcedure(BaseProcedure):
@@ -482,4 +482,4 @@ class ExpressionProcedureInstance(BaseProcedureInstance):
             self.calculated_options_data = None
 
     def __str__(self):
-        return '%s [%s] by %s'.format(self.procedure, self.id, self.member)
+        return '%s [%s] by %s' % (self.procedure, self.id, self.member)
