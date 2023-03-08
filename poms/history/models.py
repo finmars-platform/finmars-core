@@ -311,7 +311,7 @@ def get_record_context():
                 result['master_user'] = master_user
                 result['member'] = finmars_bot
 
-                _l.info('lib_celery_task.name %s' % lib_celery_task.name)
+                # _l.info('lib_celery_task.name %s' % lib_celery_task.name)
 
                 result['context_url'] = lib_celery_task.name
         except Exception as e:
