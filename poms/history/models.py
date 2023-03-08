@@ -22,6 +22,7 @@ excluded_to_track_history_models = ['system_messages.systemmessage', 'obj_attrs.
                                     'pricing.instrumentpricingpolicy', 'pricing.currencypricingpolicy',
 
                                     'transactions.complextransactioninput',
+                                    'migrations.migration',
 
                                     'django_celery_results.taskresult',
                                     'django_celery_beat.periodictask',
