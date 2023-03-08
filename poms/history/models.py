@@ -31,6 +31,24 @@ excluded_to_track_history_models = ['system_messages.systemmessage', 'obj_attrs.
                                     'csv_import.csvfield',
                                     'csv_import.entityfield',
 
+                                    'pricing.instrumentpricingschemetype',
+                                    'pricing.currencypricingschemetype',
+                                    'integrations.dataprovider',
+                                    'integrations.accrualscheduledownloadmethod',
+                                    'integrations.providerclass',
+                                    'transactions.periodicitygroup',
+                                    'transactions.eventclass',
+                                    'transactions.notificationclass',
+                                    'transactions.actionclass',
+                                    'transactions.complextransactionstatus',
+                                    'transactions.transactionclass',
+                                    'instruments.country',
+                                    'instruments.shortunderlyingexposure',
+                                    'instruments.longunderlyingexposure',
+                                    'instruments.pricingcondition',
+                                    'instruments.paymentsizedetail',
+                                    'instruments.costmethod',
+                                    'instruments.periodicity',
 
                                     'finmars_standardized_errors.errorrecord']
 
@@ -244,7 +262,6 @@ def get_record_context():
 
     request = get_request()
 
-
     # if we have request (normal way)
 
     if request:
@@ -265,7 +282,10 @@ def get_record_context():
 
             try:
 
-                celery_task = CeleryTask.objects.filter(celery_task_id=celery_task_id)[0] # thats weird
+                if not celery_task_id:
+                    raise Exception("Celery task id is not set")
+
+                celery_task = CeleryTask.objects.get(celery_task_id=celery_task_id)
 
                 result['member'] = celery_task.member
                 result['master_user'] = celery_task.master_user
@@ -287,7 +307,6 @@ def get_record_context():
         except Exception as e:
             _l.error("Error getting context for celery exception %s" % e)
             _l.error("Error getting context for celery traceback %s" % traceback.format_exc())
-
 
     return result
 

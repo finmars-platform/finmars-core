@@ -44,6 +44,7 @@ class BootstrapConfig(AppConfig):
         self.load_init_configuration()
         self.create_base_folders()
         self.register_at_authorizer_service()
+        self.bootstrap_celery()
 
     def create_finmars_bot(self):
 
@@ -421,3 +422,13 @@ class BootstrapConfig(AppConfig):
         except Exception as e:
             _l.info("create_base_folders error %s" % e)
             _l.info("create_base_folders traceback %s" % traceback.format_exc())
+
+    def bootstrap_celery(self):
+
+        # WARNING Do not delete
+        # important, its inits celery listeners for global state
+        # it uses for record history in post_save post_delete signals for proper context
+        from poms_app import celery_app
+
+        from poms.common.celery import cancel_existing_tasks
+        cancel_existing_tasks(celery_app)
