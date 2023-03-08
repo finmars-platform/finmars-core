@@ -8,8 +8,11 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
 
+from poms.celery_tasks.models import CeleryTask
+from poms.common.celery import get_active_celery_task, get_active_celery_task_id
 from poms.common.middleware import get_request
 from poms.users.models import MasterUser, Member
+from poms_app import settings
 
 _l = logging.getLogger('poms.history')
 
@@ -19,6 +22,8 @@ excluded_to_track_history_models = ['system_messages.systemmessage', 'obj_attrs.
                                     'pricing.instrumentpricingpolicy', 'pricing.currencypricingpolicy',
 
                                     'transactions.complextransactioninput',
+
+                                    'django_celery_results.taskresult',
 
                                     'finmars_standardized_errors.errorrecord']
 
@@ -114,8 +119,11 @@ def get_model_content_type_as_text(sender):
 def get_serialized_data(sender, instance):
     content_type_key = get_model_content_type_as_text(sender)
 
+    record_context = get_record_context()
+
     context = {
-        'request': get_request()
+        'master_user': record_context['master_user'],
+        'member': record_context['member']
     }
 
     from poms.accounts.serializers import AccountSerializer
@@ -208,7 +216,7 @@ def get_notes_for_history_record(user_code, content_type, serialized_data):
                           ignore_order=True,
                           ignore_type_subclasses=True)
 
-        _l.info('result %s' % result)
+        # _l.info('result %s' % result)
 
         notes = result.to_json()
 
@@ -220,17 +228,73 @@ def get_notes_for_history_record(user_code, content_type, serialized_data):
     return notes
 
 
+def get_record_context():
+    result = {
+        'master_user': None,
+        'member': None,
+        'context_url': "Unknown"
+    }
+
+    request = get_request()
+
+
+    # if we have request (normal way)
+
+    if request:
+        context_url = request.path
+
+        result['master_user'] = request.user.master_user
+        result['member'] = request.user.member
+        result['context_url'] = context_url
+
+    else:  # in case if we have celery context
+
+        try:
+
+            celery_task_id = get_active_celery_task_id()
+            lib_celery_task = get_active_celery_task()
+
+            _l.info('celery_task_id %s' % celery_task_id)
+
+            try:
+
+                celery_task = CeleryTask.objects.get(celery_task_id=celery_task_id)
+
+                result['member'] = celery_task.member
+                result['master_user'] = celery_task.master_user
+                result['context_url'] = celery_task.type + ' [' + str(celery_task.id) + ']'
+
+            except Exception as e:
+
+                _l.error('get_record_context.celery celery_task_id lookup error e %s' % e)
+
+                finmars_bot = Member.objects.get(username='finmars_bot')
+                master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+                result['master_user'] = master_user
+                result['member'] = finmars_bot
+
+                _l.info('lib_celery_task.name %s' % lib_celery_task.name)
+
+                result['context_url'] = lib_celery_task.name
+        except Exception as e:
+            _l.error("Error getting context for celery exception %s" % e)
+            _l.error("Error getting context for celery traceback %s" % traceback.format_exc())
+
+
+    return result
+
+
 def post_save(sender, instance, created, using=None, update_fields=None, **kwargs):
-    _l.info('post_save.sender %s' % sender)
-    _l.info('post_save.update_fields %s' % update_fields)
+    # _l.info('post_save.sender %s' % sender)
+    # _l.info('post_save.update_fields %s' % update_fields)
 
     try:
 
-        request = get_request()
+        record_context = get_record_context()
 
         content_type = ContentType.objects.get_for_model(sender)
         content_type_key = get_model_content_type_as_text(sender)
-
 
         '''General logic for most of the entities'''
         action = HistoricalRecord.ACTION_CREATE
@@ -264,7 +328,6 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
             except Exception as e:
                 action = HistoricalRecord.ACTION_CREATE
 
-
         user_code = get_user_code_from_instance(instance)
 
         data = get_serialized_data(sender, instance)
@@ -272,10 +335,10 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
         notes = get_notes_for_history_record(user_code, content_type, data)
 
         HistoricalRecord.objects.create(
-            master_user=request.user.master_user,
-            member=request.user.member,
+            master_user=record_context['master_user'],
+            member=record_context['member'],
             action=action,
-            context_url=request.path,
+            context_url=record_context['context_url'],
             data=data,
             notes=notes,
             user_code=user_code,
@@ -290,8 +353,10 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
 def post_delete(sender, instance, using=None, **kwargs):
     try:
 
+        record_context = get_record_context()
+
         action = HistoricalRecord.ACTION_DELETE
-        request = get_request()
+
         content_type = ContentType.objects.get_for_model(sender)
 
         user_code = get_user_code_from_instance(instance)
@@ -299,9 +364,9 @@ def post_delete(sender, instance, using=None, **kwargs):
         data = get_serialized_data(sender, instance)
 
         HistoricalRecord.objects.create(
-            master_user=request.user.master_user,
-            member=request.user.member,
-            context_url=request.path,
+            master_user=record_context['master_user'],
+            member=record_context['member'],
+            context_url=record_context['context_url'],
             action=action,
             data=data,
             user_code=user_code,

@@ -384,7 +384,7 @@ def get_item(scheme, result):
 
         except Exception as e:
 
-            # _l.debug('get_item entity exception %s' % e)
+            _l.debug('get_item entity exception %s' % e)
 
             item_result = None
 
@@ -1593,6 +1593,7 @@ class ImportHandler:
 
         # _l.debug('ImportHandler.result_item %s' % result_item)
 
+
         item = get_item(scheme, result_item)
 
         if mode == 'overwrite' and item:
@@ -1603,13 +1604,13 @@ class ImportHandler:
 
         elif mode == 'overwrite' and not item:
 
-            _l.debug('Create instance')
+            _l.debug('Create instance (overwrite)')
 
             self.save_instance(scheme, result_item, error_handler, error_row, member, master_user)
 
         elif mode == 'skip' and not item:
 
-            _l.debug('Create instance')
+            _l.debug('Create instance (skip)')
 
             self.save_instance(scheme, result_item, error_handler, error_row, member, master_user)
 
@@ -1828,6 +1829,10 @@ def data_csv_file_import(self, task_id, procedure_instance_id=None):
         handler = ImportHandler()
 
         celery_task = CeleryTask.objects.get(pk=task_id)
+        celery_task.celery_task_id = self.request.id # Important (record history rely on that)
+        celery_task.save()
+
+
         procedure_instance = None
 
         if procedure_instance_id:

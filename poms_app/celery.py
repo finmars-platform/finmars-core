@@ -19,3 +19,8 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
 
 app.conf.task_routes = {'*': {'queue': 'backend'}}
+
+# WARNING Do not delete
+# important, its inits celery listeners for global state
+# it uses for record history in post_save post_delete signals for proper context
+import poms.common.celery

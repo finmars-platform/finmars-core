@@ -11,6 +11,10 @@ _l = logging.getLogger('poms.transaction_import')
 
 @shared_task(name='transaction_import.transaction_import', bind=True)
 def transaction_import(self, task_id, procedure_instance_id=None):
+
+
+
+
     try:
 
         celery_task = CeleryTask.objects.get(pk=task_id)
