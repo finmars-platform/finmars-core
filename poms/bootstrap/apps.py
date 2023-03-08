@@ -315,7 +315,8 @@ class BootstrapConfig(AppConfig):
                 response_data = response.json()
 
                 master_user = MasterUser.objects.filter()[0]
-                member = Member.objects.get(master_user=master_user, is_owner=True)
+                # member = Member.objects.get(master_user=master_user, is_owner=True)
+                member = Member.objects.get(username='finmars_bot')
 
                 celery_task = CeleryTask.objects.create(master_user=master_user,
                                                         member=member,

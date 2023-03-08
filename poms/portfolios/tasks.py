@@ -365,7 +365,8 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
         date_to = timezone_today() - timedelta(days=1)
 
     if not member:
-        member = Member.objects.get(master_user=master_user, is_owner=True)
+        # member = Member.objects.get(master_user=master_user, is_owner=True)
+        member = Member.objects.get(username='finmars_bot')
 
     task = CeleryTask.objects.create(
         master_user=master_user,

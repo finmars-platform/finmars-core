@@ -28,7 +28,8 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
 
         schedule = Schedule.objects.get(id=schedule_instance.schedule_id)
 
-        owner_member = Member.objects.filter(master_user=master_user, is_owner=True)[0]
+        # owner_member = Member.objects.filter(master_user=master_user, is_owner=True)[0]
+        finmars_bot = Member.objects.get(username='finmars_bot')
 
         context = {
             'execution_context': {
@@ -63,7 +64,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
                         if 'end_date' in schedule.data:
                             date_to = schedule.data['end_date']
 
-                instance = PricingProcedureProcess(procedure=item, master_user=master_user, member=owner_member,
+                instance = PricingProcedureProcess(procedure=item, master_user=master_user, member=finmars_bot,
                                                    schedule_instance=schedule_instance, date_from=date_from,
                                                    context=context,
                                                    date_to=date_to)
@@ -85,7 +86,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
                 item = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
 
                 instance = DataProcedureProcess(procedure=item, master_user=master_user,
-                                                member=owner_member,
+                                                member=finmars_bot,
                                                 context=context,
                                                 schedule_instance=schedule_instance)
                 instance.process()
@@ -104,7 +105,7 @@ def process_procedure_async(self, procedure_id, master_user_id, schedule_instanc
 
                 item = ExpressionProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
 
-                instance = ExpressionProcedureProcess(procedure=item, master_user=master_user, member=owner_member,
+                instance = ExpressionProcedureProcess(procedure=item, master_user=master_user, member=finmars_bot,
                                                       context=context)
                 instance.process()
 

@@ -113,7 +113,8 @@ class PricingCurrencyHandler(object):
         self.member = member
 
         if not self.member:
-            self.member = Member.objects.get(master_user=self.master_user, is_owner=True)
+            # self.member = Member.objects.get(master_user=self.master_user, is_owner=True)
+            self.member = Member.objects.get(username='finmars_bot')
 
         self.schedule_instance = schedule_instance
 

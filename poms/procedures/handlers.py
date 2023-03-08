@@ -296,7 +296,8 @@ class DataProcedureProcess(object):
                     self.procedure_instance.member = self.member
 
                 if self.schedule_instance:
-                    member = Member.objects.get(master_user=self.master_user, is_owner=True)
+                    # member = Member.objects.get(master_user=self.master_user, is_owner=True)
+                    member = Member.objects.get(username='finmars_bot')
 
                     self.procedure_instance.member = member  # Add owner of ecosystem as member who stared schedule (Need to transaction expr execution)
                     self.procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_SCHEDULE
