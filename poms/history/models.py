@@ -244,7 +244,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
             master_user=request.user.master_user,
             member=request.user.member,
             action=action,
-            context_url=request.get_full_path,
+            context_url=request.path,
             data=data,
             notes=notes,
             user_code=user_code,
@@ -270,7 +270,7 @@ def post_delete(sender, instance, using=None, **kwargs):
         HistoricalRecord.objects.create(
             master_user=request.user.master_user,
             member=request.user.member,
-            context_url=request.get_full_path,
+            context_url=request.path,
             action=action,
             data=data,
             user_code=user_code,
