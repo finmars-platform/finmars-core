@@ -9,10 +9,15 @@ _l = logging.getLogger('poms.common')
 
 def get_active_celery_task():
 
-    return celery_state.task
+    task = getattr(celery_state, "task", None)
+
+    return task
 
 def get_active_celery_task_id():
-    return celery_state.celery_task_id
+
+    celery_task_id = getattr(celery_state, "celery_task_id", None)
+
+    return celery_task_id
 
 
 @task_prerun.connect
