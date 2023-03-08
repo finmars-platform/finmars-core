@@ -36,7 +36,7 @@ class BootstrapConfig(AppConfig):
 
         _l.info("Bootstrapping Finmars Application")
 
-
+        self.bootstrap_celery()
         self.add_view_and_manage_permissions()
         self.load_master_user_data()
         self.create_finmars_bot()
@@ -44,7 +44,7 @@ class BootstrapConfig(AppConfig):
         self.load_init_configuration()
         self.create_base_folders()
         self.register_at_authorizer_service()
-        self.bootstrap_celery()
+
 
     def create_finmars_bot(self):
 
