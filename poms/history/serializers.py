@@ -23,6 +23,7 @@ class HistoricalRecordSerializer(serializers.ModelSerializer):
             'id',
             'notes',
             'user_code',
+            'context_url',
             'action',
             'content_type',
             'created'

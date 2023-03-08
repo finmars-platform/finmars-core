@@ -13,7 +13,6 @@ from poms.users.models import MasterUser, Member
 
 _l = logging.getLogger('poms.history')
 
-
 # TODO important to keep this list up to date
 # Just not to log history for too meta models
 excluded_to_track_history_models = ['system_messages.systemmessage', 'obj_attrs.genericattribute',
@@ -49,6 +48,8 @@ class HistoricalRecord(models.Model):
     action = models.CharField(max_length=25, default=ACTION_CHANGE, choices=ACTION_CHOICES,
                               verbose_name='action')
     content_type = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type'), on_delete=models.CASCADE)
+
+    context_url = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('context_url'))
 
     notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
 
@@ -117,8 +118,6 @@ def get_serialized_data(sender, instance):
         'request': get_request()
     }
 
-
-
     from poms.accounts.serializers import AccountSerializer
     from poms.accounts.serializers import AccountTypeSerializer
 
@@ -156,7 +155,6 @@ def get_serialized_data(sender, instance):
 
         'currencies.currency': CurrencySerializer,
         'currencies.currencyhistory': CurrencyHistorySerializer,
-
 
         'instruments.instrument': InstrumentSerializer,
         'instruments.instrumenttype': InstrumentTypeSerializer,
@@ -229,6 +227,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
     try:
 
         request = get_request()
+
         content_type = ContentType.objects.get_for_model(sender)
 
         action = HistoricalRecord.ACTION_CHANGE
@@ -245,6 +244,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
             master_user=request.user.master_user,
             member=request.user.member,
             action=action,
+            context_url=request.get_full_path,
             data=data,
             notes=notes,
             user_code=user_code,
@@ -270,6 +270,7 @@ def post_delete(sender, instance, using=None, **kwargs):
         HistoricalRecord.objects.create(
             master_user=request.user.master_user,
             member=request.user.member,
+            context_url=request.get_full_path,
             action=action,
             data=data,
             user_code=user_code,
