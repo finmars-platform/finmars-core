@@ -28,6 +28,10 @@ excluded_to_track_history_models = ['system_messages.systemmessage', 'obj_attrs.
                                     'django_celery_beat.periodictasks',
                                     'django_celery_beat.crontabschedule',
 
+                                    'csv_import.csvfield',
+                                    'csv_import.entityfield',
+
+
                                     'finmars_standardized_errors.errorrecord']
 
 
