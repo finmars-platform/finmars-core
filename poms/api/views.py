@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from datetime import date, datetime
 from functools import lru_cache
+from django.db import connection
 
 import croniter
 import pexpect
@@ -659,6 +660,57 @@ class SystemLogsViewSet(AbstractViewSet):
         _l.info('SystemInfoLogsViewSet.items %s' % items)
 
         result['results'] = items
+
+        return Response(result)
+
+    @action(detail=False, methods=['get'], url_path='view-log')
+    def view_log(self, request):
+
+        log_file = request.query_params.get('log_file', 'django.log')
+
+        log_file = '/var/log/finmars/backend/' + log_file
+
+        file = open(log_file, 'r')
+
+        return HttpResponse(
+            file,
+            content_type='plain/text'
+        )
+
+
+class TablesSizeViewSet(AbstractViewSet):
+
+    def dictfetchall(self, cursor):
+        "Return all rows from a cursor as a dict"
+        columns = [col[0] for col in cursor.description]
+        return [
+            dict(zip(columns, row))
+            for row in cursor.fetchall()
+        ]
+
+    def list(self, request, *args, **kwargs):
+
+        result = {
+            "results": []
+        }
+
+        query = '''
+            select
+              table_name,
+              pg_size_pretty(pg_relation_size(quote_ident(table_name))),
+              pg_relation_size(quote_ident(table_name))
+            from information_schema.tables
+            where table_schema = 'public'
+            order by 3 desc;
+        '''
+
+        with connection.cursor() as cursor:
+
+            cursor.execute(query)
+
+            items = self.dictfetchall(cursor)
+
+            result['results'] = items
 
         return Response(result)
 
