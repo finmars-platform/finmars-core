@@ -30,8 +30,8 @@ def cancel_existing_tasks(celery_app):
         task.status = CeleryTask.STATUS_CANCELED
 
         try:  # just in case if rabbitmq still holds a task
-            if task.celery_tasks_id:
-                celery_app.revoke(task.celery_tasks_id, terminate=True)
+            if task.celery_task_id:
+                celery_app.revoke(task.celery_task_id, terminate=True)
 
         except Exception as e:
             _l.error("Something went wrong %s" % e)
