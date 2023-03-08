@@ -19,6 +19,8 @@ _l = logging.getLogger('poms.history')
 excluded_to_track_history_models = ['system_messages.systemmessage', 'obj_attrs.genericattribute',
                                     'pricing.instrumentpricingpolicy', 'pricing.currencypricingpolicy',
 
+                                    'transactions.complextransactioninput',
+
                                     'finmars_standardized_errors.errorrecord']
 
 
@@ -142,6 +144,7 @@ def get_serialized_data(sender, instance):
     from poms.procedures.serializers import RequestDataFileProcedureSerializer
     from poms.procedures.serializers import ExpressionProcedureSerializer
     from poms.schedules.serializers import ScheduleSerializer
+    from poms.transactions.serializers import TransactionSerializer
     model_serializer_map = {
         'accounts.account': AccountSerializer,
         'accounts.accounttype': AccountTypeSerializer,
@@ -167,6 +170,7 @@ def get_serialized_data(sender, instance):
         'csv_import.csvimportscheme': CsvImportSchemeSerializer,
 
         'transactions.complextransaction': ComplexTransactionSerializer,
+        'transactions.transaction': TransactionSerializer,
         'transactions.transactiontype': TransactionTypeSerializer,
 
         'procedures.pricingprocedure': PricingProcedureSerializer,
