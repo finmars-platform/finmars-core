@@ -13,6 +13,7 @@ from poms.common.celery import get_active_celery_task, get_active_celery_task_id
 from poms.common.middleware import get_request
 from poms.users.models import MasterUser, Member
 from poms_app import settings
+from django.forms.models import model_to_dict
 
 _l = logging.getLogger('poms.history')
 
@@ -184,6 +185,7 @@ def get_serialized_data(sender, instance):
     from poms.procedures.serializers import ExpressionProcedureSerializer
     from poms.schedules.serializers import ScheduleSerializer
     from poms.transactions.serializers import TransactionSerializer
+    from poms.portfolios.serializers import PortfolioRegisterRecordSerializer
     model_serializer_map = {
         'accounts.account': AccountSerializer,
         'accounts.accounttype': AccountTypeSerializer,
@@ -192,6 +194,7 @@ def get_serialized_data(sender, instance):
         'counterparties.responsible': ResponsibleSerializer,
         'portfolios.portfolio': PortfolioSerializer,
         'portfolios.portfolioregister': PortfolioRegisterSerializer,
+        'portfolios.portfolioregisterrecord': PortfolioRegisterRecordSerializer,
 
         'currencies.currency': CurrencySerializer,
         'currencies.currencyhistory': CurrencyHistorySerializer,
@@ -225,9 +228,9 @@ def get_serialized_data(sender, instance):
         result = model_serializer_map[content_type_key](instance=instance, context=context).data
     except Exception as e:
         try:
-            result = json.dumps(instance, default=str)
+            result = json.dumps(model_to_dict(instance), default=str)
         except Exception as e:
-            pass
+            result = None
 
     return result
 
@@ -253,8 +256,8 @@ def get_notes_for_history_record(user_code, content_type, serialized_data):
         notes = result.to_json()
 
     except Exception as e:
-        _l.error('get_notes_for_history_record e %s' % e)
-        _l.error('get_notes_for_history_record traceback %s' % traceback.format_exc())
+        # _l.error('get_notes_for_history_record e %s' % e)
+        # _l.error('get_notes_for_history_record traceback %s' % traceback.format_exc())
         pass
 
     return notes
@@ -285,7 +288,7 @@ def get_record_context():
             celery_task_id = get_active_celery_task_id()
             lib_celery_task = get_active_celery_task()
 
-            _l.info('celery_task_id %s' % celery_task_id)
+            # _l.info('celery_task_id %s' % celery_task_id)
 
             try:
 
@@ -300,7 +303,7 @@ def get_record_context():
 
             except Exception as e:
 
-                _l.error('get_record_context.celery celery_task_id lookup error e %s' % e)
+                # _l.error('get_record_context.celery celery_task_id lookup error e %s' % e)
 
                 finmars_bot = Member.objects.get(username='finmars_bot')
                 master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
