@@ -34,7 +34,7 @@ def cancel_existing_tasks(celery_app):
                 celery_app.revoke(task.celery_tasks_id, terminate=True)
 
         except Exception as e:
-            _l.error("Something went wrong")
+            _l.error("Something went wrong %s" % e)
 
     _l.info("Canceled %s tasks " % len(tasks))
 
