@@ -259,7 +259,7 @@ def get_record_context():
 
             try:
 
-                celery_task = CeleryTask.objects.get(celery_task_id=celery_task_id)
+                celery_task = CeleryTask.objects.filter(celery_task_id=celery_task_id)[0] # thats weird
 
                 result['member'] = celery_task.member
                 result['master_user'] = celery_task.master_user
