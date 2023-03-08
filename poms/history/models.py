@@ -229,10 +229,41 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
         request = get_request()
 
         content_type = ContentType.objects.get_for_model(sender)
+        content_type_key = get_model_content_type_as_text(sender)
 
-        action = HistoricalRecord.ACTION_CHANGE
-        if created:
-            action = HistoricalRecord.ACTION_CREATE
+
+        '''General logic for most of the entities'''
+        action = HistoricalRecord.ACTION_CREATE
+
+        if not created:
+            action = HistoricalRecord.ACTION_CHANGE
+
+        '''
+        Special logic for transactions 
+        '''
+        if content_type_key == 'complextransaction':
+            try:
+
+                if getattr(instance, 'transaction_unique_code', None):
+                    exist = sender.objects.get(transaction_unique_code=instance.transaction_unique_code)
+
+                elif getattr(instance, 'code', None):
+                    exist = sender.objects.get(code=instance.code)
+
+                action = HistoricalRecord.ACTION_CHANGE
+            except Exception as e:
+                action = HistoricalRecord.ACTION_CREATE
+        elif getattr(instance, 'user_code', None):
+            '''
+            Special logic for user_coded entities 
+            '''
+
+            try:
+                exist = sender.objects.get(user_code=instance.user_code)
+                action = HistoricalRecord.ACTION_CHANGE
+            except Exception as e:
+                action = HistoricalRecord.ACTION_CREATE
+
 
         user_code = get_user_code_from_instance(instance)
 
