@@ -2,14 +2,17 @@ import django_filters
 from django_filters.rest_framework import FilterSet
 from django_filters.fields import Lookup
 
-from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter
+from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter, ModelExtMultipleChoiceFilter
 from poms.common.views import AbstractModelViewSet
-from poms.history.filters import HistoryQueryFilter
+from poms.history.filters import HistoryQueryFilter, HistoryActionFilter, HistoryMemberFilter
 from poms.history.models import HistoricalRecord
 from poms.history.serializers import HistoricalRecordSerializer
 from poms.users.filters import OwnerByMasterUserFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
+from poms.users.models import Member
+
 
 class ContentTypeFilter(django_filters.CharFilter):
     def filter(self, qs, value):
@@ -56,7 +59,9 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
     serializer_class = HistoricalRecordSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        HistoryQueryFilter
+        HistoryQueryFilter,
+        HistoryActionFilter,
+        HistoryMemberFilter,
     ]
     filter_class = HistoricalRecordFilterSet
 
