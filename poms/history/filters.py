@@ -15,20 +15,17 @@ class HistoryQueryFilter(BaseFilterBackend):
             user_code_q = Q()
             created_q = Q()
             notes_q = Q()
-            content_type_q = Q()
 
             for piece in pieces:
                 user_code_q.add(Q(user_code__icontains=piece), Q.AND)
                 created_q.add(Q(created__icontains=piece), Q.AND)
                 notes_q.add(Q(notes__icontains=piece), Q.AND)
-                content_type_q.add(Q(content_type__model__icontains=piece), Q.AND)
 
             options = Q()
 
             options.add(user_code_q, Q.OR)
             options.add(created_q, Q.OR)
             options.add(notes_q, Q.OR)
-            options.add(content_type_q, Q.OR)
 
             return queryset.filter(options)
 
@@ -53,5 +50,24 @@ class HistoryMemberFilter(BaseFilterBackend):
 
         if member:
             return queryset.filter(member__username__in=member)
+
+        return queryset
+
+
+class HistoryContentTypeFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        content_type = request.query_params.getlist('content_type', None)
+
+        if content_type:
+
+            app_labels = []
+            models = []
+
+            for item in content_type:
+                pieces = item.split('.')
+                app_labels.append(pieces[0])
+                models.append(pieces[1])
+
+            return queryset.filter(content_type__app_label__in=app_labels, content_type__model__in=models)
 
         return queryset

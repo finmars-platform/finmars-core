@@ -4,7 +4,7 @@ from django_filters.fields import Lookup
 
 from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter, ModelExtMultipleChoiceFilter
 from poms.common.views import AbstractModelViewSet
-from poms.history.filters import HistoryQueryFilter, HistoryActionFilter, HistoryMemberFilter
+from poms.history.filters import HistoryQueryFilter, HistoryActionFilter, HistoryMemberFilter, HistoryContentTypeFilter
 from poms.history.models import HistoricalRecord
 from poms.history.serializers import HistoricalRecordSerializer
 from poms.users.filters import OwnerByMasterUserFilter
@@ -13,6 +13,8 @@ from rest_framework.response import Response
 
 from poms.users.models import Member
 
+import logging
+_l = logging.getLogger('poms.history')
 
 class ContentTypeFilter(django_filters.CharFilter):
     def filter(self, qs, value):
@@ -62,6 +64,7 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
         HistoryQueryFilter,
         HistoryActionFilter,
         HistoryMemberFilter,
+        HistoryContentTypeFilter,
     ]
     filter_class = HistoricalRecordFilterSet
 
@@ -73,3 +76,25 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
     def get_data(self, request, pk):
         instance = self.get_object()
         return Response(instance.data)
+
+    @action(detail=False, methods=['get'], url_path='content-types')
+    def get_content_types(self, request):
+
+        result = {
+            'results': []
+        }
+
+        items = HistoricalRecord.objects.select_related('content_type').order_by().values('content_type__app_label', 'content_type__model').distinct()
+
+        # _l.info('items %s' % items)
+
+        for item in items:
+
+            result['results'].append({
+                'key': item['content_type__app_label'] + '.' + item['content_type__model']
+            })
+
+        return Response(result)
+
+
+
