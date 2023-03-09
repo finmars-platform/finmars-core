@@ -58,6 +58,10 @@ excluded_to_track_history_models = ['system_messages.systemmessage', 'obj_attrs.
                                     'ui.portalinterfaceaccessmodel',
                                     'instruments.accrualcalculationmodel',
 
+                                    'widgets.collect_stats',
+                                    'widgets.collect_pl_report_history',
+                                    'widgets.collect_balance_report_history',
+
                                     'finmars_standardized_errors.errorrecord']
 
 
