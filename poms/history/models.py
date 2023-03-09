@@ -70,6 +70,9 @@ excluded_to_track_history_models = ['system_messages.systemmessage', 'obj_attrs.
                                     'pricing.pricingprocedurebloombergcurrencyresult',
                                     'portfolios.portfolioregisterrecord',
 
+                                    'ui.listlayout',
+                                    'ui.editlayout',
+
                                     'finmars_standardized_errors.errorrecord']
 
 
