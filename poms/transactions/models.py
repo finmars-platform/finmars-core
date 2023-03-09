@@ -49,6 +49,9 @@ class TransactionClass(AbstractClassModel):
     INJECTION = 12  # if portfolio registry, # share price increase
     DISTRIBUTION = 13  # if portfolio registry, # share price decrease
 
+    INITIAL_POSITION = 14
+    INITIAL_CASH = 15
+
     CLASSES = (
         (BUY, 'BUY', gettext_lazy("Buy")),
         (SELL, 'SELL', gettext_lazy("Sell")),
@@ -64,6 +67,9 @@ class TransactionClass(AbstractClassModel):
 
         (INJECTION, 'INJECTION', gettext_lazy("Injection")),
         (DISTRIBUTION, 'DISTRIBUTION', gettext_lazy("Distribution")),
+
+        (INITIAL_POSITION, 'INITIAL_POSITION', gettext_lazy("Initial Position")),
+        (INITIAL_CASH, 'INITIAL_CASH', gettext_lazy("Initial Cash")),
     )
 
     class Meta(AbstractClassModel.Meta):
