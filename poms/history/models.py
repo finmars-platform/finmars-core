@@ -57,6 +57,8 @@ excluded_to_track_history_models = ['system_messages.systemmessage', 'obj_attrs.
                                     'instruments.instrumentclass',
                                     'ui.portalinterfaceaccessmodel',
                                     'instruments.accrualcalculationmodel',
+                                    'instruments.pricehistory',
+                                    'currencies.currencyhistory',
 
                                     'widgets.collect_stats',
                                     'widgets.collect_pl_report_history',
@@ -64,6 +66,8 @@ excluded_to_track_history_models = ['system_messages.systemmessage', 'obj_attrs.
 
                                     'pricing.pricehistoryerror',
                                     'pricing.pricingprocedurebloomberginstrumentresult',
+                                    'pricing.pricingprocedurebloombergforwardinstrumentresult',
+                                    'pricing.pricingprocedurebloombergcurrencyresult',
                                     'portfolios.portfolioregisterrecord',
 
                                     'finmars_standardized_errors.errorrecord']
