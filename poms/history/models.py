@@ -356,7 +356,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
         '''
         Special logic for transactions 
         '''
-        if content_type_key == 'complextransaction':
+        if content_type_key == 'transactions.complextransaction':
             try:
 
                 if getattr(instance, 'transaction_unique_code', None):
