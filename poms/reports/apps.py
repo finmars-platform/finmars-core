@@ -84,6 +84,13 @@ class ReportsConfig(AppConfig):
                            allocation_balance_id,
                            allocation_pl_id,
                            
+                           case 
+                                when cash_date < accounting_date
+                                then cash_date
+                                else accounting_date
+                           end
+                           as min_date,
+                           
                            case
                              
                              when transaction_class_id = 4
@@ -135,6 +142,13 @@ class ReportsConfig(AppConfig):
                           allocation_balance_id,
                           allocation_pl_id,
                           
+                          case 
+                                when cash_date < accounting_date
+                                then cash_date
+                                else accounting_date
+                           end
+                           as min_date,
+                          
                           case
                             when position_size_with_sign < 0
                               then 0
@@ -182,6 +196,13 @@ class ReportsConfig(AppConfig):
                           
                           allocation_balance_id,
                           allocation_pl_id,
+                          
+                          case 
+                                when cash_date < accounting_date
+                                then cash_date
+                                else accounting_date
+                           end
+                           as min_date,
                           
                           case
                             when (-position_size_with_sign) < 0 

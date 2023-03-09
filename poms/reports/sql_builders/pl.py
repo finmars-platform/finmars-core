@@ -13,7 +13,7 @@ from poms.reports.common import Report
 from poms.reports.models import PLReportCustomField
 from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
     get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
-    get_position_consolidation_for_select, dictfetchall
+    get_position_consolidation_for_select, dictfetchall, get_transaction_date_filter_for_initial_position_sql_string
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.users.models import EcosystemDefault
 
@@ -372,6 +372,7 @@ class PLReportBuilderSql:
             pl_transactions_with_ttype_filtered as (
                 select * from pl_transactions_with_ttype
                 {transaction_filter_sql_string}
+                {transaction_date_filter_for_initial_position_sql_string}
             ),
         
             transactions_ordered as (
@@ -2840,6 +2841,8 @@ class PLReportBuilderSql:
         _l.debug('report_fx_rate %s' % report_fx_rate)
 
         transaction_filter_sql_string = get_transaction_filter_sql_string(self.instance)
+        transaction_date_filter_for_initial_position_sql_string = get_transaction_date_filter_for_initial_position_sql_string(
+            self.instance.pl_first_date, has_where=bool(len(transaction_filter_sql_string)))
         fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
             self.instance)
         transactions_all_with_multipliers_where_expression = get_where_expression_for_position_consolidation(
@@ -2858,6 +2861,7 @@ class PLReportBuilderSql:
                              pricing_policy_id=self.instance.pricing_policy.id,
                              report_fx_rate=report_fx_rate,
                              transaction_filter_sql_string=transaction_filter_sql_string,
+                             transaction_date_filter_for_initial_position_sql_string=transaction_date_filter_for_initial_position_sql_string,
                              fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
                              consolidation_columns=consolidation_columns,
                              tt_consolidation_columns=tt_consolidation_columns,
@@ -2875,6 +2879,8 @@ class PLReportBuilderSql:
         _l.debug('report_fx_rate %s' % report_fx_rate)
 
         transaction_filter_sql_string = get_transaction_filter_sql_string(self.instance)
+        transaction_date_filter_for_initial_position_sql_string = get_transaction_date_filter_for_initial_position_sql_string(
+            self.instance.report_date, has_where=bool(len(transaction_filter_sql_string)))
         fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
             self.instance)
         transactions_all_with_multipliers_where_expression = get_where_expression_for_position_consolidation(
@@ -2895,6 +2901,7 @@ class PLReportBuilderSql:
                              pricing_policy_id=self.instance.pricing_policy.id,
                              report_fx_rate=report_fx_rate,
                              transaction_filter_sql_string=transaction_filter_sql_string,
+                             transaction_date_filter_for_initial_position_sql_string=transaction_date_filter_for_initial_position_sql_string,
                              fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
                              consolidation_columns=consolidation_columns,
                              tt_consolidation_columns=tt_consolidation_columns,
