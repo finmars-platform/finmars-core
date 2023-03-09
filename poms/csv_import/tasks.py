@@ -1310,6 +1310,9 @@ class ImportHandler:
                 if 'pricing_currency' in result_without_many_to_many:
                     result_without_many_to_many['pricing_currency'] = result_without_many_to_many['pricing_currency'].id
 
+                if 'pricing_condition' in result_without_many_to_many:
+                    result_without_many_to_many['pricing_condition'] = result_without_many_to_many['pricing_condition'].id
+
                 try:
                     if 'country' in result_without_many_to_many:
                         result_without_many_to_many['country'] = result_without_many_to_many['country'].id
