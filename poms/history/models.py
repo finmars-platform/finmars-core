@@ -19,7 +19,9 @@ _l = logging.getLogger('poms.history')
 
 # TODO important to keep this list up to date
 # Just not to log history for too meta models
-excluded_to_track_history_models = ['system_messages.systemmessage', 'obj_attrs.genericattribute',
+excluded_to_track_history_models = ['system_messages.systemmessage',
+                                    'system_messages.systemmessagemember',
+                                    'obj_attrs.genericattribute',
                                     'pricing.instrumentpricingpolicy', 'pricing.currencypricingpolicy',
 
                                     'transactions.complextransactioninput',
