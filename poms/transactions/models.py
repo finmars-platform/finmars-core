@@ -26,7 +26,6 @@ from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
-from poms.transactions.utils import calc_cash_for_contract_for_difference
 from poms.users.models import MasterUser, FakeSequence, EcosystemDefault
 
 _l = logging.getLogger('poms.transactions')
@@ -1925,8 +1924,9 @@ class Transaction(models.Model):
 
         super(Transaction, self).save(*args, **kwargs)
 
-        if calc_cash:
-            self.calc_cash_by_formulas()
+        # Deprecated 2023-03-10
+        # if calc_cash:
+        #     self.calc_cash_by_formulas()
 
     def is_can_calc_cash_by_formulas(self):
         return self.transaction_class_id in [TransactionClass.BUY, TransactionClass.SELL] \

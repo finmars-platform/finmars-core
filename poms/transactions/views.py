@@ -1066,11 +1066,13 @@ class TransactionViewSet(AbstractWithObjectPermissionViewSet):
 
     def perform_update(self, serializer):
         super(TransactionViewSet, self).perform_update(serializer)
-        serializer.instance.calc_cash_by_formulas()
+        # Deprecated 2023-03-10
+        # serializer.instance.calc_cash_by_formulas()
 
     def perform_destroy(self, instance):
         super(TransactionViewSet, self).perform_destroy(instance)
-        instance.calc_cash_by_formulas()
+        # Deprecated 2023-03-10
+        # instance.calc_cash_by_formulas()
 
 
 class TransactionEvViewSet(AbstractWithObjectPermissionViewSet):
@@ -1244,11 +1246,13 @@ class TransactionEvViewSet(AbstractWithObjectPermissionViewSet):
 
     def perform_update(self, serializer):
         super(TransactionViewSet, self).perform_update(serializer)
-        serializer.instance.calc_cash_by_formulas()
+        # Deprecated 2023-03-10
+        # serializer.instance.calc_cash_by_formulas()
 
     def perform_destroy(self, instance):
         super(TransactionViewSet, self).perform_destroy(instance)
-        instance.calc_cash_by_formulas()
+        # Deprecated 2023-03-10
+        # instance.calc_cash_by_formulas()
 
 
 class TransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
