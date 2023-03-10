@@ -110,6 +110,7 @@ class BalanceReportBuilderSql:
                                        pricing_policy_id=self.instance.pricing_policy.id,
                                        report_fx_rate=report_fx_rate,
                                        transaction_filter_sql_string=transaction_filter_sql_string,
+                                       transaction_date_filter_for_initial_position_sql_string=transaction_date_filter_for_initial_position_sql_string,
                                        fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
                                        consolidation_columns=consolidation_columns,
                                        balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
