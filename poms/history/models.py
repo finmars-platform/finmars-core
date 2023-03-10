@@ -6,6 +6,7 @@ from deepdiff import DeepDiff
 from django.contrib.contenttypes.models import ContentType
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.forms.models import model_to_dict
 from django.utils.translation import gettext_lazy
 
 from poms.celery_tasks.models import CeleryTask
@@ -13,7 +14,6 @@ from poms.common.celery import get_active_celery_task, get_active_celery_task_id
 from poms.common.middleware import get_request
 from poms.users.models import MasterUser, Member
 from poms_app import settings
-from django.forms.models import model_to_dict
 
 _l = logging.getLogger('poms.history')
 
@@ -82,11 +82,13 @@ class HistoricalRecord(models.Model):
     ACTION_CREATE = 'create'
     ACTION_CHANGE = 'change'
     ACTION_DELETE = 'delete'
+    ACTION_RECYCLE_BIN = 'recycle_bin'
 
     ACTION_CHOICES = (
         (ACTION_CREATE, gettext_lazy('Create')),
         (ACTION_CHANGE, gettext_lazy('Change')),
         (ACTION_DELETE, gettext_lazy('Delete')),
+        (ACTION_RECYCLE_BIN, gettext_lazy('Recycle Bin')),
     )
 
     '''
@@ -263,7 +265,7 @@ def get_notes_for_history_record(user_code, content_type, serialized_data):
         everything_is_dict = json.loads(
             json.dumps(serialized_data))  # because deep diff counts different Dict and Ordered dict
 
-        result = DeepDiff(everything_is_dict, last_record.data,
+        result = DeepDiff(last_record.data, everything_is_dict,
                           ignore_string_type_changes=True,
                           ignore_order=True,
                           ignore_type_subclasses=True)
@@ -348,40 +350,28 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
 
         content_type = ContentType.objects.get_for_model(sender)
         content_type_key = get_model_content_type_as_text(sender)
-
-        '''General logic for most of the entities'''
-        action = HistoricalRecord.ACTION_CREATE
-
-        if not created:
-            action = HistoricalRecord.ACTION_CHANGE
-
-        '''
-        Special logic for transactions 
-        '''
-        if content_type_key == 'transactions.complextransaction':
-            try:
-
-                if getattr(instance, 'transaction_unique_code', None):
-                    exist = sender.objects.get(transaction_unique_code=instance.transaction_unique_code)
-
-                elif getattr(instance, 'code', None):
-                    exist = sender.objects.get(code=instance.code)
-
-                action = HistoricalRecord.ACTION_CHANGE
-            except Exception as e:
-                action = HistoricalRecord.ACTION_CREATE
-        elif getattr(instance, 'user_code', None):
-            '''
-            Special logic for user_coded entities 
-            '''
-
-            try:
-                exist = sender.objects.get(user_code=instance.user_code)
-                action = HistoricalRecord.ACTION_CHANGE
-            except Exception as e:
-                action = HistoricalRecord.ACTION_CREATE
-
         user_code = get_user_code_from_instance(instance)
+
+        exist = False
+
+        if HistoricalRecord.objects.filter(user_code=instance.user_code, content_type=content_type).count():
+            exist = True
+
+        if exist:
+            action = HistoricalRecord.ACTION_CHANGE
+        else:
+            action = HistoricalRecord.ACTION_CREATE
+
+        _l.info('created %s' % created)
+        _l.info('update_fields %s' % update_fields)
+
+
+        if update_fields:
+            if 'is_deleted' in update_fields:
+                if instance.is_deleted:
+                    action = HistoricalRecord.ACTION_RECYCLE_BIN
+                else:
+                    action = HistoricalRecord.ACTION_CHANGE
 
         data = get_serialized_data(sender, instance)
 
