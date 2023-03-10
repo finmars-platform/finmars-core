@@ -385,8 +385,12 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
                 else:
                     action = HistoricalRecord.ACTION_CHANGE
 
+        # TODO think about better performance
+        # if HistoricalRecord.ACTION_RECYCLE_BIN:
+        #     data = {"is_deleted": True}
+        #     notes = {"is_deleted": True}
+        # else:
         data = get_serialized_data(sender, instance)
-
         notes = get_notes_for_history_record(user_code, content_type, data)
 
         HistoricalRecord.objects.create(

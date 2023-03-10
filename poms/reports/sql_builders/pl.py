@@ -2842,7 +2842,7 @@ class PLReportBuilderSql:
 
         transaction_filter_sql_string = get_transaction_filter_sql_string(self.instance)
         transaction_date_filter_for_initial_position_sql_string = get_transaction_date_filter_for_initial_position_sql_string(
-            self.instance.pl_first_date, has_where=bool(len(transaction_filter_sql_string)))
+            self.instance.report_date, has_where=bool(len(transaction_filter_sql_string)))
         fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
             self.instance)
         transactions_all_with_multipliers_where_expression = get_where_expression_for_position_consolidation(

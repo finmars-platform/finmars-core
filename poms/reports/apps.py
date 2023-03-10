@@ -100,7 +100,7 @@ class ReportsConfig(AppConfig):
                              else 1
                              end as ttype
                         FROM transactions_transaction
-                        WHERE transaction_class_id in (1,2,4) and NOT is_canceled
+                        WHERE transaction_class_id in (1,2,4,14) and NOT is_canceled
                         
                         UNION ALL
                         
@@ -400,7 +400,7 @@ class ReportsConfig(AppConfig):
                            
 
                     from transactions_transaction as tt
-                    where transaction_class_id in (8,9,12,13) and NOT tt.is_canceled
+                    where transaction_class_id in (8,9,12,13,15) and NOT tt.is_canceled
                     
                     union all
 
