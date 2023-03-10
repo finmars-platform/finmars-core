@@ -322,17 +322,29 @@ def get_record_context():
 
             except Exception as e:
 
-                # _l.error('get_record_context.celery celery_task_id lookup error e %s' % e)
+                try:
 
-                finmars_bot = Member.objects.get(username='finmars_bot')
-                master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+                    # _l.error('get_record_context.celery celery_task_id lookup error e %s' % e)
 
-                result['master_user'] = master_user
-                result['member'] = finmars_bot
+                    finmars_bot = Member.objects.get(username='finmars_bot')
+                    master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
-                # _l.info('lib_celery_task.name %s' % lib_celery_task.name)
+                    result['master_user'] = master_user
+                    result['member'] = finmars_bot
 
-                result['context_url'] = lib_celery_task.name
+                    # _l.info('lib_celery_task.name %s' % lib_celery_task.name)
+
+                    result['context_url'] = lib_celery_task.name
+                except Exception as e:
+
+                    finmars_bot = Member.objects.get(username='finmars_bot')
+                    master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+                    result['master_user'] = master_user
+                    result['member'] = finmars_bot
+
+                    result['context_url'] = 'Shell'
+
         except Exception as e:
             _l.error("Error getting context for celery exception %s" % e)
             _l.error("Error getting context for celery traceback %s" % traceback.format_exc())
