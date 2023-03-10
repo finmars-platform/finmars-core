@@ -1351,7 +1351,7 @@ class BalanceReportBuilderSql:
                             from filtered_transactions 
                             where min_date <= '{report_date}' 
                             and master_user_id = {master_user_id}
-                            and transaction_class_id in (1,2)
+                            and transaction_class_id in (1,2,14)
                             group by
                               {consolidated_position_columns}
                               instrument_id) as t
