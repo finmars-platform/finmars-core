@@ -1317,6 +1317,7 @@ class ComplexTransaction(DataTimeStampedModel):
     transaction_type = models.ForeignKey(TransactionType, on_delete=models.PROTECT,
                                          verbose_name=gettext_lazy('transaction type'))
 
+    is_deleted = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is deleted'))
     is_locked = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is locked'))
     is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is canceled'))
     error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=gettext_lazy('error code'))
@@ -1336,6 +1337,9 @@ class ComplexTransaction(DataTimeStampedModel):
 
     transaction_unique_code = models.CharField(max_length=255, null=True, blank=True,
                                                verbose_name=gettext_lazy('transaction unique code'))
+
+    deleted_transaction_unique_code = models.CharField(max_length=255, null=True, blank=True,
+                                            verbose_name=gettext_lazy('deleted transaction unique code'))
 
     text = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('text'))
 
@@ -1488,6 +1492,31 @@ class ComplexTransaction(DataTimeStampedModel):
             self.code = FakeSequence.next_value(self.transaction_type.master_user, 'complex_transaction', d=100)
         _l.info("Complex Transaction Save date %s" % self.code)
         super(ComplexTransaction, self).save(*args, **kwargs)
+
+    def fake_delete(self):
+
+        if self.is_deleted: # if transaction was already marked as deleted, then do real delete
+            self.delete()
+        else:
+
+            self.is_deleted = True
+
+            fields_to_update = ['is_deleted', 'modified']
+
+            from poms.common.middleware import get_request
+            from poms.common import formula
+            member = get_request().user.member
+
+            if hasattr(self, 'user_code'):
+                self.deleted_transaction_unique_code = self.transaction_unique_code
+
+                self.transaction_unique_code = formula.safe_eval('generate_user_code("del", "", 1)',
+                                                   context={'master_user': self.master_user})
+
+                fields_to_update.append('deleted_transaction_unique_code')
+                fields_to_update.append('transaction_unique_code')
+
+            self.save(update_fields=fields_to_update)
 
 
 class ComplexTransactionInput(models.Model):

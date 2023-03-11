@@ -108,7 +108,7 @@ class FakeDeletableModel(models.Model):
 
         self.is_deleted = True
 
-        fields_to_update = ['is_deleted']
+        fields_to_update = ['is_deleted', 'modified']
 
         member = get_request().user.member
 

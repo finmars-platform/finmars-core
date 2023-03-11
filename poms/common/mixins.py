@@ -45,6 +45,9 @@ class DestroyModelFakeMixin(DestroyModelMixinExt):
             return qs
 
     def perform_destroy(self, instance):
+
+        _l.info("DestroyModelFakeMixin.Performing destroy")
+
         # if getattr(self, 'has_feature_is_deleted', False):
         if hasattr(instance, 'is_deleted') and hasattr(instance, 'fake_delete'):
             instance.fake_delete()
@@ -223,6 +226,7 @@ class BulkDestroyModelMixin(DestroyModelMixin):
         queryset = self.filter_queryset(self.get_queryset())
         # is_fake = bool(request.query_params.get('is_fake'))
 
+        _l.info('bulk_delete %s' % data['ids'])
 
 
         try:
@@ -239,6 +243,8 @@ class BulkDestroyModelMixin(DestroyModelMixin):
                     #     raise
                     self.perform_destroy(instance)
         except Exception as e:
+
+                # mostly for prices
 
                 queryset.filter(id__in=data['ids']).delete()
 

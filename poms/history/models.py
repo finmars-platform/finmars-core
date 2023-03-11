@@ -97,7 +97,8 @@ class HistoricalRecord(models.Model):
     In Finmars Web interface users can check history of changes for specific entity e.g. Instrument, Complex Transaction
     TODO: probably need to store only diff with change, not the whole JSON output
     '''
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
     member = models.ForeignKey('users.Member', null=True, blank=True, verbose_name=gettext_lazy('member'),
                                on_delete=models.SET_NULL)
 
@@ -215,7 +216,6 @@ def get_serialized_data(sender, instance):
         'accounts.account': AccountSerializer,
         'accounts.accounttype': AccountTypeSerializer,
 
-
         'counterparties.counterparty': CounterpartySerializer,
         'counterparties.responsible': ResponsibleSerializer,
         'portfolios.portfolio': PortfolioSerializer,
@@ -267,7 +267,9 @@ def get_notes_for_history_record(user_code, content_type, serialized_data):
     try:
 
         last_record = \
-            HistoricalRecord.objects.filter(user_code=user_code, content_type=content_type).order_by('-created')[0]
+            HistoricalRecord.objects.filter(user_code=user_code, content_type=content_type,
+                                            action__in=[HistoricalRecord.ACTION_CREATE, HistoricalRecord.ACTION_CHANGE,
+                                                        HistoricalRecord.ACTION_DELETE]).order_by('-created')[0]
 
         everything_is_dict = json.loads(
             json.dumps(serialized_data))  # because deep diff counts different Dict and Ordered dict
@@ -336,7 +338,6 @@ def get_record_context():
 
                     # _l.error('get_record_context.celery celery_task_id lookup error e %s' % e)
 
-
                     finmars_bot = Member.objects.get(username='finmars_bot')
 
                     master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
@@ -384,7 +385,6 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
                 content_type=content_type
             )
 
-
     if master_user.journal_status != MasterUser.JOURNAL_STATUS_DISABLED:
 
         try:
@@ -408,7 +408,6 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
             _l.info('created %s' % created)
             _l.info('update_fields %s' % update_fields)
 
-
             if update_fields:
                 if 'is_deleted' in update_fields:
                     if instance.is_deleted:
@@ -421,8 +420,13 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
             #     data = {"is_deleted": True}
             #     notes = {"is_deleted": True}
             # else:
-            data = get_serialized_data(sender, instance)
-            notes = get_notes_for_history_record(user_code, content_type, data)
+
+            if action != HistoricalRecord.ACTION_RECYCLE_BIN:
+                data = get_serialized_data(sender, instance)
+                notes = get_notes_for_history_record(user_code, content_type, data)
+            else:
+                data = None
+                notes = {"message": "User moved object to Recycle Bin"}
 
             HistoricalRecord.objects.create(
                 master_user=record_context['master_user'],
@@ -441,7 +445,6 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
 
 
 def post_delete(sender, instance, using=None, **kwargs):
-
     from poms.users.models import MasterUser
     master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 

@@ -1307,25 +1307,6 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
     #         raise PermissionDenied()
     #     return super(ComplexTransactionViewSet, self).perform_update(serializer)
 
-    def perform_destroy(self, instance):
-
-        Transaction.objects.filter(
-            complex_transaction=instance
-        ).delete()
-
-        ComplexTransaction.objects.get(id=instance.id).delete()
-
-        member = get_request().user.member
-        master_user = get_request().user.master_user
-
-        send_system_message(master_user=master_user,
-                            performed_by=member.username,
-                            section='transactions',
-                            type='warning',
-                            title='Delete Transaction (manual)',
-                            description='Transaction ' + str(instance.code) + ' was deleted'
-                            )
-
     @action(detail=True, methods=['get', 'put'], url_path='rebook', serializer_class=TransactionTypeProcessSerializer,
             permission_classes=[IsAuthenticated])
     def rebook(self, request, pk=None):
@@ -1552,7 +1533,7 @@ class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSe
         # ComplexTransactionPermissionFilter,
         OwnerByMasterUserFilter,
         AttributeFilter,
-        ComplexTransactionStatusFilter
+        ComplexTransactionStatusFilter,
     ]
 
 

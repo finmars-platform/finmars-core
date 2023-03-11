@@ -2652,7 +2652,7 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
 
             'transaction_unique_code',
 
-            'is_locked', 'is_canceled', 'error_code',
+            'is_locked', 'is_canceled', 'error_code', 'is_deleted',
 
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
@@ -2820,7 +2820,7 @@ class ComplexTransactionSimpleSerializer(ModelWithObjectPermissionSerializer, Mo
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'is_locked', 'is_canceled', 'status'
+            'id', 'is_locked', 'is_canceled', 'status', 'is_deleted'
         ]
 
     def update_base_transactions_permissions(self, instance, complex_transaction_permissions):
@@ -2931,7 +2931,7 @@ class ComplexTransactionEvSerializer(ModelWithObjectPermissionSerializer, ModelW
             'id', 'master_user',
             'date', 'status', 'code', 'text',
 
-            'is_locked', 'is_canceled',
+            'is_locked', 'is_canceled', 'is_deleted',
 
             'transaction_type', 'transaction_type_object',
 
@@ -3065,7 +3065,7 @@ class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, Mod
         fields = [
             'id', 'date', 'status', 'code', 'text', 'transaction_type', 'master_user',
 
-            'visibility_status', 'is_locked', 'is_canceled', 'transaction_unique_code',
+            'visibility_status', 'is_locked', 'is_canceled', 'is_deleted', 'transaction_unique_code',
 
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
