@@ -55,7 +55,7 @@ from poms.users.models import MasterUser, Member, Group, ResetPasswordToken, Inv
     OtpToken, UsercodePrefix
 from poms.users.permissions import SuperUserOrReadOnly, IsCurrentMasterUser, IsCurrentUser
 from poms.users.serializers import GroupSerializer, UserSerializer, MasterUserSerializer, MemberSerializer, \
-    PingSerializer, UserSetPasswordSerializer, MasterUserSetCurrentSerializer, UserUnsubscribeSerializer, \
+    PingSerializer, UserSetPasswordSerializer, UserUnsubscribeSerializer, \
     UserRegisterSerializer, MasterUserCreateSerializer, EmailSerializer, PasswordTokenSerializer, \
     InviteToMasterUserSerializer, InviteCreateSerializer, EcosystemDefaultSerializer, MasterUserLightSerializer, \
     OtpTokenSerializer, MasterUserCopySerializer, UsercodePrefixSerializer
@@ -574,6 +574,7 @@ class MasterUserViewSet(AbstractModelViewSet):
                 master_user.name = request.data['name']
                 master_user.description = request.data['description']
                 master_user.status = request.data['status']
+                master_user.journal_status = request.data['journal_status']
                 master_user.save()
             else:
                 raise PermissionDenied()
@@ -583,6 +584,44 @@ class MasterUserViewSet(AbstractModelViewSet):
 
         return Response({'status': 'OK'})
 
+    @action(detail=False, methods=['POST'], url_path='update')
+    def update_master_user(self, request, *args, **kwargs):
+
+        # Name and Description only available for change
+
+        user = request.user
+
+        try:
+            master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+            member_qs = Member.objects.filter(master_user=master_user, user=user, is_admin=True)
+
+            if len(list(member_qs)):
+                master_user.name = request.data['name']
+                master_user.description = request.data['description']
+                master_user.status = request.data['status']
+                master_user.journal_status = request.data['journal_status']
+                master_user.save()
+            else:
+                raise PermissionDenied()
+
+        except MasterUser.DoesNotExist:
+            raise PermissionDenied()
+
+        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+        serializer = MasterUserSerializer(instance=master_user)
+
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='get')
+    def get_master_user(self, request, *args, **kwargs):
+
+        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+        serializer = MasterUserSerializer(instance=master_user)
+
+        return Response(serializer.data)
 
 class MasterUserLightViewSet(AbstractModelViewSet):
     queryset = MasterUser.objects.prefetch_related('members')

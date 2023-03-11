@@ -271,10 +271,10 @@ class MasterUserSerializer(serializers.ModelSerializer):
     # url = serializers.HyperlinkedIdentityField(view_name='masteruser-detail')
     language = serializers.ChoiceField(choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE)
     timezone = serializers.ChoiceField(choices=TIMEZONE_CHOICES)
-    is_current = serializers.SerializerMethodField()
-    is_admin = serializers.SerializerMethodField()
-    is_owner = serializers.SerializerMethodField()
-    system_currency = CurrencyField()
+    # is_current = serializers.SerializerMethodField()
+    # is_admin = serializers.SerializerMethodField()
+    # is_owner = serializers.SerializerMethodField()
+    # system_currency = CurrencyField()
 
     # currency = CurrencyField()
     # account_type = AccountTypeField()
@@ -303,11 +303,14 @@ class MasterUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = MasterUser
         fields = [
-            'id', 'name', 'description', 'user_code_counters', 'is_current', 'is_admin', 'is_owner', 'language',
+            'id', 'name', 'description', 'user_code_counters',
+            # 'is_current', 'is_admin', 'is_owner',
+            'language',
             'status',
             'timezone',
             'notification_business_days',
-            'system_currency',
+            'journal_status',
+            # 'system_currency',
             # 'currency',
             # 'account_type', 'account',
             # 'counterparty_group', 'counterparty',
@@ -339,8 +342,8 @@ class MasterUserSerializer(serializers.ModelSerializer):
         # from poms.transactions.serializers import TransactionTypeViewSerializer
         # from poms.instruments.serializers import PricingPolicyViewSerializer
 
-        self.fields['system_currency_object'] = CurrencyViewSerializer(source='system_currency', read_only=True)
-        self.fields['currency_object'] = CurrencyViewSerializer(source='currency', read_only=True)
+        # self.fields['system_currency_object'] = CurrencyViewSerializer(source='system_currency', read_only=True)
+        # self.fields['currency_object'] = CurrencyViewSerializer(source='currency', read_only=True)
 
         # self.fields['account_type_object'] = AccountTypeViewSerializer(source='account_type', read_only=True)
         # self.fields['account_object'] = AccountViewSerializer(source='account', read_only=True)
@@ -379,39 +382,39 @@ class MasterUserSerializer(serializers.ModelSerializer):
         # self.fields['transaction_type_object'] = TransactionTypeViewSerializer(source='transaction_type',
         #                                                                        read_only=True)
 
-    def to_representation(self, instance):
-        ret = super(MasterUserSerializer, self).to_representation(instance)
-        is_current = self.get_is_current(instance)
-        is_admin = self.get_is_admin(instance)
-        is_owner = self.get_is_owner(instance)
-        if not is_current:
-            for k in list(ret.keys()):
-                if k not in ['id', 'name', 'is_current', 'description', 'is_admin', 'is_owner']:
-                    ret.pop(k)
-        return ret
+    # def to_representation(self, instance):
+    #     ret = super(MasterUserSerializer, self).to_representation(instance)
+    #     is_current = self.get_is_current(instance)
+    #     is_admin = self.get_is_admin(instance)
+    #     is_owner = self.get_is_owner(instance)
+    #     if not is_current:
+    #         for k in list(ret.keys()):
+    #             if k not in ['id', 'name', 'is_current', 'description', 'is_admin', 'is_owner']:
+    #                 ret.pop(k)
+    #     return ret
 
-    def get_is_current(self, obj):
-        master_user = get_master_user_from_context(self.context)
+    # def get_is_current(self, obj):
+    #     master_user = get_master_user_from_context(self.context)
+    #
+    #     if master_user:
+    #         return obj.id == master_user.id
+    #     return False
 
-        if master_user:
-            return obj.id == master_user.id
-        return False
-
-    def get_is_admin(self, obj):
-
-        user = get_user_from_context(self.context)
-
-        member = Member.objects.get(master_user=obj.id, user=user.id)
-
-        return member.is_admin
-
-    def get_is_owner(self, obj):
-
-        user = get_user_from_context(self.context)
-
-        member = Member.objects.get(master_user=obj.id, user=user.id)
-
-        return member.is_owner
+    # def get_is_admin(self, obj):
+    #
+    #     user = get_user_from_context(self.context)
+    #
+    #     member = Member.objects.get(master_user=obj.id, user=user.id)
+    #
+    #     return member.is_admin
+    #
+    # def get_is_owner(self, obj):
+    #
+    #     user = get_user_from_context(self.context)
+    #
+    #     member = Member.objects.get(master_user=obj.id, user=user.id)
+    #
+    #     return member.is_owner
 
 
 class MasterUserLightSerializer(serializers.ModelSerializer):

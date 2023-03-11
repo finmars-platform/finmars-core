@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.db.models.signals import post_save
+# from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy
 
@@ -119,6 +119,14 @@ class MasterUser(models.Model):
         (STATUS_BACKUP, gettext_lazy('Backup')),
     )
 
+    JOURNAL_STATUS_FULL = 'full'
+    JOURNAL_STATUS_DISABLED = 'disabled'
+
+    JOURNAL_STATUS_CHOICES = (
+        (JOURNAL_STATUS_FULL, gettext_lazy('Full')),
+        (JOURNAL_STATUS_DISABLED, gettext_lazy('Disabled')),
+    )
+
     name = models.CharField(max_length=255, null=True, blank=True,
                             verbose_name=gettext_lazy('name'))
 
@@ -129,6 +137,9 @@ class MasterUser(models.Model):
 
     status = models.PositiveSmallIntegerField(default=STATUS_ONLINE, choices=STATUSES,
                                               verbose_name=gettext_lazy('status'))
+
+    journal_status = models.CharField(max_length=25, default=JOURNAL_STATUS_FULL, choices=JOURNAL_STATUS_CHOICES,
+                                     verbose_name='journal status')
 
     language = models.CharField(max_length=LANGUAGE_MAX_LENGTH, default=settings.LANGUAGE_CODE,
                                 verbose_name=gettext_lazy('language'))
@@ -1416,32 +1427,32 @@ class FakeSequence(models.Model):
         return seq.value
 
 
-@receiver(post_save, dispatch_uid='create_profile', sender=settings.AUTH_USER_MODEL)
-def create_profile(sender, instance=None, created=None, **kwargs):
-    if created:
-        UserProfile.objects.create(
-            user=instance,
-            language=settings.LANGUAGE_CODE,
-            timezone=settings.TIME_ZONE,
-        )
-
-
-@receiver(post_save, dispatch_uid='update_member_when_member_created', sender=Member)
-def update_member_when_member_created(sender, instance=None, created=None, **kwargs):
-    if created:
-        instance.username = instance.user.username
-        instance.first_name = instance.user.first_name
-        instance.last_name = instance.user.last_name
-        instance.email = instance.user.email
-        instance.save(update_fields=['username', 'first_name', 'last_name', 'email'])
-
-
-@receiver(post_save, dispatch_uid='update_member_when_user_updated', sender=settings.AUTH_USER_MODEL)
-def update_member_when_user_updated(sender, instance=None, created=None, **kwargs):
-    if not created:
-        instance.members.all().update(
-            username=instance.username,
-            first_name=instance.first_name,
-            last_name=instance.last_name,
-            email=instance.email
-        )
+# @receiver(post_save, dispatch_uid='create_profile', sender=settings.AUTH_USER_MODEL)
+# def create_profile(sender, instance=None, created=None, **kwargs):
+#     if created:
+#         UserProfile.objects.create(
+#             user=instance,
+#             language=settings.LANGUAGE_CODE,
+#             timezone=settings.TIME_ZONE,
+#         )
+#
+#
+# @receiver(post_save, dispatch_uid='update_member_when_member_created', sender=Member)
+# def update_member_when_member_created(sender, instance=None, created=None, **kwargs):
+#     if created:
+#         instance.username = instance.user.username
+#         instance.first_name = instance.user.first_name
+#         instance.last_name = instance.user.last_name
+#         instance.email = instance.user.email
+#         instance.save(update_fields=['username', 'first_name', 'last_name', 'email'])
+#
+#
+# @receiver(post_save, dispatch_uid='update_member_when_user_updated', sender=settings.AUTH_USER_MODEL)
+# def update_member_when_user_updated(sender, instance=None, created=None, **kwargs):
+#     if not created:
+#         instance.members.all().update(
+#             username=instance.username,
+#             first_name=instance.first_name,
+#             last_name=instance.last_name,
+#             email=instance.email
+#         )

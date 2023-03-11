@@ -9,10 +9,8 @@ from django.db import models
 from django.forms.models import model_to_dict
 from django.utils.translation import gettext_lazy
 
-from poms.celery_tasks.models import CeleryTask
 from poms.common.celery import get_active_celery_task, get_active_celery_task_id
 from poms.common.middleware import get_request
-from poms.users.models import MasterUser, Member
 from poms_app import settings
 
 _l = logging.getLogger('poms.history')
@@ -82,12 +80,14 @@ class HistoricalRecord(models.Model):
     ACTION_CREATE = 'create'
     ACTION_CHANGE = 'change'
     ACTION_DELETE = 'delete'
+    ACTION_DANGER = 'danger'
     ACTION_RECYCLE_BIN = 'recycle_bin'
 
     ACTION_CHOICES = (
         (ACTION_CREATE, gettext_lazy('Create')),
         (ACTION_CHANGE, gettext_lazy('Change')),
         (ACTION_DELETE, gettext_lazy('Delete')),
+        (ACTION_DANGER, gettext_lazy('Danger')),
         (ACTION_RECYCLE_BIN, gettext_lazy('Recycle Bin')),
     )
 
@@ -97,8 +97,8 @@ class HistoricalRecord(models.Model):
     In Finmars Web interface users can check history of changes for specific entity e.g. Instrument, Complex Transaction
     TODO: probably need to store only diff with change, not the whole JSON output
     '''
-    master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
-    member = models.ForeignKey(Member, null=True, blank=True, verbose_name=gettext_lazy('member'),
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+    member = models.ForeignKey('users.Member', null=True, blank=True, verbose_name=gettext_lazy('member'),
                                on_delete=models.SET_NULL)
 
     user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
@@ -205,9 +205,16 @@ def get_serialized_data(sender, instance):
     from poms.schedules.serializers import ScheduleSerializer
     from poms.transactions.serializers import TransactionSerializer
     from poms.portfolios.serializers import PortfolioRegisterRecordSerializer
+    from poms.users.serializers import MasterUserSerializer
+    from poms.users.serializers import MemberSerializer
     model_serializer_map = {
+
+        'users.masteruser': MasterUserSerializer,
+        'users.member': MemberSerializer,
+
         'accounts.account': AccountSerializer,
         'accounts.accounttype': AccountTypeSerializer,
+
 
         'counterparties.counterparty': CounterpartySerializer,
         'counterparties.responsible': ResponsibleSerializer,
@@ -292,6 +299,8 @@ def get_record_context():
     request = get_request()
 
     # if we have request (normal way)
+    from poms.users.models import Member
+    from poms.users.models import MasterUser
 
     if request:
         context_url = request.path
@@ -314,6 +323,7 @@ def get_record_context():
                 if not celery_task_id:
                     raise Exception("Celery task id is not set")
 
+                from poms.celery_tasks.models import CeleryTask
                 celery_task = CeleryTask.objects.get(celery_task_id=celery_task_id)
 
                 result['member'] = celery_task.member
@@ -326,7 +336,9 @@ def get_record_context():
 
                     # _l.error('get_record_context.celery celery_task_id lookup error e %s' % e)
 
+
                     finmars_bot = Member.objects.get(username='finmars_bot')
+
                     master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
                     result['master_user'] = master_user
@@ -353,92 +365,120 @@ def get_record_context():
 
 
 def post_save(sender, instance, created, using=None, update_fields=None, **kwargs):
-    # _l.info('post_save.sender %s' % sender)
-    # _l.info('post_save.update_fields %s' % update_fields)
+    _l.info('post_save.sender %s' % sender)
+    _l.info('post_save.update_fields %s' % update_fields)
 
-    try:
+    from poms.users.models import MasterUser
+    master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
-        record_context = get_record_context()
-
-        content_type = ContentType.objects.get_for_model(sender)
-        content_type_key = get_model_content_type_as_text(sender)
-        user_code = get_user_code_from_instance(instance)
-
-        exist = False
-
-        if HistoricalRecord.objects.filter(user_code=instance.user_code, content_type=content_type).count():
-            exist = True
-
-        if exist:
-            action = HistoricalRecord.ACTION_CHANGE
-        else:
-            action = HistoricalRecord.ACTION_CREATE
-
-        _l.info('created %s' % created)
-        _l.info('update_fields %s' % update_fields)
+    if sender == MasterUser:
+        if instance.journal_status == 'disabled':
+            record_context = get_record_context()
+            content_type = ContentType.objects.get_for_model(sender)
+            HistoricalRecord.objects.create(
+                master_user=record_context['master_user'],
+                member=record_context['member'],
+                action=HistoricalRecord.ACTION_DANGER,
+                user_code=master_user.name,
+                notes="JOURNAL IS DISABLED. OBJECTS ARE NOT TRACKED",
+                content_type=content_type
+            )
 
 
-        if update_fields:
-            if 'is_deleted' in update_fields:
-                if instance.is_deleted:
-                    action = HistoricalRecord.ACTION_RECYCLE_BIN
-                else:
-                    action = HistoricalRecord.ACTION_CHANGE
+    if master_user.journal_status != MasterUser.JOURNAL_STATUS_DISABLED:
 
-        # TODO think about better performance
-        # if HistoricalRecord.ACTION_RECYCLE_BIN:
-        #     data = {"is_deleted": True}
-        #     notes = {"is_deleted": True}
-        # else:
-        data = get_serialized_data(sender, instance)
-        notes = get_notes_for_history_record(user_code, content_type, data)
+        try:
 
-        HistoricalRecord.objects.create(
-            master_user=record_context['master_user'],
-            member=record_context['member'],
-            action=action,
-            context_url=record_context['context_url'],
-            data=data,
-            notes=notes,
-            user_code=user_code,
-            content_type=content_type
-        )
+            record_context = get_record_context()
 
-    except Exception as e:
-        _l.error("Could not save history exception %s" % e)
-        _l.error("Could not save history traceback %s" % traceback.format_exc())
+            content_type = ContentType.objects.get_for_model(sender)
+            content_type_key = get_model_content_type_as_text(sender)
+            user_code = get_user_code_from_instance(instance)
+
+            exist = False
+
+            if HistoricalRecord.objects.filter(user_code=user_code, content_type=content_type).count():
+                exist = True
+
+            if exist:
+                action = HistoricalRecord.ACTION_CHANGE
+            else:
+                action = HistoricalRecord.ACTION_CREATE
+
+            _l.info('created %s' % created)
+            _l.info('update_fields %s' % update_fields)
+
+
+            if update_fields:
+                if 'is_deleted' in update_fields:
+                    if instance.is_deleted:
+                        action = HistoricalRecord.ACTION_RECYCLE_BIN
+                    else:
+                        action = HistoricalRecord.ACTION_CHANGE
+
+            # TODO think about better performance
+            # if HistoricalRecord.ACTION_RECYCLE_BIN:
+            #     data = {"is_deleted": True}
+            #     notes = {"is_deleted": True}
+            # else:
+            data = get_serialized_data(sender, instance)
+            notes = get_notes_for_history_record(user_code, content_type, data)
+
+            HistoricalRecord.objects.create(
+                master_user=record_context['master_user'],
+                member=record_context['member'],
+                action=action,
+                context_url=record_context['context_url'],
+                data=data,
+                notes=notes,
+                user_code=user_code,
+                content_type=content_type
+            )
+
+        except Exception as e:
+            _l.error("Could not save history exception %s" % e)
+            _l.error("Could not save history traceback %s" % traceback.format_exc())
 
 
 def post_delete(sender, instance, using=None, **kwargs):
-    try:
 
-        record_context = get_record_context()
+    from poms.users.models import MasterUser
+    master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
-        action = HistoricalRecord.ACTION_DELETE
+    if master_user.journal_status != MasterUser.JOURNAL_STATUS_DISABLED:
 
-        content_type = ContentType.objects.get_for_model(sender)
+        try:
 
-        user_code = get_user_code_from_instance(instance)
+            record_context = get_record_context()
 
-        data = get_serialized_data(sender, instance)
+            action = HistoricalRecord.ACTION_DELETE
 
-        HistoricalRecord.objects.create(
-            master_user=record_context['master_user'],
-            member=record_context['member'],
-            context_url=record_context['context_url'],
-            action=action,
-            data=data,
-            user_code=user_code,
-            content_type=content_type
-        )
+            content_type = ContentType.objects.get_for_model(sender)
 
-    except Exception as e:
-        _l.error("Could not save history record exception %s" % e)
-        _l.error("Could not save history record tracback %s " % traceback.format_exc())
+            user_code = get_user_code_from_instance(instance)
+
+            data = get_serialized_data(sender, instance)
+
+            HistoricalRecord.objects.create(
+                master_user=record_context['master_user'],
+                member=record_context['member'],
+                context_url=record_context['context_url'],
+                action=action,
+                data=data,
+                user_code=user_code,
+                content_type=content_type
+            )
+
+        except Exception as e:
+            _l.error("Could not save history record exception %s" % e)
+            _l.error("Could not save history record tracback %s " % traceback.format_exc())
 
 
 def add_history_listeners(sender, **kwargs):
     # _l.debug("History listener registered Entity %s" % sender)
+
+    # IMPORTANT TO DO ONLY LOCAL IMPORTS
+    # BECAUSE IF YOU DO AN IMPORT, CLASS WILL NOT BE LISTENED VIA signals.class_prepared
 
     content_type_key = get_model_content_type_as_text(sender)
 

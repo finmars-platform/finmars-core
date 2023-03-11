@@ -10,6 +10,7 @@ from poms.history.serializers import HistoricalRecordSerializer
 from poms.users.filters import OwnerByMasterUserFilter
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 
 from poms.users.models import Member
 
@@ -96,5 +97,16 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
 
         return Response(result)
 
+    def create(self, request, *args, **kwargs):
+
+        raise PermissionDenied("History could not be created")
+
+    def update(self, request, *args, **kwargs):
+
+        raise PermissionDenied("History could not be updated")
+
+    def perform_destroy(self, request, *args, **kwargs):
+
+        raise PermissionDenied("History could not be deleted")
 
 
