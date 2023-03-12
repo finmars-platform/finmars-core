@@ -109,8 +109,16 @@ class FakeDeletableModel(models.Model):
         self.is_deleted = True
 
         fields_to_update = ['is_deleted', 'modified']
+        try:
+            member = get_request().user.member
+        except Exception as e:
+            from poms.common.celery import get_active_celery_task_id
+            from poms.celery_tasks.models import CeleryTask
 
-        member = get_request().user.member
+            celery_task_id = get_active_celery_task_id()
+
+            celery_task = CeleryTask.objects.get(celery_task_id=celery_task_id)
+            member = celery_task.member
 
         if hasattr(self, 'user_code'):
             self.deleted_user_code = self.user_code

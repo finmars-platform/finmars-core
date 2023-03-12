@@ -88,6 +88,7 @@ def transaction_import(self, task_id, procedure_instance_id=None):
 
             celery_task.error_message = "Error %s. \n Traceback: %s" % (e, traceback.format_exc())
             celery_task.status = CeleryTask.STATUS_ERROR
+            celery_task.mark_task_as_finished()
             celery_task.save()
 
     except Exception as e:

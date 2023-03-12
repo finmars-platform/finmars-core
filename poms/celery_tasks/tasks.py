@@ -56,6 +56,9 @@ def bulk_delete(self, task_id):
     _l.info('bulk_delete.task_id %s' % task_id)
 
     celery_task = CeleryTask.objects.get(id=task_id)
+    celery_task.celery_task_id = self.request.id
+    celery_task.status = CeleryTask.STATUS_PENDING
+    celery_task.save()
 
     options_object = celery_task.options_object
 
@@ -86,8 +89,11 @@ def bulk_delete(self, task_id):
         _l.error('bulk_delete exception %s' % e)
         _l.error('bulk_delete traceback %s' % traceback.format_exc())
 
-
         if options_object['content_type'] == 'instruments.pricehistory' or options_object[
             'content_type'] == 'currencies.currencyhistory':
             _l.info("Going to permanent delete.")
             queryset.filter(id__in=options_object['ids']).delete()
+
+    celery_task.status = CeleryTask.STATUS_DONE
+    celery_task.mark_task_as_finished()
+    celery_task.save()

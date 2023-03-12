@@ -239,7 +239,7 @@ class BulkDestroyModelMixin(DestroyModelMixin):
             master_user=request.user.master_user,
             member=request.user.member,
             options_object=options_object,
-            verbose_name="Bulk Delete by %s" % request.user.member.username,
+            verbose_name="Bulk Delete",
             type='bulk_delete'
         )
 

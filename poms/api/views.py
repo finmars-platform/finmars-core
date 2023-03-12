@@ -737,7 +737,6 @@ class RecycleBinViewSet(AbstractViewSet):
         if date_to:
             date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1, microseconds=-1)
 
-
         items = ComplexTransaction.objects.filter(is_deleted=True, modified__gte=date_from, modified__lte=date_to)
 
         result = {
@@ -1058,6 +1057,7 @@ class CalendarEventsViewSet(AbstractViewSet):
             for task in tasks:
                 item = {
                     'start': task.created,
+                    'finished_at': task.finished_at,
                     'classNames': ['user'],
                     'extendedProps': {
                         'type': 'celery_task',
