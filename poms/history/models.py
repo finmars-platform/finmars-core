@@ -17,7 +17,11 @@ _l = logging.getLogger('poms.history')
 
 # TODO important to keep this list up to date
 # Just not to log history for too meta models
-excluded_to_track_history_models = ['system_messages.systemmessage',
+excluded_to_track_history_models = [
+
+                                    'celery_tasks.celerytaskattachment',
+
+                                    'system_messages.systemmessage',
                                     'system_messages.systemmessagemember',
                                     'obj_attrs.genericattribute',
                                     'pricing.instrumentpricingpolicy', 'pricing.currencypricingpolicy',
@@ -63,6 +67,8 @@ excluded_to_track_history_models = ['system_messages.systemmessage',
                                     'widgets.collect_stats',
                                     'widgets.collect_pl_report_history',
                                     'widgets.collect_balance_report_history',
+                                    'widgets.plreporthistoryitem',
+                                    'widgets.balancereporthistoryitem',
 
                                     'pricing.pricehistoryerror',
                                     'pricing.pricingprocedurebloomberginstrumentresult',

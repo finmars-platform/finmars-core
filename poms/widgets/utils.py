@@ -547,7 +547,7 @@ def collect_balance_history(master_user, member, date_from, date_to, dates, segm
         master_user=master_user,
         member=member,
         type='collect_history',
-        verbose_name="Collect Nav History for %s portfolio by %s" % (portfolio.name, member.username),
+        verbose_name="Collect Nav History for %s portfolio" % (portfolio.name),
     )
 
     options_object = {
@@ -608,7 +608,7 @@ def collect_pl_history(master_user, member, date_from, date_to, dates, segmentat
     task = CeleryTask.objects.create(
         master_user=master_user,
         member=member,
-        verbose_name="Collect Pl History for %s portfolio by %s" % (portfolio.name, member.username),
+        verbose_name="Collect Pl History for %s portfolio" % (portfolio.name),
         type='collect_history'
     )
 
@@ -666,7 +666,7 @@ def collect_widget_stats(master_user, member, date_from, date_to, dates, segment
     task = CeleryTask.objects.create(
         master_user=master_user,
         member=member,
-        verbose_name="Collect Widget Stats for %s portfolio by %s" % (portfolio.name, member.username),
+        verbose_name="Collect Widget Stats for %s portfolio" % (portfolio.name),
     )
 
     options_object = {

@@ -234,7 +234,7 @@ class DataProcedureProcess(object):
                     celery_task = CeleryTask.objects.create(master_user=master_user,
                                                             member=self.member,
                                                             notes='Import initiated by data procedure instance %s' % procedure_instance.id,
-                                                            verbose_name="Transaction Import by %s" % self.member.username,
+                                                            verbose_name="Transaction Import",
                                                             type='transaction_import')
 
                     options_object = {}
