@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import logging
 
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist, FieldDoesNotExist
 from django.db.models import ProtectedError
 from django.utils.translation import gettext_lazy
@@ -223,30 +224,53 @@ class BulkDestroyModelMixin(DestroyModelMixin):
 
         data = request.data
 
+        from poms.celery_tasks.models import CeleryTask
         queryset = self.filter_queryset(self.get_queryset())
-        # is_fake = bool(request.query_params.get('is_fake'))
 
-        _l.info('bulk_delete %s' % data['ids'])
+        content_type = ContentType.objects.get_for_model(queryset.model)
+        content_type_key = content_type.app_label + '.' + content_type.model
 
+        options_object = {
+            'content_type': content_type_key,
+            'ids': data['ids']
+        }
 
-        try:
-            if queryset.model._meta.get_field('is_deleted'):
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            options_object=options_object,
+            verbose_name="Bulk Delete by %s" % request.user.member.username,
+            type='bulk_delete'
+        )
 
-                # _l.info('bulk delete %s'  % queryset.model._meta.get_field('is_deleted'))
+        from poms_app import celery_app
 
-                queryset = queryset.filter(id__in=data['ids'])
+        celery_app.send_task('celery_tasks.bulk_delete', kwargs={"task_id": celery_task.id})
 
-                for instance in queryset:
-                    # try:
-                    #     self.check_object_permissions(request, instance)
-                    # except PermissionDenied:
-                    #     raise
-                    self.perform_destroy(instance)
-        except Exception as e:
-
-                # mostly for prices
-
-                queryset.filter(id__in=data['ids']).delete()
+        # queryset = self.filter_queryset(self.get_queryset())
+        # # is_fake = bool(request.query_params.get('is_fake'))
+        #
+        # _l.info('bulk_delete %s' % data['ids'])
+        #
+        #
+        # try:
+        #     if queryset.model._meta.get_field('is_deleted'):
+        #
+        #         # _l.info('bulk delete %s'  % queryset.model._meta.get_field('is_deleted'))
+        #
+        #         queryset = queryset.filter(id__in=data['ids'])
+        #
+        #         for instance in queryset:
+        #             # try:
+        #             #     self.check_object_permissions(request, instance)
+        #             # except PermissionDenied:
+        #             #     raise
+        #             self.perform_destroy(instance)
+        # except Exception as e:
+        #
+        #         # mostly for prices
+        #
+        #         queryset.filter(id__in=data['ids']).delete()
 
         # for pk in data['ids']:
         #

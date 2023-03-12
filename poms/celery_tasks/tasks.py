@@ -4,6 +4,7 @@ import logging
 from datetime import timedelta
 
 from celery import shared_task
+from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 
 from poms.system_messages.handlers import send_system_message
@@ -46,3 +47,47 @@ def remove_old_tasks():
 
         _l.error("remove_old_tasks.exception %s" % e)
         _l.error("remove_old_tasks.exception %s" % traceback.format_exc())
+
+
+@shared_task(name='celery_tasks.bulk_delete', bind=True)
+def bulk_delete(self, task_id):
+    # is_fake = bool(request.query_params.get('is_fake'))
+
+    _l.info('bulk_delete.task_id %s' % task_id)
+
+    celery_task = CeleryTask.objects.get(id=task_id)
+
+    options_object = celery_task.options_object
+
+    _l.info('bulk_delete.options_object %s' % options_object)
+
+    content_type_pieces = options_object['content_type'].split('.')
+
+    content_type = ContentType.objects.get(app_label=content_type_pieces[0], model=content_type_pieces[1])
+
+    queryset = content_type.model_class().objects.all()
+
+    _l.info('bulk_delete %s' % options_object['ids'])
+
+    try:
+        if content_type.model_class()._meta.get_field('is_deleted'):
+
+            # _l.info('bulk delete %s'  % queryset.model._meta.get_field('is_deleted'))
+
+            queryset = queryset.filter(id__in=options_object['ids'])
+
+            for instance in queryset:
+                # try:
+                #     self.check_object_permissions(request, instance)
+                # except PermissionDenied:
+                #     raise
+                instance.fake_delete()
+    except Exception as e:
+        _l.error('bulk_delete exception %s' % e)
+        _l.error('bulk_delete traceback %s' % traceback.format_exc())
+
+
+        if options_object['content_type'] == 'instruments.pricehistory' or options_object[
+            'content_type'] == 'currencies.currencyhistory':
+            _l.info("Going to permanent delete.")
+            queryset.filter(id__in=options_object['ids']).delete()

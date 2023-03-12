@@ -1339,7 +1339,7 @@ class ComplexTransaction(DataTimeStampedModel):
                                                verbose_name=gettext_lazy('transaction unique code'))
 
     deleted_transaction_unique_code = models.CharField(max_length=255, null=True, blank=True,
-                                            verbose_name=gettext_lazy('deleted transaction unique code'))
+                                                       verbose_name=gettext_lazy('deleted transaction unique code'))
 
     text = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('text'))
 
@@ -1495,7 +1495,7 @@ class ComplexTransaction(DataTimeStampedModel):
 
     def fake_delete(self):
 
-        if self.is_deleted: # if transaction was already marked as deleted, then do real delete
+        if self.is_deleted:  # if transaction was already marked as deleted, then do real delete
             self.delete()
         else:
 
@@ -1503,15 +1503,14 @@ class ComplexTransaction(DataTimeStampedModel):
 
             fields_to_update = ['is_deleted', 'modified']
 
-            from poms.common.middleware import get_request
             from poms.common import formula
-            member = get_request().user.member
 
             if hasattr(self, 'user_code'):
                 self.deleted_transaction_unique_code = self.transaction_unique_code
 
                 self.transaction_unique_code = formula.safe_eval('generate_user_code("del", "", 1)',
-                                                   context={'master_user': self.master_user})
+                                                                 context={
+                                                                     'master_user': self.master_user})  # Probably unnecessary
 
                 fields_to_update.append('deleted_transaction_unique_code')
                 fields_to_update.append('transaction_unique_code')
