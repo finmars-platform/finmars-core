@@ -1280,12 +1280,12 @@ class ImportHandler:
 
             result_without_many_to_many = process.instrument
 
-            _l.info('create_simple_instance result_without_many_to_many %s ' % result_without_many_to_many)
+            # _l.info('create_simple_instance result_without_many_to_many %s ' % result_without_many_to_many)
 
         many_to_many_fields = ['counterparties', 'responsibles', 'accounts', 'portfolios']
         system_fields = ['_row_index', '_row']
 
-        _l.info('create_simple_instance result %s ' % result)
+        # _l.info('create_simple_instance result %s ' % result)
 
         for key, value in result.items():
 
@@ -1330,7 +1330,7 @@ class ImportHandler:
 
                 else:
 
-                    _l.info('Serialize is not valid %s' % serializer.errors)
+                    # _l.info('Serialize is not valid %s' % serializer.errors)
 
                     error_row['level'] = 'error'
                     error_row['error_message'] = error_row['error_message'] + str(serializer.errors)
