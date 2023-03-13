@@ -1105,7 +1105,7 @@ class CalendarEventsViewSet(AbstractViewSet):
                 for workflow in workflows:
                     item = {
                         'start': workflow['created'],
-                        'finished_at': workflow['finished_at'],
+                        # 'finished_at': workflow['finished_at'],
                         'classNames': ['user'],
                         'extendedProps': {
                             'type': 'workflow',
