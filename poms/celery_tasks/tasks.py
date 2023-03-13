@@ -72,6 +72,15 @@ def bulk_delete(self, task_id):
 
     _l.info('bulk_delete %s' % options_object['ids'])
 
+    celery_task.update_progress(
+        {
+            'current': 0,
+            'total': len(options_object['ids']),
+            'percent': 0,
+            'description': 'Bulk delete initialized'
+        }
+    )
+
     try:
         if content_type.model_class()._meta.get_field('is_deleted'):
 
@@ -79,12 +88,26 @@ def bulk_delete(self, task_id):
 
             queryset = queryset.filter(id__in=options_object['ids'])
 
+            count = 0
+
             for instance in queryset:
                 # try:
                 #     self.check_object_permissions(request, instance)
                 # except PermissionDenied:
                 #     raise
                 instance.fake_delete()
+
+                count = count + 1
+
+                celery_task.update_progress(
+                    {
+                        'current': count,
+                        'total': len(options_object['ids']),
+                        'percent': round(count / (len(options_object['ids']) / 100)),
+                        'description': 'Instance %s was deleted' % instance.id
+                    }
+                )
+
     except Exception as e:
         _l.error('bulk_delete exception %s' % e)
         _l.error('bulk_delete traceback %s' % traceback.format_exc())
