@@ -1505,7 +1505,7 @@ class ComplexTransaction(DataTimeStampedModel):
 
             from poms.common import formula
 
-            if hasattr(self, 'user_code'):
+            if hasattr(self, 'transaction_unique_code'):
                 self.deleted_transaction_unique_code = self.transaction_unique_code
 
                 self.transaction_unique_code = formula.safe_eval('generate_user_code("del", "", 1)',
