@@ -4,8 +4,11 @@ import time
 
 from django.conf import settings
 from django.db import connection
+from datetime import timedelta,date
+
 
 from poms.accounts.models import Account, AccountType
+from poms.common.utils import get_closest_bday_of_yesterday
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, CostMethod, InstrumentType
 from poms.portfolios.models import Portfolio
@@ -15,6 +18,7 @@ from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string,
     get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
     get_position_consolidation_for_select, dictfetchall, get_transaction_date_filter_for_initial_position_sql_string
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
+from poms.transactions.models import Transaction
 from poms.users.models import EcosystemDefault
 
 _l = logging.getLogger('poms.reports')
@@ -33,10 +37,39 @@ class PLReportBuilderSql:
         _l.debug('self.instance master_user %s' % self.instance.master_user)
         _l.debug('self.instance report_date %s' % self.instance.report_date)
 
-    def build_balance(self):
+    def get_first_transaction(self):
+
+        try:
+
+            portfolios = []
+
+            transaction = Transaction.objects.all().first()
+
+            return transaction.transaction_date
+
+        except Exception as e:
+            _l.error("Could not find first transaction date")
+            return None
+
+    def build_report(self):
         st = time.perf_counter()
 
         self.instance.items = []
+
+        self.report_date = self.instance.report_date
+
+        if not self.instance.report_date:
+            self.report_date = get_closest_bday_of_yesterday()
+
+        self.instance.first_transaction_date = self.get_first_transaction()
+
+        pl_first_date = self.instance.pl_first_date
+
+        if not pl_first_date or pl_first_date == date.min:
+            self.instance.pl_first_date = self.instance.first_transaction_date
+
+        _l.info('self.instance.report_date %s' % self.instance.report_date)
+        _l.info('self.instance.pl_first_date %s' % self.instance.pl_first_date)
 
         self.build_positions()
 

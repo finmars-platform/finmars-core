@@ -164,7 +164,7 @@ class PLReportViewSet(AbstractViewSet):
             instance = serializer.save()
 
             builder = PLReportBuilderSql(instance=instance)
-            instance = builder.build_balance()
+            instance = builder.build_report()
 
             instance.task_id = 1
             instance.task_status = "SUCCESS"
