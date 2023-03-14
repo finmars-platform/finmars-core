@@ -50,14 +50,29 @@ class HistoryMixin(APIView):
 
         super(HistoryMixin, self).perform_create(serializer)
 
-        self.save_change_in_history(serializer)
+        # self.save_change_in_history(serializer)
 
     def perform_update(self, serializer):
 
         super(HistoryMixin, self).perform_update(serializer)
 
-        self.save_change_in_history(serializer)
+        # self.save_change_in_history(serializer)
 
     def perform_destroy(self, instance):
         # TODO what do with history on delete?
+
+        try:
+            pass
+
+            # HistoricalRecord.objects.create(
+            #     master_user=self.request.user.master_user,
+            #     member=self.request.user.member,
+            #     data={"message": ""},
+            #     user_code=serializer.data['user_code'],
+            #     content_type=ContentType.objects.get_for_model(serializer.Meta.model)
+            # )
+
+        except Exception as e:
+            _l.error("could not save history %s" % e)
+
         super(HistoryMixin, self).perform_destroy(instance)

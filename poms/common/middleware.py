@@ -1,20 +1,13 @@
 # coding=utf-8
 from __future__ import unicode_literals
 
-import datetime
 import ipaddress
-import json
-import os
 import re
 import time
-import traceback
-from http import HTTPStatus
 from threading import local
-from django.utils.timezone import now
 
 from django.conf import settings
 from django.contrib.gis.geoip2 import GeoIP2
-from django.http import HttpResponse
 from django.http.response import JsonResponse
 from django.utils.cache import get_max_age, patch_cache_control, add_never_cache_headers
 from django.utils.functional import SimpleLazyObject
@@ -31,7 +24,9 @@ except ImportError:
     MiddlewareMixin = object
 
 import logging
+
 _l = logging.getLogger('poms.common')
+
 
 def get_ip(request):
     user_ip = None
@@ -129,7 +124,6 @@ def deactivate():
 
 
 def get_request():
-
     # _l.info('get_request._active %s' % _active)
 
     request = getattr(_active, "request", None)
@@ -270,7 +264,6 @@ class LogRequestsMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-
         _l.info("Going to handle %s " % request.build_absolute_uri())
 
         self.log_middleware_start = time.perf_counter()

@@ -384,7 +384,7 @@ def get_item(scheme, result):
 
         except Exception as e:
 
-            # _l.debug('get_item entity exception %s' % e)
+            _l.debug('get_item entity exception %s' % e)
 
             item_result = None
 
@@ -1280,12 +1280,12 @@ class ImportHandler:
 
             result_without_many_to_many = process.instrument
 
-            _l.info('create_simple_instance result_without_many_to_many %s ' % result_without_many_to_many)
+            # _l.info('create_simple_instance result_without_many_to_many %s ' % result_without_many_to_many)
 
         many_to_many_fields = ['counterparties', 'responsibles', 'accounts', 'portfolios']
         system_fields = ['_row_index', '_row']
 
-        _l.info('create_simple_instance result %s ' % result)
+        # _l.info('create_simple_instance result %s ' % result)
 
         for key, value in result.items():
 
@@ -1310,6 +1310,9 @@ class ImportHandler:
                 if 'pricing_currency' in result_without_many_to_many:
                     result_without_many_to_many['pricing_currency'] = result_without_many_to_many['pricing_currency'].id
 
+                if 'pricing_condition' in result_without_many_to_many:
+                    result_without_many_to_many['pricing_condition'] = result_without_many_to_many['pricing_condition'].id
+
                 try:
                     if 'country' in result_without_many_to_many:
                         result_without_many_to_many['country'] = result_without_many_to_many['country'].id
@@ -1327,7 +1330,7 @@ class ImportHandler:
 
                 else:
 
-                    _l.info('Serialize is not valid %s' % serializer.errors)
+                    # _l.info('Serialize is not valid %s' % serializer.errors)
 
                     error_row['level'] = 'error'
                     error_row['error_message'] = error_row['error_message'] + str(serializer.errors)
@@ -1593,6 +1596,7 @@ class ImportHandler:
 
         # _l.debug('ImportHandler.result_item %s' % result_item)
 
+
         item = get_item(scheme, result_item)
 
         if mode == 'overwrite' and item:
@@ -1603,13 +1607,13 @@ class ImportHandler:
 
         elif mode == 'overwrite' and not item:
 
-            _l.debug('Create instance')
+            _l.debug('Create instance (overwrite)')
 
             self.save_instance(scheme, result_item, error_handler, error_row, member, master_user)
 
         elif mode == 'skip' and not item:
 
-            _l.debug('Create instance')
+            _l.debug('Create instance (skip)')
 
             self.save_instance(scheme, result_item, error_handler, error_row, member, master_user)
 
@@ -1828,6 +1832,10 @@ def data_csv_file_import(self, task_id, procedure_instance_id=None):
         handler = ImportHandler()
 
         celery_task = CeleryTask.objects.get(pk=task_id)
+        celery_task.celery_task_id = self.request.id # Important (record history rely on that)
+        celery_task.save()
+
+
         procedure_instance = None
 
         if procedure_instance_id:

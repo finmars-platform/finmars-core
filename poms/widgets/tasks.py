@@ -556,7 +556,8 @@ def collect_stats(self, task_id):
 @shared_task(name='widgets.calculate_historical', bind=True)
 def calculate_historical(self, date_from=None, date_to=None, portfolios=None):
 
-    member = Member.objects.get(is_owner=True)
+    # member = Member.objects.get(is_owner=True)
+    member = Member.objects.get(username='finmars_bot')
     master_user = member.master_user
 
     try:

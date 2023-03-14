@@ -40,6 +40,8 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
 
                   'error_message',
 
+                  'finished_at',
+
                   'file_report')
 
     def __init__(self, *args, **kwargs):

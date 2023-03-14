@@ -1,20 +1,18 @@
 import json
 
 from django.contrib import admin
+from django.utils.safestring import mark_safe
+from pygments import highlight
+from pygments.formatters.html import HtmlFormatter
+from pygments.lexers.data import JsonLexer
 
 from poms.common.admin import AbstractModelAdmin
 from poms.history.models import HistoricalRecord
 
-from pygments import highlight
-from pygments.lexers.data import JsonLexer
-from django.utils.safestring import mark_safe
-from pygments.formatters.html import HtmlFormatter
-
-
 
 class HistoricalRecordAdmin(AbstractModelAdmin):
     model = HistoricalRecord
-    list_display = ['id', 'master_user', 'member', 'created', 'user_code', 'content_type']
+    list_display = ['id', 'created', 'member', 'action', 'user_code', 'content_type', 'notes']
     list_select_related = ['master_user', 'content_type']
     search_fields = ['id', 'created', 'user_code', 'content_type']
     raw_id_fields = ['master_user', 'member', 'content_type']

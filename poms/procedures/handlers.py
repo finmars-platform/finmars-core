@@ -234,7 +234,7 @@ class DataProcedureProcess(object):
                     celery_task = CeleryTask.objects.create(master_user=master_user,
                                                             member=self.member,
                                                             notes='Import initiated by data procedure instance %s' % procedure_instance.id,
-                                                            verbose_name="Transaction Import by %s" % self.member.username,
+                                                            verbose_name="Transaction Import",
                                                             type='transaction_import')
 
                     options_object = {}
@@ -296,7 +296,8 @@ class DataProcedureProcess(object):
                     self.procedure_instance.member = self.member
 
                 if self.schedule_instance:
-                    member = Member.objects.get(master_user=self.master_user, is_owner=True)
+                    # member = Member.objects.get(master_user=self.master_user, is_owner=True)
+                    member = Member.objects.get(username='finmars_bot')
 
                     self.procedure_instance.member = member  # Add owner of ecosystem as member who stared schedule (Need to transaction expr execution)
                     self.procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_SCHEDULE

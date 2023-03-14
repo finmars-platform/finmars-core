@@ -64,12 +64,15 @@ INSTALLED_APPS = [
 
     'healthcheck',
 
+    'poms.history', # order is important because it registers models to listen to
+
     'poms.system',
 
     # 'poms.cache_machine',
 
-    'poms.users',
     'poms.audit',
+    'poms.users',
+
     'poms.notifications',
     'poms.obj_attrs',
     'poms.obj_perms',
@@ -106,7 +109,7 @@ INSTALLED_APPS = [
 
     'poms.auth_tokens',
     'poms.widgets',
-    'poms.history',
+
 
     'django.contrib.admin',
     'django.contrib.admindocs',

@@ -425,6 +425,8 @@ router.register(r'utils/stats', api.StatsViewSet, 'stats')
 router.register(r'utils/system-info', api.SystemInfoViewSet, 'system-info')
 router.register(r'utils/system-logs', api.SystemLogsViewSet, 'system-logs')
 router.register(r'utils/calendar-events', api.CalendarEventsViewSet, 'calendar-events')
+router.register(r'utils/tables-size', api.TablesSizeViewSet, 'tables-size')
+router.register(r'utils/recycle-bin', api.RecycleBinViewSet, 'recycle-bin')
 
 router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
 router.register(r'import/csv/scheme-light', csv_import.SchemeLightViewSet, 'import_csv_scheme_light')

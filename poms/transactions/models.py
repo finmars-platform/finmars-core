@@ -26,7 +26,6 @@ from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
-from poms.transactions.utils import calc_cash_for_contract_for_difference
 from poms.users.models import MasterUser, FakeSequence, EcosystemDefault
 
 _l = logging.getLogger('poms.transactions')
@@ -49,6 +48,9 @@ class TransactionClass(AbstractClassModel):
     INJECTION = 12  # if portfolio registry, # share price increase
     DISTRIBUTION = 13  # if portfolio registry, # share price decrease
 
+    INITIAL_POSITION = 14
+    INITIAL_CASH = 15
+
     CLASSES = (
         (BUY, 'BUY', gettext_lazy("Buy")),
         (SELL, 'SELL', gettext_lazy("Sell")),
@@ -64,6 +66,9 @@ class TransactionClass(AbstractClassModel):
 
         (INJECTION, 'INJECTION', gettext_lazy("Injection")),
         (DISTRIBUTION, 'DISTRIBUTION', gettext_lazy("Distribution")),
+
+        (INITIAL_POSITION, 'INITIAL_POSITION', gettext_lazy("Initial Position")),
+        (INITIAL_CASH, 'INITIAL_CASH', gettext_lazy("Initial Cash")),
     )
 
     class Meta(AbstractClassModel.Meta):
@@ -1312,6 +1317,7 @@ class ComplexTransaction(DataTimeStampedModel):
     transaction_type = models.ForeignKey(TransactionType, on_delete=models.PROTECT,
                                          verbose_name=gettext_lazy('transaction type'))
 
+    is_deleted = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is deleted'))
     is_locked = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is locked'))
     is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is canceled'))
     error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=gettext_lazy('error code'))
@@ -1331,6 +1337,9 @@ class ComplexTransaction(DataTimeStampedModel):
 
     transaction_unique_code = models.CharField(max_length=255, null=True, blank=True,
                                                verbose_name=gettext_lazy('transaction unique code'))
+
+    deleted_transaction_unique_code = models.CharField(max_length=255, null=True, blank=True,
+                                                       verbose_name=gettext_lazy('deleted transaction unique code'))
 
     text = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('text'))
 
@@ -1483,6 +1492,30 @@ class ComplexTransaction(DataTimeStampedModel):
             self.code = FakeSequence.next_value(self.transaction_type.master_user, 'complex_transaction', d=100)
         _l.info("Complex Transaction Save date %s" % self.code)
         super(ComplexTransaction, self).save(*args, **kwargs)
+
+    def fake_delete(self):
+
+        if self.is_deleted:  # if transaction was already marked as deleted, then do real delete
+            self.delete()
+        else:
+
+            self.is_deleted = True
+
+            fields_to_update = ['is_deleted', 'modified']
+
+            from poms.common import formula
+
+            if hasattr(self, 'transaction_unique_code'):
+                self.deleted_transaction_unique_code = self.transaction_unique_code
+
+                self.transaction_unique_code = formula.safe_eval('generate_user_code("del", "", 1)',
+                                                                 context={
+                                                                     'master_user': self.master_user})  # Probably unnecessary
+
+                fields_to_update.append('deleted_transaction_unique_code')
+                fields_to_update.append('transaction_unique_code')
+
+            self.save(update_fields=fields_to_update)
 
 
 class ComplexTransactionInput(models.Model):
@@ -1919,8 +1952,9 @@ class Transaction(models.Model):
 
         super(Transaction, self).save(*args, **kwargs)
 
-        if calc_cash:
-            self.calc_cash_by_formulas()
+        # Deprecated 2023-03-10
+        # if calc_cash:
+        #     self.calc_cash_by_formulas()
 
     def is_can_calc_cash_by_formulas(self):
         return self.transaction_class_id in [TransactionClass.BUY, TransactionClass.SELL] \

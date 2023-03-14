@@ -84,6 +84,13 @@ class ReportsConfig(AppConfig):
                            allocation_balance_id,
                            allocation_pl_id,
                            
+                           case 
+                                when cash_date < accounting_date
+                                then cash_date
+                                else accounting_date
+                           end
+                           as min_date,
+                           
                            case
                              
                              when transaction_class_id = 4
@@ -93,7 +100,7 @@ class ReportsConfig(AppConfig):
                              else 1
                              end as ttype
                         FROM transactions_transaction
-                        WHERE transaction_class_id in (1,2,4) and NOT is_canceled
+                        WHERE transaction_class_id in (1,2,4,14) and NOT is_canceled
                         
                         UNION ALL
                         
@@ -134,6 +141,13 @@ class ReportsConfig(AppConfig):
                           
                           allocation_balance_id,
                           allocation_pl_id,
+                          
+                          case 
+                                when cash_date < accounting_date
+                                then cash_date
+                                else accounting_date
+                           end
+                           as min_date,
                           
                           case
                             when position_size_with_sign < 0
@@ -182,6 +196,13 @@ class ReportsConfig(AppConfig):
                           
                           allocation_balance_id,
                           allocation_pl_id,
+                          
+                          case 
+                                when cash_date < accounting_date
+                                then cash_date
+                                else accounting_date
+                           end
+                           as min_date,
                           
                           case
                             when (-position_size_with_sign) < 0 
@@ -379,7 +400,7 @@ class ReportsConfig(AppConfig):
                            
 
                     from transactions_transaction as tt
-                    where transaction_class_id in (8,9,12,13) and NOT tt.is_canceled
+                    where transaction_class_id in (8,9,12,13,15) and NOT tt.is_canceled
                     
                     union all
 

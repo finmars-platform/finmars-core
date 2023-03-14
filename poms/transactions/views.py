@@ -20,7 +20,6 @@ from poms.accounts.models import Account, AccountType
 from poms.audit import history
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, ModelExtMultipleChoiceFilter, \
     NoOpFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter, ComplexTransactionStatusFilter
-from poms.common.middleware import get_request
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.views import AbstractClassModelViewSet, AbstractAsyncViewSet
 from poms.counterparties.models import Responsible, Counterparty, ResponsibleGroup, CounterpartyGroup
@@ -37,7 +36,6 @@ from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEv
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3, Strategy1Subgroup, Strategy1Group, \
     Strategy2Subgroup, Strategy2Group, Strategy3Subgroup, Strategy3Group
-from poms.system_messages.handlers import send_system_message
 from poms.transactions.filters import TransactionObjectPermissionMemberFilter, TransactionObjectPermissionGroupFilter, \
     TransactionObjectPermissionPermissionFilter, ComplexTransactionSpecificFilter
 from poms.transactions.handlers import TransactionTypeProcess
@@ -1066,11 +1064,13 @@ class TransactionViewSet(AbstractWithObjectPermissionViewSet):
 
     def perform_update(self, serializer):
         super(TransactionViewSet, self).perform_update(serializer)
-        serializer.instance.calc_cash_by_formulas()
+        # Deprecated 2023-03-10
+        # serializer.instance.calc_cash_by_formulas()
 
     def perform_destroy(self, instance):
         super(TransactionViewSet, self).perform_destroy(instance)
-        instance.calc_cash_by_formulas()
+        # Deprecated 2023-03-10
+        # instance.calc_cash_by_formulas()
 
 
 class TransactionEvViewSet(AbstractWithObjectPermissionViewSet):
@@ -1244,11 +1244,13 @@ class TransactionEvViewSet(AbstractWithObjectPermissionViewSet):
 
     def perform_update(self, serializer):
         super(TransactionViewSet, self).perform_update(serializer)
-        serializer.instance.calc_cash_by_formulas()
+        # Deprecated 2023-03-10
+        # serializer.instance.calc_cash_by_formulas()
 
     def perform_destroy(self, instance):
         super(TransactionViewSet, self).perform_destroy(instance)
-        instance.calc_cash_by_formulas()
+        # Deprecated 2023-03-10
+        # instance.calc_cash_by_formulas()
 
 
 class TransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
@@ -1302,25 +1304,6 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
     #     if serializer.is_locked:
     #         raise PermissionDenied()
     #     return super(ComplexTransactionViewSet, self).perform_update(serializer)
-
-    def perform_destroy(self, instance):
-
-        Transaction.objects.filter(
-            complex_transaction=instance
-        ).delete()
-
-        ComplexTransaction.objects.get(id=instance.id).delete()
-
-        member = get_request().user.member
-        master_user = get_request().user.master_user
-
-        send_system_message(master_user=master_user,
-                            performed_by=member.username,
-                            section='transactions',
-                            type='warning',
-                            title='Delete Transaction (manual)',
-                            description='Transaction ' + str(instance.code) + ' was deleted'
-                            )
 
     @action(detail=True, methods=['get', 'put'], url_path='rebook', serializer_class=TransactionTypeProcessSerializer,
             permission_classes=[IsAuthenticated])
@@ -1537,6 +1520,42 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
         return response
 
+    @action(detail=False, methods=['get', 'post'], url_path='bulk-restore')
+    def bulk_restore(self, request):
+        # print('Bulk delelete here')
+
+        if request.method.lower() == 'get':
+            return self.list(request)
+
+        data = request.data
+
+        queryset = self.filter_queryset(self.get_queryset())
+        # is_fake = bool(request.query_params.get('is_fake'))
+
+        _l.info('bulk_restore %s' % data['ids'])
+
+        complex_transactions = ComplexTransaction.objects.filter(id__in=data['ids'])
+
+        for complex_transaction in complex_transactions:
+
+            if complex_transaction.deleted_transaction_unique_code:
+
+                used = ComplexTransaction.objects.filter(
+                    transaction_unique_code=complex_transaction.deleted_transaction_unique_code)
+
+                if len(used):
+                    pass  # that means, we could not restore transaction until user fix transaction uniq code issue
+                else:
+                    complex_transaction.transaction_unique_code = complex_transaction.deleted_transaction_unique_code
+                    complex_transaction.deleted_transaction_unique_code = None
+                    complex_transaction.is_deleted = False
+                    complex_transaction.save()
+
+            else:
+                complex_transaction.is_deleted = False
+                complex_transaction.save()
+
+        return Response({'message': 'ok'})
 
 class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = get_complex_transaction_queryset(select_related=False, transactions=True)
@@ -1548,7 +1567,7 @@ class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSe
         # ComplexTransactionPermissionFilter,
         OwnerByMasterUserFilter,
         AttributeFilter,
-        ComplexTransactionStatusFilter
+        ComplexTransactionStatusFilter,
     ]
 
 

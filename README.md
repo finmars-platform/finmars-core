@@ -242,6 +242,7 @@ pip install pyotp # possibly can be removed
 pip install uwsgi
 pip install django-cprofile-middleware
 pip install flower
+pip install deepdiff
 
 ==== TODO ====
 Move generated documentation to another project

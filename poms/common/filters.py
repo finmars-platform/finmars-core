@@ -678,4 +678,7 @@ class ComplexTransactionStatusFilter(BaseFilterBackend):
                 except FieldDoesNotExist:
                     pass
 
+        # Important, we could find deleted transactions only via recycle bin
+        queryset = queryset.filter(is_deleted=False)
+
         return queryset

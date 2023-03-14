@@ -3057,7 +3057,7 @@ def _run_transaction_import(evaluator, filepath, scheme):
 
         celery_task = CeleryTask.objects.create(master_user=master_user, member=member,
                                                 type='transaction_import',
-                                                verbose_name="Transaction Import by %s" % member.username)
+                                                verbose_name="Transaction Import")
         celery_task.status = CeleryTask.STATUS_DONE
 
         scheme = ComplexTransactionImportScheme.objects.get(master_user=master_user,
