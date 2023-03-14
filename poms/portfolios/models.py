@@ -225,6 +225,9 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
     #
     #     super(PortfolioRegisterRecord, self).save(*args, **kwargs)
 
+    def __str__(self):
+        return '%s %s %s %s' % (self.portfolio_register, self.transaction_date, self.transaction_class, self.cash_amount)
+
 
 class PortfolioBundle(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='portfolio_bundles',

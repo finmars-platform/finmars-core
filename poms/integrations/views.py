@@ -946,7 +946,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
                                                 options_object=options_object,
-                                                verbose_name="Transaction Import by %s" % request.user.member.username,
+                                                verbose_name="Transaction Import",
                                                 type='transaction_import')
 
         _l.info('celery_task %s created ' % celery_task.pk)
@@ -985,7 +985,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
                                                 options_object=options_object,
-                                                verbose_name="Transaction Import by %s" % request.user.member.username,
+                                                verbose_name="Transaction Import",
                                                 type='transaction_import')
 
         _l.info('celery_task %s created ' % celery_task.pk)
@@ -1026,7 +1026,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
                                                 options_object=options_object,
-                                                verbose_name="Transaction Import by %s" % request.user.member.username,
+                                                verbose_name="Transaction Import",
                                                 type='transaction_import')
 
         _l.info('celery_task %s created ' % celery_task.pk)
@@ -1099,7 +1099,7 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
                                                 options_object=options_object,
-                                                verbose_name="Transaction Import by %s" % request.user.member.username,
+                                                verbose_name="Transaction Import",
                                                 type='transaction_import')
 
         transaction_import_process = TransactionImportProcess(task_id=celery_task.id)
@@ -1228,7 +1228,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
                                                 member=request.user.member,
                                                 options_object=options_object,
-                                                verbose_name="Transaction Import by %s" % request.user.member.username,
+                                                verbose_name="Transaction Import",
                                                 type='transaction_import')
 
         _l.info('celery_task %s created ' % celery_task.pk)
@@ -1420,7 +1420,7 @@ class TransactionImportJson(APIView):
         procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
 
         celery_task = CeleryTask.objects.create(master_user=master_user,
-                                                verbose_name="Transaction Import by %s" % request.user.member.username,
+                                                verbose_name="Transaction Import",
                                                 type='transaction_import')
 
         celery_task.options_object = {

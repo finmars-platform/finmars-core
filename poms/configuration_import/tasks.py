@@ -3230,18 +3230,16 @@ class ConfigurationImportManager(object):
 
 @shared_task(name='configuration_import.configuration_import_as_json', bind=True)
 def configuration_import_as_json(self, task_id):
+
+    _l.info("Start configuration_import_as_json task_id %s" % task_id)
+
+    task = CeleryTask.objects.get(id=task_id)
+
+    task.celery_task_id = self.request.id
+    task.status = CeleryTask.STATUS_PENDING
+    task.save()
+
     try:
-
-        _l.info("Start configuration_import_as_json task_id %s" % task_id)
-
-        task = CeleryTask.objects.get(id=task_id)
-
-        task.celery_task_id = self.request.id
-        task.save()
-
-        with transaction.atomic():
-            task.status = CeleryTask.STATUS_PENDING
-            task.save()
 
         send_system_message(master_user=task.master_user,
                             performed_by=task.member.username,

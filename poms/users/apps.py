@@ -8,6 +8,6 @@ class UsersConfig(AppConfig):
     name = 'poms.users'
     verbose_name = gettext_lazy('Poms users')
 
-    def ready(self):
-        # noinspection PyUnresolvedReferences
-        import poms.users.signals
+    # def ready(self):
+    #     # noinspection PyUnresolvedReferences
+    #     import poms.users.signals

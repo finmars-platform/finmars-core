@@ -11,6 +11,10 @@ _l = logging.getLogger('poms.transaction_import')
 
 @shared_task(name='transaction_import.transaction_import', bind=True)
 def transaction_import(self, task_id, procedure_instance_id=None):
+
+
+
+
     try:
 
         celery_task = CeleryTask.objects.get(pk=task_id)
@@ -84,6 +88,7 @@ def transaction_import(self, task_id, procedure_instance_id=None):
 
             celery_task.error_message = "Error %s. \n Traceback: %s" % (e, traceback.format_exc())
             celery_task.status = CeleryTask.STATUS_ERROR
+            celery_task.mark_task_as_finished()
             celery_task.save()
 
     except Exception as e:

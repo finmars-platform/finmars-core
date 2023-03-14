@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 import requests
 from celery import shared_task
@@ -7,6 +8,9 @@ from django.conf import settings
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.system_messages.handlers import send_system_message
+from poms.users.models import MasterUser
+from django.utils.timezone import now
+from datetime import timedelta
 
 _l = logging.getLogger('poms.procedures')
 
@@ -131,3 +135,33 @@ def run_data_procedure_from_formula(self, master_user_id, member_id, user_code, 
     instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member,
                                     context=merged_context, **kwargs)
     instance.process()
+
+
+
+# TODO Refactor to task_id
+@shared_task(name='procedures.remove_old_data_procedures')
+def remove_old_data_procedures():
+    try:
+
+        tasks = RequestDataFileProcedureInstance.objects.filter(created__lte=now() - timedelta(days=30))
+
+        count = tasks.count()
+
+        _l.info("Delete %s data procedures" % count)
+        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        tasks.delete()
+
+        send_system_message(master_user=master_user, type="info",
+                            title='Old Data Procedures Clearance',
+                            description='Finmars removed %s tasks' % count)
+
+    except Exception as e:
+
+        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+        send_system_message(master_user=master_user, action_status="required", type="warning",
+                            title='Could not delete old Data Procedures',
+                            description=str(e))
+
+        _l.error("remove_old_data_procedures.exception %s" % e)
+        _l.error("remove_old_data_procedures.exception %s" % traceback.format_exc())

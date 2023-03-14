@@ -7,6 +7,9 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.models import TimeStampedModel
 from poms.file_reports.models import FileReport
+from django.utils.timezone import now
+import datetime
+from poms_app import settings
 
 _l = logging.getLogger('poms.celery_tasks')
 
@@ -75,11 +78,14 @@ class CeleryTask(TimeStampedModel):
     verbose_name = models.CharField(null=True, max_length=255)
     verbose_result = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('verbose result'))
 
+    finished_at = models.DateTimeField(null=True, db_index=True,
+                                       verbose_name=gettext_lazy('finished at'))
+
     class Meta:
         ordering = ['-created']
 
     def __str__(self):
-        return '<Task: {0.pk} ({0.status})>'.format(self)
+        return '{0.verbose_name} [{0.pk}] ({0.status})>'.format(self)
 
     @property
     def options_object(self):
@@ -124,6 +130,10 @@ class CeleryTask(TimeStampedModel):
 
         CeleryTaskAttachment.objects.create(celery_task=self,
                                             file_report_id=file_report_id)
+
+    def mark_task_as_finished(self):
+
+        self.finished_at = now()
 
     def update_progress(self, progress):
 

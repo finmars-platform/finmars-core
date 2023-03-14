@@ -373,11 +373,12 @@ def generate_events(self):
 
     master_user = MasterUser.objects.all()[0]  # TODO get by base_api_url
 
-    member = Member.objects.get(master_user=master_user, is_owner=True)
+    # member = Member.objects.get(master_user=master_user, is_owner=True)
+    finmars_bot = Member.objects.get(username='finmars_bot')
 
     celery_task = CeleryTask.objects.create(
         master_user=master_user,
-        member=member,
+        member=finmars_bot,
         verbose_name="Generate Events",
         type="generate_events"
     )
@@ -688,10 +689,11 @@ def process_events(self):
     from poms.celery_tasks.models import CeleryTask
 
     master_user = MasterUser.objects.all()[0]  # TODO refactor to get by base_api_url
-    member = Member.objects.get(master_user=master_user, is_owner=True)
+    # member = Member.objects.get(master_user=master_user, is_owner=True)
+    finmars_bot = Member.objects.get(username='finmars_bot')
     celery_task = CeleryTask.objects.create(
         master_user=master_user,
-        member=member,
+        member=finmars_bot,
         verbose_name="Process Events",
         type="process_events"
     )

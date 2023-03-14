@@ -11,6 +11,19 @@ def dictfetchall(cursor):
     ]
 
 
+def get_transaction_date_filter_for_initial_position_sql_string(date, has_where):
+    result_string = ''
+
+    if has_where:
+        result_string = 'and '
+    else:
+        result_string = 'where '
+
+    result_string = result_string + "((transaction_class_id IN (14,15) and min_date = '%s') or (transaction_class_id NOT IN (14,15)))" % date
+
+    return result_string
+
+
 def get_transaction_filter_sql_string(instance):
     result_string = ''
 
@@ -142,7 +155,6 @@ def get_where_expression_for_position_consolidation(instance, prefix, prefix_sec
 
     if instance.allocation_mode == Report.MODE_INDEPENDENT:
         result.append(prefix + "allocation_pl_id = " + prefix_second + "allocation_pl_id")
-
 
     resultString = ''
 
@@ -320,13 +332,15 @@ def get_transaction_report_filter_sql_string(instance):
 def get_transaction_report_date_filter_sql_string(instance):
     result_string = ''
 
-    if 'user_' in instance.date_field or 'date' == instance.date_field:
+    if 'user_' in instance.date_field or 'date' == instance.date_field:  # for complex transaction.user_date_N fields (note tc.)
 
-        result_string = "tc." + instance.date_field + " >= '" + str(
-            instance.begin_date) + "' AND tc." + instance.date_field + "<= '" + str(instance.end_date) + "'"
+        result_string = "((t.transaction_class_id IN (14,15) AND tc." + instance.date_field + " = '" + str(
+            instance.end_date) + "') OR (t.transaction_class_id NOT IN (14,15) AND tc." + instance.date_field + " >= '" + str(
+            instance.begin_date) + "' AND tc." + instance.date_field + "<= '" + str(instance.end_date) + "'))"
 
-    else:
-        result_string = "t." + instance.date_field + " >= '" + str(
-            instance.begin_date) + "' AND t." + instance.date_field + " <= '" + str(instance.end_date) + "'"
+    else:  # for base transaction fields (note t.)
+        result_string = "((t.transaction_class_id IN (14,15) AND t." + instance.date_field + " = '" + str(
+            instance.end_date) + "') OR (t.transaction_class_id NOT IN (14,15) AND t." + instance.date_field + " >= '" + str(
+            instance.begin_date) + "' AND t." + instance.date_field + " <= '" + str(instance.end_date) + "'))"
 
     return result_string

@@ -318,14 +318,15 @@ def serialize_balance_report_item(item):
     result["strategy3"] = item["strategy3_position_id"]
 
     ids = []
-    ids.append(str(result["item_type"]))
+    ids.append(str(result["item_type"])) # if of item type
 
     if item['item_type'] == 1:
-        ids.append(str(result["instrument"]))
+        ids.append(str(result["instrument"])) # id of instrument
 
     if item['item_type'] == 2:
-        ids.append(str(result["currency"]))
+        ids.append(str(result["currency"])) # id of currency
 
+    ids.append(str(result["portfolio"]))
     ids.append(str(result["account"]))
     ids.append(str(result["strategy1"]))
     ids.append(str(result["strategy2"]))
@@ -468,10 +469,13 @@ def serialize_pl_report_item(item):
     if item['item_type'] == 6:  # mismatch
         ids.append(str(result["instrument"]))
 
+
+    ids.append(str(result["portfolio"]))
     ids.append(str(result["account"]))
     ids.append(str(result["strategy1"]))
     ids.append(str(result["strategy2"]))
     ids.append(str(result["strategy3"]))
+    ids.append(str(result["allocation"]))
 
     result['id'] = ','.join(ids)
 

@@ -1043,6 +1043,7 @@ class TransactionImportProcess(object):
         self.task.verbose_result = self.get_verbose_result()
 
         self.task.status = CeleryTask.STATUS_DONE
+        self.task.mark_task_as_finished()
         self.task.save()
 
         return self.result

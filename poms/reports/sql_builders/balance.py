@@ -1,6 +1,6 @@
 import logging
-import time
 import os
+import time
 
 from django.conf import settings
 from django.db import connection
@@ -15,7 +15,8 @@ from poms.reports.models import BalanceReportCustomField
 from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
     get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
     get_position_consolidation_for_select, get_pl_left_join_consolidation, dictfetchall, \
-    get_cash_consolidation_for_select, get_cash_as_position_consolidation_for_select
+    get_cash_consolidation_for_select, get_cash_as_position_consolidation_for_select, \
+    get_transaction_date_filter_for_initial_position_sql_string
 from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.users.models import EcosystemDefault
@@ -37,7 +38,6 @@ class BalanceReportBuilderSql:
 
         _l.debug('self.instance master_user %s' % self.instance.master_user)
         _l.debug('self.instance report_date %s' % self.instance.report_date)
-
 
     def build_balance(self):
         st = time.perf_counter()
@@ -71,6 +71,8 @@ class BalanceReportBuilderSql:
             pl_query = PLReportBuilderSql.get_source_query(cost_method=self.instance.cost_method.id)
 
             transaction_filter_sql_string = get_transaction_filter_sql_string(self.instance)
+            transaction_date_filter_for_initial_position_sql_string = get_transaction_date_filter_for_initial_position_sql_string(
+                self.instance.report_date, has_where=bool(len(transaction_filter_sql_string)))
             report_fx_rate = get_report_fx_rate(self.instance, self.instance.report_date)
             fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
                 self.instance)
@@ -101,8 +103,6 @@ class BalanceReportBuilderSql:
             # _l.debug(
             #     'transactions_all_with_multipliers_where_expression: "%s"' % transactions_all_with_multipliers_where_expression)
 
-
-
             pl_query = pl_query.format(report_date=self.instance.report_date,
                                        master_user_id=self.instance.master_user.id,
                                        default_currency_id=self.ecosystem_defaults.currency_id,
@@ -110,6 +110,7 @@ class BalanceReportBuilderSql:
                                        pricing_policy_id=self.instance.pricing_policy.id,
                                        report_fx_rate=report_fx_rate,
                                        transaction_filter_sql_string=transaction_filter_sql_string,
+                                       transaction_date_filter_for_initial_position_sql_string=transaction_date_filter_for_initial_position_sql_string,
                                        fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
                                        consolidation_columns=consolidation_columns,
                                        balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
@@ -420,6 +421,7 @@ class BalanceReportBuilderSql:
                     
                     select * from unioned_interim_account_transactions
                     {transaction_filter_sql_string}
+                    {transaction_date_filter_for_initial_position_sql_string}
                 
                 )
                 
@@ -1349,7 +1351,7 @@ class BalanceReportBuilderSql:
                             from filtered_transactions 
                             where min_date <= '{report_date}' 
                             and master_user_id = {master_user_id}
-                            and transaction_class_id in (1,2)
+                            and transaction_class_id in (1,2,14)
                             group by
                               {consolidated_position_columns}
                               instrument_id) as t
@@ -1481,6 +1483,7 @@ class BalanceReportBuilderSql:
 
                                  balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
                                  transaction_filter_sql_string=transaction_filter_sql_string,
+                                 transaction_date_filter_for_initial_position_sql_string=transaction_date_filter_for_initial_position_sql_string,
 
                                  pl_query=pl_query,
                                  pl_left_join_consolidation=pl_left_join_consolidation,
@@ -1488,7 +1491,8 @@ class BalanceReportBuilderSql:
                                  )
 
             if settings.DEBUG:
-                with open(os.path.join(settings.BASE_DIR, 'balance_query_result_before_execution.txt'), 'w') as the_file:
+                with open(os.path.join(settings.BASE_DIR, 'balance_query_result_before_execution.txt'),
+                          'w') as the_file:
                     the_file. \
                         write(query)
 
@@ -1996,4 +2000,3 @@ class BalanceReportBuilderSql:
         self.instance.item_strategies3 = list(self.instance.item_strategies3)
         self.instance.item_account_types = list(self.instance.item_account_types)
         self.instance.item_instrument_types = list(self.instance.item_instrument_types)
-

@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from functools import lru_cache
 
 import croniter
@@ -10,6 +10,7 @@ import pytz
 from babel import Locale
 from babel.dates import get_timezone, get_timezone_gmt, get_timezone_name
 from django.conf import settings
+from django.db import connection
 from django.http import HttpResponse
 from django.utils import translation, timezone
 from django.views.static import serve
@@ -677,6 +678,98 @@ class SystemLogsViewSet(AbstractViewSet):
         )
 
 
+class TablesSizeViewSet(AbstractViewSet):
+
+    def dictfetchall(self, cursor):
+        "Return all rows from a cursor as a dict"
+        columns = [col[0] for col in cursor.description]
+        return [
+            dict(zip(columns, row))
+            for row in cursor.fetchall()
+        ]
+
+    def list(self, request, *args, **kwargs):
+        result = {
+            "results": []
+        }
+
+        query = '''
+            select
+              table_name,
+              pg_size_pretty(pg_total_relation_size(quote_ident(table_name))),
+              pg_total_relation_size(quote_ident(table_name))
+            from information_schema.tables
+            where table_schema = 'public'
+            order by 3 desc;
+        '''
+
+        with connection.cursor() as cursor:
+            cursor.execute(query)
+
+            items = self.dictfetchall(cursor)
+
+            result['results'] = items
+
+        return Response(result)
+
+    @action(detail=False, methods=['get'], url_path='view-log')
+    def view_log(self, request):
+        log_file = request.query_params.get('log_file', 'django.log')
+
+        log_file = '/var/log/finmars/backend/' + log_file
+
+        file = open(log_file, 'r')
+
+        return HttpResponse(
+            file,
+            content_type='plain/text'
+        )
+
+
+class RecycleBinViewSet(AbstractViewSet):
+
+    def list(self, request, *args, **kwargs):
+        from poms.transactions.models import ComplexTransaction
+
+        date_from = request.query_params.get('date_from', None)
+        date_to = request.query_params.get('date_to', None)
+
+        if date_to:
+            date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1, microseconds=-1)
+
+        items = ComplexTransaction.objects.filter(is_deleted=True, modified__gte=date_from, modified__lte=date_to)
+
+        result = {
+            "results": []
+        }
+
+        for item in items:
+            result_item = {
+                'id': item.id,
+                'code': item.code,
+                'transaction_unique_code': item.transaction_unique_code,
+                'deleted_transaction_unique_code': item.deleted_transaction_unique_code,
+                'modified': item.modified
+            }
+
+            result['results'].append(result_item)
+
+        return Response(result)
+
+    @action(detail=False, methods=['get'], url_path='view-log')
+    def view_log(self, request):
+        log_file = request.query_params.get('log_file', 'django.log')
+
+        log_file = '/var/log/finmars/backend/' + log_file
+
+        file = open(log_file, 'r')
+
+        return HttpResponse(
+            file,
+            content_type='plain/text'
+        )
+
+
 class CalendarEventsViewSet(AbstractViewSet):
 
     def list(self, request, *args, **kwargs):
@@ -696,7 +789,6 @@ class CalendarEventsViewSet(AbstractViewSet):
         from poms.procedures.models import BaseProcedureInstance
         from poms.procedures.models import PricingProcedureInstance
         from poms.procedures.models import RequestDataFileProcedureInstance
-        from poms.system_messages.models import SystemMessage
         def cronexp(field):
             """Representation of cron expression."""
             return field and str(field).replace(' ', '') or '*'
@@ -965,6 +1057,7 @@ class CalendarEventsViewSet(AbstractViewSet):
             for task in tasks:
                 item = {
                     'start': task.created,
+                    'finished_at': task.finished_at,
                     'classNames': ['user'],
                     'extendedProps': {
                         'type': 'celery_task',
@@ -1007,41 +1100,41 @@ class CalendarEventsViewSet(AbstractViewSet):
 
             try:
 
-               workflows = get_workflows_list(date_from, date_to)
+                workflows = get_workflows_list(date_from, date_to)
 
-               for workflow in workflows:
-                   item = {
-                       'start': workflow['created'],
-                       'classNames': ['user'],
-                       'extendedProps': {
-                           'type': 'workflow',
-                           'id': workflow['id'],
-                           'payload': {
-                               'status': workflow['status'],
-                               'payload': workflow['payload']
-                           }
-                       }
-                   }
+                for workflow in workflows:
+                    item = {
+                        'start': workflow['created'],
+                        # 'finished_at': workflow['finished_at'],
+                        'classNames': ['user'],
+                        'extendedProps': {
+                            'type': 'workflow',
+                            'id': workflow['id'],
+                            'payload': {
+                                'status': workflow['status'],
+                                'payload': workflow['payload']
+                            }
+                        }
+                    }
 
-                   if workflow['status'] == 'error':
-                       item['backgroundColor'] = 'red'
+                    if workflow['status'] == 'error':
+                        item['backgroundColor'] = 'red'
 
-                   if workflow['status'] == 'pending':
-                       item['backgroundColor'] = 'blue'
+                    if workflow['status'] == 'pending':
+                        item['backgroundColor'] = 'blue'
 
-                   if workflow['status'] == 'success':
-                       item['backgroundColor'] = 'green'
+                    if workflow['status'] == 'success':
+                        item['backgroundColor'] = 'green'
 
-                   title = workflow['project'] + '.' + workflow['user_code']
-                   title = title + ' [' + str(workflow['id']) + ']'
+                    title = workflow['project'] + '.' + workflow['user_code']
+                    title = title + ' [' + str(workflow['id']) + ']'
 
-                   item['title'] = title
+                    item['title'] = title
 
-                   results.append(item)
+                    results.append(item)
 
             except Exception as e:
                 _l.error("Could not fetch workflows %s" % e)
-
 
         response = {}
 

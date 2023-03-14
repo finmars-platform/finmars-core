@@ -36,7 +36,7 @@ class BootstrapConfig(AppConfig):
 
         _l.info("Bootstrapping Finmars Application")
 
-
+        self.bootstrap_celery()
         self.add_view_and_manage_permissions()
         self.load_master_user_data()
         self.create_finmars_bot()
@@ -44,6 +44,7 @@ class BootstrapConfig(AppConfig):
         self.load_init_configuration()
         self.create_base_folders()
         self.register_at_authorizer_service()
+
 
     def create_finmars_bot(self):
 
@@ -315,7 +316,8 @@ class BootstrapConfig(AppConfig):
                 response_data = response.json()
 
                 master_user = MasterUser.objects.filter()[0]
-                member = Member.objects.get(master_user=master_user, is_owner=True)
+                # member = Member.objects.get(master_user=master_user, is_owner=True)
+                member = Member.objects.get(username='finmars_bot')
 
                 celery_task = CeleryTask.objects.create(master_user=master_user,
                                                         member=member,
@@ -420,3 +422,13 @@ class BootstrapConfig(AppConfig):
         except Exception as e:
             _l.info("create_base_folders error %s" % e)
             _l.info("create_base_folders traceback %s" % traceback.format_exc())
+
+    def bootstrap_celery(self):
+
+        # WARNING Do not delete
+        # important, its inits celery listeners for global state
+        # it uses for record history in post_save post_delete signals for proper context
+        from poms_app import celery_app
+
+        from poms.common.celery import cancel_existing_tasks
+        cancel_existing_tasks(celery_app)
