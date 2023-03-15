@@ -19,67 +19,67 @@ _l = logging.getLogger('poms.history')
 # Just not to log history for too meta models
 excluded_to_track_history_models = [
 
-                                    'celery_tasks.celerytaskattachment',
+    'celery_tasks.celerytaskattachment',
 
-                                    'system_messages.systemmessage',
-                                    'system_messages.systemmessagemember',
-                                    'obj_attrs.genericattribute',
-                                    'pricing.instrumentpricingpolicy', 'pricing.currencypricingpolicy',
+    'system_messages.systemmessage',
+    'system_messages.systemmessagemember',
+    'obj_attrs.genericattribute',
+    'pricing.instrumentpricingpolicy', 'pricing.currencypricingpolicy',
 
-                                    'transactions.complextransactioninput',
-                                    'migrations.migration',
+    'transactions.complextransactioninput',
+    'migrations.migration',
 
-                                    'django_celery_results.taskresult',
-                                    'django_celery_beat.periodictask',
-                                    'django_celery_beat.periodictasks',
-                                    'django_celery_beat.crontabschedule',
+    'django_celery_results.taskresult',
+    'django_celery_beat.periodictask',
+    'django_celery_beat.periodictasks',
+    'django_celery_beat.crontabschedule',
 
-                                    'csv_import.csvfield',
-                                    'csv_import.entityfield',
+    'csv_import.csvfield',
+    'csv_import.entityfield',
 
-                                    'pricing.instrumentpricingschemetype',
-                                    'pricing.currencypricingschemetype',
-                                    'integrations.dataprovider',
-                                    'integrations.accrualscheduledownloadmethod',
-                                    'integrations.providerclass',
-                                    'transactions.periodicitygroup',
-                                    'transactions.eventclass',
-                                    'transactions.notificationclass',
-                                    'transactions.actionclass',
-                                    'transactions.complextransactionstatus',
-                                    'transactions.transactionclass',
-                                    'instruments.country',
-                                    'instruments.shortunderlyingexposure',
-                                    'instruments.longunderlyingexposure',
-                                    'instruments.pricingcondition',
-                                    'instruments.paymentsizedetail',
-                                    'instruments.costmethod',
-                                    'instruments.periodicity',
-                                    'integrations.factorscheduledownloadmethod',
-                                    'instruments.exposurecalculationmodel',
-                                    'instruments.dailypricingmodel',
-                                    'instruments.instrumentclass',
-                                    'ui.portalinterfaceaccessmodel',
-                                    'instruments.accrualcalculationmodel',
-                                    'instruments.pricehistory',
-                                    'currencies.currencyhistory',
+    'pricing.instrumentpricingschemetype',
+    'pricing.currencypricingschemetype',
+    'integrations.dataprovider',
+    'integrations.accrualscheduledownloadmethod',
+    'integrations.providerclass',
+    'transactions.periodicitygroup',
+    'transactions.eventclass',
+    'transactions.notificationclass',
+    'transactions.actionclass',
+    'transactions.complextransactionstatus',
+    'transactions.transactionclass',
+    'instruments.country',
+    'instruments.shortunderlyingexposure',
+    'instruments.longunderlyingexposure',
+    'instruments.pricingcondition',
+    'instruments.paymentsizedetail',
+    'instruments.costmethod',
+    'instruments.periodicity',
+    'integrations.factorscheduledownloadmethod',
+    'instruments.exposurecalculationmodel',
+    'instruments.dailypricingmodel',
+    'instruments.instrumentclass',
+    'ui.portalinterfaceaccessmodel',
+    'instruments.accrualcalculationmodel',
+    'instruments.pricehistory',
+    'currencies.currencyhistory',
 
-                                    'widgets.collect_stats',
-                                    'widgets.collect_pl_report_history',
-                                    'widgets.collect_balance_report_history',
-                                    'widgets.plreporthistoryitem',
-                                    'widgets.balancereporthistoryitem',
+    'widgets.collect_stats',
+    'widgets.collect_pl_report_history',
+    'widgets.collect_balance_report_history',
+    'widgets.plreporthistoryitem',
+    'widgets.balancereporthistoryitem',
 
-                                    'pricing.pricehistoryerror',
-                                    'pricing.pricingprocedurebloomberginstrumentresult',
-                                    'pricing.pricingprocedurebloombergforwardinstrumentresult',
-                                    'pricing.pricingprocedurebloombergcurrencyresult',
-                                    'portfolios.portfolioregisterrecord',
+    'pricing.pricehistoryerror',
+    'pricing.pricingprocedurebloomberginstrumentresult',
+    'pricing.pricingprocedurebloombergforwardinstrumentresult',
+    'pricing.pricingprocedurebloombergcurrencyresult',
+    'portfolios.portfolioregisterrecord',
 
-                                    'ui.listlayout',
-                                    'ui.editlayout',
+    'ui.listlayout',
+    'ui.editlayout',
 
-                                    'finmars_standardized_errors.errorrecord']
+    'finmars_standardized_errors.errorrecord']
 
 
 class HistoricalRecord(models.Model):
@@ -489,18 +489,19 @@ def add_history_listeners(sender, **kwargs):
     # IMPORTANT TO DO ONLY LOCAL IMPORTS
     # BECAUSE IF YOU DO AN IMPORT, CLASS WILL NOT BE LISTENED VIA signals.class_prepared
 
-    try:
+    content_type_key = get_model_content_type_as_text(sender)
 
-        content_type_key = get_model_content_type_as_text(sender)
-
-        if content_type_key not in excluded_to_track_history_models:
-            models.signals.post_save.connect(post_save, sender=sender, weak=False)
-            models.signals.post_delete.connect(post_delete, sender=sender, weak=False)
-
-    except Exception as e:
-        _l.info("Probably new Ecosystem, Tables are not ready. Its OK that history recorder throws an error")
-        _l.error("Could not record history %s " % e)
+    if content_type_key not in excluded_to_track_history_models:
+        models.signals.post_save.connect(post_save, sender=sender, weak=False)
+        models.signals.post_delete.connect(post_delete, sender=sender, weak=False)
 
 
+import sys
+def record_history():
+    if ('makemigrations' in sys.argv or 'migrate' in sys.argv):
+        _l.info("History is not recording. Probably Migration context")
+    else:
+        _l.info("History is recording")
+        models.signals.class_prepared.connect(add_history_listeners, weak=False)
 
-models.signals.class_prepared.connect(add_history_listeners, weak=False)
+record_history()
