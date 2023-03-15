@@ -482,6 +482,144 @@ class CollectHistoryViewSet(AbstractViewSet):
         })
 
 
+class CollectBalanceHistoryViewSet(AbstractViewSet):
+    serializer_class = CollectHistorySerializer
+
+    def create(self, request):
+
+        date_from = request.data.get('date_from', None)
+        date_to = request.data.get('date_to', None)
+        portfolio_id = request.data.get('portfolio', None)
+        report_currency_id = request.data.get('currency', None)
+        pricing_policy_id = request.data.get('pricing_policy', None)
+        cost_method_id = request.data.get('cost_method', None)
+        segmentation_type = request.data.get('segmentation_type', None)
+
+        if not portfolio_id:
+            raise ValidationError("Portfolio is required")
+
+        ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
+
+        if not report_currency_id:
+            report_currency_id = ecosystem_default.currency_id
+        if not pricing_policy_id:
+            pricing_policy_id = ecosystem_default.pricing_policy_id
+
+        if not cost_method_id:
+            cost_method_id = CostMethod.AVCO
+
+        _l.info('CollectBalanceHistoryViewSet.segmentation_type %s' % segmentation_type)
+        if not segmentation_type:
+            segmentation_type = 'months'
+
+        dates = []
+
+        _l.info('CollectBalanceHistoryViewSet.date_from %s' % date_from)
+        _l.info('CollectBalanceHistoryViewSet.date_to %s' % date_to)
+
+        if not date_from:
+            transaction = get_first_transaction(portfolio_id)
+
+            date_from = transaction.accounting_date
+
+        if not date_to:
+            date_to = get_closest_bday_of_yesterday()
+
+        if segmentation_type == 'days':
+            dates = get_list_of_business_days_between_two_dates(date_from, date_to, to_string=True)
+
+        if segmentation_type == 'months':
+            dates = get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=True)
+            _l.info('CollectHistoryViewSet.create: dates %s' % dates)
+
+        if len(dates) == 0:
+            raise ValidationError("No buisness days in range %s to %s" % (date_from, date_to))
+
+        if len(dates) > 365:
+            raise ValidationError("Date range exceeded max limit of 365 days")
+
+        task = collect_balance_history(request.user.master_user,
+                                request.user.member,
+                                date_from,
+                                date_to,
+                                dates,
+                                segmentation_type, portfolio_id, report_currency_id,
+                                cost_method_id, pricing_policy_id)
+
+        return Response({
+            'task_id': task.id
+        })
+
+
+class CollectPlHistoryViewSet(AbstractViewSet):
+    serializer_class = CollectHistorySerializer
+
+    def create(self, request):
+
+        date_from = request.data.get('date_from', None)
+        date_to = request.data.get('date_to', None)
+        portfolio_id = request.data.get('portfolio', None)
+        report_currency_id = request.data.get('currency', None)
+        pricing_policy_id = request.data.get('pricing_policy', None)
+        cost_method_id = request.data.get('cost_method', None)
+        segmentation_type = request.data.get('segmentation_type', None)
+
+        if not portfolio_id:
+            raise ValidationError("Portfolio is required")
+
+        ecosystem_default = EcosystemDefault.objects.get(master_user=request.user.master_user)
+
+        if not report_currency_id:
+            report_currency_id = ecosystem_default.currency_id
+        if not pricing_policy_id:
+            pricing_policy_id = ecosystem_default.pricing_policy_id
+
+        if not cost_method_id:
+            cost_method_id = CostMethod.AVCO
+
+        _l.info('CollectHistoryViewSet.segmentation_type %s' % segmentation_type)
+        if not segmentation_type:
+            segmentation_type = 'months'
+
+        dates = []
+
+        _l.info('CollectHistoryViewSet.date_from %s' % date_from)
+        _l.info('CollectHistoryViewSet.date_to %s' % date_to)
+
+        if not date_from:
+            transaction = get_first_transaction(portfolio_id)
+
+            date_from = transaction.accounting_date
+
+        if not date_to:
+            date_to = get_closest_bday_of_yesterday()
+
+        if segmentation_type == 'days':
+            dates = get_list_of_business_days_between_two_dates(date_from, date_to, to_string=True)
+
+        if segmentation_type == 'months':
+            dates = get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=True)
+            _l.info('CollectHistoryViewSet.create: dates %s' % dates)
+
+        if len(dates) == 0:
+            raise ValidationError("No buisness days in range %s to %s" % (date_from, date_to))
+
+        if len(dates) > 365:
+            raise ValidationError("Date range exceeded max limit of 365 days")
+
+        task = collect_pl_history(request.user.master_user,
+                           request.user.member,
+                           date_from,
+                           date_to,
+                           dates,
+                           segmentation_type,
+                           portfolio_id, report_currency_id, cost_method_id,
+                           pricing_policy_id)
+
+        return Response({
+            'task_id': task.id
+        })
+
 class CollectStatsViewSet(AbstractViewSet):
     serializer_class = CollectStatsSerializer
 
