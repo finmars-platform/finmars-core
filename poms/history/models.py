@@ -496,4 +496,8 @@ def add_history_listeners(sender, **kwargs):
         models.signals.post_delete.connect(post_delete, sender=sender, weak=False)
 
 
-models.signals.class_prepared.connect(add_history_listeners, weak=False)
+try:
+    models.signals.class_prepared.connect(add_history_listeners, weak=False)
+except Exception as e:
+    _l.info("Probably new Ecosystem, Tables are not ready. Its OK that history recorder throws an error")
+    _l.error("Could not record history %s " % e)

@@ -459,6 +459,8 @@ class CollectHistoryViewSet(AbstractViewSet):
         if len(dates) > 365:
             raise ValidationError("Date range exceeded max limit of 365 days")
 
+        # TODO MAKE AS SEPARATE APIS
+
         collect_balance_history(request.user.master_user,
                                 request.user.member,
                                 date_from,
