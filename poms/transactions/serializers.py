@@ -3374,6 +3374,8 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
 
     recon_fields = ReconciliationComplexTransactionFieldSerializer(read_only=True, many=True)
 
+    source = serializers.JSONField(read_only=True)
+
     def __init__(self, *args, **kwargs):
         super(TransactionTypeComplexTransactionSerializer, self).__init__(*args, **kwargs)
 
@@ -3413,7 +3415,7 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
 
             'recon_fields',
 
-            'execution_log'
+            'execution_log', 'source'
 
         ]
 

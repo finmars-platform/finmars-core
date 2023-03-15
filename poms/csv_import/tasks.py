@@ -29,7 +29,7 @@ from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.file_reports.models import FileReport
 from poms.instruments.handlers import InstrumentTypeProcess
-from poms.instruments.models import PricingPolicy, Instrument, InstrumentType, Country
+from poms.instruments.models import PricingPolicy, Instrument, InstrumentType, Country, PricingCondition
 from poms.integrations.models import CounterpartyMapping, AccountMapping, ResponsibleMapping, PortfolioMapping, \
     PortfolioClassifierMapping, AccountClassifierMapping, ResponsibleClassifierMapping, CounterpartyClassifierMapping, \
     PricingPolicyMapping, InstrumentMapping, CurrencyMapping, InstrumentTypeMapping, PaymentSizeDetailMapping, \
@@ -603,7 +603,7 @@ def process_csv_file(master_user,
                         'instrument_type': InstrumentTypeMapping,
                         'type': AccountTypeMapping,
                         'payment_size_detail': PaymentSizeDetailMapping,
-                        'pricing_condition': PricingConditionMapping,
+                        # 'pricing_condition': PricingConditionMapping,
                         'currency': CurrencyMapping,
                         'pricing_currency': CurrencyMapping,
                         'accrued_currency': CurrencyMapping
@@ -620,7 +620,8 @@ def process_csv_file(master_user,
                         'type': AccountType,
                         'currency': Currency,
                         'pricing_currency': Currency,
-                        'accrued_currency': Currency
+                        'accrued_currency': Currency,
+                        'pricing_condition': PricingCondition
                     }
 
                     classifier_mapping_map = {
@@ -716,7 +717,7 @@ def process_csv_file(master_user,
                                                 except Exception as e:
                                                     instance[key] = None
                                                     _l.error("Could not find country %s. Error %s " % (
-                                                    executed_expression, e))
+                                                        executed_expression, e))
                                             else:
                                                 instance[key] = executed_expression
 
@@ -1310,8 +1311,12 @@ class ImportHandler:
                 if 'pricing_currency' in result_without_many_to_many:
                     result_without_many_to_many['pricing_currency'] = result_without_many_to_many['pricing_currency'].id
 
-                if 'pricing_condition' in result_without_many_to_many:
-                    result_without_many_to_many['pricing_condition'] = result_without_many_to_many['pricing_condition'].id
+                try:
+                    if 'pricing_condition' in result_without_many_to_many:
+                        result_without_many_to_many['pricing_condition'] = result_without_many_to_many[
+                            'pricing_condition'].id
+                except Exception as e:
+                    _l.error("Could not set pricing_condition to instance %s " % e)
 
                 try:
                     if 'country' in result_without_many_to_many:
@@ -1596,7 +1601,6 @@ class ImportHandler:
 
         # _l.debug('ImportHandler.result_item %s' % result_item)
 
-
         item = get_item(scheme, result_item)
 
         if mode == 'overwrite' and item:
@@ -1832,9 +1836,8 @@ def data_csv_file_import(self, task_id, procedure_instance_id=None):
         handler = ImportHandler()
 
         celery_task = CeleryTask.objects.get(pk=task_id)
-        celery_task.celery_task_id = self.request.id # Important (record history rely on that)
+        celery_task.celery_task_id = self.request.id  # Important (record history rely on that)
         celery_task.save()
-
 
         procedure_instance = None
 
