@@ -489,15 +489,18 @@ def add_history_listeners(sender, **kwargs):
     # IMPORTANT TO DO ONLY LOCAL IMPORTS
     # BECAUSE IF YOU DO AN IMPORT, CLASS WILL NOT BE LISTENED VIA signals.class_prepared
 
-    content_type_key = get_model_content_type_as_text(sender)
+    try:
 
-    if content_type_key not in excluded_to_track_history_models:
-        models.signals.post_save.connect(post_save, sender=sender, weak=False)
-        models.signals.post_delete.connect(post_delete, sender=sender, weak=False)
+        content_type_key = get_model_content_type_as_text(sender)
+
+        if content_type_key not in excluded_to_track_history_models:
+            models.signals.post_save.connect(post_save, sender=sender, weak=False)
+            models.signals.post_delete.connect(post_delete, sender=sender, weak=False)
+
+    except Exception as e:
+        _l.info("Probably new Ecosystem, Tables are not ready. Its OK that history recorder throws an error")
+        _l.error("Could not record history %s " % e)
 
 
-try:
-    models.signals.class_prepared.connect(add_history_listeners, weak=False)
-except Exception as e:
-    _l.info("Probably new Ecosystem, Tables are not ready. Its OK that history recorder throws an error")
-    _l.error("Could not record history %s " % e)
+
+models.signals.class_prepared.connect(add_history_listeners, weak=False)
