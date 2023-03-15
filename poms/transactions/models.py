@@ -1463,6 +1463,21 @@ class ComplexTransaction(DataTimeStampedModel):
 
     execution_log = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('execution log'))
 
+    source_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('source data'))
+
+    @property
+    def source(self):
+        if self.source_data is None:
+            return None
+        return json.loads(self.source_data)
+
+    @source.setter
+    def source(self, value):
+        if value is None:
+            self.source_data = None
+        else:
+            self.source_data = json.dumps(value, cls=DjangoJSONEncoder, sort_keys=True, indent=1)
+
     class Meta:
         verbose_name = gettext_lazy('complex transaction')
         verbose_name_plural = gettext_lazy('complex transactions')
@@ -1476,46 +1491,48 @@ class ComplexTransaction(DataTimeStampedModel):
             ("view_complextransaction_hide_parameters", "Hide Parameters"),
         )
 
-    def __str__(self):
-        return str(self.code)
 
-    def save(self, *args, **kwargs):
-        cache.clear()
+def __str__(self):
+    return str(self.code)
 
-        _l.info("Complex Transaction Save status %s" % self.status)
-        _l.info("Complex Transaction Save text %s" % self.text)
-        _l.info("Complex Transaction Save date %s" % self.date)
 
-        _l.info("Complex Transaction Save transaction_unique_code %s" % self.transaction_unique_code)
+def save(self, *args, **kwargs):
+    cache.clear()
 
-        if self.code is None or self.code == 0:
-            self.code = FakeSequence.next_value(self.transaction_type.master_user, 'complex_transaction', d=100)
-        _l.info("Complex Transaction Save date %s" % self.code)
-        super(ComplexTransaction, self).save(*args, **kwargs)
+    _l.info("Complex Transaction Save status %s" % self.status)
+    _l.info("Complex Transaction Save text %s" % self.text)
+    _l.info("Complex Transaction Save date %s" % self.date)
 
-    def fake_delete(self):
+    _l.info("Complex Transaction Save transaction_unique_code %s" % self.transaction_unique_code)
 
-        if self.is_deleted:  # if transaction was already marked as deleted, then do real delete
-            self.delete()
-        else:
+    if self.code is None or self.code == 0:
+        self.code = FakeSequence.next_value(self.transaction_type.master_user, 'complex_transaction', d=100)
+    _l.info("Complex Transaction Save date %s" % self.code)
+    super(ComplexTransaction, self).save(*args, **kwargs)
 
-            self.is_deleted = True
 
-            fields_to_update = ['is_deleted', 'modified']
+def fake_delete(self):
+    if self.is_deleted:  # if transaction was already marked as deleted, then do real delete
+        self.delete()
+    else:
 
-            from poms.common import formula
+        self.is_deleted = True
 
-            if hasattr(self, 'transaction_unique_code'):
-                self.deleted_transaction_unique_code = self.transaction_unique_code
+        fields_to_update = ['is_deleted', 'modified']
 
-                self.transaction_unique_code = formula.safe_eval('generate_user_code("del", "", 1)',
-                                                                 context={
-                                                                     'master_user': self.master_user})  # Probably unnecessary
+        from poms.common import formula
 
-                fields_to_update.append('deleted_transaction_unique_code')
-                fields_to_update.append('transaction_unique_code')
+        if hasattr(self, 'transaction_unique_code'):
+            self.deleted_transaction_unique_code = self.transaction_unique_code
 
-            self.save(update_fields=fields_to_update)
+            self.transaction_unique_code = formula.safe_eval('generate_user_code("del", "", 1)',
+                                                             context={
+                                                                 'master_user': self.master_user})  # Probably unnecessary
+
+            fields_to_update.append('deleted_transaction_unique_code')
+            fields_to_update.append('transaction_unique_code')
+
+        self.save(update_fields=fields_to_update)
 
 
 class ComplexTransactionInput(models.Model):

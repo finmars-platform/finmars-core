@@ -419,6 +419,7 @@ class TransactionImportProcess(object):
                     context=self.context,
                     uniqueness_reaction=self.scheme.book_uniqueness_settings,
                     member=self.member,
+                    source=item.file_inputs,
                     execution_context="import"
                 )
 

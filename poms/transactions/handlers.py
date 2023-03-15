@@ -88,6 +88,7 @@ class TransactionTypeProcess(object):
                  uniqueness_reaction=None,
                  execution_context='manual',
                  member=None,
+                 source=None,
                  linked_import_task=None):  # if book from import
 
         _l.info('TransactionTypeProcess')
@@ -173,6 +174,7 @@ class TransactionTypeProcess(object):
         self.next_transaction_order = transaction_order_gen or self._next_transaction_order_default
 
         self.uniqueness_reaction = uniqueness_reaction
+        self.source = source # JSON object that contains source dictonary from broker
 
         self.uniqueness_status = None
 
@@ -2381,6 +2383,9 @@ class TransactionTypeProcess(object):
         _l.debug("complex_transaction.date %s" % self.complex_transaction.date)
         _l.debug("complex_transaction.code %s" % self.complex_transaction.code)
         _l.debug("complex_transaction.status %s" % self.complex_transaction.status)
+
+        if self.source:
+            self.complex_transaction.source = self.source
 
         self.complex_transaction.save()
 
