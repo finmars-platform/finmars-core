@@ -692,3 +692,5 @@ def collect_widget_stats(master_user, member, date_from, date_to, dates, segment
         collect_stats.apply(kwargs={'task_id': task.id})
     else:
         transaction.on_commit(lambda: collect_stats.apply_async(kwargs={'task_id': task.id}))
+
+    return task

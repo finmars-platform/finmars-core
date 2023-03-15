@@ -539,12 +539,12 @@ class CollectBalanceHistoryViewSet(AbstractViewSet):
             raise ValidationError("Date range exceeded max limit of 365 days")
 
         task = collect_balance_history(request.user.master_user,
-                                request.user.member,
-                                date_from,
-                                date_to,
-                                dates,
-                                segmentation_type, portfolio_id, report_currency_id,
-                                cost_method_id, pricing_policy_id)
+                                       request.user.member,
+                                       date_from,
+                                       date_to,
+                                       dates,
+                                       segmentation_type, portfolio_id, report_currency_id,
+                                       cost_method_id, pricing_policy_id)
 
         return Response({
             'task_id': task.id
@@ -608,17 +608,18 @@ class CollectPlHistoryViewSet(AbstractViewSet):
             raise ValidationError("Date range exceeded max limit of 365 days")
 
         task = collect_pl_history(request.user.master_user,
-                           request.user.member,
-                           date_from,
-                           date_to,
-                           dates,
-                           segmentation_type,
-                           portfolio_id, report_currency_id, cost_method_id,
-                           pricing_policy_id)
+                                  request.user.member,
+                                  date_from,
+                                  date_to,
+                                  dates,
+                                  segmentation_type,
+                                  portfolio_id, report_currency_id, cost_method_id,
+                                  pricing_policy_id)
 
         return Response({
             'task_id': task.id
         })
+
 
 class CollectStatsViewSet(AbstractViewSet):
     serializer_class = CollectStatsSerializer
@@ -657,14 +658,14 @@ class CollectStatsViewSet(AbstractViewSet):
         if len(dates) > 365:
             raise ValidationError("Date range exceeded max limit of 365 days")
 
-        collect_widget_stats(request.user.master_user,
-                             request.user.member,
-                             date_from,
-                             date_to,
-                             dates,
-                             segmentation_type,
-                             portfolio_id, benchmark)
+        task = collect_widget_stats(request.user.master_user,
+                                    request.user.member,
+                                    date_from,
+                                    date_to,
+                                    dates,
+                                    segmentation_type,
+                                    portfolio_id, benchmark)
 
         return Response({
-            'status': 'ok'
+            'task_id': task.id
         })
