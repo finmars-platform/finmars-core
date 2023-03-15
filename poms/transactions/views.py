@@ -1555,7 +1555,12 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                 complex_transaction.is_deleted = False
                 complex_transaction.save()
 
+            for transaction in complex_transaction.transactions.all():
+                transaction.is_deleted = False
+                transaction.save()
+
         return Response({'message': 'ok'})
+
 
 class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = get_complex_transaction_queryset(select_related=False, transactions=True)

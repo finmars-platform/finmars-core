@@ -1517,6 +1517,10 @@ class ComplexTransaction(DataTimeStampedModel):
 
             fields_to_update = ['is_deleted', 'modified']
 
+            for transaction in self.transactions.all():
+                transaction.is_deleted = True
+                transaction.save()
+
             from poms.common import formula
 
             if hasattr(self, 'transaction_unique_code'):
@@ -1613,6 +1617,7 @@ class Transaction(models.Model):
 
     # is_locked = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is locked'))
     is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is canceled'))
+    is_deleted = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is deleted'))
 
     error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=gettext_lazy('error code'))
 
