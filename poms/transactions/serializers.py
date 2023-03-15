@@ -3512,6 +3512,8 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
 
 class ComplexTransactionViewOnlyComplexTransactionSerializer(serializers.ModelSerializer):
 
+    source = serializers.JSONField(read_only=True)
+
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionViewOnlyComplexTransactionSerializer, self).__init__(*args, **kwargs)
 
@@ -3549,7 +3551,7 @@ class ComplexTransactionViewOnlyComplexTransactionSerializer(serializers.ModelSe
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
             'object_permissions',
 
-            'execution_log'
+            'execution_log', 'source'
 
         ]
 
