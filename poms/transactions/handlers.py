@@ -2259,9 +2259,10 @@ class TransactionTypeProcess(object):
 
                     _l.info("TransactionTypeProcess.run_procedures_after_book. recalculating from %s" % date_from)
 
-                    calculate_portfolio_register_record.apply_async(link=[
-                        calculate_portfolio_register_price_history.s(date_from=date_from)
-                    ])
+                    # TODO trigger recalc after manual book properly
+                    # calculate_portfolio_register_record.apply_async(link=[
+                    #     calculate_portfolio_register_price_history.s(date_from=date_from)
+                    # ])
 
         except Exception as e:
             _l.error("TransactionTypeProcess.run_procedures_after_book e %s" % e)

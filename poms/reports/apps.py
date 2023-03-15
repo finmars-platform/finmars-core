@@ -100,7 +100,7 @@ class ReportsConfig(AppConfig):
                              else 1
                              end as ttype
                         FROM transactions_transaction
-                        WHERE transaction_class_id in (1,2,4,14) and NOT is_canceled AND NOT tc.is_deleted
+                        WHERE transaction_class_id in (1,2,4,14) and NOT is_canceled AND NOT is_deleted
                         
                         UNION ALL
                         
@@ -155,7 +155,7 @@ class ReportsConfig(AppConfig):
                             else 1
                             end as ttype
                         from transactions_transaction
-                        WHERE transaction_class_id in (6) and NOT is_canceled AND NOT tc.is_deleted
+                        WHERE transaction_class_id in (6) and NOT is_canceled AND NOT is_deleted
                         
                         UNION ALL
                         
@@ -210,7 +210,7 @@ class ReportsConfig(AppConfig):
                             else 1
                             end as ttype
                         from transactions_transaction 
-                        WHERE transaction_class_id in (6) and NOT is_canceled AND NOT tc.is_deleted;            
+                        WHERE transaction_class_id in (6) and NOT is_canceled AND NOT is_deleted;            
                 """
 
                 cursor.execute(query)
