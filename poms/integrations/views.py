@@ -1031,13 +1031,13 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
 
         _l.info('celery_task %s created ' % celery_task.pk)
 
-        import_instance = transaction_import.apply(kwargs={"task_id": celery_task.pk})
+        task_result = transaction_import.apply(kwargs={"task_id": celery_task.pk})
 
         result = []
         error_message = None
 
         try:
-            result = import_instance.result.task.result_object
+            result = task_result['result_object']
         except Exception as e:
             error_message = str(e)
 

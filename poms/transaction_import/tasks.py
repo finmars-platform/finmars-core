@@ -12,9 +12,6 @@ _l = logging.getLogger('poms.transaction_import')
 @shared_task(name='transaction_import.transaction_import', bind=True)
 def transaction_import(self, task_id, procedure_instance_id=None):
 
-
-
-
     try:
 
         celery_task = CeleryTask.objects.get(pk=task_id)
@@ -79,7 +76,8 @@ def transaction_import(self, task_id, procedure_instance_id=None):
             )
             instance.process()
 
-            return {"message": "import finished"}
+            return {"message": "import finished", "result_object": instance.task.result_object}
+            # return instance
 
         except Exception as e:
 
