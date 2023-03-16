@@ -1037,7 +1037,9 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         error_message = None
 
         try:
-            result = task_result['result_object']
+            task = CeleryTask.objects.get(id=celery_task.id)
+
+            result = task.result_object
         except Exception as e:
             error_message = str(e)
 
