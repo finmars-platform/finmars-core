@@ -3378,12 +3378,6 @@ class PLReportBuilderSql:
                     result_item_closed['net_cost_price'] = item['net_cost_price']
                     result_item_closed['net_cost_price_loc'] = item['net_cost_price_loc']
 
-                    result_item_closed['position_return'] = item['position_return']
-                    result_item_closed['position_return_loc'] = item['position_return_loc']
-
-                    result_item_closed['net_position_return'] = item['net_position_return']
-                    result_item_closed['net_position_return_loc'] = item['net_position_return_loc']
-
                     result_item_closed['position_size'] = item['position_size']
                     result_item_closed['mismatch'] = item['mismatch']
 
