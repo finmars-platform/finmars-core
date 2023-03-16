@@ -1003,7 +1003,7 @@ class PLReportBuilderSql:
                     (principal_closed - principal_fixed_closed)     as principal_fx_closed,
                     (carry_closed - carry_fixed_closed)             as carry_fx_closed,
                     (overheads_closed - overheads_fixed_closed)     as overheads_fx_closed,
-                    (0)                                             as total_fx_closed, -- TODO calculate column
+                    ((principal_closed - principal_fixed_closed) + (carry_closed - carry_fixed_closed) + (overheads_closed - overheads_fixed_closed)) as total_fx_closed,
                     
                     principal_fixed_opened,
                     carry_fixed_opened,
@@ -3468,20 +3468,20 @@ class PLReportBuilderSql:
 
                     # loc
 
-                    result_item_closed["principal_loc"] = item["principal_opened_loc"]
-                    result_item_closed["carry_loc"] = item["carry_opened_loc"]
-                    result_item_closed["overheads_loc"] = item["overheads_opened_loc"]
-                    result_item_closed["total_loc"] = item["total_opened_loc"]
+                    result_item_closed["principal_loc"] = item["principal_closed_loc"]
+                    result_item_closed["carry_loc"] = item["carry_closed_loc"]
+                    result_item_closed["overheads_loc"] = item["overheads_closed_loc"]
+                    result_item_closed["total_loc"] = item["total_closed_loc"]
 
-                    result_item_closed["principal_fx_loc"] = item["principal_fx_opened_loc"]
-                    result_item_closed["carry_fx_loc"] = item["carry_fx_opened_loc"]
-                    result_item_closed["overheads_fx_loc"] = item["overheads_fx_opened_loc"]
-                    result_item_closed["total_fx_loc"] = item["total_fx_opened_loc"]
+                    result_item_closed["principal_fx_loc"] = item["principal_fx_closed_loc"]
+                    result_item_closed["carry_fx_loc"] = item["carry_fx_closed_loc"]
+                    result_item_closed["overheads_fx_loc"] = item["overheads_fx_closed_loc"]
+                    result_item_closed["total_fx_loc"] = item["total_fx_closed_loc"]
 
-                    result_item_closed["principal_fixed_loc"] = item["principal_fixed_opened_loc"]
-                    result_item_closed["carry_fixed_loc"] = item["carry_fixed_opened_loc"]
-                    result_item_closed["overheads_fixed_loc"] = item["overheads_fixed_opened_loc"]
-                    result_item_closed["total_fixed_loc"] = item["total_fixed_opened_loc"]
+                    result_item_closed["principal_fixed_loc"] = item["principal_fixed_closed_loc"]
+                    result_item_closed["carry_fixed_loc"] = item["carry_fixed_closed_loc"]
+                    result_item_closed["overheads_fixed_loc"] = item["overheads_fixed_closed_loc"]
+                    result_item_closed["total_fixed_loc"] = item["total_fixed_closed_loc"]
 
                     result.append(result_item_closed)
 
