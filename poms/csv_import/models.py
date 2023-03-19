@@ -236,17 +236,17 @@ class SimpleImportProcessItem(object):
                  file_inputs=None,
                  raw_inputs=None,
                  inputs=None,
-                 transaction_inputs=None,
+                 final_inputs=None,
                  row_number=None):
         self.file_inputs = file_inputs
         self.raw_inputs = raw_inputs
         self.inputs = inputs
-        self.transaction_inputs = transaction_inputs
+        self.final_inputs = final_inputs
         self.row_number = row_number
 
         self.status = status
         self.error_message = error_message
         self.message = message
-        self.processed_rule_scenarios = processed_rule_scenarios
+
         self.imported_items = imported_items
 

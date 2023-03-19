@@ -1262,6 +1262,39 @@ class SimpleImportProcess(object):
 
         return result
 
+    def get_final_inputs(self, item):
+
+        result = {}
+
+        for entity_field in self.scheme.entity_fields.all():
+
+            try:
+
+                value = formula.safe_eval(entity_field.expression, names=item.inputs,
+                                          context=self.context)
+
+                if entity_field.system_property_key:
+
+                    result[entity_field.system_property_key] = value
+
+                elif entity_field.attribute_user_code:
+
+                    result[entity_field.attribute_user_code] = value
+
+            except Exception as e:
+
+                _l.error('get_final_inputs.e %s' % e)
+
+                if entity_field.system_property_key:
+                    result[entity_field.system_property_key] = None
+
+                elif entity_field.attribute_user_code:
+
+                    result[entity_field.attribute_user_code] = None
+
+
+        return result
+
     def import_item(self, item):
 
         content_type_key = self.scheme.content_type.app_label + '.' + self.scheme.content_type.model
@@ -1270,10 +1303,13 @@ class SimpleImportProcess(object):
 
         try:
 
-            result_item = copy.copy(item.inputs)
-            result_item['attributes'] = []
+            item.final_inputs = self.get_final_inputs(item)
 
+            result_item = copy.copy(item.final_inputs)
             result_item['attributes'] = self.fill_result_item_with_attributes(item)
+
+
+            _l.info('final_inputs %s' % item.final_inputs)
 
             serializer(data=result_item, context=self.context)
             serializer.is_valid(raise_exception=True)
@@ -1281,7 +1317,7 @@ class SimpleImportProcess(object):
 
             if self.scheme.item_post_process_script:
                 # POST SUCCESS SCRIPT
-                formula.safe_eval(self.scheme.item_post_process_script, names=item.inputs,
+                formula.safe_eval(self.scheme.item_post_process_script, names=item.final_inputs,
                                   context=self.context)
 
             item.status = 'success'
@@ -1291,6 +1327,7 @@ class SimpleImportProcess(object):
                 id=instance.id,
                 user_code=str(instance)
             )
+
 
             item.imported_items.append(trn)
 
@@ -1313,6 +1350,11 @@ class SimpleImportProcess(object):
                         instance = model.objects.get(master_user=self.master_user,
                                                      user_code=item.inputs['user_code'])
 
+                    item.final_inputs = self.get_final_inputs(item)
+
+                    result_item = copy.copy(item.final_inputs)
+                    result_item['attributes'] = self.fill_result_item_with_attributes(item)
+
                     serializer = serializer(data=result_item,
                                             instance=instance,
                                             context=self.context)
@@ -1321,7 +1363,7 @@ class SimpleImportProcess(object):
 
                     if self.scheme.item_post_process_script:
                         # POST SUCCESS SCRIPT
-                        formula.safe_eval(self.scheme.item_post_process_script, names=item.inputs,
+                        formula.safe_eval(self.scheme.item_post_process_script, names=item.final_inputs,
                                           context=self.context)
 
                     item.status = 'success'

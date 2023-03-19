@@ -476,6 +476,7 @@ class SimpleImportProcessItemSerializer(serializers.Serializer):
     raw_inputs = serializers.JSONField(allow_null=False)
     conversion_inputs = serializers.JSONField(allow_null=False)
     inputs = serializers.JSONField(allow_null=False)
+    final_inputs = serializers.JSONField(allow_null=False)
 
     imported_items = SimpleImportImportedItemSerializer(many=True)
 
