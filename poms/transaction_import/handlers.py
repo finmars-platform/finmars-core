@@ -806,7 +806,7 @@ class TransactionImportProcess(object):
                     # expr = Expression.parseString("a == 1 and b == 2")
                     expr = Expression.parseString(self.scheme.filter_expression)
 
-                    if expr(item.result_inputs):
+                    if expr(item.inputs):
                         # filter passed
                         pass
                     else:

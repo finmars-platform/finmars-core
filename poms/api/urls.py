@@ -432,10 +432,8 @@ router.register(r'utils/recycle-bin', api.RecycleBinViewSet, 'recycle-bin')
 router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
 router.register(r'import/csv/scheme-light', csv_import.SchemeLightViewSet, 'import_csv_scheme_light')
 router.register(r'import/csv', csv_import.CsvDataImportViewSet, 'import_csv')
-# DEPRECATED
-# router.register(r'import/unified_csv', csv_import.UnifiedCsvDataImportViewSet, 'unified_csv')
 
-router.register(r'import/csv-validate', csv_import.CsvDataImportValidateViewSet, 'import_csv-validate')
+# router.register(r'import/csv-validate', csv_import.CsvDataImportValidateViewSet, 'import_csv-validate')
 
 router.register(r'import/complex/scheme', complex_import.ComplexImportSchemeViewSet, 'import_complex_scheme')
 router.register(r'import/complex', complex_import.ComplexImportViewSet, 'import_complex')
@@ -551,8 +549,8 @@ urlpatterns = [
     re_path(r'internal/brokers/fx-cbonds/callback', csrf_exempt(pricing.PricingBrokerFxCbondsHandler.as_view())),
     re_path(r'internal/brokers/fixer/callback', csrf_exempt(pricing.PricingBrokerFixerHandler.as_view())),
     re_path(r'internal/brokers/alphav/callback', csrf_exempt(pricing.PricingBrokerAlphavHandler.as_view())),
-    re_path(r'internal/data/transactions/callback',
-            csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),
+    # re_path(r'internal/data/transactions/callback',
+    #         csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),
     re_path(r'internal/data/transactions/json', csrf_exempt(integrations.TransactionImportJson.as_view())),
     re_path(r'integrations/superset/get-security-token', csrf_exempt(integrations.SupersetGetSecurityToken.as_view())),
     re_path(r'instruments/instrument-external-api', csrf_exempt(instruments.InstrumentExternalAPIViewSet.as_view())),

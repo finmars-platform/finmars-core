@@ -26,7 +26,6 @@ from poms.common.utils import datetime_now
 from poms.common.views import AbstractViewSet, AbstractModelViewSet, AbstractReadOnlyModelViewSet, \
     AbstractClassModelViewSet, AbstractAsyncViewSet, AbstractApiView
 from poms.counterparties.models import Counterparty, Responsible
-from poms.csv_import.tasks import data_csv_file_import_by_procedure
 from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentType, AccrualCalculationModel, Periodicity, Instrument, PaymentSizeDetail, \
     PricingPolicy, PricingCondition
@@ -1433,92 +1432,93 @@ class TransactionImportJson(APIView):
         complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
 
 
-class TransactionFileResultUploadHandler(APIView):
-    permission_classes = []
-
-    def get(self, request):
-
-        return Response({'status': 'ok'})
-
-    def post(self, request):
-
-        # _l.debug('request.data %s' % request.data)
-
-        _l.debug('request.data %s' % request.data)
-
-        procedure_id = request.data['id']
-
-        master_user = MasterUser.objects.get(token=request.data['user']['token'])
-
-        _l.debug('master_user %s' % master_user)
-
-        try:
-
-            procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
-
-            try:
-
-                item = TransactionFileResult.objects.get(master_user=master_user,
-                                                         provider__user_code=request.data['provider'],
-                                                         procedure_instance=procedure_instance)
-
-                if (request.data['files'] and len(request.data['files'])):
-
-                    with transaction.atomic():
-
-                        procedure_instance.symmetric_key = request.data['files'][0]['symmetric_key']
-                        procedure_instance.save()
-
-                        item.file_path = request.data['files'][0]["path"]
-
-                        item.save()
-
-                        _l.debug("Transaction File saved successfuly")
-
-                        procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
-                        procedure_instance.save()
-
-                    if procedure_instance.schedule_instance:
-                        procedure_instance.schedule_instance.run_next_procedure()
-
-                    if procedure_instance.procedure.scheme_type == 'transaction_import':
-                        complex_transaction_csv_file_import_by_procedure.apply_async(
-                            kwargs={'procedure_instance_id': procedure_instance.id,
-                                    'transaction_file_result_id': item.id,
-                                    })
-
-                    if procedure_instance.procedure.scheme_type == 'simple_import':
-                        data_csv_file_import_by_procedure.apply_async(
-                            kwargs={'procedure_instance_id': procedure_instance.id,
-                                    'transaction_file_result_id': item.id,
-                                    })
-
-                else:
-                    _l.debug("No files found")
-
-                    text = "Data File Procedure %s. Files not found" % (
-                        procedure_instance.procedure.user_code)
-
-                    send_system_message(master_user=procedure_instance.master_user,
-                                        performed_by='System',
-                                        description=text)
-
-                    procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
-                    procedure_instance.save()
-
-                return Response({'status': 'ok'})
-
-            except Exception as e:
-
-                _l.debug("Transaction File error happened %s " % e)
-
-                return Response({'status': 'error'})
-
-        except RequestDataFileProcedureInstance.DoesNotExist:
-
-            _l.debug("Does not exist? RequestDataFileProcedureInstance %s" % procedure_id)
-
-            return Response({'status': '404'})  # TODO handle 404 properly
+#Deprecated
+# class TransactionFileResultUploadHandler(APIView):
+#     permission_classes = []
+#
+#     def get(self, request):
+#
+#         return Response({'status': 'ok'})
+#
+#     def post(self, request):
+#
+#         # _l.debug('request.data %s' % request.data)
+#
+#         _l.debug('request.data %s' % request.data)
+#
+#         procedure_id = request.data['id']
+#
+#         master_user = MasterUser.objects.get(token=request.data['user']['token'])
+#
+#         _l.debug('master_user %s' % master_user)
+#
+#         try:
+#
+#             procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
+#
+#             try:
+#
+#                 item = TransactionFileResult.objects.get(master_user=master_user,
+#                                                          provider__user_code=request.data['provider'],
+#                                                          procedure_instance=procedure_instance)
+#
+#                 if (request.data['files'] and len(request.data['files'])):
+#
+#                     with transaction.atomic():
+#
+#                         procedure_instance.symmetric_key = request.data['files'][0]['symmetric_key']
+#                         procedure_instance.save()
+#
+#                         item.file_path = request.data['files'][0]["path"]
+#
+#                         item.save()
+#
+#                         _l.debug("Transaction File saved successfuly")
+#
+#                         procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
+#                         procedure_instance.save()
+#
+#                     if procedure_instance.schedule_instance:
+#                         procedure_instance.schedule_instance.run_next_procedure()
+#
+#                     if procedure_instance.procedure.scheme_type == 'transaction_import':
+#                         complex_transaction_csv_file_import_by_procedure.apply_async(
+#                             kwargs={'procedure_instance_id': procedure_instance.id,
+#                                     'transaction_file_result_id': item.id,
+#                                     })
+#
+#                     if procedure_instance.procedure.scheme_type == 'simple_import':
+#                         data_csv_file_import_by_procedure.apply_async(
+#                             kwargs={'procedure_instance_id': procedure_instance.id,
+#                                     'transaction_file_result_id': item.id,
+#                                     })
+#
+#                 else:
+#                     _l.debug("No files found")
+#
+#                     text = "Data File Procedure %s. Files not found" % (
+#                         procedure_instance.procedure.user_code)
+#
+#                     send_system_message(master_user=procedure_instance.master_user,
+#                                         performed_by='System',
+#                                         description=text)
+#
+#                     procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
+#                     procedure_instance.save()
+#
+#                 return Response({'status': 'ok'})
+#
+#             except Exception as e:
+#
+#                 _l.debug("Transaction File error happened %s " % e)
+#
+#                 return Response({'status': 'error'})
+#
+#         except RequestDataFileProcedureInstance.DoesNotExist:
+#
+#             _l.debug("Does not exist? RequestDataFileProcedureInstance %s" % procedure_id)
+#
+#             return Response({'status': '404'})  # TODO handle 404 properly
 
 
 class DataProviderViewSet(AbstractReadOnlyModelViewSet):

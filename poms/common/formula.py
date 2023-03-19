@@ -2984,7 +2984,7 @@ def _run_data_import(evaluator, filepath, scheme):
         from poms.users.utils import get_member_from_context
         from poms.csv_import.models import CsvImportScheme
         from poms.celery_tasks.models import CeleryTask
-        from poms.csv_import.tasks import data_csv_file_import
+        from poms.csv_import.tasks import simple_import
 
         context = evaluator.context
 
@@ -3008,9 +3008,9 @@ def _run_data_import(evaluator, filepath, scheme):
         celery_task.options_object = options_object
         celery_task.save()
 
-        data_csv_file_import.apply(kwargs={'task_id': celery_task.id})
+        simple_import.apply(kwargs={'task_id': celery_task.id})
 
-        return None
+        return {'task_id': celery_task.id}
 
     except Exception as e:
         _l.error("_run_data_import. general exception %s" % e)
