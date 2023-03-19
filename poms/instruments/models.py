@@ -4,6 +4,7 @@ import json
 import logging
 import traceback
 from datetime import date, timedelta, datetime
+from math import isnan
 
 from dateutil import relativedelta, rrule
 from django.contrib.contenttypes.fields import GenericRelation
@@ -15,7 +16,6 @@ from django.db import models
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
-from math import isnan
 
 from poms.common import formula
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
@@ -843,7 +843,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                                                           verbose_name=gettext_lazy('position reporting'))
 
     country = models.ForeignKey(Country, null=True, blank=True,
-                                verbose_name=gettext_lazy('country'),
+                                verbose_name=gettext_lazy('Country'),
                                 on_delete=models.SET_NULL)
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
@@ -1323,8 +1323,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
         content_type = ContentType.objects.get(app_label="instruments", model='instrument')
         instrument_pricing_policies = InstrumentPricingPolicy.objects.filter(instrument=self)
-
-
 
         for ipp in instrument_pricing_policies:
 

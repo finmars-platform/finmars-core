@@ -759,7 +759,7 @@ def process_csv_file(master_user,
                             if get_field_type(entity_field) == 'dynamic_attribute':
 
                                 executed_attr = {}
-                                executed_attr['dynamic_attribute_id'] = entity_field.dynamic_attribute_id
+                                executed_attr['attribute_user_code'] = entity_field.attribute_user_code
 
                                 executed_expression = None
 
@@ -780,7 +780,7 @@ def process_csv_file(master_user,
 
                                     executed_expressions.append(gettext_lazy('Invalid expression'))
 
-                                attr_type = GenericAttributeType.objects.get(pk=executed_attr['dynamic_attribute_id'])
+                                attr_type = GenericAttributeType.objects.get(user_code=executed_attr['attribute_user_code'])
 
                                 if attr_type.value_type == 30:
 
@@ -947,7 +947,7 @@ class ValidateHandler:
 
             try:
 
-                attr_type = GenericAttributeType.objects.get(pk=result_attr['dynamic_attribute_id'])
+                attr_type = GenericAttributeType.objects.get(user_code=result_attr['attribute_user_code'])
 
                 attr_type_user_code = attr_type.user_code
 
@@ -1225,7 +1225,7 @@ class ImportHandler:
 
         for result_attr in attributes:
 
-            attr_type = GenericAttributeType.objects.get(pk=result_attr['dynamic_attribute_id'])
+            attr_type = GenericAttributeType.objects.get(user_code=result_attr['attribute_user_code'])
 
             if attr_type:
                 attribute = GenericAttribute.objects.filter(object_id=instance.pk, attribute_type=attr_type)
@@ -1236,7 +1236,7 @@ class ImportHandler:
 
         for result_attr in attributes:
 
-            attr_type = GenericAttributeType.objects.get(pk=result_attr['dynamic_attribute_id'])
+            attr_type = GenericAttributeType.objects.get(user_code=result_attr['attribute_user_code'])
 
             if attr_type:
 
@@ -1521,6 +1521,8 @@ class ImportHandler:
                     self.add_instrument_type_pricing_policies(instance, scheme, member, master_user)
 
                 instance.save()
+
+
 
         except Exception as e:
 

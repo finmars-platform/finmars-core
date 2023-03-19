@@ -58,6 +58,9 @@ class CsvImportScheme(NamedModel, DataTimeStampedModel):
     spreadsheet_active_tab_name = models.CharField(max_length=255, default='', blank=True, null=True)
     column_matcher = models.CharField(max_length=255, choices=COLUMN_MATCHER_CHOICES, default='index')
 
+    item_post_process_script = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
+                                                verbose_name=gettext_lazy('item post process script'))
+
     class Meta:
         unique_together = (
             ('content_type', 'user_code', 'master_user')
@@ -115,7 +118,7 @@ class EntityField(models.Model):
     order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
 
     system_property_key = models.CharField(max_length=255, null=True)
-    dynamic_attribute_id = models.IntegerField(null=True)
+    attribute_user_code = models.CharField(max_length=255, null=True)
 
     scheme = models.ForeignKey(CsvImportScheme, related_name='entity_fields', on_delete=models.CASCADE)
 

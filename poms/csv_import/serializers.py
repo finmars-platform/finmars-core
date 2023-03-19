@@ -11,6 +11,7 @@ from poms.users.fields import MasterUserField, HiddenMemberField
 from poms_app import settings
 from .fields import CsvImportContentTypeField, CsvImportSchemeField
 from .models import CsvField, EntityField, CsvImportScheme, CsvImportSchemeCalculatedInput
+from ..obj_attrs.models import GenericAttributeType
 
 storage = get_storage()
 
@@ -67,7 +68,7 @@ class CsvFieldSerializer(serializers.ModelSerializer):
 class EntityFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = EntityField
-        fields = ('id', 'name', 'order', 'expression', 'system_property_key', 'dynamic_attribute_id', 'use_default')
+        fields = ('id', 'name', 'order', 'expression', 'system_property_key', 'attribute_user_code', 'use_default')
         extra_kwargs = {
             'id': {
                 'read_only': True,
@@ -99,6 +100,8 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
     delimiter = serializers.CharField(max_length=3, required=False, initial=',', default=',')
     column_matcher = serializers.CharField(max_length=255, required=False, initial='index', default='index')
 
+    item_post_process_script = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
+
     class Meta:
 
         model = CsvImportScheme
@@ -109,7 +112,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
                   'spreadsheet_start_cell', 'spreadsheet_active_tab_name',
 
                   'mode', 'delimiter', 'error_handler', 'missing_data_handler', 'classifier_handler',
-                  'column_matcher', 'instrument_reference_column'
+                  'column_matcher', 'instrument_reference_column', 'item_post_process_script'
 
                   )
 
@@ -207,7 +210,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
 
     def set_entity_fields_mapping(self, scheme, entity_fields):
 
-        EntityField.objects.filter(scheme=scheme, dynamic_attribute_id__isnull=True).delete()
+        EntityField.objects.filter(scheme=scheme, attribute_user_code__isnull=True).delete()
 
         self.create_entity_fields_if_not_exist(scheme)
 
@@ -232,15 +235,45 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
                     # raise ValidationError("Entity with id {} is not exist ".format(entity_field.get(
                     #     'system_property_key')))
 
+    def create_user_attributes_if_not_exist(self, scheme):
+
+        attribute_types = GenericAttributeType.objects.filter(
+            content_type=scheme.content_type
+        )
+
+        ids = set()
+
+        for attribute_type in attribute_types:
+
+            try:
+
+                o = EntityField.objects.get(scheme=scheme,
+                                            attribute_user_code=attribute_type.user_code)
+
+                ids.add(o.id)
+
+            except EntityField.DoesNotExist:
+
+                o = EntityField.objects.create(scheme=scheme,
+                                               attribute_user_code=attribute_type.user_code,
+                                               name=attribute_type.name,
+                                               expression='')
+
+                ids.add(o.id)
+
+        EntityField.objects.filter(scheme=scheme, attribute_user_code__isnull=False).exclude(id__in=ids).delete()
+
     def set_dynamic_attributes_mapping(self, scheme, entity_fields):
 
-        EntityField.objects.filter(scheme=scheme, dynamic_attribute_id__isnull=False).delete()
+        EntityField.objects.filter(scheme=scheme, attribute_user_code__isnull=False).delete()
+
+        self.create_user_attributes_if_not_exist(scheme)
 
         for entity_field in entity_fields:
 
-            if entity_field.get('dynamic_attribute_id') is not None:
+            if entity_field.get('attribute_user_code') is not None:
                 EntityField.objects.create(scheme=scheme,
-                                           dynamic_attribute_id=entity_field.get('dynamic_attribute_id'),
+                                           attribute_user_code=entity_field.get('attribute_user_code'),
                                            name=entity_field.get('name'),
                                            expression=entity_field.get('expression'))
 
@@ -295,6 +328,8 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
         scheme.name = validated_data.get('name', scheme.name)
         scheme.short_name = validated_data.get('short_name', scheme.short_name)
         scheme.filter_expr = validated_data.get('filter_expr', scheme.filter_expr)
+        scheme.item_post_process_script = validated_data.get('item_post_process_script',
+                                                             scheme.item_post_process_script)
         scheme.spreadsheet_start_cell = validated_data.get('spreadsheet_start_cell', scheme.spreadsheet_start_cell)
         scheme.spreadsheet_active_tab_name = validated_data.get('spreadsheet_active_tab_name',
                                                                 scheme.spreadsheet_active_tab_name)
