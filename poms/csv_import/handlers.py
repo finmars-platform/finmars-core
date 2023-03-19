@@ -12,6 +12,7 @@ from filtration import Expression
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
 
+from poms.accounts.models import AccountType
 from poms.celery_tasks.models import CeleryTask
 from poms.common import formula
 from poms.common.models import ProxyUser, ProxyRequest
@@ -21,7 +22,8 @@ from poms.csv_import.models import CsvImportScheme, SimpleImportResult, ProcessT
 from poms.csv_import.serializers import SimpleImportResultSerializer
 from poms.currencies.models import Currency
 from poms.file_reports.models import FileReport
-from poms.instruments.models import Instrument, PaymentSizeDetail, AccrualCalculationModel, Periodicity, Country
+from poms.instruments.models import Instrument, PaymentSizeDetail, AccrualCalculationModel, Periodicity, Country, \
+    PricingCondition, InstrumentType, PricingPolicy, DailyPricingModel
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.system_messages.handlers import send_system_message
@@ -1262,6 +1264,44 @@ class SimpleImportProcess(object):
 
         return result
 
+    def convert_relation_to_ids(self, item, result_item):
+
+        relation_fields = {
+            'instrument': Instrument,
+            'currency': Currency,
+            'pricing_currency': Currency,
+            'accrued_currency': Currency,
+            'type': AccountType,
+            'pricing_condition': PricingCondition,
+            'instrument_type': InstrumentType,
+            'country': Country,
+            'pricing_policy': PricingPolicy,
+            'payment_size_detail': PaymentSizeDetail,
+            'co_directional_exposure_currency': Currency,
+            'counter_directional_exposure_currency': Currency,
+            'daily_pricing_model': DailyPricingModel
+        }
+
+        for entity_field in self.scheme.entity_fields.all():
+
+            key = entity_field.system_property_key
+
+            if key:
+
+                if key in relation_fields:
+
+                    try:
+                        result_item[key] = relation_fields[key].objects.get(user_code=result_item[key]).id
+                    except Exception as e:
+                        result_item[key] = None
+
+                        if not item.error_message:
+                            item.error_message = ''
+
+                        item.error_message = (item.error_message + '%s: %s, ') % (key, str(e))
+
+        return result_item
+
     def get_final_inputs(self, item):
 
         result = {}
@@ -1285,13 +1325,20 @@ class SimpleImportProcess(object):
 
                 _l.error('get_final_inputs.e %s' % e)
 
+                if not item.error_message:
+                    item.error_message = ''
+
                 if entity_field.system_property_key:
+
+                    item.error_message = (item.error_message + '%s: %s, ') % (entity_field.system_property_key, str(e))
+
                     result[entity_field.system_property_key] = None
 
                 elif entity_field.attribute_user_code:
 
-                    result[entity_field.attribute_user_code] = None
+                    item.error_message = (item.error_message + '%s: %s, ') % (entity_field.attribute_user_code, str(e))
 
+                    result[entity_field.attribute_user_code] = None
 
         return result
 
@@ -1307,7 +1354,7 @@ class SimpleImportProcess(object):
 
             result_item = copy.copy(item.final_inputs)
             result_item['attributes'] = self.fill_result_item_with_attributes(item)
-
+            result_item = self.convert_relation_to_ids(item, result_item)
 
             _l.info('final_inputs %s' % item.final_inputs)
 
@@ -1327,7 +1374,6 @@ class SimpleImportProcess(object):
                 id=instance.id,
                 user_code=str(instance)
             )
-
 
             item.imported_items.append(trn)
 
@@ -1354,6 +1400,7 @@ class SimpleImportProcess(object):
 
                     result_item = copy.copy(item.final_inputs)
                     result_item['attributes'] = self.fill_result_item_with_attributes(item)
+                    result_item = self.convert_relation_to_ids(item, result_item)
 
                     serializer = serializer(data=result_item,
                                             instance=instance,

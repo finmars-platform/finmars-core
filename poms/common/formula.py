@@ -1646,6 +1646,53 @@ def _safe_get_currency(evaluator, currency):
 
     return currency
 
+def _safe_get_account_type(evaluator, account_type):
+
+    from poms.users.utils import get_master_user_from_context, get_member_from_context
+    from poms.accounts.models import AccountType
+
+    if isinstance(account_type, AccountType):
+        return account_type
+
+    context = evaluator.context
+
+    if context is None:
+        raise InvalidExpression('Context must be specified')
+
+    pk = None
+    user_code = None
+
+    if isinstance(account_type, dict):
+        pk = int(account_type['id'])
+
+    elif isinstance(account_type, (int, float)):
+        pk = int(account_type)
+
+    elif isinstance(account_type, str):
+        user_code = account_type
+
+    if id is None and user_code is None:
+        raise ExpressionEvalError('Invalid account type')
+
+    master_user = get_master_user_from_context(context)
+    member = get_member_from_context(context)
+
+    if master_user is None:
+        raise ExpressionEvalError('master user in context does not find')
+
+    account_types_qs = AccountType.objects.filter(master_user=master_user)
+
+    try:
+        if pk is not None:
+            account_type = account_types_qs.get(pk=pk)
+
+        elif user_code is not None:
+            account_type = account_types_qs.get(user_code=user_code)
+
+    except AccountType.DoesNotExist:
+        raise ExpressionEvalError()
+
+    return account_type
 
 def _safe_get_instrument(evaluator, instrument):
     from poms.users.utils import get_master_user_from_context, get_member_from_context
@@ -1721,6 +1768,22 @@ def _get_currency(evaluator, currency):
 
 
 _get_currency.evaluator = True
+
+
+def _get_account_type(evaluator, account_type):
+    try:
+
+        account_type = _safe_get_account_type(evaluator, account_type)
+
+        context = evaluator.context
+
+        from poms.accounts.serializers import AccountTypeSerializer
+        return AccountTypeSerializer(instance=account_type, context=context).data
+    except Exception as e:
+        return None
+
+
+_get_account_type.evaluator = True
 
 
 def _get_instrument(evaluator, instrument):
@@ -3404,6 +3467,10 @@ FUNCTIONS = [
 
     SimpleEval2Def('get_instrument', _get_instrument),
     SimpleEval2Def('get_currency', _get_currency),
+
+    SimpleEval2Def('get_account_type', _get_account_type),
+
+
 
     SimpleEval2Def('get_currency_field', _get_currency_field),
     SimpleEval2Def('set_currency_field', _set_currency_field),
