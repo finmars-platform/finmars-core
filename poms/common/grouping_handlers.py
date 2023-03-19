@@ -533,8 +533,8 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                         if 'disabled' not in ev_options['entity_filters']:
                             options['is_enabled'] = True
 
-                    if content_type.model in ['complextransaction']:
-                        options['is_deleted'] = False
+        if content_type.model in ['complextransaction']:
+            options['is_deleted'] = False
 
         # _l.info('options %s' % options)
 
