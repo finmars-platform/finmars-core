@@ -1302,6 +1302,15 @@ class SimpleImportProcess(object):
 
         return result_item
 
+    def remove_nullable_attributes(self, result_item):
+
+        for key, value in result_item.items():
+
+            if value == None:
+                del result_item[key]
+
+        return result_item
+
     def get_final_inputs(self, item):
 
         result = {}
@@ -1355,6 +1364,7 @@ class SimpleImportProcess(object):
             result_item = copy.copy(item.final_inputs)
             result_item['attributes'] = self.fill_result_item_with_attributes(item)
             result_item = self.convert_relation_to_ids(item, result_item)
+            result_item = self.remove_nullable_attributes(result_item)
 
             _l.info('final_inputs %s' % item.final_inputs)
 
@@ -1401,6 +1411,7 @@ class SimpleImportProcess(object):
                     result_item = copy.copy(item.final_inputs)
                     result_item['attributes'] = self.fill_result_item_with_attributes(item)
                     result_item = self.convert_relation_to_ids(item, result_item)
+                    result_item = self.remove_nullable_attributes(result_item)
 
                     serializer = serializer(data=result_item,
                                             instance=instance,
