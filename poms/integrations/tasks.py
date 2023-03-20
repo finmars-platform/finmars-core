@@ -48,7 +48,7 @@ from poms.file_reports.models import FileReport
 from poms.instruments.models import Instrument, DailyPricingModel, PriceHistory, InstrumentType, \
     PaymentSizeDetail, Periodicity, AccrualCalculationModel, PricingCondition
 from poms.integrations.models import ImportConfig
-from poms.integrations.models import Task, PriceDownloadScheme, InstrumentDownloadScheme, \
+from poms.integrations.models import PriceDownloadScheme, InstrumentDownloadScheme, \
     AccountMapping, CurrencyMapping, PortfolioMapping, CounterpartyMapping, InstrumentTypeMapping, ResponsibleMapping, \
     Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, \
     PriceDownloadSchemeMapping, InstrumentMapping, PeriodicityMapping, AccrualCalculationModelMapping, \
@@ -148,7 +148,7 @@ def auth_log_statistics():
 
 @shared_task(name='integrations.download_instrument', bind=True, ignore_result=False)
 def download_instrument_async(self, task_id=None):
-    task = Task.objects.get(pk=task_id)
+    task = CeleryTask.objects.get(pk=task_id)
     _l.debug('download_instrument_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     task.add_celery_task_id(self.request.id)
@@ -157,17 +157,17 @@ def download_instrument_async(self, task_id=None):
         provider = get_provider(task.master_user, task.provider_id)
     except Exception:
         _l.debug('provider load error', exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         raise
 
     if provider is None:
         _l.debug('provider not found')
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
-    if task.status not in [Task.STATUS_PENDING, Task.STATUS_WAIT_RESPONSE]:
+    if task.status not in [CeleryTask.STATUS_PENDING, CeleryTask.STATUS_WAIT_RESPONSE]:
         _l.debug('invalid task status')
         return
     options = task.options_object
@@ -176,13 +176,13 @@ def download_instrument_async(self, task_id=None):
         result, is_ready = provider.download_instrument(options)
     except Exception:
         _l.error('provider processing error', exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
     else:
         if is_ready:
-            task.status = Task.STATUS_DONE
+            task.status = CeleryTask.STATUS_DONE
             task.result_object = result
         else:
-            task.status = Task.STATUS_WAIT_RESPONSE
+            task.status = CeleryTask.STATUS_WAIT_RESPONSE
 
     response_id = options.get('response_id', None)
     if response_id:
@@ -191,14 +191,14 @@ def download_instrument_async(self, task_id=None):
     task.options_object = options
     task.save()
 
-    if task.status == Task.STATUS_WAIT_RESPONSE:
+    if task.status == CeleryTask.STATUS_WAIT_RESPONSE:
         if self.request.is_eager:
             time.sleep(provider.get_retry_delay())
         try:
             self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries())
             # self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries(), throw=False)
         except MaxRetriesExceededError:
-            task.status = Task.STATUS_TIMEOUT
+            task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
         return
 
@@ -221,12 +221,12 @@ def download_instrument(instrument_code=None, instrument_download_scheme=None, m
             'instrument_code': instrument_code,
         }
         with transaction.atomic():
-            task = Task(
+            task = CeleryTask(
                 master_user=master_user,
                 member=member,
                 provider=instrument_download_scheme.provider,
-                status=Task.STATUS_PENDING,
-                action=Task.ACTION_INSTRUMENT
+                status=CeleryTask.STATUS_PENDING,
+                action=CeleryTask.ACTION_INSTRUMENT
             )
             task.options_object = options
             task.save()
@@ -235,7 +235,7 @@ def download_instrument(instrument_code=None, instrument_download_scheme=None, m
             transaction.on_commit(lambda: download_instrument_async.apply_async(kwargs={'task_id': task.id}))
         return task, None, None
     else:
-        if task.status == Task.STATUS_DONE:
+        if task.status == CeleryTask.STATUS_DONE:
             provider = get_provider(task.master_user, task.provider_id)
 
             options = task.options_object
@@ -557,11 +557,11 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
         task = None
 
         with transaction.atomic():
-            task = Task(
+            task = CeleryTask(
                 master_user=master_user,
                 member=member,
-                status=Task.STATUS_PENDING,
-                action=Task.ACTION_INSTRUMENT
+                status=CeleryTask.STATUS_PENDING,
+                action=CeleryTask.ACTION_INSTRUMENT
             )
             task.options_object = options
             task.save()
@@ -756,11 +756,11 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
             'code': currency_code,
         }
         with transaction.atomic():
-            task = Task(
+            task = CeleryTask(
                 master_user=master_user,
                 member=member,
-                status=Task.STATUS_PENDING,
-                action=Task.ACTION_INSTRUMENT
+                status=CeleryTask.STATUS_PENDING,
+                action=CeleryTask.ACTION_INSTRUMENT
             )
             task.options_object = options
             task.save()
@@ -1067,7 +1067,7 @@ def download_instrument_finmars_database_async(self, task_id):
 
 @shared_task(name='integrations.download_instrument_cbond_task', bind=True, ignore_result=False)
 def download_instrument_cbond_task(self, task_id):
-    task = Task.objects.get(pk=task_id)
+    task = CeleryTask.objects.get(pk=task_id)
 
     name = None
     instrument_type_code = None
@@ -1089,11 +1089,11 @@ def download_unified_data(id=None, entity_type=None, master_user=None, member=No
 
         with transaction.atomic():
             # DEPRECATED, REFACTOR SOON
-            task = Task(
+            task = CeleryTask(
                 master_user=master_user,
                 member=member,
-                status=Task.STATUS_PENDING,
-                action=Task.ACTION_INSTRUMENT
+                status=CeleryTask.STATUS_PENDING,
+                action=CeleryTask.ACTION_INSTRUMENT
             )
             task.options_object = {
                 "entity_type": entity_type,
@@ -1175,7 +1175,7 @@ def download_unified_data(id=None, entity_type=None, master_user=None, member=No
 
 @shared_task(name='integrations.download_instrument_pricing_async', bind=True, ignore_result=False)
 def download_instrument_pricing_async(self, task_id):
-    task = Task.objects.get(pk=task_id)
+    task = CeleryTask.objects.get(pk=task_id)
     _l.debug('download_instrument_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     task.add_celery_task_id(self.request.id)
@@ -1184,17 +1184,17 @@ def download_instrument_pricing_async(self, task_id):
         provider = get_provider(task.master_user, task.provider_id)
     except Exception:
         _l.debug('provider load error', exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
     if provider is None:
         _l.debug('provider not found')
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
-    if task.status not in [Task.STATUS_PENDING, Task.STATUS_WAIT_RESPONSE]:
+    if task.status not in [CeleryTask.STATUS_PENDING, CeleryTask.STATUS_WAIT_RESPONSE]:
         _l.warn('invalid task status')
         return
 
@@ -1204,13 +1204,13 @@ def download_instrument_pricing_async(self, task_id):
         result, is_ready = provider.download_instrument_pricing(options)
     except Exception:
         _l.warn("provider processing error", exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
     else:
         if is_ready:
-            task.status = Task.STATUS_DONE
+            task.status = CeleryTask.STATUS_DONE
             task.result_object = result
         else:
-            task.status = Task.STATUS_WAIT_RESPONSE
+            task.status = CeleryTask.STATUS_WAIT_RESPONSE
 
     response_id = options.get('response_id', None)
     if response_id:
@@ -1218,14 +1218,14 @@ def download_instrument_pricing_async(self, task_id):
     task.options_object = options
     task.save()
 
-    if task.status == Task.STATUS_WAIT_RESPONSE:
+    if task.status == CeleryTask.STATUS_WAIT_RESPONSE:
         if self.request.is_eager:
             time.sleep(provider.get_retry_delay())
         try:
             self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries())
             # self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries(), throw=False)
         except MaxRetriesExceededError:
-            task.status = Task.STATUS_TIMEOUT
+            task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
         return
 
@@ -1234,7 +1234,7 @@ def download_instrument_pricing_async(self, task_id):
 
 @shared_task(name='integrations.test_certificate_async', bind=True, ignore_result=False)
 def test_certificate_async(self, task_id):
-    task = Task.objects.get(pk=task_id)
+    task = CeleryTask.objects.get(pk=task_id)
     _l.debug('handle_test_certificate_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     task.add_celery_task_id(self.request.id)
@@ -1243,17 +1243,17 @@ def test_certificate_async(self, task_id):
         provider = get_provider(task.master_user, task.provider_id)
     except Exception:
         _l.debug('provider load error', exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
     if provider is None:
         _l.debug('provider not found')
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
-    if task.status not in [Task.STATUS_PENDING, Task.STATUS_WAIT_RESPONSE]:
+    if task.status not in [CeleryTask.STATUS_PENDING, CeleryTask.STATUS_WAIT_RESPONSE]:
         _l.warn('invalid task status')
         return
 
@@ -1263,7 +1263,7 @@ def test_certificate_async(self, task_id):
         result = provider.test_certificate(options)
     except Exception as e:
         _l.warn("provider processing error", exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
 
         task.save()
         return
@@ -1271,7 +1271,7 @@ def test_certificate_async(self, task_id):
         _l.debug('handle_test_certificate_async task: result %s' % result)
         _l.debug('handle_test_certificate_async task: result is authorized %s' % result['is_authorized'])
 
-        task.status = Task.STATUS_DONE
+        task.status = CeleryTask.STATUS_DONE
         task.result_object = result
 
         task.options_object = options
@@ -1300,14 +1300,14 @@ def test_certificate_async(self, task_id):
         _l.debug('handle_test_certificate_async task: master_user_id=%s, task=%s', task.master_user_id, task.result)
         _l.debug('handle_test_certificate_async task.status: ', task.status)
 
-    if task.status == Task.STATUS_WAIT_RESPONSE:
+    if task.status == CeleryTask.STATUS_WAIT_RESPONSE:
         if self.request.is_eager:
             time.sleep(provider.get_retry_delay())
         try:
             self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries())
             # self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries(), throw=False)
         except MaxRetriesExceededError:
-            task.status = Task.STATUS_TIMEOUT
+            task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
         return
 
@@ -1317,7 +1317,7 @@ def test_certificate_async(self, task_id):
 # DEPRECATED SINCE 22.09.2020 DELETE SOON
 @shared_task(name='integrations.download_currency_pricing_async', bind=True, ignore_result=False)
 def download_currency_pricing_async(self, task_id):
-    task = Task.objects.get(pk=task_id)
+    task = CeleryTask.objects.get(pk=task_id)
     _l.debug('download_currency_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
 
     task.add_celery_task_id(self.request.id)
@@ -1326,17 +1326,17 @@ def download_currency_pricing_async(self, task_id):
         provider = get_provider(task.master_user, task.provider_id)
     except Exception:
         _l.debug('provider load error', exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
     if provider is None:
         _l.debug('provider not found')
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
-    if task.status not in [Task.STATUS_PENDING, Task.STATUS_WAIT_RESPONSE]:
+    if task.status not in [CeleryTask.STATUS_PENDING, CeleryTask.STATUS_WAIT_RESPONSE]:
         _l.warn('invalid task status')
         return
 
@@ -1346,13 +1346,13 @@ def download_currency_pricing_async(self, task_id):
         result, is_ready = provider.download_currency_pricing(options)
     except Exception:
         _l.warn("provider processing error", exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
     else:
         if is_ready:
-            task.status = Task.STATUS_DONE
+            task.status = CeleryTask.STATUS_DONE
             task.result_object = result
         else:
-            task.status = Task.STATUS_WAIT_RESPONSE
+            task.status = CeleryTask.STATUS_WAIT_RESPONSE
 
     response_id = options.get('response_id', None)
     if response_id:
@@ -1361,14 +1361,14 @@ def download_currency_pricing_async(self, task_id):
     task.options_object = options
     task.save()
 
-    if task.status == Task.STATUS_WAIT_RESPONSE:
+    if task.status == CeleryTask.STATUS_WAIT_RESPONSE:
         if self.request.is_eager:
             time.sleep(provider.get_retry_delay())
         try:
             self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries())
             # self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries(), throw=False)
         except MaxRetriesExceededError:
-            task.status = Task.STATUS_TIMEOUT
+            task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
         return
 
@@ -1508,12 +1508,12 @@ def test_certificate(master_user=None, member=None, task=None):
 
                 }
                 # DEPRECATED, REFACTOR SOON
-                task = Task(
+                task = CeleryTask(
                     master_user=master_user,
                     member=member,
                     provider_id=1,
-                    status=Task.STATUS_PENDING,
-                    action=Task.ACTION_PRICING
+                    status=CeleryTask.STATUS_PENDING,
+                    action=CeleryTask.ACTION_PRICING
                 )
 
                 task.options_object = options
@@ -1523,7 +1523,7 @@ def test_certificate(master_user=None, member=None, task=None):
 
             return task, False
         else:
-            if task.status == Task.STATUS_DONE:
+            if task.status == CeleryTask.STATUS_DONE:
                 return task, True
             return task, False
 

@@ -38,6 +38,9 @@ class CeleryTask(TimeStampedModel):
     STATUS_TIMEOUT = 'T'
     STATUS_CANCELED = 'C'
     STATUS_TRANSACTIONS_ABORTED = 'X'
+    STATUS_REQUEST_SENT = 'S'
+    STATUS_WAIT_RESPONSE = 'W'
+
 
     STATUS_CHOICES = (
         (STATUS_INIT, 'INIT'),
@@ -47,6 +50,8 @@ class CeleryTask(TimeStampedModel):
         (STATUS_TIMEOUT, 'TIMEOUT'),
         (STATUS_CANCELED, 'CANCELED'),
         (STATUS_TRANSACTIONS_ABORTED, 'TRANSACTIONS_ABORTED'),
+        (STATUS_REQUEST_SENT, 'REQUEST_SENT'),
+        (STATUS_WAIT_RESPONSE, 'WAIT_RESPONSE'),
     )
 
     master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),

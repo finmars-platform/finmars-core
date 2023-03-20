@@ -6,7 +6,6 @@ import django_filters
 from celery.result import AsyncResult
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
 from django.db.models import Prefetch
 from django.http import HttpResponse
 from django_filters.rest_framework import FilterSet, DjangoFilterBackend
@@ -35,21 +34,21 @@ from poms.integrations.filters import TaskFilter, InstrumentAttributeValueMappin
     ResponsibleMappingObjectPermissionFilter, PortfolioMappingObjectPermissionFilter, \
     Strategy1MappingObjectPermissionFilter, Strategy2MappingObjectPermissionFilter, \
     Strategy3MappingObjectPermissionFilter, AccountTypeMappingObjectPermissionFilter
-from poms.integrations.models import ImportConfig, Task, InstrumentDownloadScheme, ProviderClass, \
+from poms.integrations.models import ImportConfig, InstrumentDownloadScheme, ProviderClass, \
     FactorScheduleDownloadMethod, AccrualScheduleDownloadMethod, PriceDownloadScheme, CurrencyMapping, \
     InstrumentTypeMapping, InstrumentAttributeValueMapping, AccrualCalculationModelMapping, PeriodicityMapping, \
-    PricingAutomatedSchedule, InstrumentDownloadSchemeAttribute, AccountMapping, InstrumentMapping, CounterpartyMapping, \
+    InstrumentDownloadSchemeAttribute, AccountMapping, InstrumentMapping, CounterpartyMapping, \
     ResponsibleMapping, PortfolioMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
     DailyPricingModelMapping, \
     PaymentSizeDetailMapping, PriceDownloadSchemeMapping, ComplexTransactionImportScheme, PortfolioClassifierMapping, \
     AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping, PricingPolicyMapping, \
     InstrumentClassifierMapping, AccountTypeMapping, BloombergDataProviderCredential, PricingConditionMapping, \
     TransactionFileResult, DataProvider
-from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer, ImportInstrumentSerializer, \
-    ImportPricingSerializer, InstrumentDownloadSchemeSerializer, ProviderClassSerializer, \
+from poms.integrations.serializers import ImportConfigSerializer, ImportInstrumentSerializer, \
+    InstrumentDownloadSchemeSerializer, ProviderClassSerializer, \
     FactorScheduleDownloadMethodSerializer, AccrualScheduleDownloadMethodSerializer, PriceDownloadSchemeSerializer, \
     CurrencyMappingSerializer, InstrumentTypeMappingSerializer, InstrumentAttributeValueMappingSerializer, \
-    AccrualCalculationModelMappingSerializer, PeriodicityMappingSerializer, PricingAutomatedScheduleSerializer, \
+    AccrualCalculationModelMappingSerializer, PeriodicityMappingSerializer, \
     ComplexTransactionCsvFileImportSerializer, AccountMappingSerializer, \
     InstrumentMappingSerializer, CounterpartyMappingSerializer, ResponsibleMappingSerializer, \
     PortfolioMappingSerializer, \
@@ -62,8 +61,7 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     PricingConditionMappingSerializer, TransactionFileResultSerializer, DataProviderSerializer, \
     InstrumentDownloadSchemeLightSerializer, ImportInstrumentCbondsSerializer, ImportUnifiedDataProviderSerializer, \
     ImportCurrencyCbondsSerializer
-from poms.integrations.tasks import complex_transaction_csv_file_import_by_procedure, \
-    complex_transaction_csv_file_import_parallel, \
+from poms.integrations.tasks import complex_transaction_csv_file_import_parallel, \
     complex_transaction_csv_file_import_validate_parallel
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
@@ -671,59 +669,6 @@ class PriceDownloadSchemeMappingViewSet(AbstractMappingViewSet):
     ]
 
 
-# ---------
-
-
-class TaskFilterSet(FilterSet):
-    id = NoOpFilter()
-    provider = django_filters.ModelMultipleChoiceFilter(queryset=ProviderClass.objects)
-    member = ModelExtMultipleChoiceFilter(model=Member, field_name='username')
-    action = CharFilter()
-    created = django_filters.DateFromToRangeFilter()
-    modified = django_filters.DateFromToRangeFilter()
-
-    class Meta:
-        model = Task
-        fields = []
-
-
-class TaskViewSet(AbstractReadOnlyModelViewSet):
-    queryset = Task.objects.select_related(
-        'provider'
-    ).prefetch_related(
-        'children'
-    )
-    serializer_class = TaskSerializer
-    filter_backends = AbstractReadOnlyModelViewSet.filter_backends + [
-        TaskFilter,
-    ]
-    filter_class = TaskFilterSet
-    ordering_fields = [
-        'action', 'created', 'modified'
-    ]
-
-
-class PricingAutomatedScheduleViewSet(AbstractModelViewSet):
-    queryset = PricingAutomatedSchedule.objects
-    serializer_class = PricingAutomatedScheduleSerializer
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        SuperUserOrReadOnly,
-    ]
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-    ]
-
-    def get_object(self):
-        try:
-            return self.request.user.master_user.pricing_automated_schedule
-        except ObjectDoesNotExist:
-            obj = PricingAutomatedSchedule.objects.create(master_user=self.request.user.master_user)
-            return obj
-
-    def destroy(self, request, *args, **kwargs):
-        raise MethodNotAllowed(method=request.method)
-
-
 class ImportInstrumentViewSet(AbstractViewSet):
     serializer_class = ImportInstrumentSerializer
     permission_classes = AbstractViewSet.permission_classes + [
@@ -774,20 +719,6 @@ class ImportUnifiedDataProviderViewSet(AbstractViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-
-
-class ImportPricingViewSet(AbstractViewSet):
-    serializer_class = ImportPricingSerializer
-    permission_classes = AbstractViewSet.permission_classes + [
-        PomsFunctionPermission
-    ]
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
 
 class TestCertificateViewSet(AbstractViewSet):
     serializer_class = TestCertificateSerializer
@@ -1432,7 +1363,7 @@ class TransactionImportJson(APIView):
         complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
 
 
-#Deprecated
+# Deprecated
 # class TransactionFileResultUploadHandler(APIView):
 #     permission_classes = []
 #

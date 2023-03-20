@@ -266,8 +266,8 @@ class AbstractProvider(object):
                             errors[attr] = [gettext_lazy('A valid date is required.')]
 
                 elif attr in (
-                'instrument_user_code', 'instrument_name', 'instrument_short_name', 'instrument_public_name',
-                'instrument_notes'):
+                        'instrument_user_code', 'instrument_name', 'instrument_short_name', 'instrument_public_name',
+                        'instrument_notes'):
                     if self.is_empty_value(v):
                         pass
                     else:
@@ -490,6 +490,9 @@ def get_provider(master_user=None, provider=None, task=None):
                 return BloombergDataProvider(cert=cert, key=key)
 
             except Exception as e:
+
+                _l.error('get_provider.e %s' % e)
+                _l.error('get_provider.e %s' % traceback.format_exc())
 
                 try:
                     config = master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
