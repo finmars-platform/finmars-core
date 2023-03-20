@@ -16,7 +16,6 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.admin import AbstractModelAdmin
 from poms.instruments.models import EventScheduleConfig
-from poms.integrations.models import PricingAutomatedSchedule
 from poms.users.models import MasterUser, UserProfile, Member, Group, TIMEZONE_CHOICES, FakeSequence, \
     InviteToMasterUser, EcosystemDefault, OtpToken
 
@@ -32,12 +31,6 @@ class MemberInline(admin.TabularInline):
     model = Member
     extra = 0
     raw_id_fields = ['user', 'groups', ]
-
-
-class PricingAutomatedScheduleInline(admin.StackedInline):
-    model = PricingAutomatedSchedule
-    can_delete = False
-    # readonly_fields = ['latest_running', 'latest_task']
 
 
 class EventScheduleConfigInline(admin.StackedInline):
