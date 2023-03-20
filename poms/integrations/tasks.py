@@ -226,7 +226,6 @@ def download_instrument(instrument_code=None, instrument_download_scheme=None, m
             task = CeleryTask(
                 master_user=master_user,
                 member=member,
-                provider=instrument_download_scheme.provider,
                 status=CeleryTask.STATUS_PENDING,
                 type='download_instrument'
             )
@@ -1525,7 +1524,6 @@ def test_certificate(master_user=None, member=None, task=None):
                 task = CeleryTask(
                     master_user=master_user,
                     member=member,
-                    provider_id=1,
                     status=CeleryTask.STATUS_PENDING,
                     type='test_certificate'
                 )
