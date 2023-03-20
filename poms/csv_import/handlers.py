@@ -1433,7 +1433,7 @@ class SimpleImportProcess(object):
             item.message = "Item Imported %s" % serializer.instance
 
             trn = SimpleImportImportedItem(
-                id=serializer.instance,
+                id=serializer.instance.id,
                 user_code=str(serializer.instance)
             )
 
