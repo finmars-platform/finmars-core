@@ -151,7 +151,7 @@ def download_instrument_async(self, task_id=None):
     task = CeleryTask.objects.get(pk=task_id)
     _l.debug('download_instrument_async: master_user_id=%s, task=%s', task.master_user_id, task)
 
-    task.add_celery_task_id(self.request.id)
+    task.celery_task_id = self.request.id
 
     provider_id = 1 # bloomberg
 
@@ -1182,7 +1182,7 @@ def download_instrument_pricing_async(self, task_id):
     task = CeleryTask.objects.get(pk=task_id)
     _l.debug('download_instrument_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task)
 
-    task.add_celery_task_id(self.request.id)
+    task.celery_task_id = self.request.id
 
     try:
 
@@ -1244,7 +1244,7 @@ def test_certificate_async(self, task_id):
     task = CeleryTask.objects.get(pk=task_id)
     _l.debug('handle_test_certificate_async: master_user_id=%s, task=%s', task.master_user_id, task)
 
-    task.add_celery_task_id(self.request.id)
+    task.celery_task_id = self.request.id
 
     try:
 
@@ -1330,7 +1330,7 @@ def download_currency_pricing_async(self, task_id):
     task = CeleryTask.objects.get(pk=task_id)
     _l.debug('download_currency_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task)
 
-    task.add_celery_task_id(self.request.id)
+    task.celery_task_id = self.request.id
 
     try:
 
