@@ -1450,12 +1450,12 @@ class SimpleImportProcess(object):
                     model = self.scheme.content_type.model_class()
 
                     if self.scheme.content_type.model in ['pricehistory']:
-                        instance = model.objects.get(instrument=item.final_inputs['instrument'],
-                                                     pricing_policy=item.final_inputs['pricing_policy'],
+                        instance = model.objects.get(instrument__user_code=item.final_inputs['instrument'],
+                                                     pricing_policy__user_code=item.final_inputs['pricing_policy'],
                                                      date=item.final_inputs['date'])
                     elif self.scheme.content_type.model in ['currencyhistory']:
-                        instance = model.objects.get(currency=item.final_inputs['currency'],
-                                                     pricing_policy=item.final_inputs['pricing_policy'],
+                        instance = model.objects.get(currency__user_code=item.final_inputs['currency'],
+                                                     pricing_policy__user_code=item.final_inputs['pricing_policy'],
                                                      date=item.final_inputs['date'])
                     else:
                         instance = model.objects.get(master_user=self.master_user,

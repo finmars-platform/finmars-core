@@ -1885,49 +1885,52 @@ class Transaction(models.Model):
 
             dt = self.accounting_date
 
-            _l.debug('Transaction.calculate_ytm: instr_pricing_ccy_cur_fx %s' % self.instr_pricing_ccy_cur_fx)
-            _l.debug('Transaction.calculate_ytm: instr_accrued_ccy_cur_fx %s' % self.instr_accrued_ccy_cur_fx)
-            _l.debug('Transaction.calculate_ytm: self.instrument.maturity_date %s' % self.instrument.maturity_date)
-            _l.debug('Transaction.calculate_ytm: dt %s' % dt)
-            _l.debug('Transaction.calculate_ytm: date.max %s' % date.max)
+            # _l.debug('Transaction.calculate_ytm: instr_pricing_ccy_cur_fx %s' % self.instr_pricing_ccy_cur_fx)
+            # _l.debug('Transaction.calculate_ytm: instr_accrued_ccy_cur_fx %s' % self.instr_accrued_ccy_cur_fx)
+            # _l.debug('Transaction.calculate_ytm: self.instrument.maturity_date %s' % self.instrument.maturity_date)
+            # _l.debug('Transaction.calculate_ytm: dt %s' % dt)
+            # _l.debug('Transaction.calculate_ytm: date.max %s' % date.max)
 
             if self.instrument.maturity_date is None or \
                     self.instrument.maturity_date == date.max or str(
                 self.instrument.maturity_date) == '2999-01-01' or str(self.instrument.maturity_date) == '2099-01-01':
 
-                _l.debug('Transaction.calculate_ytm: instrument has maturity_date')
+                # _l.debug('Transaction.calculate_ytm: instrument has maturity_date')
 
                 try:
 
                     accrual_size = self.instrument.get_accrual_size(dt)
 
-                    _l.debug('Transaction.calculate_ytm: accrual_size %s' % accrual_size)
-                    _l.debug(
-                        'Transaction.calculate_ytm: self.instrument.accrued_multiplier %s' % self.instrument.accrued_multiplier)
-                    _l.debug('Transaction.calculate_ytm: self.trade_price %s' % self.trade_price)
-                    _l.debug(
-                        'Transaction.calculate_ytm: self.instrument.price_multiplier %s' % self.instrument.price_multiplier)
+                    # _l.debug('Transaction.calculate_ytm: accrual_size %s' % accrual_size)
+                    # _l.debug(
+                    #     'Transaction.calculate_ytm: self.instrument.accrued_multiplier %s' % self.instrument.accrued_multiplier)
+                    # _l.debug('Transaction.calculate_ytm: self.trade_price %s' % self.trade_price)
+                    # _l.debug(
+                    #     'Transaction.calculate_ytm: self.instrument.price_multiplier %s' % self.instrument.price_multiplier)
 
                     # TODO  * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) happens in sql report
                     ytm = (accrual_size * self.instrument.accrued_multiplier) / \
                           (self.trade_price * self.instrument.price_multiplier)
 
-                    _l.debug('Transaction.calculate_ytm: ytm %s' % ytm)
+                    # _l.debug('Transaction.calculate_ytm: ytm %s' % ytm)
 
                 except ArithmeticError:
                     ytm = 0
 
+                _l.debug('Transaction.calculate_ytm done: %s',
+                         "{:3.3f}".format(time.perf_counter() - process_st))
+
                 return ytm
 
-            _l.debug('Transaction.calculate_ytm: self.instrument.maturity_date is None')
+            # _l.debug('Transaction.calculate_ytm: self.instrument.maturity_date is None')
 
             x0 = self.get_instr_ytm_x0(dt)
 
-            _l.debug('Transaction.calculate_ytm: x0 %s' % x0)
+            # _l.debug('Transaction.calculate_ytm: x0 %s' % x0)
 
             data = self.get_instr_ytm_data(dt)
 
-            _l.debug('Transaction.calculate_ytm: data %s' % data)
+            # _l.debug('Transaction.calculate_ytm: data %s' % data)
 
             if data:
 
@@ -1936,14 +1939,17 @@ class Transaction(models.Model):
             else:
                 ytm = 0.0
 
+            _l.debug('Transaction.calculate_ytm done: %s',
+                     "{:3.3f}".format(time.perf_counter() - process_st))
+
             return ytm
 
         except Exception as e:
             _l.error("calculate_ytm error %s" % e)
             _l.error("calculate_ytm traceback %s" % traceback.format_exc())
 
-        _l.debug('Transaction.calculate_ytm done: %s',
-                 "{:3.3f}".format(time.perf_counter() - process_st))
+            _l.debug('Transaction.calculate_ytm done: %s',
+                     "{:3.3f}".format(time.perf_counter() - process_st))
 
     def save(self, *args, **kwargs):
 
