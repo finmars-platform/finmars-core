@@ -1456,11 +1456,14 @@ class SimpleImportProcess(object):
                 except Exception as e:
 
                     item.status = 'error'
-                    item.error_message = item.error_message + 'Overwrite Exception ' + str(e)
+                    item.error_message = item.error_message + '==== Overwrite Exception ' + str(e)
+
+                    _l.error('import_item.overwrite  e %s' % e)
+                    _l.error('import_item.overwrite  traceback %s' % traceback.format_exc())
 
             else:
                 item.status = 'error'
-                item.error_message = item.error_message + 'Create Exception ' + str(e)
+                item.error_message = item.error_message + '====  Create Exception ' + str(e)
 
     def process_items(self):
 
