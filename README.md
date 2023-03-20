@@ -243,6 +243,8 @@ pip install uwsgi
 pip install django-cprofile-middleware
 pip install flower
 pip install deepdiff
+pip install pyopenssl
+pip install suds
 
 ==== TODO ====
 Move generated documentation to another project
