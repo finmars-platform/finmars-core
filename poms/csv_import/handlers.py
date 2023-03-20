@@ -1386,7 +1386,7 @@ class SimpleImportProcess(object):
 
         content_type_key = self.scheme.content_type.app_label + '.' + self.scheme.content_type.model
 
-        serializer = self.get_serializer(content_type_key)
+        serializer_class = self.get_serializer(content_type_key)
 
         try:
 
@@ -1399,9 +1399,8 @@ class SimpleImportProcess(object):
             result_item = self.entity_specific_update(result_item)
 
             _l.info('result_item %s' % result_item)
-            _l.info('serializer %s' % serializer)
 
-            serializer(data=result_item, context=self.context)
+            serializer = serializer_class(data=result_item, context=self.context)
             serializer.is_valid(raise_exception=True)
             serializer.save()
 
