@@ -1,12 +1,10 @@
 from __future__ import unicode_literals, print_function
 
 import json
-from datetime import timedelta
 from logging import getLogger
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils import timezone
 from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 from rest_framework.fields import empty
@@ -15,7 +13,7 @@ from rest_framework.validators import UniqueTogetherValidator
 from poms.accounts.fields import AccountField, AccountTypeField
 from poms.celery_tasks.models import CeleryTask
 from poms.celery_tasks.serializers import CeleryTaskSerializer
-from poms.common.fields import ExpressionField, DateTimeTzAwareField
+from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.counterparties.fields import CounterpartyField, ResponsibleField
@@ -40,8 +38,8 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     ComplexTransactionImportSchemeRuleScenario, ComplexTransactionImportSchemeCalculatedInput, \
     BloombergDataProviderCredential, PricingConditionMapping, TransactionFileResult, DataProvider
 from poms.integrations.providers.base import get_provider, ProviderException
-from poms.integrations.tasks import download_instrument, test_certificate, download_instrument_cbond, \
-    download_unified_data, download_currency_cbond, download_instrument_finmars_database
+from poms.integrations.tasks import download_instrument, test_certificate, download_unified_data, \
+    download_currency_cbond, download_instrument_finmars_database
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericAttributeTypeSerializer, \
     GenericClassifierSerializer
@@ -49,7 +47,7 @@ from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.transactions.fields import TransactionTypeField, TransactionTypeInputField
-from poms.users.fields import MasterUserField, MemberField, HiddenMemberField
+from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.models import EcosystemDefault
 from poms_app import settings
 
@@ -86,6 +84,28 @@ class BloombergDataProviderCredentialSerializer(serializers.ModelSerializer):
             'id', 'master_user', 'p12cert', 'password', 'has_p12cert',
             'has_password', 'is_valid'
         ]
+
+    def create(self, validated_data):
+        p12cert = validated_data.pop('p12cert', None)
+
+        instance = super(BloombergDataProviderCredentialSerializer, self).create(validated_data)
+
+        cert_file_path = settings.BASE_API_URL + '/brokers/bloomberg/%s' % p12cert.name
+
+        storage.save(cert_file_path, p12cert)
+
+        return instance
+
+    def update(self, instance, validated_data):
+        p12cert = validated_data.pop('p12cert', None)
+
+        instance = super(BloombergDataProviderCredentialSerializer, self).update(instance, validated_data)
+
+        cert_file_path = settings.BASE_API_URL + '/brokers/bloomberg/%s' % p12cert.name
+
+        storage.save(cert_file_path, p12cert)
+
+        return instance
 
 
 class ImportConfigSerializer(serializers.ModelSerializer):
@@ -1489,7 +1509,8 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 
     class Meta:
         model = ComplexTransactionImportSchemeRuleScenario
-        fields = ['id', 'is_default_rule_scenario', 'is_error_rule_scenario', 'name', 'selector_values', 'transaction_type', 'fields', 'status']
+        fields = ['id', 'is_default_rule_scenario', 'is_error_rule_scenario', 'name', 'selector_values',
+                  'transaction_type', 'fields', 'status']
 
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionImportSchemeRuleScenarioSerializer, self).__init__(*args, **kwargs)
@@ -1512,7 +1533,6 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
         inputs = []
 
         for input in instance.transaction_type.inputs.all():
-
             result = {
                 'id': input.id,
                 'name': input.name,
@@ -1528,7 +1548,6 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
             'user_code': instance.transaction_type.user_code,
             'inputs': inputs
         }
-
 
         return ret
 
