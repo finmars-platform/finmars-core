@@ -1449,9 +1449,9 @@ class SimpleImportProcess(object):
                     result_item = self.remove_nullable_attributes(result_item)
                     result_item = self.entity_specific_update(result_item)
 
-                    serializer = serializer(data=result_item,
-                                            instance=instance,
-                                            context=self.context)
+                    serializer = serializer_class(data=result_item,
+                                                  instance=instance,
+                                                  context=self.context)
                     serializer.is_valid(raise_exception=True)
                     serializer.save()
 
@@ -1461,11 +1461,11 @@ class SimpleImportProcess(object):
                                           context=self.context)
 
                     item.status = 'success'
-                    item.message = "Item Imported %s" % instance
+                    item.message = "Item Imported %s" % serializer.instance
 
                     trn = SimpleImportImportedItem(
-                        id=instance.id,
-                        user_code=str(instance)
+                        id=serializer.instance.id,
+                        user_code=str(serializer.instance)
                     )
 
                     item.imported_items.append(trn)
