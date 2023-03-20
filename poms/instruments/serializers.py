@@ -1578,14 +1578,14 @@ class PriceHistorySerializer(serializers.ModelSerializer):
 
         try:
 
-            history_item = PriceHistoryError.objects.get(instrument=instance.instrument,
+            history_item = PriceHistoryError.objects.filter(instrument=instance.instrument,
                                                          master_user=instance.instrument.master_user,
                                                          date=instance.date,
-                                                         pricing_policy=instance.pricing_policy)
+                                                         pricing_policy=instance.pricing_policy)[0]
 
             history_item.status = PriceHistoryError.STATUS_OVERWRITTEN
 
-        except PriceHistoryError.DoesNotExist:
+        except (PriceHistoryError.DoesNotExist, IndexError):
 
             history_item = PriceHistoryError()
 

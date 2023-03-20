@@ -308,14 +308,14 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
 
         try:
 
-            history_item = CurrencyHistoryError.objects.get(currency=instance.currency,
+            history_item = CurrencyHistoryError.objects.filter(currency=instance.currency,
                                                             master_user=instance.currency.master_user,
                                                             date=instance.date,
-                                                            pricing_policy=instance.pricing_policy)
+                                                            pricing_policy=instance.pricing_policy)[0]
 
             history_item.status = CurrencyHistoryError.STATUS_OVERWRITTEN
 
-        except CurrencyHistoryError.DoesNotExist:
+        except (CurrencyHistoryError.DoesNotExist, IndexError):
 
             history_item = CurrencyHistoryError()
 
