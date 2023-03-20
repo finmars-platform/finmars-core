@@ -1310,9 +1310,6 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
     def rebook(self, request, pk=None):
         complex_transaction = self.get_object()
 
-        # if request.method != 'GET':
-        #     complex_transaction.status = ComplexTransaction.PRODUCTION
-
         if request.method == 'GET':
 
             instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,

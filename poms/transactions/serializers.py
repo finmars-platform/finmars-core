@@ -3705,7 +3705,7 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
         )
 
         if self.instance:
-            _l.info('instance=self.instance %s ' % self.instance.values)
+            # _l.info('instance=self.instance %s ' % self.instance.values)
 
             self.fields['values'] = TransactionTypeProcessValuesSerializer(instance=self.instance, required=False)
 

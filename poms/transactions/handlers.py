@@ -148,8 +148,8 @@ class TransactionTypeProcess(object):
         if complex_transaction and not complex_transaction_status:
             self.complex_transaction_status = complex_transaction.status_id
 
-        _l.info('complex_transaction_status %s' % complex_transaction_status)
-        _l.info('self.complex_transaction.status %s' % self.complex_transaction.status_id)
+        # _l.info('complex_transaction_status %s' % complex_transaction_status)
+        # _l.info('self.complex_transaction.status %s' % self.complex_transaction.status_id)
 
         # if complex_transaction_date is not None:
         #     self.complex_transaction.date = complex_transaction_date
@@ -2323,6 +2323,8 @@ class TransactionTypeProcess(object):
         if self.process_mode == self.MODE_RECALCULATE:
             return self.process_recalculate()
 
+        process_st = time.perf_counter()
+
         self.record_execution_progress('Booking Process Initialized')
 
         _l.debug('process: %s, values=%s', self.transaction_type, self.values)
@@ -2394,12 +2396,10 @@ class TransactionTypeProcess(object):
 
         self._save_inputs()
 
-        execute_commands_st = time.perf_counter()
 
         self._context['values'] = self.values
         self.book_execute_commands(actions)
-        _l.debug('TransactionTypeProcess: book_execute_commands done: %s',
-                 "{:3.3f}".format(time.perf_counter() - execute_commands_st))
+
 
         # _l.debug(self.complex_transaction.transactions.all())
 
@@ -2434,11 +2434,6 @@ class TransactionTypeProcess(object):
 
         self.assign_permissions_to_complex_transaction()
 
-        # LMAO what is this
-        # if not self.has_errors and self.transactions:
-        #     for trn in self.transactions:
-        #         trn.calc_cash_by_formulas()
-
         self.run_procedures_after_book()
 
         if self.complex_transaction.status_id == ComplexTransaction.PENDING:
@@ -2448,34 +2443,13 @@ class TransactionTypeProcess(object):
             self.complex_transaction.delete()
             self.complex_transaction = None
 
-        # Deprecated (now history app itselfs track all changes)
-        # if self.complex_transaction:
-        #
-        #     try:
-        #
-        #         from poms.history.models import HistoricalRecord
-        #         from django.contrib.contenttypes.models import ContentType
-        #         from poms.transactions.serializers import ComplexTransactionSerializer
-        #
-        #         _l.info('self._context %s' % self._context)
-        #
-        #         serializer = ComplexTransactionSerializer(instance=self.complex_transaction, context=self._context)
-        #
-        #         user_code = self.complex_transaction.code
-        #
-        #         if self.complex_transaction.transaction_unique_code:
-        #             user_code = self.complex_transaction.transaction_unique_code
-        #
-        #         HistoricalRecord.objects.create(
-        #             master_user=self.transaction_type.master_user,
-        #             member=self.member,
-        #             data=serializer.data,
-        #             user_code=user_code,
-        #             content_type=ContentType.objects.get_for_model(ComplexTransaction)
-        #         )
-        #     except Exception as e:
-        #         _l.error("Could not save history for complex transaction. Error %s" % e)
-        #         _l.error("Could not save history for complex transaction. Traceback %s" % traceback.format_exc())
+        _l.info('TransactionTypeProcess: process done: %s',
+                 "{:3.3f}".format(time.perf_counter() - process_st))
+
+        _l.info('self.value_errors %s' % self.value_errors)
+        _l.info('self.instruments_errors %s' % self.instruments_errors)
+        _l.info('self.complex_transaction_errors %s' % self.complex_transaction_errors)
+        _l.info('self.transactions_errors %s' % self.transactions_errors)
 
 
     def process_recalculate(self):

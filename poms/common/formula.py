@@ -3648,6 +3648,7 @@ FUNCTIONS = [
     SimpleEval2Def('get_accrued_price', _get_price_history_accrued_price),
     SimpleEval2Def('get_next_coupon_date', _get_next_coupon_date),
     SimpleEval2Def('get_factor_schedule', _get_factor_schedule),
+    SimpleEval2Def('get_factor', _get_factor_schedule),
 
     SimpleEval2Def('add_factor_schedule', _add_factor_schedule),
     SimpleEval2Def('add_accrual_schedule', _add_accrual_schedule),
