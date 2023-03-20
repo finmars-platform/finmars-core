@@ -226,7 +226,7 @@ def download_instrument(instrument_code=None, instrument_download_scheme=None, m
                 member=member,
                 provider=instrument_download_scheme.provider,
                 status=CeleryTask.STATUS_PENDING,
-                action=CeleryTask.ACTION_INSTRUMENT
+                type='download_instrument'
             )
             task.options_object = options
             task.save()
@@ -561,7 +561,7 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
                 master_user=master_user,
                 member=member,
                 status=CeleryTask.STATUS_PENDING,
-                action=CeleryTask.ACTION_INSTRUMENT
+                type='download_instrument'
             )
             task.options_object = options
             task.save()
@@ -760,7 +760,7 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
                 master_user=master_user,
                 member=member,
                 status=CeleryTask.STATUS_PENDING,
-                action=CeleryTask.ACTION_INSTRUMENT
+                type='download_currency'
             )
             task.options_object = options
             task.save()
@@ -1093,7 +1093,7 @@ def download_unified_data(id=None, entity_type=None, master_user=None, member=No
                 master_user=master_user,
                 member=member,
                 status=CeleryTask.STATUS_PENDING,
-                action=CeleryTask.ACTION_INSTRUMENT
+                type="download_entity"
             )
             task.options_object = {
                 "entity_type": entity_type,
@@ -1513,7 +1513,7 @@ def test_certificate(master_user=None, member=None, task=None):
                     member=member,
                     provider_id=1,
                     status=CeleryTask.STATUS_PENDING,
-                    action=CeleryTask.ACTION_PRICING
+                    type='test_certificate'
                 )
 
                 task.options_object = options
