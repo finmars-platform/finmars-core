@@ -1252,7 +1252,7 @@ class SimpleImportProcess(object):
                             try:
                                 attribute['classifier'] = GenericClassifier.objects.get(attribute_type=attribute_type,
                                                                                         name=item.final_inputs[
-                                                                                            entity_field.attribute_user_code])
+                                                                                            entity_field.attribute_user_code]).id
                             except Exception as e:
                                 _l.error('fill_result_item_with_attributes classifier error - item %s e %s' % (item, e))
                                 attribute['classifier'] = None
@@ -1398,11 +1398,12 @@ class SimpleImportProcess(object):
             result_item = self.remove_nullable_attributes(result_item)
             result_item = self.entity_specific_update(result_item)
 
-            _l.info('final_inputs %s' % item.final_inputs)
+            _l.info('result_item %s' % result_item)
+            _l.info('serializer %s' % serializer)
 
             serializer(data=result_item, context=self.context)
             serializer.is_valid(raise_exception=True)
-            instance = serializer.save()
+            serializer.save()
 
             if self.scheme.item_post_process_script:
                 # POST SUCCESS SCRIPT
@@ -1410,11 +1411,11 @@ class SimpleImportProcess(object):
                                   context=self.context)
 
             item.status = 'success'
-            item.message = "Item Imported %s" % instance
+            item.message = "Item Imported %s" % serializer.data['id']
 
             trn = SimpleImportImportedItem(
-                id=instance.id,
-                user_code=str(instance)
+                id=serializer.data['id'],
+                user_code=str(serializer.data['id'])
             )
 
             item.imported_items.append(trn)
