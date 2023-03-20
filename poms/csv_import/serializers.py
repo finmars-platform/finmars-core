@@ -267,18 +267,15 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
 
                 ids.add(o.id)
 
-        EntityField.objects.filter(scheme=scheme, attribute_user_code__isnull=False).exclude(id__in=ids).delete()
+        EntityField.objects.filter(scheme=scheme, system_property_key__isnull=True).exclude(id__in=ids).delete()
 
     def set_dynamic_attributes_mapping(self, scheme, entity_fields):
 
-        fields = EntityField.objects.filter(scheme=scheme)
+        fields = EntityField.objects.filter(scheme=scheme, system_property_key__isnull=True)
 
         for field in fields:
-
-            if not field.system_property_key and field.attribute_user_code:
-
-                if not field.expression:
-                    field.delete()
+            if not field.expression:
+                field.delete()
 
         self.create_user_attributes_if_not_exist(scheme)
 
