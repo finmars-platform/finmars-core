@@ -1791,7 +1791,7 @@ class TransactionTypeProcess(object):
 
                         self.record_execution_progress('Create Transaction %s' % transaction)
 
-                        self.assign_permissions_to_transaction(transaction)
+                        # self.assign_permissions_to_transaction(transaction)
 
                     except (ValueError, TypeError, IntegrityError) as error:
 
@@ -1938,12 +1938,15 @@ class TransactionTypeProcess(object):
                     # _l.error("User Field Expression Eval error names %s" % names)
                     # _l.error("User Field Expression Eval error %s" % e)
 
-                    try:
-                        setattr(self.complex_transaction, field_key, '<InvalidExpression>')
-                        _result_for_log[field_key] = str(e)
-                    except Exception as e:
+                    if 'number' in field_key:
                         setattr(self.complex_transaction, field_key, None)
-                        _result_for_log[field_key] = str(e)
+                    else:
+                        try:
+                            setattr(self.complex_transaction, field_key, '<InvalidExpression>')
+                            _result_for_log[field_key] = str(e)
+                        except Exception as e:
+                            setattr(self.complex_transaction, field_key, None)
+                            _result_for_log[field_key] = str(e)
 
         self.record_execution_progress('==== USER FIELDS ====')
         self.record_execution_progress(json.dumps(_result_for_log, indent=4, default=str))

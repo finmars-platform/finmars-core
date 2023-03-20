@@ -1613,6 +1613,7 @@ def _add_accrual_schedule(evaluator, instrument, data):
 
 _add_accrual_schedule.evaluator = True
 
+
 def _delete_accrual_schedules(evaluator, instrument):
     from poms.users.utils import get_master_user_from_context
 
@@ -1624,10 +1625,7 @@ def _delete_accrual_schedules(evaluator, instrument):
     instrument.accrual_calculation_schedules.all().delete()
 
 
-
 _delete_accrual_schedules.evaluator = True
-
-
 
 
 def _safe_get_pricing_policy(evaluator, pricing_policy):
@@ -3741,6 +3739,9 @@ SAFE_TYPES = (bool, int, float, str, list, tuple, dict, OrderedDict,
 
 class SimpleEval2(object):
     def __init__(self, names=None, max_time=None, add_print=False, allow_assign=False, now=None, context=None):
+
+        # st = time.perf_counter()
+
         self.max_time = max_time or 60 * 30  # 30 min
         # self.max_time = 10000000000
         self.start_time = 0
@@ -3773,6 +3774,9 @@ class SimpleEval2(object):
             _globals['print'] = _print
 
         self._table = _globals
+
+        # _l.debug('SimpleEval2: init done: %s',
+        #          "{:3.3f}".format(time.perf_counter() - st))
 
     @staticmethod
     def try_parse(expr):
@@ -4192,9 +4196,15 @@ def validate(expr):
 
 
 def safe_eval(s, names=None, max_time=None, add_print=False, allow_assign=True, now=None, context=None):
+    st = time.perf_counter()
+
     e = SimpleEval2(names=names, max_time=max_time, add_print=add_print, allow_assign=allow_assign, now=now,
                     context=context)
-    return e.eval(s)
+    result = e.eval(s)
+
+    _l.debug('safe_eval done %s : %s' % (s, "{:3.3f}".format(time.perf_counter() - st)))
+
+    return result
 
 
 def safe_eval_with_logs(s, names=None, max_time=None, add_print=False, allow_assign=True, now=None, context=None):
