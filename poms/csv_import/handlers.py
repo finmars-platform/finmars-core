@@ -1418,7 +1418,7 @@ class SimpleImportProcess(object):
 
                 try:
 
-                    formula.safe_eval(self.scheme.item_post_process_script, names=item.final_inputs,
+                    formula.safe_eval(self.scheme.item_post_process_script, names=item.inputs,
                                   context=self.context)
 
                 except Exception as e:
@@ -1478,7 +1478,7 @@ class SimpleImportProcess(object):
                     if self.scheme.item_post_process_script:
                         # POST SUCCESS SCRIPT
                         try:
-                            formula.safe_eval(self.scheme.item_post_process_script, names=item.final_inputs,
+                            formula.safe_eval(self.scheme.item_post_process_script, names=item.inputs,
                                               context=self.context)
                         except Exception as e:
 
