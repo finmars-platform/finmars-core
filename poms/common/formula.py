@@ -1591,6 +1591,15 @@ def _add_accrual_schedule(evaluator, instrument, data):
     if 'first_payment_date' in data:
         result.first_payment_date = data['first_payment_date']
 
+    if 'accrual_calculation_model' in data:
+        result.accrual_calculation_model = data['accrual_calculation_model']
+
+    if 'periodicity' in data:
+        result.periodicity = data['periodicity']
+
+    if 'periodicity_n' in data:
+        result.periodicity_n = data['periodicity_n']
+
     if 'notes' in data:
         result.notes = data['notes']
 
