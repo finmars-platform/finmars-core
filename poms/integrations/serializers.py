@@ -976,7 +976,7 @@ class ImportInstrumentEntry(object):
     @property
     def task_object(self):
         if not self._task_object and self.task:
-            self._task_object = self.master_user.tasks.get(pk=self.task)
+            self._task_object = CeleryTask.objects.get(pk=self.task)
         return self._task_object
 
     @task_object.setter
@@ -1000,7 +1000,7 @@ class ImportCurrencyEntry(object):
     @property
     def task_object(self):
         if not self._task_object and self.task:
-            self._task_object = self.master_user.tasks.get(pk=self.task)
+            self._task_object = CeleryTask.objects.get(pk=self.task)
         return self._task_object
 
     @task_object.setter
@@ -1024,7 +1024,7 @@ class UnifiedDataEntry(object):
     @property
     def task_object(self):
         if not self._task_object and self.task:
-            self._task_object = self.master_user.tasks.get(pk=self.task)
+            self._task_object = CeleryTask.objects.get(pk=self.task)
         return self._task_object
 
     @task_object.setter
@@ -1242,7 +1242,7 @@ class ImportTestCertificate(object):
     @property
     def task_object(self):
         if not self._task_object and self.task:
-            self._task_object = self.master_user.tasks.get(pk=self.task)
+            self._task_object = CeleryTask.objects.get(pk=self.task)
         return self._task_object
 
     @task_object.setter
@@ -1277,7 +1277,7 @@ class ImportPricingEntry(object):
     @property
     def task_object(self):
         if not self._task_object and self.task:
-            self._task_object = self.master_user.tasks.get(pk=self.task)
+            self._task_object = CeleryTask.objects.get(pk=self.task)
         return self._task_object
 
     @task_object.setter
