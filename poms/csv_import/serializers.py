@@ -281,7 +281,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
 
         for entity_field in entity_fields:
 
-            if entity_field.get('attribute_user_code') is not None:
+            if entity_field.get('attribute_user_code') is not None and entity_field.get('expression'):
                 EntityField.objects.create(scheme=scheme,
                                            attribute_user_code=entity_field.get('attribute_user_code'),
                                            name=entity_field.get('name'),
