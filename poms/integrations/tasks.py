@@ -149,7 +149,7 @@ def auth_log_statistics():
 @shared_task(name='integrations.download_instrument', bind=True, ignore_result=False)
 def download_instrument_async(self, task_id=None):
     task = CeleryTask.objects.get(pk=task_id)
-    _l.debug('download_instrument_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.debug('download_instrument_async: master_user_id=%s, task=%s', task.master_user_id, task)
 
     task.add_celery_task_id(self.request.id)
 
@@ -1180,7 +1180,7 @@ def download_unified_data(id=None, entity_type=None, master_user=None, member=No
 @shared_task(name='integrations.download_instrument_pricing_async', bind=True, ignore_result=False)
 def download_instrument_pricing_async(self, task_id):
     task = CeleryTask.objects.get(pk=task_id)
-    _l.debug('download_instrument_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.debug('download_instrument_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task)
 
     task.add_celery_task_id(self.request.id)
 
@@ -1242,7 +1242,7 @@ def download_instrument_pricing_async(self, task_id):
 @shared_task(name='integrations.test_certificate_async', bind=True, ignore_result=False)
 def test_certificate_async(self, task_id):
     task = CeleryTask.objects.get(pk=task_id)
-    _l.debug('handle_test_certificate_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.debug('handle_test_certificate_async: master_user_id=%s, task=%s', task.master_user_id, task)
 
     task.add_celery_task_id(self.request.id)
 
@@ -1328,7 +1328,7 @@ def test_certificate_async(self, task_id):
 @shared_task(name='integrations.download_currency_pricing_async', bind=True, ignore_result=False)
 def download_currency_pricing_async(self, task_id):
     task = CeleryTask.objects.get(pk=task_id)
-    _l.debug('download_currency_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    _l.debug('download_currency_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task)
 
     task.add_celery_task_id(self.request.id)
 
