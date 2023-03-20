@@ -271,7 +271,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
 
     def set_dynamic_attributes_mapping(self, scheme, entity_fields):
 
-        EntityField.objects.filter(scheme=scheme, attribute_user_code__isnull=False).delete()
+        EntityField.objects.filter(scheme=scheme, attribute_user_code__isnull=True).delete()
 
         self.create_user_attributes_if_not_exist(scheme)
 

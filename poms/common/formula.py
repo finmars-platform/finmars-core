@@ -1551,6 +1551,20 @@ def _get_factor_schedule(evaluator, date, instrument):
 _get_factor_schedule.evaluator = True
 
 
+def _add_factor_schedule(evaluator, instrument, data):
+
+    pass
+
+_add_factor_schedule.evaluator = True
+
+
+def _add_accrual_schedule(evaluator, instrument, data):
+
+    pass
+
+_add_accrual_schedule.evaluator = True
+
+
 def _safe_get_pricing_policy(evaluator, pricing_policy):
     from poms.users.utils import get_master_user_from_context, get_member_from_context
     from poms.instruments.models import PricingPolicy
@@ -3491,7 +3505,11 @@ FUNCTIONS = [
     SimpleEval2Def('get_principal_price', _get_price_history_principal_price),
     SimpleEval2Def('get_accrued_price', _get_price_history_accrued_price),
     SimpleEval2Def('get_next_coupon_date', _get_next_coupon_date),
-    SimpleEval2Def('get_factor', _get_factor_schedule),
+    SimpleEval2Def('get_factor_schedule', _get_factor_schedule),
+
+    SimpleEval2Def('add_factor_schedule', _add_factor_schedule),
+    SimpleEval2Def('get_accrual_schedule', _get_accrual_schedule),
+
     SimpleEval2Def('add_fx_rate', _add_fx_rate),
     SimpleEval2Def('add_price_history', _add_price_history),
     SimpleEval2Def('generate_user_code', _generate_user_code),
