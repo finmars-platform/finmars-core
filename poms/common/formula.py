@@ -1600,6 +1600,9 @@ def _add_accrual_schedule(evaluator, instrument, data):
     if 'periodicity_n' in data:
         result.periodicity_n = data['periodicity_n']
 
+    if 'accrual_size' in data:
+        result.accrual_size = float(data['accrual_size'])
+
     if 'notes' in data:
         result.notes = data['notes']
 
@@ -1609,6 +1612,22 @@ def _add_accrual_schedule(evaluator, instrument, data):
 
 
 _add_accrual_schedule.evaluator = True
+
+def _delete_accrual_schedules(evaluator, instrument):
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    instrument.accrual_calculation_schedules.all().delete()
+
+
+
+_delete_accrual_schedules.evaluator = True
+
+
 
 
 def _safe_get_pricing_policy(evaluator, pricing_policy):
@@ -3632,6 +3651,7 @@ FUNCTIONS = [
 
     SimpleEval2Def('add_factor_schedule', _add_factor_schedule),
     SimpleEval2Def('add_accrual_schedule', _add_accrual_schedule),
+    SimpleEval2Def('delete_accrual_schedules', _delete_accrual_schedules),
 
     SimpleEval2Def('add_fx_rate', _add_fx_rate),
     SimpleEval2Def('add_price_history', _add_price_history),
