@@ -58,8 +58,6 @@ class CsvImportScheme(NamedModel, DataTimeStampedModel):
     spreadsheet_active_tab_name = models.CharField(max_length=255, default='', blank=True, null=True)
     column_matcher = models.CharField(max_length=255, choices=COLUMN_MATCHER_CHOICES, default='index')
 
-
-
     data_preprocess_expression = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                                   verbose_name=gettext_lazy('data preprocess expression'))
 
@@ -153,8 +151,6 @@ class CsvDataImport(models.Model):
     file = ''
 
 
-
-
 class ProcessType(object):
     CSV = 'CSV'
     JSON = 'JSON'
@@ -202,6 +198,7 @@ class SimpleImportConversionItem(object):
         self.conversion_inputs = conversion_inputs
         self.row_number = row_number
 
+
 class SimpleImportProcessPreprocessItem(object):
 
     def __init__(self,
@@ -224,6 +221,7 @@ class SimpleImportImportedItem(object):
                  user_code=None):
         self.id = id
         self.user_code = user_code
+
 
 class SimpleImportProcessItem(object):
 
@@ -250,3 +248,5 @@ class SimpleImportProcessItem(object):
 
         self.imported_items = imported_items
 
+    def __str__(self):
+        return 'Row number %s' % self.row_number

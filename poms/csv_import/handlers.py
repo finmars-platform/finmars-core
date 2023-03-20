@@ -1248,13 +1248,19 @@ class SimpleImportProcess(object):
                         if attribute_type.value_type == GenericAttributeType.NUMBER:
                             attribute['value_float'] = item.final_inputs[entity_field.attribute_user_code]
 
-                        if attribute_type.value_type == GenericAttributeType.NUMBER:
+                        if attribute_type.value_type == GenericAttributeType.CLASSIFIER:
                             try:
                                 attribute['classifier'] = GenericClassifier.objects.get(attribute_type=attribute_type,
                                                                                         name=item.final_inputs[
                                                                                             entity_field.attribute_user_code]).id
                             except Exception as e:
                                 _l.error('fill_result_item_with_attributes classifier error - item %s e %s' % (item, e))
+
+                                if not item.error_message:
+                                    item.error_message = ''
+
+                                item.error_message = (item.error_message + '%s: %s, ') % (entity_field.attribute_user_code, str(e))
+
                                 attribute['classifier'] = None
 
                         if attribute_type.value_type == GenericAttributeType.DATE:
@@ -1387,6 +1393,9 @@ class SimpleImportProcess(object):
         content_type_key = self.scheme.content_type.app_label + '.' + self.scheme.content_type.model
 
         serializer_class = self.get_serializer(content_type_key)
+
+        if not item.imported_items:
+            item.imported_items = []
 
         try:
 
