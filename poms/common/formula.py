@@ -1579,7 +1579,6 @@ def _add_accrual_schedule(evaluator, instrument, data):
 
     from poms.instruments.models import AccrualCalculationSchedule
 
-
     result = AccrualCalculationSchedule(instrument=instrument)
 
     if 'accrual_start_date' in data:
@@ -1592,10 +1591,11 @@ def _add_accrual_schedule(evaluator, instrument, data):
         result.first_payment_date = data['first_payment_date']
 
     if 'accrual_calculation_model' in data:
-        result.accrual_calculation_model = data['accrual_calculation_model']
+        result.accrual_calculation_model = _safe_get_accrual_calculation_model(evaluator,
+                                                                               data['accrual_calculation_model'])
 
     if 'periodicity' in data:
-        result.periodicity = data['periodicity']
+        result.periodicity = _safe_get_periodicity(evaluator, data['periodicity'])
 
     if 'periodicity_n' in data:
         result.periodicity_n = data['periodicity_n']
@@ -1606,6 +1606,7 @@ def _add_accrual_schedule(evaluator, instrument, data):
     result.save()
 
     return result
+
 
 _add_accrual_schedule.evaluator = True
 
@@ -1752,6 +1753,84 @@ def _safe_get_account_type(evaluator, account_type):
         raise ExpressionEvalError()
 
     return account_type
+
+
+def _safe_get_periodicity(evaluator, periodicity):
+    from poms.instruments.models import Periodicity
+
+    if isinstance(periodicity, Periodicity):
+        return periodicity
+
+    context = evaluator.context
+
+    if context is None:
+        raise InvalidExpression('Context must be specified')
+
+    pk = None
+    user_code = None
+
+    if isinstance(periodicity, dict):
+        pk = int(periodicity['id'])
+
+    elif isinstance(periodicity, (int, float)):
+        pk = int(periodicity)
+
+    elif isinstance(periodicity, str):
+        user_code = periodicity
+
+    if pk is None and user_code is None:
+        raise ExpressionEvalError('Invalid periodicity')
+
+    try:
+        if pk is not None:
+            periodicity = Periodicity.objects.get(pk=pk)
+
+        elif user_code is not None:
+            periodicity = Periodicity.objects.get(user_code=user_code)
+
+    except Periodicity.DoesNotExist:
+        raise ExpressionEvalError()
+
+    return periodicity
+
+
+def _safe_get_accrual_calculation_model(evaluator, accrual_calculation_model):
+    from poms.instruments.models import AccrualCalculationModel
+
+    if isinstance(accrual_calculation_model, AccrualCalculationModel):
+        return accrual_calculation_model
+
+    context = evaluator.context
+
+    if context is None:
+        raise InvalidExpression('Context must be specified')
+
+    pk = None
+    user_code = None
+
+    if isinstance(accrual_calculation_model, dict):
+        pk = int(accrual_calculation_model['id'])
+
+    elif isinstance(accrual_calculation_model, (int, float)):
+        pk = int(accrual_calculation_model)
+
+    elif isinstance(accrual_calculation_model, str):
+        user_code = accrual_calculation_model
+
+    if pk is None and user_code is None:
+        raise ExpressionEvalError('Invalid accrual_calculation_model')
+
+    try:
+        if pk is not None:
+            accrual_calculation_model = AccrualCalculationModel.objects.get(pk=pk)
+
+        elif user_code is not None:
+            accrual_calculation_model = AccrualCalculationModel.objects.get(user_code=user_code)
+
+    except AccrualCalculationModel.DoesNotExist:
+        raise ExpressionEvalError()
+
+    return accrual_calculation_model
 
 
 def _safe_get_instrument(evaluator, instrument):
