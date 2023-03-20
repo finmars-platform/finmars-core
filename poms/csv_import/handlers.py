@@ -1317,35 +1317,49 @@ class SimpleImportProcess(object):
 
         for entity_field in self.scheme.entity_fields.all():
 
-            try:
+            if entity_field.expression:
 
-                value = formula.safe_eval(entity_field.expression, names=item.inputs,
-                                          context=self.context)
+                try:
+
+                    value = formula.safe_eval(entity_field.expression, names=item.inputs,
+                                              context=self.context)
+
+                    if entity_field.system_property_key:
+
+                        result[entity_field.system_property_key] = value
+
+                    elif entity_field.attribute_user_code:
+
+                        result[entity_field.attribute_user_code] = value
+
+                except Exception as e:
+
+                    _l.error('get_final_inputs.e %s' % e)
+
+                    if not item.error_message:
+                        item.error_message = ''
+
+                    if entity_field.system_property_key:
+
+                        item.error_message = (item.error_message + '%s: %s, ') % (
+                            entity_field.system_property_key, str(e))
+
+                        result[entity_field.system_property_key] = None
+
+                    elif entity_field.attribute_user_code:
+
+                        item.error_message = (item.error_message + '%s: %s, ') % (
+                            entity_field.attribute_user_code, str(e))
+
+                        result[entity_field.attribute_user_code] = None
+
+            else:
 
                 if entity_field.system_property_key:
-
-                    result[entity_field.system_property_key] = value
-
-                elif entity_field.attribute_user_code:
-
-                    result[entity_field.attribute_user_code] = value
-
-            except Exception as e:
-
-                _l.error('get_final_inputs.e %s' % e)
-
-                if not item.error_message:
-                    item.error_message = ''
-
-                if entity_field.system_property_key:
-
-                    item.error_message = (item.error_message + '%s: %s, ') % (entity_field.system_property_key, str(e))
 
                     result[entity_field.system_property_key] = None
 
                 elif entity_field.attribute_user_code:
-
-                    item.error_message = (item.error_message + '%s: %s, ') % (entity_field.attribute_user_code, str(e))
 
                     result[entity_field.attribute_user_code] = None
 
@@ -1406,6 +1420,9 @@ class SimpleImportProcess(object):
             item.imported_items.append(trn)
 
         except Exception as e:
+
+            _l.error('import_item e %s' % e)
+            _l.error('import_item traceback %s' % traceback.format_exc())
 
             if self.scheme.mode == 'overwrite':
                 try:
