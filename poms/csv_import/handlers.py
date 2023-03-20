@@ -1351,6 +1351,23 @@ class SimpleImportProcess(object):
 
         return result
 
+    def entity_specific_update(self, result_item):
+
+        if self.scheme.content_type.model == 'instrument':
+            from poms.instruments.handlers import InstrumentTypeProcess
+
+            instrument_type = InstrumentType.objects.get(id=result_item['instrument_type'])
+
+            process = InstrumentTypeProcess(instrument_type=instrument_type)
+
+            default_instrument_object = process.instrument
+
+            default_instrument_object.update(result_item)
+
+            result_item = default_instrument_object
+
+        return result_item
+
     def import_item(self, item):
 
         content_type_key = self.scheme.content_type.app_label + '.' + self.scheme.content_type.model
@@ -1365,6 +1382,7 @@ class SimpleImportProcess(object):
             result_item['attributes'] = self.fill_result_item_with_attributes(item)
             result_item = self.convert_relation_to_ids(item, result_item)
             result_item = self.remove_nullable_attributes(result_item)
+            result_item = self.entity_specific_update(result_item)
 
             _l.info('final_inputs %s' % item.final_inputs)
 
@@ -1412,6 +1430,7 @@ class SimpleImportProcess(object):
                     result_item['attributes'] = self.fill_result_item_with_attributes(item)
                     result_item = self.convert_relation_to_ids(item, result_item)
                     result_item = self.remove_nullable_attributes(result_item)
+                    result_item = self.entity_specific_update(result_item)
 
                     serializer = serializer(data=result_item,
                                             instance=instance,
