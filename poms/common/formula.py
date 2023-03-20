@@ -515,6 +515,7 @@ _transaction_import__find_row.evaluator = True
 def _md5(text):
     return hashlib.md5(text.encode('utf-8')).hexdigest()
 
+
 def _parse_date(date_string, format=None):
     if not date_string:
         return None
@@ -562,7 +563,6 @@ def _universal_parse_date(date_string):
 
 
 def _universal_parse_country(value):
-
     result = None
 
     from poms.instruments.models import Country
@@ -1551,16 +1551,38 @@ def _get_factor_schedule(evaluator, date, instrument):
 _get_factor_schedule.evaluator = True
 
 
-def _add_factor_schedule(evaluator, instrument, data):
+def _add_factor_schedule(evaluator, instrument, effective_date, factor_value):
+    from poms.users.utils import get_master_user_from_context
+    from poms.instruments.models import InstrumentFactorSchedule
 
-    pass
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    result = InstrumentFactorSchedule.objects.create(effective_date=effective_date, factor_value=factor_value,
+                                                     instrument=instrument)
+
+    return result
+
 
 _add_factor_schedule.evaluator = True
 
 
 def _add_accrual_schedule(evaluator, instrument, data):
+    from poms.users.utils import get_master_user_from_context
 
-    pass
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    from poms.instruments.models import AccrualCalculationSchedule
+
+
+    result = AccrualCalculationSchedule.objects.create(instrument=instrument)
+
+    return result
 
 _add_accrual_schedule.evaluator = True
 
@@ -1660,8 +1682,8 @@ def _safe_get_currency(evaluator, currency):
 
     return currency
 
-def _safe_get_account_type(evaluator, account_type):
 
+def _safe_get_account_type(evaluator, account_type):
     from poms.users.utils import get_master_user_from_context, get_member_from_context
     from poms.accounts.models import AccountType
 
@@ -1707,6 +1729,7 @@ def _safe_get_account_type(evaluator, account_type):
         raise ExpressionEvalError()
 
     return account_type
+
 
 def _safe_get_instrument(evaluator, instrument):
     from poms.users.utils import get_master_user_from_context, get_member_from_context
@@ -3484,8 +3507,6 @@ FUNCTIONS = [
 
     SimpleEval2Def('get_account_type', _get_account_type),
 
-
-
     SimpleEval2Def('get_currency_field', _get_currency_field),
     SimpleEval2Def('set_currency_field', _set_currency_field),
 
@@ -3508,7 +3529,7 @@ FUNCTIONS = [
     SimpleEval2Def('get_factor_schedule', _get_factor_schedule),
 
     SimpleEval2Def('add_factor_schedule', _add_factor_schedule),
-    SimpleEval2Def('get_accrual_schedule', _get_accrual_schedule),
+    SimpleEval2Def('get_accrual_schedule', _add_accrual_schedule),
 
     SimpleEval2Def('add_fx_rate', _add_fx_rate),
     SimpleEval2Def('add_price_history', _add_price_history),
@@ -4209,7 +4230,8 @@ def _get_supported_models_serializer_class():
     from poms.accounts.serializers import AccountSerializer
     from poms.counterparties.models import Counterparty, Responsible
     from poms.counterparties.serializers import CounterpartySerializer, ResponsibleSerializer
-    from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, GeneratedEvent, Country, InstrumentType
+    from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, GeneratedEvent, Country, \
+        InstrumentType
     from poms.instruments.serializers import InstrumentSerializer, DailyPricingModelSerializer, \
         InstrumentTypeSerializer, CountrySerializer, \
         PaymentSizeDetailSerializer, GeneratedEventSerializer
