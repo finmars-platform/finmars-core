@@ -397,11 +397,8 @@ router.register(r'import/finmars-database/instrument', integrations.ImportInstru
 router.register(r'import/finmars-database/currency', integrations.ImportCurrencyCbondsViewSet, 'importcurrencycbonds')
 router.register(r'import/unified-data-provider', integrations.ImportUnifiedDataProviderViewSet,
                 'importunifieddataprovider')
-router.register(r'import/pricing', integrations.ImportPricingViewSet, 'importpricing')
 router.register(r'import/test-certificate', integrations.TestCertificateViewSet, 'testcertificate')
 # router.register(r'import/pricing-automated-schedule', integrations.PricingAutomatedScheduleViewSet)
-
-router.register(r'import/task', integrations.TaskViewSet)
 
 router.register(r'import/complex-transaction-import-scheme', integrations.ComplexTransactionImportSchemeViewSet)
 router.register(r'import/complex-transaction-import-scheme-light',
