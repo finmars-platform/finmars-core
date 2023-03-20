@@ -1407,7 +1407,7 @@ class SimpleImportProcess(object):
             result_item = self.remove_nullable_attributes(result_item)
             result_item = self.entity_specific_update(result_item)
 
-            _l.info('result_item %s' % result_item)
+            # _l.info('result_item %s' % result_item)
 
             serializer = serializer_class(data=result_item, context=self.context)
             serializer.is_valid(raise_exception=True)

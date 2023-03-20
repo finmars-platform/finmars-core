@@ -3631,7 +3631,7 @@ FUNCTIONS = [
     SimpleEval2Def('get_factor_schedule', _get_factor_schedule),
 
     SimpleEval2Def('add_factor_schedule', _add_factor_schedule),
-    SimpleEval2Def('get_accrual_schedule', _add_accrual_schedule),
+    SimpleEval2Def('add_accrual_schedule', _add_accrual_schedule),
 
     SimpleEval2Def('add_fx_rate', _add_fx_rate),
     SimpleEval2Def('add_price_history', _add_price_history),
