@@ -1410,11 +1410,11 @@ class SimpleImportProcess(object):
                                   context=self.context)
 
             item.status = 'success'
-            item.message = "Item Imported %s" % serializer.data['id']
+            item.message = "Item Imported %s" % serializer.instance
 
             trn = SimpleImportImportedItem(
-                id=serializer.data['id'],
-                user_code=str(serializer.data['id'])
+                id=serializer.instance,
+                user_code=str(serializer.instance)
             )
 
             item.imported_items.append(trn)
