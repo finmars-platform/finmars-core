@@ -1580,7 +1580,21 @@ def _add_accrual_schedule(evaluator, instrument, data):
     from poms.instruments.models import AccrualCalculationSchedule
 
 
-    result = AccrualCalculationSchedule.objects.create(instrument=instrument)
+    result = AccrualCalculationSchedule(instrument=instrument)
+
+    if 'accrual_start_date' in data:
+        result.accrual_start_date = data['accrual_start_date']
+
+    if 'accrual_end_date' in data:
+        result.accrual_end_date = data['accrual_end_date']
+
+    if 'first_payment_date' in data:
+        result.first_payment_date = data['first_payment_date']
+
+    if 'notes' in data:
+        result.notes = data['notes']
+
+    result.save()
 
     return result
 
