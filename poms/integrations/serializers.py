@@ -94,6 +94,9 @@ class BloombergDataProviderCredentialSerializer(serializers.ModelSerializer):
 
         storage.save(cert_file_path, p12cert)
 
+        instance.p12cert = cert_file_path
+        instance.save()
+
         return instance
 
     def update(self, instance, validated_data):
@@ -104,6 +107,9 @@ class BloombergDataProviderCredentialSerializer(serializers.ModelSerializer):
         cert_file_path = settings.BASE_API_URL + '/brokers/bloomberg/%s' % p12cert.name
 
         storage.save(cert_file_path, p12cert)
+
+        instance.p12cert = cert_file_path
+        instance.save()
 
         return instance
 
