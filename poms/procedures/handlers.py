@@ -4,7 +4,6 @@ import traceback
 
 import requests
 from django.db import transaction
-from django.db.transaction import on_commit
 from django.utils.timezone import now
 
 from poms.celery_tasks.models import CeleryTask
@@ -63,7 +62,6 @@ class DataProcedureProcess(object):
     def update_procedure_options(self, options):
 
         if self.procedure.data:
-
             # Warning, do not refactor, it works only that way
             data = self.procedure.data
             data.update(options)
@@ -231,38 +229,51 @@ class DataProcedureProcess(object):
                                         description="universal Broker. Procedure %s. Done, start import" % procedure_instance.id,
                                         )
 
-                    celery_task = CeleryTask.objects.create(master_user=master_user,
-                                                            member=self.member,
-                                                            notes='Import initiated by data procedure instance %s' % procedure_instance.id,
-                                                            verbose_name="Transaction Import",
-                                                            type='transaction_import')
+                    if procedure_instance.procedure.scheme_type == 'transaction_import':
+                        celery_task = CeleryTask.objects.create(master_user=master_user,
+                                                                member=self.member,
+                                                                notes='Import initiated by data procedure instance %s' % procedure_instance.id,
+                                                                verbose_name="Transaction Import",
+                                                                type='transaction_import')
 
-                    options_object = {}
+                        options_object = {}
 
-                    options_object['items'] = response_data['data']
+                        options_object['items'] = response_data['data']
 
-                    celery_task.options_object = options_object
+                        celery_task.options_object = options_object
 
-                    celery_task.save()
+                        celery_task.save()
 
-                    procedure_instance.linked_import_task = celery_task
-                    procedure_instance.save()
+                        procedure_instance.linked_import_task = celery_task
+                        procedure_instance.save()
 
-                    def run_tasks():
+                        complex_transaction_csv_file_import_by_procedure_json.apply_async(
+                            kwargs={'procedure_instance_id': procedure_instance.id,
+                                    'celery_task_id': celery_task.id,
+                                    })
 
-                        if procedure_instance.procedure.scheme_type == 'transaction_import':
-                            complex_transaction_csv_file_import_by_procedure_json.apply_async(
-                                kwargs={'procedure_instance_id': procedure_instance.id,
-                                        'celery_task_id': celery_task.id,
-                                        })
+                    if procedure_instance.procedure.scheme_type == 'simple_import':
+                        celery_task = CeleryTask.objects.create(master_user=master_user,
+                                                                member=self.member,
+                                                                notes='Import initiated by data procedure instance %s' % procedure_instance.id,
+                                                                verbose_name="Simple Import",
+                                                                type='simple_import')
 
-                        if procedure_instance.procedure.scheme_type == 'simple_import':
-                            data_csv_file_import_by_procedure_json.apply_async(
-                                kwargs={'procedure_instance_id': procedure_instance.id,
-                                        'celery_task_id': celery_task.id,
-                                        })
+                        options_object = {}
 
-                    on_commit(run_tasks)
+                        options_object['items'] = response_data['data']
+
+                        celery_task.options_object = options_object
+
+                        celery_task.save()
+
+                        procedure_instance.linked_import_task = celery_task
+                        procedure_instance.save()
+
+                        data_csv_file_import_by_procedure_json.apply_async(
+                            kwargs={'procedure_instance_id': procedure_instance.id,
+                                    'celery_task_id': celery_task.id,
+                                    })
 
             except Exception as e:
                 _l.error("universal broker error %s" % e)
