@@ -466,7 +466,7 @@ def get_provider(master_user=None, provider=None, task=None):
     if master_user is None:
         master_user = task.master_user
     if provider is None:
-        provider = task.provider_id
+        provider = 1 # bloomberg
     if isinstance(provider, ProviderClass):
         provider = provider.id
 

@@ -153,8 +153,10 @@ def download_instrument_async(self, task_id=None):
 
     task.add_celery_task_id(self.request.id)
 
+    provider_id = 1 # bloomberg
+
     try:
-        provider = get_provider(task.master_user, task.provider_id)
+        provider = get_provider(task.master_user, provider_id)
     except Exception:
         _l.debug('provider load error', exc_info=True)
         task.status = CeleryTask.STATUS_ERROR
@@ -236,7 +238,10 @@ def download_instrument(instrument_code=None, instrument_download_scheme=None, m
         return task, None, None
     else:
         if task.status == CeleryTask.STATUS_DONE:
-            provider = get_provider(task.master_user, task.provider_id)
+
+            provider_id = 1 # bloomberg
+
+            provider = get_provider(task.master_user, provider_id)
 
             options = task.options_object
             values = task.result_object.copy()
@@ -1181,7 +1186,10 @@ def download_instrument_pricing_async(self, task_id):
     task.add_celery_task_id(self.request.id)
 
     try:
-        provider = get_provider(task.master_user, task.provider_id)
+
+        provider_id = 1 # bloomberg
+
+        provider = get_provider(task.master_user, provider_id)
     except Exception:
         _l.debug('provider load error', exc_info=True)
         task.status = CeleryTask.STATUS_ERROR
@@ -1240,7 +1248,10 @@ def test_certificate_async(self, task_id):
     task.add_celery_task_id(self.request.id)
 
     try:
-        provider = get_provider(task.master_user, task.provider_id)
+
+        provider_id = 1 # bloomberg
+
+        provider = get_provider(task.master_user, provider_id)
     except Exception:
         _l.debug('provider load error', exc_info=True)
         task.status = CeleryTask.STATUS_ERROR
@@ -1323,7 +1334,10 @@ def download_currency_pricing_async(self, task_id):
     task.add_celery_task_id(self.request.id)
 
     try:
-        provider = get_provider(task.master_user, task.provider_id)
+
+        provider_id = 1 # bloomberg
+
+        provider = get_provider(task.master_user, provider_id)
     except Exception:
         _l.debug('provider load error', exc_info=True)
         task.status = CeleryTask.STATUS_ERROR
