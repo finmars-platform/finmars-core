@@ -1304,7 +1304,7 @@ class SimpleImportProcess(object):
 
                     item.error_message = (item.error_message + '%s: %s, ') % (key, str(e))
 
-        _l.info('convert_relation_to_ids.result_item %s' % result_item)
+        # _l.info('convert_relation_to_ids.result_item %s' % result_item)
 
         return result_item
 
@@ -1441,8 +1441,8 @@ class SimpleImportProcess(object):
 
         except Exception as e:
 
-            _l.error('import_item e %s' % e)
-            _l.error('import_item traceback %s' % traceback.format_exc())
+            # _l.error('import_item e %s' % e)
+            # _l.error('import_item traceback %s' % traceback.format_exc())
 
             if self.scheme.mode == 'overwrite':
                 try:
