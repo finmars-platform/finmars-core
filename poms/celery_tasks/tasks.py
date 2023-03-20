@@ -90,7 +90,9 @@ def bulk_delete(self, task_id):
 
             count = 0
 
-            for instance in queryset:
+            items = list(queryset)
+
+            for instance in items:
                 # try:
                 #     self.check_object_permissions(request, instance)
                 # except PermissionDenied:
