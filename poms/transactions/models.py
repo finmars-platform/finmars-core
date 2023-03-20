@@ -5,10 +5,10 @@ import logging
 import traceback
 from datetime import date
 from math import isnan
-
+import time
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from django.core.cache import cache
+
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
@@ -1495,17 +1495,17 @@ class ComplexTransaction(DataTimeStampedModel):
         return str(self.code)
 
     def save(self, *args, **kwargs):
-        cache.clear()
 
-        _l.info("ComplexTransaction.save status %s" % self.status)
-        _l.info("ComplexTransaction.save text %s" % self.text)
-        _l.info("ComplexTransaction.save date %s" % self.date)
-
-        _l.info("ComplexTransaction.save transaction_unique_code %s" % self.transaction_unique_code)
+        # _l.info("ComplexTransaction.save status %s" % self.status)
+        # _l.info("ComplexTransaction.save text %s" % self.text)
+        # _l.info("ComplexTransaction.save date %s" % self.date)
 
         if self.code is None or self.code == 0:
             self.code = FakeSequence.next_value(self.transaction_type.master_user, 'complex_transaction', d=100)
-        _l.info("ComplexTransaction.save date %s" % self.code)
+        # _l.info("ComplexTransaction.save code %s" % self.code)
+
+        _l.info("ComplexTransaction.save %s %s %s" % (self.code, self.date, self.transaction_unique_code))
+
         super(ComplexTransaction, self).save(*args, **kwargs)
 
     def fake_delete(self):
@@ -1860,6 +1860,8 @@ class Transaction(models.Model):
 
     def calculate_ytm(self):
 
+        process_st = time.perf_counter()
+
         ecosystem_default = EcosystemDefault.objects.get(master_user=self.instrument.master_user)
 
         try:
@@ -1939,6 +1941,9 @@ class Transaction(models.Model):
         except Exception as e:
             _l.error("calculate_ytm error %s" % e)
             _l.error("calculate_ytm traceback %s" % traceback.format_exc())
+
+        _l.debug('Transaction.calculate_ytm done: %s',
+                 "{:3.3f}".format(time.perf_counter() - process_st))
 
     def save(self, *args, **kwargs):
 

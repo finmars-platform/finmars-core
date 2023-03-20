@@ -3,7 +3,7 @@ import logging
 import time
 import traceback
 from datetime import date, datetime
-
+from django.core.cache import cache
 from django.apps import apps
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, IntegrityError
@@ -208,11 +208,11 @@ class TransactionTypeProcess(object):
 
     def execute_action_condition(self, action):
 
-        _l.info('execute_action_condition.action.order %s' % action.order)
-        _l.info('execute_action_condition.action.condition_expr')
-        _l.info(action.condition_expr)
-        _l.debug('execute_action_condition.action.condition_expr values')
-        _l.debug(self.values)
+        # _l.info('execute_action_condition.action.order %s' % action.order)
+        # _l.info('execute_action_condition.action.condition_expr')
+        # _l.info(action.condition_expr)
+        # _l.debug('execute_action_condition.action.condition_expr values')
+        # _l.debug(self.values)
 
         if action is None:
             return False
@@ -225,16 +225,16 @@ class TransactionTypeProcess(object):
                                        context=self._context)
 
             if result == "False" or result == False:
-                _l.debug('execute_action_condition.Action %s is not executed' % action.order)
+                # _l.debug('execute_action_condition.Action %s is not executed' % action.order)
                 return False
 
-            _l.debug('execute_action_condition.Action %s is executed' % action.order)
+            # _l.debug('execute_action_condition.Action %s is executed' % action.order)
 
             return True
 
         except formula.InvalidExpression as e:
 
-            _l.debug('execute_action_condition.Action is skipped %s' % e)
+            # _l.debug('execute_action_condition.Action is skipped %s' % e)
 
             return False
 
@@ -1321,7 +1321,7 @@ class TransactionTypeProcess(object):
 
     def book_execute_commands(self, actions):
 
-        _l.debug('book_execute_commands %s' % actions)
+        # _l.debug('book_execute_commands %s' % actions)
 
         for order, action in enumerate(actions):
             try:
@@ -1351,9 +1351,9 @@ class TransactionTypeProcess(object):
 
                 except (ValueError, TypeError, IntegrityError, formula.InvalidExpression) as e:
 
-                    _l.info("Execute command execute_command.expr %s " % execute_command.expr)
-                    _l.info("Execute command execute_command.names %s " % names)
-                    _l.info("Execute command error %s " % e)
+                    # _l.info("Execute command execute_command.expr %s " % execute_command.expr)
+                    # _l.info("Execute command execute_command.names %s " % names)
+                    # _l.info("Execute command error %s " % e)
 
                     self._add_err_msg(errors, 'non_field_errors',
                                       gettext_lazy(
@@ -1755,9 +1755,9 @@ class TransactionTypeProcess(object):
 
                     transaction.cash_consideration = format_float_to_2(transaction.cash_consideration)
 
-                    _l.debug('action_transaction.notes')
-                    _l.debug(action_transaction.notes)
-                    _l.debug(self.values)
+                    # _l.debug('action_transaction.notes')
+                    # _l.debug(action_transaction.notes)
+                    # _l.debug(self.values)
 
                     if action_transaction.notes is not None:
                         self._set_val(errors=errors, values=self.values, default_value='',
@@ -1806,7 +1806,7 @@ class TransactionTypeProcess(object):
                         self.transactions.append(transaction)
                     finally:
 
-                        _l.debug("Transaction action errors %s " % errors)
+                        # _l.debug("Transaction action errors %s " % errors)
 
                         if bool(errors):
                             self.transactions_errors.append(errors)
@@ -1933,17 +1933,17 @@ class TransactionTypeProcess(object):
 
                 except Exception as e:
 
-                    _l.error("User Field Expression Eval error expression %s" % getattr(
-                        self.complex_transaction.transaction_type, field_key))
-                    _l.error("User Field Expression Eval error names %s" % names)
-                    _l.error("User Field Expression Eval error %s" % e)
+                    # _l.error("User Field Expression Eval error expression %s" % getattr(
+                    #     self.complex_transaction.transaction_type, field_key))
+                    # _l.error("User Field Expression Eval error names %s" % names)
+                    # _l.error("User Field Expression Eval error %s" % e)
 
                     try:
                         setattr(self.complex_transaction, field_key, '<InvalidExpression>')
-                        _result_for_log[field_key] = '<InvalidExpression>'
+                        _result_for_log[field_key] = str(e)
                     except Exception as e:
                         setattr(self.complex_transaction, field_key, None)
-                        _result_for_log[field_key] = None
+                        _result_for_log[field_key] = str(e)
 
         self.record_execution_progress('==== USER FIELDS ====')
         self.record_execution_progress(json.dumps(_result_for_log, indent=4, default=str))
@@ -2007,7 +2007,7 @@ class TransactionTypeProcess(object):
 
     def execute_complex_transaction_main_expressions(self):
 
-        _l.debug('execute_complex_transaction_main_expressions')
+        # _l.debug('execute_complex_transaction_main_expressions')
 
         self.record_execution_progress('Calculating Description')
 
@@ -2078,7 +2078,7 @@ class TransactionTypeProcess(object):
         # 3 (OVERWRITE, gettext_lazy('Overwrite')),
         # 4 (TREAT_AS_ERROR, gettext_lazy('Treat as error')),
 
-        _l.debug('execute_uniqueness_expression self.uniqueness_reaction %s' % self.uniqueness_reaction)
+        # _l.debug('execute_uniqueness_expression self.uniqueness_reaction %s' % self.uniqueness_reaction)
 
         self.record_execution_progress('Calculating Unique Code')
 
@@ -2097,8 +2097,8 @@ class TransactionTypeProcess(object):
 
             try:
 
-                _l.debug('names %s' % names)
-                _l.debug('self._context %s' % self._context)
+                # _l.debug('names %s' % names)
+                # _l.debug('self._context %s' % self._context)
 
                 self.complex_transaction.transaction_unique_code = formula.safe_eval(
                     self.complex_transaction.transaction_type.transaction_unique_code_expr, names=names,
@@ -2106,9 +2106,9 @@ class TransactionTypeProcess(object):
 
             except Exception as e:
 
-                _l.error('execute_uniqueness_expression.e %s ' % e)
-                _l.info('execute_uniqueness_expression.names %s' % names)
-                _l.info('execute_uniqueness_expression.names %s' % traceback.format_exc())
+                # _l.error('execute_uniqueness_expression.e %s ' % e)
+                # _l.info('execute_uniqueness_expression.names %s' % names)
+                # _l.info('execute_uniqueness_expression.names %s' % traceback.format_exc())
 
                 self.complex_transaction.transaction_unique_code = None
 
@@ -2160,7 +2160,7 @@ class TransactionTypeProcess(object):
 
         else:  # default behaviour
 
-            _l.debug('execute_uniqueness_expression default behavior')
+            # _l.debug('execute_uniqueness_expression default behavior')
 
             if self.complex_transaction.transaction_type.transaction_unique_code_expr and \
                     (
@@ -2184,14 +2184,14 @@ class TransactionTypeProcess(object):
                         context=self._context)
                 except Exception as e:
 
-                    _l.debug("Cant process transaction_unique_code %s" % e)
+                    # _l.debug("Cant process transaction_unique_code %s" % e)
 
                     self.complex_transaction.transaction_unique_code = None
 
                 if self.complex_transaction.transaction_unique_code:
 
-                    _l.debug(
-                        "execute_uniqueness_expression default behavior %s" % self.complex_transaction.transaction_unique_code)
+                    # _l.debug(
+                    #     "execute_uniqueness_expression default behavior %s" % self.complex_transaction.transaction_unique_code)
 
                     try:
 
@@ -2224,12 +2224,14 @@ class TransactionTypeProcess(object):
 
             from celery import Celery
 
-            _l.info("TransactionTypeProcess.run_procedures_after_book. execution_context %s" % self.execution_context)
+            # _l.info("TransactionTypeProcess.run_procedures_after_book. execution_context %s" % self.execution_context)
 
             from poms.portfolios.tasks import calculate_portfolio_register_record, \
                 calculate_portfolio_register_price_history
 
             if self.execution_context == 'manual':
+
+                cache.clear()
 
                 # app = Celery('poms_app')
                 # app.config_from_object('django.conf:settings', namespace='CELERY')
@@ -2238,8 +2240,8 @@ class TransactionTypeProcess(object):
                 # app.send_task('calculate_portfolio_register_record', [])
                 # app.send_task('calculate_portfolio_register_nav', [])
 
-                _l.info(
-                    "TransactionTypeProcess.run_procedures_after_book. recalculate prices %s" % self.complex_transaction.status)
+                # _l.info(
+                #     "TransactionTypeProcess.run_procedures_after_book. recalculate prices %s" % self.complex_transaction.status)
 
                 if self.complex_transaction.status_id == ComplexTransaction.PRODUCTION:
 
@@ -2257,7 +2259,7 @@ class TransactionTypeProcess(object):
                         if _date_from < date_from:
                             date_from = _date_from
 
-                    _l.info("TransactionTypeProcess.run_procedures_after_book. recalculating from %s" % date_from)
+                    # _l.info("TransactionTypeProcess.run_procedures_after_book. recalculating from %s" % date_from)
 
                     # TODO trigger recalc after manual book properly
                     # calculate_portfolio_register_record.apply_async(link=[
@@ -2327,9 +2329,9 @@ class TransactionTypeProcess(object):
 
         self.record_execution_progress('Booking Process Initialized')
 
-        _l.debug('process: %s, values=%s', self.transaction_type, self.values)
+        # _l.debug('process: %s, values=%s', self.transaction_type, self.values)
 
-        _l.debug('process self.process_mode %s' % self.process_mode)
+        # _l.debug('process self.process_mode %s' % self.process_mode)
 
         master_user = self.transaction_type.master_user
 
@@ -2337,55 +2339,72 @@ class TransactionTypeProcess(object):
         event_schedules_map = {}
         actions = self.transaction_type.actions.order_by('order').all()
 
+        '''
+        Creating instruments
+        '''
         instruments_st = time.perf_counter()
         instrument_map = self.book_create_instruments(actions, master_user, instrument_map)
         _l.debug('TransactionTypeProcess: book_create_instruments done: %s',
                  "{:3.3f}".format(time.perf_counter() - instruments_st))
 
+        '''
+        Creating instruments factor schedules
+        '''
         create_factor_st = time.perf_counter()
         self.book_create_factor_schedules(actions, instrument_map)
         _l.debug('TransactionTypeProcess: book_create_factor_schedules done: %s',
                  "{:3.3f}".format(time.perf_counter() - create_factor_st))
 
+        '''
+        Creating instruments manual pricing formulas
+        '''
         create_manual_pricing_st = time.perf_counter()
         self.book_create_manual_pricing_formulas(actions, instrument_map)
         _l.debug('TransactionTypeProcess: book_create_manual_pricing_formulas done: %s',
                  "{:3.3f}".format(time.perf_counter() - create_manual_pricing_st))
 
+        '''
+        Creating instruments accrual schedules
+        '''
         create_accrual_calculation_st = time.perf_counter()
         self.book_create_accrual_calculation_schedules(actions, instrument_map)
         _l.debug('TransactionTypeProcess: book_create_accrual_calculation_schedules done: %s',
                  "{:3.3f}".format(time.perf_counter() - create_accrual_calculation_st))
 
+        '''
+        Creating instruments event schedules
+        '''
         create_event_schedules_st = time.perf_counter()
         event_schedules_map = self.book_create_event_schedules(actions, instrument_map, event_schedules_map)
         _l.debug('TransactionTypeProcess: book_create_event_schedules done: %s',
                  "{:3.3f}".format(time.perf_counter() - create_event_schedules_st))
 
+        '''
+        Creating instruments event schedules actions
+        '''
         create_event_st = time.perf_counter()
         self.book_create_event_actions(actions, instrument_map, event_schedules_map)
         _l.debug('TransactionTypeProcess: book_create_event_actions done: %s',
                  "{:3.3f}".format(time.perf_counter() - create_event_st))
 
-        # complex_transaction
+        '''
+        Creating complex_transaction itself
+        '''
+        create_complex_transaction_st = time.perf_counter()
         complex_transaction_errors = {}
         if self.complex_transaction.date is None:
             self.complex_transaction.date = self._now  # set by default
 
-            self._set_val(errors=complex_transaction_errors, values=self.values, default_value=self._now,
-                          target=self.complex_transaction, target_attr_name='date',
-                          source=self.transaction_type, source_attr_name='date_expr',
-                          validator=formula.validate_date)
+        self._set_val(errors=complex_transaction_errors, values=self.values, default_value=self._now,
+                      target=self.complex_transaction, target_attr_name='date',
+                      source=self.transaction_type, source_attr_name='date_expr',
+                      validator=formula.validate_date)
 
         if bool(complex_transaction_errors):
             self.complex_transaction_errors.append(complex_transaction_errors)
 
         if self.complex_transaction_status is not None:
             self.complex_transaction.status_id = self.complex_transaction_status
-
-        _l.debug("complex_transaction.date %s" % self.complex_transaction.date)
-        _l.debug("complex_transaction.code %s" % self.complex_transaction.code)
-        _l.debug("complex_transaction.status %s" % self.complex_transaction.status)
 
         if self.source:
             self.complex_transaction.source = self.source
@@ -2395,29 +2414,51 @@ class TransactionTypeProcess(object):
         self._context['complex_transaction'] = self.complex_transaction
 
         self._save_inputs()
+        _l.info('TransactionTypeProcess: create_complex_transaction done: %s',
+                "{:3.3f}".format(time.perf_counter() - create_complex_transaction_st))
 
-
+        '''
+        Executing command actions
+        '''
+        book_execute_commands_st = time.perf_counter()
         self._context['values'] = self.values
         self.book_execute_commands(actions)
+        _l.info('TransactionTypeProcess: book_execute_commands done: %s',
+                "{:3.3f}".format(time.perf_counter() - book_execute_commands_st))
 
-
-        # _l.debug(self.complex_transaction.transactions.all())
-
+        '''
+        Creating base transactions
+        '''
+        book_create_transactions_st = time.perf_counter()
         self.complex_transaction.transactions.all().delete()
-
         self.book_create_transactions(actions, master_user, instrument_map)
+        _l.info('TransactionTypeProcess: book_create_transactions_st done: %s',
+                "{:3.3f}".format(time.perf_counter() - book_create_transactions_st))
 
+        '''
+        Executing complex_transaction.text expression
+        '''
+        execute_complex_transaction_main_expressions_st = time.perf_counter()
         self.execute_complex_transaction_main_expressions()
+        _l.info('TransactionTypeProcess: execute_complex_transaction_main_expressions done: %s',
+                "{:3.3f}".format(time.perf_counter() - execute_complex_transaction_main_expressions_st))
 
+        '''
+        Executing user_fields
+        '''
+        execute_user_fields_expressions_st = time.perf_counter()
         self.execute_user_fields_expressions()
+        _l.info('TransactionTypeProcess: execute_user_fields_expressions done: %s',
+                "{:3.3f}".format(time.perf_counter() - execute_user_fields_expressions_st))
 
-        self.execute_recon_fields_expressions()
-
-        # if self.transaction_type.transaction_unique_code_options == TransactionType.BOOK_WITH_UNIQUE_CODE_CHOICES:
-        #     _l.info("Going to execute unique code")
+        '''
+        Executing transaction_unique_code
+        '''
+        execute_uniqueness_expression_st = time.perf_counter()
         self.execute_uniqueness_expression()
-        # else:
-        #     _l.info("Not going to execute unique code")
+        _l.info('TransactionTypeProcess: execute_uniqueness_expression done: %s',
+                "{:3.3f}".format(time.perf_counter() - execute_uniqueness_expression_st))
+
 
         if self.linked_import_task:
             self.record_execution_progress('Transaction Booked during Task %s' % self.linked_import_task)

@@ -1272,7 +1272,7 @@ class SimpleImportProcess(object):
 
     def convert_relation_to_ids(self, item, result_item):
 
-        relation_fields = {
+        relation_fields_map = {
             'instrument': Instrument,
             'currency': Currency,
             'pricing_currency': Currency,
@@ -1292,19 +1292,19 @@ class SimpleImportProcess(object):
 
             key = entity_field.system_property_key
 
-            if key:
+            if key in relation_fields_map:
 
-                if key in relation_fields:
+                try:
+                    result_item[key] = relation_fields_map[key].objects.get(user_code=result_item[key]).id
+                except Exception as e:
+                    result_item[key] = None
 
-                    try:
-                        result_item[key] = relation_fields[key].objects.get(user_code=result_item[key]).id
-                    except Exception as e:
-                        result_item[key] = None
+                    if not item.error_message:
+                        item.error_message = ''
 
-                        if not item.error_message:
-                            item.error_message = ''
+                    item.error_message = (item.error_message + '%s: %s, ') % (key, str(e))
 
-                        item.error_message = (item.error_message + '%s: %s, ') % (key, str(e))
+        _l.info('convert_relation_to_ids.result_item %s' % result_item)
 
         return result_item
 

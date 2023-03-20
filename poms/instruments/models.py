@@ -1040,7 +1040,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
     def get_accrual_calculation_schedules_all(self):
         accruals = list(self.accrual_calculation_schedules.all())
 
-        _l.info("get_accrual_calculation_schedules_all %s" % accruals)
+        # _l.info("get_accrual_calculation_schedules_all %s" % accruals)
 
         if not accruals:
             return accruals
@@ -1049,11 +1049,11 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             # already configured
             return accruals
 
-        _l.info('get_accrual_calculation_schedules_all')
+        # _l.info('get_accrual_calculation_schedules_all')
 
         accruals = sorted(accruals, key=lambda x: datetime.date(datetime.strptime(x.accrual_start_date, '%Y-%m-%d')))
 
-        _l.info('get_accrual_calculation_schedules_all after sort')
+        # _l.info('get_accrual_calculation_schedules_all after sort')
 
         a = None
         for next_a in accruals:
@@ -1082,7 +1082,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         accruals = self.get_accrual_calculation_schedules_all()
         accrual = None
 
-        _l.debug('find_accrual.accruals %s' % accruals)
+        # _l.debug('find_accrual.accruals %s' % accruals)
 
         for a in accruals:
             if datetime.date(datetime.strptime(a.accrual_start_date, '%Y-%m-%d')) <= d:
@@ -1137,7 +1137,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             return 0.0
 
         accrual = self.find_accrual(price_date)
-        _l.debug('get_accrual_size.accrual %s' % accrual)
+        # _l.debug('get_accrual_size.accrual %s' % accrual)
         if accrual is None:
             return 0.0
 
