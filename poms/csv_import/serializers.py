@@ -275,8 +275,10 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
 
         for field in fields:
 
-            if not field.system_property_key and not field.attribute_user_code:
-                field.delete()
+            if not field.system_property_key and field.attribute_user_code:
+
+                if not field.expression:
+                    field.delete()
 
         self.create_user_attributes_if_not_exist(scheme)
 
