@@ -1304,10 +1304,10 @@ class SimpleImportProcess(object):
 
     def remove_nullable_attributes(self, result_item):
 
-        for key, value in result_item.items():
+        for key, value in list(result_item.items()):
 
             if value == None:
-                del result_item[key]
+                result_item.pop(key)
 
         return result_item
 
