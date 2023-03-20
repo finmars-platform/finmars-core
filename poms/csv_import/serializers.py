@@ -282,10 +282,24 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
         for entity_field in entity_fields:
 
             if entity_field.get('attribute_user_code') is not None and entity_field.get('expression'):
-                EntityField.objects.create(scheme=scheme,
-                                           attribute_user_code=entity_field.get('attribute_user_code'),
-                                           name=entity_field.get('name'),
-                                           expression=entity_field.get('expression'))
+
+
+                try:
+
+                    instance = EntityField.objects.get(scheme=scheme,
+                                                       attribute_user_code=entity_field.get(
+                                                           'attribute_user_code'))
+
+                    instance.expression = entity_field.get('expression', '')
+                    instance.name = entity_field.get('name', instance.name)
+                    instance.use_default = entity_field.get('use_default', instance.use_default)
+                    instance.save()
+
+                except EntityField.DoesNotExist:
+
+                    print("Unknown attribute %s" % entity_field.get(
+                        'attribute_user_code'))
+
 
     def save_calculated_inputs(self, scheme, inputs):
         pk_set = set()
