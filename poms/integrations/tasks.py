@@ -207,7 +207,7 @@ def download_instrument_async(self, task_id=None):
 
 def download_instrument(instrument_code=None, instrument_download_scheme=None, master_user=None, member=None,
                         task=None, value_overrides=None):
-    _l.debug('download_pricing: master_user_id=%s, task=%s, instrument_code=%s, instrument_download_scheme=%s',
+    _l.info('download_instrument: master_user_id=%s, task=%s, instrument_code=%s, instrument_download_scheme=%s',
              getattr(master_user, 'id', None), getattr(task, 'info', None), instrument_code, instrument_download_scheme)
 
     if task is None:
