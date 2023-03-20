@@ -1415,8 +1415,19 @@ class SimpleImportProcess(object):
 
             if self.scheme.item_post_process_script:
                 # POST SUCCESS SCRIPT
-                formula.safe_eval(self.scheme.item_post_process_script, names=item.final_inputs,
+
+                try:
+
+                    formula.safe_eval(self.scheme.item_post_process_script, names=item.final_inputs,
                                   context=self.context)
+
+                except Exception as e:
+
+                    if not item.error_message:
+                        item.error_message = ''
+
+                    item.error_message = (item.error_message + 'Post script error: %s, ') % str(e)
+
 
             item.status = 'success'
             item.message = "Item Imported %s" % serializer.instance
@@ -1466,8 +1477,15 @@ class SimpleImportProcess(object):
 
                     if self.scheme.item_post_process_script:
                         # POST SUCCESS SCRIPT
-                        formula.safe_eval(self.scheme.item_post_process_script, names=item.final_inputs,
-                                          context=self.context)
+                        try:
+                            formula.safe_eval(self.scheme.item_post_process_script, names=item.final_inputs,
+                                              context=self.context)
+                        except Exception as e:
+
+                            if not item.error_message:
+                                item.error_message = ''
+
+                            item.error_message = (item.error_message + 'Post script error: %s, ') % str(e)
 
                     item.status = 'success'
                     item.message = "Item Imported %s" % serializer.instance
