@@ -2464,8 +2464,12 @@ class TransactionTypeProcess(object):
         '''
         Creating base transactions
         '''
-        book_create_transactions_st = time.perf_counter()
+        delete_old_transactions_st = time.perf_counter()
         self.complex_transaction.transactions.all().delete()
+        _l.info('TransactionTypeProcess: delete_old_transactions done: %s',
+                "{:3.3f}".format(time.perf_counter() - delete_old_transactions_st))
+
+        book_create_transactions_st = time.perf_counter()
         self.book_create_transactions(actions, master_user, instrument_map)
         _l.info('TransactionTypeProcess: book_create_transactions_st done: %s',
                 "{:3.3f}".format(time.perf_counter() - book_create_transactions_st))
@@ -2524,10 +2528,10 @@ class TransactionTypeProcess(object):
         _l.info('TransactionTypeProcess: process done: %s',
                 "{:3.3f}".format(time.perf_counter() - process_st))
 
-        _l.info('self.value_errors %s' % self.value_errors)
-        _l.info('self.instruments_errors %s' % self.instruments_errors)
-        _l.info('self.complex_transaction_errors %s' % self.complex_transaction_errors)
-        _l.info('self.transactions_errors %s' % self.transactions_errors)
+        _l.debug('self.value_errors %s' % self.value_errors)
+        _l.debug('self.instruments_errors %s' % self.instruments_errors)
+        _l.debug('self.complex_transaction_errors %s' % self.complex_transaction_errors)
+        _l.debug('self.transactions_errors %s' % self.transactions_errors)
 
     def process_recalculate(self):
         if not self.recalculate_inputs:

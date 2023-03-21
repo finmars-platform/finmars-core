@@ -1504,7 +1504,7 @@ class ComplexTransaction(DataTimeStampedModel):
             self.code = FakeSequence.next_value(self.transaction_type.master_user, 'complex_transaction', d=100)
         # _l.info("ComplexTransaction.save code %s" % self.code)
 
-        _l.info("ComplexTransaction.save %s %s %s" % (self.code, self.date, self.transaction_unique_code))
+        _l.debug("ComplexTransaction.save %s %s %s" % (self.code, self.date, self.transaction_unique_code))
 
         super(ComplexTransaction, self).save(*args, **kwargs)
 
@@ -1953,7 +1953,7 @@ class Transaction(models.Model):
 
     def save(self, *args, **kwargs):
 
-        _l.info("Transaction.save: %s" % self)
+        _l.debug("Transaction.save: %s" % self)
 
         calc_cash = kwargs.pop('calc_cash', False)
 
@@ -1978,7 +1978,7 @@ class Transaction(models.Model):
         if self.ytm_at_cost is None:
             self.ytm_at_cost = 0
 
-        _l.info('Transaction.save: ytm is %s' % self.ytm_at_cost)
+        _l.debug('Transaction.save: ytm is %s' % self.ytm_at_cost)
 
         super(Transaction, self).save(*args, **kwargs)
 
