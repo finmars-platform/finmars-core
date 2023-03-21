@@ -100,7 +100,7 @@ class KeycloakAuthentication(TokenAuthentication):
         except Exception as e:
             _l.error("User not found %s" % e)
             try:
-                user = User.objects.create_user(username=userinfo['preferred_username'], is_verified=True,
+                user = User.objects.create_user(username=userinfo['preferred_username'],
                                                 password=generate_random_string(12))
 
             except Exception as e:
