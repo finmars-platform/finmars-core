@@ -989,9 +989,9 @@ class TransactionImportProcess(object):
             self.result.reports = []
 
 
-            if self.items_has_error():
-                self.result.reports.append(self.generate_file_report())
-                self.result.reports.append(self.generate_json_report())
+            # if self.items_has_error():
+            self.result.reports.append(self.generate_file_report())
+            self.result.reports.append(self.generate_json_report())
 
 
             if self.items_has_error():
