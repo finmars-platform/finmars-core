@@ -2439,6 +2439,7 @@ class TransactionTypeProcess(object):
         if self.source:
             self.complex_transaction.source = self.source
 
+        self.complex_transaction.save()  # save executed text and date expression
         self._context['complex_transaction'] = self.complex_transaction
 
         self._save_inputs()
@@ -2469,7 +2470,7 @@ class TransactionTypeProcess(object):
         self.record_execution_progress(' ')
         self.record_execution_progress('+====+====+')
         self.record_execution_progress(' ')
-        self.complex_transaction.save()  # save executed text and date expression
+
 
         '''
         Executing complex_transaction.text expression
