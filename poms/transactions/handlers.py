@@ -1843,6 +1843,8 @@ class TransactionTypeProcess(object):
 
         self.complex_transaction.inputs.all().delete()
 
+        inputs_to_create = []
+
         for ti in self.transaction_type.inputs.all():
             val = self.values.get(ti.name, None)
 
@@ -1904,7 +1906,11 @@ class TransactionTypeProcess(object):
                 # elif issubclass(model_class, NotificationClass):
                 #     ci.notification_class = val
 
-            ci.save()
+            # ci.save()
+
+            inputs_to_create.append(ci)
+
+        ComplexTransactionInput.objects.bulk_create(inputs_to_create)
 
     def execute_user_fields_expressions(self):
 
