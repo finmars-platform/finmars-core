@@ -415,3 +415,18 @@ class PortfolioBundleEvSerializer(ModelWithObjectPermissionSerializer, ModelWith
 
     def __init__(self, *args, **kwargs):
         super(PortfolioBundleEvSerializer, self).__init__(*args, **kwargs)
+
+
+class PortfolioEvalSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = Portfolio
+        fields = [
+            'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_default',
+            'is_deleted', 'is_enabled',
+
+        ]
+
+        read_only_fields = fields
+

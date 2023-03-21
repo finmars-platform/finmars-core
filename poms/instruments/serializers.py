@@ -1266,6 +1266,18 @@ class InstrumentLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         return result
 
 
+class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
+
+    class Meta:
+        model = Instrument
+        fields = [
+            'id', 'master_user', 'user_code', 'name', 'short_name',
+            'public_name', 'is_active', 'is_deleted', 'is_enabled', 'has_linked_with_portfolio'
+        ]
+
+        read_only_fields = fields
+
+
 class InstrumentForSelectSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
@@ -1819,3 +1831,98 @@ class InstrumentTypeProcessSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return validated_data
+
+
+
+class InstrumentTypeEvalSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+    instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)
+    one_off_event = TransactionTypeField(allow_null=True, required=False)
+    one_off_event_object = serializers.PrimaryKeyRelatedField(source='one_off_event', read_only=True)
+    regular_event = TransactionTypeField(allow_null=True, required=False)
+    regular_event_object = serializers.PrimaryKeyRelatedField(source='regular_event', read_only=True)
+    factor_same = TransactionTypeField(allow_null=True, required=False)
+    factor_same_object = serializers.PrimaryKeyRelatedField(source='factor_same', read_only=True)
+    factor_up = TransactionTypeField(allow_null=True, required=False)
+    factor_up_object = serializers.PrimaryKeyRelatedField(source='factor_up', read_only=True)
+    factor_down = TransactionTypeField(allow_null=True, required=False)
+    factor_down_object = serializers.PrimaryKeyRelatedField(source='factor_down', read_only=True)
+
+    pricing_currency_object = serializers.PrimaryKeyRelatedField(source='pricing_currency', read_only=True)
+    pricing_condition_object = PricingConditionSerializer(source='pricing_condition', read_only=True)
+
+    instrument_attributes = InstrumentTypeInstrumentAttributeSerializer(required=False, many=True, read_only=False)
+    instrument_factor_schedules = InstrumentTypeInstrumentFactorScheduleSerializer(required=False, many=True,
+                                                                                   read_only=False)
+
+    accruals = InstrumentTypeAccrualSerializer(required=False, many=True, read_only=False)
+    events = InstrumentTypeEventSerializer(required=False, many=True, read_only=False)
+
+    accrued_currency = CurrencyField(default=CurrencyDefault())
+    accrued_currency_object = serializers.PrimaryKeyRelatedField(source='accrued_currency', read_only=True)
+
+    payment_size_detail_object = PaymentSizeDetailSerializer(source='payment_size_detail', read_only=True)
+
+    instrument_factor_schedule_data = serializers.JSONField(allow_null=False)
+
+    class Meta:
+        model = InstrumentType
+        fields = [
+            'id', 'master_user',
+            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'is_default', 'is_deleted',
+            'instrument_form_layouts',
+            'instrument_class', 'instrument_class_object',
+
+            'one_off_event', 'one_off_event_object',
+            'regular_event', 'regular_event_object', 'factor_same', 'factor_same_object',
+            'factor_up', 'factor_up_object', 'factor_down', 'factor_down_object',
+            'is_enabled', 'pricing_policies',
+            'has_second_exposure_currency',
+
+            'accruals', 'events', 'instrument_attributes', 'instrument_factor_schedules',
+
+            'payment_size_detail', 'payment_size_detail_object',
+            'accrued_currency', 'accrued_currency_object',
+            'accrued_multiplier', 'default_accrued',
+
+            'exposure_calculation_model',
+
+            'co_directional_exposure_currency', 'counter_directional_exposure_currency',
+            'co_directional_exposure_currency_value_type', 'counter_directional_exposure_currency_value_type',
+
+            'long_underlying_instrument', 'short_underlying_instrument',
+
+            'underlying_long_multiplier', 'underlying_short_multiplier',
+
+            'long_underlying_exposure', 'short_underlying_exposure',
+
+            'position_reporting',
+
+            'instrument_factor_schedule_data',
+
+            'pricing_currency', 'pricing_currency_object',
+            'price_multiplier',
+
+            'pricing_condition', 'pricing_condition_object',
+
+            'default_price', 'maturity_date', 'maturity_price', 'reference_for_pricing'
+
+        ]
+
+        read_only_fields = fields
+
+    def __init__(self, *args, **kwargs):
+        super(InstrumentTypeEvalSerializer, self).__init__(*args, **kwargs)
+
+        self.fields['one_off_event_object'] = TransactionTypeSimpleViewSerializer(source='one_off_event',
+                                                                                  read_only=True)
+        self.fields['regular_event_object'] = TransactionTypeSimpleViewSerializer(source='regular_event',
+                                                                                  read_only=True)
+        self.fields['factor_same_object'] = TransactionTypeSimpleViewSerializer(source='factor_same', read_only=True)
+        self.fields['factor_up_object'] = TransactionTypeSimpleViewSerializer(source='factor_up', read_only=True)
+        self.fields['factor_down_object'] = TransactionTypeSimpleViewSerializer(source='factor_down', read_only=True)
+
+        self.fields['pricing_policies'] = InstrumentTypePricingPolicySerializer(many=True, required=False,
+                                                                                allow_null=True)
+

@@ -342,3 +342,20 @@ class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
                             )
 
         return instance
+
+
+class CurrencyEvalSerializer(ModelWithUserCodeSerializer,
+                          ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+
+    class Meta(ModelWithObjectPermissionSerializer.Meta):
+        model = Currency
+        fields = [
+            'id', 'master_user', 'user_code', 'name', 'short_name', 'notes',
+            'reference_for_pricing',
+            'pricing_condition',
+            'default_fx_rate',
+            'is_deleted', 'is_enabled',
+        ]
+
+        read_only_fields = fields

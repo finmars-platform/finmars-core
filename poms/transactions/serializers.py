@@ -2562,6 +2562,64 @@ class TransactionTextRenderSerializer(TransactionSerializer):
         kwargs.setdefault('skip_complex_transaction', True)
         super(TransactionTextRenderSerializer, self).__init__(*args, **kwargs)
 
+    class Meta(TransactionSerializer.Meta):
+        fields = [
+            'id',
+            'master_user',
+            'transaction_code',
+            'complex_transaction',
+            'complex_transaction_order',
+            'transaction_class',
+            'instrument',
+            'transaction_currency',
+            'position_size_with_sign',
+            'settlement_currency',
+            'cash_consideration',
+            'principal_with_sign',
+            'carry_with_sign',
+            'overheads_with_sign',
+            'reference_fx_rate',
+
+            'accounting_date',
+            'cash_date',
+            'transaction_date',
+
+            'portfolio',
+            'account_cash',
+            'account_position',
+            'account_interim',
+            'strategy1_position',
+            'strategy1_cash',
+            'strategy2_position',
+            'strategy2_cash',
+            'strategy3_position',
+            'strategy3_cash',
+
+            'responsible',
+            'counterparty',
+            'linked_instrument',
+            'allocation_balance',
+            'allocation_pl',
+
+            # 'is_locked',
+            'is_canceled',
+            # 'is_deleted',
+
+            'error_code',
+
+            'factor',
+            'trade_price',
+            'position_amount',
+            'principal_amount',
+            'carry_amount',
+            'overheads',
+            'ytm_at_cost',
+            'notes',
+
+        ]
+
+        read_only_fields = fields
+
 
 class ComplexTransactionMixin:
     # def __init__(self, *args, **kwargs):
@@ -2885,6 +2943,36 @@ class ComplexTransactionEvalSerializer(ComplexTransactionSerializer):
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionEvalSerializer, self).__init__(*args, **kwargs)
         self.fields.pop('text', None)
+
+    class Meta(ComplexTransactionSerializer.Meta):
+        model = ComplexTransaction
+        fields = [
+            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'transactions', 'master_user',
+
+            'transaction_unique_code',
+
+            'is_locked', 'is_canceled', 'error_code', 'is_deleted',
+
+            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
+            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
+
+            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
+            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
+            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
+
+            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
+            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
+            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
+
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
+
+        ]
+
+        read_only_fields = fields
 
 
 class ComplexTransactionViewSerializer(ComplexTransactionMixin, serializers.ModelSerializer):
@@ -3511,7 +3599,6 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
 
 
 class ComplexTransactionViewOnlyComplexTransactionSerializer(serializers.ModelSerializer):
-
     source = serializers.JSONField(read_only=True)
 
     def __init__(self, *args, **kwargs):
@@ -3992,3 +4079,103 @@ class RecalculateUserFieldsSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return RecalculateUserFields(**validated_data)
+
+
+class TransactionEvalSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = [
+            'id',
+            'master_user',
+            'transaction_code',
+            'complex_transaction',
+            'complex_transaction_order',
+            'transaction_class',
+            'instrument',
+            'transaction_currency',
+            'position_size_with_sign',
+            'settlement_currency',
+            'cash_consideration',
+            'principal_with_sign',
+            'carry_with_sign',
+            'overheads_with_sign',
+            'reference_fx_rate',
+
+            'accounting_date',
+            'cash_date',
+            'transaction_date',
+
+            'portfolio',
+            'account_cash',
+            'account_position',
+            'account_interim',
+            'strategy1_position',
+            'strategy1_cash',
+            'strategy2_position',
+            'strategy2_cash',
+            'strategy3_position',
+            'strategy3_cash',
+
+            'responsible',
+            'counterparty',
+            'linked_instrument',
+            'allocation_balance',
+            'allocation_pl',
+
+            'is_canceled',
+
+            'error_code',
+
+            'factor',
+            'trade_price',
+            'position_amount',
+            'principal_amount',
+            'carry_amount',
+            'overheads',
+            'ytm_at_cost',
+            'notes',
+
+        ]
+
+        read_only_fields = fields
+
+    def __init__(self, *args, **kwargs):
+        skip_complex_transaction = kwargs.pop('skip_complex_transaction', False)
+        super(TransactionEvalSerializer, self).__init__(*args, **kwargs)
+
+        from poms.instruments.serializers import InstrumentEvalSerializer
+        from poms.portfolios.serializers import PortfolioEvalSerializer
+        from poms.accounts.serializers import AccountEvalSerializer
+        from poms.currencies.serializers import CurrencyEvalSerializer
+        from poms.strategies.serializers import Strategy1EvalSerializer, Strategy2EvalSerializer, \
+            Strategy3EvalSerializer
+
+        from poms.counterparties.serializers import ResponsibleEvalSerializer
+        from poms.counterparties.serializers import CounterpartyEvalSerializer
+
+        self.fields['portfolio'] = PortfolioEvalSerializer(read_only=True)
+
+        self.fields['transaction_currency'] = CurrencyEvalSerializer(read_only=True)
+        self.fields['settlement_currency'] = CurrencyEvalSerializer(read_only=True)
+
+        self.fields['responsible'] = ResponsibleEvalSerializer(read_only=True)
+
+        self.fields['counterparty'] = CounterpartyEvalSerializer(read_only=True)
+
+        self.fields['account_cash'] = AccountEvalSerializer(read_only=True)
+        self.fields['account_position'] = AccountEvalSerializer(read_only=True)
+        self.fields['account_interim'] = AccountEvalSerializer(read_only=True)
+
+        self.fields['strategy1_position'] = Strategy1EvalSerializer(read_only=True)
+        self.fields['strategy1_cash'] = Strategy1EvalSerializer(read_only=True)
+
+        self.fields['strategy2_position'] = Strategy2EvalSerializer(read_only=True)
+        self.fields['strategy2_cash'] = Strategy2EvalSerializer(read_only=True)
+
+        self.fields['strategy3_position'] = Strategy3EvalSerializer(read_only=True)
+        self.fields['strategy3_cash'] = Strategy3EvalSerializer(read_only=True)
+
+        self.fields['instrument'] = InstrumentEvalSerializer(read_only=True)
+        self.fields['linked_instrument'] = InstrumentEvalSerializer(read_only=True)
+        self.fields['allocation_balance'] = InstrumentEvalSerializer(read_only=True)
+        self.fields['allocation_pl'] = InstrumentEvalSerializer(read_only=True)

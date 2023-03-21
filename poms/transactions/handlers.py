@@ -129,8 +129,8 @@ class TransactionTypeProcess(object):
         self.record_execution_progress('Transaction Type: %s' % self.transaction_type.user_code)
         self.record_execution_progress('Member: %s' % self.member)
         self.record_execution_progress('Execution_context: %s' % execution_context)
-        self.record_execution_progress('==== INPUT CONTEXT VALUES ====', context_values)
-        self.record_execution_progress('==== INPUT VALUES ====', values)
+        # self.record_execution_progress('==== INPUT CONTEXT VALUES ====', context_values)
+        # self.record_execution_progress('==== INPUT VALUES ====', values)
 
         self.process_mode = process_mode
         self.execution_context = execution_context
@@ -335,15 +335,15 @@ class TransactionTypeProcess(object):
 
         self.values = {}
 
-        self.record_execution_progress('values: ', self.values)
+        # self.record_execution_progress('values: ', self.values)
 
         self.values.update(self.default_values)
 
-        self.record_execution_progress('values with defaults: ', self.values)
+        # self.record_execution_progress('values with defaults: ', self.values)
 
         self.values.update(self.context_values)
 
-        self.record_execution_progress('values with context: ', self.values)
+        # self.record_execution_progress('values with context: ', self.values)
 
         for i in range(10):
             self.values['phantom_instrument_%s' % i] = None
@@ -2514,6 +2514,9 @@ class TransactionTypeProcess(object):
         if self.complex_transaction.transaction_type.type == TransactionType.TYPE_PROCEDURE:
             self.complex_transaction.delete()
             self.complex_transaction = None
+
+        self.record_execution_progress('Process time: %s',
+                                       "{:3.3f}".format(time.perf_counter() - process_st))
 
         self.complex_transaction.save()  # save executed text and date expression
 

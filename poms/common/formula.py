@@ -4145,12 +4145,15 @@ class SimpleEval2(object):
             try:
                 return val[node.attr]
             except (IndexError, KeyError, TypeError):
+
+                _l.info('AttributeDoesNotExist.node %s' % node)
+
                 raise AttributeDoesNotExist(node.attr)
 
         elif isinstance(val, list):
-            _l.debug("list here? %s" % val)
-            _l.debug("list here? node.value %s" % node.value)
-            _l.debug("list here? node.attr %s" % node.attr)
+            # _l.debug("list here? %s" % val)
+            # _l.debug("list here? node.value %s" % node.value)
+            # _l.debug("list here? node.attr %s" % node.attr)
             if node.attr in ['append', 'pop', 'remove']:
                 return getattr(val, node.attr)
         else:
@@ -4166,6 +4169,9 @@ class SimpleEval2(object):
             elif isinstance(val, relativedelta.relativedelta):
                 if node.attr in ['years', 'months', 'days', 'leapdays', 'year', 'month', 'day', 'weekday']:
                     return getattr(val, node.attr)
+
+        _l.info('AttributeDoesNotExist.val %s' % val)
+        _l.info('AttributeDoesNotExist.node %s' % node.__dict__)
 
         raise AttributeDoesNotExist(node.attr)
 
@@ -4360,40 +4366,41 @@ def _get_supported_models_serializer_class():
     from poms.users.serializers import MemberSerializer
 
     from poms.accounts.models import Account
-    from poms.accounts.serializers import AccountSerializer
+    from poms.accounts.serializers import AccountEvalSerializer
     from poms.counterparties.models import Counterparty, Responsible
-    from poms.counterparties.serializers import CounterpartySerializer, ResponsibleSerializer
+    from poms.counterparties.serializers import CounterpartyEvalSerializer, ResponsibleEvalSerializer
     from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, GeneratedEvent, Country, \
         InstrumentType
-    from poms.instruments.serializers import InstrumentSerializer, DailyPricingModelSerializer, \
-        InstrumentTypeSerializer, CountrySerializer, \
+    from poms.instruments.serializers import InstrumentEvalSerializer, DailyPricingModelSerializer, \
+        InstrumentTypeEvalSerializer, CountrySerializer, \
         PaymentSizeDetailSerializer, GeneratedEventSerializer
     from poms.currencies.models import Currency
-    from poms.currencies.serializers import CurrencySerializer
+    from poms.currencies.serializers import CurrencyEvalSerializer
     from poms.portfolios.models import Portfolio
-    from poms.portfolios.serializers import PortfolioSerializer
+    from poms.portfolios.serializers import PortfolioEvalSerializer
     from poms.strategies.models import Strategy1, Strategy2, Strategy3
-    from poms.strategies.serializers import Strategy1Serializer, Strategy2Serializer, Strategy3Serializer
+    from poms.strategies.serializers import Strategy1EvalSerializer, Strategy2EvalSerializer, Strategy3EvalSerializer
     from poms.integrations.models import PriceDownloadScheme
     from poms.integrations.serializers import PriceDownloadSchemeSerializer
     from poms.transactions.models import Transaction, ComplexTransaction
-    from poms.transactions.serializers import TransactionTextRenderSerializer, ComplexTransactionEvalSerializer
+    from poms.transactions.serializers import TransactionEvalSerializer, ComplexTransactionEvalSerializer
 
     return {
-        Account: AccountSerializer,
-        Counterparty: CounterpartySerializer,
-        Responsible: ResponsibleSerializer,
-        Instrument: InstrumentSerializer,
-        InstrumentType: InstrumentTypeSerializer,
-        Currency: CurrencySerializer,
-        Portfolio: PortfolioSerializer,
-        Strategy1: Strategy1Serializer,
-        Strategy2: Strategy2Serializer,
-        Strategy3: Strategy3Serializer,
+        Account: AccountEvalSerializer,
+        Counterparty: CounterpartyEvalSerializer,
+        Responsible: ResponsibleEvalSerializer,
+        Instrument: InstrumentEvalSerializer,
+        InstrumentType: InstrumentTypeEvalSerializer,
+        Currency: CurrencyEvalSerializer,
+        Portfolio: PortfolioEvalSerializer,
+        Strategy1: Strategy1EvalSerializer,
+        Strategy2: Strategy2EvalSerializer,
+        Strategy3: Strategy3EvalSerializer,
         DailyPricingModel: DailyPricingModelSerializer,
         PaymentSizeDetail: PaymentSizeDetailSerializer,
         PriceDownloadScheme: PriceDownloadSchemeSerializer,
-        Transaction: TransactionTextRenderSerializer,
+        # Transaction: TransactionTextRenderSerializer,
+        Transaction: TransactionEvalSerializer,
         ComplexTransaction: ComplexTransactionEvalSerializer,
         GeneratedEvent: GeneratedEventSerializer,
         Member: MemberSerializer,
