@@ -330,7 +330,7 @@ class TransactionTypeProcess(object):
                 elif issubclass(model_class, NotificationClass):
                     return NotificationClass.objects.get(user_code=obj.value_relation)
             except Exception:
-                _l.info("Could not find default value relation %s " % obj.value_relation)
+                _l.error("Could not find default value relation %s " % obj.value_relation)
                 return None
 
         self.values = {}
@@ -483,7 +483,7 @@ class TransactionTypeProcess(object):
                     errors = {}
                     try:
 
-                        _l.info("Calulate user code. Values %s" % self.values)
+                        _l.debug("Calulate user code. Values %s" % self.values)
 
                         user_code = formula.safe_eval(action_instrument.user_code, names=self.values, now=self._now,
                                                       context=self._context)
@@ -507,11 +507,11 @@ class TransactionTypeProcess(object):
 
                         try:
                             from poms.integrations.tasks import download_instrument_cbond
-                            _l.info("Trying to download instrument from provider")
+                            _l.debug("Trying to download instrument from provider")
                             task, errors = download_instrument_cbond(user_code, None, None, master_user, self.member)
 
-                            _l.info("Download Instrument from provider. Task %s" % task)
-                            _l.info("Download Instrument from provider. Errors %s" % errors)
+                            _l.debug("Download Instrument from provider. Task %s" % task)
+                            _l.debug("Download Instrument from provider. Errors %s" % errors)
 
                             instrument = Instrument.objects.get(id=task.result_object['instrument_id'],
                                                                 master_user=master_user)
@@ -524,7 +524,7 @@ class TransactionTypeProcess(object):
 
                         except Exception as e:
 
-                            _l.info("Download instrument from provider. Error %s" % e)
+                            _l.error("Download instrument from provider. Error %s" % e)
 
                             self.book_create_instruments(actions, master_user, instrument_map, pass_download=True)
 
@@ -596,7 +596,7 @@ class TransactionTypeProcess(object):
 
                             object_data['instrument_type'] = instrument.instrument_type.id
 
-                            _l.info('set rel instrument.instrument_type %s' % instrument.instrument_type.id)
+                            # _l.info('set rel instrument.instrument_type %s' % instrument.instrument_type.id)
 
                             from poms.csv_import.handlers import set_defaults_from_instrument_type
                             set_defaults_from_instrument_type(object_data, instrument.instrument_type,
@@ -757,7 +757,7 @@ class TransactionTypeProcess(object):
 
                         except (ValueError, TypeError, IntegrityError, Exception) as e:
 
-                            _l.info("Instrument save error %s" % e)
+                            _l.error("Instrument save error %s" % e)
 
                             self._add_err_msg(errors, 'non_field_errors',
                                               gettext_lazy(
@@ -769,7 +769,7 @@ class TransactionTypeProcess(object):
 
                             self.values['phantom_instrument_%s' % action.order] = instrument
 
-                            _l.info('self.values %s updated values with phantom', self.values)
+                            # _l.debug('self.values %s updated values with phantom', self.values)
 
                         finally:
 
@@ -2039,7 +2039,7 @@ class TransactionTypeProcess(object):
 
         except Exception as error:
 
-            _l.info("execute_recon_fields_expressions %s" % error)
+            _l.error("execute_recon_fields_expressions %s" % error)
 
     def execute_complex_transaction_main_expressions(self):
 
@@ -2609,12 +2609,12 @@ class TransactionTypeProcess(object):
                         res = formula.safe_eval(inp.value_expr, names=self.values, now=self._now, context=self._context)
                         self.values[name] = res
 
-                        _l.info('process_recalculate self.values %s' % self.values)
+                        _l.debug('process_recalculate self.values %s' % self.values)
 
                     except formula.InvalidExpression as e:
 
-                        _l.info('process_recalculate e %s' % e)
-                        _l.info('process_recalculate e self.values %s' % self.values)
+                        _l.error('process_recalculate e %s' % e)
+                        _l.debug('process_recalculate e self.values %s' % self.values)
 
                         if inp.value_type == TransactionTypeInput.STRING:
                             self.values[name] = 'Invalid Expression'
