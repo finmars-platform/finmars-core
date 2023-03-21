@@ -101,63 +101,61 @@ def simple_import(self, task_id, procedure_instance_id=None):
 
 @shared_task(name='csv_import.data_csv_file_import_by_procedure_json', bind=True)
 def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_task_id):
-    with transaction.atomic():
 
-        _l.info('data_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (
-            procedure_instance_id, celery_task_id))
+    _l.info('data_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (
+        procedure_instance_id, celery_task_id))
 
-        from poms.procedures.models import RequestDataFileProcedureInstance
+    from poms.procedures.models import RequestDataFileProcedureInstance
 
-        procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
-        celery_task = CeleryTask.objects.get(id=celery_task_id)
-        celery_task.status = CeleryTask.STATUS_PENDING
-        celery_task.celery_task_id = self.request.id
+    procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
+    celery_task = CeleryTask.objects.get(id=celery_task_id)
+    celery_task.status = CeleryTask.STATUS_PENDING
+    celery_task.celery_task_id = self.request.id
+    celery_task.save()
+
+    try:
+
+        _l.info(
+            'data_csv_file_import_by_procedure_json looking for scheme %s ' % procedure_instance.procedure.scheme_user_code)
+
+        scheme = CsvImportScheme.objects.get(master_user=procedure_instance.master_user,
+                                             user_code=procedure_instance.procedure.scheme_user_code)
+
+        options_object = celery_task.options_object
+
+        options_object['file_path'] = ''
+        options_object['filename'] = ''
+        options_object['scheme_id'] = scheme.id
+        options_object['execution_context'] = {'started_by': 'procedure'}
+
+        celery_task.options_object = options_object
         celery_task.save()
 
-        try:
+        text = "Data File Procedure %s. Procedure Instance %s. File is received. Importing JSON" % (
+            procedure_instance.id,
+            procedure_instance.procedure.user_code)
 
-            _l.info(
-                'data_csv_file_import_by_procedure_json looking for scheme %s ' % procedure_instance.procedure.scheme_user_code)
+        send_system_message(master_user=procedure_instance.master_user,
+                            performed_by='System',
+                            description=text)
 
-            scheme = CsvImportScheme.objects.get(master_user=procedure_instance.master_user,
-                                                 user_code=procedure_instance.procedure.scheme_user_code)
-
-            options_object = celery_task.options_object
-
-            options_object['file_path'] = ''
-            options_object['filename'] = ''
-            options_object['scheme_id'] = scheme.id
-            options_object['execution_context'] = {'started_by': 'procedure'}
-
-            celery_task.options_object = options_object
-            celery_task.save()
-
-            text = "Data File Procedure %s. Procedure Instance %s. File is received. Importing JSON" % (
-                procedure_instance.id,
-                procedure_instance.procedure.user_code)
-
-            send_system_message(master_user=procedure_instance.master_user,
-                                performed_by='System',
-                                description=text)
-
-            transaction.on_commit(lambda: simple_import.apply_async(
-                kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
+        transaction.on_commit(lambda: simple_import.apply_async(
+            kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
 
 
-        except Exception as e:
+    except Exception as e:
 
-            _l.info('data_csv_file_import_by_procedure_json e %s' % e)
+        _l.info('data_csv_file_import_by_procedure_json e %s' % e)
 
-            text = "Data File Procedure %s. Can't import json, Error %s" % (
-                procedure_instance.procedure.user_code, e)
+        text = "Data File Procedure %s. Can't import json, Error %s" % (
+            procedure_instance.procedure.user_code, e)
 
-            send_system_message(master_user=procedure_instance.master_user,
-                                performed_by='System',
-                                description=text)
+        send_system_message(master_user=procedure_instance.master_user,
+                            performed_by='System',
+                            description=text)
 
-            _l.debug(
-                'data_csv_file_import_by_procedure_json scheme %s not found' % procedure_instance.procedure.scheme_name)
+        _l.debug(
+            'data_csv_file_import_by_procedure_json scheme %s not found' % procedure_instance.procedure.scheme_name)
 
-            procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
-            procedure_instance.save()
-
+        procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+        procedure_instance.save()
