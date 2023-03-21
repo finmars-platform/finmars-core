@@ -3,8 +3,9 @@ import logging
 import time
 import traceback
 from datetime import date, datetime
-from django.core.cache import cache
+
 from django.apps import apps
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import DatabaseError, IntegrityError
 from django.utils.translation import gettext_lazy
@@ -45,8 +46,8 @@ _l = logging.getLogger('poms.transactions')
 # }
 
 class UniqueCodeError(ValidationError):
-
     message = "Unique code already exists"
+
 
 class TransactionTypeProcess(object):
     # if store is false then operations must be rollback outside, for example in view...
@@ -54,16 +55,23 @@ class TransactionTypeProcess(object):
     MODE_REBOOK = 'rebook'
     MODE_RECALCULATE = 'recalculate'
 
-    def record_execution_progress(self, message):
+    def record_execution_progress(self, message, obj=None):
         # _l.debug('record_execution_progress.message %s' % message)
 
-        if not self.complex_transaction.execution_log:
-            self.complex_transaction.execution_log = ''
+        if self.record_execution_log:
 
-        _time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            if not self.complex_transaction.execution_log:
+                self.complex_transaction.execution_log = ''
 
-        self.complex_transaction.execution_log = self.complex_transaction.execution_log + '[' + str(
-            _time) + '] ' + message + '\n'
+            _time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            self.complex_transaction.execution_log = self.complex_transaction.execution_log + '[' + str(
+                _time) + '] ' + message + '\n'
+
+            if obj:
+                self.complex_transaction.execution_log = self.complex_transaction.execution_log + json.dumps(obj,
+                                                                                                         indent=4,
+                                                                                                         default=str) + '\n'
 
     def __init__(self,
                  process_mode=None,
@@ -89,11 +97,14 @@ class TransactionTypeProcess(object):
                  execution_context='manual',
                  member=None,
                  source=None,
+                 clear_execution_log=True,
+                 record_execution_log=True,
                  linked_import_task=None):  # if book from import
 
-        _l.info('TransactionTypeProcess')
+        _l.info('==== TransactionTypeProcess INIT ====')
 
         self.transaction_type = transaction_type
+
 
         master_user = self.transaction_type.master_user
         self.member = member
@@ -105,6 +116,12 @@ class TransactionTypeProcess(object):
             self.complex_transaction = ComplexTransaction(transaction_type=self.transaction_type, date=None,
                                                           master_user=master_user)
 
+        self.clear_execution_log = clear_execution_log
+        self.record_execution_log = record_execution_log
+
+        if self.clear_execution_log:
+            self.complex_transaction.execution_log = ''
+
         # _l.info("EXECUTION LOG %s" % self.complex_transaction.execution_log)
 
         self.record_execution_progress('Booking Complex Transaction')
@@ -112,10 +129,8 @@ class TransactionTypeProcess(object):
         self.record_execution_progress('Transaction Type: %s' % self.transaction_type.user_code)
         self.record_execution_progress('Member: %s' % self.member)
         self.record_execution_progress('Execution_context: %s' % execution_context)
-        self.record_execution_progress('==== INPUT CONTEXT VALUES ====')
-        self.record_execution_progress(json.dumps(context_values, indent=4, default=str))
-        self.record_execution_progress('==== INPUT VALUES ====')
-        self.record_execution_progress(json.dumps(values, indent=4, default=str))
+        self.record_execution_progress('==== INPUT CONTEXT VALUES ====', context_values)
+        self.record_execution_progress('==== INPUT VALUES ====', values)
 
         self.process_mode = process_mode
         self.execution_context = execution_context
@@ -174,7 +189,7 @@ class TransactionTypeProcess(object):
         self.next_transaction_order = transaction_order_gen or self._next_transaction_order_default
 
         self.uniqueness_reaction = uniqueness_reaction
-        self.source = source # JSON object that contains source dictonary from broker
+        self.source = source  # JSON object that contains source dictonary from broker
 
         self.uniqueness_status = None
 
@@ -239,6 +254,9 @@ class TransactionTypeProcess(object):
             return False
 
     def _set_values(self):
+
+        self.record_execution_progress('==== SETTINGS VALUES ====')
+
         def _get_val_by_model_cls_for_transaction_type_input(master_user, value, model_class):
             try:
                 if issubclass(model_class, Account):
@@ -316,8 +334,16 @@ class TransactionTypeProcess(object):
                 return None
 
         self.values = {}
+
+        self.record_execution_progress('values: ', self.values)
+
         self.values.update(self.default_values)
+
+        self.record_execution_progress('values with defaults: ', self.values)
+
         self.values.update(self.context_values)
+
+        self.record_execution_progress('values with context: ', self.values)
 
         for i in range(10):
             self.values['phantom_instrument_%s' % i] = None
@@ -347,92 +373,94 @@ class TransactionTypeProcess(object):
 
         # _l.debug('self.inputs %s' % self.inputs)
 
-        self.record_execution_progress('==== COMPLEX TRANSACTION VALUES ====')
-        self.record_execution_progress(json.dumps(self.values, indent=4, default=str))
+        self.record_execution_progress('==== COMPLEX TRANSACTION VALUES ====', self.values)
 
         for i in self.inputs:
 
-            if i.name in self.values:
-                continue
+            if i.name not in self.values:
 
-            if 'context_' in i.name:  # input could not be context
-                continue
+                if 'context_' not in i.name:  # input could not be context
 
-            value = None
+                    value = None
 
-            if i.is_fill_from_context:
+                    if i.is_fill_from_context:
 
-                try:
-
-                    value = self.context_values[i.context_property]
-
-                    _l.debug("Set from context. input %s value %s" % (i.name, value))
-
-                except KeyError:
-                    _l.debug("Can't find context variable %s" % i.context_property)
-
-            if value is None:
-
-                if i.value_type == TransactionTypeInput.RELATION:
-
-                    model_class = i.content_type.model_class()
-
-                    if i.value:
-                        errors = {}
                         try:
-                            # i.value = _if_null(effective_date)
-                            # names = {
-                            #   'effective_date': 2020-02-10
-                            #
-                            # }
 
-                            value = formula.safe_eval(i.value, names=self.values, now=self._now, context=self._context)
+                            value = self.context_values[i.context_property]
 
-                            _l.debug("Set from default. input %s value %s" % (i.name, i.value))
+                            _l.debug("Set from context. input %s value %s" % (i.name, value))
 
-                        except formula.InvalidExpression as e:
-                            self._set_eval_error(errors, i.name, i.value, e)
-                            self.value_errors.append(errors)
-                            _l.debug("ERROR Set from default. input %s" % i.name)
-                            _l.debug("ERROR Set from default. error %s" % e)
-                            value = None
+                        except KeyError:
+                            _l.debug("Can't find context variable %s" % i.context_property)
 
-                    value = _get_val_by_model_cls_for_transaction_type_input(self.complex_transaction.master_user,
-                                                                             value,
-                                                                             model_class)
+                    if value is None:
 
-                    _l.debug("Set from default. Relation input %s value %s" % (i.name, value))
+                        if i.value_type == TransactionTypeInput.RELATION:
 
-                else:
-                    if i.value:
-                        errors = {}
-                        try:
-                            # i.value = _if_null(effective_date)
-                            # names = {
-                            #   'effective_date': 2020-02-10
-                            #
-                            # }
+                            model_class = i.content_type.model_class()
 
-                            value = formula.safe_eval(i.value, names=self.values, now=self._now, context=self._context)
+                            if i.value:
+                                errors = {}
+                                try:
+                                    # i.value = _if_null(effective_date)
+                                    # names = {
+                                    #   'effective_date': 2020-02-10
+                                    #
+                                    # }
 
-                            _l.debug("Set from default. input %s value %s" % (i.name, i.value))
+                                    value = formula.safe_eval(i.value, names=self.values, now=self._now,
+                                                              context=self._context)
 
-                        except formula.InvalidExpression as e:
-                            self._set_eval_error(errors, i.name, i.value, e)
-                            self.value_errors.append(errors)
-                            _l.debug("ERROR Set from default. input %s" % i.name)
-                            _l.debug("ERROR Set from default. error %s" % e)
-                            value = None
+                                    _l.debug("Set from default. input %s value %s" % (i.name, i.value))
 
-            if value or value == 0:
-                self.values[i.name] = value
-            else:
-                _l.debug("Value is not set. No Context. No Default. input %s " % i.name)
+                                except formula.InvalidExpression as e:
+                                    self._set_eval_error(errors, i.name, i.value, e)
+                                    self.value_errors.append(errors)
+                                    _l.debug("ERROR Set from default. input %s" % i.name)
+                                    _l.debug("ERROR Set from default. error %s" % e)
+                                    value = None
+
+                            value = _get_val_by_model_cls_for_transaction_type_input(
+                                self.complex_transaction.master_user,
+                                value,
+                                model_class)
+
+                            _l.debug("Set from default. Relation input %s value %s" % (i.name, value))
+
+                        else:
+                            if i.value:
+                                errors = {}
+                                try:
+                                    # i.value = _if_null(effective_date)
+                                    # names = {
+                                    #   'effective_date': 2020-02-10
+                                    #
+                                    # }
+
+                                    value = formula.safe_eval(i.value, names=self.values, now=self._now,
+                                                              context=self._context)
+
+                                    _l.debug("Set from default. input %s value %s" % (i.name, i.value))
+
+                                except formula.InvalidExpression as e:
+                                    self._set_eval_error(errors, i.name, i.value, e)
+                                    self.value_errors.append(errors)
+                                    _l.debug("ERROR Set from default. input %s" % i.name)
+                                    _l.debug("ERROR Set from default. error %s" % e)
+                                    value = None
+
+                    if value or value == 0:
+                        self.values[i.name] = value
+                    else:
+                        _l.debug("Value is not set. No Context. No Default. input %s " % i.name)
 
         self.record_execution_progress('==== CALCULATED INPUTS ====')
-        self.record_execution_progress(json.dumps(self.values, indent=4, default=str))
 
         # _l.debug('setvalues %s' % self.values)
+
+        for key, value in self.values.items():
+            self.record_execution_progress('Key: %s. Value: %s. Type: %s' % (key, value, type(self.values[key]).__name__))
 
     def book_create_instruments(self, actions, master_user, instrument_map, pass_download=False):
 
@@ -1948,8 +1976,7 @@ class TransactionTypeProcess(object):
                             setattr(self.complex_transaction, field_key, None)
                             _result_for_log[field_key] = str(e)
 
-        self.record_execution_progress('==== USER FIELDS ====')
-        self.record_execution_progress(json.dumps(_result_for_log, indent=4, default=str))
+        self.record_execution_progress('==== USER FIELDS ====', _result_for_log)
 
     def execute_recon_fields_expressions(self):
 
@@ -2091,8 +2118,8 @@ class TransactionTypeProcess(object):
             trns = formula.value_prepare(self.complex_transaction.transactions.all())
 
             names = {
-                'complex_transaction': json.loads(json.dumps(ctrn, default=str)),
-                'transactions': json.loads(json.dumps(trns, default=str)),
+                'complex_transaction': ctrn,
+                'transactions': trns,
             }
 
             for key, value in self.values.items():
@@ -2412,8 +2439,6 @@ class TransactionTypeProcess(object):
         if self.source:
             self.complex_transaction.source = self.source
 
-        self.complex_transaction.save()
-
         self._context['complex_transaction'] = self.complex_transaction
 
         self._save_inputs()
@@ -2462,12 +2487,6 @@ class TransactionTypeProcess(object):
         _l.info('TransactionTypeProcess: execute_uniqueness_expression done: %s',
                 "{:3.3f}".format(time.perf_counter() - execute_uniqueness_expression_st))
 
-
-        if self.linked_import_task:
-            self.record_execution_progress('Transaction Booked during Task %s' % self.linked_import_task)
-
-            self.complex_transaction.linked_import_task = self.linked_import_task
-
         self.record_execution_progress('Complex Transaction %s Booked' % self.complex_transaction.code)
 
         self.record_execution_progress('Saving Complex Transaction')
@@ -2476,6 +2495,7 @@ class TransactionTypeProcess(object):
         self.record_execution_progress(' ')
         self.complex_transaction.save()  # save executed text and date expression
 
+        # _l.info("LOG %s" % self.complex_transaction.execution_log)
         self.assign_permissions_to_complex_transaction()
 
         self.run_procedures_after_book()
@@ -2488,13 +2508,12 @@ class TransactionTypeProcess(object):
             self.complex_transaction = None
 
         _l.info('TransactionTypeProcess: process done: %s',
-                 "{:3.3f}".format(time.perf_counter() - process_st))
+                "{:3.3f}".format(time.perf_counter() - process_st))
 
         _l.info('self.value_errors %s' % self.value_errors)
         _l.info('self.instruments_errors %s' % self.instruments_errors)
         _l.info('self.complex_transaction_errors %s' % self.complex_transaction_errors)
         _l.info('self.transactions_errors %s' % self.transactions_errors)
-
 
     def process_recalculate(self):
         if not self.recalculate_inputs:

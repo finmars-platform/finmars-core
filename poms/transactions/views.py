@@ -1315,6 +1315,8 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
             instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                               process_mode='rebook',
                                               complex_transaction=complex_transaction,
+                                              clear_execution_log=False,
+                                              record_execution_log=False,
                                               context=self.get_serializer_context(), member=request.user.member)
 
             serializer = self.get_serializer(instance=instance)
@@ -1327,7 +1329,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
             uniqueness_reaction = request.data.get('uniqueness_reaction', None)
 
-            complex_transaction.execution_log = ''
+            # complex_transaction.execution_log = ''
 
             instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                               process_mode=request.data['process_mode'],
