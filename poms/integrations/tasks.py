@@ -4069,51 +4069,50 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
 
 @shared_task(name='integrations.complex_transaction_csv_file_import_by_procedure_json', bind=True)
 def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_task_id):
-    with transaction.atomic():
 
-        _l.info('complex_transaction_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (
-            procedure_instance_id, celery_task_id))
+    _l.info('complex_transaction_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (
+        procedure_instance_id, celery_task_id))
 
-        from poms.procedures.models import RequestDataFileProcedureInstance
+    from poms.procedures.models import RequestDataFileProcedureInstance
 
-        procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
-        celery_task = CeleryTask.objects.get(id=celery_task_id)
-        celery_task.celery_task_id = self.request.id
+    procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
+    celery_task = CeleryTask.objects.get(id=celery_task_id)
+    celery_task.celery_task_id = self.request.id
+    celery_task.save()
+
+    try:
+
+        _l.info(
+            'complex_transaction_csv_file_import_by_procedure_json looking for scheme %s ' % procedure_instance.procedure.scheme_user_code)
+
+        scheme = ComplexTransactionImportScheme.objects.get(master_user=procedure_instance.master_user,
+                                                            user_code=procedure_instance.procedure.scheme_user_code)
+
+        options_object = celery_task.options_object
+
+        options_object['file_path'] = ''
+        options_object['file_name'] = ''
+        options_object['scheme_id'] = scheme.id
+        options_object['execution_context'] = {'started_by': 'procedure',
+                                               'date_from': str(procedure_instance.date_from),
+                                               'date_to': str(procedure_instance.date_to),
+                                               }
+
+        celery_task.options_object = options_object
         celery_task.save()
 
-        try:
+        text = "Data File Procedure %s. File is received. Importing JSON" % (
+            procedure_instance.procedure.user_code)
 
-            _l.info(
-                'complex_transaction_csv_file_import_by_procedure_json looking for scheme %s ' % procedure_instance.procedure.scheme_user_code)
+        send_system_message(master_user=procedure_instance.master_user,
+                            performed_by='System',
+                            description=text)
 
-            scheme = ComplexTransactionImportScheme.objects.get(master_user=procedure_instance.master_user,
-                                                                user_code=procedure_instance.procedure.scheme_user_code)
-
-            options_object = celery_task.options_object
-
-            options_object['file_path'] = ''
-            options_object['file_name'] = ''
-            options_object['scheme_id'] = scheme.id
-            options_object['execution_context'] = {'started_by': 'procedure',
-                                                   'date_from': str(procedure_instance.date_from),
-                                                   'date_to': str(procedure_instance.date_to),
-                                                   }
-
-            celery_task.options_object = options_object
-            celery_task.save()
-
-            text = "Data File Procedure %s. File is received. Importing JSON" % (
-                procedure_instance.procedure.user_code)
-
-            send_system_message(master_user=procedure_instance.master_user,
-                                performed_by='System',
-                                description=text)
-
-            transaction.on_commit(lambda: transaction_import.apply_async(
-                kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
+        transaction.on_commit(lambda: transaction_import.apply_async(
+            kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
 
 
-        except Exception as e:
+    except Exception as e:
 
             _l.info('complex_transaction_csv_file_import_by_procedure_json e %s' % e)
 

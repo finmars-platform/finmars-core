@@ -82,198 +82,196 @@ class DataProcedureProcess(object):
 
             try:
 
-                with transaction.atomic():
+                self.procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
+                                                                                          master_user=self.master_user,
+                                                                                          status=RequestDataFileProcedureInstance.STATUS_PENDING,
+                                                                                          schedule_instance=self.schedule_instance,
+                                                                                          action='request_transaction_file',
+                                                                                          provider='universal',
+                                                                                          date_from=self.procedure.date_from,
+                                                                                          date_to=self.procedure.date_to,
+                                                                                          action_verbose='Request file with Transactions',
+                                                                                          provider_verbose='Universal'
 
-                    self.procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
-                                                                                              master_user=self.master_user,
-                                                                                              status=RequestDataFileProcedureInstance.STATUS_PENDING,
-                                                                                              schedule_instance=self.schedule_instance,
-                                                                                              action='request_transaction_file',
-                                                                                              provider='universal',
-                                                                                              date_from=self.procedure.date_from,
-                                                                                              date_to=self.procedure.date_to,
-                                                                                              action_verbose='Request file with Transactions',
-                                                                                              provider_verbose='Universal'
+                                                                                          )
 
-                                                                                              )
+                send_system_message(master_user=self.master_user,
+                                    performed_by='System',
+                                    description="universal Broker.  Procedure %s. Start" % self.procedure_instance.id,
+                                    )
 
-                    send_system_message(master_user=self.master_user,
-                                        performed_by='System',
-                                        description="universal Broker.  Procedure %s. Start" % self.procedure_instance.id,
-                                        )
+                headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
-                    headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+                url = None
+                security_token = None
+                data = None
 
-                    url = None
-                    security_token = None
-                    data = None
+                try:
 
-                    try:
+                    url = self.procedure.data['url']
+                    security_token = self.procedure.data['security_token']
 
-                        url = self.procedure.data['url']
-                        security_token = self.procedure.data['security_token']
+                    data = {
+                        'security_token': security_token,
+                        "id": self.procedure_instance.id,
+                        "user": {
+                            "token": self.master_user.token,
+                            "credentials": {}
+                        },
+                        "provider": self.procedure.provider.user_code,
+                        "scheme_name": self.procedure.scheme_user_code,
+                        "scheme_type": self.procedure.scheme_type,
+                        "data": [],
+                        "options": self.procedure.data,
+                        "error_status": 0,
+                        "error_message": "",
+                    }
 
-                        data = {
-                            'security_token': security_token,
-                            "id": self.procedure_instance.id,
-                            "user": {
-                                "token": self.master_user.token,
-                                "credentials": {}
-                            },
-                            "provider": self.procedure.provider.user_code,
-                            "scheme_name": self.procedure.scheme_user_code,
-                            "scheme_type": self.procedure.scheme_type,
-                            "data": [],
-                            "options": self.procedure.data,
-                            "error_status": 0,
-                            "error_message": "",
-                        }
+                    if self.context:
+                        if 'names' in self.context:
+                            if "echo" in data['options']:
+                                for key, value in data['options']["echo"].items():
 
-                        if self.context:
-                            if 'names' in self.context:
-                                if "echo" in data['options']:
-                                    for key, value in data['options']["echo"].items():
+                                    if value in self.context['names']:
+                                        data['options']["echo"][key] = str(self.context['names'][value])
 
-                                        if value in self.context['names']:
-                                            data['options']["echo"][key] = str(self.context['names'][value])
+                    if self.procedure.date_from:
+                        data["date_from"] = str(self.procedure.date_from)
 
-                        if self.procedure.date_from:
-                            data["date_from"] = str(self.procedure.date_from)
+                    if self.procedure.date_to:
+                        data["date_to"] = str(self.procedure.date_to)
 
-                        if self.procedure.date_to:
-                            data["date_to"] = str(self.procedure.date_to)
+                    # if self.procedure.data['currencies']:
+                    #     data["options"]['currencies'] = self.procedure.data['currencies']
 
-                        # if self.procedure.data['currencies']:
-                        #     data["options"]['currencies'] = self.procedure.data['currencies']
+                    _l.info('request universal url %s' % url)
+                    _l.info('request universal data %s' % data)
+                    _l.info('request universal self.context %s' % self.context)
 
-                        _l.info('request universal url %s' % url)
-                        _l.info('request universal data %s' % data)
-                        _l.info('request universal self.context %s' % self.context)
+                    self.procedure_instance.request_data = data
+                    self.procedure_instance.save()
+                except Exception as e:
+                    self.procedure_instance.error_message = 'Data Config Error %s' % e
+                    self.procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+                    self.procedure_instance.save()
 
-                        self.procedure_instance.request_data = data
-                        self.procedure_instance.save()
-                    except Exception as e:
-                        self.procedure_instance.error_message = 'Data Config Error %s' % e
-                        self.procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
-                        self.procedure_instance.save()
+                response = None
 
-                    response = None
+                try:
+                    response = requests.post(url=url, json=data, headers=headers, verify=settings.VERIFY_SSL)
+                except Exception as e:
 
-                    try:
-                        response = requests.post(url=url, json=data, headers=headers, verify=settings.VERIFY_SSL)
-                    except Exception as e:
+                    self.procedure_instance.error_message = 'Request To Remote Server Error %s.' % e
+                    self.procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+                    self.procedure_instance.save()
 
-                        self.procedure_instance.error_message = 'Request To Remote Server Error %s.' % e
-                        self.procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
-                        self.procedure_instance.save()
+                    return
 
-                        return
+                response_data = None
 
-                    response_data = None
+                current_date_time = now().strftime("%Y-%m-%d-%H-%M")
 
-                    current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+                file_report = FileReport()
 
-                    file_report = FileReport()
+                file_name = "Universal Broker Response %s %s.json" % (self.procedure_instance.id, current_date_time)
 
-                    file_name = "Universal Broker Response %s %s.json" % (self.procedure_instance.id, current_date_time)
+                file_content = ''
 
-                    file_content = ''
+                try:
 
-                    try:
+                    response_data = response.json()
 
-                        response_data = response.json()
+                    file_content = json.dumps(response_data, indent=4)
+                    self.procedure_instance.response_data = file_content
+                    self.procedure_instance.save()
 
-                        file_content = json.dumps(response_data, indent=4)
-                        self.procedure_instance.response_data = file_content
-                        self.procedure_instance.save()
+                except Exception as e:
 
-                    except Exception as e:
+                    self.procedure_instance.response_data = response.text
 
-                        self.procedure_instance.response_data = response.text
+                    self.procedure_instance.error_message = 'Received JSON Error %s' % e
+                    self.procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
+                    self.procedure_instance.save()
 
-                        self.procedure_instance.error_message = 'Received JSON Error %s' % e
-                        self.procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
-                        self.procedure_instance.save()
+                    _l.info('response %s' % response.text)
+                    _l.info("Response parse error %s" % e)
+                    file_content = response.text
 
-                        _l.info('response %s' % response.text)
-                        _l.info("Response parse error %s" % e)
-                        file_content = response.text
+                file_report.upload_file(file_name=file_name, text=file_content, master_user=self.master_user)
+                file_report.master_user = self.master_user
+                file_report.name = file_name
+                file_report.file_name = file_name
+                file_report.type = 'procedure.requestdatafileprocedure'
+                file_report.notes = 'System File'
+                file_report.content_type = 'application/json'
 
-                    file_report.upload_file(file_name=file_name, text=file_content, master_user=self.master_user)
-                    file_report.master_user = self.master_user
-                    file_report.name = file_name
-                    file_report.file_name = file_name
-                    file_report.type = 'procedure.requestdatafileprocedure'
-                    file_report.notes = 'System File'
-                    file_report.content_type = 'application/json'
+                file_report.save()
 
-                    file_report.save()
+                send_system_message(master_user=self.procedure_instance.master_user,
+                                    performed_by='System',
+                                    description="universal Broker. Procedure %s. Response Received" % self.procedure_instance.id,
+                                    attachments=[file_report.id])
 
-                    send_system_message(master_user=self.procedure_instance.master_user,
-                                        performed_by='System',
-                                        description="universal Broker. Procedure %s. Response Received" % self.procedure_instance.id,
-                                        attachments=[file_report.id])
+                procedure_id = response_data['id']
 
-                    procedure_id = response_data['id']
+                master_user = MasterUser.objects.get(token=response_data['user']['token'])
 
-                    master_user = MasterUser.objects.get(token=response_data['user']['token'])
+                procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id,
+                                                                                  master_user=master_user)
 
-                    procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id,
-                                                                                      master_user=master_user)
+                procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
+                procedure_instance.save()
 
-                    procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
+                send_system_message(master_user=procedure_instance.master_user,
+                                    performed_by="System",
+                                    description="universal Broker. Procedure %s. Done, start import" % procedure_instance.id,
+                                    )
+
+                if procedure_instance.procedure.scheme_type == 'transaction_import':
+                    celery_task = CeleryTask.objects.create(master_user=master_user,
+                                                            member=self.member,
+                                                            notes='Import initiated by data procedure instance %s' % procedure_instance.id,
+                                                            verbose_name="Transaction Import",
+                                                            type='transaction_import')
+
+                    options_object = {}
+
+                    options_object['items'] = response_data['data']
+
+                    celery_task.options_object = options_object
+
+                    celery_task.save()
+
+                    procedure_instance.linked_import_task = celery_task
                     procedure_instance.save()
 
-                    send_system_message(master_user=procedure_instance.master_user,
-                                        performed_by="System",
-                                        description="universal Broker. Procedure %s. Done, start import" % procedure_instance.id,
-                                        )
+                    complex_transaction_csv_file_import_by_procedure_json.apply_async(
+                        kwargs={'procedure_instance_id': procedure_instance.id,
+                                'celery_task_id': celery_task.id,
+                                })
 
-                    if procedure_instance.procedure.scheme_type == 'transaction_import':
-                        celery_task = CeleryTask.objects.create(master_user=master_user,
-                                                                member=self.member,
-                                                                notes='Import initiated by data procedure instance %s' % procedure_instance.id,
-                                                                verbose_name="Transaction Import",
-                                                                type='transaction_import')
+                if procedure_instance.procedure.scheme_type == 'simple_import':
+                    celery_task = CeleryTask.objects.create(master_user=master_user,
+                                                            member=self.member,
+                                                            notes='Import initiated by data procedure instance %s' % procedure_instance.id,
+                                                            verbose_name="Simple Import",
+                                                            type='simple_import')
 
-                        options_object = {}
+                    options_object = {}
 
-                        options_object['items'] = response_data['data']
+                    options_object['items'] = response_data['data']
 
-                        celery_task.options_object = options_object
+                    celery_task.options_object = options_object
 
-                        celery_task.save()
+                    celery_task.save()
 
-                        procedure_instance.linked_import_task = celery_task
-                        procedure_instance.save()
+                    procedure_instance.linked_import_task = celery_task
+                    procedure_instance.save()
 
-                        complex_transaction_csv_file_import_by_procedure_json.apply_async(
-                            kwargs={'procedure_instance_id': procedure_instance.id,
-                                    'celery_task_id': celery_task.id,
-                                    })
-
-                    if procedure_instance.procedure.scheme_type == 'simple_import':
-                        celery_task = CeleryTask.objects.create(master_user=master_user,
-                                                                member=self.member,
-                                                                notes='Import initiated by data procedure instance %s' % procedure_instance.id,
-                                                                verbose_name="Simple Import",
-                                                                type='simple_import')
-
-                        options_object = {}
-
-                        options_object['items'] = response_data['data']
-
-                        celery_task.options_object = options_object
-
-                        celery_task.save()
-
-                        procedure_instance.linked_import_task = celery_task
-                        procedure_instance.save()
-
-                        data_csv_file_import_by_procedure_json.apply_async(
-                            kwargs={'procedure_instance_id': procedure_instance.id,
-                                    'celery_task_id': celery_task.id,
-                                    })
+                    data_csv_file_import_by_procedure_json.apply_async(
+                        kwargs={'procedure_instance_id': procedure_instance.id,
+                                'celery_task_id': celery_task.id,
+                                })
 
             except Exception as e:
                 _l.error("universal broker error %s" % e)
