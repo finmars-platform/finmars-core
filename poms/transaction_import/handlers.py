@@ -138,6 +138,22 @@ class TransactionImportProcess(object):
                             description=self.member.username + ' started import with scheme ' + self.scheme.name,
                             )
 
+    def items_has_error(self):
+
+        result = False
+
+        error_rows_count = 0
+
+        for result_item in self.result.items:
+
+            if result_item.status == 'error':
+                error_rows_count = error_rows_count + 1
+                result = True
+                break
+
+
+        return result
+
     def generate_file_report(self):
 
         _l.info('TransactionImportProcess.generate_file_report error_handler %s' % self.scheme.error_handler)
@@ -972,8 +988,10 @@ class TransactionImportProcess(object):
 
             self.result.reports = []
 
-            self.result.reports.append(self.generate_file_report())
-            self.result.reports.append(self.generate_json_report())
+
+            if self.items_has_error():
+                self.result.reports.append(self.generate_file_report())
+                self.result.reports.append(self.generate_json_report())
 
             error_rows_count = 0
             for result_item in self.result.items:
