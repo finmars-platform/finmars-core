@@ -2463,6 +2463,14 @@ class TransactionTypeProcess(object):
         _l.info('TransactionTypeProcess: book_create_transactions_st done: %s',
                 "{:3.3f}".format(time.perf_counter() - book_create_transactions_st))
 
+        self.record_execution_progress('Complex Transaction %s Booked' % self.complex_transaction.code)
+
+        self.record_execution_progress('Saving Complex Transaction')
+        self.record_execution_progress(' ')
+        self.record_execution_progress('+====+====+')
+        self.record_execution_progress(' ')
+        self.complex_transaction.save()  # save executed text and date expression
+
         '''
         Executing complex_transaction.text expression
         '''
@@ -2487,13 +2495,6 @@ class TransactionTypeProcess(object):
         _l.info('TransactionTypeProcess: execute_uniqueness_expression done: %s',
                 "{:3.3f}".format(time.perf_counter() - execute_uniqueness_expression_st))
 
-        self.record_execution_progress('Complex Transaction %s Booked' % self.complex_transaction.code)
-
-        self.record_execution_progress('Saving Complex Transaction')
-        self.record_execution_progress(' ')
-        self.record_execution_progress('+====+====+')
-        self.record_execution_progress(' ')
-        self.complex_transaction.save()  # save executed text and date expression
 
         # _l.info("LOG %s" % self.complex_transaction.execution_log)
         self.assign_permissions_to_complex_transaction()
@@ -2506,6 +2507,9 @@ class TransactionTypeProcess(object):
         if self.complex_transaction.transaction_type.type == TransactionType.TYPE_PROCEDURE:
             self.complex_transaction.delete()
             self.complex_transaction = None
+
+        self.complex_transaction.save()  # save executed text and date expression
+
 
         _l.info('TransactionTypeProcess: process done: %s',
                 "{:3.3f}".format(time.perf_counter() - process_st))
