@@ -65,7 +65,7 @@ class CeleryTask(TimeStampedModel):
     function_name = models.CharField(null=True, max_length=255)
     status = models.CharField(null=True, max_length=1, default=STATUS_INIT, choices=STATUS_CHOICES,
                               verbose_name='status')
-    type = models.CharField(max_length=50, blank=True, null=True)
+    type = models.CharField(max_length=255, blank=True, null=True)
 
     parent = models.ForeignKey('self', null=True, blank=True, related_name='children',
                                verbose_name=gettext_lazy('parent'), on_delete=models.SET_NULL)
