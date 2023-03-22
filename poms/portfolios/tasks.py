@@ -517,9 +517,10 @@ def calculate_portfolio_register_price_history(self, task_id):
         # Init calculation
         for key, item in result.items():
 
-            true_pricing_policy = portfolio_register.valuation_pricing_policy
 
-            portfolio_register = item['portfolio_register_object']['user_code']
+            portfolio_register = portfolio_register_map[item['portfolio_register_object']['user_code']]
+
+            true_pricing_policy = portfolio_register.valuation_pricing_policy
 
             for date in item['dates']:
 
