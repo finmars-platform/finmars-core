@@ -2734,7 +2734,22 @@ def _run_task(evaluator, task_name, options={}):
 
         from poms_app import celery_app
 
-        celery_app.send_task(task_name, kwargs=options)
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_member_from_context
+
+        master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
+
+        from poms.celery_tasks.models import CeleryTask
+        task = CeleryTask.objects.create(
+            master_user=master_user,
+            member=member,
+            type=task_name,
+            options_object=options,
+        )
+
+        celery_app.send_task(task_name, kwargs={"task_id": task.id})
 
     except Exception as e:
         _l.debug("_run_task.exception %s" % e)
