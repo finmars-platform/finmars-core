@@ -777,7 +777,7 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
 
         options_object = {
             'content_type': content_type_key,
-            'ids': ids
+            'ids': list(ids)
         }
 
         from poms.celery_tasks.models import CeleryTask
