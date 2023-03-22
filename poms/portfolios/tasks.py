@@ -170,6 +170,7 @@ def calculate_portfolio_register_record(self, task_id):
 
         # from oldest to newest
         transactions = Transaction.objects.filter(master_user=master_user, portfolio_id__in=portfolio_ids,
+                                                  is_deleted=False,
                                                   transaction_class_id__in=[TransactionClass.CASH_INFLOW,
                                                                             TransactionClass.CASH_OUTFLOW]).order_by(
             'accounting_date')
