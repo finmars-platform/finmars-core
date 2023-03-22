@@ -3427,7 +3427,7 @@ class PLReportBuilderSql:
                     # else:
                     #     result_item_closed['allocation_pl_id'] = item['allocation_pl_id']
 
-                    if item['allocation_pl_id'] == self.ecosystem_defaults.instrument_id and item['instrument_id']:
+                    if result_item_closed['allocation_pl_id'] == self.ecosystem_defaults.instrument_id and item['instrument_id']:
                         result_item_closed['allocation_pl_id'] = item['instrument_id']
 
                     if 'allocation_pl_id' not in result_item_closed:
