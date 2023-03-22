@@ -4179,3 +4179,17 @@ class TransactionEvalSerializer(serializers.ModelSerializer):
         self.fields['linked_instrument'] = InstrumentEvalSerializer(read_only=True)
         self.fields['allocation_balance'] = InstrumentEvalSerializer(read_only=True)
         self.fields['allocation_pl'] = InstrumentEvalSerializer(read_only=True)
+
+
+class ComplexTransactionDeleteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ComplexTransaction
+        fields = [
+            'id',
+            'code',
+            'transaction_unique_code',
+            'deleted_transaction_unique_code',
+            'modified'
+        ]
+
+        read_only_fields = fields

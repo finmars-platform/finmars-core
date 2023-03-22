@@ -28,6 +28,8 @@ from poms.instruments.models import PriceHistory, PricingPolicy, Instrument
 from poms.schedules.models import ScheduleInstance
 from poms.workflows_handler import get_workflows_list
 
+from rest_framework.viewsets import ModelViewSet
+
 _languages = [Language(code, name) for code, name in settings.LANGUAGES]
 
 import logging
@@ -726,7 +728,16 @@ class TablesSizeViewSet(AbstractViewSet):
         )
 
 
-class RecycleBinViewSet(AbstractViewSet):
+class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
+
+    def get_queryset(self):
+        from poms.transactions.models import ComplexTransaction
+        return ComplexTransaction.objects.filter(is_deleted=True)
+
+    def get_serializer_class(self):
+
+        from poms.transactions.serializers import ComplexTransactionDeleteSerializer
+        return ComplexTransactionDeleteSerializer
 
     def list(self, request, *args, **kwargs):
         from poms.transactions.models import ComplexTransaction
@@ -737,37 +748,53 @@ class RecycleBinViewSet(AbstractViewSet):
         if date_to:
             date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1, microseconds=-1)
 
-        items = ComplexTransaction.objects.filter(is_deleted=True, modified__gte=date_from, modified__lte=date_to)
+        qs = ComplexTransaction.objects.filter(is_deleted=True, modified__gte=date_from, modified__lte=date_to)
 
-        result = {
-            "results": []
+        page = self.paginate_queryset(qs)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
+
+
+    @action(detail=False, methods=['post'], url_path='clear-bin')
+    def clear_bin(self, request):
+
+        date_from = request.data.get('date_from', None)
+        date_to = request.data.get('date_to', None)
+
+        from poms.transactions.models import ComplexTransaction
+        from django.contrib.contenttypes.models import ContentType
+
+        ids = ComplexTransaction.objects.filter(is_deleted=True, modified__gte=date_from,
+                                                modified__lte=date_to).values_list('id', flat=True)
+
+        content_type = ContentType.objects.get_for_model(ComplexTransaction)
+        content_type_key = content_type.app_label + '.' + content_type.model
+
+        options_object = {
+            'content_type': content_type_key,
+            'ids': ids
         }
 
-        for item in items:
-            result_item = {
-                'id': item.id,
-                'code': item.code,
-                'transaction_unique_code': item.transaction_unique_code,
-                'deleted_transaction_unique_code': item.deleted_transaction_unique_code,
-                'modified': item.modified
-            }
-
-            result['results'].append(result_item)
-
-        return Response(result)
-
-    @action(detail=False, methods=['get'], url_path='view-log')
-    def view_log(self, request):
-        log_file = request.query_params.get('log_file', 'django.log')
-
-        log_file = '/var/log/finmars/backend/' + log_file
-
-        file = open(log_file, 'r')
-
-        return HttpResponse(
-            file,
-            content_type='plain/text'
+        from poms.celery_tasks.models import CeleryTask
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            options_object=options_object,
+            verbose_name="Bulk Delete",
+            type='bulk_delete'
         )
+
+        from poms_app import celery_app
+
+        celery_app.send_task('celery_tasks.bulk_delete', kwargs={"task_id": celery_task.id},
+                             queue='backend-delete-queue')
+
+        return Response({"task_id": celery_task.id})
 
 
 class CalendarEventsViewSet(AbstractViewSet):

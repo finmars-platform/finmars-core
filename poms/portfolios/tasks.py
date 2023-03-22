@@ -139,6 +139,8 @@ def calculate_portfolio_register_record(self, task_id):
         'members'
     ).all().first()
 
+    result = {}
+
     try:
 
         send_system_message(master_user=master_user,
@@ -184,7 +186,7 @@ def calculate_portfolio_register_record(self, task_id):
 
         count = 0
         total = len(transactions)
-        result = {}
+
 
         for item in transactions:
 
@@ -338,6 +340,9 @@ def calculate_portfolio_register_record(self, task_id):
 
                 previous_record = record
 
+
+
+
         send_system_message(master_user=master_user,
                             performed_by='system',
                             section='schedules',
@@ -356,6 +361,7 @@ def calculate_portfolio_register_record(self, task_id):
 
         task.status = CeleryTask.STATUS_ERROR
         task.error_message = str(e)
+        task.result_object = result
         task.save()
 
         send_system_message(master_user=master_user, action_status="required", type="error",
@@ -365,7 +371,6 @@ def calculate_portfolio_register_record(self, task_id):
         _l.error(traceback.format_exc())
 
 
-# TODO Refactor to task_id
 @shared_task(name='portfolios.calculate_portfolio_register_price_history', bind=True)
 def calculate_portfolio_register_price_history(self, task_id):
     '''

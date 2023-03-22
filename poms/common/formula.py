@@ -2752,7 +2752,8 @@ def _run_task(evaluator, task_name, options={}):
         celery_app.send_task(task_name, kwargs={"task_id": task.id})
 
     except Exception as e:
-        _l.debug("_run_task.exception %s" % e)
+        _l.error("_run_task.exception %s" % e)
+        _l.error("_run_task.traceback %s" % traceback.format_exc())
 
 
 _run_task.evaluator = True
