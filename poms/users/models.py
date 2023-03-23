@@ -733,7 +733,7 @@ class MasterUser(models.Model):
         from poms.portfolios.models import Portfolio
         from poms.instruments.models import InstrumentClass, InstrumentType, EventScheduleConfig, Instrument, \
             AccrualCalculationModel, PaymentSizeDetail, Periodicity
-        from poms.integrations.models import PricingAutomatedSchedule, ProviderClass
+        from poms.integrations.models import ProviderClass
         from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, \
             Strategy2Subgroup, Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
         from poms.transactions.models import TransactionTypeGroup, TransactionType
@@ -745,8 +745,6 @@ class MasterUser(models.Model):
         if not EventScheduleConfig.objects.filter(master_user=self).exists():
             EventScheduleConfig.create_default(master_user=self)
 
-        if not PricingAutomatedSchedule.objects.filter(master_user=self).exists():
-            PricingAutomatedSchedule.objects.create(master_user=self, is_enabled=False)
 
         # price_download_scheme = PriceDownloadScheme.objects.create(master_user=self, scheme_name='-',
         #                                                            provider=ProviderClass.objects.get(
