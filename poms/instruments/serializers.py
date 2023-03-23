@@ -1567,6 +1567,7 @@ class PriceHistorySerializer(serializers.ModelSerializer):
 
             'nav',
             'cash_flow',
+            'factor',
 
             'long_delta',
             'short_delta',

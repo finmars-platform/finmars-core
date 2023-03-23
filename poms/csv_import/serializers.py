@@ -165,7 +165,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
                                  'user_text_1', 'user_text_2', 'user_text_3'
             ],
             'instruments.pricehistory': [
-                'instrument', 'pricing_policy', 'date', 'principal_price', 'accrued_price'
+                'instrument', 'pricing_policy', 'date', 'principal_price', 'accrued_price', 'factor'
             ],
             'currencies.currencyhistory': [
                 'currency', 'pricing_policy', 'date', 'fx_rate'
