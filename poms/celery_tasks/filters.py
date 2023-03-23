@@ -12,3 +12,4 @@ class CeleryTaskQueryFilter(BaseFilterBackend):
                 member__username__icontains=query) | Q(celery_task_id__icontains=query))
 
         return queryset
+

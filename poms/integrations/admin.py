@@ -7,10 +7,10 @@ from django.utils.html import escape
 from django.utils.translation import gettext_lazy
 
 from poms.common.admin import ClassModelAdmin, AbstractModelAdmin
-from poms.integrations.models import Task, ImportConfig, ProviderClass, CurrencyMapping, \
+from poms.integrations.models import ImportConfig, ProviderClass, CurrencyMapping, \
     InstrumentTypeMapping, FactorScheduleDownloadMethod, AccrualScheduleDownloadMethod, \
     InstrumentDownloadScheme, InstrumentDownloadSchemeInput, InstrumentDownloadSchemeAttribute, PriceDownloadScheme, \
-    AccrualCalculationModelMapping, PeriodicityMapping, PricingAutomatedSchedule, AccountMapping, InstrumentMapping, \
+    AccrualCalculationModelMapping, PeriodicityMapping,  AccountMapping, InstrumentMapping, \
     CounterpartyMapping, ResponsibleMapping, PortfolioMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
     DailyPricingModelMapping, PaymentSizeDetailMapping, PriceDownloadSchemeMapping, InstrumentAttributeValueMapping, \
     ComplexTransactionImportScheme, ComplexTransactionImportSchemeField, ComplexTransactionImportSchemeInput, \
@@ -253,61 +253,6 @@ admin.site.register(PricingConditionMapping, AbstractMappingAdmin)
 #
 #
 # admin.site.register(InstrumentAttributeValueMapping, InstrumentAttributeValueMappingAdmin)
-
-
-# -------
-
-class TaskAdmin(AbstractModelAdmin):
-    model = Task
-    master_user_path = 'master_user'
-    list_display = ['id', 'parent', 'created', 'status', 'master_user', 'member', 'provider', 'action',
-                    'response_id']
-    list_select_related = ['parent', 'master_user', 'member', 'provider']
-    raw_id_fields = ['master_user', 'member', 'parent']
-    search_fields = ['response_id', ]
-    list_filter = ['provider', 'created', 'action', 'status', ]
-    date_hierarchy = 'created'
-
-    readonly_fields = [
-        'id', 'celery_tasks_id',
-        'master_user', 'member', 'parent',
-        'provider', 'action', 'status',
-        'request_id', 'response_id', 'options', 'result',
-    ]
-
-    def has_add_permission(self, request):
-        return False
-
-    def save_model(self, request, obj, form, change):
-        pass
-
-
-admin.site.register(Task, TaskAdmin)
-
-
-class PricingAutomatedScheduleAdmin(AbstractModelAdmin):
-    model = PricingAutomatedSchedule
-    master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'is_enabled', 'cron_expr', 'last_run_at', 'next_run_at', 'last_run_task_url']
-    list_select_related = ['master_user', ]
-    list_filter = ['is_enabled', 'last_run_at', 'next_run_at']
-    date_hierarchy = 'next_run_at'
-    raw_id_fields = ['master_user', ]
-
-    # readonly_fields = ['latest_running', 'latest_task']
-
-    def last_run_task_url(self, obj):
-        t = obj.last_run_task
-        if t:
-            return '<a href="%s">%s</a>' % (reverse_lazy("admin:integrations_task_change", args=(t.id,)), escape(t.id))
-        return None
-
-    last_run_task_url.allow_tags = True
-    last_run_task_url.short_description = gettext_lazy('last run task')
-
-
-admin.site.register(PricingAutomatedSchedule, PricingAutomatedScheduleAdmin)
-
 
 # --------
 

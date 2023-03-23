@@ -266,8 +266,8 @@ class AbstractProvider(object):
                             errors[attr] = [gettext_lazy('A valid date is required.')]
 
                 elif attr in (
-                'instrument_user_code', 'instrument_name', 'instrument_short_name', 'instrument_public_name',
-                'instrument_notes'):
+                        'instrument_user_code', 'instrument_name', 'instrument_short_name', 'instrument_public_name',
+                        'instrument_notes'):
                     if self.is_empty_value(v):
                         pass
                     else:
@@ -466,7 +466,7 @@ def get_provider(master_user=None, provider=None, task=None):
     if master_user is None:
         master_user = task.master_user
     if provider is None:
-        provider = task.provider_id
+        provider = 1 # bloomberg
     if isinstance(provider, ProviderClass):
         provider = provider.id
 
@@ -480,22 +480,25 @@ def get_provider(master_user=None, provider=None, task=None):
 
             try:
 
-                _l.debug("Trying to get bloomberg credentials")
+                _l.info("Trying to get bloomberg credentials")
 
                 config = BloombergDataProviderCredential.objects.get(master_user=master_user)
                 cert, key = config.pair
 
-                _l.debug("Took bloomberg credentials")
+                _l.info("Took bloomberg credentials")
 
                 return BloombergDataProvider(cert=cert, key=key)
 
             except Exception as e:
 
+                _l.error('get_provider.e %s' % e)
+                _l.error('get_provider.e %s' % traceback.format_exc())
+
                 try:
                     config = master_user.import_configs.get(provider=ProviderClass.BLOOMBERG)
                     cert, key = config.pair
 
-                    _l.debug("Took from old config credentials")
+                    _l.info("Took from old config credentials")
 
                     return BloombergDataProvider(cert=cert, key=key)
                 except (ObjectDoesNotExist, FileNotFoundError, ValueError):

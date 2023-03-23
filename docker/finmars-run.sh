@@ -45,7 +45,8 @@ export C_FORCE_ROOT='true'
 
 supervisord
 
-supervisorctl start celery
+supervisorctl start worker1
+supervisorctl start worker2
 supervisorctl start celerybeat
 
 echo "Create admin user"

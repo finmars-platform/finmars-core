@@ -515,6 +515,7 @@ _transaction_import__find_row.evaluator = True
 def _md5(text):
     return hashlib.md5(text.encode('utf-8')).hexdigest()
 
+
 def _parse_date(date_string, format=None):
     if not date_string:
         return None
@@ -562,7 +563,6 @@ def _universal_parse_date(date_string):
 
 
 def _universal_parse_country(value):
-
     result = None
 
     from poms.instruments.models import Country
@@ -1551,6 +1551,83 @@ def _get_factor_schedule(evaluator, date, instrument):
 _get_factor_schedule.evaluator = True
 
 
+def _add_factor_schedule(evaluator, instrument, effective_date, factor_value):
+    from poms.users.utils import get_master_user_from_context
+    from poms.instruments.models import InstrumentFactorSchedule
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    result = InstrumentFactorSchedule.objects.create(effective_date=effective_date, factor_value=factor_value,
+                                                     instrument=instrument)
+
+    return result
+
+
+_add_factor_schedule.evaluator = True
+
+
+def _add_accrual_schedule(evaluator, instrument, data):
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    from poms.instruments.models import AccrualCalculationSchedule
+
+    result = AccrualCalculationSchedule(instrument=instrument)
+
+    if 'accrual_start_date' in data:
+        result.accrual_start_date = data['accrual_start_date']
+
+    if 'accrual_end_date' in data:
+        result.accrual_end_date = data['accrual_end_date']
+
+    if 'first_payment_date' in data:
+        result.first_payment_date = data['first_payment_date']
+
+    if 'accrual_calculation_model' in data:
+        result.accrual_calculation_model = _safe_get_accrual_calculation_model(evaluator,
+                                                                               data['accrual_calculation_model'])
+
+    if 'periodicity' in data:
+        result.periodicity = _safe_get_periodicity(evaluator, data['periodicity'])
+
+    if 'periodicity_n' in data:
+        result.periodicity_n = data['periodicity_n']
+
+    if 'accrual_size' in data:
+        result.accrual_size = float(data['accrual_size'])
+
+    if 'notes' in data:
+        result.notes = data['notes']
+
+    result.save()
+
+    return result
+
+
+_add_accrual_schedule.evaluator = True
+
+
+def _delete_accrual_schedules(evaluator, instrument):
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    instrument.accrual_calculation_schedules.all().delete()
+
+
+_delete_accrual_schedules.evaluator = True
+
+
 def _safe_get_pricing_policy(evaluator, pricing_policy):
     from poms.users.utils import get_master_user_from_context, get_member_from_context
     from poms.instruments.models import PricingPolicy
@@ -1647,6 +1724,132 @@ def _safe_get_currency(evaluator, currency):
     return currency
 
 
+def _safe_get_account_type(evaluator, account_type):
+    from poms.users.utils import get_master_user_from_context, get_member_from_context
+    from poms.accounts.models import AccountType
+
+    if isinstance(account_type, AccountType):
+        return account_type
+
+    context = evaluator.context
+
+    if context is None:
+        raise InvalidExpression('Context must be specified')
+
+    pk = None
+    user_code = None
+
+    if isinstance(account_type, dict):
+        pk = int(account_type['id'])
+
+    elif isinstance(account_type, (int, float)):
+        pk = int(account_type)
+
+    elif isinstance(account_type, str):
+        user_code = account_type
+
+    if id is None and user_code is None:
+        raise ExpressionEvalError('Invalid account type')
+
+    master_user = get_master_user_from_context(context)
+    member = get_member_from_context(context)
+
+    if master_user is None:
+        raise ExpressionEvalError('master user in context does not find')
+
+    account_types_qs = AccountType.objects.filter(master_user=master_user)
+
+    try:
+        if pk is not None:
+            account_type = account_types_qs.get(pk=pk)
+
+        elif user_code is not None:
+            account_type = account_types_qs.get(user_code=user_code)
+
+    except AccountType.DoesNotExist:
+        raise ExpressionEvalError()
+
+    return account_type
+
+
+def _safe_get_periodicity(evaluator, periodicity):
+    from poms.instruments.models import Periodicity
+
+    if isinstance(periodicity, Periodicity):
+        return periodicity
+
+    context = evaluator.context
+
+    if context is None:
+        raise InvalidExpression('Context must be specified')
+
+    pk = None
+    user_code = None
+
+    if isinstance(periodicity, dict):
+        pk = int(periodicity['id'])
+
+    elif isinstance(periodicity, (int, float)):
+        pk = int(periodicity)
+
+    elif isinstance(periodicity, str):
+        user_code = periodicity
+
+    if pk is None and user_code is None:
+        raise ExpressionEvalError('Invalid periodicity')
+
+    try:
+        if pk is not None:
+            periodicity = Periodicity.objects.get(pk=pk)
+
+        elif user_code is not None:
+            periodicity = Periodicity.objects.get(user_code=user_code)
+
+    except Periodicity.DoesNotExist:
+        raise ExpressionEvalError()
+
+    return periodicity
+
+
+def _safe_get_accrual_calculation_model(evaluator, accrual_calculation_model):
+    from poms.instruments.models import AccrualCalculationModel
+
+    if isinstance(accrual_calculation_model, AccrualCalculationModel):
+        return accrual_calculation_model
+
+    context = evaluator.context
+
+    if context is None:
+        raise InvalidExpression('Context must be specified')
+
+    pk = None
+    user_code = None
+
+    if isinstance(accrual_calculation_model, dict):
+        pk = int(accrual_calculation_model['id'])
+
+    elif isinstance(accrual_calculation_model, (int, float)):
+        pk = int(accrual_calculation_model)
+
+    elif isinstance(accrual_calculation_model, str):
+        user_code = accrual_calculation_model
+
+    if pk is None and user_code is None:
+        raise ExpressionEvalError('Invalid accrual_calculation_model')
+
+    try:
+        if pk is not None:
+            accrual_calculation_model = AccrualCalculationModel.objects.get(pk=pk)
+
+        elif user_code is not None:
+            accrual_calculation_model = AccrualCalculationModel.objects.get(user_code=user_code)
+
+    except AccrualCalculationModel.DoesNotExist:
+        raise ExpressionEvalError()
+
+    return accrual_calculation_model
+
+
 def _safe_get_instrument(evaluator, instrument):
     from poms.users.utils import get_master_user_from_context, get_member_from_context
     from poms.instruments.models import Instrument
@@ -1721,6 +1924,22 @@ def _get_currency(evaluator, currency):
 
 
 _get_currency.evaluator = True
+
+
+def _get_account_type(evaluator, account_type):
+    try:
+
+        account_type = _safe_get_account_type(evaluator, account_type)
+
+        context = evaluator.context
+
+        from poms.accounts.serializers import AccountTypeSerializer
+        return AccountTypeSerializer(instance=account_type, context=context).data
+    except Exception as e:
+        return None
+
+
+_get_account_type.evaluator = True
 
 
 def _get_instrument(evaluator, instrument):
@@ -2515,10 +2734,26 @@ def _run_task(evaluator, task_name, options={}):
 
         from poms_app import celery_app
 
-        celery_app.send_task(task_name, kwargs=options)
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context
+        from poms.users.utils import get_member_from_context
+
+        master_user = get_master_user_from_context(context)
+        member = get_member_from_context(context)
+
+        from poms.celery_tasks.models import CeleryTask
+        task = CeleryTask.objects.create(
+            master_user=master_user,
+            member=member,
+            type=task_name,
+            options_object=options,
+        )
+
+        celery_app.send_task(task_name, kwargs={"task_id": task.id})
 
     except Exception as e:
-        _l.debug("_run_task.exception %s" % e)
+        _l.error("_run_task.exception %s" % e)
+        _l.error("_run_task.traceback %s" % traceback.format_exc())
 
 
 _run_task.evaluator = True
@@ -2984,7 +3219,7 @@ def _run_data_import(evaluator, filepath, scheme):
         from poms.users.utils import get_member_from_context
         from poms.csv_import.models import CsvImportScheme
         from poms.celery_tasks.models import CeleryTask
-        from poms.csv_import.tasks import data_csv_file_import
+        from poms.csv_import.tasks import simple_import
 
         context = evaluator.context
 
@@ -3008,9 +3243,9 @@ def _run_data_import(evaluator, filepath, scheme):
         celery_task.options_object = options_object
         celery_task.save()
 
-        data_csv_file_import.apply(kwargs={'task_id': celery_task.id})
+        simple_import.apply(kwargs={'task_id': celery_task.id})
 
-        return None
+        return {'task_id': celery_task.id}
 
     except Exception as e:
         _l.error("_run_data_import. general exception %s" % e)
@@ -3405,6 +3640,8 @@ FUNCTIONS = [
     SimpleEval2Def('get_instrument', _get_instrument),
     SimpleEval2Def('get_currency', _get_currency),
 
+    SimpleEval2Def('get_account_type', _get_account_type),
+
     SimpleEval2Def('get_currency_field', _get_currency_field),
     SimpleEval2Def('set_currency_field', _set_currency_field),
 
@@ -3424,7 +3661,13 @@ FUNCTIONS = [
     SimpleEval2Def('get_principal_price', _get_price_history_principal_price),
     SimpleEval2Def('get_accrued_price', _get_price_history_accrued_price),
     SimpleEval2Def('get_next_coupon_date', _get_next_coupon_date),
+    SimpleEval2Def('get_factor_schedule', _get_factor_schedule),
     SimpleEval2Def('get_factor', _get_factor_schedule),
+
+    SimpleEval2Def('add_factor_schedule', _add_factor_schedule),
+    SimpleEval2Def('add_accrual_schedule', _add_accrual_schedule),
+    SimpleEval2Def('delete_accrual_schedules', _delete_accrual_schedules),
+
     SimpleEval2Def('add_fx_rate', _add_fx_rate),
     SimpleEval2Def('add_price_history', _add_price_history),
     SimpleEval2Def('generate_user_code', _generate_user_code),
@@ -3512,6 +3755,9 @@ SAFE_TYPES = (bool, int, float, str, list, tuple, dict, OrderedDict,
 
 class SimpleEval2(object):
     def __init__(self, names=None, max_time=None, add_print=False, allow_assign=False, now=None, context=None):
+
+        # st = time.perf_counter()
+
         self.max_time = max_time or 60 * 30  # 30 min
         # self.max_time = 10000000000
         self.start_time = 0
@@ -3544,6 +3790,9 @@ class SimpleEval2(object):
             _globals['print'] = _print
 
         self._table = _globals
+
+        # _l.debug('SimpleEval2: init done: %s',
+        #          "{:3.3f}".format(time.perf_counter() - st))
 
     @staticmethod
     def try_parse(expr):
@@ -3912,12 +4161,15 @@ class SimpleEval2(object):
             try:
                 return val[node.attr]
             except (IndexError, KeyError, TypeError):
+
+                _l.info('AttributeDoesNotExist.node %s' % node)
+
                 raise AttributeDoesNotExist(node.attr)
 
         elif isinstance(val, list):
-            _l.debug("list here? %s" % val)
-            _l.debug("list here? node.value %s" % node.value)
-            _l.debug("list here? node.attr %s" % node.attr)
+            # _l.debug("list here? %s" % val)
+            # _l.debug("list here? node.value %s" % node.value)
+            # _l.debug("list here? node.attr %s" % node.attr)
             if node.attr in ['append', 'pop', 'remove']:
                 return getattr(val, node.attr)
         else:
@@ -3933,6 +4185,9 @@ class SimpleEval2(object):
             elif isinstance(val, relativedelta.relativedelta):
                 if node.attr in ['years', 'months', 'days', 'leapdays', 'year', 'month', 'day', 'weekday']:
                     return getattr(val, node.attr)
+
+        _l.info('AttributeDoesNotExist.val %s' % val)
+        _l.info('AttributeDoesNotExist.node %s' % node.__dict__)
 
         raise AttributeDoesNotExist(node.attr)
 
@@ -3963,9 +4218,15 @@ def validate(expr):
 
 
 def safe_eval(s, names=None, max_time=None, add_print=False, allow_assign=True, now=None, context=None):
+    st = time.perf_counter()
+
     e = SimpleEval2(names=names, max_time=max_time, add_print=add_print, allow_assign=allow_assign, now=now,
                     context=context)
-    return e.eval(s)
+    result = e.eval(s)
+
+    _l.debug('safe_eval done %s : %s' % (s, "{:3.3f}".format(time.perf_counter() - st)))
+
+    return result
 
 
 def safe_eval_with_logs(s, names=None, max_time=None, add_print=False, allow_assign=True, now=None, context=None):
@@ -4121,39 +4382,41 @@ def _get_supported_models_serializer_class():
     from poms.users.serializers import MemberSerializer
 
     from poms.accounts.models import Account
-    from poms.accounts.serializers import AccountSerializer
+    from poms.accounts.serializers import AccountEvalSerializer
     from poms.counterparties.models import Counterparty, Responsible
-    from poms.counterparties.serializers import CounterpartySerializer, ResponsibleSerializer
-    from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, GeneratedEvent, Country, InstrumentType
-    from poms.instruments.serializers import InstrumentSerializer, DailyPricingModelSerializer, \
-        InstrumentTypeSerializer, CountrySerializer, \
+    from poms.counterparties.serializers import CounterpartyEvalSerializer, ResponsibleEvalSerializer
+    from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, GeneratedEvent, Country, \
+        InstrumentType
+    from poms.instruments.serializers import InstrumentEvalSerializer, DailyPricingModelSerializer, \
+        InstrumentTypeEvalSerializer, CountrySerializer, \
         PaymentSizeDetailSerializer, GeneratedEventSerializer
     from poms.currencies.models import Currency
-    from poms.currencies.serializers import CurrencySerializer
+    from poms.currencies.serializers import CurrencyEvalSerializer
     from poms.portfolios.models import Portfolio
-    from poms.portfolios.serializers import PortfolioSerializer
+    from poms.portfolios.serializers import PortfolioEvalSerializer
     from poms.strategies.models import Strategy1, Strategy2, Strategy3
-    from poms.strategies.serializers import Strategy1Serializer, Strategy2Serializer, Strategy3Serializer
+    from poms.strategies.serializers import Strategy1EvalSerializer, Strategy2EvalSerializer, Strategy3EvalSerializer
     from poms.integrations.models import PriceDownloadScheme
     from poms.integrations.serializers import PriceDownloadSchemeSerializer
     from poms.transactions.models import Transaction, ComplexTransaction
-    from poms.transactions.serializers import TransactionTextRenderSerializer, ComplexTransactionEvalSerializer
+    from poms.transactions.serializers import TransactionEvalSerializer, ComplexTransactionEvalSerializer
 
     return {
-        Account: AccountSerializer,
-        Counterparty: CounterpartySerializer,
-        Responsible: ResponsibleSerializer,
-        Instrument: InstrumentSerializer,
-        InstrumentType: InstrumentTypeSerializer,
-        Currency: CurrencySerializer,
-        Portfolio: PortfolioSerializer,
-        Strategy1: Strategy1Serializer,
-        Strategy2: Strategy2Serializer,
-        Strategy3: Strategy3Serializer,
+        Account: AccountEvalSerializer,
+        Counterparty: CounterpartyEvalSerializer,
+        Responsible: ResponsibleEvalSerializer,
+        Instrument: InstrumentEvalSerializer,
+        InstrumentType: InstrumentTypeEvalSerializer,
+        Currency: CurrencyEvalSerializer,
+        Portfolio: PortfolioEvalSerializer,
+        Strategy1: Strategy1EvalSerializer,
+        Strategy2: Strategy2EvalSerializer,
+        Strategy3: Strategy3EvalSerializer,
         DailyPricingModel: DailyPricingModelSerializer,
         PaymentSizeDetail: PaymentSizeDetailSerializer,
         PriceDownloadScheme: PriceDownloadSchemeSerializer,
-        Transaction: TransactionTextRenderSerializer,
+        # Transaction: TransactionTextRenderSerializer,
+        Transaction: TransactionEvalSerializer,
         ComplexTransaction: ComplexTransactionEvalSerializer,
         GeneratedEvent: GeneratedEventSerializer,
         Member: MemberSerializer,

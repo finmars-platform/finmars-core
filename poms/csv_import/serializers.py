@@ -10,7 +10,11 @@ from poms.common.storage import get_storage
 from poms.users.fields import MasterUserField, HiddenMemberField
 from poms_app import settings
 from .fields import CsvImportContentTypeField, CsvImportSchemeField
-from .models import CsvField, EntityField, CsvImportScheme, CsvImportSchemeCalculatedInput
+from .models import CsvField, EntityField, CsvImportScheme, CsvImportSchemeCalculatedInput, SimpleImportProcessItem
+from ..celery_tasks.models import CeleryTask
+from ..file_reports.serializers import FileReportSerializer
+from ..obj_attrs.models import GenericAttributeType
+from ..transaction_import.models import TransactionImportResult
 
 storage = get_storage()
 
@@ -67,7 +71,7 @@ class CsvFieldSerializer(serializers.ModelSerializer):
 class EntityFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = EntityField
-        fields = ('id', 'name', 'order', 'expression', 'system_property_key', 'dynamic_attribute_id', 'use_default')
+        fields = ('id', 'name', 'order', 'expression', 'system_property_key', 'attribute_user_code', 'use_default')
         extra_kwargs = {
             'id': {
                 'read_only': True,
@@ -99,6 +103,10 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
     delimiter = serializers.CharField(max_length=3, required=False, initial=',', default=',')
     column_matcher = serializers.CharField(max_length=255, required=False, initial='index', default='index')
 
+    item_post_process_script = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_null=True, allow_blank=True)
+    data_preprocess_expression = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH, allow_null=True, allow_blank=True)
+
     class Meta:
 
         model = CsvImportScheme
@@ -109,7 +117,8 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
                   'spreadsheet_start_cell', 'spreadsheet_active_tab_name',
 
                   'mode', 'delimiter', 'error_handler', 'missing_data_handler', 'classifier_handler',
-                  'column_matcher', 'instrument_reference_column'
+                  'column_matcher', 'instrument_reference_column', 'item_post_process_script',
+                  'data_preprocess_expression',
 
                   )
 
@@ -207,7 +216,7 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
 
     def set_entity_fields_mapping(self, scheme, entity_fields):
 
-        EntityField.objects.filter(scheme=scheme, dynamic_attribute_id__isnull=True).delete()
+        EntityField.objects.filter(scheme=scheme, attribute_user_code__isnull=True).delete()
 
         self.create_entity_fields_if_not_exist(scheme)
 
@@ -232,17 +241,65 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
                     # raise ValidationError("Entity with id {} is not exist ".format(entity_field.get(
                     #     'system_property_key')))
 
+    def create_user_attributes_if_not_exist(self, scheme):
+
+        attribute_types = GenericAttributeType.objects.filter(
+            content_type=scheme.content_type
+        )
+
+        ids = set()
+
+        for attribute_type in attribute_types:
+
+            try:
+
+                o = EntityField.objects.get(scheme=scheme,
+                                            attribute_user_code=attribute_type.user_code)
+
+                ids.add(o.id)
+
+            except EntityField.DoesNotExist:
+
+                o = EntityField.objects.create(scheme=scheme,
+                                               attribute_user_code=attribute_type.user_code,
+                                               name=attribute_type.name,
+                                               expression='')
+
+                ids.add(o.id)
+
+        EntityField.objects.filter(scheme=scheme, system_property_key__isnull=True).exclude(id__in=ids).delete()
+
     def set_dynamic_attributes_mapping(self, scheme, entity_fields):
 
-        EntityField.objects.filter(scheme=scheme, dynamic_attribute_id__isnull=False).delete()
+        fields = EntityField.objects.filter(scheme=scheme, system_property_key__isnull=True)
+
+        for field in fields:
+            if not field.expression:
+                field.delete()
+
+        self.create_user_attributes_if_not_exist(scheme)
 
         for entity_field in entity_fields:
 
-            if entity_field.get('dynamic_attribute_id') is not None:
-                EntityField.objects.create(scheme=scheme,
-                                           dynamic_attribute_id=entity_field.get('dynamic_attribute_id'),
-                                           name=entity_field.get('name'),
-                                           expression=entity_field.get('expression'))
+            if entity_field.get('attribute_user_code') is not None and entity_field.get('expression'):
+
+
+                try:
+
+                    instance = EntityField.objects.get(scheme=scheme,
+                                                       attribute_user_code=entity_field.get(
+                                                           'attribute_user_code'))
+
+                    instance.expression = entity_field.get('expression', '')
+                    instance.name = entity_field.get('name', instance.name)
+                    instance.use_default = entity_field.get('use_default', instance.use_default)
+                    instance.save()
+
+                except EntityField.DoesNotExist:
+
+                    print("Unknown attribute %s" % entity_field.get(
+                        'attribute_user_code'))
+
 
     def save_calculated_inputs(self, scheme, inputs):
         pk_set = set()
@@ -295,6 +352,12 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
         scheme.name = validated_data.get('name', scheme.name)
         scheme.short_name = validated_data.get('short_name', scheme.short_name)
         scheme.filter_expr = validated_data.get('filter_expr', scheme.filter_expr)
+        scheme.item_post_process_script = validated_data.get('item_post_process_script',
+                                                             scheme.item_post_process_script)
+
+        scheme.data_preprocess_expression = validated_data.get('data_preprocess_expression',
+                                                               scheme.data_preprocess_expression)
+
         scheme.spreadsheet_start_cell = validated_data.get('spreadsheet_start_cell', scheme.spreadsheet_start_cell)
         scheme.spreadsheet_active_tab_name = validated_data.get('spreadsheet_active_tab_name',
                                                                 scheme.spreadsheet_active_tab_name)
@@ -414,3 +477,65 @@ class CsvDataImportSerializer(serializers.Serializer):
 
     def _get_path(self, master_user, file_name):
         return '%s/public/%s' % (settings.BASE_API_URL, file_name)
+
+
+class SimpleImportImportedItemSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    user_code = serializers.CharField()
+
+
+class SimpleImportProcessItemSerializer(serializers.Serializer):
+    row_number = serializers.IntegerField()
+    status = serializers.CharField()
+    error_message = serializers.CharField()
+    message = serializers.CharField()
+
+    file_inputs = serializers.JSONField(allow_null=False)
+    raw_inputs = serializers.JSONField(allow_null=False)
+    conversion_inputs = serializers.JSONField(allow_null=False)
+    inputs = serializers.JSONField(allow_null=False)
+    final_inputs = serializers.JSONField(allow_null=False)
+
+    imported_items = SimpleImportImportedItemSerializer(many=True)
+
+    class Meta:
+        model = SimpleImportProcessItem
+        fields = ['row_number', 'status', 'error_message', 'message', 'raw_inputs', 'inputs',
+                  'processed_rule_scenarios']
+
+    def to_representation(self, instance):
+        data = super(SimpleImportProcessItemSerializer, self).to_representation(instance)
+
+        for key, value in data['inputs'].items():
+            data['inputs'][key] = str(value)
+
+        return data
+
+
+class SimpleImportCeleryTaskSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CeleryTask
+        fields = ['id', 'status', 'type']
+
+
+class SimpleImportSchemeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CsvImportScheme
+        fields = ['id', 'name', 'user_code', 'delimiter', 'error_handler', 'missing_data_handler']
+
+
+class SimpleImportResultSerializer(serializers.Serializer):
+    file_name = serializers.CharField()
+    error_message = serializers.CharField()
+    total_rows = serializers.IntegerField()
+    processed_rows = serializers.IntegerField()
+
+    task = SimpleImportCeleryTaskSerializer()
+    scheme = SimpleImportSchemeSerializer()
+    reports = FileReportSerializer(many=True)
+
+    items = SimpleImportProcessItemSerializer(many=True)
+
+    class Meta:
+        model = TransactionImportResult
+        fields = ['task', 'scheme', 'file_name', 'total_rows', 'items', 'processed_rows', 'error_message', 'reports']

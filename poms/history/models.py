@@ -372,8 +372,8 @@ def get_record_context():
 
 
 def post_save(sender, instance, created, using=None, update_fields=None, **kwargs):
-    _l.info('post_save.sender %s' % sender)
-    _l.info('post_save.update_fields %s' % update_fields)
+    # _l.info('post_save.sender %s' % sender)
+    # _l.info('post_save.update_fields %s' % update_fields)
 
     from poms.users.models import MasterUser
     master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
@@ -411,8 +411,8 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
             else:
                 action = HistoricalRecord.ACTION_CREATE
 
-            _l.info('created %s' % created)
-            _l.info('update_fields %s' % update_fields)
+            # _l.info('created %s' % created)
+            # _l.info('update_fields %s' % update_fields)
 
             if update_fields:
                 if 'is_deleted' in update_fields:

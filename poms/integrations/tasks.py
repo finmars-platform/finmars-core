@@ -48,7 +48,7 @@ from poms.file_reports.models import FileReport
 from poms.instruments.models import Instrument, DailyPricingModel, PriceHistory, InstrumentType, \
     PaymentSizeDetail, Periodicity, AccrualCalculationModel, PricingCondition
 from poms.integrations.models import ImportConfig
-from poms.integrations.models import Task, PriceDownloadScheme, InstrumentDownloadScheme, \
+from poms.integrations.models import PriceDownloadScheme, InstrumentDownloadScheme, \
     AccountMapping, CurrencyMapping, PortfolioMapping, CounterpartyMapping, InstrumentTypeMapping, ResponsibleMapping, \
     Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, \
     PriceDownloadSchemeMapping, InstrumentMapping, PeriodicityMapping, AccrualCalculationModelMapping, \
@@ -148,26 +148,28 @@ def auth_log_statistics():
 
 @shared_task(name='integrations.download_instrument', bind=True, ignore_result=False)
 def download_instrument_async(self, task_id=None):
-    task = Task.objects.get(pk=task_id)
-    _l.debug('download_instrument_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    task = CeleryTask.objects.get(pk=task_id)
+    _l.debug('download_instrument_async: master_user_id=%s, task=%s', task.master_user_id, task)
 
-    task.add_celery_task_id(self.request.id)
+    task.celery_task_id = self.request.id
+
+    provider_id = 1 # bloomberg
 
     try:
-        provider = get_provider(task.master_user, task.provider_id)
+        provider = get_provider(task.master_user, provider_id)
     except Exception:
         _l.debug('provider load error', exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         raise
 
     if provider is None:
         _l.debug('provider not found')
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
-    if task.status not in [Task.STATUS_PENDING, Task.STATUS_WAIT_RESPONSE]:
+    if task.status not in [CeleryTask.STATUS_PENDING, CeleryTask.STATUS_WAIT_RESPONSE]:
         _l.debug('invalid task status')
         return
     options = task.options_object
@@ -176,13 +178,13 @@ def download_instrument_async(self, task_id=None):
         result, is_ready = provider.download_instrument(options)
     except Exception:
         _l.error('provider processing error', exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
     else:
         if is_ready:
-            task.status = Task.STATUS_DONE
+            task.status = CeleryTask.STATUS_DONE
             task.result_object = result
         else:
-            task.status = Task.STATUS_WAIT_RESPONSE
+            task.status = CeleryTask.STATUS_WAIT_RESPONSE
 
     response_id = options.get('response_id', None)
     if response_id:
@@ -191,14 +193,14 @@ def download_instrument_async(self, task_id=None):
     task.options_object = options
     task.save()
 
-    if task.status == Task.STATUS_WAIT_RESPONSE:
+    if task.status == CeleryTask.STATUS_WAIT_RESPONSE:
         if self.request.is_eager:
             time.sleep(provider.get_retry_delay())
         try:
             self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries())
             # self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries(), throw=False)
         except MaxRetriesExceededError:
-            task.status = Task.STATUS_TIMEOUT
+            task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
         return
 
@@ -207,7 +209,8 @@ def download_instrument_async(self, task_id=None):
 
 def download_instrument(instrument_code=None, instrument_download_scheme=None, master_user=None, member=None,
                         task=None, value_overrides=None):
-    _l.debug('download_pricing: master_user_id=%s, task=%s, instrument_code=%s, instrument_download_scheme=%s',
+    _l.info('download_instrument value_overrides %s' % value_overrides)
+    _l.info('download_instrument: master_user_id=%s, task=%s, instrument_code=%s, instrument_download_scheme=%s',
              getattr(master_user, 'id', None), getattr(task, 'info', None), instrument_code, instrument_download_scheme)
 
     if task is None:
@@ -220,12 +223,11 @@ def download_instrument(instrument_code=None, instrument_download_scheme=None, m
             'instrument_code': instrument_code,
         }
         with transaction.atomic():
-            task = Task(
+            task = CeleryTask(
                 master_user=master_user,
                 member=member,
-                provider=instrument_download_scheme.provider,
-                status=Task.STATUS_PENDING,
-                action=Task.ACTION_INSTRUMENT
+                status=CeleryTask.STATUS_PENDING,
+                type='download_instrument'
             )
             task.options_object = options
             task.save()
@@ -234,8 +236,11 @@ def download_instrument(instrument_code=None, instrument_download_scheme=None, m
             transaction.on_commit(lambda: download_instrument_async.apply_async(kwargs={'task_id': task.id}))
         return task, None, None
     else:
-        if task.status == Task.STATUS_DONE:
-            provider = get_provider(task.master_user, task.provider_id)
+        if task.status == CeleryTask.STATUS_DONE:
+
+            provider_id = 1 # bloomberg
+
+            provider = get_provider(task.master_user, provider_id)
 
             options = task.options_object
             values = task.result_object.copy()
@@ -556,11 +561,11 @@ def download_instrument_cbond(instrument_code=None, instrument_name=None, instru
         task = None
 
         with transaction.atomic():
-            task = Task(
+            task = CeleryTask(
                 master_user=master_user,
                 member=member,
-                status=Task.STATUS_PENDING,
-                action=Task.ACTION_INSTRUMENT
+                status=CeleryTask.STATUS_PENDING,
+                type='download_instrument'
             )
             task.options_object = options
             task.save()
@@ -755,11 +760,11 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
             'code': currency_code,
         }
         with transaction.atomic():
-            task = Task(
+            task = CeleryTask(
                 master_user=master_user,
                 member=member,
-                status=Task.STATUS_PENDING,
-                action=Task.ACTION_INSTRUMENT
+                status=CeleryTask.STATUS_PENDING,
+                type='download_currency'
             )
             task.options_object = options
             task.save()
@@ -1066,7 +1071,7 @@ def download_instrument_finmars_database_async(self, task_id):
 
 @shared_task(name='integrations.download_instrument_cbond_task', bind=True, ignore_result=False)
 def download_instrument_cbond_task(self, task_id):
-    task = Task.objects.get(pk=task_id)
+    task = CeleryTask.objects.get(pk=task_id)
 
     name = None
     instrument_type_code = None
@@ -1088,11 +1093,11 @@ def download_unified_data(id=None, entity_type=None, master_user=None, member=No
 
         with transaction.atomic():
             # DEPRECATED, REFACTOR SOON
-            task = Task(
+            task = CeleryTask(
                 master_user=master_user,
                 member=member,
-                status=Task.STATUS_PENDING,
-                action=Task.ACTION_INSTRUMENT
+                status=CeleryTask.STATUS_PENDING,
+                type="download_entity"
             )
             task.options_object = {
                 "entity_type": entity_type,
@@ -1174,26 +1179,29 @@ def download_unified_data(id=None, entity_type=None, master_user=None, member=No
 
 @shared_task(name='integrations.download_instrument_pricing_async', bind=True, ignore_result=False)
 def download_instrument_pricing_async(self, task_id):
-    task = Task.objects.get(pk=task_id)
-    _l.debug('download_instrument_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    task = CeleryTask.objects.get(pk=task_id)
+    _l.debug('download_instrument_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task)
 
-    task.add_celery_task_id(self.request.id)
+    task.celery_task_id = self.request.id
 
     try:
-        provider = get_provider(task.master_user, task.provider_id)
+
+        provider_id = 1 # bloomberg
+
+        provider = get_provider(task.master_user, provider_id)
     except Exception:
         _l.debug('provider load error', exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
     if provider is None:
         _l.debug('provider not found')
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
-    if task.status not in [Task.STATUS_PENDING, Task.STATUS_WAIT_RESPONSE]:
+    if task.status not in [CeleryTask.STATUS_PENDING, CeleryTask.STATUS_WAIT_RESPONSE]:
         _l.warn('invalid task status')
         return
 
@@ -1203,13 +1211,13 @@ def download_instrument_pricing_async(self, task_id):
         result, is_ready = provider.download_instrument_pricing(options)
     except Exception:
         _l.warn("provider processing error", exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
     else:
         if is_ready:
-            task.status = Task.STATUS_DONE
+            task.status = CeleryTask.STATUS_DONE
             task.result_object = result
         else:
-            task.status = Task.STATUS_WAIT_RESPONSE
+            task.status = CeleryTask.STATUS_WAIT_RESPONSE
 
     response_id = options.get('response_id', None)
     if response_id:
@@ -1217,14 +1225,14 @@ def download_instrument_pricing_async(self, task_id):
     task.options_object = options
     task.save()
 
-    if task.status == Task.STATUS_WAIT_RESPONSE:
+    if task.status == CeleryTask.STATUS_WAIT_RESPONSE:
         if self.request.is_eager:
             time.sleep(provider.get_retry_delay())
         try:
             self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries())
             # self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries(), throw=False)
         except MaxRetriesExceededError:
-            task.status = Task.STATUS_TIMEOUT
+            task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
         return
 
@@ -1233,26 +1241,29 @@ def download_instrument_pricing_async(self, task_id):
 
 @shared_task(name='integrations.test_certificate_async', bind=True, ignore_result=False)
 def test_certificate_async(self, task_id):
-    task = Task.objects.get(pk=task_id)
-    _l.debug('handle_test_certificate_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    task = CeleryTask.objects.get(pk=task_id)
+    _l.debug('handle_test_certificate_async: master_user_id=%s, task=%s', task.master_user_id, task)
 
-    task.add_celery_task_id(self.request.id)
+    task.celery_task_id = self.request.id
 
     try:
-        provider = get_provider(task.master_user, task.provider_id)
+
+        provider_id = 1 # bloomberg
+
+        provider = get_provider(task.master_user, provider_id)
     except Exception:
         _l.debug('provider load error', exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
     if provider is None:
         _l.debug('provider not found')
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
-    if task.status not in [Task.STATUS_PENDING, Task.STATUS_WAIT_RESPONSE]:
+    if task.status not in [CeleryTask.STATUS_PENDING, CeleryTask.STATUS_WAIT_RESPONSE]:
         _l.warn('invalid task status')
         return
 
@@ -1262,7 +1273,7 @@ def test_certificate_async(self, task_id):
         result = provider.test_certificate(options)
     except Exception as e:
         _l.warn("provider processing error", exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
 
         task.save()
         return
@@ -1270,7 +1281,7 @@ def test_certificate_async(self, task_id):
         _l.debug('handle_test_certificate_async task: result %s' % result)
         _l.debug('handle_test_certificate_async task: result is authorized %s' % result['is_authorized'])
 
-        task.status = Task.STATUS_DONE
+        task.status = CeleryTask.STATUS_DONE
         task.result_object = result
 
         task.options_object = options
@@ -1299,14 +1310,14 @@ def test_certificate_async(self, task_id):
         _l.debug('handle_test_certificate_async task: master_user_id=%s, task=%s', task.master_user_id, task.result)
         _l.debug('handle_test_certificate_async task.status: ', task.status)
 
-    if task.status == Task.STATUS_WAIT_RESPONSE:
+    if task.status == CeleryTask.STATUS_WAIT_RESPONSE:
         if self.request.is_eager:
             time.sleep(provider.get_retry_delay())
         try:
             self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries())
             # self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries(), throw=False)
         except MaxRetriesExceededError:
-            task.status = Task.STATUS_TIMEOUT
+            task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
         return
 
@@ -1316,26 +1327,29 @@ def test_certificate_async(self, task_id):
 # DEPRECATED SINCE 22.09.2020 DELETE SOON
 @shared_task(name='integrations.download_currency_pricing_async', bind=True, ignore_result=False)
 def download_currency_pricing_async(self, task_id):
-    task = Task.objects.get(pk=task_id)
-    _l.debug('download_currency_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task.info)
+    task = CeleryTask.objects.get(pk=task_id)
+    _l.debug('download_currency_pricing_async: master_user_id=%s, task=%s', task.master_user_id, task)
 
-    task.add_celery_task_id(self.request.id)
+    task.celery_task_id = self.request.id
 
     try:
-        provider = get_provider(task.master_user, task.provider_id)
+
+        provider_id = 1 # bloomberg
+
+        provider = get_provider(task.master_user, provider_id)
     except Exception:
         _l.debug('provider load error', exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
     if provider is None:
         _l.debug('provider not found')
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.save()
         return
 
-    if task.status not in [Task.STATUS_PENDING, Task.STATUS_WAIT_RESPONSE]:
+    if task.status not in [CeleryTask.STATUS_PENDING, CeleryTask.STATUS_WAIT_RESPONSE]:
         _l.warn('invalid task status')
         return
 
@@ -1345,13 +1359,13 @@ def download_currency_pricing_async(self, task_id):
         result, is_ready = provider.download_currency_pricing(options)
     except Exception:
         _l.warn("provider processing error", exc_info=True)
-        task.status = Task.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
     else:
         if is_ready:
-            task.status = Task.STATUS_DONE
+            task.status = CeleryTask.STATUS_DONE
             task.result_object = result
         else:
-            task.status = Task.STATUS_WAIT_RESPONSE
+            task.status = CeleryTask.STATUS_WAIT_RESPONSE
 
     response_id = options.get('response_id', None)
     if response_id:
@@ -1360,14 +1374,14 @@ def download_currency_pricing_async(self, task_id):
     task.options_object = options
     task.save()
 
-    if task.status == Task.STATUS_WAIT_RESPONSE:
+    if task.status == CeleryTask.STATUS_WAIT_RESPONSE:
         if self.request.is_eager:
             time.sleep(provider.get_retry_delay())
         try:
             self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries())
             # self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries(), throw=False)
         except MaxRetriesExceededError:
-            task.status = Task.STATUS_TIMEOUT
+            task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
         return
 
@@ -1507,12 +1521,11 @@ def test_certificate(master_user=None, member=None, task=None):
 
                 }
                 # DEPRECATED, REFACTOR SOON
-                task = Task(
+                task = CeleryTask(
                     master_user=master_user,
                     member=member,
-                    provider_id=1,
-                    status=Task.STATUS_PENDING,
-                    action=Task.ACTION_PRICING
+                    status=CeleryTask.STATUS_PENDING,
+                    type='test_certificate'
                 )
 
                 task.options_object = options
@@ -1522,7 +1535,7 @@ def test_certificate(master_user=None, member=None, task=None):
 
             return task, False
         else:
-            if task.status == Task.STATUS_DONE:
+            if task.status == CeleryTask.STATUS_DONE:
                 return task, True
             return task, False
 
@@ -4056,51 +4069,50 @@ def complex_transaction_csv_file_import_by_procedure(self, procedure_instance_id
 
 @shared_task(name='integrations.complex_transaction_csv_file_import_by_procedure_json', bind=True)
 def complex_transaction_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_task_id):
-    with transaction.atomic():
 
-        _l.info('complex_transaction_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (
-            procedure_instance_id, celery_task_id))
+    _l.info('complex_transaction_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (
+        procedure_instance_id, celery_task_id))
 
-        from poms.procedures.models import RequestDataFileProcedureInstance
+    from poms.procedures.models import RequestDataFileProcedureInstance
 
-        procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
-        celery_task = CeleryTask.objects.get(id=celery_task_id)
-        celery_task.celery_task_id = self.request.id
+    procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_instance_id)
+    celery_task = CeleryTask.objects.get(id=celery_task_id)
+    celery_task.celery_task_id = self.request.id
+    celery_task.save()
+
+    try:
+
+        _l.info(
+            'complex_transaction_csv_file_import_by_procedure_json looking for scheme %s ' % procedure_instance.procedure.scheme_user_code)
+
+        scheme = ComplexTransactionImportScheme.objects.get(master_user=procedure_instance.master_user,
+                                                            user_code=procedure_instance.procedure.scheme_user_code)
+
+        options_object = celery_task.options_object
+
+        options_object['file_path'] = ''
+        options_object['file_name'] = ''
+        options_object['scheme_id'] = scheme.id
+        options_object['execution_context'] = {'started_by': 'procedure',
+                                               'date_from': str(procedure_instance.date_from),
+                                               'date_to': str(procedure_instance.date_to),
+                                               }
+
+        celery_task.options_object = options_object
         celery_task.save()
 
-        try:
+        text = "Data File Procedure %s. File is received. Importing JSON" % (
+            procedure_instance.procedure.user_code)
 
-            _l.info(
-                'complex_transaction_csv_file_import_by_procedure_json looking for scheme %s ' % procedure_instance.procedure.scheme_user_code)
+        send_system_message(master_user=procedure_instance.master_user,
+                            performed_by='System',
+                            description=text)
 
-            scheme = ComplexTransactionImportScheme.objects.get(master_user=procedure_instance.master_user,
-                                                                user_code=procedure_instance.procedure.scheme_user_code)
-
-            options_object = celery_task.options_object
-
-            options_object['file_path'] = ''
-            options_object['file_name'] = ''
-            options_object['scheme_id'] = scheme.id
-            options_object['execution_context'] = {'started_by': 'procedure',
-                                                   'date_from': str(procedure_instance.date_from),
-                                                   'date_to': str(procedure_instance.date_to),
-                                                   }
-
-            celery_task.options_object = options_object
-            celery_task.save()
-
-            text = "Data File Procedure %s. File is received. Importing JSON" % (
-                procedure_instance.procedure.user_code)
-
-            send_system_message(master_user=procedure_instance.master_user,
-                                performed_by='System',
-                                description=text)
-
-            transaction.on_commit(lambda: transaction_import.apply_async(
-                kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
+        transaction.on_commit(lambda: transaction_import.apply_async(
+            kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
 
 
-        except Exception as e:
+    except Exception as e:
 
             _l.info('complex_transaction_csv_file_import_by_procedure_json e %s' % e)
 

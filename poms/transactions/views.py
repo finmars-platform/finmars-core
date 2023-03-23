@@ -1310,14 +1310,13 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
     def rebook(self, request, pk=None):
         complex_transaction = self.get_object()
 
-        # if request.method != 'GET':
-        #     complex_transaction.status = ComplexTransaction.PRODUCTION
-
         if request.method == 'GET':
 
             instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                               process_mode='rebook',
                                               complex_transaction=complex_transaction,
+                                              clear_execution_log=False,
+                                              record_execution_log=False,
                                               context=self.get_serializer_context(), member=request.user.member)
 
             serializer = self.get_serializer(instance=instance)
@@ -1330,7 +1329,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
             uniqueness_reaction = request.data.get('uniqueness_reaction', None)
 
-            complex_transaction.execution_log = ''
+            # complex_transaction.execution_log = ''
 
             instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
                                               process_mode=request.data['process_mode'],
@@ -1555,7 +1554,12 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                 complex_transaction.is_deleted = False
                 complex_transaction.save()
 
+            for transaction in complex_transaction.transactions.all():
+                transaction.is_deleted = False
+                transaction.save()
+
         return Response({'message': 'ok'})
+
 
 class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = get_complex_transaction_queryset(select_related=False, transactions=True)

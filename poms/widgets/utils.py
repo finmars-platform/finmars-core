@@ -594,6 +594,8 @@ def collect_balance_history(master_user, member, date_from, date_to, dates, segm
                                 options_object['date_from'], options_object['date_to']),
                             )
 
+    return task
+
 
 def collect_pl_history(master_user, member, date_from, date_to, dates, segmentation_type, portfolio_id,
                        report_currency_id, cost_method_id,
@@ -654,6 +656,7 @@ def collect_pl_history(master_user, member, date_from, date_to, dates, segmentat
                             description='PL History from %s to %s will be soon available' % (
                                 options_object['date_from'], options_object['date_to']),
                             )
+    return task
 
 
 def collect_widget_stats(master_user, member, date_from, date_to, dates, segmentation_type, portfolio_id, benchmark,
@@ -689,3 +692,5 @@ def collect_widget_stats(master_user, member, date_from, date_to, dates, segment
         collect_stats.apply(kwargs={'task_id': task.id})
     else:
         transaction.on_commit(lambda: collect_stats.apply_async(kwargs={'task_id': task.id}))
+
+    return task

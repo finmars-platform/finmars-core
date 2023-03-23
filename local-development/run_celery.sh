@@ -23,4 +23,4 @@ FINMARS_DATABASE_URL=https://database.finmars.com/ \
 FINMARS_DATABASE_USER=finmars \
 FINMARS_DATABASE_PASSWORD=8ah9o7zq2nw10oud2ictqvgxw6ja81007m \
 DIRECTOR_DATABASE_URI="sqlite:////Users/szhitenev/projects/finmars/repositories/backend/director/local/director.db" \
-celery --app=poms_app worker --autoscale=4,2 -Q backend --loglevel=INFO -n backend
+celery --app=poms_app worker --autoscale=4,2 -Q backend-general-queue,backend-delete-queue --loglevel=INFO -n backend

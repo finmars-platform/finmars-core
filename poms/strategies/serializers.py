@@ -219,3 +219,42 @@ class Strategy3ViewSerializer(Strategy1ViewSerializer):
 
     class Meta(Strategy1ViewSerializer.Meta):
         model = Strategy3
+
+
+class Strategy1EvalSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = Strategy1
+        fields = [
+            'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_deleted',
+           'is_enabled'
+        ]
+
+        read_only_fields = fields
+
+
+class Strategy2EvalSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = Strategy2
+        fields = [
+            'id', 'master_user',  'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_deleted',
+             'is_enabled'
+        ]
+
+        read_only_fields = fields
+
+
+class Strategy3EvalSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = Strategy3
+        fields = [
+            'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_deleted',
+            'is_enabled'
+        ]
+
+        read_only_fields = fields

@@ -799,12 +799,13 @@ class InstrumentFDBCreateFromCallbackViewSet(APIView):
 
         try:
 
-            from poms.integrations.models import Task
+
 
             _l.info("InstrumentFDBCreateFromCallbackViewSet.data %s" % request.data)
             _l.info("InstrumentFDBCreateFromCallbackViewSet.request_id %s" % request.data['request_id'])
 
-            task = Task.objects.get(id=request.data['request_id'])
+            from poms.celery_tasks.models import CeleryTask
+            task = CeleryTask.objects.get(id=request.data['request_id'])
 
             context = {'request': request, 'master_user': task.master_user}
 

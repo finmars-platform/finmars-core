@@ -58,6 +58,12 @@ class CsvImportScheme(NamedModel, DataTimeStampedModel):
     spreadsheet_active_tab_name = models.CharField(max_length=255, default='', blank=True, null=True)
     column_matcher = models.CharField(max_length=255, choices=COLUMN_MATCHER_CHOICES, default='index')
 
+    data_preprocess_expression = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                                  verbose_name=gettext_lazy('data preprocess expression'))
+
+    item_post_process_script = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, default='',
+                                                verbose_name=gettext_lazy('item post process script'))
+
     class Meta:
         unique_together = (
             ('content_type', 'user_code', 'master_user')
@@ -115,7 +121,7 @@ class EntityField(models.Model):
     order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
 
     system_property_key = models.CharField(max_length=255, null=True)
-    dynamic_attribute_id = models.IntegerField(null=True)
+    attribute_user_code = models.CharField(max_length=255, null=True)
 
     scheme = models.ForeignKey(CsvImportScheme, related_name='entity_fields', on_delete=models.CASCADE)
 
@@ -143,3 +149,104 @@ class CsvDataImport(models.Model):
     classifier_handler = models.CharField(max_length=255, choices=CLASSIFIER_HANDLER, default='skip')
 
     file = ''
+
+
+class ProcessType(object):
+    CSV = 'CSV'
+    JSON = 'JSON'
+    EXCEL = 'EXCEL'
+
+
+class SimpleImportResult(object):
+
+    def __init__(self,
+                 task=None,
+                 scheme=None,
+                 file_name=None,
+                 file_path=None,
+
+                 total_rows=None,
+                 processed_rows=0,
+
+                 errors=None,
+                 items=None,
+
+                 error_message=None,
+                 reports=None):
+        self.task = task
+        self.scheme = scheme
+        self.file_name = file_name
+
+        self.total_rows = total_rows
+        self.processed_rows = processed_rows
+
+        self.items = items
+
+        self.error_message = error_message
+        self.reports = reports
+
+
+class SimpleImportConversionItem(object):
+
+    def __init__(self,
+                 file_inputs=None,
+                 raw_inputs=None,
+                 conversion_inputs=None,
+                 row_number=None):
+        self.file_inputs = file_inputs
+        self.raw_inputs = raw_inputs
+        self.conversion_inputs = conversion_inputs
+        self.row_number = row_number
+
+
+class SimpleImportProcessPreprocessItem(object):
+
+    def __init__(self,
+                 file_inputs=None,
+                 raw_inputs=None,
+                 conversion_inputs=None,
+                 inputs=None,
+                 row_number=None):
+        self.file_inputs = file_inputs
+        self.raw_inputs = raw_inputs
+        self.conversion_inputs = conversion_inputs
+        self.inputs = inputs
+        self.row_number = row_number
+
+
+class SimpleImportImportedItem(object):
+
+    def __init__(self,
+                 id=None,
+                 user_code=None):
+        self.id = id
+        self.user_code = user_code
+
+
+class SimpleImportProcessItem(object):
+
+    def __init__(self,
+                 status='init',
+                 error_message='',
+                 message='',
+                 processed_rule_scenarios=None,
+                 imported_items=None,
+                 file_inputs=None,
+                 raw_inputs=None,
+                 inputs=None,
+                 final_inputs=None,
+                 row_number=None):
+        self.file_inputs = file_inputs
+        self.raw_inputs = raw_inputs
+        self.inputs = inputs
+        self.final_inputs = final_inputs
+        self.row_number = row_number
+
+        self.status = status
+        self.error_message = error_message
+        self.message = message
+
+        self.imported_items = imported_items
+
+    def __str__(self):
+        return 'Row number %s' % self.row_number

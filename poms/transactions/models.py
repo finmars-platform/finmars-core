@@ -5,10 +5,10 @@ import logging
 import traceback
 from datetime import date
 from math import isnan
-
+import time
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
-from django.core.cache import cache
+
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
@@ -1463,6 +1463,21 @@ class ComplexTransaction(DataTimeStampedModel):
 
     execution_log = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('execution log'))
 
+    source_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('source data'))
+
+    @property
+    def source(self):
+        if self.source_data is None:
+            return None
+        return json.loads(self.source_data)
+
+    @source.setter
+    def source(self, value):
+        if value is None:
+            self.source_data = None
+        else:
+            self.source_data = json.dumps(value, cls=DjangoJSONEncoder, sort_keys=True, indent=1)
+
     class Meta:
         verbose_name = gettext_lazy('complex transaction')
         verbose_name_plural = gettext_lazy('complex transactions')
@@ -1480,21 +1495,20 @@ class ComplexTransaction(DataTimeStampedModel):
         return str(self.code)
 
     def save(self, *args, **kwargs):
-        cache.clear()
 
-        _l.info("Complex Transaction Save status %s" % self.status)
-        _l.info("Complex Transaction Save text %s" % self.text)
-        _l.info("Complex Transaction Save date %s" % self.date)
-
-        _l.info("Complex Transaction Save transaction_unique_code %s" % self.transaction_unique_code)
+        # _l.info("ComplexTransaction.save status %s" % self.status)
+        # _l.info("ComplexTransaction.save text %s" % self.text)
+        # _l.info("ComplexTransaction.save date %s" % self.date)
 
         if self.code is None or self.code == 0:
             self.code = FakeSequence.next_value(self.transaction_type.master_user, 'complex_transaction', d=100)
-        _l.info("Complex Transaction Save date %s" % self.code)
+        # _l.info("ComplexTransaction.save code %s" % self.code)
+
+        _l.debug("ComplexTransaction.save %s %s %s" % (self.code, self.date, self.transaction_unique_code))
+
         super(ComplexTransaction, self).save(*args, **kwargs)
 
     def fake_delete(self):
-
         if self.is_deleted:  # if transaction was already marked as deleted, then do real delete
             self.delete()
         else:
@@ -1502,6 +1516,10 @@ class ComplexTransaction(DataTimeStampedModel):
             self.is_deleted = True
 
             fields_to_update = ['is_deleted', 'modified']
+
+            for transaction in self.transactions.all():
+                transaction.is_deleted = True
+                transaction.save()
 
             from poms.common import formula
 
@@ -1599,6 +1617,7 @@ class Transaction(models.Model):
 
     # is_locked = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is locked'))
     is_canceled = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is canceled'))
+    is_deleted = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is deleted'))
 
     error_code = models.PositiveSmallIntegerField(null=True, blank=True, verbose_name=gettext_lazy('error code'))
 
@@ -1841,6 +1860,8 @@ class Transaction(models.Model):
 
     def calculate_ytm(self):
 
+        process_st = time.perf_counter()
+
         ecosystem_default = EcosystemDefault.objects.get(master_user=self.instrument.master_user)
 
         try:
@@ -1864,49 +1885,52 @@ class Transaction(models.Model):
 
             dt = self.accounting_date
 
-            _l.debug('Transaction.calculate_ytm: instr_pricing_ccy_cur_fx %s' % self.instr_pricing_ccy_cur_fx)
-            _l.debug('Transaction.calculate_ytm: instr_accrued_ccy_cur_fx %s' % self.instr_accrued_ccy_cur_fx)
-            _l.debug('Transaction.calculate_ytm: self.instrument.maturity_date %s' % self.instrument.maturity_date)
-            _l.debug('Transaction.calculate_ytm: dt %s' % dt)
-            _l.debug('Transaction.calculate_ytm: date.max %s' % date.max)
+            # _l.debug('Transaction.calculate_ytm: instr_pricing_ccy_cur_fx %s' % self.instr_pricing_ccy_cur_fx)
+            # _l.debug('Transaction.calculate_ytm: instr_accrued_ccy_cur_fx %s' % self.instr_accrued_ccy_cur_fx)
+            # _l.debug('Transaction.calculate_ytm: self.instrument.maturity_date %s' % self.instrument.maturity_date)
+            # _l.debug('Transaction.calculate_ytm: dt %s' % dt)
+            # _l.debug('Transaction.calculate_ytm: date.max %s' % date.max)
 
             if self.instrument.maturity_date is None or \
                     self.instrument.maturity_date == date.max or str(
                 self.instrument.maturity_date) == '2999-01-01' or str(self.instrument.maturity_date) == '2099-01-01':
 
-                _l.debug('Transaction.calculate_ytm: instrument has maturity_date')
+                # _l.debug('Transaction.calculate_ytm: instrument has maturity_date')
 
                 try:
 
                     accrual_size = self.instrument.get_accrual_size(dt)
 
-                    _l.debug('Transaction.calculate_ytm: accrual_size %s' % accrual_size)
-                    _l.debug(
-                        'Transaction.calculate_ytm: self.instrument.accrued_multiplier %s' % self.instrument.accrued_multiplier)
-                    _l.debug('Transaction.calculate_ytm: self.trade_price %s' % self.trade_price)
-                    _l.debug(
-                        'Transaction.calculate_ytm: self.instrument.price_multiplier %s' % self.instrument.price_multiplier)
+                    # _l.debug('Transaction.calculate_ytm: accrual_size %s' % accrual_size)
+                    # _l.debug(
+                    #     'Transaction.calculate_ytm: self.instrument.accrued_multiplier %s' % self.instrument.accrued_multiplier)
+                    # _l.debug('Transaction.calculate_ytm: self.trade_price %s' % self.trade_price)
+                    # _l.debug(
+                    #     'Transaction.calculate_ytm: self.instrument.price_multiplier %s' % self.instrument.price_multiplier)
 
                     # TODO  * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx) happens in sql report
                     ytm = (accrual_size * self.instrument.accrued_multiplier) / \
                           (self.trade_price * self.instrument.price_multiplier)
 
-                    _l.debug('Transaction.calculate_ytm: ytm %s' % ytm)
+                    # _l.debug('Transaction.calculate_ytm: ytm %s' % ytm)
 
                 except ArithmeticError:
                     ytm = 0
 
+                _l.debug('Transaction.calculate_ytm done: %s',
+                         "{:3.3f}".format(time.perf_counter() - process_st))
+
                 return ytm
 
-            _l.debug('Transaction.calculate_ytm: self.instrument.maturity_date is None')
+            # _l.debug('Transaction.calculate_ytm: self.instrument.maturity_date is None')
 
             x0 = self.get_instr_ytm_x0(dt)
 
-            _l.debug('Transaction.calculate_ytm: x0 %s' % x0)
+            # _l.debug('Transaction.calculate_ytm: x0 %s' % x0)
 
             data = self.get_instr_ytm_data(dt)
 
-            _l.debug('Transaction.calculate_ytm: data %s' % data)
+            # _l.debug('Transaction.calculate_ytm: data %s' % data)
 
             if data:
 
@@ -1915,15 +1939,21 @@ class Transaction(models.Model):
             else:
                 ytm = 0.0
 
+            _l.debug('Transaction.calculate_ytm done: %s',
+                     "{:3.3f}".format(time.perf_counter() - process_st))
+
             return ytm
 
         except Exception as e:
             _l.error("calculate_ytm error %s" % e)
             _l.error("calculate_ytm traceback %s" % traceback.format_exc())
 
+            _l.debug('Transaction.calculate_ytm done: %s',
+                     "{:3.3f}".format(time.perf_counter() - process_st))
+
     def save(self, *args, **kwargs):
 
-        _l.info("Transaction.save: %s" % self)
+        _l.debug("Transaction.save: %s" % self)
 
         calc_cash = kwargs.pop('calc_cash', False)
 
@@ -1948,7 +1978,7 @@ class Transaction(models.Model):
         if self.ytm_at_cost is None:
             self.ytm_at_cost = 0
 
-        _l.info('Transaction.save: ytm is %s' % self.ytm_at_cost)
+        _l.debug('Transaction.save: ytm is %s' % self.ytm_at_cost)
 
         super(Transaction, self).save(*args, **kwargs)
 

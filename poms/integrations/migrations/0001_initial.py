@@ -527,7 +527,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(blank=True, default='', max_length=255, null=True, verbose_name='name')),
                 ('notes', models.TextField(blank=True, default='', verbose_name='notes')),
                 ('is_enabled', models.BooleanField(default=True, verbose_name='is enabled')),
-                ('cron_expr', models.CharField(blank=True, default='', help_text='Format is "* * * * *" (minute / hour / day_month / month / day_week)', max_length=255, validators=[poms.integrations.models.validate_crontab], verbose_name='cron expr')),
+                ('cron_expr', models.CharField(blank=True, default='', help_text='Format is "* * * * *" (minute / hour / day_month / month / day_week)', max_length=255, verbose_name='cron expr')),
                 ('balance_day', models.PositiveSmallIntegerField(default=0, verbose_name='balance day')),
                 ('load_days', models.PositiveSmallIntegerField(default=1, verbose_name='load days')),
                 ('fill_days', models.PositiveSmallIntegerField(default=0, verbose_name='tagfill dayss')),

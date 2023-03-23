@@ -8,7 +8,6 @@ from time import sleep
 import requests
 from OpenSSL import crypto
 from dateutil import parser
-from django.conf import settings
 from suds.client import Client
 from suds.transport import Reply
 from suds.transport.http import HttpAuthenticated
@@ -19,6 +18,7 @@ from poms.instruments.models import AccrualCalculationSchedule, InstrumentFactor
 from poms.integrations.models import FactorScheduleDownloadMethod, AccrualScheduleDownloadMethod, ProviderClass, \
     InstrumentDownloadScheme, PriceDownloadScheme
 from poms.integrations.providers.base import AbstractProvider, ProviderException, parse_date_iso
+from poms_app import settings
 
 _l = logging.getLogger('poms.integrations.providers.bloomberg')
 

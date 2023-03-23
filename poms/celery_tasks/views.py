@@ -62,13 +62,20 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         from poms_app import celery_app
 
         task_name = request.data.get('task_name')
-        payload = request.data.get('payload')
+        options = request.data.get('options')
 
-        result = celery_app.send_task(task_name, kwargs={'payload': payload})
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            type=task_name,
+            options_object=options
+        )
+
+        result = celery_app.send_task(task_name, kwargs={'task_id': celery_task.id})
 
         _l.info('result %s' % result)
 
-        return Response({'status': 'ok', 'task_id': None, 'celery_task_id': result.id})
+        return Response({'status': 'ok', 'task_id': celery_task.id, 'celery_task_id': result.id})
 
     @action(detail=True, methods=['PUT'], url_path='cancel')
     def cancel(self, request, pk=None):

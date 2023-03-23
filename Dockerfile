@@ -30,7 +30,8 @@ RUN mkdir -p /var/log/finmars/backend
 #RUN chown -R www-data:www-data /var/app
 #RUN chown -R www-data:www-data /var/app-data
 
-COPY docker/supervisor/celery.conf /etc/supervisor/conf.d/celery.conf
+COPY docker/supervisor/celery-worker-1.conf /etc/supervisor/conf.d/celery-worker-1.conf
+COPY docker/supervisor/celery-worker-2.conf /etc/supervisor/conf.d/celery-worker-2.conf
 COPY docker/supervisor/celerybeat.conf /etc/supervisor/conf.d/celerybeat.conf
 
 #COPY docker/uwsgi-www.ini /etc/uwsgi/apps-enabled/finmars.ini
