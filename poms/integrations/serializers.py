@@ -1,12 +1,10 @@
 from __future__ import unicode_literals, print_function
 
 import json
-from datetime import timedelta
 from logging import getLogger
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
-from django.utils import timezone
 from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 from rest_framework.fields import empty
@@ -14,7 +12,8 @@ from rest_framework.validators import UniqueTogetherValidator
 
 from poms.accounts.fields import AccountField, AccountTypeField
 from poms.celery_tasks.models import CeleryTask
-from poms.common.fields import ExpressionField, DateTimeTzAwareField
+from poms.celery_tasks.serializers import CeleryTaskSerializer
+from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.counterparties.fields import CounterpartyField, ResponsibleField
@@ -26,9 +25,9 @@ from poms.instruments.models import PriceHistory, Instrument, AccrualCalculation
 from poms.integrations.fields import InstrumentDownloadSchemeField, PriceDownloadSchemeField, \
     ComplexTransactionImportSchemeRestField
 from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDownloadSchemeAttribute, \
-    InstrumentDownloadScheme, ImportConfig, Task, ProviderClass, FactorScheduleDownloadMethod, \
+    InstrumentDownloadScheme, ImportConfig, ProviderClass, FactorScheduleDownloadMethod, \
     AccrualScheduleDownloadMethod, PriceDownloadScheme, CurrencyMapping, InstrumentTypeMapping, \
-    InstrumentAttributeValueMapping, AccrualCalculationModelMapping, PeriodicityMapping, PricingAutomatedSchedule, \
+    InstrumentAttributeValueMapping, AccrualCalculationModelMapping, PeriodicityMapping, \
     AbstractMapping, AccountMapping, InstrumentMapping, CounterpartyMapping, ResponsibleMapping, PortfolioMapping, \
     Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, DailyPricingModelMapping, PaymentSizeDetailMapping, \
     PriceDownloadSchemeMapping, ComplexTransactionImportScheme, ComplexTransactionImportSchemeInput, \
@@ -39,8 +38,8 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     ComplexTransactionImportSchemeRuleScenario, ComplexTransactionImportSchemeCalculatedInput, \
     BloombergDataProviderCredential, PricingConditionMapping, TransactionFileResult, DataProvider
 from poms.integrations.providers.base import get_provider, ProviderException
-from poms.integrations.tasks import download_instrument, test_certificate, download_instrument_cbond, \
-    download_unified_data, download_currency_cbond, download_instrument_finmars_database
+from poms.integrations.tasks import download_instrument, test_certificate, download_unified_data, \
+    download_currency_cbond, download_instrument_finmars_database
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericAttributeTypeSerializer, \
     GenericClassifierSerializer
@@ -48,7 +47,7 @@ from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.transactions.fields import TransactionTypeField, TransactionTypeInputField
-from poms.users.fields import MasterUserField, MemberField, HiddenMemberField
+from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.models import EcosystemDefault
 from poms_app import settings
 
@@ -85,6 +84,34 @@ class BloombergDataProviderCredentialSerializer(serializers.ModelSerializer):
             'id', 'master_user', 'p12cert', 'password', 'has_p12cert',
             'has_password', 'is_valid'
         ]
+
+    def create(self, validated_data):
+        p12cert = validated_data.pop('p12cert', None)
+
+        instance = super(BloombergDataProviderCredentialSerializer, self).create(validated_data)
+
+        cert_file_path = settings.BASE_API_URL + '/brokers/bloomberg/%s' % p12cert.name
+
+        storage.save(cert_file_path, p12cert)
+
+        instance.p12cert = cert_file_path
+        instance.save()
+
+        return instance
+
+    def update(self, instance, validated_data):
+        p12cert = validated_data.pop('p12cert', None)
+
+        instance = super(BloombergDataProviderCredentialSerializer, self).update(instance, validated_data)
+
+        cert_file_path = settings.BASE_API_URL + '/brokers/bloomberg/%s' % p12cert.name
+
+        storage.save(cert_file_path, p12cert)
+
+        instance.p12cert = cert_file_path
+        instance.save()
+
+        return instance
 
 
 class ImportConfigSerializer(serializers.ModelSerializer):
@@ -875,47 +902,6 @@ class PriceDownloadSchemeMappingSerializer(AbstractMappingSerializer):
 
 # ----
 
-
-class TaskSerializer(serializers.ModelSerializer):
-    master_user = MasterUserField()
-    member = MemberField()
-    provider_object = ProviderClassSerializer(source='provider', read_only=True)
-    is_yesterday = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Task
-        fields = [
-            'id', 'master_user', 'member', 'provider', 'provider_object',
-            'created', 'modified', 'status',
-            'action',
-            'is_yesterday',
-            'parent', 'children',
-            # 'options_object',
-            # 'result_object',
-        ]
-
-    def get_is_yesterday(self, obj):
-        if obj.action == Task.ACTION_PRICING:
-            options = obj.options_object or {}
-            return options.get('is_yesterday', None)
-        return None
-
-
-class PricingAutomatedScheduleSerializer(serializers.ModelSerializer):
-    master_user = MasterUserField()
-    last_run_at = DateTimeTzAwareField(read_only=True)
-    next_run_at = DateTimeTzAwareField(read_only=True)
-
-    class Meta:
-        model = PricingAutomatedSchedule
-        fields = [
-            'id', 'master_user', 'name', 'notes',
-            'is_enabled', 'cron_expr', 'balance_day', 'load_days', 'fill_days', 'override_existed',
-            'last_run_at', 'next_run_at',
-        ]
-        read_only_fields = ['last_run_at', 'next_run_at']
-
-
 class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObjectPermissionSerializer,
                                      ModelWithUserCodeSerializer):
     instrument_type = InstrumentTypeField(default=InstrumentTypeDefault())
@@ -1016,7 +1002,7 @@ class ImportInstrumentEntry(object):
     @property
     def task_object(self):
         if not self._task_object and self.task:
-            self._task_object = self.master_user.tasks.get(pk=self.task)
+            self._task_object = CeleryTask.objects.get(pk=self.task)
         return self._task_object
 
     @task_object.setter
@@ -1040,7 +1026,7 @@ class ImportCurrencyEntry(object):
     @property
     def task_object(self):
         if not self._task_object and self.task:
-            self._task_object = self.master_user.tasks.get(pk=self.task)
+            self._task_object = CeleryTask.objects.get(pk=self.task)
         return self._task_object
 
     @task_object.setter
@@ -1064,7 +1050,7 @@ class UnifiedDataEntry(object):
     @property
     def task_object(self):
         if not self._task_object and self.task:
-            self._task_object = self.master_user.tasks.get(pk=self.task)
+            self._task_object = CeleryTask.objects.get(pk=self.task)
         return self._task_object
 
     @task_object.setter
@@ -1077,10 +1063,10 @@ class ImportInstrumentSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
     instrument_download_scheme = InstrumentDownloadSchemeField()
-    instrument_code = serializers.CharField(required=True, initial='USP16394AG62 Corp')
+    instrument_code = serializers.CharField(required=True)
 
     task = serializers.IntegerField(required=False, allow_null=True)
-    task_object = TaskSerializer(read_only=True)
+    task_object = CeleryTaskSerializer(read_only=True)
     task_result = serializers.SerializerMethodField()
     task_result_overrides = serializers.JSONField(default={}, allow_null=True)
 
@@ -1155,7 +1141,7 @@ class ImportInstrumentSerializer(serializers.Serializer):
         return instance
 
     def get_task_result(self, obj):
-        if obj.task_object.status == Task.STATUS_DONE:
+        if obj.task_object.status == CeleryTask.STATUS_DONE:
             fields = obj.task_object.options_object['fields']
             result_object = obj.task_object.result_object
             return {k: v for k, v in result_object.items() if k in fields}
@@ -1165,8 +1151,8 @@ class ImportInstrumentSerializer(serializers.Serializer):
 class ImportInstrumentCbondsSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
-    instrument_code = serializers.CharField(required=True, initial='USP16394AG62 Corp')
-    instrument_name = serializers.CharField(required=False, allow_null=True, initial='USP16394AG62 Corp')
+    instrument_code = serializers.CharField(required=True)
+    instrument_name = serializers.CharField(required=False, allow_null=True)
     instrument_type_code = serializers.CharField(required=False, allow_null=True, initial='bonds')
     task = serializers.IntegerField(required=False, allow_null=True)
     result_id = serializers.IntegerField(required=False, allow_null=True)
@@ -1282,7 +1268,7 @@ class ImportTestCertificate(object):
     @property
     def task_object(self):
         if not self._task_object and self.task:
-            self._task_object = self.master_user.tasks.get(pk=self.task)
+            self._task_object = CeleryTask.objects.get(pk=self.task)
         return self._task_object
 
     @task_object.setter
@@ -1317,7 +1303,7 @@ class ImportPricingEntry(object):
     @property
     def task_object(self):
         if not self._task_object and self.task:
-            self._task_object = self.master_user.tasks.get(pk=self.task)
+            self._task_object = CeleryTask.objects.get(pk=self.task)
         return self._task_object
 
     @task_object.setter
@@ -1378,91 +1364,12 @@ class ImportPricingEntry(object):
         return []
 
 
-class ImportPricingSerializer(serializers.Serializer):
-    master_user = MasterUserField()
-    member = HiddenMemberField()
-
-    date_from = serializers.DateField(allow_null=True, required=False)
-    date_to = serializers.DateField(allow_null=True, required=False)
-    is_yesterday = serializers.BooleanField(read_only=True)
-    balance_date = serializers.DateField(allow_null=True, required=False)
-    fill_days = serializers.IntegerField(initial=0, default=0, min_value=0)
-    override_existed = serializers.BooleanField()
-
-    task = serializers.IntegerField(required=False, allow_null=True)
-    task_object = TaskSerializer(read_only=True)
-
-    errors = serializers.ReadOnlyField()
-    instrument_price_missed = serializers.ReadOnlyField()
-    currency_price_missed = serializers.ReadOnlyField()
-
-    def __init__(self, **kwargs):
-        super(ImportPricingSerializer, self).__init__(**kwargs)
-
-        from poms.instruments.serializers import PriceHistorySerializer
-        self.fields['instrument_price_missed'] = PriceHistorySerializer(read_only=True, many=True)
-
-        from poms.currencies.serializers import CurrencyHistorySerializer
-        self.fields['currency_price_missed'] = CurrencyHistorySerializer(read_only=True, many=True)
-
-    def validate(self, attrs):
-        attrs = super(ImportPricingSerializer, self).validate(attrs)
-
-        yesterday = timezone.now().date() - timedelta(days=1)
-
-        date_from = attrs.get('date_from', yesterday) or yesterday
-        date_to = attrs.get('date_to', yesterday) or yesterday
-        if date_from > date_to:
-            raise serializers.ValidationError({
-                'date_from': gettext_lazy('Invalid date range'),
-                'date_to': gettext_lazy('Invalid date range'),
-            })
-
-        balance_date = attrs.get('balance_date', date_to) or date_to
-        is_yesterday = (date_from == yesterday) and (date_to == yesterday)
-
-        attrs['date_from'] = date_from
-        attrs['date_to'] = date_to
-        attrs['balance_date'] = balance_date
-        attrs['is_yesterday'] = is_yesterday
-        attrs['fill_days'] = attrs.get('fill_days', 0) if is_yesterday else 0
-
-        return attrs
-
-    def create(self, validated_data):
-        instance = ImportPricingEntry(**validated_data)
-
-        if instance.task:
-
-            task, is_ready = download_pricing(
-                master_user=instance.master_user,
-                fill_days=instance.fill_days,
-                override_existed=instance.override_existed,
-                task=instance.task_object
-            )
-            instance.task_object = task
-        else:
-            task, is_ready = download_pricing(
-                master_user=instance.master_user,
-                member=instance.member,
-                date_from=instance.date_from,
-                date_to=instance.date_to,
-                is_yesterday=instance.is_yesterday,
-                balance_date=instance.balance_date,
-                fill_days=instance.fill_days,
-                override_existed=instance.override_existed
-            )
-            instance.task_object = task
-
-        return instance
-
-
 class TestCertificateSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
 
     task = serializers.IntegerField(required=False, allow_null=True)
-    task_object = TaskSerializer(read_only=True)
+    task_object = CeleryTaskSerializer(read_only=True)
 
     provider_id = serializers.ReadOnlyField()
 
@@ -1608,7 +1515,8 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 
     class Meta:
         model = ComplexTransactionImportSchemeRuleScenario
-        fields = ['id', 'is_default_rule_scenario', 'is_error_rule_scenario', 'name', 'selector_values', 'transaction_type', 'fields', 'status']
+        fields = ['id', 'is_default_rule_scenario', 'is_error_rule_scenario', 'name', 'selector_values',
+                  'transaction_type', 'fields', 'status']
 
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionImportSchemeRuleScenarioSerializer, self).__init__(*args, **kwargs)
@@ -1631,7 +1539,6 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
         inputs = []
 
         for input in instance.transaction_type.inputs.all():
-
             result = {
                 'id': input.id,
                 'name': input.name,
@@ -1647,7 +1554,6 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
             'user_code': instance.transaction_type.user_code,
             'inputs': inputs
         }
-
 
         return ret
 

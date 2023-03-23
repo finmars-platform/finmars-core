@@ -138,6 +138,22 @@ class TransactionImportProcess(object):
                             description=self.member.username + ' started import with scheme ' + self.scheme.name,
                             )
 
+    def items_has_error(self):
+
+        result = False
+
+        error_rows_count = 0
+
+        for result_item in self.result.items:
+
+            if result_item.status == 'error':
+                error_rows_count = error_rows_count + 1
+                result = True
+                break
+
+
+        return result
+
     def generate_file_report(self):
 
         _l.info('TransactionImportProcess.generate_file_report error_handler %s' % self.scheme.error_handler)
@@ -419,6 +435,7 @@ class TransactionImportProcess(object):
                     context=self.context,
                     uniqueness_reaction=self.scheme.book_uniqueness_settings,
                     member=self.member,
+                    source=item.file_inputs,
                     execution_context="import"
                 )
 
@@ -805,7 +822,7 @@ class TransactionImportProcess(object):
                     # expr = Expression.parseString("a == 1 and b == 2")
                     expr = Expression.parseString(self.scheme.filter_expression)
 
-                    if expr(item.result_inputs):
+                    if expr(item.inputs):
                         # filter passed
                         pass
                     else:
@@ -971,19 +988,23 @@ class TransactionImportProcess(object):
 
             self.result.reports = []
 
+
+            # if self.items_has_error():
             self.result.reports.append(self.generate_file_report())
             self.result.reports.append(self.generate_json_report())
 
-            error_rows_count = 0
-            for result_item in self.result.items:
 
-                if result_item.status == 'error':
-                    error_rows_count = error_rows_count + 1
+            if self.items_has_error():
+                error_rows_count = 0
+                for result_item in self.result.items:
 
-            if error_rows_count != 0:
-                send_system_message(master_user=self.master_user, action_status="required", type="warning",
-                                    title='Transaction Import Partially Failed. Task id: %s' % self.task.id,
-                                    description="Error rows %s/%s" % (error_rows_count, len(self.result.items)))
+                    if result_item.status == 'error':
+                        error_rows_count = error_rows_count + 1
+
+                if error_rows_count != 0:
+                    send_system_message(master_user=self.master_user, action_status="required", type="warning",
+                                        title='Transaction Import Partially Failed. Task id: %s' % self.task.id,
+                                        description="Error rows %s/%s" % (error_rows_count, len(self.result.items)))
 
             system_message_title = 'New transactions (import from file)'
             system_message_description = 'New transactions created (Import scheme - ' + str(
@@ -1019,12 +1040,16 @@ class TransactionImportProcess(object):
                                 title="Import Finished. Prices Recalculation Required",
                                 description="Please, run schedule or execute procedures to calculate portfolio prices and nav history")
 
+        attachments = []
+        if len(self.result.reports):
+            attachments = [self.result.reports[0].id, self.result.reports[1].id]
+
         send_system_message(master_user=self.master_user,
                             performed_by=system_message_performed_by,
                             section='import',
                             type='success',
                             title=import_system_message_title,
-                            attachments=[self.result.reports[0].id, self.result.reports[1].id])
+                            attachments=attachments)
 
         send_system_message(master_user=self.master_user,
                             performed_by=system_message_performed_by,
@@ -1037,8 +1062,9 @@ class TransactionImportProcess(object):
         if self.procedure_instance and self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
 
-        self.task.add_attachment(self.result.reports[0].id)
-        self.task.add_attachment(self.result.reports[1].id)
+        if len(self.result.reports):
+            self.task.add_attachment(self.result.reports[0].id)
+            self.task.add_attachment(self.result.reports[1].id)
 
         self.task.verbose_result = self.get_verbose_result()
 

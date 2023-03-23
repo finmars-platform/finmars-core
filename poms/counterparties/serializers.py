@@ -171,3 +171,35 @@ class ResponsibleViewSerializer(ModelWithObjectPermissionSerializer):
         fields = [
             'id', 'group', 'group_object', 'user_code', 'name', 'short_name', 'public_name',
         ]
+
+
+class CounterpartyEvalSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+    group = CounterpartyGroupField()
+
+    class Meta:
+        model = Counterparty
+        fields = [
+            'id', 'master_user', 'group', 'user_code', 'name', 'short_name', 'public_name',
+            'notes', 'is_default', 'is_valid_for_all_portfolios', 'is_deleted',
+            'is_enabled'
+        ]
+
+        read_only_fields = fields
+
+
+class ResponsibleEvalSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+    master_user = MasterUserField()
+    group = ResponsibleGroupField()
+
+    # attributes = ResponsibleAttributeSerializer(many=True, required=False, allow_null=True)
+
+    class Meta:
+        model = Responsible
+        fields = [
+            'id', 'master_user', 'group', 'user_code', 'name', 'short_name', 'public_name',
+            'notes', 'is_default', 'is_valid_for_all_portfolios', 'is_deleted', 'is_enabled'
+            # 'attributes'
+        ]
+
+        read_only_fields = fields

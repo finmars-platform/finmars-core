@@ -53,7 +53,6 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
 
 
 class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
-
     '''
         Portfolio Register
 
@@ -104,9 +103,11 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
             bundle.save()
 
+    def __str__(self):
+        return "Portfolio Register %s. Linked Instrument %s" % (self.portfolio.user_code, self.linked_instrument)
+
 
 class PortfolioRegisterRecord(DataTimeStampedModel):
-
     '''
 
     Portfolio Register RECORD
@@ -118,7 +119,6 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
     And we also counting number of shares. In portfolio share it is position_size
 
     '''
-
 
     master_user = models.ForeignKey(MasterUser, related_name='portfolio_register_records',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
@@ -226,7 +226,8 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
     #     super(PortfolioRegisterRecord, self).save(*args, **kwargs)
 
     def __str__(self):
-        return '%s %s %s %s' % (self.portfolio_register, self.transaction_date, self.transaction_class, self.cash_amount)
+        return '%s %s %s %s' % (
+        self.portfolio_register, self.transaction_date, self.transaction_class, self.cash_amount)
 
 
 class PortfolioBundle(NamedModel, FakeDeletableModel, DataTimeStampedModel):

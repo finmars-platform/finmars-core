@@ -315,6 +315,9 @@ class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, HistoryMixin, 
             if is_enabled == 'true':
                 queryset = queryset.filter(is_enabled=True)
 
+        if content_type.model in ['complextransaction']:
+            queryset = queryset.filter(is_deleted=False)
+
         queryset = handle_filters(queryset, filter_settings, master_user, content_type)
 
         ordering = request.data.get('ordering', None)

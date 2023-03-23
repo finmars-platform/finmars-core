@@ -22,13 +22,12 @@ _state = local()
 def _is_accept(model):
     from poms.audit.models import ObjectHistory4Entry
     from poms.common.models import AbstractClassModel
-    from poms.integrations.models import Task
 
     app_label = getattr(model._meta, 'app_label', None)
     if app_label not in ['users', 'accounts', 'counterparties', 'currencies', 'instruments',
                          'integrations', 'portfolios', 'strategies', 'transactions', ]:
         return False
-    if issubclass(model, (AbstractClassModel, Task, ObjectHistory4Entry)):
+    if issubclass(model, (AbstractClassModel, ObjectHistory4Entry)):
         return False
     return True
 

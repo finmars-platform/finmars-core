@@ -20,6 +20,7 @@ import poms.csv_import.views as csv_import
 import poms.currencies.views as currencies
 import poms.explorer.views as explorer
 import poms.file_reports.views as file_reports
+import poms.history.views as history
 import poms.instruments.views as instruments
 import poms.integrations.views as integrations
 import poms.notifications.views as notifications
@@ -37,7 +38,6 @@ import poms.transactions.views as transactions
 import poms.ui.views as ui
 import poms.users.views as users
 import poms.widgets.views as widgets
-import poms.history.views as history
 from finmars_standardized_errors.views import ErrorRecordViewSet
 from poms.auth_tokens.views import ObtainAuthToken, SetAuthToken, CreateUser, CreateMasterUser, CreateMember, \
     DeleteMember, RenameMasterUser, MasterUserChangeOwner
@@ -115,7 +115,8 @@ router.register(r'counterparties/responsible-attribute-type', counterparties.Res
 router.register(r'counterparties/responsible-classifier', counterparties.ResponsibleClassifierViewSet,
                 'responsibleclassifier')
 
-router.register(r'counterparties/responsible-group-ev-group', counterparties.ResponsibleGroupEvGroupViewSet, 'responsiblegroupev')
+router.register(r'counterparties/responsible-group-ev-group', counterparties.ResponsibleGroupEvGroupViewSet,
+                'responsiblegroupev')
 router.register(r'counterparties/responsible-group', counterparties.ResponsibleGroupViewSet, 'responsiblegroup')
 
 router.register(r'counterparties/responsible-ev-group', counterparties.ResponsibleEvGroupViewSet, 'responsibleevgroup')
@@ -125,7 +126,7 @@ router.register(r'counterparties/responsible-light', counterparties.ResponsibleL
 
 router.register(r'currencies/currency-ev-group', currencies.CurrencyEvGroupViewSet, 'currencyevgroup')
 router.register(r'currencies/currency', currencies.CurrencyViewSet, 'currency')
-router.register(r'currencies/currency-ev', currencies.CurrencyEvViewSet , 'currencyev')
+router.register(r'currencies/currency-ev', currencies.CurrencyEvViewSet, 'currencyev')
 router.register(r'currencies/currency-light', currencies.CurrencyLightViewSet, 'currencylight')
 
 router.register(r'currencies/currency-history-ev-group', currencies.CurrencyHistoryEvGroupViewSet)
@@ -396,11 +397,8 @@ router.register(r'import/finmars-database/instrument', integrations.ImportInstru
 router.register(r'import/finmars-database/currency', integrations.ImportCurrencyCbondsViewSet, 'importcurrencycbonds')
 router.register(r'import/unified-data-provider', integrations.ImportUnifiedDataProviderViewSet,
                 'importunifieddataprovider')
-router.register(r'import/pricing', integrations.ImportPricingViewSet, 'importpricing')
 router.register(r'import/test-certificate', integrations.TestCertificateViewSet, 'testcertificate')
 # router.register(r'import/pricing-automated-schedule', integrations.PricingAutomatedScheduleViewSet)
-
-router.register(r'import/task', integrations.TaskViewSet)
 
 router.register(r'import/complex-transaction-import-scheme', integrations.ComplexTransactionImportSchemeViewSet)
 router.register(r'import/complex-transaction-import-scheme-light',
@@ -431,10 +429,8 @@ router.register(r'utils/recycle-bin', api.RecycleBinViewSet, 'recycle-bin')
 router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
 router.register(r'import/csv/scheme-light', csv_import.SchemeLightViewSet, 'import_csv_scheme_light')
 router.register(r'import/csv', csv_import.CsvDataImportViewSet, 'import_csv')
-# DEPRECATED
-# router.register(r'import/unified_csv', csv_import.UnifiedCsvDataImportViewSet, 'unified_csv')
 
-router.register(r'import/csv-validate', csv_import.CsvDataImportValidateViewSet, 'import_csv-validate')
+# router.register(r'import/csv-validate', csv_import.CsvDataImportValidateViewSet, 'import_csv-validate')
 
 router.register(r'import/complex/scheme', complex_import.ComplexImportSchemeViewSet, 'import_complex_scheme')
 router.register(r'import/complex', complex_import.ComplexImportViewSet, 'import_complex')
@@ -516,6 +512,9 @@ router.register(r'widgets/history/pl', widgets.HistoryPlViewSet, 'widgets_histor
 
 router.register(r'widgets/stats', widgets.StatsViewSet, 'widgets_stats')
 router.register(r'widgets/collect-history', widgets.CollectHistoryViewSet, 'widgets_collect_history')
+router.register(r'widgets/collect-balance-history', widgets.CollectBalanceHistoryViewSet,
+                'widgets_collect_balance_history')
+router.register(r'widgets/collect-pl-history', widgets.CollectPlHistoryViewSet, 'widgets_collect_pl_history')
 router.register(r'widgets/collect-stats', widgets.CollectStatsViewSet, 'widgets_collect_stats')
 
 router.register(r'explorer/explorer', explorer.ExplorerViewSet, 'explorer')
@@ -524,8 +523,7 @@ router.register(r'explorer/upload', explorer.ExplorerUploadViewSet, 'explorer_up
 router.register(r'explorer/delete', explorer.ExplorerDeleteViewSet, 'explorer_delete')
 router.register(r'explorer/create_folder', explorer.ExplorerCreateFolderViewSet, 'explorer_create_folder')
 
-
-router.register(r'debug/logs', common.DebugLogViewSet, 'debug_log') # Deprecated
+router.register(r'debug/logs', common.DebugLogViewSet, 'debug_log')  # Deprecated
 router.register(r'errors/error', ErrorRecordViewSet, 'error')
 
 router.register(r'history/historical-record', history.HistoricalRecordViewSet, 'historical-record')
@@ -548,8 +546,8 @@ urlpatterns = [
     re_path(r'internal/brokers/fx-cbonds/callback', csrf_exempt(pricing.PricingBrokerFxCbondsHandler.as_view())),
     re_path(r'internal/brokers/fixer/callback', csrf_exempt(pricing.PricingBrokerFixerHandler.as_view())),
     re_path(r'internal/brokers/alphav/callback', csrf_exempt(pricing.PricingBrokerAlphavHandler.as_view())),
-    re_path(r'internal/data/transactions/callback',
-            csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),
+    # re_path(r'internal/data/transactions/callback',
+    #         csrf_exempt(integrations.TransactionFileResultUploadHandler.as_view())),
     re_path(r'internal/data/transactions/json', csrf_exempt(integrations.TransactionImportJson.as_view())),
     re_path(r'integrations/superset/get-security-token', csrf_exempt(integrations.SupersetGetSecurityToken.as_view())),
     re_path(r'instruments/instrument-external-api', csrf_exempt(instruments.InstrumentExternalAPIViewSet.as_view())),

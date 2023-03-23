@@ -517,7 +517,7 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
             if content_type.model not in ['portfolioregisterrecord']:
                 if ev_options['entity_filters']:
 
-                    if content_type.model not in ['objecthistory4entry', 'generatedevent', 'complextransaction']:
+                    if content_type.model not in ['objecthistory4entry', 'generatedevent']:
 
                         if 'deleted' not in ev_options['entity_filters']:
                             options['is_deleted'] = False
@@ -533,13 +533,17 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
                         if 'disabled' not in ev_options['entity_filters']:
                             options['is_enabled'] = True
 
+        if content_type.model in ['complextransaction']:
+            options['is_deleted'] = False
+
         # _l.info('options %s' % options)
 
         # item['items_count'] = Model.objects.filter(Q(**options)).count()
         count_cs = Model.objects.filter(Q(**options))
         item['items_count_raw'] = count_cs.count()
         count_cs = handle_filters(count_cs, filter_settings, master_user, content_type)
-        count_cs = handle_global_table_search(count_cs, global_table_search, Model, content_type)
+        if global_table_search:
+            count_cs = handle_global_table_search(count_cs, global_table_search, Model, content_type)
         item['items_count'] = count_cs.count()
 
     _l.debug("count_groups %s seconds " % str((time.time() - start_time)))

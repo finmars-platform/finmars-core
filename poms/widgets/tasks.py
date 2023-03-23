@@ -437,9 +437,7 @@ def collect_stats(self, task_id):
 
     '''
 
-    ==== Hope this thing will move into workflow/olap ASAP ====
-
-    Task that calculates fancy metrics on portfolio for each day
+    Task that calculates metrics on portfolio for each day
     It has some heavy calculations such as  'max_annualized_drawdown_month' or 'betta'
 
     Serve the same purpose as tasks above, demo for Widgets Dashboard
@@ -447,6 +445,10 @@ def collect_stats(self, task_id):
     '''
 
     task = CeleryTask.objects.get(id=task_id)
+
+    task.celery_tasks_id = self.request.id
+    task.status = CeleryTask.STATUS_PENDING
+    task.save()
 
     date = find_next_date_to_process(task)
 
@@ -506,8 +508,6 @@ def collect_stats(self, task_id):
 
         widget_stats_instance.save()
 
-        task.status = CeleryTask.STATUS_DONE
-
         task_options_object = task.options_object
 
         task_options_object['processed_dates'].append(date)
@@ -526,7 +526,6 @@ def collect_stats(self, task_id):
         })
 
         task.result_object = task_result_object
-
         task.save()
 
         start_new_collect_stats(task)

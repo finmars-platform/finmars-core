@@ -31,7 +31,7 @@ from poms.file_reports.models import FileReport
 from poms.instruments.models import InstrumentType, DailyPricingModel, PaymentSizeDetail, Instrument, PricingPolicy, \
     Periodicity, AccrualCalculationModel
 from poms.instruments.serializers import InstrumentTypeSerializer, PricingPolicySerializer
-from poms.integrations.models import PriceDownloadScheme, ComplexTransactionImportScheme, Task, AccountTypeMapping, \
+from poms.integrations.models import PriceDownloadScheme, ComplexTransactionImportScheme, AccountTypeMapping, \
     InstrumentTypeMapping, PricingPolicyMapping, PriceDownloadSchemeMapping, \
     PeriodicityMapping, DailyPricingModelMapping, PaymentSizeDetailMapping, AccrualCalculationModelMapping, \
     InstrumentDownloadScheme

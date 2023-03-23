@@ -7,6 +7,8 @@ from celery import shared_task
 from dateutil import parser
 from django.views.generic.dates import timezone_today
 
+
+from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_list_of_dates_between_two_dates
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import PricingPolicy
@@ -15,7 +17,7 @@ from poms.reports.common import Report
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import Transaction, TransactionClass
-from poms.users.models import MasterUser, EcosystemDefault, Member
+from poms.users.models import MasterUser, EcosystemDefault
 
 _l = logging.getLogger('poms.portfolios')
 
@@ -107,27 +109,37 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
     return cash_flow
 
 
-# TODO Refactor to task_id
 @shared_task(name='portfolios.calculate_portfolio_register_record', bind=True)
-def calculate_portfolio_register_record(self, portfolio_ids=[]):
+def calculate_portfolio_register_record(self, task_id):
     '''
-
-    ==== Hope this thing will move into workflow/olap ASAP ====
 
     Now as it a part of Finmars Backend project its specific task over portfolio
     The idea is to collect all Cash In/Cash Out transactions and create from them RegisterRecord instances
     at this points we also calculate number of shares for each Register Record
 
     :param self:
-    :param portfolio_ids:
+    :param task_id:
     :return:
     '''
     _l.info('calculate_portfolio_register_record.init')
-    _l.info('calculate_portfolio_register_record.portfolios %s' % portfolio_ids)
+    _l.info('calculate_portfolio_register_record.task_id %s' % task_id)
+
+    task = CeleryTask.objects.get(id=task_id)
+    task.celery_tasks_id = self.request.id
+    task.status = CeleryTask.STATUS_PENDING
+    task.save()
+
+    portfolio_user_codes = []
+
+    if task.options_object:
+        if 'portfolios' in task.options_object:
+            portfolio_user_codes = task.options_object['portfolios']
 
     master_user = MasterUser.objects.prefetch_related(
         'members'
     ).all().first()
+
+    result = {}
 
     try:
 
@@ -141,9 +153,10 @@ def calculate_portfolio_register_record(self, portfolio_ids=[]):
 
         _l.info("calculate_portfolio_register_record0 master_user %s" % master_user)
 
-        if portfolio_ids:
+        if len(portfolio_user_codes):
 
-            portfolio_registers = PortfolioRegister.objects.filter(master_user_id=master_user, portfolio_id__in=portfolio_ids)
+            portfolio_registers = PortfolioRegister.objects.filter(master_user_id=master_user,
+                                                                   portfolio__user_code__in=portfolio_user_codes)
 
         else:
             portfolio_registers = PortfolioRegister.objects.filter(master_user_id=master_user)
@@ -159,15 +172,21 @@ def calculate_portfolio_register_record(self, portfolio_ids=[]):
 
         # from oldest to newest
         transactions = Transaction.objects.filter(master_user=master_user, portfolio_id__in=portfolio_ids,
+                                                  is_deleted=False,
                                                   transaction_class_id__in=[TransactionClass.CASH_INFLOW,
                                                                             TransactionClass.CASH_OUTFLOW]).order_by(
             'accounting_date')
 
         transactions_dict = {}
 
-        PortfolioRegisterRecord.objects.filter(master_user=master_user).delete() # TODO refactor, why we delete everything?
+        PortfolioRegisterRecord.objects.filter(
+            master_user=master_user, portfolio_id__in=portfolio_ids,
+            transaction_class_id__in=[TransactionClass.CASH_INFLOW,
+                                      TransactionClass.CASH_OUTFLOW]).delete()
 
         count = 0
+        total = len(transactions)
+
 
         for item in transactions:
 
@@ -310,7 +329,19 @@ def calculate_portfolio_register_record(self, portfolio_ids=[]):
 
                 count = count + 1
 
+                task.update_progress(
+                    {
+                        "current": count,
+                        "percent": round(count / (total / 100)),
+                        "total": total,
+                        "description": "Record %s calculated" % record
+                    }
+                )
+
                 previous_record = record
+
+
+
 
         send_system_message(master_user=master_user,
                             performed_by='system',
@@ -320,7 +351,18 @@ def calculate_portfolio_register_record(self, portfolio_ids=[]):
                             description='Record created: %s ' % count
                             )
 
+        result['message'] = "Records calculated: %s" % total
+
+        task.status = CeleryTask.STATUS_DONE
+        task.result_object = result
+        task.save()
+
     except Exception as e:
+
+        task.status = CeleryTask.STATUS_ERROR
+        task.error_message = str(e)
+        task.result_object = result
+        task.save()
 
         send_system_message(master_user=master_user, action_status="required", type="error",
                             title='Task Failed. Name: calculate_portfolio_register_record', description=str(e))
@@ -329,13 +371,9 @@ def calculate_portfolio_register_record(self, portfolio_ids=[]):
         _l.error(traceback.format_exc())
 
 
-# TODO Refactor to task_id
 @shared_task(name='portfolios.calculate_portfolio_register_price_history', bind=True)
-def calculate_portfolio_register_price_history(self, member=None, date_from=None, date_to=None, portfolios=None):
-
+def calculate_portfolio_register_price_history(self, task_id):
     '''
-
-    ==== Hope this thing will move into workflow/olap ASAP ====
 
     It should be triggered after calculate_portfolio_register_record finished
 
@@ -346,46 +384,68 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
     Also it calculates NAV and Cash Flows and saves it in Price History
 
     :param self:
-    :param member:
-    :param date_from:
-    :param date_to:
-    :param portfolios:
+    :param task_id
     :return:
     '''
 
     from poms.celery_tasks.models import CeleryTask
 
-    _l.info('calculate_portfolio_register_price_history.date_from %s' % date_from)
-    _l.info('calculate_portfolio_register_price_history.date_to %s' % date_to)
-    _l.info('calculate_portfolio_register_price_history.portfolios %s' % portfolios)
+    # member=None, date_from=None, date_to=None, portfolios=None
 
-    master_user = MasterUser.objects.all().first()  # TODO if we return to signle base logic, fix it
+    # _l.info('calculate_portfolio_register_price_history.date_from %s' % date_from)
+    # _l.info('calculate_portfolio_register_price_history.date_to %s' % date_to)
+    # _l.info('calculate_portfolio_register_price_history.portfolios %s' % portfolios)
+    #
+    # master_user = MasterUser.objects.all().first()  # TODO if we return to signle base logic, fix it
+    #
+    # if not date_to:
+    #     date_to = timezone_today() - timedelta(days=1)
+    #
+    # if not member:
+    #     # member = Member.objects.get(master_user=master_user, is_owner=True)
+    #     member = Member.objects.get(username='finmars_bot')
+
+    # task = CeleryTask.objects.create(
+    #     master_user=master_user,
+    #     member=member,
+    #     verbose_name="Calculate Portfolio Register Prices",
+    #     type='calculate_portfolio_register_price_history',
+    #     status=CeleryTask.STATUS_PENDING
+    # )
+
+    task = CeleryTask.objects.get(id=task_id)
+    task.celery_tasks_id = self.request.id
+    task.status = CeleryTask.STATUS_PENDING
+    task.save()
+
+    date_from = None
+    date_to = None
+    portfolios_user_codes = []
+
+    if task.options_object:
+        if 'date_from' in task.options_object:
+            date_from = task.options_object['date_from']
+
+        if 'date_to' in task.options_object:
+            date_from = task.options_object['date_to']
+
+        if 'portfolios' in task.options_object:
+            portfolios_user_codes = task.options_object['portfolios']
 
     if not date_to:
         date_to = timezone_today() - timedelta(days=1)
 
-    if not member:
-        # member = Member.objects.get(master_user=master_user, is_owner=True)
-        member = Member.objects.get(username='finmars_bot')
-
-    task = CeleryTask.objects.create(
-        master_user=master_user,
-        member=member,
-        verbose_name="Calculate Portfolio Register Prices",
-        type='calculate_portfolio_register_price_history',
-        status=CeleryTask.STATUS_PENDING
-    )
 
     if not task.notes:
         task.notes = ''
 
     try:
 
-        _l.info('calculate_portfolio_register_nav: master_user=%s date_from=%s', master_user, date_from)
+        _l.info('calculate_portfolio_register_nav: date_from=%s' % date_from)
 
         from poms.instruments.models import PriceHistory
 
-        send_system_message(master_user=master_user,
+        send_system_message(master_user=task.master_user,
                             performed_by='system',
                             section='schedules',
                             type='info',
@@ -393,18 +453,37 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
                             description='Starting from date %s' % date_from,
                             )
 
-        _l.debug('calculate_portfolio_register_nav: master_user=%s', master_user.id)
-
-        if portfolios:
-            portfolio_registers = PortfolioRegister.objects.filter(master_user=master_user, portfolio__in=portfolios)
+        if len(portfolios_user_codes):
+            portfolio_registers = PortfolioRegister.objects.filter(master_user=task.master_user,
+                                                                   portfolio__user_code__in=portfolios_user_codes)
         else:
-            portfolio_registers = PortfolioRegister.objects.filter(master_user=master_user)
+            portfolio_registers = PortfolioRegister.objects.filter(master_user=task.master_user)
 
-        pricing_policies = PricingPolicy.objects.filter(master_user=master_user)
+        pricing_policies = PricingPolicy.objects.filter(master_user=task.master_user)
 
         count = 0
+        total = 0
+
+
+        portfolio_register_map = {}
+
+        result = {
+
+        }
 
         for portfolio_register in portfolio_registers:
+
+            portfolio_register_map[portfolio_register.user_code] = portfolio_register
+
+            result[portfolio_register.user_code] = {
+                'portfolio_register_id': portfolio_register.id,
+                'portfolio_register_object': {
+                  'id': portfolio_register.id,
+                  'user_code': portfolio_register.user_code,
+                },
+                'error_message': None,
+                'dates': []
+            }
 
             _date_from = None
 
@@ -420,28 +499,30 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
                     _date_from = first_transaction.accounting_date
 
                 except Exception as e:
-                    task.notes = task.notes + 'Portfolio % has no transactions' % portfolio_register.portfolio.name + '\n'
-                    task.save()
-                    # task.error_message = "No first transaction"
-                    # task.status = CeleryTask.STATUS_ERROR
-                    # task.save()
-
+                    result[portfolio_register.user_code]['error_message'] = 'Portfolio % has no transactions' % portfolio_register.portfolio.name
+                    result[portfolio_register.user_code]['dates'] = []
                     continue
 
+            result[portfolio_register.user_code]['dates'] = get_list_of_dates_between_two_dates(_date_from, date_to)
+
             if not portfolio_register.linked_instrument:
-                task.notes = task.notes + 'Portfolio % has no linked instrument' % portfolio_register.portfolio.name + '\n'
-                task.save()
+                result[portfolio_register.user_code]['error_message'] = 'Portfolio % has no linked instrument' % portfolio_register.portfolio.name
+                result[portfolio_register.user_code]['dates'] = []
                 continue
 
-            _l.info('calculate_portfolio_register_nav0.date_from %s' % _date_from)
-            _l.info('calculate_portfolio_register_nav0.date_to %s' % date_to)
-            dates = get_list_of_dates_between_two_dates(_date_from, date_to)
+        # Calculate total
+        for key, item in result.items():
+            total = total + len(item['dates'])
 
-            _l.info('calculate_portfolio_register_nav0.dates %s ' % len(dates))
+        # Init calculation
+        for key, item in result.items():
+
+
+            portfolio_register = portfolio_register_map[item['portfolio_register_object']['user_code']]
 
             true_pricing_policy = portfolio_register.valuation_pricing_policy
 
-            for date in dates:
+            for date in item['dates']:
 
                 try:
 
@@ -461,7 +542,7 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
                         if item['market_value']:
                             nav = nav + item['market_value']
 
-                    cash_flow = calculate_cash_flow(master_user, date, true_pricing_policy, portfolio_register)
+                    cash_flow = calculate_cash_flow(task.master_user, date, true_pricing_policy, portfolio_register)
 
                     # principal_price = nav / (registry_record.n_shares_previous_day + registry_record.n_shares_added)
                     principal_price = nav / registry_record.rolling_shares_of_the_day
@@ -484,12 +565,22 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
 
                     count = count + 1
 
+                    task.update_progress({
+                        'current': count,
+                        "percent": round(count / (total / 100)),
+                        'total': total,
+                        'description': 'Calculating %s at %s' % (portfolio_register, date)
+                    })
+
                 except Exception as e:
                     _l.error('calculate_portfolio_register_price_history.error %s ' % e)
                     _l.error("calculate_portfolio_register_price_history.exception %s" % traceback.format_exc())
                     _l.error('date %s' % date)
 
-        send_system_message(master_user=master_user,
+
+        # Finish calculation
+
+        send_system_message(master_user=task.master_user,
                             performed_by='system',
                             section='schedules',
                             type='success',
@@ -497,12 +588,14 @@ def calculate_portfolio_register_price_history(self, member=None, date_from=None
                             description='Calculated %s prices' % count,
                             )
 
+        task.result_object = result
+
         task.status = CeleryTask.STATUS_DONE
         task.save()
 
     except Exception as e:
 
-        send_system_message(master_user=master_user, action_status="required", type="error",
+        send_system_message(master_user=task.master_user, action_status="required", type="error",
                             title='Task Failed. Name: calculate_portfolio_register_price_history', description=str(e))
 
         task.error_message = 'Error %s. Traceback %s' % (e, traceback.format_exc())

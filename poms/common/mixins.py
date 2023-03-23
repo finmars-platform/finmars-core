@@ -245,7 +245,7 @@ class BulkDestroyModelMixin(DestroyModelMixin):
 
         from poms_app import celery_app
 
-        celery_app.send_task('celery_tasks.bulk_delete', kwargs={"task_id": celery_task.id})
+        celery_app.send_task('celery_tasks.bulk_delete', kwargs={"task_id": celery_task.id}, queue='backend-delete-queue')
 
         # queryset = self.filter_queryset(self.get_queryset())
         # # is_fake = bool(request.query_params.get('is_fake'))

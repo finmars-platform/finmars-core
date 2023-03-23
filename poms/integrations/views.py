@@ -6,7 +6,6 @@ import django_filters
 from celery.result import AsyncResult
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
 from django.db.models import Prefetch
 from django.http import HttpResponse
 from django_filters.rest_framework import FilterSet, DjangoFilterBackend
@@ -26,7 +25,6 @@ from poms.common.utils import datetime_now
 from poms.common.views import AbstractViewSet, AbstractModelViewSet, AbstractReadOnlyModelViewSet, \
     AbstractClassModelViewSet, AbstractAsyncViewSet, AbstractApiView
 from poms.counterparties.models import Counterparty, Responsible
-from poms.csv_import.tasks import data_csv_file_import_by_procedure
 from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentType, AccrualCalculationModel, Periodicity, Instrument, PaymentSizeDetail, \
     PricingPolicy, PricingCondition
@@ -36,21 +34,21 @@ from poms.integrations.filters import TaskFilter, InstrumentAttributeValueMappin
     ResponsibleMappingObjectPermissionFilter, PortfolioMappingObjectPermissionFilter, \
     Strategy1MappingObjectPermissionFilter, Strategy2MappingObjectPermissionFilter, \
     Strategy3MappingObjectPermissionFilter, AccountTypeMappingObjectPermissionFilter
-from poms.integrations.models import ImportConfig, Task, InstrumentDownloadScheme, ProviderClass, \
+from poms.integrations.models import ImportConfig, InstrumentDownloadScheme, ProviderClass, \
     FactorScheduleDownloadMethod, AccrualScheduleDownloadMethod, PriceDownloadScheme, CurrencyMapping, \
     InstrumentTypeMapping, InstrumentAttributeValueMapping, AccrualCalculationModelMapping, PeriodicityMapping, \
-    PricingAutomatedSchedule, InstrumentDownloadSchemeAttribute, AccountMapping, InstrumentMapping, CounterpartyMapping, \
+    InstrumentDownloadSchemeAttribute, AccountMapping, InstrumentMapping, CounterpartyMapping, \
     ResponsibleMapping, PortfolioMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
     DailyPricingModelMapping, \
     PaymentSizeDetailMapping, PriceDownloadSchemeMapping, ComplexTransactionImportScheme, PortfolioClassifierMapping, \
     AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping, PricingPolicyMapping, \
     InstrumentClassifierMapping, AccountTypeMapping, BloombergDataProviderCredential, PricingConditionMapping, \
     TransactionFileResult, DataProvider
-from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer, ImportInstrumentSerializer, \
-    ImportPricingSerializer, InstrumentDownloadSchemeSerializer, ProviderClassSerializer, \
+from poms.integrations.serializers import ImportConfigSerializer, ImportInstrumentSerializer, \
+    InstrumentDownloadSchemeSerializer, ProviderClassSerializer, \
     FactorScheduleDownloadMethodSerializer, AccrualScheduleDownloadMethodSerializer, PriceDownloadSchemeSerializer, \
     CurrencyMappingSerializer, InstrumentTypeMappingSerializer, InstrumentAttributeValueMappingSerializer, \
-    AccrualCalculationModelMappingSerializer, PeriodicityMappingSerializer, PricingAutomatedScheduleSerializer, \
+    AccrualCalculationModelMappingSerializer, PeriodicityMappingSerializer, \
     ComplexTransactionCsvFileImportSerializer, AccountMappingSerializer, \
     InstrumentMappingSerializer, CounterpartyMappingSerializer, ResponsibleMappingSerializer, \
     PortfolioMappingSerializer, \
@@ -63,8 +61,7 @@ from poms.integrations.serializers import ImportConfigSerializer, TaskSerializer
     PricingConditionMappingSerializer, TransactionFileResultSerializer, DataProviderSerializer, \
     InstrumentDownloadSchemeLightSerializer, ImportInstrumentCbondsSerializer, ImportUnifiedDataProviderSerializer, \
     ImportCurrencyCbondsSerializer
-from poms.integrations.tasks import complex_transaction_csv_file_import_by_procedure, \
-    complex_transaction_csv_file_import_parallel, \
+from poms.integrations.tasks import complex_transaction_csv_file_import_parallel, \
     complex_transaction_csv_file_import_validate_parallel
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
@@ -672,59 +669,6 @@ class PriceDownloadSchemeMappingViewSet(AbstractMappingViewSet):
     ]
 
 
-# ---------
-
-
-class TaskFilterSet(FilterSet):
-    id = NoOpFilter()
-    provider = django_filters.ModelMultipleChoiceFilter(queryset=ProviderClass.objects)
-    member = ModelExtMultipleChoiceFilter(model=Member, field_name='username')
-    action = CharFilter()
-    created = django_filters.DateFromToRangeFilter()
-    modified = django_filters.DateFromToRangeFilter()
-
-    class Meta:
-        model = Task
-        fields = []
-
-
-class TaskViewSet(AbstractReadOnlyModelViewSet):
-    queryset = Task.objects.select_related(
-        'provider'
-    ).prefetch_related(
-        'children'
-    )
-    serializer_class = TaskSerializer
-    filter_backends = AbstractReadOnlyModelViewSet.filter_backends + [
-        TaskFilter,
-    ]
-    filter_class = TaskFilterSet
-    ordering_fields = [
-        'action', 'created', 'modified'
-    ]
-
-
-class PricingAutomatedScheduleViewSet(AbstractModelViewSet):
-    queryset = PricingAutomatedSchedule.objects
-    serializer_class = PricingAutomatedScheduleSerializer
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        SuperUserOrReadOnly,
-    ]
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-    ]
-
-    def get_object(self):
-        try:
-            return self.request.user.master_user.pricing_automated_schedule
-        except ObjectDoesNotExist:
-            obj = PricingAutomatedSchedule.objects.create(master_user=self.request.user.master_user)
-            return obj
-
-    def destroy(self, request, *args, **kwargs):
-        raise MethodNotAllowed(method=request.method)
-
-
 class ImportInstrumentViewSet(AbstractViewSet):
     serializer_class = ImportInstrumentSerializer
     permission_classes = AbstractViewSet.permission_classes + [
@@ -775,20 +719,6 @@ class ImportUnifiedDataProviderViewSet(AbstractViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-
-
-class ImportPricingViewSet(AbstractViewSet):
-    serializer_class = ImportPricingSerializer
-    permission_classes = AbstractViewSet.permission_classes + [
-        PomsFunctionPermission
-    ]
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-
 
 class TestCertificateViewSet(AbstractViewSet):
     serializer_class = TestCertificateSerializer
@@ -1031,13 +961,15 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
 
         _l.info('celery_task %s created ' % celery_task.pk)
 
-        import_instance = transaction_import.apply(kwargs={"task_id": celery_task.pk})
+        task_result = transaction_import.apply(kwargs={"task_id": celery_task.pk})
 
         result = []
         error_message = None
 
         try:
-            result = import_instance.result.task.result_object
+            task = CeleryTask.objects.get(id=celery_task.id)
+
+            result = task.result_object
         except Exception as e:
             error_message = str(e)
 
@@ -1431,92 +1363,93 @@ class TransactionImportJson(APIView):
         complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
 
 
-class TransactionFileResultUploadHandler(APIView):
-    permission_classes = []
-
-    def get(self, request):
-
-        return Response({'status': 'ok'})
-
-    def post(self, request):
-
-        # _l.debug('request.data %s' % request.data)
-
-        _l.debug('request.data %s' % request.data)
-
-        procedure_id = request.data['id']
-
-        master_user = MasterUser.objects.get(token=request.data['user']['token'])
-
-        _l.debug('master_user %s' % master_user)
-
-        try:
-
-            procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
-
-            try:
-
-                item = TransactionFileResult.objects.get(master_user=master_user,
-                                                         provider__user_code=request.data['provider'],
-                                                         procedure_instance=procedure_instance)
-
-                if (request.data['files'] and len(request.data['files'])):
-
-                    with transaction.atomic():
-
-                        procedure_instance.symmetric_key = request.data['files'][0]['symmetric_key']
-                        procedure_instance.save()
-
-                        item.file_path = request.data['files'][0]["path"]
-
-                        item.save()
-
-                        _l.debug("Transaction File saved successfuly")
-
-                        procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
-                        procedure_instance.save()
-
-                    if procedure_instance.schedule_instance:
-                        procedure_instance.schedule_instance.run_next_procedure()
-
-                    if procedure_instance.procedure.scheme_type == 'transaction_import':
-                        complex_transaction_csv_file_import_by_procedure.apply_async(
-                            kwargs={'procedure_instance_id': procedure_instance.id,
-                                    'transaction_file_result_id': item.id,
-                                    })
-
-                    if procedure_instance.procedure.scheme_type == 'simple_import':
-                        data_csv_file_import_by_procedure.apply_async(
-                            kwargs={'procedure_instance_id': procedure_instance.id,
-                                    'transaction_file_result_id': item.id,
-                                    })
-
-                else:
-                    _l.debug("No files found")
-
-                    text = "Data File Procedure %s. Files not found" % (
-                        procedure_instance.procedure.user_code)
-
-                    send_system_message(master_user=procedure_instance.master_user,
-                                        performed_by='System',
-                                        description=text)
-
-                    procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
-                    procedure_instance.save()
-
-                return Response({'status': 'ok'})
-
-            except Exception as e:
-
-                _l.debug("Transaction File error happened %s " % e)
-
-                return Response({'status': 'error'})
-
-        except RequestDataFileProcedureInstance.DoesNotExist:
-
-            _l.debug("Does not exist? RequestDataFileProcedureInstance %s" % procedure_id)
-
-            return Response({'status': '404'})  # TODO handle 404 properly
+# Deprecated
+# class TransactionFileResultUploadHandler(APIView):
+#     permission_classes = []
+#
+#     def get(self, request):
+#
+#         return Response({'status': 'ok'})
+#
+#     def post(self, request):
+#
+#         # _l.debug('request.data %s' % request.data)
+#
+#         _l.debug('request.data %s' % request.data)
+#
+#         procedure_id = request.data['id']
+#
+#         master_user = MasterUser.objects.get(token=request.data['user']['token'])
+#
+#         _l.debug('master_user %s' % master_user)
+#
+#         try:
+#
+#             procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
+#
+#             try:
+#
+#                 item = TransactionFileResult.objects.get(master_user=master_user,
+#                                                          provider__user_code=request.data['provider'],
+#                                                          procedure_instance=procedure_instance)
+#
+#                 if (request.data['files'] and len(request.data['files'])):
+#
+#                     with transaction.atomic():
+#
+#                         procedure_instance.symmetric_key = request.data['files'][0]['symmetric_key']
+#                         procedure_instance.save()
+#
+#                         item.file_path = request.data['files'][0]["path"]
+#
+#                         item.save()
+#
+#                         _l.debug("Transaction File saved successfuly")
+#
+#                         procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
+#                         procedure_instance.save()
+#
+#                     if procedure_instance.schedule_instance:
+#                         procedure_instance.schedule_instance.run_next_procedure()
+#
+#                     if procedure_instance.procedure.scheme_type == 'transaction_import':
+#                         complex_transaction_csv_file_import_by_procedure.apply_async(
+#                             kwargs={'procedure_instance_id': procedure_instance.id,
+#                                     'transaction_file_result_id': item.id,
+#                                     })
+#
+#                     if procedure_instance.procedure.scheme_type == 'simple_import':
+#                         data_csv_file_import_by_procedure.apply_async(
+#                             kwargs={'procedure_instance_id': procedure_instance.id,
+#                                     'transaction_file_result_id': item.id,
+#                                     })
+#
+#                 else:
+#                     _l.debug("No files found")
+#
+#                     text = "Data File Procedure %s. Files not found" % (
+#                         procedure_instance.procedure.user_code)
+#
+#                     send_system_message(master_user=procedure_instance.master_user,
+#                                         performed_by='System',
+#                                         description=text)
+#
+#                     procedure_instance.status = RequestDataFileProcedureInstance.STATUS_DONE
+#                     procedure_instance.save()
+#
+#                 return Response({'status': 'ok'})
+#
+#             except Exception as e:
+#
+#                 _l.debug("Transaction File error happened %s " % e)
+#
+#                 return Response({'status': 'error'})
+#
+#         except RequestDataFileProcedureInstance.DoesNotExist:
+#
+#             _l.debug("Does not exist? RequestDataFileProcedureInstance %s" % procedure_id)
+#
+#             return Response({'status': '404'})  # TODO handle 404 properly
 
 
 class DataProviderViewSet(AbstractReadOnlyModelViewSet):

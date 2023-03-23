@@ -103,10 +103,12 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
     ]
 
     def create(self, request, *args, **kwargs):
-        calculate_portfolio_register_record.apply_async(
-            link=[
-                calculate_portfolio_register_price_history.s()
-            ])
+        # Probably pointless on portfolio create
+        # Because you cannot book transaction without portfolio
+        # calculate_portfolio_register_record.apply_async(
+        #     link=[
+        #         calculate_portfolio_register_price_history.s()
+        #     ])
 
         _l.info("Create Portfolio")
 
@@ -118,10 +120,12 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def update(self, request, *args, **kwargs):
-        calculate_portfolio_register_record.apply_async(
-            link=[
-                calculate_portfolio_register_price_history.s()
-            ])
+
+        # trigger recalc after book properly
+        # calculate_portfolio_register_record.apply_async(
+        #     link=[
+        #         calculate_portfolio_register_price_history.s()
+        #     ])
 
         _l.info("Update Portfolio")
 
@@ -290,8 +294,9 @@ class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
 
         master_user = request.user.master_user
 
-        calculate_portfolio_register_record.apply_async(
-            kwargs={'portfolio_ids': portfolio_ids})
+        # Trigger Recalc Properly
+        # calculate_portfolio_register_record.apply_async(
+        #     kwargs={'portfolio_ids': portfolio_ids})
 
         return Response({'status': 'ok'})
 
