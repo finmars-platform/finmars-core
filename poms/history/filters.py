@@ -9,7 +9,7 @@ _l = logging.getLogger('poms.history')
 
 class HistoryQueryFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        query = request.query_params.get('query', False)
+        query = request.query_params.get('query', None)
 
         if query:
 

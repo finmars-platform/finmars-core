@@ -11,6 +11,7 @@ from babel import Locale
 from babel.dates import get_timezone, get_timezone_gmt, get_timezone_name
 from django.conf import settings
 from django.db import connection
+from django.db.models import Q
 from django.http import HttpResponse
 from django.utils import translation, timezone
 from django.views.static import serve
@@ -18,6 +19,7 @@ from rest_framework import response, schemas
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
 
 from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer
 from poms.common.utils import get_list_of_business_days_between_two_dates, get_closest_bday_of_yesterday, \
@@ -27,8 +29,6 @@ from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory, PricingPolicy, Instrument
 from poms.schedules.models import ScheduleInstance
 from poms.workflows_handler import get_workflows_list
-
-from rest_framework.viewsets import ModelViewSet
 
 _languages = [Language(code, name) for code, name in settings.LANGUAGES]
 
@@ -744,11 +744,42 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
 
         date_from = request.query_params.get('date_from', None)
         date_to = request.query_params.get('date_to', None)
+        query = request.query_params.get('query', None)
 
         if date_to:
             date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1, microseconds=-1)
 
         qs = ComplexTransaction.objects.filter(is_deleted=True, modified__gte=date_from, modified__lte=date_to)
+
+        if query:
+
+            pieces = query.split(' ')
+
+            text_q = Q()
+            user_text_1_q = Q()
+            user_text_2_q = Q()
+            user_text_3_q = Q()
+            user_text_4_q = Q()
+            user_text_5_q = Q()
+
+            for piece in pieces:
+                text_q.add(Q(text__icontains=piece), Q.AND)
+                user_text_1_q.add(Q(user_text_1__icontains=piece), Q.AND)
+                user_text_2_q.add(Q(user_text_2__icontains=piece), Q.AND)
+                user_text_3_q.add(Q(user_text_3__icontains=piece), Q.AND)
+                user_text_4_q.add(Q(user_text_4__icontains=piece), Q.AND)
+                user_text_5_q.add(Q(user_text_5__icontains=piece), Q.AND)
+
+            options = Q()
+
+            options.add(text_q, Q.OR)
+            options.add(user_text_1_q, Q.OR)
+            options.add(user_text_2_q, Q.OR)
+            options.add(user_text_3_q, Q.OR)
+            options.add(user_text_4_q, Q.OR)
+            options.add(user_text_5_q, Q.OR)
+
+            qs = qs.filter(options)
 
         page = self.paginate_queryset(qs)
 
@@ -758,7 +789,6 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
 
         serializer = self.get_serializer(qs, many=True)
         return Response(serializer.data)
-
 
     @action(detail=False, methods=['post'], url_path='clear-bin')
     def clear_bin(self, request):
