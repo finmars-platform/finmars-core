@@ -103,8 +103,10 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
     delimiter = serializers.CharField(max_length=3, required=False, initial=',', default=',')
     column_matcher = serializers.CharField(max_length=255, required=False, initial='index', default='index')
 
-    item_post_process_script = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, allow_null=True, allow_blank=True)
+    item_post_process_script = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True,
+                                               allow_blank=True)
     data_preprocess_expression = ExpressionField(
+        required=False,
         max_length=EXPRESSION_FIELD_LENGTH, allow_null=True, allow_blank=True)
 
     class Meta:
@@ -283,7 +285,6 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
 
             if entity_field.get('attribute_user_code') is not None and entity_field.get('expression'):
 
-
                 try:
 
                     instance = EntityField.objects.get(scheme=scheme,
@@ -299,7 +300,6 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
 
                     print("Unknown attribute %s" % entity_field.get(
                         'attribute_user_code'))
-
 
     def save_calculated_inputs(self, scheme, inputs):
         pk_set = set()
