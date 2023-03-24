@@ -3653,14 +3653,14 @@ class PLReportBuilderSql:
         ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies2(self, ids):
-        self.instance.item_strategies1 = Strategy2.objects.prefetch_related(
+        self.instance.item_strategies2 = Strategy2.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
         ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies3(self, ids):
-        self.instance.item_strategies1 = Strategy3.objects.prefetch_related(
+        self.instance.item_strategies3 = Strategy3.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
