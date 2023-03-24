@@ -95,6 +95,7 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
                 portfolio=instance,
                 user_code=instance.user_code,
             )
+
         except Exception as e:
 
             ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
@@ -150,8 +151,15 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
                 portfolio=instance,
                 user_code=instance.user_code,
                 linked_instrument=new_instrument,
-                default_price=1
+                default_price=1,
+                name=instance.name,
+                short_name=instance.short_name,
+                public_name=instance.public_name
             )
+
+
+
+
 
     def create(self, validated_data):
 
