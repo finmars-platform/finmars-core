@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta
 
 from django.db.models import Q
 from rest_framework.filters import BaseFilterBackend
@@ -33,6 +34,22 @@ class HistoryQueryFilter(BaseFilterBackend):
             options.add(context_url_q, Q.OR)
 
             return queryset.filter(options)
+
+        return queryset
+
+
+class HistoryDateRangeFilter(BaseFilterBackend):
+    def filter_queryset(self, request, queryset, view):
+        date_from = request.query_params.get('date_from', None)
+        date_to = request.query_params.get('date_to', None)
+
+        if date_from:
+            queryset = queryset.filter(created__gte=date_from)
+
+        if date_to:
+            date_to = datetime.strptime(date_to, '%Y-%m-%d') + timedelta(days=1, microseconds=-1)
+
+            queryset = queryset.filter(created__lte=date_to)
 
         return queryset
 

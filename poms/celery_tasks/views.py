@@ -9,7 +9,7 @@ from rest_framework.viewsets import ModelViewSet
 from poms.common.filters import CharFilter
 from poms.common.views import AbstractApiView
 from poms.users.filters import OwnerByMasterUserFilter
-from .filters import CeleryTaskQueryFilter
+from .filters import CeleryTaskQueryFilter, CeleryTaskDateRangeFilter
 from .models import CeleryTask
 from .serializers import CeleryTaskSerializer
 
@@ -35,6 +35,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
     serializer_class = CeleryTaskSerializer
     filter_class = CeleryTaskFilterSet
     filter_backends = [
+        CeleryTaskDateRangeFilter,
         CeleryTaskQueryFilter,
         DjangoFilterBackend,
         OwnerByMasterUserFilter,
