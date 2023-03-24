@@ -1617,8 +1617,10 @@ class BalanceReportBuilderSql:
                 result_item["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
                 result_item["instrument_principal_price"] = item["instrument_principal_price"]
                 result_item["instrument_accrued_price"] = item["instrument_accrued_price"]
+                result_item["instrument_factor"] = item["instrument_factor"]
 
                 result_item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
+                result_item['nominal_position_size'] = round(item['nominal_position_size'], settings.ROUND_NDIGITS)
 
                 result_item["ytm"] = item["ytm"]
                 result_item["ytm_at_cost"] = item["ytm_at_cost"]
@@ -1759,6 +1761,7 @@ class BalanceReportBuilderSql:
                                 "instrument_accrued_currency_fx_rate": None,
                                 "instrument_principal_price": None,
                                 "instrument_accrued_price": None,
+                                "instrument_factor": None,
 
                                 "market_value": None,
                                 "market_value_loc": None,
@@ -1775,6 +1778,7 @@ class BalanceReportBuilderSql:
                                 new_exposure_item["exposure"] = -item["position_size"] * short
 
                             new_exposure_item["position_size"] = None
+                            new_exposure_item["nominal_position_size"] = None
                             new_exposure_item["ytm"] = None
                             new_exposure_item["ytm_at_cost"] = None
                             new_exposure_item["modified_duration"] = None
