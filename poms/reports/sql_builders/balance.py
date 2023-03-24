@@ -1101,7 +1101,7 @@ class BalanceReportBuilderSql:
                         {consolidated_position_columns}
                         
                         position_size,
-                        case when factor = 0
+                        case when coalesce(factor,0) = 0
                                 then 0
                                 else
                                     position_size / factor
@@ -1619,6 +1619,7 @@ class BalanceReportBuilderSql:
                 result_item["instrument_accrued_price"] = item["instrument_accrued_price"]
                 result_item["instrument_factor"] = item["instrument_factor"]
 
+                _l.info('item %s' % item)
                 result_item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
                 result_item['nominal_position_size'] = round(item['nominal_position_size'], settings.ROUND_NDIGITS)
 

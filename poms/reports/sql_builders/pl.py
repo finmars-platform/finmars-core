@@ -1083,7 +1083,7 @@ class PLReportBuilderSql:
                         
                         position_size,
                         -- (position_size / cur_factor) as nominal_position_size,
-                        case when cur_factor = 0
+                        case when coalesce(cur_factor,0) = 0
                                 then 0
                                 else
                                     position_size / cur_factor
@@ -1871,6 +1871,7 @@ class PLReportBuilderSql:
                     {consolidation_columns}
                     
                     (0) as position_size,
+                    (0) as nominal_position_size,
                     
                     sum(principal) as principal_opened,
                     sum(carry) as carry_opened,
@@ -3170,6 +3171,7 @@ class PLReportBuilderSql:
             for item in result_tmp_raw:
 
                 item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
+                item['nominal_position_size'] = round(item['nominal_position_size'], settings.ROUND_NDIGITS)
 
                 if item['item_type'] == ITEM_TYPE_MISMATCH:
                     if item['position_size'] and item['total_opened']:
