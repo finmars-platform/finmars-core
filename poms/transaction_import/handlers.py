@@ -3,6 +3,7 @@ import csv
 import json
 import os
 import re
+import time
 import traceback
 from datetime import date
 from tempfile import NamedTemporaryFile
@@ -509,6 +510,8 @@ class TransactionImportProcess(object):
 
         _l.info('TransactionImportProcess.Task %s. fill_with_raw_items INIT %s' % (self.task, self.process_type))
 
+        st = time.perf_counter()
+
         try:
 
             if self.process_type == ProcessType.JSON:
@@ -641,6 +644,9 @@ class TransactionImportProcess(object):
                 'TransactionImportProcess.Task %s. fill_with_raw_items %s DONE items %s' % (
                     self.task, self.process_type, len(self.raw_items)))
 
+            _l.info('TransactionTypeProcess: fill_with_raw_items done: %s',
+                     "{:3.3f}".format(time.perf_counter() - st))
+
         except Exception as e:
 
             _l.error('TransactionImportProcess.Task %s. fill_with_raw_items %s Exception %s' % (
@@ -651,6 +657,7 @@ class TransactionImportProcess(object):
     def fill_with_raw_items(self):
 
         _l.info('TransactionImportProcess.Task %s. fill_with_raw_items INIT %s' % (self.task, self.process_type))
+        st = time.perf_counter()
 
         try:
 
@@ -669,6 +676,8 @@ class TransactionImportProcess(object):
             _l.info(
                 'TransactionImportProcess.Task %s. fill_with_raw_items %s DONE items %s' % (
                     self.task, self.process_type, len(self.raw_items)))
+            _l.info('TransactionTypeProcess: fill_with_raw_items done: %s',
+                    "{:3.3f}".format(time.perf_counter() - st))
 
         except Exception as e:
 
@@ -680,6 +689,8 @@ class TransactionImportProcess(object):
     def apply_conversion_to_raw_items(self):
 
         # EXECUTE CONVERSIONS ON SCHEME INPUTS
+
+        st = time.perf_counter()
 
         row_number = 1
         for raw_item in self.raw_items:
@@ -709,6 +720,10 @@ class TransactionImportProcess(object):
             self.conversion_items.append(conversion_item)
 
             row_number = row_number + 1
+
+
+        _l.info('TransactionTypeProcess: apply_conversion_to_raw_items done: %s',
+                "{:3.3f}".format(time.perf_counter() - st))
 
     # We have formulas that lookup for rows
     # e.g. transaction_import.find_row
@@ -788,8 +803,13 @@ class TransactionImportProcess(object):
     def preprocess(self):
 
         _l.info('TransactionImportProcess.Task %s. preprocess INIT' % self.task)
+        st = time.perf_counter()
+        # self.recursive_preprocess(deep=2)
 
-        self.recursive_preprocess(deep=2)
+        if self.scheme.expression_iterations_count < 1:
+            self.scheme.expression_iterations_count = 1
+
+        self.recursive_preprocess(deep=self.scheme.expression_iterations_count)
 
         for preprocessed_item in self.preprocessed_items:
             item = TransactionImportProcessItem()
@@ -803,11 +823,14 @@ class TransactionImportProcess(object):
 
         _l.info(
             'TransactionImportProcess.Task %s. preprocess DONE items %s' % (self.task, len(self.preprocessed_items)))
+        _l.info('TransactionTypeProcess: preprocess done: %s',
+               "{:3.3f}".format(time.perf_counter() - st))
+
 
     def process_items(self):
 
         _l.info('TransactionImportProcess.Task %s. process_items INIT' % self.task)
-
+        st = time.perf_counter()
         index = 0
 
         for item in self.items:
@@ -920,7 +943,8 @@ class TransactionImportProcess(object):
         self.result.items = self.items
 
         _l.info('TransactionImportProcess.Task %s. process_items DONE' % self.task)
-
+        _l.info('TransactionTypeProcess: process_items done: %s',
+                "{:3.3f}".format(time.perf_counter() - st))
     def get_verbose_result(self):
 
         booked_count = 0
