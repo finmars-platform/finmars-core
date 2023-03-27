@@ -178,6 +178,7 @@ class ReportSerializer(ReportSerializerWithLogs):
     allocation_detailing = serializers.BooleanField(default=True, initial=True)
     pl_include_zero = serializers.BooleanField(default=False, initial=False)
     custom_fields_to_calculate = serializers.CharField(allow_null=True, allow_blank=True, required=False)
+    expression_iterations_count = serializers.IntegerField(default=1, initial=1, min_value=1, required=False)
 
     custom_fields = BalanceReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
 
@@ -359,16 +360,12 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                     names = formula.value_prepare(names)
 
-                    # _l.debug('names %s' % names['market_value'])
-
                     cfv = []
 
                     custom_fields_names = {}
 
-                    # data["custom_fields_to_calculate"] = 'custom_fields.Currency_asset'
 
-                    # for i in range(5):
-                    for i in range(2):
+                    for i in range(data['expression_iterations_count']):
 
                         for cf in custom_fields:
 
@@ -803,6 +800,7 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
                                               ('base_transaction', gettext_lazy('Base Transaction')),
                                               ('entry', gettext_lazy('Entry')),
                                           ))
+    expression_iterations_count = serializers.IntegerField(default=1, initial=1, min_value=1, required=False)
 
     begin_date = serializers.DateField(required=False, allow_null=True, initial=date_now() - timedelta(days=365),
                                        default=date_now() - timedelta(days=365))
@@ -953,7 +951,7 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
                     custom_fields_names = {}
 
                     # for i in range(5):
-                    for i in range(2):
+                    for i in range(data['expression_iterations_count']):
 
                         for cf in custom_fields:
 
