@@ -84,7 +84,7 @@ class AccountTypeEvFilterSet(FilterSet):
         model = AccountType
         fields = []
 
-
+# DEPRECATED
 class AccountTypeEvViewSet(AbstractWithObjectPermissionViewSet):
     queryset = AccountType.objects.select_related(
         'master_user'
@@ -108,7 +108,7 @@ class AccountTypeEvViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name', 'show_transaction_details'
     ]
 
-
+# DEPRECATED
 class AccountTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = AccountType.objects.select_related(
         'master_user'
@@ -229,7 +229,7 @@ class AccountEvFilterSet(FilterSet):
         model = Account
         fields = []
 
-
+# DEPRECATED
 class AccountEvViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Account.objects.select_related(
         'master_user',
@@ -288,7 +288,7 @@ class AccountLightViewSet(AbstractWithObjectPermissionViewSet):
         'user_code', 'name', 'short_name', 'public_name'
     ]
 
-
+# DEPRECATED
 class AccountEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
     queryset = Account.objects.select_related(
         'master_user',

@@ -60,16 +60,16 @@ router.register(r'users/timezone', api.TimezoneViewSet, 'timezone')
 router.register(r'users/ecosystem-default', users.EcosystemDefaultViewSet, 'ecosystemdefault')
 router.register(r'users/usercode-prefix', users.UsercodePrefixViewSet, 'usercodeprefix')
 
-router.register(r'accounts/account-type-ev-group', accounts.AccountTypeEvGroupViewSet)
+router.register(r'accounts/account-type-ev-group', accounts.AccountTypeEvGroupViewSet) # DEPRECATED
 router.register(r'accounts/account-type', accounts.AccountTypeViewSet)
-router.register(r'accounts/account-type-ev', accounts.AccountTypeEvViewSet)
+router.register(r'accounts/account-type-ev', accounts.AccountTypeEvViewSet) # DEPRECATED
 router.register(r'accounts/account-type-attribute-type', accounts.AccountTypeAttributeTypeViewSet,
                 'accounttypeattributetype')
 
 router.register(r'accounts/account-attribute-type', accounts.AccountAttributeTypeViewSet, 'accountattributetype')
 router.register(r'accounts/account-classifier', accounts.AccountClassifierViewSet, 'accountclassifier')
-router.register(r'accounts/account-ev-group', accounts.AccountEvGroupViewSet, 'accountevgroup')
-router.register(r'accounts/account-ev', accounts.AccountEvViewSet, 'accountev')
+router.register(r'accounts/account-ev-group', accounts.AccountEvGroupViewSet, 'accountevgroup') # DEPRECATED
+router.register(r'accounts/account-ev', accounts.AccountEvViewSet, 'accountev') # DEPRECATED
 router.register(r'accounts/account', accounts.AccountViewSet, 'account')
 router.register(r'accounts/account-light', accounts.AccountLightViewSet, 'accountlight')  # DEPRECATED
 
@@ -78,13 +78,13 @@ router.register(r'counterparties/counterparty-attribute-type', counterparties.Co
 router.register(r'counterparties/counterparty-classifier', counterparties.CounterpartyClassifierViewSet,
                 'counterpartyclassifier')
 router.register(r'counterparties/counterparty-group-ev-group', counterparties.CounterpartyGroupEvGroupViewSet,
-                'counterpartygroupevgroup')
+                'counterpartygroupevgroup') # DEPRECATED
 router.register(r'counterparties/counterparty-group', counterparties.CounterpartyGroupViewSet)
 
 router.register(r'counterparties/counterparty-ev-group', counterparties.CounterpartyEvGroupViewSet,
-                'counterpartyevgroup')
+                'counterpartyevgroup') # DEPRECATED
 router.register(r'counterparties/counterparty', counterparties.CounterpartyViewSet, 'counterparty')
-router.register(r'counterparties/counterparty-ev', counterparties.CounterpartyEvViewSet, 'counterpartyev')
+router.register(r'counterparties/counterparty-ev', counterparties.CounterpartyEvViewSet, 'counterpartyev') # DEPRECATED
 router.register(r'counterparties/counterparty-light', counterparties.CounterpartyLightViewSet,
                 'counterpartylight')  # DEPRECATED
 
@@ -93,22 +93,22 @@ router.register(r'counterparties/responsible-attribute-type', counterparties.Res
 router.register(r'counterparties/responsible-classifier', counterparties.ResponsibleClassifierViewSet,
                 'responsibleclassifier')
 router.register(r'counterparties/responsible-group-ev-group', counterparties.ResponsibleGroupEvGroupViewSet,
-                'responsiblegroupev')
+                'responsiblegroupev') # DEPRECATED
 router.register(r'counterparties/responsible-group', counterparties.ResponsibleGroupViewSet, 'responsiblegroup')
 
-router.register(r'counterparties/responsible-ev-group', counterparties.ResponsibleEvGroupViewSet, 'responsibleevgroup')
+router.register(r'counterparties/responsible-ev-group', counterparties.ResponsibleEvGroupViewSet, 'responsibleevgroup') # DEPRECATED
 router.register(r'counterparties/responsible', counterparties.ResponsibleViewSet, 'responsible')
-router.register(r'counterparties/responsible-ev', counterparties.ResponsibleEvViewSet, 'responsibleev')
+router.register(r'counterparties/responsible-ev', counterparties.ResponsibleEvViewSet, 'responsibleev') # DEPRECATED
 router.register(r'counterparties/responsible-light', counterparties.ResponsibleLightViewSet,
                 'responsiblelight')  # DEPRECATED
 
 router.register(r'currencies/currency-ev-group', currencies.CurrencyEvGroupViewSet, 'currencyevgroup')
 router.register(r'currencies/currency', currencies.CurrencyViewSet, 'currency')
-router.register(r'currencies/currency-ev', currencies.CurrencyEvViewSet, 'currencyev')
+router.register(r'currencies/currency-ev', currencies.CurrencyEvViewSet, 'currencyev') # DEPRECATED
 router.register(r'currencies/currency-light', currencies.CurrencyLightViewSet, 'currencylight')  # DEPRECATED
-router.register(r'currencies/currency-history-ev-group', currencies.CurrencyHistoryEvGroupViewSet)
+router.register(r'currencies/currency-history-ev-group', currencies.CurrencyHistoryEvGroupViewSet) # DEPRECATED
 router.register(r'currencies/currency-attribute-type', currencies.CurrencyAttributeTypeViewSet, 'currencyattributetype')
-router.register(r'currencies/currency-history-ev', currencies.CurrencyHistoryViewSet)
+router.register(r'currencies/currency-history-ev', currencies.CurrencyHistoryViewSet) # DEPRECATED
 router.register(r'currencies/currency-history', currencies.CurrencyHistoryViewSet)
 
 router.register(r'instruments/instrument-class', instruments.InstrumentClassViewSet)
@@ -126,9 +126,9 @@ router.register(r'instruments/pricing-policy-ev-group', instruments.PricingPolic
 router.register(r'instruments/pricing-policy', instruments.PricingPolicyViewSet)
 router.register(r'instruments/pricing-policy-light', instruments.PricingPolicyLightViewSet)  # Deprecated
 router.register(r'instruments/event-schedule-config', instruments.EventScheduleConfigViewSet)
-router.register(r'instruments/instrument-type-ev-group', instruments.InstrumentTypeEvGroupViewSet)
+router.register(r'instruments/instrument-type-ev-group', instruments.InstrumentTypeEvGroupViewSet) # DEPRECATED
 router.register(r'instruments/instrument-type', instruments.InstrumentTypeViewSet)
-router.register(r'instruments/instrument-type-ev', instruments.InstrumentTypeEvViewSet)
+router.register(r'instruments/instrument-type-ev', instruments.InstrumentTypeEvViewSet) # DEPRECATED
 router.register(r'instruments/instrument-type-light', instruments.InstrumentTypeLightViewSet)  # Deprecated
 router.register(r'instruments/instrument-type-attribute-type', instruments.InstrumentTypeAttributeTypeViewSet)
 
@@ -136,75 +136,75 @@ router.register(r'instruments/instrument-attribute-type', instruments.Instrument
                 'instrumentattributetype')
 router.register(r'instruments/instrument-classifier', instruments.InstrumentClassifierViewSet, 'instrumentclassifier')
 
-router.register(r'instruments/instrument-ev-group', instruments.InstrumentEvGroupViewSet)
+router.register(r'instruments/instrument-ev-group', instruments.InstrumentEvGroupViewSet) # DEPRECATED
 router.register(r'instruments/instrument', instruments.InstrumentViewSet)
-router.register(r'instruments/instrument-ev', instruments.InstrumentEvViewSet)
+router.register(r'instruments/instrument-ev', instruments.InstrumentEvViewSet) # DEPRECATED
 router.register(r'instruments/instrument-light', instruments.InstrumentLightViewSet)  # DEPRECATED
 router.register(r'instruments/instrument-for-select', instruments.InstrumentForSelectViewSet)
 
 router.register(r'instruments/price-history-ev-group', instruments.PriceHistoryEvGroupViewSet, 'instrumentevgroup')
-router.register(r'instruments/price-history-ev', instruments.PriceHistoryViewSet)
+router.register(r'instruments/price-history-ev', instruments.PriceHistoryViewSet) # DEPRECATED
 router.register(r'instruments/price-history', instruments.PriceHistoryViewSet)
 
-router.register(r'instruments/generated-event-ev-group', instruments.GeneratedEventEvGroupViewSet)
-router.register(r'instruments/generated-event-ev', instruments.GeneratedEventEvViewSet)
+router.register(r'instruments/generated-event-ev-group', instruments.GeneratedEventEvGroupViewSet) # DEPRECATED
+router.register(r'instruments/generated-event-ev', instruments.GeneratedEventEvViewSet) # DEPRECATED
 router.register(r'instruments/generated-event', instruments.GeneratedEventViewSet)
 
 router.register(r'portfolios/portfolio-attribute-type', portfolios.PortfolioAttributeTypeViewSet,
                 'portfolioattributetype')
 router.register(r'portfolios/portfolio-classifier', portfolios.PortfolioClassifierViewSet, 'portfolioclassifier')
-router.register(r'portfolios/portfolio-ev-group', portfolios.PortfolioEvGroupViewSet, 'portfolioevgroup')
-router.register(r'portfolios/portfolio-ev', portfolios.PortfolioEvViewSet, 'portfolio-ev')
+router.register(r'portfolios/portfolio-ev-group', portfolios.PortfolioEvGroupViewSet, 'portfolioevgroup') # DEPRECATED
+router.register(r'portfolios/portfolio-ev', portfolios.PortfolioEvViewSet, 'portfolio-ev') # DEPRECATED
 router.register(r'portfolios/portfolio', portfolios.PortfolioViewSet, 'portfolio')
 router.register(r'portfolios/portfolio-light', portfolios.PortfolioLightViewSet, 'portfoliolight')  # Deprecated
 router.register(r'portfolios/portfolio-register-attribute-type', portfolios.PortfolioRegisterAttributeTypeViewSet,
                 'portfolioregisterattributetype')
 router.register(r'portfolios/portfolio-register', portfolios.PortfolioRegisterViewSet, 'portfolioregister')
-router.register(r'portfolios/portfolio-register-ev', portfolios.PortfolioRegisterEvViewSet, 'portfolioregisterev')
+router.register(r'portfolios/portfolio-register-ev', portfolios.PortfolioRegisterEvViewSet, 'portfolioregisterev') # DEPRECATED
 router.register(r'portfolios/portfolio-register-ev-group', portfolios.PortfolioRegisterEvGroupViewSet,
-                'portfolioregisterevgroup')
+                'portfolioregisterevgroup') # DEPRECATED
 
 router.register(r'portfolios/portfolio-register-record', portfolios.PortfolioRegisterRecordViewSet,
                 'portfolioregisterrecord')
 router.register(r'portfolios/portfolio-register-record-ev', portfolios.PortfolioRegisterRecordEvViewSet,
-                'portfolioregisterrecordev')
+                'portfolioregisterrecordev') # DEPRECATED
 router.register(r'portfolios/portfolio-register-record-ev-group', portfolios.PortfolioRegisterRecordEvGroupViewSet,
-                'portfolioregisterrecordgroup')
+                'portfolioregisterrecordgroup') # DEPRECATED
 router.register(r'portfolios/portfolio-bundle', portfolios.PortfolioBundleViewSet, 'portfoliobundle')
-router.register(r'portfolios/portfolio-bundle-ev', portfolios.PortfolioBundleEvViewSet, 'portfoliobundleev')
+router.register(r'portfolios/portfolio-bundle-ev', portfolios.PortfolioBundleEvViewSet, 'portfoliobundleev') # DEPRECATED
 router.register(r'portfolios/portfolio-bundle-ev-group', portfolios.PortfolioBundleEvGroupViewSet,
-                'portfoliobundlevgroup')
+                'portfoliobundlevgroup') # DEPRECATED
 
-router.register(r'strategies/1/group-ev-group', strategies.Strategy1GroupEvGroupViewSet, 'strategy1groupevgroup')
+router.register(r'strategies/1/group-ev-group', strategies.Strategy1GroupEvGroupViewSet, 'strategy1groupevgroup') # DEPRECATED
 router.register(r'strategies/1/group', strategies.Strategy1GroupViewSet)
 router.register(r'strategies/1/subgroup-ev-group', strategies.Strategy1SubgroupEvGroupViewSet,
-                'strategy1subggroupevgroup')
+                'strategy1subggroupevgroup') # DEPRECATED
 router.register(r'strategies/1/subgroup', strategies.Strategy1SubgroupViewSet)
-router.register(r'strategies/1/strategy-ev-group', strategies.Strategy1EvGroupViewSet, 'strategy1evgroup')
+router.register(r'strategies/1/strategy-ev-group', strategies.Strategy1EvGroupViewSet, 'strategy1evgroup') # DEPRECATED
 router.register(r'strategies/1/strategy', strategies.Strategy1ViewSet, 'strategy1')
-router.register(r'strategies/1/strategy-ev', strategies.Strategy1EvViewSet, 'strategy1ev')
+router.register(r'strategies/1/strategy-ev', strategies.Strategy1EvViewSet, 'strategy1ev') # DEPRECATED
 router.register(r'strategies/1/strategy-light', strategies.Strategy1LightViewSet, 'strategy1light')  # Deprecated
 router.register(r'strategies/1/strategy-attribute-type', strategies.Strategy1AttributeTypeViewSet)
 
-router.register(r'strategies/2/group-ev-group', strategies.Strategy2GroupEvGroupViewSet, 'strategy2groupevgroup')
+router.register(r'strategies/2/group-ev-group', strategies.Strategy2GroupEvGroupViewSet, 'strategy2groupevgroup') # DEPRECATED
 router.register(r'strategies/2/group', strategies.Strategy2GroupViewSet)
 router.register(r'strategies/2/subgroup-ev-group', strategies.Strategy2SubgroupEvGroupViewSet,
-                'strategy2subggroupevgroup')
+                'strategy2subggroupevgroup') # DEPRECATED
 router.register(r'strategies/2/subgroup', strategies.Strategy2SubgroupViewSet)
-router.register(r'strategies/2/strategy-ev-group', strategies.Strategy2EvGroupViewSet, 'strategy2evgroup')
+router.register(r'strategies/2/strategy-ev-group', strategies.Strategy2EvGroupViewSet, 'strategy2evgroup') # DEPRECATED
 router.register(r'strategies/2/strategy', strategies.Strategy2ViewSet, 'strategy2')
-router.register(r'strategies/2/strategy-ev', strategies.Strategy2EvViewSet, 'strategy2ev')
+router.register(r'strategies/2/strategy-ev', strategies.Strategy2EvViewSet, 'strategy2ev') # DEPRECATED
 router.register(r'strategies/2/strategy-light', strategies.Strategy2LightViewSet, 'strategy2light')  # Deprecated
 router.register(r'strategies/2/strategy-attribute-type', strategies.Strategy2AttributeTypeViewSet)
 
-router.register(r'strategies/3/group-ev-group', strategies.Strategy3GroupEvGroupViewSet, 'strategy3groupevgroup')
+router.register(r'strategies/3/group-ev-group', strategies.Strategy3GroupEvGroupViewSet, 'strategy3groupevgroup') # DEPRECATED
 router.register(r'strategies/3/group', strategies.Strategy3GroupViewSet)
 router.register(r'strategies/3/subgroup-ev-group', strategies.Strategy3SubgroupEvGroupViewSet,
-                'strategy3subggroupevgroup')
+                'strategy3subggroupevgroup') # DEPRECATED
 router.register(r'strategies/3/subgroup', strategies.Strategy3SubgroupViewSet)
-router.register(r'strategies/3/strategy-ev-group', strategies.Strategy3EvGroupViewSet, 'strategy3evgroup')
+router.register(r'strategies/3/strategy-ev-group', strategies.Strategy3EvGroupViewSet, 'strategy3evgroup') # DEPRECATED
 router.register(r'strategies/3/strategy', strategies.Strategy3ViewSet, 'strategy3')
-router.register(r'strategies/3/strategy-ev', strategies.Strategy3EvViewSet, 'strategy3ev')
+router.register(r'strategies/3/strategy-ev', strategies.Strategy3EvViewSet, 'strategy3ev') # DEPRECATED
 router.register(r'strategies/3/strategy-light', strategies.Strategy3LightViewSet, 'strategy3light')  # Deprecated
 router.register(r'strategies/3/strategy-attribute-type', strategies.Strategy3AttributeTypeViewSet)
 
@@ -216,14 +216,14 @@ router.register(r'transactions/event-class', transactions.EventClassViewSet)
 router.register(r'transactions/notification-class', transactions.NotificationClassViewSet)
 router.register(r'transactions/transaction-class', transactions.TransactionClassViewSet)
 router.register(r'transactions/transaction-type-group-ev-group', transactions.TransactionTypeGroupEvGroupViewSet,
-                'transactiontypegroupevgroup')
+                'transactiontypegroupevgroup') # DEPRECATED
 router.register(r'transactions/transaction-type-group', transactions.TransactionTypeGroupViewSet)
 router.register(r'transactions/transaction-type-ev-group', transactions.TransactionTypeEvGroupViewSet,
-                'transactiontypeevgroup')
+                'transactiontypeevgroup') # DEPRECATED
 router.register(r'transactions/transaction-type-light-ev-group', transactions.TransactionTypeLightEvGroupViewSet,
                 'transactiontypelightevgroup')  # Deprecated why even needed?
 router.register(r'transactions/transaction-type', transactions.TransactionTypeViewSet, 'transactiontype')
-router.register(r'transactions/transaction-type-ev', transactions.TransactionTypeEvViewSet, 'transactiontypev')
+router.register(r'transactions/transaction-type-ev', transactions.TransactionTypeEvViewSet, 'transactiontypev') # DEPRECATED
 router.register(r'transactions/transaction-type-light', transactions.TransactionTypeLightViewSet,
                 'transactiontypelight')  # Deprecated
 router.register(r'transactions/transaction-type-light-with-inputs', transactions.TransactionTypeLightWithInputsViewSet,
@@ -234,18 +234,18 @@ router.register(r'transactions/transaction-attribute-type', transactions.Transac
 router.register(r'transactions/transaction-classifier', transactions.TransactionClassifierViewSet,
                 'transactionclassifier')
 
-router.register(r'transactions/transaction-ev-group', transactions.TransactionEvGroupViewSet, 'transactionevgroup')
+router.register(r'transactions/transaction-ev-group', transactions.TransactionEvGroupViewSet, 'transactionevgroup') # DEPRECATED
 router.register(r'transactions/transaction', transactions.TransactionViewSet, 'transaction')
-router.register(r'transactions/transaction-ev', transactions.TransactionEvViewSet, 'transaction-ev')
+router.register(r'transactions/transaction-ev', transactions.TransactionEvViewSet, 'transaction-ev') # DEPRECATED
 router.register(r'transactions/complex-transaction-attribute-type', transactions.ComplexTransactionAttributeTypeViewSet,
                 'complextransactionattributetype')
 
 router.register(r'transactions/complex-transaction-ev-group', transactions.ComplexTransactionEvGroupViewSet,
-                'complextransactionevgroup')
+                'complextransactionevgroup') # DEPRECATED
 router.register(r'transactions/complex-transaction-light-ev-group', transactions.ComplexTransactionLightEvGroupViewSet,
                 'complextransactionlightevgroup')  # Deprecated, why even needed?
 router.register(r'transactions/complex-transaction', transactions.ComplexTransactionViewSet)
-router.register(r'transactions/complex-transaction-ev', transactions.ComplexTransactionEvViewSet)
+router.register(r'transactions/complex-transaction-ev', transactions.ComplexTransactionEvViewSet) # DEPRECATED
 router.register(r'transactions/complex-transaction-light', transactions.ComplexTransactionLightViewSet,
                 'complextransactionlight')  # Deprecated
 router.register(r'transactions/recalculate-permission-transaction',
