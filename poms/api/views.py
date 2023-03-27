@@ -845,7 +845,6 @@ class CalendarEventsViewSet(AbstractViewSet):
 
         from poms.schedules.models import Schedule
         from poms.celery_tasks.models import CeleryTask
-        from poms.procedures.models import ExpressionProcedureInstance
         from poms.procedures.models import BaseProcedureInstance
         from poms.procedures.models import PricingProcedureInstance
         from poms.procedures.models import RequestDataFileProcedureInstance
@@ -1044,58 +1043,6 @@ class CalendarEventsViewSet(AbstractViewSet):
                 else:
                     title = ''
 
-                    if instance.action:
-                        title = title + ' ' + instance.action
-
-                if instance.member:
-                    title = title + ' by ' + instance.member.username
-
-                title = title + ' [' + str(instance.id) + ']'
-
-                item['title'] = title
-
-                results.append(item)
-
-        # Expression Procedures
-
-        if 'expression_procedure' in filter:
-
-            expression_procedure_instances = ExpressionProcedureInstance.objects.filter(created__gte=date_from,
-                                                                                        created__lte=date_to)
-
-            for instance in expression_procedure_instances:
-
-                item = {
-                    'start': instance.created,
-                    'classNames': ['user'],
-                    'extendedProps': {
-                        'type': 'expression_procedure',
-                        'id': instance.id,
-                        'payload': {
-                            'action': instance.action,
-                            'provider': instance.provider,
-                            'status': instance.status,
-                            'error_message': instance.error_message,
-                            'result': instance.result
-                        }
-                    }
-                }
-
-                item['backgroundColor'] = 'green'
-
-                if instance.status == BaseProcedureInstance.STATUS_ERROR:
-                    item['backgroundColor'] = 'red'
-
-                if instance.status == BaseProcedureInstance.STATUS_PENDING:
-                    item['backgroundColor'] = 'blue'
-
-                if instance.action_verbose:
-                    if instance.provider_verbose:
-                        title = instance.provider_verbose + ': ' + instance.action_verbose
-                    else:
-                        title = instance.action_verbose
-                else:
-                    title = ''
                     if instance.action:
                         title = title + ' ' + instance.action
 

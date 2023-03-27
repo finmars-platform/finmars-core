@@ -434,7 +434,6 @@ router.register(r'procedures/data-procedure', procedures.RequestDataFileProcedur
 router.register(r'procedures/data-procedure-instance', procedures.RequestDataFileProcedureInstanceViewSet)
 
 router.register(r'procedures/expression-procedure', procedures.ExpressionProcedureViewSet)
-router.register(r'procedures/expression-procedure-instance', procedures.ExpressionProcedureInstanceViewSet)
 
 router.register(r'credentials/credentials', credentials.CredentialsViewSet)
 router.register(r'integrations/data-provider', integrations.DataProviderViewSet)
