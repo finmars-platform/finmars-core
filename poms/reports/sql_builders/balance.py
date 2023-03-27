@@ -1619,7 +1619,7 @@ class BalanceReportBuilderSql:
                 result_item["instrument_accrued_price"] = item["instrument_accrued_price"]
                 result_item["instrument_factor"] = item["instrument_factor"]
 
-                _l.info('item %s' % item)
+                # _l.info('item %s' % item)
                 result_item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
                 result_item['nominal_position_size'] = round(item['nominal_position_size'], settings.ROUND_NDIGITS)
 

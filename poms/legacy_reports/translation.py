@@ -1,1 +1,0 @@
-# translator.register(ReportClass, AbstractClassModelOptions)

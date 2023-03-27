@@ -23,7 +23,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 
-from poms.audit.mixins import HistoricalModelMixin
 from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend, OrderingPostFilter, \
     ByIsEnabledFilterBackend
@@ -60,46 +59,6 @@ class AbstractApiView(APIView):
                 _l.debug("perform_authentication exception %s" % e)
 
         self.auth_time = float("{:3.3f}".format(time.perf_counter() - auth_st))
-
-    # Possibly Deprecated
-    # def initial(self, request, *args, **kwargs):
-    #     super(AbstractApiView, self).initial(request, *args, **kwargs)
-    #
-    #     timezone.activate(settings.TIME_ZONE)
-    #     if request.user.is_authenticated:
-    #
-    #         if hasattr(request.user, 'master_user'):
-    #
-    #             master_user = request.user.master_user
-    #             if master_user and master_user.timezone:
-    #                 timezone.activate(master_user.timezone)
-
-    # Possibly Deprecated
-    # def dispatch(self, request, *args, **kwargs):
-    #     if request.method.upper() in permissions.SAFE_METHODS:
-    #         response = super(AbstractApiView, self).dispatch(request, *args, **kwargs)
-    #         return self._mini_if_need(request, response)
-    #     else:
-    #         with transaction.atomic():
-    #             response = super(AbstractApiView, self).dispatch(request, *args, **kwargs)
-    #             return self._mini_if_need(request, response)
-    #
-    # def _mini_if_need(self, request, response):
-    #     if '_mini' in request.GET:
-    #         self._remove_object(response.data)
-    #     return response
-    #
-    # def _remove_object(self, data):
-    #     if isinstance(data, (list, tuple)):
-    #         for i, v in enumerate(data):
-    #             data[i] = self._remove_object(v)
-    #     elif isinstance(data, (dict, OrderedDict)):
-    #         for k, v in list(data.items()):
-    #             if k.endswith('_object') or k in ['user_object_permissions', 'group_object_permissions']:
-    #                 del data[k]
-    #             else:
-    #                 data[k] = self._remove_object(v)
-    #     return data
 
 
 class AbstractViewSet(AbstractApiView, ViewSet):
@@ -247,7 +206,7 @@ class AbstractEvGroupViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelF
         return Response(filtered_qs)
 
 
-class AbstractModelViewSet(AbstractApiView, HistoricalModelMixin, HistoryMixin, UpdateModelMixinExt, DestroyModelFakeMixin,
+class AbstractModelViewSet(AbstractApiView, HistoryMixin, UpdateModelMixinExt, DestroyModelFakeMixin,
                            BulkModelMixin, ModelViewSet):
     permission_classes = [
         IsAuthenticated

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import django_filters
 from django_filters.rest_framework import FilterSet
 from rest_framework.settings import api_settings
-
+from rest_framework.decorators import action
 from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer, AccountLightSerializer, \
     AccountEvSerializer, AccountTypeEvSerializer
@@ -197,6 +197,17 @@ class AccountViewSet(AbstractWithObjectPermissionViewSet):
         'type', 'type__user_code', 'type__name', 'type__short_name', 'type__public_name',
     ]
 
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=AccountLightSerializer)
+    def list_light(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
+
 
 class AccountEvFilterSet(FilterSet):
     id = NoOpFilter()
@@ -258,6 +269,7 @@ class AccountLightFilterSet(FilterSet):
         fields = []
 
 
+# DEPRECATED DELETE SOON
 class AccountLightViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Account.objects.select_related(
         'master_user',

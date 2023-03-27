@@ -6,8 +6,6 @@ from mptt.utils import get_cached_trees
 from rest_framework import serializers
 
 from poms.common.serializers import ModelWithTimeStampSerializer
-from poms.layout_recovery.models import LayoutArchetype
-from poms.layout_recovery.utils import recursive_dict_fix
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \

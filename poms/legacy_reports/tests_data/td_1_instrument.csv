@@ -1,3 +1,0 @@
-ID;instrument_type;is_active;pricing_currency;price_multiplier;accrued_currency;accrued_multiplier;payment_size_detail;default_price;default_accrued;maturity_date;maturity_price
-VALE US;-;ИСТИНА;USD;1;USD;1;in %;0;0;;100
-XS0776111188;-;ИСТИНА;EUR;0,01;EUR;0,01;in %;0;0;2019-05-01;100
