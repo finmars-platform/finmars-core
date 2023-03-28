@@ -4321,10 +4321,10 @@ def _get_supported_models_serializer_class():
     from poms.counterparties.models import Counterparty, Responsible
     from poms.counterparties.serializers import CounterpartyEvalSerializer, ResponsibleEvalSerializer
     from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, GeneratedEvent, Country, \
-        InstrumentType
+        InstrumentType, Periodicity
     from poms.instruments.serializers import InstrumentEvalSerializer, DailyPricingModelSerializer, \
         InstrumentTypeEvalSerializer, CountrySerializer, \
-        PaymentSizeDetailSerializer, GeneratedEventSerializer
+        PaymentSizeDetailSerializer, GeneratedEventSerializer, PeriodicitySerializer
     from poms.currencies.models import Currency
     from poms.currencies.serializers import CurrencyEvalSerializer
     from poms.portfolios.models import Portfolio
@@ -4349,6 +4349,7 @@ def _get_supported_models_serializer_class():
         Strategy3: Strategy3EvalSerializer,
         DailyPricingModel: DailyPricingModelSerializer,
         PaymentSizeDetail: PaymentSizeDetailSerializer,
+        Periodicity: PeriodicitySerializer,
         PriceDownloadScheme: PriceDownloadSchemeSerializer,
         # Transaction: TransactionTextRenderSerializer,
         Transaction: TransactionEvalSerializer,
