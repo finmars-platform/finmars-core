@@ -4,6 +4,7 @@ import ast
 import calendar
 import datetime
 import hashlib
+import json
 import logging
 import random
 import re
@@ -515,6 +516,8 @@ _transaction_import__find_row.evaluator = True
 def _md5(text):
     return hashlib.md5(text.encode('utf-8')).hexdigest()
 
+def _to_json(obj):
+    return json.dumps(obj, default=str, indent=4)
 
 def _parse_date(date_string, format=None):
     if not date_string:
@@ -1567,6 +1570,28 @@ def _add_factor_schedule(evaluator, instrument, effective_date, factor_value):
 
 
 _add_factor_schedule.evaluator = True
+
+
+def _get_instrument_pricing_scheme(evaluator, instrument, pricing_policy):
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+    pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+
+    result = None
+
+    for policy in instrument.pricing_policies.all():
+
+        if policy.pricing_policy.id == pricing_policy.id:
+            result = policy
+
+    return result
+
+
+_get_instrument_pricing_scheme.evaluator = True
 
 
 def _add_accrual_schedule(evaluator, instrument, data):
@@ -3558,6 +3583,7 @@ FUNCTIONS = [
     SimpleEval2Def('universal_parse_country', _universal_parse_country),
     SimpleEval2Def('unix_to_date', _unix_to_date),
     SimpleEval2Def('md5', _md5),
+    SimpleEval2Def('to_json', _to_json),
 
     SimpleEval2Def('last_business_day', _last_business_day),
     SimpleEval2Def('get_date_last_week_end_business', _get_date_last_week_end_business),
@@ -3605,6 +3631,7 @@ FUNCTIONS = [
     SimpleEval2Def('add_factor_schedule', _add_factor_schedule),
     SimpleEval2Def('add_accrual_schedule', _add_accrual_schedule),
     SimpleEval2Def('delete_accrual_schedules', _delete_accrual_schedules),
+    SimpleEval2Def('get_instrument_pricing_scheme', _get_instrument_pricing_scheme),
 
     SimpleEval2Def('add_fx_rate', _add_fx_rate),
     SimpleEval2Def('add_price_history', _add_price_history),
@@ -4335,6 +4362,8 @@ def _get_supported_models_serializer_class():
     from poms.integrations.serializers import PriceDownloadSchemeSerializer
     from poms.transactions.models import Transaction, ComplexTransaction
     from poms.transactions.serializers import TransactionEvalSerializer, ComplexTransactionEvalSerializer
+    from poms.pricing.models import InstrumentPricingPolicy
+    from poms.pricing.serializers import InstrumentPricingPolicySerializer
 
     return {
         Account: AccountEvalSerializer,
@@ -4356,7 +4385,8 @@ def _get_supported_models_serializer_class():
         ComplexTransaction: ComplexTransactionEvalSerializer,
         GeneratedEvent: GeneratedEventSerializer,
         Member: MemberSerializer,
-        Country: CountrySerializer
+        Country: CountrySerializer,
+        InstrumentPricingPolicy: InstrumentPricingPolicySerializer
     }
 
 
