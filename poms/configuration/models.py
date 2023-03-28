@@ -8,7 +8,7 @@ class ConfigurationModel(models.Model):
     just a good remainder to find entity by configuration_code
     '''
     configuration_code = models.CharField(max_length=255,
-                                          default='com.finmars.default',
+                                          default='com.finmars.local',
                                           verbose_name=gettext_lazy('configuration code'))
 
     user_code = models.CharField(max_length=510, null=True, blank=True, verbose_name=gettext_lazy('user code'))
@@ -22,6 +22,7 @@ class ConfigurationModel(models.Model):
         - com.finmars.hnwi:buy_sell
         - com.finmars.asset_manager:buy_sell
         
+        frn:finmars:backend:::transactions.transactiontype:com.finmars.local:*
         frn:finmars:backend:::transactions.transactiontype:com.finmars.hnwi:*
         
         in that case con.finmars.hnwi already a user_code
