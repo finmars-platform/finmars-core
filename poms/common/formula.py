@@ -1593,6 +1593,27 @@ def _get_instrument_pricing_scheme(evaluator, instrument, pricing_policy):
 
 _get_instrument_pricing_scheme.evaluator = True
 
+def _get_currency_pricing_scheme(evaluator, currency, pricing_policy):
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    currency = _safe_get_currency(evaluator, currency)
+    pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+
+    result = None
+
+    for policy in currency.pricing_policies.all():
+
+        if policy.pricing_policy.id == pricing_policy.id:
+            result = policy
+
+    return result
+
+
+_get_currency_pricing_scheme.evaluator = True
+
 
 def _add_accrual_schedule(evaluator, instrument, data):
     from poms.users.utils import get_master_user_from_context
@@ -3632,6 +3653,7 @@ FUNCTIONS = [
     SimpleEval2Def('add_accrual_schedule', _add_accrual_schedule),
     SimpleEval2Def('delete_accrual_schedules', _delete_accrual_schedules),
     SimpleEval2Def('get_instrument_pricing_scheme', _get_instrument_pricing_scheme),
+    SimpleEval2Def('get_currency_pricing_scheme', _get_currency_pricing_scheme),
 
     SimpleEval2Def('add_fx_rate', _add_fx_rate),
     SimpleEval2Def('add_price_history', _add_price_history),
