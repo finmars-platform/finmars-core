@@ -59,7 +59,7 @@ class ModelWithObjectPermissionViewListSerializer(serializers.ListSerializer):
         # attribute_types = obj_perms_filter_objects(member, get_attr_type_view_perms(attribute_type_model), attribute_types)
         # return instance.attributes.filter(attribute_type__in=attribute_types)
 
-
+# DEPRECATED Delete as soon as Finmars Access Policy will be implemented
 class ModelWithObjectPermissionSerializer(serializers.ModelSerializer):
     class Meta:
         list_serializer_class = ModelWithObjectPermissionViewListSerializer
@@ -67,43 +67,47 @@ class ModelWithObjectPermissionSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(ModelWithObjectPermissionSerializer, self).__init__(*args, **kwargs)
 
-        self.fields['display_name'] = serializers.SerializerMethodField()
+        # self.fields['display_name'] = serializers.SerializerMethodField()
 
         # self.fields['granted_permissions'] = GrantedPermissionField()
         # self.fields['user_object_permissions'] = UserObjectPermissionSerializer(many=True, required=False,
         #                                                                         allow_null=True)
         # self.fields['group_object_permissions'] = GroupObjectPermissionSerializer(many=True, required=False,
         #                                                                           allow_null=True)
-        self.fields['object_permissions'] = GenericObjectPermissionSerializer(many=True, required=False,
-                                                                              allow_null=True)
+        # self.fields['object_permissions'] = GenericObjectPermissionSerializer(many=True, required=False,
+        #                                                                       allow_null=True)
 
-    def get_display_name(self, instance):
-        member = get_member_from_context(self.context)
-        if has_view_perms(member, instance):
-            return getattr(instance, 'name', '') or ''
-        else:
-            return getattr(instance, 'public_name', '') or ''
+
+
+    # def get_display_name(self, instance):
+    #     member = get_member_from_context(self.context)
+    #     if has_view_perms(member, instance):
+    #         return getattr(instance, 'name', '') or ''
+    #     else:
+    #         return getattr(instance, 'public_name', '') or ''
 
     def to_representation(self, instance):
         ret = super(ModelWithObjectPermissionSerializer, self).to_representation(instance)
-        member = get_member_from_context(self.context)
 
-        is_default_obj = False
-
-        if hasattr(instance, 'user_code') and instance.user_code == '-':
-            is_default_obj = True
-
-        if not has_view_perms(member, instance) and not is_default_obj:
-            for k in list(ret.keys()):
-                if k not in ['id', 'public_name', 'display_name', 'granted_permissions']:
-                    ret.pop(k)
-
-            if 'name' in ret:
-                ret['name'] = ret['public_name']
-            if 'short_name' in ret:
-                ret['short_name'] = ret['public_name']
-            if 'user_code' in ret:
-                ret['user_code'] = ret['public_name']
+        ret['object_permissions'] = []
+        # member = get_member_from_context(self.context)
+        #
+        # is_default_obj = False
+        #
+        # if hasattr(instance, 'user_code') and instance.user_code == '-':
+        #     is_default_obj = True
+        #
+        # if not has_view_perms(member, instance) and not is_default_obj:
+        #     for k in list(ret.keys()):
+        #         if k not in ['id', 'public_name', 'display_name', 'granted_permissions']:
+        #             ret.pop(k)
+        #
+        #     if 'name' in ret:
+        #         ret['name'] = ret['public_name']
+        #     if 'short_name' in ret:
+        #         ret['short_name'] = ret['public_name']
+        #     if 'user_code' in ret:
+        #         ret['user_code'] = ret['public_name']
 
         # if self.context.get('show_object_permissions', True): # TODO should we show permissions?
         #     if not has_manage_perm(member, instance):
@@ -156,7 +160,7 @@ class ModelWithObjectPermissionSerializer(serializers.ModelSerializer):
             if has_manage_perm(member, instance):
                 assign_perms3(instance, perms=object_permissions)
 
-
+# DEPRECATED
 class ModelWithObjectPermissionVewSerializer(serializers.ModelSerializer):
     class Meta:
         list_serializer_class = ModelWithObjectPermissionViewListSerializer
