@@ -8,6 +8,7 @@ from django_filters.rest_framework import FilterSet
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
+from rest_framework.decorators import action
 
 from poms.common.filters import CharFilter, ModelExtMultipleChoiceFilter, NoOpFilter, AttributeFilter, \
     GroupsAttributeFilter, EntitySpecificFilter
@@ -76,6 +77,17 @@ class CurrencyViewSet(AbstractWithObjectPermissionViewSet):
         'price_download_scheme', 'price_download_scheme__scheme_name',
     ]
 
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=CurrencyLightSerializer)
+    def list_light(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
+
 
 class CurrencyEvFilterSet(FilterSet):
     id = NoOpFilter()
@@ -126,7 +138,7 @@ class CurrencyLightFilterSet(FilterSet):
         model = Currency
         fields = []
 
-
+# DEPRECATED
 class CurrencyLightViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Currency.objects.select_related(
         'master_user',

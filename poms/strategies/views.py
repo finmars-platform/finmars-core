@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import django_filters
 from django_filters.rest_framework import FilterSet
 from rest_framework.settings import api_settings
-
+from rest_framework.decorators import action
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, AttributeFilter, \
     GroupsAttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
@@ -198,6 +198,17 @@ class Strategy1ViewSet(AbstractWithObjectPermissionViewSet):
         'subgroup', 'subgroup__user_code', 'subgroup__name', 'subgroup__short_name', 'subgroup__public_name',
     ]
 
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=Strategy1LightSerializer)
+    def list_light(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
+
 
 class Strategy1EvFilterSet(FilterSet):
     id = NoOpFilter()
@@ -258,7 +269,7 @@ class Strategy1LightFilterSet(FilterSet):
         model = Strategy1
         fields = []
 
-
+# DEPRECATED
 class Strategy1LightViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Strategy1.objects.select_related(
         'master_user'
@@ -438,6 +449,17 @@ class Strategy2ViewSet(Strategy1ViewSet):
     serializer_class = Strategy2Serializer
     filter_class = Strategy2FilterSet
 
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=Strategy2LightSerializer)
+    def list_light(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
+
 
 class Strategy2EvFilterSet(Strategy1FilterSet):
     subgroup__group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy2Group)
@@ -486,7 +508,7 @@ class Strategy2LightFilterSet(FilterSet):
         model = Strategy2
         fields = []
 
-
+# DEPRECATED
 class Strategy2LightViewSet(Strategy1ViewSet):
     queryset = Strategy2.objects.select_related(
         'master_user',
@@ -659,6 +681,17 @@ class Strategy3ViewSet(Strategy1ViewSet):
     serializer_class = Strategy3Serializer
     filter_class = Strategy3FilterSet
 
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=Strategy3LightSerializer)
+    def list_light(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
+
 
 class Strategy3EvFilterSet(Strategy1FilterSet):
     subgroup__group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy3Group)
@@ -707,7 +740,7 @@ class Strategy3LightFilterSet(FilterSet):
         model = Strategy3
         fields = []
 
-
+# DEPRECATED
 class Strategy3LightViewSet(Strategy1ViewSet):
     queryset = Strategy3.objects.select_related(
         'master_user'

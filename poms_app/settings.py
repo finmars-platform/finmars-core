@@ -70,7 +70,6 @@ INSTALLED_APPS = [
 
     # 'poms.cache_machine',
 
-    'poms.audit',
     'poms.users',
 
     'poms.notifications',
@@ -104,8 +103,7 @@ INSTALLED_APPS = [
     'poms.procedures',
     'poms.credentials',
     'poms.system_messages',
-
-    'poms.layout_recovery',
+    'poms.configuration',
 
     'poms.auth_tokens',
     'poms.widgets',

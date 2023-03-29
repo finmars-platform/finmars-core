@@ -4,6 +4,7 @@ import ast
 import calendar
 import datetime
 import hashlib
+import json
 import logging
 import random
 import re
@@ -424,7 +425,6 @@ def _calculate_pl_report(evaluator, name, pl_first_date, report_date, report_cur
         member = get_member_from_context(context)
 
         from poms.reports.sql_builders.balance import PLReportBuilderSql
-        from poms.legacy_reports.builders.balance_serializers import PLReportSqlSerializer
         from poms.reports.common import Report
         from poms.instruments.models import Instrument
 
@@ -474,6 +474,7 @@ def _calculate_pl_report(evaluator, name, pl_first_date, report_date, report_cur
         builder = PLReportBuilderSql(instance=instance)
         instance = builder.build_balance()
 
+        from poms.reports.serializers import PLReportSerializer
         serializer = PLReportSerializer(instance=instance, context=context)
 
         serializer.to_representation(instance)
@@ -515,6 +516,8 @@ _transaction_import__find_row.evaluator = True
 def _md5(text):
     return hashlib.md5(text.encode('utf-8')).hexdigest()
 
+def _to_json(obj):
+    return json.dumps(obj, default=str, indent=4)
 
 def _parse_date(date_string, format=None):
     if not date_string:
@@ -1567,6 +1570,49 @@ def _add_factor_schedule(evaluator, instrument, effective_date, factor_value):
 
 
 _add_factor_schedule.evaluator = True
+
+
+def _get_instrument_pricing_scheme(evaluator, instrument, pricing_policy):
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+    pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+
+    result = None
+
+    for policy in instrument.pricing_policies.all():
+
+        if policy.pricing_policy.id == pricing_policy.id:
+            result = policy
+
+    return result
+
+
+_get_instrument_pricing_scheme.evaluator = True
+
+def _get_currency_pricing_scheme(evaluator, currency, pricing_policy):
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    currency = _safe_get_currency(evaluator, currency)
+    pricing_policy = _safe_get_pricing_policy(evaluator, pricing_policy)
+
+    result = None
+
+    for policy in currency.pricing_policies.all():
+
+        if policy.pricing_policy.id == pricing_policy.id:
+            result = policy
+
+    return result
+
+
+_get_currency_pricing_scheme.evaluator = True
 
 
 def _add_accrual_schedule(evaluator, instrument, data):
@@ -3024,66 +3070,6 @@ def _download_instrument_from_finmars_database(evaluator, reference, instrument_
 _download_instrument_from_finmars_database.evaluator = True
 
 
-def _create_workflow(evaluator, name=None):
-    from django.db import transaction
-
-    with transaction.atomic():
-        from poms.workflows.models import Workflow
-
-        from poms.users.utils import get_master_user_from_context
-        from poms.users.utils import get_member_from_context
-
-        context = evaluator.context
-
-        master_user = get_master_user_from_context(context)
-        member = get_member_from_context(context)
-
-        if not name:
-            name = 'Workflow ' + str((Workflow.objects.all().count() + 1))
-
-        workflow = Workflow.objects.create(name=name, master_user=master_user, member=member, current_step=1)
-
-        return workflow.id
-
-
-_create_workflow.evaluator = True
-
-
-def _register_workflow_step(evaluator, workflow_id, code, name=None):
-    from django.db import transaction
-
-    with transaction.atomic():
-        from poms.workflows.models import Workflow, WorkflowStep
-
-        workflow = Workflow.objects.get(id=workflow_id)
-
-        order = WorkflowStep.objects.filter(workflow_id=workflow_id).count() + 1
-
-        if not name:
-            name = workflow.name + ' step ' + str((order))
-
-        code_txt = ast.unparse(code.node)
-
-        workflow_step = WorkflowStep.objects.create(workflow_id=workflow_id, code=code_txt, name=name, order=order)
-
-        return workflow_step.id
-
-
-_register_workflow_step.evaluator = True
-
-
-def _run_workflow(evaluator, workflow_id):
-    from poms.workflows.tasks import run_workflow_step
-
-    # workflow = Workflow.objects.get(id=workflow_id)
-    from django.db import transaction
-
-    transaction.on_commit(lambda: run_workflow_step.apply_async(kwargs={"workflow_id": workflow_id}))
-
-
-_run_workflow.evaluator = True
-
-
 def _get_filenames_from_storage(evaluator, pattern=None, path_to_folder=None):
     # pattern \.txt$
 
@@ -3266,8 +3252,6 @@ def _run_transaction_import(evaluator, filepath, scheme):
             filepath = settings.BASE_API_URL + '/' + filepath
 
         # pattern \.txt$
-
-        from poms.workflows.models import Workflow, WorkflowStep
 
         from poms.users.utils import get_master_user_from_context
         from poms.users.utils import get_member_from_context
@@ -3620,6 +3604,7 @@ FUNCTIONS = [
     SimpleEval2Def('universal_parse_country', _universal_parse_country),
     SimpleEval2Def('unix_to_date', _unix_to_date),
     SimpleEval2Def('md5', _md5),
+    SimpleEval2Def('to_json', _to_json),
 
     SimpleEval2Def('last_business_day', _last_business_day),
     SimpleEval2Def('get_date_last_week_end_business', _get_date_last_week_end_business),
@@ -3667,6 +3652,8 @@ FUNCTIONS = [
     SimpleEval2Def('add_factor_schedule', _add_factor_schedule),
     SimpleEval2Def('add_accrual_schedule', _add_accrual_schedule),
     SimpleEval2Def('delete_accrual_schedules', _delete_accrual_schedules),
+    SimpleEval2Def('get_instrument_pricing_scheme', _get_instrument_pricing_scheme),
+    SimpleEval2Def('get_currency_pricing_scheme', _get_currency_pricing_scheme),
 
     SimpleEval2Def('add_fx_rate', _add_fx_rate),
     SimpleEval2Def('add_price_history', _add_price_history),
@@ -3730,9 +3717,6 @@ FUNCTIONS = [
     SimpleEval2Def('rebook_transaction', _rebook_transaction),
     SimpleEval2Def('download_instrument_from_finmars_database', _download_instrument_from_finmars_database),
 
-    SimpleEval2Def('create_workflow', _create_workflow),
-    SimpleEval2Def('register_workflow_step', _register_workflow_step),
-    SimpleEval2Def('run_workflow', _run_workflow),
     SimpleEval2Def('get_filenames_from_storage', _get_filenames_from_storage),
     SimpleEval2Def('delete_file_from_storage', _delete_file_from_storage),
     SimpleEval2Def('put_file_to_storage', _put_file_to_storage),
@@ -4386,10 +4370,10 @@ def _get_supported_models_serializer_class():
     from poms.counterparties.models import Counterparty, Responsible
     from poms.counterparties.serializers import CounterpartyEvalSerializer, ResponsibleEvalSerializer
     from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, GeneratedEvent, Country, \
-        InstrumentType
+        InstrumentType, Periodicity
     from poms.instruments.serializers import InstrumentEvalSerializer, DailyPricingModelSerializer, \
         InstrumentTypeEvalSerializer, CountrySerializer, \
-        PaymentSizeDetailSerializer, GeneratedEventSerializer
+        PaymentSizeDetailSerializer, GeneratedEventSerializer, PeriodicitySerializer
     from poms.currencies.models import Currency
     from poms.currencies.serializers import CurrencyEvalSerializer
     from poms.portfolios.models import Portfolio
@@ -4400,6 +4384,8 @@ def _get_supported_models_serializer_class():
     from poms.integrations.serializers import PriceDownloadSchemeSerializer
     from poms.transactions.models import Transaction, ComplexTransaction
     from poms.transactions.serializers import TransactionEvalSerializer, ComplexTransactionEvalSerializer
+    from poms.pricing.models import InstrumentPricingPolicy
+    from poms.pricing.serializers import InstrumentPricingPolicySerializer
 
     return {
         Account: AccountEvalSerializer,
@@ -4414,13 +4400,15 @@ def _get_supported_models_serializer_class():
         Strategy3: Strategy3EvalSerializer,
         DailyPricingModel: DailyPricingModelSerializer,
         PaymentSizeDetail: PaymentSizeDetailSerializer,
+        Periodicity: PeriodicitySerializer,
         PriceDownloadScheme: PriceDownloadSchemeSerializer,
         # Transaction: TransactionTextRenderSerializer,
         Transaction: TransactionEvalSerializer,
         ComplexTransaction: ComplexTransactionEvalSerializer,
         GeneratedEvent: GeneratedEventSerializer,
         Member: MemberSerializer,
-        Country: CountrySerializer
+        Country: CountrySerializer,
+        InstrumentPricingPolicy: InstrumentPricingPolicySerializer
     }
 
 

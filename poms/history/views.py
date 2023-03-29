@@ -4,7 +4,8 @@ from django_filters.fields import Lookup
 
 from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter, ModelExtMultipleChoiceFilter
 from poms.common.views import AbstractModelViewSet
-from poms.history.filters import HistoryQueryFilter, HistoryActionFilter, HistoryMemberFilter, HistoryContentTypeFilter
+from poms.history.filters import HistoryQueryFilter, HistoryActionFilter, HistoryMemberFilter, HistoryContentTypeFilter, \
+    HistoryDateRangeFilter
 from poms.history.models import HistoricalRecord
 from poms.history.serializers import HistoricalRecordSerializer
 from poms.users.filters import OwnerByMasterUserFilter
@@ -62,6 +63,7 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
     serializer_class = HistoricalRecordSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
+        HistoryDateRangeFilter,
         HistoryQueryFilter,
         HistoryActionFilter,
         HistoryMemberFilter,

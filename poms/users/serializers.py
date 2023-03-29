@@ -672,7 +672,7 @@ class MemberSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'master_user', 'join_date', 'is_owner', 'is_admin', 'is_superuser', 'is_current',
             'notification_level', 'interface_level',
-            'is_deleted', 'username', 'first_name', 'last_name', 'display_name', 'groups', 'groups_object',
+            'is_deleted', 'username', 'first_name', 'last_name',  'groups', 'groups_object',
             'data'
         ]
         read_only_fields = [
@@ -743,7 +743,7 @@ class MemberViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = ['id', 'username', 'first_name', 'last_name', 'display_name', 'is_owner', 'is_admin', 'user']
-        read_only_fields = ['id', 'username', 'first_name', 'last_name', 'display_name', ]
+        read_only_fields = ['id', 'username', 'first_name', 'last_name', ]
 
     def get_is_current(self, obj):
         member = get_member_from_context(self.context)

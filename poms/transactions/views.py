@@ -17,7 +17,6 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 
 from poms.accounts.models import Account, AccountType
-from poms.audit import history
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, ModelExtMultipleChoiceFilter, \
     NoOpFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter, ComplexTransactionStatusFilter
 from poms.common.pagination import CustomPaginationMixin
@@ -265,7 +264,7 @@ class TransactionTypeEvViewSet(AbstractWithObjectPermissionViewSet):
         'group__public_name',
     ]
 
-
+# DEPRECATED
 class TransactionTypeLightViewSet(AbstractWithObjectPermissionViewSet):
     queryset = TransactionType.objects.select_related('group').prefetch_related(
         'portfolios',
@@ -294,7 +293,7 @@ class TransactionTypeLightViewSet(AbstractWithObjectPermissionViewSet):
         'group__public_name',
     ]
 
-
+# DEPRECATED
 class TransactionTypeLightWithInputsViewSet(AbstractWithObjectPermissionViewSet):
     queryset = TransactionType.objects.select_related('group').prefetch_related(
         'portfolios',
@@ -375,6 +374,28 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         'group__short_name',
         'group__public_name',
     ]
+
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=TransactionTypeLightSerializer)
+    def list_light(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
+
+    @action(detail=False, methods=['get'], url_path='light-with-inputs', serializer_class=TransactionTypeLightSerializerWithInputs)
+    def list_light_with_inputs(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
 
     def get_context_for_book(self, request):
 
@@ -576,13 +597,10 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
                                               uniqueness_reaction=uniqueness_reaction, member=request.user.member)
 
             try:
-                history.set_flag_addition()
 
                 serializer = self.get_serializer(instance=instance, data=request.data)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-
-                history.set_actor_content_object(instance.complex_transaction)
 
                 return Response(serializer.data)
             finally:
@@ -607,14 +625,9 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
             return Response(serializer.data)
         else:
             try:
-                history.set_flag_addition()
-
                 serializer = self.get_serializer(instance=instance, data=request.data)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-
-                history.set_actor_content_object(instance.complex_transaction)
-
                 return Response(serializer.data)
             finally:
                 if instance.has_errors:
@@ -1300,6 +1313,17 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
         'is_deleted',
     ]
 
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=ComplexTransactionLightSerializer)
+    def list_light(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
+
     # def perform_update(self, serializer):
     #     if serializer.is_locked:
     #         raise PermissionDenied()
@@ -1341,7 +1365,6 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
             _l.info("==== INIT REBOOK ====")
 
             try:
-                history.set_flag_change()
 
                 if request.data['complex_transaction']:
                     if not request.data['complex_transaction']['status']:
@@ -1350,8 +1373,6 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                 serializer = self.get_serializer(instance=instance, data=request.data)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-
-                history.set_actor_content_object(complex_transaction)
 
                 return Response(serializer.data)
 
@@ -1412,13 +1433,10 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
             return Response(serializer.data)
         else:
             try:
-                history.set_flag_change()
 
                 serializer = self.get_serializer(instance=instance, data=request.data)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-
-                history.set_actor_content_object(complex_transaction)
 
                 return Response(serializer.data)
             finally:
@@ -1440,7 +1458,6 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
-        history.set_actor_content_object(complex_transaction)
 
         return Response(serializer.data)
 
@@ -1574,7 +1591,7 @@ class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSe
         ComplexTransactionStatusFilter,
     ]
 
-
+# DEPRECATED
 class ComplexTransactionLightViewSet(AbstractWithObjectPermissionViewSet):
     queryset = qs = ComplexTransaction.objects.select_related(
         'transaction_type',

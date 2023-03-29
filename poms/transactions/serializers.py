@@ -4189,7 +4189,13 @@ class ComplexTransactionDeleteSerializer(serializers.ModelSerializer):
             'code',
             'transaction_unique_code',
             'deleted_transaction_unique_code',
-            'modified'
+            'modified',
+            'text',
+            'user_text_1',
+            'user_text_2',
+            'user_text_3',
+            'user_text_4',
+            'user_text_5',
         ]
 
         read_only_fields = fields

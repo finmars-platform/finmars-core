@@ -709,9 +709,11 @@ class PLReportBuilderSql:
             instrument_pricing_currency_fx_rate,
             instrument_accrued_currency_fx_rate,    
             instrument_principal_price,
-            instrument_accrued_price,    
+            instrument_accrued_price,
+            instrument_factor,    
           
             position_size,
+            nominal_position_size,
             
             position_return,
             position_return_loc,
@@ -827,8 +829,10 @@ class PLReportBuilderSql:
             instrument_accrued_currency_fx_rate,    
             instrument_principal_price,
             instrument_accrued_price,   
+            instrument_factor,
           
             position_size,
+            nominal_position_size,
             
             position_return,
             position_return_loc,
@@ -944,9 +948,11 @@ class PLReportBuilderSql:
                     instrument_pricing_currency_fx_rate,
                     instrument_accrued_currency_fx_rate,    
                     instrument_principal_price,
-                    instrument_accrued_price,   
+                    instrument_accrued_price,  
+                    instrument_factor, 
 
                     position_size,
+                    nominal_position_size,
                     
                     position_return,
                     position_return_loc,
@@ -1067,6 +1073,7 @@ class PLReportBuilderSql:
                         accrual_size,
                         (cur_price) as instrument_principal_price,
                         (cur_accr_price) as instrument_accrued_price,
+                        (cur_factor) as instrument_factor,
                         (prc_cur_fx) as instrument_pricing_currency_fx_rate,
                         (accr_cur_fx) as instrument_accrued_currency_fx_rate,
                         rep_cur_fx,
@@ -1075,6 +1082,12 @@ class PLReportBuilderSql:
                         cross_loc_prc_fx,
                         
                         position_size,
+                        -- (position_size / cur_factor) as nominal_position_size,
+                        case when coalesce(cur_factor,0) = 0
+                                then 0
+                                else
+                                    position_size / cur_factor
+                        end as nominal_position_size,
                         position_size_opened,
                         
                         net_cost_price,
@@ -1194,6 +1207,7 @@ class PLReportBuilderSql:
                             i.accrued_multiplier,
                             i.accrual_size,
                             i.cur_price,
+                            i.cur_factor,
                             i.cur_accr_price,
                             i.prc_cur_fx,
                             i.accr_cur_fx,
@@ -1212,6 +1226,15 @@ class PLReportBuilderSql:
                                 date = '{report_date}' and
                                 pricing_policy_id = {pricing_policy_id})
                             as instrument_principal_price,
+                            
+                            (select 
+                                factor
+                            from instruments_pricehistory
+                            where 
+                                instrument_id=i.id and 
+                                date = '{report_date}' and
+                                pricing_policy_id = {pricing_policy_id})
+                            as instrument_factor,
                             
                             case when i.pricing_currency_id = {default_currency_id}
                                 then 1
@@ -1558,6 +1581,16 @@ class PLReportBuilderSql:
                                     and iph.instrument_id=ii.id
                                     and iph.pricing_policy_id = {pricing_policy_id}
                                    ) as cur_price,
+                                   
+                               (select
+                                    factor
+                                from
+                                    instruments_pricehistory iph
+                                where
+                                    date = '{report_date}'
+                                    and iph.instrument_id=ii.id
+                                    and iph.pricing_policy_id = {pricing_policy_id}
+                                   ) as cur_factor,
                                   -- add current accrued
                                 (select
                                     accrued_price
@@ -1604,8 +1637,10 @@ class PLReportBuilderSql:
             instrument_accrued_currency_fx_rate,    
             instrument_principal_price,
             instrument_accrued_price, 
+            instrument_factor,
           
             position_size,
+            nominal_position_size,
             
             position_return,
             position_return_loc,
@@ -1722,8 +1757,10 @@ class PLReportBuilderSql:
                 (0) as instrument_accrued_currency_fx_rate,    
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
+                (1) as instrument_factor,
 
                 position_size,
+                (position_size) as nominal_position_size,
                 
                 (0) as position_return,
                 (0) as position_return_loc,
@@ -1834,6 +1871,7 @@ class PLReportBuilderSql:
                     {consolidation_columns}
                     
                     (0) as position_size,
+                    (0) as nominal_position_size,
                     
                     sum(principal) as principal_opened,
                     sum(carry) as carry_opened,
@@ -1949,8 +1987,10 @@ class PLReportBuilderSql:
             instrument_accrued_currency_fx_rate,    
             instrument_principal_price,
             instrument_accrued_price, 
+            instrument_factor,
           
             position_size,
+            nominal_position_size,
             
             position_return,
             position_return_loc,
@@ -2068,8 +2108,10 @@ class PLReportBuilderSql:
                 (0) as instrument_accrued_currency_fx_rate,    
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
+                (1) as instrument_factor,
               
                 position_size,
+                nominal_position_size,
                 
                 (0) as position_return,
                 (0) as position_return_loc,
@@ -2182,6 +2224,7 @@ class PLReportBuilderSql:
                     
         
                     (0) as position_size,
+                    (0) as nominal_position_size,
                     
                     sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_opened,
                     sum(carry_with_sign * stl_cur_fx/rep_cur_fx)     as carry_opened,
@@ -2254,8 +2297,10 @@ class PLReportBuilderSql:
             instrument_accrued_currency_fx_rate,    
             instrument_principal_price,
             instrument_accrued_price, 
+            instrument_factor,
 
             position_size,
+            nominal_position_size,
             
             position_return,
             position_return_loc,
@@ -2372,8 +2417,10 @@ class PLReportBuilderSql:
                 (0) as instrument_accrued_currency_fx_rate,    
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
+                (1) as instrument_factor,
               
                 position_size,
+                nominal_position_size,
                 
                 (0) as position_return,
                 (0) as position_return_loc,
@@ -2485,6 +2532,7 @@ class PLReportBuilderSql:
                     
         
                     (0) as position_size,
+                    (0) as nominal_position_size,
                     
                     sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_opened,
                     sum(carry_with_sign * stl_cur_fx/rep_cur_fx)     as carry_opened,
@@ -2555,8 +2603,10 @@ class PLReportBuilderSql:
             instrument_accrued_currency_fx_rate,    
             instrument_principal_price,
             instrument_accrued_price, 
+            instrument_factor,
           
             position_size,
+            nominal_position_size,
             
             position_return,
             position_return_loc,
@@ -2673,8 +2723,10 @@ class PLReportBuilderSql:
                 (0) as instrument_accrued_currency_fx_rate,    
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
+                (1) as instrument_factor,
               
                 position_opened as position_size,
+                (position_opened) as nominal_position_size, 
                 
                 (0) as position_return,
                 (0) as position_return_loc,
@@ -2975,6 +3027,7 @@ class PLReportBuilderSql:
                             {final_consolidation_columns}
                             
                             (q2.position_size) as position_size, -- ?
+                            (q2.nominal_position_size) as nominal_position_size,
                             
                             (q2.position_return) as position_return,
                             (q2.position_return_loc) as position_return_loc,
@@ -3001,6 +3054,7 @@ class PLReportBuilderSql:
                             
                             (q2.instrument_principal_price) as instrument_principal_price,
                             (q2.instrument_accrued_price) as instrument_accrued_price,
+                            (q2.instrument_factor) as instrument_factor,
                             
                             
                             (q2.ytm) as ytm,
@@ -3117,6 +3171,7 @@ class PLReportBuilderSql:
             for item in result_tmp_raw:
 
                 item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
+                item['nominal_position_size'] = round(item['nominal_position_size'], settings.ROUND_NDIGITS)
 
                 if item['item_type'] == ITEM_TYPE_MISMATCH:
                     if item['position_size'] and item['total_opened']:
@@ -3166,6 +3221,8 @@ class PLReportBuilderSql:
                 result_item_opened['net_position_return_loc'] = item['net_position_return_loc']
 
                 result_item_opened['position_size'] = item['position_size']
+                result_item_opened['nominal_position_size'] = item['nominal_position_size']
+
                 result_item_opened['mismatch'] = item['mismatch']
 
                 result_item_opened['instrument_id'] = item['instrument_id']
@@ -3237,6 +3294,7 @@ class PLReportBuilderSql:
                 result_item_opened["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
                 result_item_opened["instrument_principal_price"] = item["instrument_principal_price"]
                 result_item_opened["instrument_accrued_price"] = item["instrument_accrued_price"]
+                result_item_opened["instrument_factor"] = item["instrument_factor"]
 
                 result_item_opened["principal"] = item["principal_opened"]
                 result_item_opened["carry"] = item["carry_opened"]
@@ -3445,8 +3503,10 @@ class PLReportBuilderSql:
                         "instrument_accrued_currency_fx_rate"]
                     result_item_closed["instrument_principal_price"] = item["instrument_principal_price"]
                     result_item_closed["instrument_accrued_price"] = item["instrument_accrued_price"]
+                    result_item_closed["instrument_factor"] = item["instrument_factor"]
 
                     result_item_closed["position_size"] = 0
+                    result_item_closed["nominal_position_size"] = 0
 
                     result_item_closed["principal"] = item["principal_closed"]
                     result_item_closed["carry"] = item["carry_closed"]
@@ -3593,14 +3653,14 @@ class PLReportBuilderSql:
         ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies2(self, ids):
-        self.instance.item_strategies1 = Strategy2.objects.prefetch_related(
+        self.instance.item_strategies2 = Strategy2.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
         ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies3(self, ids):
-        self.instance.item_strategies1 = Strategy3.objects.prefetch_related(
+        self.instance.item_strategies3 = Strategy3.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',

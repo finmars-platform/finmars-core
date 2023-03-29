@@ -113,6 +113,9 @@ def generate_report_unique_hash(app, action, data, master_user, member):
     if 'filters' in _data:
         report_options['filters'] = str(_data['filters'])
 
+    if 'expression_iterations_count' in _data:
+        report_options['expression_iterations_count'] = _data['expression_iterations_count']
+
     result = app + '_' + action + '_' + str(master_user.id) + '_' + str(member.id) + '_' + hashlib.md5(
         json.dumps(report_options, sort_keys=True).encode('utf-8')).hexdigest()
 

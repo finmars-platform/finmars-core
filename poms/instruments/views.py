@@ -22,7 +22,7 @@ from rest_framework.views import APIView
 
 from poms.accounts.models import Account
 from poms.accounts.models import AccountType
-from poms.audit import history
+
 from poms.common.authentication import get_access_token
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
     ModelExtMultipleChoiceFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter
@@ -160,7 +160,18 @@ class PricingPolicyViewSet(AbstractModelViewSet):
     ]
     filter_class = PricingPolicyFilterSet
 
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=PricingPolicyLightSerializer)
+    def list_light(self, request, *args, **kwargs):
 
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
+
+# DEPRECATED
 class PricingPolicyLightViewSet(AbstractModelViewSet):
     queryset = PricingPolicy.objects
     serializer_class = PricingPolicyLightSerializer
@@ -260,6 +271,17 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name',
     ]
+
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=InstrumentTypeLightSerializer)
+    def list_light(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
 
     @action(detail=True, methods=['get', 'put'], url_path='book', serializer_class=InstrumentTypeProcessSerializer)
     def book(self, request, pk=None):
@@ -399,7 +421,7 @@ class InstrumentTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, C
         EntitySpecificFilter
     ]
 
-
+# DEPRECATED
 class InstrumentTypeLightViewSet(AbstractWithObjectPermissionViewSet):
     queryset = InstrumentType.objects.select_related(
         'master_user',
@@ -563,6 +585,17 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
         'reference_for_pricing',
         'maturity_date',
     ]
+
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=InstrumentLightSerializer)
+    def list_light(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
 
     @action(detail=False, methods=['post'], url_path='rebuild-events', serializer_class=serializers.Serializer)
     def rebuild_all_events(self, request):
@@ -859,7 +892,7 @@ class InstrumentLightFilterSet(FilterSet):
         fields = []
 
 
-# List method for selects
+# DEPRECATED
 class InstrumentLightViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Instrument.objects.select_related(
         'master_user'
@@ -1377,7 +1410,6 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
             return Response(serializer.data)
         else:
             try:
-                history.set_flag_addition()
 
                 status = request.query_params.get('event_status', None)
 
@@ -1416,8 +1448,6 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
                                               GeneratedEvent.ERROR)
 
                     generated_event.save()
-
-                history.set_actor_content_object(instance.complex_transaction)
 
                 return Response(serializer.data)
             finally:

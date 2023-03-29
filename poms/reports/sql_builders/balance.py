@@ -443,6 +443,7 @@ class BalanceReportBuilderSql:
                     
                     instrument_principal_price,
                     instrument_accrued_price,
+                    instrument_factor,
                     
                     currency_id,
                     
@@ -450,6 +451,7 @@ class BalanceReportBuilderSql:
                     item_type_name,
                     
                     position_size,
+                    nominal_position_size,
                     
                     co_directional_exposure_currency_id,
                     counter_directional_exposure_currency_id,
@@ -580,16 +582,18 @@ class BalanceReportBuilderSql:
                         ('Currency') as item_type_name,
                             
                         position_size,
+                        (position_size) as nominal_position_size,
                                   
                         c.name,
                         c.short_name,
                         c.user_code,
                         
-                        (-1) as pricing_currency_id,
+                        (-1) as pricing_currency_id, -- TODO WTF?
                         (0) as instrument_pricing_currency_fx_rate,
                         (0) as instrument_accrued_currency_fx_rate,
                         (0) as instrument_principal_price,
                         (0) as instrument_accrued_price,
+                        (1) as instrument_factor,
                         
                         (c.id) as co_directional_exposure_currency_id,
                         (-1) as counter_directional_exposure_currency_id,
@@ -811,6 +815,7 @@ class BalanceReportBuilderSql:
                     
                     instrument_principal_price,
                     instrument_accrued_price,
+                    instrument_factor,
                     
                     currency_id,
                     
@@ -818,6 +823,7 @@ class BalanceReportBuilderSql:
                     item_type_name,
                     
                     position_size,
+                    nominal_position_size,
                     
                     co_directional_exposure_currency_id,
                     counter_directional_exposure_currency_id,
@@ -950,6 +956,7 @@ class BalanceReportBuilderSql:
                         
                         instrument_principal_price,
                         instrument_accrued_price,
+                        instrument_factor,
                         
                         (-1) as currency_id,
                         
@@ -957,6 +964,7 @@ class BalanceReportBuilderSql:
                         item_type_name,
                         
                         position_size,
+                        nominal_position_size,
                         
                         exposure_calculation_model_id,
                         co_directional_exposure_currency_id,
@@ -1093,6 +1101,11 @@ class BalanceReportBuilderSql:
                         {consolidated_position_columns}
                         
                         position_size,
+                        case when coalesce(factor,0) = 0
+                                then 0
+                                else
+                                    position_size / factor
+                        end as nominal_position_size,
 
                         (1) as item_type,
                         ('Instrument') as item_type_name,
@@ -1123,6 +1136,8 @@ class BalanceReportBuilderSql:
     
                         (principal_price) as instrument_principal_price,
                         (accrued_price) as instrument_accrued_price,
+                        (factor) as instrument_factor,
+                    
                         
                         (long_delta) as instrument_long_delta,
                         (short_delta) as instrument_short_delta,
@@ -1315,6 +1330,15 @@ class BalanceReportBuilderSql:
                                 date = '{report_date}' and
                                 pricing_policy_id = {pricing_policy_id})
                             as principal_price,
+                            
+                            (select 
+                                factor
+                            from instruments_pricehistory
+                            where 
+                                instrument_id=i.id and 
+                                date = '{report_date}' and
+                                pricing_policy_id = {pricing_policy_id})
+                            as factor,
                             
                             (select 
                                 accrued_price
@@ -1593,8 +1617,11 @@ class BalanceReportBuilderSql:
                 result_item["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
                 result_item["instrument_principal_price"] = item["instrument_principal_price"]
                 result_item["instrument_accrued_price"] = item["instrument_accrued_price"]
+                result_item["instrument_factor"] = item["instrument_factor"]
 
+                # _l.info('item %s' % item)
                 result_item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
+                result_item['nominal_position_size'] = round(item['nominal_position_size'], settings.ROUND_NDIGITS)
 
                 result_item["ytm"] = item["ytm"]
                 result_item["ytm_at_cost"] = item["ytm_at_cost"]
@@ -1735,6 +1762,7 @@ class BalanceReportBuilderSql:
                                 "instrument_accrued_currency_fx_rate": None,
                                 "instrument_principal_price": None,
                                 "instrument_accrued_price": None,
+                                "instrument_factor": None,
 
                                 "market_value": None,
                                 "market_value_loc": None,
@@ -1751,6 +1779,7 @@ class BalanceReportBuilderSql:
                                 new_exposure_item["exposure"] = -item["position_size"] * short
 
                             new_exposure_item["position_size"] = None
+                            new_exposure_item["nominal_position_size"] = None
                             new_exposure_item["ytm"] = None
                             new_exposure_item["ytm_at_cost"] = None
                             new_exposure_item["modified_duration"] = None

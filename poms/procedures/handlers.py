@@ -14,7 +14,7 @@ from poms.csv_import.tasks import data_csv_file_import_by_procedure_json
 from poms.file_reports.models import FileReport
 from poms.integrations.models import TransactionFileResult
 from poms.integrations.tasks import complex_transaction_csv_file_import_by_procedure_json
-from poms.procedures.models import RequestDataFileProcedureInstance, ExpressionProcedureInstance
+from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.procedures.tasks import procedure_request_data_file
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import Member, MasterUser
@@ -532,22 +532,25 @@ class ExpressionProcedureProcess(object):
 
         try:
 
-            self.procedure_instance = ExpressionProcedureInstance.objects.create(procedure=self.procedure,
-                                                                                 master_user=self.master_user,
-                                                                                 member=self.member,
-                                                                                 status=ExpressionProcedureInstance.STATUS_PENDING,
-                                                                                 schedule_instance=self.schedule_instance,
-                                                                                 action='execute_expression_procedure',
-                                                                                 provider='finmars',
+            options_object = {
+                'procedure': {
+                    'id': self.procedure.id,
+                    'user_code': self.procedure.user_code,
+                    'name': self.procedure.name
+                }
+            }
 
-                                                                                 action_verbose='Execute Expression Procedure',
-                                                                                 provider_verbose='Finmars'
-
-                                                                                 )
+            self.celery_task = CeleryTask.objects.create(
+                options_object=options_object,
+                master_user=self.master_user,
+                member=self.member,
+                status=CeleryTask.STATUS_PENDING,
+                type='execute_expression_procedure',
+            )
 
             send_system_message(master_user=self.master_user,
                                 performed_by='System',
-                                description="Procedure %s. Start" % self.procedure_instance.id,
+                                description="Procedure %s. Start" % self.celery_task.id,
                                 )
 
             names = self.procedure.data
@@ -563,15 +566,15 @@ class ExpressionProcedureProcess(object):
             _l.info('ExpressionProcedureProcess.names %s' % names)
             _l.info('ExpressionProcedureProcess.context %s' % self.context)
 
-            self.procedure_instance.notes = ''
+            self.celery_task.notes = ''
 
             if 'execution_context' in self.context:
-                self.procedure_instance.notes = self.procedure_instance.notes = 'Executed by: %s %s' % (
+                self.celery_task.notes = self.celery_task.notes = 'Executed by: %s %s' % (
                     self.context['execution_context']['source'], self.context['execution_context']['actor']) + '\n'
 
-            self.procedure_instance.notes = self.procedure_instance.notes + 'Content: \n' + str(names) + '\n'
-            self.procedure_instance.notes = self.procedure_instance.notes + '==========\n'
-            self.procedure_instance.notes = self.procedure_instance.notes + 'Code: ' + str(self.procedure.code)
+            self.celery_task.notes = self.celery_task.notes + 'Content: \n' + str(names) + '\n'
+            self.celery_task.notes = self.celery_task.notes + '==========\n'
+            self.celery_task.notes = self.celery_task.notes + 'Code: ' + str(self.procedure.code)
 
             try:
 
@@ -580,14 +583,14 @@ class ExpressionProcedureProcess(object):
                 _l.debug('ExpressionProcedureProcess.result %s' % result)
 
                 if result:
-                    self.procedure_instance.result = result
+                    self.celery_task.result_object = result
 
                 if log:
-                    self.procedure_instance.log = log
+                    self.celery_task.notes = self.celery_task.notes + log
 
-                self.procedure_instance.status = ExpressionProcedureInstance.STATUS_DONE
+                self.celery_task.status = CeleryTask.STATUS_DONE
 
-                self.procedure_instance.save()
+                self.celery_task.save()
 
             except Exception as e:
 
@@ -595,22 +598,22 @@ class ExpressionProcedureProcess(object):
                                     title='Expression Procedure Failed. User Code: %s' % self.procedure.user_code,
                                     description=str(e))
 
-                self.procedure_instance.status = ExpressionProcedureInstance.STATUS_ERROR
+                self.celery_task.status = CeleryTask.STATUS_ERROR
 
-                self.procedure_instance.error_message = str(e)
-                self.procedure_instance.save()
+                self.celery_task.error_message = str(e)
+                self.celery_task.save()
 
                 _l.error("ExpressionProcedureProcess.safe_eval error %s" % e)
                 _l.error("ExpressionProcedureProcess.safe_eval traceback %s" % traceback.print_exc())
 
             send_system_message(master_user=self.master_user,
                                 performed_by='System',
-                                description="Procedure %s. Done" % self.procedure_instance.id,
+                                description="Procedure %s. Done" % self.celery_task.id,
                                 )
 
         except Exception as e:
             _l.error("ExpressionProcedureProcess.process error %s" % e)
-            _l.error(traceback.print_exc())
+            _l.error("ExpressionProcedureProcess.process traceback %s" % traceback.format_exc())
 
             send_system_message(master_user=self.master_user, action_status="required", type="error",
                                 title='Expression Procedure Unknown Exception. User Code: %s' % self.procedure.user_code,

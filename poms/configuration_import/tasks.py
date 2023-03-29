@@ -19,7 +19,6 @@ from poms.common.utils import get_content_type_by_name
 from poms.complex_import.models import ComplexImportScheme
 from poms.complex_import.serializers import ComplexImportSchemeSerializer
 from poms.configuration_import.handlers import ConfigurationEntityArchetypeGenerateHandler
-from poms.configuration_import.recovery import ConfigurationRecoveryHandler
 from poms.configuration_import.serializers import ConfigurationImportAsJson
 from poms.configuration_sharing.models import SharedConfigurationFile
 from poms.counterparties.models import Responsible, Counterparty
@@ -202,7 +201,7 @@ class ConfigurationImportManager(object):
         _l.info('self.access_table %s' % self.data_access_table)
         _l.info('self.configuration_access_table %s' % self.configuration_access_table)
 
-        self.configuration_recovery_handler = ConfigurationRecoveryHandler(master_user=self.master_user)
+        # self.configuration_recovery_handler = ConfigurationRecoveryHandler(master_user=self.master_user)
 
         _l.info('self.master_user %s ' % self.master_user)
         _l.info('self.instance.mode %s ' % self.instance.mode)

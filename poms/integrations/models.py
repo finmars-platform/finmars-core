@@ -848,6 +848,8 @@ class ComplexTransactionImportScheme(NamedModel, DataTimeStampedModel):
     data_preprocess_expression = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                                   verbose_name=gettext_lazy('data preprocess expression'))
 
+    expression_iterations_count = models.SmallIntegerField(default=1) # min 1
+
     @property
     def recon_layout(self):
         try:

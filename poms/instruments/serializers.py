@@ -1474,9 +1474,6 @@ class EventScheduleSerializer(serializers.ModelSerializer):
     name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=True, allow_blank=True, allow_null=True)
     description = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, allow_null=True)
 
-    display_name = serializers.SerializerMethodField()
-    display_description = serializers.SerializerMethodField()
-
     data = serializers.JSONField(allow_null=True, required=False)
 
     class Meta:
@@ -1488,7 +1485,6 @@ class EventScheduleSerializer(serializers.ModelSerializer):
             'periodicity_n', 'periodicity_n_value_type',
             'final_date', 'final_date_value_type',
             'is_auto_generated',
-            'display_name', 'display_description',
             'actions', 'data'
         ]
         read_only_fields = ['is_auto_generated']
@@ -1518,21 +1514,21 @@ class EventScheduleSerializer(serializers.ModelSerializer):
         #             raise ValidationError({'periodicity_n': e.messages})
         return attrs
 
-    def get_display_name(self, obj):
-        r = self.root
-        if isinstance(r, ListSerializer):
-            r = r.child
-        if isinstance(r, GeneratedEventSerializer):
-            return r.generate_text(obj.name)
-        return None
-
-    def get_display_description(self, obj):
-        r = self.root
-        if isinstance(r, ListSerializer):
-            r = r.child
-        if isinstance(r, GeneratedEventSerializer):
-            return r.generate_text(obj.description)
-        return None
+    # def get_display_name(self, obj):
+    #     r = self.root
+    #     if isinstance(r, ListSerializer):
+    #         r = r.child
+    #     if isinstance(r, GeneratedEventSerializer):
+    #         return r.generate_text(obj.name)
+    #     return None
+    #
+    # def get_display_description(self, obj):
+    #     r = self.root
+    #     if isinstance(r, ListSerializer):
+    #         r = r.child
+    #     if isinstance(r, GeneratedEventSerializer):
+    #         return r.generate_text(obj.description)
+    #     return None
 
 
 class InstrumentCalculatePricesAccruedPriceSerializer(serializers.Serializer):
@@ -1567,6 +1563,7 @@ class PriceHistorySerializer(serializers.ModelSerializer):
 
             'nav',
             'cash_flow',
+            'factor',
 
             'long_delta',
             'short_delta',

@@ -20,7 +20,7 @@ def get_master_user_and_member(request):
 
         return member, master_user
 
-    except AuthToken.DoesNotExist:
+    except Exception:
 
         _l.debug('get_master_user_and_member: token not found')
 

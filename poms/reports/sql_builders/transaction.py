@@ -600,6 +600,7 @@ class TransactionReportBuilderSql:
                             (self.instance.end_date > result_item['accounting_date'] and self.instance.end_date >
                              result_item['cash_date']):
 
+
                         result_item['entry_account'] = result_item['account_cash_id']
                         result_item['entry_strategy'] = result_item['strategy1_cash_id']
                         result_item['entry_currency'] = result_item['settlement_currency_id']
@@ -666,6 +667,9 @@ class TransactionReportBuilderSql:
                              result_item['cash_date']):
 
                         if result_item['account_position_id']:
+
+                            entry1['id'] = str(result_item['id']) + '_1'
+
                             entry1['entry_account'] = result_item['account_position_id']
                             entry1['entry_strategy'] = result_item['strategy1_position_id']
                             entry1['entry_instrument'] = result_item['instrument_id']
@@ -676,6 +680,9 @@ class TransactionReportBuilderSql:
                             results.append(entry1)
 
                         if result_item['account_cash_id']:
+
+                            entry2['id'] = str(result_item['id']) + '_2'
+
                             entry2['entry_account'] = result_item['account_cash_id']
                             entry2['entry_strategy'] = result_item['strategy1_cash_id']
                             entry2['entry_currency'] = result_item['settlement_currency_id']
@@ -690,6 +697,9 @@ class TransactionReportBuilderSql:
                         if result_item['accounting_date'] < result_item['cash_date']:
 
                             if result_item['account_position_id']:
+
+                                entry1['id'] = str(result_item['id']) + '_1'
+
                                 entry1['entry_account'] = result_item['account_position_id']
                                 entry1['entry_strategy'] = result_item['strategy1_position_id']
                                 entry1['entry_instrument'] = result_item['instrument_id']
@@ -700,6 +710,9 @@ class TransactionReportBuilderSql:
                                 results.append(entry1)
 
                             if result_item['account_cash_id']:
+
+                                entry2['id'] = str(result_item['id']) + '_2'
+
                                 entry2['entry_account'] = result_item['account_interim_id']  # IMPORTANT
                                 entry2['entry_strategy'] = result_item['strategy1_cash_id']
                                 entry2['entry_currency'] = result_item['settlement_currency_id']
@@ -712,6 +725,9 @@ class TransactionReportBuilderSql:
                         else:
 
                             if result_item['account_position_id']:
+
+                                entry1['id'] = str(result_item['id']) + '_1'
+
                                 entry1['entry_account'] = result_item['account_interim_id']
                                 entry1['entry_strategy'] = result_item['strategy1_position_id']
                                 entry1['entry_instrument'] = result_item['instrument_id']
@@ -722,6 +738,9 @@ class TransactionReportBuilderSql:
                                 results.append(entry1)
 
                             if result_item['account_cash_id']:
+
+                                entry2['id'] = str(result_item['id']) + '_2'
+
                                 entry2['entry_account'] = result_item['account_cash_id']
                                 entry2['entry_strategy'] = result_item['strategy1_cash_id']
                                 entry2['entry_currency'] = result_item['settlement_currency_id']
@@ -743,6 +762,9 @@ class TransactionReportBuilderSql:
                              result_item['cash_date']):
 
                         if result_item['account_position_id']:
+
+                            entry1['id'] = str(result_item['id']) + '_1'
+
                             entry1['entry_account'] = result_item['account_position_id']
                             entry1['entry_strategy'] = result_item['strategy1_cash_id']
                             entry1['entry_currency'] = result_item['transaction_currency_id']
@@ -753,6 +775,9 @@ class TransactionReportBuilderSql:
                             results.append(entry1)
 
                         if result_item['account_cash_id']:
+
+                            entry2['id'] = str(result_item['id']) + '_2'
+
                             entry2['entry_account'] = result_item['account_cash_id']
                             entry2['entry_strategy'] = result_item['strategy1_cash_id']
                             entry2['entry_currency'] = result_item['settlement_currency_id']
@@ -767,6 +792,9 @@ class TransactionReportBuilderSql:
                         if result_item['accounting_date'] < result_item['cash_date']:
 
                             if result_item['account_position_id']:
+
+                                entry1['id'] = str(result_item['id']) + '_1'
+
                                 entry1['entry_account'] = result_item['account_position_id']
                                 entry1['entry_strategy'] = result_item['strategy1_cash_id']
                                 entry1['entry_currency'] = result_item['transaction_currency_id']
@@ -777,6 +805,9 @@ class TransactionReportBuilderSql:
                                 results.append(entry1)
 
                             if result_item['account_cash_id']:
+
+                                entry2['id'] = str(result_item['id']) + '_2'
+
                                 entry2['entry_account'] = result_item['account_interim_id'] # IMPORTANT
                                 entry2['entry_strategy'] = result_item['strategy1_cash_id']
                                 entry2['entry_currency'] = result_item['settlement_currency_id']
@@ -789,6 +820,9 @@ class TransactionReportBuilderSql:
                         else:
 
                             if result_item['account_position_id']:
+
+                                entry1['id'] = str(result_item['id']) + '_1'
+
                                 entry1['entry_account'] = result_item['account_interim_id']
                                 entry1['entry_strategy'] = result_item['strategy1_cash_id']
                                 entry1['entry_currency'] = result_item['transaction_currency_id']
@@ -799,6 +833,9 @@ class TransactionReportBuilderSql:
                                 results.append(entry1)
 
                             if result_item['account_cash_id']:
+
+                                entry2['id'] = str(result_item['id']) + '_2'
+
                                 entry2['entry_account'] = result_item['account_cash_id']
                                 entry2['entry_strategy'] = result_item['strategy1_cash_id']
                                 entry2['entry_currency'] = result_item['settlement_currency_id']
@@ -820,6 +857,8 @@ class TransactionReportBuilderSql:
 
                         if result_item['account_position_id']:  # from
 
+                            entry1['id'] = str(result_item['id']) + '_1'
+
                             entry1['entry_account'] = result_item['account_position_id']
                             entry1['entry_strategy'] = result_item['strategy1_cash_id']
                             entry1['entry_currency'] = result_item['settlement_currency_id']
@@ -830,6 +869,8 @@ class TransactionReportBuilderSql:
                             results.append(entry1)
 
                         if result_item['account_cash_id']:  # to
+
+                            entry2['id'] = str(result_item['id']) + '_2'
 
                             entry2['entry_account'] = result_item['account_cash_id']
                             entry2['entry_strategy'] = result_item['strategy1_position_id']
@@ -846,6 +887,8 @@ class TransactionReportBuilderSql:
 
                             if result_item['account_position_id']:  # from
 
+                                entry1['id'] = str(result_item['id']) + '_1'
+
                                 entry1['entry_account'] = result_item['account_position_id']
                                 entry1['entry_strategy'] = result_item['strategy1_cash_id']
                                 entry1['entry_currency'] = result_item['settlement_currency_id']
@@ -856,6 +899,8 @@ class TransactionReportBuilderSql:
                                 results.append(entry1)
 
                             if result_item['account_cash_id']:  # to
+
+                                entry2['id'] = str(result_item['id']) + '_2'
 
                                 entry2['entry_account'] = result_item['account_interim_id'] # IMPORTANT
                                 entry2['entry_strategy'] = result_item['strategy1_position_id']
@@ -870,6 +915,8 @@ class TransactionReportBuilderSql:
 
                             if result_item['account_position_id']:  # from
 
+                                entry1['id'] = str(result_item['id']) + '_1'
+
                                 entry1['entry_account'] = result_item['account_interim_id']
                                 entry1['entry_strategy'] = result_item['strategy1_cash_id']
                                 entry1['entry_currency'] = result_item['settlement_currency_id']
@@ -880,6 +927,8 @@ class TransactionReportBuilderSql:
                                 results.append(entry1)
 
                             if result_item['account_cash_id']:  # to
+
+                                entry2['id'] = str(result_item['id']) + '_2'
 
                                 entry2['entry_account'] = result_item['account_cash_id']
                                 entry2['entry_strategy'] = result_item['strategy1_position_id']
@@ -903,6 +952,7 @@ class TransactionReportBuilderSql:
                              result_item['cash_date']):
 
                         if result_item['account_position_id']:  # to
+                            entry2['id'] = str(result_item['id']) + '_2'
 
                             entry2['entry_account'] = result_item['account_position_id']
                             entry2['entry_strategy'] = result_item['strategy1_cash_id']
@@ -914,6 +964,8 @@ class TransactionReportBuilderSql:
                             results.append(entry2)
 
                         if result_item['account_cash_id']:  # from
+
+                            entry1['id'] = str(result_item['id']) + '_1'
 
                             entry1['entry_account'] = result_item['account_position_id']
                             entry1['entry_strategy'] = result_item['strategy1_position_id']
@@ -931,6 +983,8 @@ class TransactionReportBuilderSql:
 
                             if result_item['account_position_id']:  # to
 
+                                entry2['id'] = str(result_item['id']) + '_2'
+
                                 entry2['entry_account'] = result_item['account_position_id'] # Important
                                 entry2['entry_strategy'] = result_item['strategy1_cash_id']
                                 entry2['entry_currency'] = result_item['settlement_currency_id']
@@ -941,6 +995,8 @@ class TransactionReportBuilderSql:
                                 results.append(entry2)
 
                             if result_item['account_cash_id']:  # from
+
+                                entry1['id'] = str(result_item['id']) + '_2'
 
                                 entry1['entry_account'] = result_item['account_interim_id']
                                 entry1['entry_strategy'] = result_item['strategy1_position_id']
@@ -955,6 +1011,8 @@ class TransactionReportBuilderSql:
 
                             if result_item['account_position_id']:  # to
 
+                                entry2['id'] = str(result_item['id']) + '_2'
+
                                 entry2['entry_account'] = result_item['account_interim_id']
                                 entry2['entry_strategy'] = result_item['strategy1_cash_id']
                                 entry2['entry_currency'] = result_item['settlement_currency_id']
@@ -965,6 +1023,8 @@ class TransactionReportBuilderSql:
                                 results.append(entry2)
 
                             if result_item['account_cash_id']:  # from
+
+                                entry1['id'] = str(result_item['id']) + '_1'
 
                                 entry1['entry_account'] = result_item['account_position_id']
                                 entry1['entry_strategy'] = result_item['strategy1_position_id']
