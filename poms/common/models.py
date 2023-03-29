@@ -10,6 +10,14 @@ from poms.common.middleware import get_request
 EXPRESSION_FIELD_LENGTH = 4096
 
 
+class OwnerModel(models.Model):
+
+    owner = models.ForeignKey('users.Member', verbose_name=gettext_lazy('owner'),
+                              on_delete=models.CASCADE)
+
+    class Meta:
+        abstract = True
+
 class NamedModel(models.Model):
     user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
     name = models.CharField(max_length=255, verbose_name=gettext_lazy('name'))

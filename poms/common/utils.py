@@ -453,3 +453,34 @@ def finmars_exception_handler(exc, context):
         error["details"] = response.data
         response.data = error_payload
     return response
+
+
+def get_serializer(content_type_key):
+
+    from poms.instruments.serializers import InstrumentSerializer
+
+    from poms.accounts.serializers import AccountSerializer
+    from poms.accounts.serializers import AccountTypeSerializer
+    from poms.portfolios.serializers import PortfolioSerializer
+    from poms.instruments.serializers import PriceHistorySerializer
+    from poms.currencies.serializers import CurrencyHistorySerializer
+    from poms.counterparties.serializers import CounterpartySerializer
+    from poms.counterparties.serializers import ResponsibleSerializer
+    from poms.strategies.serializers import Strategy1Serializer
+    from poms.strategies.serializers import Strategy2Serializer
+
+    serializer_map = {
+        'instruments.instrument': InstrumentSerializer,
+        'accounts.account': AccountSerializer,
+        'accounts.accounttype': AccountTypeSerializer,
+        'portfolios.portfolio': PortfolioSerializer,
+        'instruments.pricehistory': PriceHistorySerializer,
+        'currencies.currencyhistory': CurrencyHistorySerializer,
+        'counterparties.counterparty': CounterpartySerializer,
+        'counterparties.responsible': ResponsibleSerializer,
+        'strategies.strategy1': Strategy1Serializer,
+        'strategies.strategy2': Strategy2Serializer,
+        'strategies.strategy3': Strategy2Serializer,
+    }
+
+    return serializer_map[content_type_key]

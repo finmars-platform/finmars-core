@@ -8,12 +8,28 @@ from poms.common.filters import ClassifierRootFilter
 from poms.system_messages.handlers import send_system_message
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.utils import get_member_from_context, get_master_user_from_context
+from poms_app import settings
 
 
 class PomsClassSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ['id', 'user_code', 'name', 'description', ]
 
+
+class ModelMetaSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+
+        representation = super().to_representation(instance)
+
+        representation['meta'] = {
+            'content_type': self.Meta.model._meta.app_label + '.' + self.Meta.model._meta.model_name,
+            'app_label': self.Meta.model._meta.app_label,
+            'model_name': self.Meta.model._meta.model_name,
+            'space_code': settings.BASE_API_URL
+        }
+
+        return representation
 
 class ModelWithTimeStampSerializer(serializers.ModelSerializer):
 
@@ -34,7 +50,7 @@ class ModelWithTimeStampSerializer(serializers.ModelSerializer):
         return data
 
 
-class ModelWithUserCodeSerializer(serializers.ModelSerializer):
+class ModelWithUserCodeSerializer(ModelMetaSerializer):
     def __init__(self, *args, **kwargs):
         super(ModelWithUserCodeSerializer, self).__init__(*args, **kwargs)
         self.fields['user_code'] = UserCodeField()

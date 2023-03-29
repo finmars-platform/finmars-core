@@ -17,6 +17,7 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common import formula
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.storage import get_storage
+from poms.common.utils import get_serializer
 from poms.csv_import.models import CsvImportScheme, SimpleImportResult, ProcessType, SimpleImportProcessPreprocessItem, \
     SimpleImportConversionItem, SimpleImportProcessItem, SimpleImportImportedItem
 from poms.csv_import.serializers import SimpleImportResultSerializer
@@ -856,36 +857,6 @@ class SimpleImportProcess(object):
 
         _l.info('SimpleImportProcess.Task %s. process_type %s' % (self.task, self.process_type))
 
-    def get_serializer(self, content_type_key):
-
-        from poms.instruments.serializers import InstrumentSerializer
-
-        from poms.accounts.serializers import AccountSerializer
-        from poms.accounts.serializers import AccountTypeSerializer
-        from poms.portfolios.serializers import PortfolioSerializer
-        from poms.instruments.serializers import PriceHistorySerializer
-        from poms.currencies.serializers import CurrencyHistorySerializer
-        from poms.counterparties.serializers import CounterpartySerializer
-        from poms.counterparties.serializers import ResponsibleSerializer
-        from poms.strategies.serializers import Strategy1Serializer
-        from poms.strategies.serializers import Strategy2Serializer
-
-        serializer_map = {
-            'instruments.instrument': InstrumentSerializer,
-            'accounts.account': AccountSerializer,
-            'accounts.accounttype': AccountTypeSerializer,
-            'portfolios.portfolio': PortfolioSerializer,
-            'instruments.pricehistory': PriceHistorySerializer,
-            'currencies.currencyhistory': CurrencyHistorySerializer,
-            'counterparties.counterparty': CounterpartySerializer,
-            'counterparties.responsible': ResponsibleSerializer,
-            'strategies.strategy1': Strategy1Serializer,
-            'strategies.strategy2': Strategy2Serializer,
-            'strategies.strategy3': Strategy2Serializer,
-        }
-
-        return serializer_map[content_type_key]
-
     def get_verbose_result(self):
 
         imported_count = 0
@@ -1392,7 +1363,7 @@ class SimpleImportProcess(object):
 
         content_type_key = self.scheme.content_type.app_label + '.' + self.scheme.content_type.model
 
-        serializer_class = self.get_serializer(content_type_key)
+        serializer_class = get_serializer(content_type_key)
 
         if not item.imported_items:
             item.imported_items = []

@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import json
 from datetime import date, datetime, timedelta
 from functools import lru_cache
 
@@ -23,7 +24,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer
 from poms.common.utils import get_list_of_business_days_between_two_dates, get_closest_bday_of_yesterday, \
-    get_list_of_dates_between_two_dates, last_day_of_month
+    get_list_of_dates_between_two_dates, last_day_of_month, get_serializer
 from poms.common.views import AbstractViewSet, AbstractApiView
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory, PricingPolicy, Instrument
@@ -828,6 +829,45 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
                              queue='backend-delete-queue')
 
         return Response({"task_id": celery_task.id})
+
+
+class UniversalInputViewSet(AbstractViewSet):
+
+    def import_item(self, item):
+
+        meta = item.get('meta', None)
+
+        if not meta:
+            raise ValueError("Meta is not found. Could not process JSON")
+
+        serializer_class = get_serializer(meta['content_type'])
+
+        serializer = serializer_class(data=item, context=self.context)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+
+    def create(self, request):
+
+        data = json.loads(request.data)
+
+        # TODO implement logic when Meta field is available
+
+        self.context = {
+            'master_user': request.user.master_user,
+            'member': request.user.member,
+            'request': request
+        }
+
+        if isinstance(data, dict):
+            self.import_item(data)
+        else:
+            for item in data:
+                self.import_item(item)
+
+        _l.info('UniversalInputViewSet.data %s' % data)
+
+        return Response({"status": "ok"})
 
 
 class CalendarEventsViewSet(AbstractViewSet):
