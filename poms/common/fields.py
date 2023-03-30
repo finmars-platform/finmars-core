@@ -5,8 +5,8 @@ from django.utils.translation import gettext_lazy
 from rest_framework import ISO_8601
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField, DateTimeField, FloatField, empty, RegexField
-from rest_framework.relations import PrimaryKeyRelatedField, SlugRelatedField
-
+from rest_framework.relations import PrimaryKeyRelatedField, SlugRelatedField, RelatedField
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from poms.common import formula
 
 
@@ -63,6 +63,26 @@ class SlugRelatedFilteredField(SlugRelatedField):
             for backend in self.filter_backends:
                 queryset = backend().filter_queryset(request, queryset, None)
         return queryset
+
+# Thats cool
+class UserCodeOrPrimaryKeyRelatedField(RelatedField):
+
+    def to_internal_value(self, data):
+        queryset = self.get_queryset()
+        try:
+            if isinstance(data, str):
+                return queryset.get(user_code=data)
+            else:
+                return queryset.get(pk=data)
+        except ObjectDoesNotExist:
+            self.fail('does_not_exist', slug_name='user_code', value=str(data))
+        except (TypeError, ValueError):
+            self.fail('invalid')
+
+    def to_representation(self, obj):
+        return getattr(obj, 'id')
+
+
 
 
 class UserCodeField(CharField):

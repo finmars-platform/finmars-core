@@ -18,7 +18,9 @@ from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerial
 from poms.common.utils import date_now
 from poms.currencies.fields import CurrencyDefault
 from poms.currencies.serializers import CurrencyField, CurrencyViewSerializer
-from poms.instruments.fields import InstrumentField, PricingPolicyField
+from poms.instruments.fields import InstrumentField, PricingPolicyField, InstrumentTypeField, CountryField, \
+    PricingConditionField, PaymentSizeDetailField, DailyPricingModelField, PeriodicityField, \
+    AccrualCalculationModelField
 from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, DailyPricingModel, \
     AccrualCalculationModel, PaymentSizeDetail, Periodicity, CostMethod, InstrumentType, \
     ManualPricingFormula, AccrualCalculationSchedule, InstrumentFactorSchedule, EventSchedule, \
@@ -878,6 +880,24 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
                            ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
+    pricing_currency = CurrencyField()
+    accrued_currency = CurrencyField()
+
+    instrument_type = InstrumentTypeField()
+
+    co_directional_exposure_currency = CurrencyField()
+    counter_directional_exposure_currency = CurrencyField()
+
+    long_underlying_instrument = InstrumentField(required=False, allow_null=True)
+    short_underlying_instrument = InstrumentField(required=False, allow_null=True)
+
+    pricing_condition = PricingConditionField()
+    payment_size_detail = PaymentSizeDetailField()
+    daily_pricing_model = DailyPricingModelField(required=False, allow_null=True)
+    country = CountryField()
+
+    # ==== Objects below ====
+
     instrument_type_object = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
     pricing_currency_object = serializers.PrimaryKeyRelatedField(source='pricing_currency', read_only=True)
     accrued_currency_object = serializers.PrimaryKeyRelatedField(source='accrued_currency', read_only=True)
@@ -900,12 +920,12 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
     # price_download_scheme = PriceDownloadSchemeField(allow_null=True, required=False)
     # price_download_scheme_object = serializers.PrimaryKeyRelatedField(source='price_download_scheme', read_only=True)
 
-    manual_pricing_formulas = serializers.PrimaryKeyRelatedField(many=True, required=False, allow_null=True,
-                                                                 read_only=True)
-    accrual_calculation_schedules = serializers.PrimaryKeyRelatedField(many=True, required=False, allow_null=True,
-                                                                       read_only=True)
-    factor_schedules = serializers.PrimaryKeyRelatedField(many=True, required=False, allow_null=True, read_only=True)
-    event_schedules = serializers.PrimaryKeyRelatedField(many=True, required=False, allow_null=True, read_only=True)
+    # manual_pricing_formulas = serializers.PrimaryKeyRelatedField(many=True, required=False, allow_null=True,
+    #                                                              read_only=True)
+    # accrual_calculation_schedules = serializers.PrimaryKeyRelatedField(many=True, required=False, allow_null=True,
+    #                                                                    read_only=True)
+    # factor_schedules = serializers.PrimaryKeyRelatedField(many=True, required=False, allow_null=True, read_only=True)
+    # event_schedules = serializers.PrimaryKeyRelatedField(many=True, required=False, allow_null=True, read_only=True)
 
     country_object = CountrySerializer(source='country', read_only=True)
 
@@ -1395,8 +1415,12 @@ class ManualPricingFormulaSerializer(serializers.ModelSerializer):
 class AccrualCalculationScheduleSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
     # periodicity_n = serializers.IntegerField(required=False, default=0, initial=0, min_value=0, max_value=10 * 365)
+
+    accrual_calculation_model = AccrualCalculationModelField()
     accrual_calculation_model_object = AccrualCalculationModelSerializer(source='accrual_calculation_model',
-                                                                         read_only=True)
+                                                                                read_only=True)
+
+    periodicity = PeriodicityField(allow_null=False)
     periodicity_object = PeriodicitySerializer(source='periodicity', read_only=True)
 
     class Meta:

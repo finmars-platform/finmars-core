@@ -1,8 +1,8 @@
 from __future__ import unicode_literals
 
-from poms.common.fields import PrimaryKeyRelatedFilteredField
+from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeOrPrimaryKeyRelatedField
 from poms.instruments.models import Instrument, InstrumentType, PricingPolicy, AccrualCalculationModel, Periodicity, \
-    EventSchedule, CostMethod
+    EventSchedule, CostMethod, Country, PricingCondition, PaymentSizeDetail, DailyPricingModel
 from poms.obj_perms.fields import PrimaryKeyRelatedFilteredWithObjectPermissionField
 from poms.portfolios.models import PortfolioBundle
 from poms.transactions.models import NotificationClass, EventClass, TransactionTypeInputSettings, TransactionTypeInput
@@ -33,7 +33,7 @@ class InstrumentTypeDefault(object):
         return self._master_user.instrument_type
 
 
-class InstrumentTypeField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+class InstrumentTypeField(UserCodeOrPrimaryKeyRelatedField):
     queryset = InstrumentType.objects
     filter_backends = [
         OwnerByMasterUserFilter,
@@ -52,11 +52,32 @@ class InstrumentDefault(object):
         return self._master_user.instrument
 
 
-class InstrumentField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+class InstrumentField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Instrument.objects
     filter_backends = [
         OwnerByMasterUserFilter,
     ]
+
+class CountryField(UserCodeOrPrimaryKeyRelatedField):
+    queryset = Country.objects
+    filter_backends = [
+    ]
+
+class PricingConditionField(UserCodeOrPrimaryKeyRelatedField):
+    queryset = PricingCondition.objects
+    filter_backends = [
+    ]
+
+class PaymentSizeDetailField(UserCodeOrPrimaryKeyRelatedField):
+    queryset = PaymentSizeDetail.objects
+    filter_backends = [
+    ]
+
+class DailyPricingModelField(UserCodeOrPrimaryKeyRelatedField):
+    queryset = DailyPricingModel.objects
+    filter_backends = [
+    ]
+
 
 
 class RegisterField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
@@ -89,11 +110,11 @@ class TransactionTypeInputField(PrimaryKeyRelatedFilteredField):
     queryset = TransactionTypeInput.objects
 
 
-class AccrualCalculationModelField(PrimaryKeyRelatedFilteredField):
+class AccrualCalculationModelField(UserCodeOrPrimaryKeyRelatedField):
     queryset = AccrualCalculationModel.objects
 
 
-class PeriodicityField(PrimaryKeyRelatedFilteredField):
+class PeriodicityField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Periodicity.objects
 
 
