@@ -24,7 +24,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer
 from poms.common.utils import get_list_of_business_days_between_two_dates, get_closest_bday_of_yesterday, \
-    get_list_of_dates_between_two_dates, last_day_of_month, get_serializer
+    get_list_of_dates_between_two_dates, last_day_of_month, get_serializer, get_content_type_by_name
 from poms.common.views import AbstractViewSet, AbstractApiView
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory, PricingPolicy, Instrument
@@ -840,12 +840,54 @@ class UniversalInputViewSet(AbstractViewSet):
         if not meta:
             raise ValueError("Meta is not found. Could not process JSON")
 
-        serializer_class = get_serializer(meta['content_type'])
+        if meta['content_type'] == 'transactions.complextransaction':
 
-        serializer = serializer_class(data=item, context=self.context)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+            from poms.transactions.handlers import TransactionTypeProcess
 
+            from poms.transactions.models import TransactionType
+            transaction_type = TransactionType.objects.get(user_code=item['transaction_type'])
+
+            values = {}
+
+            for input in item['inputs']:
+
+                if input['value_type'] == 10:
+                    values[input['transaction_type_input']] = input['value_string']
+
+                if input['value_type'] == 20:
+                    values[input['transaction_type_input']] = input['value_float']
+
+                if input['value_type'] == 40:
+                    values[input['transaction_type_input']] = input['value_date']
+
+                if input['value_type'] == 100:
+                    content_type_key = input['content_type']
+
+                    content_type = get_content_type_by_name(content_type_key)
+                    try:
+                        values[input['transaction_type_input']] = content_type.model_class().objects.get(
+                            user_code=input['value_relation'])
+                    except Exception as e:
+                        pass
+
+            process_instance = TransactionTypeProcess(
+                transaction_type=transaction_type,
+                default_values=values,
+                context=self.context,
+                member=self.context['request'].user.member,
+                source=item['source'],
+                execution_context="manual"
+            )
+
+            process_instance.process()
+
+        else:
+
+            serializer_class = get_serializer(meta['content_type'])
+
+            serializer = serializer_class(data=item, context=self.context)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
 
     def create(self, request):
 

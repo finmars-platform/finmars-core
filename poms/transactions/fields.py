@@ -4,7 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.encoding import force_str
 from rest_framework.fields import ReadOnlyField
-from rest_framework.relations import PrimaryKeyRelatedField
+from rest_framework.relations import PrimaryKeyRelatedField, RelatedField
 
 from poms.common.fields import SlugRelatedFilteredField
 from poms.obj_perms.fields import PrimaryKeyRelatedFilteredWithObjectPermissionField
@@ -29,7 +29,7 @@ class TransactionTypeField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
     ]
 
 
-class TransactionTypeInputField(PrimaryKeyRelatedField):
+class TransactionTypeInputField(RelatedField):
     queryset = TransactionTypeInput.objects
 
     def get_queryset(self):
@@ -43,6 +43,20 @@ class TransactionTypeInputField(PrimaryKeyRelatedField):
         # queryset = ObjectPermissionFilter().simple_filter_queryset(member, queryset)
         return qs.filter(transaction_type__in=tt_qs)
 
+    def to_internal_value(self, data):
+        queryset = self.get_queryset()
+        try:
+            if isinstance(data, str):
+                return queryset.get(name=data)
+            else:
+                return queryset.get(pk=data)
+        except ObjectDoesNotExist:
+            self.fail('does_not_exist', slug_name='name', value=str(data))
+        except (TypeError, ValueError):
+            self.fail('invalid')
+
+    def to_representation(self, obj):
+        return getattr(obj, 'id')
 
 # class TransactionClassifierField(AttributeClassifierBaseField):
 #     queryset = TransactionClassifier.objects

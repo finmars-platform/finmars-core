@@ -15,7 +15,8 @@ from poms.accounts.models import Account
 from poms.common import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, \
+    ModelMetaSerializer
 from poms.counterparties.fields import ResponsibleField, CounterpartyField, ResponsibleDefault, CounterpartyDefault
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.fields import CurrencyField, CurrencyDefault, SystemCurrencyDefault
@@ -37,7 +38,7 @@ from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Fiel
     Strategy3Default
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.fields import TransactionTypeInputContentTypeField, \
-    TransactionTypeGroupField, ReadOnlyContentTypeField
+    TransactionTypeGroupField, ReadOnlyContentTypeField, TransactionTypeInputField
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionClass, Transaction, TransactionType, TransactionTypeAction, \
     TransactionTypeActionTransaction, TransactionTypeActionInstrument, TransactionTypeInput, TransactionTypeGroup, \
@@ -45,7 +46,7 @@ from poms.transactions.models import TransactionClass, Transaction, TransactionT
     TransactionTypeActionInstrumentManualPricingFormula, \
     TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
     TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionExecuteCommand, \
-    TransactionTypeInputSettings, ComplexTransactionStatus, TransactionTypeContextParameter
+    TransactionTypeInputSettings, ComplexTransactionStatus, TransactionTypeContextParameter, ComplexTransactionInput
 from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.utils import get_member_from_context
 
@@ -2680,9 +2681,37 @@ class ComplexTransactionMixin:
             data['text'] = instance._cached_text
         return data
 
+class ComplexTransactionInputSerializer(serializers.ModelSerializer):
+
+    transaction_type_input = TransactionTypeInputField()
+    transaction_type_input_object = TransactionTypeInputSerializer(source='transaction_type_input')
+
+    value_type = serializers.SerializerMethodField(read_only=True)
+    content_type = serializers.SerializerMethodField(read_only=True)
+    class Meta:
+        model = ComplexTransactionInput
+        fields = [
+            'transaction_type_input',
+            'transaction_type_input_object',
+            'content_type',
+            'value_type',
+            'value_string',
+            'value_float',
+            'value_date',
+            'value_relation',
+        ]
+
+    def get_value_type(self, instance):
+        return instance.transaction_type_input.value_type
+
+    def get_content_type(self, instance):
+        if instance.transaction_type_input.content_type:
+            return instance.transaction_type_input.content_type.app_label + '.' + instance.transaction_type_input.content_type.model
+        return None
+
 
 class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
-                                   ModelWithTimeStampSerializer):
+                                   ModelWithTimeStampSerializer, ModelMetaSerializer):
     # text = serializers.SerializerMethodField()
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -2690,6 +2719,8 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
 
     recon_fields = ReconciliationComplexTransactionFieldSerializer(required=False, many=True)
     source = serializers.JSONField(read_only=True, allow_null=True)
+
+    inputs = ComplexTransactionInputSerializer(many=True)
 
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionSerializer, self).__init__(*args, **kwargs)
@@ -2728,7 +2759,7 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
 
             'recon_fields',
 
-            'execution_log', 'source'
+            'execution_log', 'source', 'inputs'
 
         ]
 
