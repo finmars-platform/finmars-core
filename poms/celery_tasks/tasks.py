@@ -230,7 +230,7 @@ def universal_input(self, task_id):
             except Exception as e:
 
                 result[str(i)] = {
-                    'status': 'success',
+                    'status': 'error',
                     'error_message': str(e)
                 }
 
