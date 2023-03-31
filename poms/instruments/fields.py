@@ -95,7 +95,7 @@ class BundleField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
     ]
 
 
-class PricingPolicyField(PrimaryKeyRelatedFilteredField):
+class PricingPolicyField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PricingPolicy.objects
     filter_backends = [
         OwnerByMasterUserFilter,

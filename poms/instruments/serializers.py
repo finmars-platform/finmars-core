@@ -14,7 +14,8 @@ from rest_framework.serializers import ListSerializer
 
 from poms.common.fields import ExpressionField, FloatEvalField, DateTimeTzAwareField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, \
+    ModelMetaSerializer
 from poms.common.utils import date_now
 from poms.currencies.fields import CurrencyDefault
 from poms.currencies.serializers import CurrencyField, CurrencyViewSerializer
@@ -1567,7 +1568,7 @@ class InstrumentCalculatePricesAccruedPriceSerializer(serializers.Serializer):
         return attrs
 
 
-class PriceHistorySerializer(serializers.ModelSerializer):
+class PriceHistorySerializer(ModelMetaSerializer):
     instrument = InstrumentField()
     instrument_object = InstrumentViewSerializer(source='instrument', read_only=True)
     pricing_policy = PricingPolicyField(allow_null=False)

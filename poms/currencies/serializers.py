@@ -5,7 +5,7 @@ from rest_framework import serializers
 from rest_framework.fields import ReadOnlyField
 
 from poms.common.fields import FloatEvalField
-from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer
 from poms.currencies.fields import CurrencyField
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.fields import PricingPolicyField
@@ -227,7 +227,7 @@ class CurrencyViewSerializer(ModelWithUserCodeSerializer):
         ]
 
 
-class CurrencyHistorySerializer(ModelWithTimeStampSerializer):
+class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerializer):
     # url = serializers.HyperlinkedIdentityField(view_name='currencyhistory-detail')
     currency = CurrencyField()
     currency_object = CurrencyViewSerializer(source='currency', read_only=True)

@@ -833,83 +833,27 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
 
 class UniversalInputViewSet(AbstractViewSet):
 
-    def import_item(self, item):
 
-        meta = item.get('meta', None)
-
-        if not meta:
-            raise ValueError("Meta is not found. Could not process JSON")
-
-        if meta['content_type'] == 'transactions.complextransaction':
-
-            from poms.transactions.handlers import TransactionTypeProcess
-
-            from poms.transactions.models import TransactionType
-            transaction_type = TransactionType.objects.get(user_code=item['transaction_type'])
-
-            values = {}
-
-            for input in item['inputs']:
-
-                if input['value_type'] == 10:
-                    values[input['transaction_type_input']] = input['value_string']
-
-                if input['value_type'] == 20:
-                    values[input['transaction_type_input']] = input['value_float']
-
-                if input['value_type'] == 40:
-                    values[input['transaction_type_input']] = input['value_date']
-
-                if input['value_type'] == 100:
-                    content_type_key = input['content_type']
-
-                    content_type = get_content_type_by_name(content_type_key)
-                    try:
-                        values[input['transaction_type_input']] = content_type.model_class().objects.get(
-                            user_code=input['value_relation'])
-                    except Exception as e:
-                        pass
-
-            process_instance = TransactionTypeProcess(
-                transaction_type=transaction_type,
-                default_values=values,
-                context=self.context,
-                member=self.context['request'].user.member,
-                source=item['source'],
-                execution_context="manual"
-            )
-
-            process_instance.process()
-
-        else:
-
-            serializer_class = get_serializer(meta['content_type'])
-
-            serializer = serializer_class(data=item, context=self.context)
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
 
     def create(self, request):
 
         data = json.loads(request.data)
 
-        # TODO implement logic when Meta field is available
+        from poms.celery_tasks.models import CeleryTask
+        celery_task = CeleryTask.objects.create(
+            member=self.request.user.member,
+            master_user=self.request.user.master_user,
+            options_object=data,
+            type='universal_input'
+        )
 
-        self.context = {
-            'master_user': request.user.master_user,
-            'member': request.user.member,
-            'request': request
-        }
+        from poms.celery_tasks.tasks import universal_input
 
-        if isinstance(data, dict):
-            self.import_item(data)
-        else:
-            for item in data:
-                self.import_item(item)
+        universal_input.apply_async(kwargs={"task_id": celery_task.id})
 
-        _l.info('UniversalInputViewSet.data %s' % data)
+        # _l.info('UniversalInputViewSet.data %s' % data)
 
-        return Response({"status": "ok"})
+        return Response({"status": "ok", "task_id": celery_task.id})
 
 
 class CalendarEventsViewSet(AbstractViewSet):
