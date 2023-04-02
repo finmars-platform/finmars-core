@@ -88,6 +88,65 @@ class CurrencyViewSet(AbstractWithObjectPermissionViewSet):
 
         return result
 
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+
+        items = [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "reference_for_pricing",
+                "name": "Reference for pricing",
+                "value_type": 10
+            },
+            {
+                "key": "default_fx_rate",
+                "name": "Default FX rate",
+                "value_type": 20
+            },
+            {
+                "key": "pricing_condition",
+                "name": "Pricing Condition",
+                "value_content_type": "instruments.pricingcondition",
+                "value_entity": "pricing-condition",
+                "code": "user_code",
+                "value_type": "field"
+            }
+        ]
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
+
+
 
 class CurrencyEvFilterSet(FilterSet):
     id = NoOpFilter()
@@ -210,6 +269,53 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
         'pricing_policy', 'pricing_policy__user_code', 'pricing_policy__name', 'pricing_policy__short_name',
         'pricing_policy__public_name',
     ]
+
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+
+        items = [
+            {
+                "key": "currency",
+                "name": "Currency",
+                "value_type": "field",
+                "value_entity": "currency",
+                "value_content_type": "",
+                "code": "currencies.currency"
+            },
+            {
+                "key": "date",
+                "name": "Date",
+                "value_type": 40
+            },
+            {
+                "key": "fx_rate",
+                "name": "Fx rate",
+                "value_type": 20
+            },
+            {
+                "key": "pricing_policy",
+                "name": "Pricing policy",
+                "value_type": "field",
+                "value_entity": "pricing_policy",
+                "value_content_type": "instruments.pricingpolicy",
+                "code": "user_code"
+            },
+
+            {
+                "key": "procedure_modified_datetime",
+                "name": "Modified Date And Time",
+                "value_type": 40
+            }
+        ]
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
 
 
 class CurrencyHistoryEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):

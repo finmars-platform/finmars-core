@@ -29,7 +29,7 @@ from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoice
 from poms.common.jwt import encode_with_jwt
 from poms.common.mixins import UpdateModelMixinExt
 from poms.common.pagination import CustomPaginationMixin
-from poms.common.utils import date_now
+from poms.common.utils import date_now, get_list_of_entity_attributes
 from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.csv_import.handlers import handler_instrument_object
 from poms.currencies.models import Currency
@@ -523,8 +523,6 @@ class InstrumentFilterSet(FilterSet):
         fields = []
 
 
-# For usual GET/PUT/ADD/CREATE
-# Not for getting List
 class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Instrument.objects.select_related(
         'instrument_type',
@@ -596,6 +594,233 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
         result = self.get_paginated_response(serializer.data)
 
         return result
+
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+
+        items = [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "instrument_type",
+                "name": "Instrument type",
+                "value_type": "field",
+                "value_content_type": "instruments.instrumenttype",
+                "value_entity": "instrument-type",
+                "code": "user_code"
+            },
+            {
+                "key": "is_active",
+                "name": "Is active",
+                "value_type": 50
+            },
+            {
+                "key": "has_linked_with_portfolio",
+                "name": "Has linked with portfolio",
+                "value_type": 50
+            },
+            {
+                "key": "reference_for_pricing",
+                "name": "Reference for pricing",
+                "value_type": 10
+            },
+            {
+                "key": "pricing_currency",
+                "name": "Pricing currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "price_multiplier",
+                "name": "Price multiplier",
+                "value_type": 20
+            },
+            {
+                "key": "position_reporting",
+                "name": "Position reporting",
+                "value_content_type": "instruments.positionreporting",
+                "value_entity": "position-reporting",
+                "value_type": "field",
+            },
+            {
+                "key": "accrued_currency",
+                "name": "Accrued currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "maturity_date",
+                "name": "Maturity date",
+                "value_type": 40
+            },
+            {
+                "key": "maturity_price",
+                "name": "Maturity price",
+                "value_type": 20
+            },
+            {
+                "key": "accrued_multiplier",
+                "name": "Accrued multiplier",
+                "value_type": 20
+            },
+            {
+                "key": "pricing_condition",
+                "name": "Pricing Condition",
+                "value_content_type": "instruments.pricingcondition",
+                "value_entity": "pricing-condition",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "payment_size_detail",
+                "name": "Accrual Size Clarification",
+                "value_content_type": "instruments.paymentsizedetail",
+                "value_entity": "payment-size-detail",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "default_price",
+                "name": "Default price",
+                "value_type": 20
+            },
+            {
+                "key": "default_accrued",
+                "name": "Default accrued",
+                "value_type": 20
+            },
+            {
+                "key": "user_text_1",
+                "name": "User text 1",
+                "value_type": 10
+            },
+            {
+                "key": "user_text_2",
+                "name": "User text 2",
+                "value_type": 10
+            },
+            {
+                "key": "user_text_3",
+                "name": "User text 3",
+                "value_type": 10
+            },
+            {
+                "key": "object_permissions",
+                "name": "Object permissions",
+                "value_type": "mc_field"
+            },
+
+
+            {
+                "key": "underlying_long_multiplier",
+                "name": "Underlying long multiplier",
+                "value_type": 20
+            },
+            {
+                "key": "underlying_short_multiplier",
+                "name": "Underlying short multiplier",
+                "value_type": 20
+            },
+
+            {
+                "key": "co_directional_exposure_currency",
+                "name": "Exposure Co-Directional Currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "counter_directional_exposure_currency",
+                "name": "Exposure Counter-Directional Currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "long_underlying_exposure",
+                "name": "Long Underlying Exposure",
+                "value_content_type": "instruments.longunderlyingexposure",
+                "value_entity": "long-underlying-exposure",
+                "value_type": "field"
+            },
+            {
+                "key": "short_underlying_exposure",
+                "name": "Short Underlying Exposure",
+                "value_content_type": "instruments.shortunderlyingexposure",
+                "value_entity": "short-underlying-exposure",
+                "value_type": "field"
+            },
+            {
+                "key": "exposure_calculation_model",
+                "name": "Exposure Calculation Model",
+                "value_content_type": "instruments.exposurecalculationmodel",
+                "value_entity": "exposure-calculation-model",
+                "value_type": "field"
+            },
+
+            {
+                "key": "long_underlying_instrument",
+                "name": "Long Underlying Instrument",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "value_type": "field"
+            },
+            {
+                "key": "short_underlying_instrument",
+                "name": "Short Underlying Instrument",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "value_type": "field"
+            },
+            {
+                "key": "country",
+                "name": "Country",
+                "value_content_type": "instruments.country",
+                "value_entity": "country",
+                "code": "user_code",
+                "value_type": "field"
+            }
+        ]
+
+        items = items + get_list_of_entity_attributes('instruments.instrument')
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
 
     @action(detail=False, methods=['post'], url_path='rebuild-events', serializer_class=serializers.Serializer)
     def rebuild_all_events(self, request):
@@ -1231,6 +1456,89 @@ class PriceHistoryViewSet(AbstractModelViewSet):
         'pricing_policy__public_name',
         'date', 'principal_price', 'accrued_price',
     ]
+
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+
+        items = [
+            {
+                "key": "instrument",
+                "name": "Instrument",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "date",
+                "name": "Date",
+                "value_type": 40
+            },
+            {
+                "key": "pricing_policy",
+                "name": "Pricing policy",
+                "value_content_type": "instruments.pricingpolicy",
+                "value_entity": "pricing_policy",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "principal_price",
+                "name": "Principal price",
+                "value_type": 20
+            },
+            {
+                "key": "accrued_price",
+                "name": "Accrued price",
+                "value_type": 20
+            },
+            {
+                "key": "long_delta",
+                "name": "Long delta",
+                "value_type": 20
+            },
+            {
+                "key": "short_delta",
+                "name": "Short delta",
+                "value_type": 20
+            },
+            {
+                "key": "nav",
+                "name": "NAV",
+                "value_type": 20
+            },
+            {
+                "key": "cash_flow",
+                "name": "Cash Flow",
+                "value_type": 20
+            },
+            {
+                "key": "factor",
+                "name": "Factor",
+                "value_type": 20
+            },
+            {
+                "key": "procedure_modified_datetime",
+                "name": "Modified Date And Time",
+                "value_type": 80,
+            },
+
+            {
+                "key": "is_temporary_price",
+                "name": "Is Temporary Price",
+                "value_type": 50
+            }
+        ]
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
+
 
 
 class PriceHistoryEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):

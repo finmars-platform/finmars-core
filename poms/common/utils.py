@@ -484,3 +484,23 @@ def get_serializer(content_type_key):
     }
 
     return serializer_map[content_type_key]
+
+
+def get_list_of_entity_attributes(content_type_key):
+
+    content_type = get_content_type_by_name(content_type_key)
+    result = []
+    from poms.obj_attrs.models import GenericAttributeType
+    attribute_types = GenericAttributeType.objects.filter(content_type=content_type)
+
+    for attribute_type in attribute_types:
+
+        result.append({
+            "name": attribute_type.name,
+            "key": "attributes." + attribute_type.user_code,
+            "value_type": attribute_type.value_type,
+            "tooltip": attribute_type.tooltip,
+            "can_recalculate": attribute_type.can_recalculate
+        })
+
+    return result
