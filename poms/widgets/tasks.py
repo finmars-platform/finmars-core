@@ -290,7 +290,7 @@ def collect_pl_report_history(self, task_id):
         )
 
         builder = PLReportBuilderSql(instance=instance)
-        instance = builder.build_balance()
+        instance = builder.build_report()
 
         serializer = PLReportSerializer(instance=instance, context=context)
 
