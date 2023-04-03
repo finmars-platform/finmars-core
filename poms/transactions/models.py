@@ -1746,6 +1746,8 @@ class Transaction(models.Model):
         verbose_name_plural = gettext_lazy('transactions')
         index_together = [
             ['master_user', 'transaction_code'],
+            ['accounting_date', 'cash_date'],
+            ['master_user', 'transaction_class', 'accounting_date']
         ]
         ordering = ['transaction_date', 'transaction_code']
 
