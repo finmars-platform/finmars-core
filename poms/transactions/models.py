@@ -1345,65 +1345,65 @@ class ComplexTransaction(DataTimeStampedModel):
 
     text = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('text'), db_index=True)
 
-    user_text_1 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 1'))
+    user_text_1 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 1'))
 
-    user_text_2 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 2'))
+    user_text_2 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 2'))
 
-    user_text_3 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 3'))
+    user_text_3 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 3'))
 
-    user_text_4 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 4'))
+    user_text_4 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 4'))
 
-    user_text_5 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 5'))
+    user_text_5 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 5'))
 
-    user_text_6 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 6'))
+    user_text_6 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 6'))
 
-    user_text_7 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 7'))
+    user_text_7 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 7'))
 
-    user_text_8 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 8'))
+    user_text_8 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 8'))
 
-    user_text_9 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 9'))
+    user_text_9 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 9'))
 
-    user_text_10 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 10'))
+    user_text_10 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 10'))
 
-    user_text_11 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 11'))
+    user_text_11 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 11'))
 
-    user_text_12 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 12'))
+    user_text_12 = models.TextField(null=True, blank=True, db_index=True,verbose_name=gettext_lazy('user text 12'))
 
-    user_text_13 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 13'))
+    user_text_13 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 13'))
 
-    user_text_14 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 14'))
+    user_text_14 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 14'))
 
-    user_text_15 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 15'))
+    user_text_15 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 15'))
 
-    user_text_16 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 16'))
+    user_text_16 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 16'))
 
-    user_text_17 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 17'))
+    user_text_17 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 17'))
 
-    user_text_18 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 18'))
+    user_text_18 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 18'))
 
-    user_text_19 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 19'))
+    user_text_19 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 19'))
 
-    user_text_20 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 20'))
+    user_text_20 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 20'))
 
-    user_text_21 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 21'))
+    user_text_21 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 21'))
 
-    user_text_22 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 22'))
+    user_text_22 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 22'))
 
-    user_text_23 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 23'))
+    user_text_23 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 23'))
 
-    user_text_24 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 24'))
+    user_text_24 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 24'))
 
-    user_text_25 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 25'))
+    user_text_25 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 25'))
 
-    user_text_26 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 26'))
+    user_text_26 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 26'))
 
-    user_text_27 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 27'))
+    user_text_27 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 27'))
 
-    user_text_28 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 28'))
+    user_text_28 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 28'))
 
-    user_text_29 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 29'))
+    user_text_29 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 29'))
 
-    user_text_30 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 30'))
+    user_text_30 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 30'))
 
     user_number_1 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 1'))
 
