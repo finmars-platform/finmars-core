@@ -1572,6 +1572,9 @@ class PriceHistory(DataTimeStampedModel):
         unique_together = (
             ('instrument', 'pricing_policy', 'date',)
         )
+        index_together = [
+            ['instrument', 'pricing_policy', 'date']
+        ]
         ordering = ['date']
 
     def __str__(self):

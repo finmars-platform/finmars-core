@@ -91,6 +91,9 @@ class CurrencyHistory(DataTimeStampedModel):
         unique_together = (
             ('currency', 'pricing_policy', 'date',)
         )
+        index_together = [
+            ['currency', 'pricing_policy', 'date']
+        ]
         ordering = ['date']
 
     def save(self, *args, **kwargs):
