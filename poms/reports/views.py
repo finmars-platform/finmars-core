@@ -208,7 +208,7 @@ class TransactionReportViewSet(AbstractViewSet):
 
             serializer = self.get_serializer(instance=instance, many=False)
 
-            _l.debug('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+            _l.debug('Transaction Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
             cached_data = serializer.data
 

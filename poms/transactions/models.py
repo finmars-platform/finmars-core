@@ -1315,6 +1315,7 @@ class ComplexTransaction(DataTimeStampedModel):
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     transaction_type = models.ForeignKey(TransactionType, on_delete=models.PROTECT,
+                                         db_index=True,
                                          verbose_name=gettext_lazy('transaction type'))
 
     is_deleted = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is deleted'))
@@ -1333,15 +1334,16 @@ class ComplexTransaction(DataTimeStampedModel):
                                                          db_index=True,
                                                          verbose_name=gettext_lazy('visibility_status'))
 
-    code = models.IntegerField(default=0, verbose_name=gettext_lazy('code'))
+    code = models.IntegerField(default=0, verbose_name=gettext_lazy('code'), db_index=True)
 
     transaction_unique_code = models.CharField(max_length=255, null=True, blank=True,
+                                               db_index=True,
                                                verbose_name=gettext_lazy('transaction unique code'))
 
     deleted_transaction_unique_code = models.CharField(max_length=255, null=True, blank=True,
                                                        verbose_name=gettext_lazy('deleted transaction unique code'))
 
-    text = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('text'))
+    text = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('text'), db_index=True)
 
     user_text_1 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 1'))
 
@@ -1609,8 +1611,8 @@ class Transaction(models.Model):
                                             verbose_name=gettext_lazy('complex transaction'))
     complex_transaction_order = models.PositiveSmallIntegerField(default=0.0, verbose_name=gettext_lazy(
         'complex transaction order'))
-    transaction_code = models.IntegerField(default=0, verbose_name=gettext_lazy('transaction code'))
-    transaction_class = models.ForeignKey(TransactionClass, on_delete=models.PROTECT,
+    transaction_code = models.IntegerField(default=0, verbose_name=gettext_lazy('transaction code'), db_index=True)
+    transaction_class = models.ForeignKey(TransactionClass, on_delete=models.PROTECT, db_index=True,
                                           verbose_name=gettext_lazy("transaction class"))
 
     # is_locked = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is locked'))
@@ -1644,7 +1646,7 @@ class Transaction(models.Model):
     cash_date = models.DateField(default=date_now, db_index=True, verbose_name=gettext_lazy("cash date"))
 
     # portfolio
-    portfolio = models.ForeignKey(Portfolio, on_delete=models.PROTECT, verbose_name=gettext_lazy("portfolio"))
+    portfolio = models.ForeignKey(Portfolio, on_delete=models.PROTECT, verbose_name=gettext_lazy("portfolio"), db_index=True)
 
     # accounts
     account_position = models.ForeignKey(Account, related_name='transactions_account_position',
@@ -1733,7 +1735,7 @@ class Transaction(models.Model):
                                   help_text=gettext_lazy(
                                       'Absolute value of overheads (for calculations on the form)'))
 
-    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
+    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'), db_index=True)
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
@@ -1743,7 +1745,7 @@ class Transaction(models.Model):
         verbose_name = gettext_lazy('transaction')
         verbose_name_plural = gettext_lazy('transactions')
         index_together = [
-            ['master_user', 'transaction_code']
+            ['master_user', 'transaction_code'],
         ]
         ordering = ['transaction_date', 'transaction_code']
 
