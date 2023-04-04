@@ -280,6 +280,7 @@ class TransactionReportBuilderSql:
             query = query.format(begin_date=self.instance.begin_date,
                                  end_date=self.instance.end_date,
                                  master_user_id=self.instance.master_user.id,
+                                 default_instrument_id=self.ecosystem_defaults.instrument_id,
                                  statuses=statuses_str,
                                  filter_sql_string=filter_sql_string,
                                  date_filter_sql_string=date_filter_sql_string
@@ -322,22 +323,22 @@ class TransactionReportBuilderSql:
                       -- transaction fields
                       t.*,
                       
-                      case when t.instrument_id != null
-                         then i.name
+                      case when (t.instrument_id = null OR t.instrument_id = {default_instrument_id})
+                         then t.notes
                          else
-                           t.notes
+                           i.name
                       end as transaction_item_name,
                       
-                      case when t.instrument_id != null
-                         then i.user_code
+                      case when (t.instrument_id = null OR t.instrument_id = {default_instrument_id})
+                         then t.notes
                          else
-                           t.notes
+                           i.user_code
                       end as transaction_item_user_code,
                       
-                      case when t.instrument_id != null
-                         then i.short_name
+                      case when (t.instrument_id = null OR t.instrument_id = {default_instrument_id})
+                         then t.notes
                          else
-                           t.notes
+                           i.short_name
                       end as transaction_item_short_name,
                       -- complex transaction fields
                       tc.status_id as complex_transaction_status,
@@ -439,6 +440,7 @@ class TransactionReportBuilderSql:
             query = query.format(begin_date=self.instance.begin_date,
                                  end_date=self.instance.end_date,
                                  master_user_id=self.instance.master_user.id,
+                                 default_instrument_id=self.ecosystem_defaults.instrument_id,
                                  statuses=statuses_str,
                                  filter_sql_string=filter_sql_string,
                                  date_filter_sql_string=date_filter_sql_string,
@@ -484,22 +486,22 @@ class TransactionReportBuilderSql:
                       -- transaction fields
                       t.*,
                       
-                      case when t.instrument_id != null
-                         then i.name
+                      case when (t.instrument_id = null OR t.instrument_id = {default_instrument_id})
+                         then t.notes
                          else
-                           t.notes
+                           i.name
                       end as transaction_item_name,
                       
-                      case when t.instrument_id != null
-                         then i.user_code
+                      case when (t.instrument_id = null OR t.instrument_id = {default_instrument_id})
+                         then t.notes
                          else
-                           t.notes
+                           i.user_code
                       end as transaction_item_user_code,
                       
-                      case when t.instrument_id != null
-                         then i.short_name
+                      case when (t.instrument_id = null OR t.instrument_id = {default_instrument_id})
+                         then t.notes
                          else
-                           t.notes
+                           i.short_name
                       end as transaction_item_short_name,
                       
                       -- complex transaction fields
@@ -602,6 +604,7 @@ class TransactionReportBuilderSql:
 
             query = query.format(begin_date=self.instance.begin_date,
                                  end_date=self.instance.end_date,
+                                 default_instrument_id=self.ecosystem_defaults.instrument_id,
                                  master_user_id=self.instance.master_user.id,
                                  statuses=statuses_str,
                                  filter_sql_string=filter_sql_string,
