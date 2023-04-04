@@ -895,7 +895,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
     pricing_condition = PricingConditionField()
     payment_size_detail = PaymentSizeDetailField()
     daily_pricing_model = DailyPricingModelField(required=False, allow_null=True)
-    country = CountryField()
+    country = CountryField(required=False, allow_null=True)
 
     # ==== Objects below ====
 

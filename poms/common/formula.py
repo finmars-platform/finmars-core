@@ -516,8 +516,10 @@ _transaction_import__find_row.evaluator = True
 def _md5(text):
     return hashlib.md5(text.encode('utf-8')).hexdigest()
 
+
 def _to_json(obj):
     return json.dumps(obj, default=str, indent=4)
+
 
 def _parse_date(date_string, format=None):
     if not date_string:
@@ -1593,6 +1595,7 @@ def _get_instrument_pricing_scheme(evaluator, instrument, pricing_policy):
 
 _get_instrument_pricing_scheme.evaluator = True
 
+
 def _get_currency_pricing_scheme(evaluator, currency, pricing_policy):
     from poms.users.utils import get_master_user_from_context
 
@@ -1672,6 +1675,72 @@ def _delete_accrual_schedules(evaluator, instrument):
 
 
 _delete_accrual_schedules.evaluator = True
+
+
+def _add_event_schedule(evaluator, instrument, data):
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    from poms.instruments.models import EventSchedule
+
+    result = EventSchedule(instrument=instrument)
+
+    if 'name' in data:
+        result.name = data['name']
+
+    if 'description' in data:
+        result.description = data['description']
+
+    if 'event_class' in data:
+        result.event_class = _safe_get_event_class(evaluator,
+                                                   data['event_class'])
+
+    if 'notification_class' in data:
+        result.notification_class = _safe_get_notification_class(evaluator,
+                                                                 data['notification_class'])
+
+    if 'effective_date' in data:
+        result.effective_date = data['effective_date']
+
+    if 'notify_in_n_days' in data:
+        result.notify_in_n_days = data['notify_in_n_days']
+
+    if 'periodicity' in data:
+        result.periodicity = _safe_get_periodicity(evaluator, data['periodicity'])
+
+    if 'periodicity_n' in data:
+        result.periodicity_n = data['periodicity_n']
+
+    if 'final_date' in data:
+        result.final_date = data['final_date']
+
+    if 'is_auto_generated' in data:
+        result.is_auto_generated = data['is_auto_generated']
+
+    result.save()
+
+    return result
+
+
+_add_event_schedule.evaluator = True
+
+
+def _delete_event_schedules(evaluator, instrument):
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    instrument.event_schedules.all().delete()
+
+
+_delete_event_schedules.evaluator = True
 
 
 def _safe_get_pricing_policy(evaluator, pricing_policy):
@@ -1855,6 +1924,84 @@ def _safe_get_periodicity(evaluator, periodicity):
         raise ExpressionEvalError()
 
     return periodicity
+
+
+def _safe_get_notification_class(evaluator, notification_class):
+    from poms.transactions.models import NotificationClass
+
+    if isinstance(notification_class, NotificationClass):
+        return notification_class
+
+    context = evaluator.context
+
+    if context is None:
+        raise InvalidExpression('Context must be specified')
+
+    pk = None
+    user_code = None
+
+    if isinstance(notification_class, dict):
+        pk = int(notification_class['id'])
+
+    elif isinstance(notification_class, (int, float)):
+        pk = int(notification_class)
+
+    elif isinstance(notification_class, str):
+        user_code = notification_class
+
+    if pk is None and user_code is None:
+        raise ExpressionEvalError('Invalid notification_class')
+
+    try:
+        if pk is not None:
+            notification_class = NotificationClass.objects.get(pk=pk)
+
+        elif user_code is not None:
+            notification_class = NotificationClass.objects.get(user_code=user_code)
+
+    except NotificationClass.DoesNotExist:
+        raise ExpressionEvalError()
+
+    return notification_class
+
+
+def _safe_get_event_class(evaluator, event_class):
+    from poms.transactions.models import EventClass
+
+    if isinstance(event_class, EventClass):
+        return event_class
+
+    context = evaluator.context
+
+    if context is None:
+        raise InvalidExpression('Context must be specified')
+
+    pk = None
+    user_code = None
+
+    if isinstance(event_class, dict):
+        pk = int(event_class['id'])
+
+    elif isinstance(event_class, (int, float)):
+        pk = int(event_class)
+
+    elif isinstance(event_class, str):
+        user_code = event_class
+
+    if pk is None and user_code is None:
+        raise ExpressionEvalError('Invalid event_class')
+
+    try:
+        if pk is not None:
+            event_class = EventClass.objects.get(pk=pk)
+
+        elif user_code is not None:
+            event_class = EventClass.objects.get(user_code=user_code)
+
+    except EventClass.DoesNotExist:
+        raise ExpressionEvalError()
+
+    return event_class
 
 
 def _safe_get_accrual_calculation_model(evaluator, accrual_calculation_model):
