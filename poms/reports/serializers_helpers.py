@@ -183,6 +183,10 @@ def serialize_transaction_report_item(item):
 
     }
 
+    result['transaction_item_name'] = item['transaction_item_name']
+    result['transaction_item_short_name'] = item['transaction_item_short_name']
+    result['transaction_item_user_code'] = item['transaction_item_user_code']
+
     # Complex Transaction Fields
 
     # result['complex_transaction.status'] = item['complex_transaction_status']
