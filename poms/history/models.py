@@ -519,11 +519,14 @@ def add_history_listeners(sender, **kwargs):
 
 
 import sys
+
+
 def record_history():
-    if ('makemigrations' in sys.argv or 'migrate' in sys.argv):
-        _l.info("History is not recording. Probably Migration context")
+    if 'test' in sys.argv or 'makemigrations' in sys.argv or 'migrate' in sys.argv:
+        _l.info("History is not recording. Probably Test or Migration context")
     else:
         _l.info("History is recording")
         models.signals.class_prepared.connect(add_history_listeners, weak=False)
+
 
 record_history()
