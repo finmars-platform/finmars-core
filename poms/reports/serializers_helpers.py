@@ -343,7 +343,6 @@ def serialize_balance_report_item(item):
     # result["pricing_currency"] = item["pricing_currency_id"]
     # result["currency"] = None
 
-    result["price"] = item["price"]
     result["fx_rate"] = item["fx_rate"]
 
     result["position_size"] = item["position_size"]

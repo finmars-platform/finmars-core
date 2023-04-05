@@ -1,7 +1,7 @@
 import logging
 import os
 import time
-
+from datetime import timedelta
 from django.conf import settings
 from django.db import connection
 
@@ -89,8 +89,10 @@ class BalanceReportBuilderSql:
             fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
                 self.instance)
 
-            self.bday_yesterday_of_report_date = get_last_business_day(self.instance.report_date, to_string=True)
+            self.bday_yesterday_of_report_date = get_last_business_day(self.instance.report_date - timedelta(days=1), to_string=True)
 
+            _l.info('====report_date %s' % self.instance.report_date)
+            _l.info('====bday_yesterday_of_report_date %s' % self.bday_yesterday_of_report_date)
             # _l.debug('report_date: "%s"' % self.instance.report_date)
             # _l.debug('report_fx_rate: "%s"' % report_fx_rate)
             # _l.debug('default_currency_id: "%s"' % self.ecosystem_defaults.currency_id)
@@ -455,7 +457,6 @@ class BalanceReportBuilderSql:
                     item_type,
                     item_type_name,
                     
-                    price,
                     fx_rate,
                     
                     position_size,
@@ -611,10 +612,10 @@ class BalanceReportBuilderSql:
                         c.short_name,
                         c.user_code,
                         
-                        (-1) as pricing_currency_id, -- TODO WTF?
-                        (0) as instrument_pricing_currency_fx_rate,
+                        (settlement_currency_id) as pricing_currency_id,
+                        (0) as instrument_pricing_currency_fx_rate, -- WTF?
                         (0) as instrument_accrued_currency_fx_rate,
-                        (0) as instrument_principal_price,
+                        (1) as instrument_principal_price,
                         (0) as instrument_accrued_price,
                         (1) as instrument_factor,
                         (0) as daily_price_change,
@@ -847,7 +848,6 @@ class BalanceReportBuilderSql:
                     item_type,
                     item_type_name,
                     
-                    price,
                     fx_rate,
                     
                     position_size,
@@ -1671,7 +1671,6 @@ class BalanceReportBuilderSql:
                 result_item["instrument_factor"] = item["instrument_factor"]
                 result_item["daily_price_change"] = item["daily_price_change"]
 
-                result_item["price"] = item["price"]
                 result_item["fx_rate"] = item["fx_rate"]
 
                 # _l.info('item %s' % item)

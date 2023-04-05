@@ -1,7 +1,7 @@
 import logging
 import os
 import time
-from datetime import date
+from datetime import date, timedelta
 
 from django.conf import settings
 from django.db import connection
@@ -60,7 +60,7 @@ class PLReportBuilderSql:
         if not self.instance.report_date:
             self.report_date = get_closest_bday_of_yesterday()
 
-        self.bday_yesterday_of_report_date = get_last_business_day(self.report_date, to_string=True)
+        self.bday_yesterday_of_report_date = get_last_business_day(self.report_date - timedelta(days=1), to_string=True)
 
         self.instance.first_transaction_date = self.get_first_transaction()
 

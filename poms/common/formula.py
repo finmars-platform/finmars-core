@@ -4355,7 +4355,7 @@ def safe_eval(s, names=None, max_time=None, add_print=False, allow_assign=True, 
                     context=context)
     result = e.eval(s)
 
-    _l.debug('safe_eval done %s : %s' % (s, "{:3.3f}".format(time.perf_counter() - st)))
+    # _l.debug('safe_eval done %s : %s' % (s, "{:3.3f}".format(time.perf_counter() - st)))
 
     return result
 
