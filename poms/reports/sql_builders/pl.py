@@ -3253,15 +3253,14 @@ class PLReportBuilderSql:
                     result_item_opened['strategy3_position_id'] = item['strategy3_position_id']
 
 
-                if  'allocation_pl_id' not in item:
-                    result_item_opened['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
-                else:
-                    result_item_opened['allocation_pl_id'] = item['allocation_pl_id']
 
+                if  result_item_opened['allocation_pl_id'] == self.ecosystem_defaults.instrument_id or result_item_opened['allocation_pl_id'] == None:
 
-                if  result_item_opened['allocation_pl_id'] == self.ecosystem_defaults.instrument_id and item['instrument_id']:
-                    result_item_opened['allocation_pl_id'] = item['instrument_id']
-
+                    if item['instrument_id'] != None:
+                        result_item_opened['allocation_pl_id'] = item['instrument_id']
+                    else:
+                        # convert None to '-'
+                        result_item_opened['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
 
                 if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT:
                     result_item_opened["item_group"] = 10
