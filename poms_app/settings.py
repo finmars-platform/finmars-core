@@ -20,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 DJANGO_LOG_LEVEL = ENV_STR('DJANGO_LOG_LEVEL', 'INFO')
 
-SECRET_KEY = ENV_STR('SECRET_KEY', None)
+SECRET_KEY = ENV_STR('SECRET_KEY', "django_secret_key")
 SERVER_TYPE = ENV_STR('SERVER_TYPE', 'local')
 USE_DEBUGGER = ENV_STR('USE_DEBUGGER', False)
 BASE_API_URL = ENV_STR('BASE_API_URL', 'space00000')
@@ -221,10 +221,10 @@ WSGI_APPLICATION = 'poms_app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': ENV_STR('DB_NAME', None),
-        'USER': ENV_STR('DB_USER', None),
-        'PASSWORD': ENV_STR('DB_PASSWORD', None),
-        'HOST': ENV_STR('DB_HOST', None),
+        'NAME': ENV_STR('DB_NAME', "postgres"),
+        'USER': ENV_STR('DB_USER', "postgres"),
+        'PASSWORD': ENV_STR('DB_PASSWORD', "postgres"),
+        'HOST': ENV_STR('DB_HOST', "localhost"),
         'PORT': ENV_INT('DB_PORT', 5432)
     }
 }
@@ -637,4 +637,3 @@ KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY',
 
 
 SIMPLE_JWT = {"SIGNING_KEY": os.getenv("SIGNING_KEY", SECRET_KEY), 'USER_ID_FIELD': 'username'}
-

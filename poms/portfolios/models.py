@@ -124,13 +124,16 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     )
 
     attributes = GenericRelation(
-        GenericAttribute, verbose_name=gettext_lazy("attributes")
+        GenericAttribute,
+        verbose_name=gettext_lazy("attributes"),
     )
     object_permissions = GenericRelation(
-        GenericObjectPermission, verbose_name=gettext_lazy("object permissions")
+        GenericObjectPermission,
+        verbose_name=gettext_lazy("object permissions"),
     )
     default_price = models.FloatField(
-        default=1.0, verbose_name=gettext_lazy("default price")
+        default=1.0,
+        verbose_name=gettext_lazy("default price"),
     )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
@@ -169,7 +172,6 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
 class PortfolioRegisterRecord(DataTimeStampedModel):
     """
-
     Portfolio Register RECORD
 
     Basically it is a copy of transactions.BaseTransaction, but with few extra features
@@ -178,8 +180,10 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
 
     Its also contains NAV of the portfolio in previous date
     And we also counting number of shares. In portfolio share it is position_size
-
     """
+
+    AUTOMATIC = "Automatic"
+    MANUAL = "Manual"
 
     master_user = models.ForeignKey(
         MasterUser,
@@ -223,7 +227,6 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("cash currency"),
     )
-
     fx_rate = models.FloatField(
         default=0.0,
         verbose_name=gettext_lazy("fx rate"),
@@ -278,7 +281,6 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
         on_delete=models.CASCADE,
         verbose_name=gettext_lazy("complex transaction"),
     )
-
     portfolio_register = models.ForeignKey(
         PortfolioRegister,
         on_delete=models.CASCADE,
@@ -287,6 +289,12 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
     object_permissions = GenericRelation(
         GenericObjectPermission,
         verbose_name=gettext_lazy("object permissions"),
+    )
+    share_price_calculation_type = models.CharField(
+        max_length=255,
+        default=AUTOMATIC,
+        blank=False,
+        verbose_name=gettext_lazy("price calculation type"),
     )
 
     class Meta:

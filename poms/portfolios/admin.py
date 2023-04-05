@@ -95,8 +95,14 @@ class PortfolioRegisterRecordAdmin(AbstractModelAdmin):
         "instrument",
         "transaction_class",
         "portfolio_register",
+        "share_price_calculation_type",
     ]
-    raw_id_fields = ["master_user", "portfolio", "instrument", "portfolio_register"]
+    raw_id_fields = [
+        "master_user",
+        "portfolio",
+        "instrument",
+        "portfolio_register",
+    ]
 
 
 admin.site.register(PortfolioRegisterRecord, PortfolioRegisterRecordAdmin)
