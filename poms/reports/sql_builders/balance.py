@@ -450,6 +450,9 @@ class BalanceReportBuilderSql:
                     item_type,
                     item_type_name,
                     
+                    price,
+                    fx_rate,
+                    
                     position_size,
                     nominal_position_size,
                     
@@ -580,6 +583,21 @@ class BalanceReportBuilderSql:
                             
                         (2) as item_type,
                         ('Currency') as item_type_name,
+                        
+                        (1) as price,
+                        case when settlement_currency_id = {default_currency_id}
+                            then 1
+                            else
+                                (select
+                            fx_rate
+                         from currencies_currencyhistory
+                         where
+                            currency_id = settlement_currency_id and
+                            date = '{report_date}' and
+                            pricing_policy_id = {pricing_policy_id}
+                        )
+                        end as fx_rate,
+                        
                             
                         position_size,
                         (position_size) as nominal_position_size,
@@ -822,6 +840,9 @@ class BalanceReportBuilderSql:
                     item_type,
                     item_type_name,
                     
+                    price,
+                    fx_rate,
+                    
                     position_size,
                     nominal_position_size,
                     
@@ -962,6 +983,9 @@ class BalanceReportBuilderSql:
                         
                         item_type,
                         item_type_name,
+                        
+                        price,
+                        fx_rate,
                         
                         position_size,
                         nominal_position_size,
@@ -1109,6 +1133,9 @@ class BalanceReportBuilderSql:
 
                         (1) as item_type,
                         ('Instrument') as item_type_name,
+                        
+                        (principal_price) as price,
+                        (pch_fx_rate) as fx_rate,
     
                         name,
                         short_name,
@@ -1618,6 +1645,9 @@ class BalanceReportBuilderSql:
                 result_item["instrument_principal_price"] = item["instrument_principal_price"]
                 result_item["instrument_accrued_price"] = item["instrument_accrued_price"]
                 result_item["instrument_factor"] = item["instrument_factor"]
+
+                result_item["price"] = item["price"]
+                result_item["fx_rate"] = item["fx_rate"]
 
                 # _l.info('item %s' % item)
                 result_item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
