@@ -3286,9 +3286,9 @@ class PLReportBuilderSql:
 
                 if 'allocation_pl_id' in item:
                     if item['allocation_pl_id'] == self.ecosystem_defaults.instrument_id or \
-                            item['allocation_pl_id'] == None:
+                            item['allocation_pl_id'] == None or item['allocation_pl_id'] == -1:
 
-                        if item['instrument_id'] != None:
+                        if item['instrument_id'] != None and item['instrument_id'] != -1:
                             result_item_opened['allocation_pl_id'] = item['instrument_id']
                         else:
                             # convert None to '-'
@@ -3510,9 +3510,9 @@ class PLReportBuilderSql:
 
                     if 'allocation_pl_id' in item:
 
-                        if item['allocation_pl_id'] == self.ecosystem_defaults.instrument_id or item['allocation_pl_id'] == None:
+                        if item['allocation_pl_id'] == self.ecosystem_defaults.instrument_id or item['allocation_pl_id'] == None or item['allocation_pl_id'] == -1:
 
-                            if item['instrument_id'] != None:
+                            if item['instrument_id'] != None and item['instrument_id'] != -1:
 
                                 result_item_closed['allocation_pl_id'] = item['instrument_id']
 
