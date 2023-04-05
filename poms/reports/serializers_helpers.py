@@ -494,6 +494,7 @@ def serialize_pl_report_item(item):
     result["instrument_principal_price"] = item["instrument_principal_price"]
     result["instrument_accrued_price"] = item["instrument_accrued_price"]
     result["instrument_factor"] = item["instrument_factor"]
+    result["daily_price_change"] = item["daily_price_change"]
 
     #
     result["position_size"] = item["position_size"]

@@ -1,14 +1,13 @@
 import logging
 import os
 import time
+from datetime import date
 
 from django.conf import settings
 from django.db import connection
-from datetime import timedelta,date
-
 
 from poms.accounts.models import Account, AccountType
-from poms.common.utils import get_closest_bday_of_yesterday
+from poms.common.utils import get_closest_bday_of_yesterday, get_last_business_day
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, CostMethod, InstrumentType
 from poms.portfolios.models import Portfolio
@@ -60,6 +59,8 @@ class PLReportBuilderSql:
 
         if not self.instance.report_date:
             self.report_date = get_closest_bday_of_yesterday()
+
+        self.bday_yesterday_of_report_date = get_last_business_day(self.report_date, to_string=True)
 
         self.instance.first_transaction_date = self.get_first_transaction()
 
@@ -711,6 +712,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price,
             instrument_factor,    
+            daily_price_change,
           
             position_size,
             nominal_position_size,
@@ -830,6 +832,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price,   
             instrument_factor,
+            daily_price_change,
           
             position_size,
             nominal_position_size,
@@ -949,7 +952,8 @@ class PLReportBuilderSql:
                     instrument_accrued_currency_fx_rate,    
                     instrument_principal_price,
                     instrument_accrued_price,  
-                    instrument_factor, 
+                    instrument_factor,
+                    daily_price_change, 
 
                     position_size,
                     nominal_position_size,
@@ -1074,6 +1078,11 @@ class PLReportBuilderSql:
                         (cur_price) as instrument_principal_price,
                         (cur_accr_price) as instrument_accrued_price,
                         (cur_factor) as instrument_factor,
+                        case when coalesce(yesterday_price,0) = 0
+                                then 0
+                                else
+                                    (cur_price - yesterday_price) / yesterday_price
+                        end as daily_price_change,
                         (prc_cur_fx) as instrument_pricing_currency_fx_rate,
                         (accr_cur_fx) as instrument_accrued_currency_fx_rate,
                         rep_cur_fx,
@@ -1207,6 +1216,7 @@ class PLReportBuilderSql:
                             i.accrued_multiplier,
                             i.accrual_size,
                             i.cur_price,
+                            i.yesterday_price,
                             i.cur_factor,
                             i.cur_accr_price,
                             i.prc_cur_fx,
@@ -1583,6 +1593,17 @@ class PLReportBuilderSql:
                                    ) as cur_price,
                                    
                                (select
+                                    principal_price
+                                from
+                                    instruments_pricehistory iph
+                                where
+                                    date = '{bday_yesterday_of_report_date}'
+                                    and iph.instrument_id=ii.id
+                                    and iph.pricing_policy_id = {pricing_policy_id}
+                                   ) as yesterday_price,   
+                                
+                                   
+                               (select
                                     factor
                                 from
                                     instruments_pricehistory iph
@@ -1638,6 +1659,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price, 
             instrument_factor,
+            daily_price_change,
           
             position_size,
             nominal_position_size,
@@ -1758,6 +1780,7 @@ class PLReportBuilderSql:
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
                 (1) as instrument_factor,
+                (0) as daily_price_change,
 
                 position_size,
                 (position_size) as nominal_position_size,
@@ -1988,6 +2011,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price, 
             instrument_factor,
+            daily_price_change,
           
             position_size,
             nominal_position_size,
@@ -2109,6 +2133,7 @@ class PLReportBuilderSql:
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
                 (1) as instrument_factor,
+                (0) as daily_price_change,
               
                 position_size,
                 nominal_position_size,
@@ -2298,6 +2323,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price, 
             instrument_factor,
+            daily_price_change,
 
             position_size,
             nominal_position_size,
@@ -2418,6 +2444,7 @@ class PLReportBuilderSql:
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
                 (1) as instrument_factor,
+                (0) as daily_price_change,
               
                 position_size,
                 nominal_position_size,
@@ -2604,6 +2631,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price, 
             instrument_factor,
+            daily_price_change,
           
             position_size,
             nominal_position_size,
@@ -2724,6 +2752,7 @@ class PLReportBuilderSql:
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
                 (1) as instrument_factor,
+                (0) as daily_price_change,
               
                 position_opened as position_size,
                 (position_opened) as nominal_position_size, 
@@ -2952,7 +2981,8 @@ class PLReportBuilderSql:
                              tt_consolidation_columns=tt_consolidation_columns,
                              tt_in1_consolidation_columns=tt_in1_consolidation_columns,
                              transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
-                             filter_query_for_balance_in_multipliers_table=''
+                             filter_query_for_balance_in_multipliers_table='',
+                             bday_yesterday_of_report_date=self.bday_yesterday_of_report_date
                              )
 
         return query
@@ -2992,7 +3022,8 @@ class PLReportBuilderSql:
                              tt_consolidation_columns=tt_consolidation_columns,
                              tt_in1_consolidation_columns=tt_in1_consolidation_columns,
                              transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
-                             filter_query_for_balance_in_multipliers_table=''
+                             filter_query_for_balance_in_multipliers_table='',
+                             bday_yesterday_of_report_date=self.bday_yesterday_of_report_date
                              )
 
         return query
@@ -3055,6 +3086,7 @@ class PLReportBuilderSql:
                             (q2.instrument_principal_price) as instrument_principal_price,
                             (q2.instrument_accrued_price) as instrument_accrued_price,
                             (q2.instrument_factor) as instrument_factor,
+                            (q2.daily_price_change) as daily_price_change,
                             
                             
                             (q2.ytm) as ytm,
@@ -3252,15 +3284,17 @@ class PLReportBuilderSql:
                 else:
                     result_item_opened['strategy3_position_id'] = item['strategy3_position_id']
 
+                if 'allocation_pl_id' in result_item_opened:
+                    if result_item_opened['allocation_pl_id'] == self.ecosystem_defaults.instrument_id or \
+                            result_item_opened['allocation_pl_id'] == None:
 
-
-                if  result_item_opened['allocation_pl_id'] == self.ecosystem_defaults.instrument_id or result_item_opened['allocation_pl_id'] == None:
-
-                    if item['instrument_id'] != None:
-                        result_item_opened['allocation_pl_id'] = item['instrument_id']
-                    else:
-                        # convert None to '-'
-                        result_item_opened['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
+                        if item['instrument_id'] != None:
+                            result_item_opened['allocation_pl_id'] = item['instrument_id']
+                        else:
+                            # convert None to '-'
+                            result_item_opened['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
+                else:
+                    result_item_opened['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
 
                 if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT:
                     result_item_opened["item_group"] = 10
@@ -3294,6 +3328,7 @@ class PLReportBuilderSql:
                 result_item_opened["instrument_principal_price"] = item["instrument_principal_price"]
                 result_item_opened["instrument_accrued_price"] = item["instrument_accrued_price"]
                 result_item_opened["instrument_factor"] = item["instrument_factor"]
+                result_item_opened["daily_price_change"] = item["daily_price_change"]
 
                 result_item_opened["principal"] = item["principal_opened"]
                 result_item_opened["carry"] = item["carry_opened"]
@@ -3465,30 +3500,22 @@ class PLReportBuilderSql:
                     else:
                         result_item_closed['strategy3_position_id'] = item['strategy3_position_id']
 
-
                     # if "allocation_pl_id" not in item:
                     #     result_item_closed['allocation_pl_id'] = None
                     # else:
                     #     result_item_closed['allocation_pl_id'] = item['instrument_id']
 
-                    if "allocation_pl_id" not in item:
-                        result_item_closed['allocation_pl_id'] = None
+                    if 'allocation_pl_id' in result_item_closed:
+                        if result_item_closed['allocation_pl_id'] == self.ecosystem_defaults.instrument_id or \
+                                result_item_closed['allocation_pl_id'] == None:
+
+                            if item['instrument_id'] != None:
+                                result_item_closed['allocation_pl_id'] = item['instrument_id']
+                            else:
+                                # convert None to '-'
+                                result_item_closed['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
                     else:
-                        if not item['allocation_pl_id']:
-                            result_item_closed['allocation_pl_id'] = item['instrument_id']
-                        else:
-                            result_item_closed['allocation_pl_id'] = item['allocation_pl_id']
-
-                    # if not item['allocation_pl_id']:
-                    #     result_item_closed['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
-                    # else:
-                    #     result_item_closed['allocation_pl_id'] = item['allocation_pl_id']
-
-                    if result_item_closed['allocation_pl_id'] == self.ecosystem_defaults.instrument_id and item['instrument_id']:
-                        result_item_closed['allocation_pl_id'] = item['instrument_id']
-
-                    if 'allocation_pl_id' not in result_item_closed:
-                        result_item_closed['allocation_pl_id'] = None
+                        result_item_closed['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
 
                     result_item_closed["item_group"] = 11
                     result_item_closed["item_group_code"] = "CLOSED"
@@ -3503,6 +3530,7 @@ class PLReportBuilderSql:
                     result_item_closed["instrument_principal_price"] = item["instrument_principal_price"]
                     result_item_closed["instrument_accrued_price"] = item["instrument_accrued_price"]
                     result_item_closed["instrument_factor"] = item["instrument_factor"]
+                    result_item_closed["daily_price_change"] = item["daily_price_change"]
 
                     result_item_closed["position_size"] = 0
                     result_item_closed["nominal_position_size"] = 0
@@ -3730,7 +3758,6 @@ class PLReportBuilderSql:
         self.add_data_items_instruments(instrument_ids)
         self.add_data_items_portfolios(portfolio_ids)
         self.add_data_items_accounts(account_ids)
-
 
         self.add_data_items_currencies(currencies_ids)
         self.add_data_items_strategies1(strategies1_ids)
