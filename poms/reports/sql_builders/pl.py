@@ -3284,7 +3284,7 @@ class PLReportBuilderSql:
                 else:
                     result_item_opened['strategy3_position_id'] = item['strategy3_position_id']
 
-                if 'allocation_pl_id' in result_item_opened:
+                if 'allocation_pl_id' in item:
                     if result_item_opened['allocation_pl_id'] == self.ecosystem_defaults.instrument_id or \
                             result_item_opened['allocation_pl_id'] == None:
 
@@ -3505,7 +3505,7 @@ class PLReportBuilderSql:
                     # else:
                     #     result_item_closed['allocation_pl_id'] = item['instrument_id']
 
-                    if 'allocation_pl_id' in result_item_closed:
+                    if 'allocation_pl_id' in item:
                         if result_item_closed['allocation_pl_id'] == self.ecosystem_defaults.instrument_id or \
                                 result_item_closed['allocation_pl_id'] == None:
 
