@@ -1060,6 +1060,9 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
     notes = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                              verbose_name=gettext_lazy('notes'))
 
+    comment = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                             verbose_name=gettext_lazy('comment'))
+
     class Meta:
         verbose_name = gettext_lazy('transaction type action transaction')
         verbose_name_plural = gettext_lazy('transaction type action transactions')
@@ -1736,6 +1739,7 @@ class Transaction(models.Model):
                                       'Absolute value of overheads (for calculations on the form)'))
 
     notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'), db_index=True)
+    comment = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('comment'), db_index=True)
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 

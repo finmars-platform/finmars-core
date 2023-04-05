@@ -453,6 +453,7 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
     overheads = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
 
     notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    comment = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
 
     class Meta:
         model = TransactionTypeActionTransaction
@@ -513,6 +514,7 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
             'carry_amount',
             'overheads',
             'notes',
+            'comment',
 
             'action_notes'
         ]
@@ -2303,6 +2305,7 @@ class TransactionSerializer(ModelWithObjectPermissionSerializer):
             'overheads',
             'ytm_at_cost',
             'notes',
+            'comment',
 
             # 'transaction_class_object',
             # 'transaction_currency_object',

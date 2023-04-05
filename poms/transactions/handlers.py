@@ -1792,6 +1792,11 @@ class TransactionTypeProcess(object):
                                       target=transaction, target_attr_name='notes',
                                       source=action_transaction, source_attr_name='notes')
 
+                    if action_transaction.comment is not None:
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=transaction, target_attr_name='comment',
+                                      source=action_transaction, source_attr_name='comment')
+
                     transaction_date_source = 'null'
 
                     if transaction.accounting_date is None:
