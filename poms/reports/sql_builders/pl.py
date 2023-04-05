@@ -2231,8 +2231,8 @@ class PLReportBuilderSql:
                     sum(overheads_with_sign * stl_cur_fx/rep_cur_fx) as overheads_opened,
 
                     sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as principal_fx_opened,
-                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as carry_fx_opened,
-                    sum(principal_with_sign * stl_cur_fx/rep_cur_fx) as overheads_fx_opened,
+                    sum(carry_with_sign * stl_cur_fx/rep_cur_fx) as carry_fx_opened,
+                    sum(overheads_with_sign * stl_cur_fx/rep_cur_fx) as overheads_fx_opened,
                      
                     (0) as principal_fixed_opened,
                     (0) as carry_fixed_opened,
