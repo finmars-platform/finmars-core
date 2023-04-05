@@ -3293,6 +3293,9 @@ class PLReportBuilderSql:
                         else:
                             # convert None to '-'
                             result_item_opened['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
+                    else:
+                        # TODO do not remove that, its really important
+                        result_item_opened['allocation_pl_id'] = item['allocation_pl_id']
                 else:
                     result_item_opened['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
 
@@ -3506,16 +3509,24 @@ class PLReportBuilderSql:
                     #     result_item_closed['allocation_pl_id'] = item['instrument_id']
 
                     if 'allocation_pl_id' in item:
-                        if item['allocation_pl_id'] == self.ecosystem_defaults.instrument_id or \
-                                item['allocation_pl_id'] == None:
+
+                        if item['allocation_pl_id'] == self.ecosystem_defaults.instrument_id or item['allocation_pl_id'] == None:
 
                             if item['instrument_id'] != None:
+
                                 result_item_closed['allocation_pl_id'] = item['instrument_id']
+
                             else:
+
                                 # convert None to '-'
                                 result_item_closed['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
+
+                        else:
+                            # TODO do not remove that, its really important
+                            result_item_closed['allocation_pl_id'] = item['allocation_pl_id']
                     else:
                         result_item_closed['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
+
 
                     result_item_closed["item_group"] = 11
                     result_item_closed["item_group_code"] = "CLOSED"
@@ -3723,7 +3734,10 @@ class PLReportBuilderSql:
 
             if 'instrument_id' in item:
                 instrument_ids.append(item['instrument_id'])
-                instrument_ids.append(item['allocation_pl_id'])
+                try:
+                    instrument_ids.append(item['allocation_pl_id'])
+                except Exception as e:
+                    _l.info('no allocation_pl_id %s' % item)
 
             if 'account_position_id' in item and item['account_position_id'] != '-':
                 account_ids.append(item['account_position_id'])
