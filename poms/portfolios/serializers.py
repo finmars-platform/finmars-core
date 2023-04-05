@@ -332,23 +332,36 @@ class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWi
                                                                                  read_only=True)
 
 
-class PortfolioRegisterRecordSerializer(ModelWithObjectPermissionSerializer, ModelWithTimeStampSerializer):
+class PortfolioRegisterRecordSerializer(
+    ModelWithObjectPermissionSerializer,
+    ModelWithTimeStampSerializer,
+):
     master_user = MasterUserField()
 
     class Meta:
         model = PortfolioRegisterRecord
         fields = [
-            'id', 'master_user',
-
-            'portfolio', 'instrument', 'transaction_class', 'transaction_code', 'transaction_date', 'cash_amount',
-            'cash_currency',
-            'fx_rate', 'cash_amount_valuation_currency', 'valuation_currency', 'nav_previous_day_valuation_currency',
-
-            'n_shares_previous_day', 'n_shares_added',
-
-            'dealing_price_valuation_currency', 'rolling_shares_of_the_day',
-            'transaction', 'complex_transaction', 'portfolio_register'
-
+            "id",
+            "master_user",
+            "portfolio",
+            "instrument",
+            "transaction_class",
+            "transaction_code",
+            "transaction_date",
+            "cash_amount",
+            "cash_currency",
+            "fx_rate",
+            "cash_amount_valuation_currency",
+            "valuation_currency",
+            "nav_previous_day_valuation_currency",
+            "n_shares_previous_day",
+            "n_shares_added",
+            "dealing_price_valuation_currency",
+            "rolling_shares_of_the_day",
+            "transaction",
+            "complex_transaction",
+            "portfolio_register",
+            "share_price_calculation_type",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -437,4 +450,3 @@ class PortfolioEvalSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
         ]
 
         read_only_fields = fields
-
