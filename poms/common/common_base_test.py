@@ -2,6 +2,7 @@ import random
 import string
 from datetime import date, datetime, timedelta
 
+from django.conf import settings
 from django.test import TestCase
 from rest_framework.test import APIClient
 
@@ -17,6 +18,38 @@ from poms.transactions.models import (
     TransactionTypeGroup,
 )
 from poms.users.models import EcosystemDefault, MasterUser
+
+
+def show_all_urls():
+    """
+    Print all urls in the project
+    """
+    from django.urls import get_resolver
+
+    def print_urls(resolver, prefix="/"):
+        for url_pattern in resolver.url_patterns:
+            if hasattr(url_pattern, "url_patterns"):
+                print_urls(
+                    url_pattern,
+                    prefix=f"{prefix}{url_pattern.pattern.regex.pattern}",
+                )
+            else:
+                print(f"{prefix}{url_pattern.pattern.regex.pattern}")
+
+    print("------------------------------------------------")
+    django_resolver = get_resolver(None)
+    print_urls(django_resolver)
+    print("------------------------------------------------")
+
+
+class MockResponse:
+    def __init__(self, json_data, status_code):
+        self.json_data = json_data
+        self.status_code = status_code
+        self.content = str(json_data)
+
+    def json(self):
+        return self.json_data
 
 
 class TestMetaClass(type):
@@ -105,39 +138,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
 
     def init_test_case(self):
         self.client = APIClient()
-
-
-class MockResponse:
-    def __init__(self, json_data, status_code):
-        self.json_data = json_data
-        self.status_code = status_code
-        self.content = str(json_data)
-
-    def json(self):
-        return self.json_data
-
-
-def show_all_urls():
-    """
-    Print all urls in the project
-    """
-    from django.urls import get_resolver
-
-    def print_urls(resolver, prefix="/"):
-        for url_pattern in resolver.url_patterns:
-            if hasattr(url_pattern, "url_patterns"):
-                print_urls(
-                    url_pattern,
-                    prefix=f"{prefix}{url_pattern.pattern.regex.pattern}",
-                )
-            else:
-                print(f"{prefix}{url_pattern.pattern.regex.pattern}")
-
-    print("------------------------------------------------")
-    django_resolver = get_resolver(None)
-    print_urls(django_resolver)
-    print("------------------------------------------------")
-
+        self.db_data = DbInitializer()
 
 
 START_DATE = date(year=2020, month=1, day=1)
@@ -181,6 +182,14 @@ USD = "USD"
 
 
 class DbInitializer:
+    def get_or_create_master_user(self) -> MasterUser:
+        master_user = MasterUser.objects.first() or MasterUser.objects.create(
+            name=MASTER_USER,
+            journal_status="disabled",
+            base_api_url=settings.BASE_API_URL,
+        )
+        EcosystemDefault.objects.get_or_create(master_user=master_user)
+        return master_user
 
     def create_unified_group(self):
         return TransactionTypeGroup.objects.filter(
@@ -275,20 +284,18 @@ class DbInitializer:
             default_fx_rate=1,
         )
 
-    def get_or_create_types(self, master_user) -> dict:
+    def get_or_create_types(self) -> dict:
         types = {}
         for name in TRANSACTIONS_TYPES:
             type_obj = TransactionType.objects.filter(
                 user_code=name,
-            ).first()
-            if not type_obj:
-                type_obj = TransactionType.objects.create(
-                    master_user=master_user,
-                    name=name,
-                    user_code=name,
-                    short_name=name,
-                    group=self.group,
-                )
+            ).first() or TransactionType.objects.create(
+                master_user=self.master_user,
+                name=name,
+                user_code=name,
+                short_name=name,
+                group=self.group,
+            )
             types[name] = type_obj
 
         return types
@@ -322,30 +329,34 @@ class DbInitializer:
     def create_counter_party(self):
         name = "test_counter_party"
         return Counterparty.objects.first() or Counterparty.objects.create(
-                master_user=self.master_user,
-                name=name,
-                user_code=name,
-                short_name=name,
-            )
+            master_user=self.master_user,
+            name=name,
+            user_code=name,
+            short_name=name,
+        )
 
     def create_responsible(self):
         name = "test_responsible"
         return Responsible.objects.first() or Responsible.objects.create(
-                master_user=self.master_user,
-                name=name,
-                user_code=name,
-                short_name=name,
-            )
+            master_user=self.master_user,
+            name=name,
+            user_code=name,
+            short_name=name,
+        )
 
     def __init__(self):
-        self.master_user = None
+        print("----------- db initialization started -------------")
+        self.master_user = self.get_or_create_master_user()
         self.group = self.create_unified_group()
         self.usd = self.get_or_create_currency_usd()
-        self.default_instrument = self.get_or_create_default_instrument()
-        self.instruments = self.get_or_create_instruments()
-        self.transaction_classes = self.get_or_create_classes()
-        self.transaction_types = self.get_or_create_types(self.master_user)
-        self.accounts, self.portfolios = self.create_accounts_and_portfolios()
         self.strategies = self.get_or_create_strategies()
         self.counter_party = self.create_counter_party()
         self.responsible = self.create_responsible()
+        self.default_instrument = self.get_or_create_default_instrument()
+        self.accounts, self.portfolios = self.create_accounts_and_portfolios()
+
+        self.instruments = self.get_or_create_instruments()
+        self.transaction_classes = self.get_or_create_classes()
+        self.transaction_types = self.get_or_create_types()
+
+        print("----------- db initialized -------------")
