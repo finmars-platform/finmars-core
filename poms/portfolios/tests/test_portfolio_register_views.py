@@ -13,6 +13,8 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
         user = User.objects.first()
+        user.master_user = self.db_data.master_user
+        user.save()
         self.client.force_authenticate(user)
         self.url = (
             f"/{settings.BASE_API_URL}/api/v1" f"/portfolios/portfolio-register-record/"
@@ -32,7 +34,6 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
             portfolio, instrument
         )
         prr_data = {
-            "master_user": self.db_data.master_user.id,
             "portfolio": portfolio.id,
             "instrument": instrument.id,
             "transaction_class": trans_class.id,
@@ -46,8 +47,7 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
             "complex_transaction": complex_transaction.id,
             "portfolio_register": portfolio_register.id,
         }
-        print(prr_data)
-        response = self.client.post(self.url, data=prr_data, content_type=JSON_TYPE)
+        response = self.client.post(self.url, data=prr_data, format="json")
         self.assertEqual(response.status_code, 201, response.content)
 
 

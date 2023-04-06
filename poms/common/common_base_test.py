@@ -185,7 +185,7 @@ USD = "USD"
 
 class DbInitializer:
     def get_or_create_master_user(self) -> MasterUser:
-        master_user = MasterUser.objects.first() or MasterUser.objects.create(
+        master_user = MasterUser.objects.first() or MasterUser.objects.create_master_user(
             name=MASTER_USER,
             journal_status="disabled",
             base_api_url=settings.BASE_API_URL,
