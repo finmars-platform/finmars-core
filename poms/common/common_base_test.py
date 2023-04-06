@@ -12,8 +12,6 @@ from poms.instruments.models import Instrument, InstrumentClass, InstrumentType
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import (
-    ComplexTransaction,
-    Transaction,
     TransactionClass,
     TransactionType,
     TransactionTypeGroup,
@@ -141,6 +139,47 @@ def show_all_urls():
     print("------------------------------------------------")
 
 
+
+START_DATE = date(year=2020, month=1, day=1)
+END_DATE = date.today()
+MASTER_USER = "Experimental_Master"
+
+BUY_SELL = "Buy/Sell_unified"
+DEPOSIT = "Deposits/Withdraw_unified"
+FX = "FX/Forwards_unified"
+INSTRUMENT_EXP = "Expense/Income (Instrument)_unified"
+NON_INSTRUMENT_EXP = "Expense/Income (Non-Instrument)_unified"
+
+TRANSACTIONS_TYPES = [
+    BUY_SELL,
+    DEPOSIT,
+    FX,
+    INSTRUMENT_EXP,
+    NON_INSTRUMENT_EXP,
+]
+INSTRUMENTS = [
+    ("Apple", "stocks", InstrumentClass.GENERAL),
+    ("Boeing", "stocks", InstrumentClass.GENERAL),
+    ("Tesla", "stocks", InstrumentClass.GENERAL),
+    ("Pfizer", "stocks", InstrumentClass.GENERAL),
+    ("Bitcoin", "Crypto", InstrumentClass.CONTRACT_FOR_DIFFERENCE),
+]
+TRANSACTIONS_CLASSES = [
+    TransactionClass.CASH_INFLOW,
+    TransactionClass.CASH_OUTFLOW,
+    TransactionClass.BUY,  # must include instrument
+    TransactionClass.SELL,  # must include instrument
+    TransactionClass.FX_TRADE,
+    TransactionClass.TRANSACTION_PL,
+    TransactionClass.INSTRUMENT_PL,  # must include instrument
+]
+BIG = "Big"
+SMALL = "Small"
+PORTFOLIOS = [BIG, SMALL]
+UNIFIED = "Unified"
+USD = "USD"
+
+
 class DbInitializer:
 
     def create_unified_group(self):
@@ -155,8 +194,8 @@ class DbInitializer:
             short_name=UNIFIED,
         )
 
-    def get_or_create_instruments(self) -> dict:
-        self.default_instrument = Instrument.objects.filter(
+    def get_or_create_default_instrument(self):
+        return Instrument.objects.filter(
             user_code="-",
         ).first() or Instrument.objects.create(
             master_user=self.master_user,
@@ -170,6 +209,7 @@ class DbInitializer:
             maturity_date=date.today(),
         )
 
+    def get_or_create_instruments(self) -> dict:
         instruments = {}
         for name, type_, class_id in INSTRUMENTS:
             instrument_type = InstrumentType.objects.filter(
@@ -225,14 +265,14 @@ class DbInitializer:
 
         return accounts, portfolios
 
-    def get_or_create_currencies(self):
-        self.usd = Currency.objects.filter(
-            user_code=USD.name,
+    def get_or_create_currency_usd(self):
+        return Currency.objects.filter(
+            user_code=USD,
         ).first() or Currency.objects.create(
             master_user=self.master_user,
-            user_code=USD.name,
-            name=USD.name,
-            default_fx_rate=USD.fx_rate,
+            user_code=USD,
+            name=USD,
+            default_fx_rate=1,
         )
 
     def get_or_create_types(self, master_user) -> dict:
@@ -256,53 +296,56 @@ class DbInitializer:
     def get_or_create_classes(self) -> dict:
         classes = {}
         for class_id in TRANSACTIONS_CLASSES:
+            name = f"transaction_class_{class_id}"
             record = TransactionClass.objects.filter(
                 id=class_id
             ).first() or TransactionClass.objects.create(
                 id=class_id,
-                user_code=random_string(),
-                name=random_string(),
-                short_name=random_string(),
+                user_code=name,
+                name=name,
+                short_name=name,
             )
             classes[class_id] = record
         return classes
 
     def get_or_create_strategies(self):
-        self.strategies = {}
+        strategies = {}
         for i, model in enumerate([Strategy1, Strategy2, Strategy3]):
             if not (strategy := model.objects.first()):
                 strategy = model.objects.create(
                     master_user=self.master_user,
-                    name="1M",
+                    name=f"strategy_{i+1}",
                 )
-            self.strategies[i + 1] = strategy
+            strategies[i + 1] = strategy
+        return strategies
 
-    def create_counterparties(self):
-        self.counterparty = Counterparty.objects.first()
-        if not self.counterparty:
-            self.counterparty = Counterparty.objects.create(
+    def create_counter_party(self):
+        name = "test_counter_party"
+        return Counterparty.objects.first() or Counterparty.objects.create(
                 master_user=self.master_user,
-                name="1M",
-                user_code="1M",
-                short_name="1M",
+                name=name,
+                user_code=name,
+                short_name=name,
             )
 
-        self.responsible = Responsible.objects.first()
-        if not self.responsible:
-            self.responsible = Responsible.objects.create(
+    def create_responsible(self):
+        name = "test_responsible"
+        return Responsible.objects.first() or Responsible.objects.create(
                 master_user=self.master_user,
-                name="1M",
-                user_code="1M",
-                short_name="1M",
+                name=name,
+                user_code=name,
+                short_name=name,
             )
 
     def __init__(self):
         self.master_user = None
         self.group = self.create_unified_group()
-        self.get_or_create_currencies()
+        self.usd = self.get_or_create_currency_usd()
+        self.default_instrument = self.get_or_create_default_instrument()
         self.instruments = self.get_or_create_instruments()
         self.transaction_classes = self.get_or_create_classes()
         self.transaction_types = self.get_or_create_types(self.master_user)
         self.accounts, self.portfolios = self.create_accounts_and_portfolios()
-        self.get_or_create_strategies()
-        self.create_counterparties()
+        self.strategies = self.get_or_create_strategies()
+        self.counter_party = self.create_counter_party()
+        self.responsible = self.create_responsible()
