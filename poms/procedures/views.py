@@ -10,11 +10,11 @@ from poms.integrations.providers.base import parse_date_iso
 from poms.pricing.handlers import PricingProcedureProcess
 from poms.procedures.handlers import DataProcedureProcess, ExpressionProcedureProcess
 from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, PricingParentProcedureInstance, \
-    RequestDataFileProcedureInstance, ExpressionProcedure, ExpressionProcedureInstance, PricingProcedureInstance
+    RequestDataFileProcedureInstance, ExpressionProcedure, PricingProcedureInstance
 from poms.procedures.serializers import RequestDataFileProcedureSerializer, \
     PricingProcedureSerializer, RunProcedureSerializer, PricingParentProcedureInstanceSerializer, \
     RequestDataFileProcedureInstanceSerializer, ExpressionProcedureSerializer, RunExpressionProcedureSerializer, \
-    ExpressionProcedureInstanceSerializer, PricingProcedureInstanceSerializer
+    PricingProcedureInstanceSerializer
 from poms.system_messages.handlers import send_system_message
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -247,30 +247,9 @@ class ExpressionProcedureViewSet(AbstractModelViewSet):
                             description=text)
 
         return Response({
-            'procedure_instance': {
-                'id': instance.procedure_instance.id
-            }
+            'task_id': instance.celery_task.id
         })
 
         # serializer = self.get_serializer(instance=instance)
         #
         # return Response(serializer.data)
-
-
-class ExpressionProcedureInstanceFilterSet(FilterSet):
-    id = NoOpFilter()
-
-    class Meta:
-        model = ExpressionProcedureInstance
-        fields = []
-
-
-class ExpressionProcedureInstanceViewSet(AbstractModelViewSet):
-    queryset = ExpressionProcedureInstance.objects.select_related(
-        'master_user',
-    )
-    serializer_class = ExpressionProcedureInstanceSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-    ]
-    filter_class = ExpressionProcedureInstanceFilterSet

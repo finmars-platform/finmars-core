@@ -265,6 +265,17 @@ class ListLayoutViewSet(AbstractModelViewSet, DestroySystemicModelMixin):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=ListLayoutLightSerializer)
+    def list_light(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
+
     @action(detail=True, methods=['get'], url_path='ping')
     def ping(self, request, pk=None):
         layout = self.get_object()
@@ -275,7 +286,7 @@ class ListLayoutViewSet(AbstractModelViewSet, DestroySystemicModelMixin):
             "is_default": layout.is_default
         })
 
-
+# DEPRECATED
 class ListLayoutLightViewSet(AbstractModelViewSet):
     queryset = ListLayout.objects.select_related(
         'member',

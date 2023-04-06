@@ -310,6 +310,7 @@ def serialize_balance_report_item(item):
     result["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
     result["instrument_principal_price"] = item["instrument_principal_price"]
     result["instrument_accrued_price"] = item["instrument_accrued_price"]
+    result["instrument_factor"] = item["instrument_factor"]
 
     result["account"] = item["account_position_id"]
 
@@ -338,6 +339,8 @@ def serialize_balance_report_item(item):
     # result["currency"] = None
 
     result["position_size"] = item["position_size"]
+    result["nominal_position_size"] = item["nominal_position_size"]
+
     result["market_value"] = item["market_value"]
     result["market_value_loc"] = item["market_value_loc"]
     result["exposure"] = item["exposure"]
@@ -483,9 +486,11 @@ def serialize_pl_report_item(item):
     result["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
     result["instrument_principal_price"] = item["instrument_principal_price"]
     result["instrument_accrued_price"] = item["instrument_accrued_price"]
+    result["instrument_factor"] = item["instrument_factor"]
 
     #
     result["position_size"] = item["position_size"]
+    result["nominal_position_size"] = item["nominal_position_size"]
 
     result["position_return"] = item["position_return"]
     result["position_return_loc"] = item["position_return_loc"]

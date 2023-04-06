@@ -175,7 +175,18 @@ class InstrumentDownloadSchemeViewSet(AbstractModelViewSet):
         'provider', 'provider__name',
     ]
 
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=InstrumentDownloadSchemeLightSerializer)
+    def list_light(self, request, *args, **kwargs):
 
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
+
+# DEPRECATED
 class InstrumentDownloadSchemeLightViewSet(AbstractModelViewSet):
     queryset = InstrumentDownloadScheme.objects.select_related(
         'provider',
@@ -763,6 +774,17 @@ class ComplexTransactionImportSchemeViewSet(AbstractApiView, UpdateModelMixinExt
         'scheme_name',
     ]
 
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=ComplexTransactionImportSchemeLightSerializer)
+    def list_light(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
+
 
 class TransactionImportViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
@@ -983,7 +1005,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         return Response({"task_id": celery_task.pk, "task_status": celery_task.status, "result": result,
                          "error_message": error_message})
 
-
+# DEPRECATED
 class ComplexTransactionImportSchemeLightViewSet(AbstractModelViewSet):
     queryset = ComplexTransactionImportScheme.objects
 

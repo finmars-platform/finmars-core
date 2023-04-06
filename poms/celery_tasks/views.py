@@ -9,7 +9,7 @@ from rest_framework.viewsets import ModelViewSet
 from poms.common.filters import CharFilter
 from poms.common.views import AbstractApiView
 from poms.users.filters import OwnerByMasterUserFilter
-from .filters import CeleryTaskQueryFilter
+from .filters import CeleryTaskQueryFilter, CeleryTaskDateRangeFilter
 from .models import CeleryTask
 from .serializers import CeleryTaskSerializer
 
@@ -35,6 +35,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
     serializer_class = CeleryTaskSerializer
     filter_class = CeleryTaskFilterSet
     filter_backends = [
+        CeleryTaskDateRangeFilter,
         CeleryTaskQueryFilter,
         DjangoFilterBackend,
         OwnerByMasterUserFilter,
@@ -79,10 +80,11 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=['PUT'], url_path='cancel')
     def cancel(self, request, pk=None):
-        celery_task_id = request.query_params.get('celery_task_id', None)
-        async_result = AsyncResult(celery_task_id).revoke()
 
         task = CeleryTask.objects.get(pk=pk)
+
+        async_result = AsyncResult(task.celery_task_id).revoke()
+
 
         task.status = CeleryTask.STATUS_CANCELED
 

@@ -275,7 +275,7 @@ def get_notes_for_history_record(user_code, content_type, serialized_data):
         last_record = \
             HistoricalRecord.objects.filter(user_code=user_code, content_type=content_type,
                                             action__in=[HistoricalRecord.ACTION_CREATE, HistoricalRecord.ACTION_CHANGE,
-                                                        HistoricalRecord.ACTION_DELETE]).order_by('-created')[0]
+                                                        HistoricalRecord.ACTION_DELETE, HistoricalRecord.ACTION_DANGER]).order_by('-created')[0]
 
         everything_is_dict = json.loads(
             json.dumps(serialized_data))  # because deep diff counts different Dict and Ordered dict
@@ -382,14 +382,36 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
         if instance.journal_status == 'disabled':
             record_context = get_record_context()
             content_type = ContentType.objects.get_for_model(sender)
-            HistoricalRecord.objects.create(
-                master_user=record_context['master_user'],
-                member=record_context['member'],
-                action=HistoricalRecord.ACTION_DANGER,
-                user_code=master_user.name,
-                notes="JOURNAL IS DISABLED. OBJECTS ARE NOT TRACKED",
-                content_type=content_type
-            )
+
+            already_disabled = False
+
+            try:
+
+                last_record = \
+                    HistoricalRecord.objects.filter(user_code=master_user.name, content_type=content_type,
+                                                    ).order_by('-created')[0]
+
+                _l.info('last_record %s' % last_record.data)
+
+                if last_record.data['journal_status'] == 'disabled':
+                    already_disabled = True
+
+            except Exception as e:
+                pass
+
+            if not already_disabled:
+
+                data = get_serialized_data(sender, instance)
+
+                HistoricalRecord.objects.create(
+                    master_user=record_context['master_user'],
+                    member=record_context['member'],
+                    action=HistoricalRecord.ACTION_DANGER,
+                    user_code=master_user.name,
+                    data=data,
+                    notes="JOURNAL IS DISABLED. OBJECTS ARE NOT TRACKED",
+                    content_type=content_type
+                )
 
     if master_user.journal_status != MasterUser.JOURNAL_STATUS_DISABLED:
 
@@ -497,11 +519,14 @@ def add_history_listeners(sender, **kwargs):
 
 
 import sys
+
+
 def record_history():
-    if ('makemigrations' in sys.argv or 'migrate' in sys.argv):
-        _l.info("History is not recording. Probably Migration context")
+    if 'test' in sys.argv or 'makemigrations' in sys.argv or 'migrate' in sys.argv:
+        _l.info("History is not recording. Probably Test or Migration context")
     else:
         _l.info("History is recording")
         models.signals.class_prepared.connect(add_history_listeners, weak=False)
+
 
 record_history()

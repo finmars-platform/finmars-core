@@ -1557,6 +1557,7 @@ class PriceHistory(DataTimeStampedModel):
 
     ytm = models.FloatField(default=0.0, verbose_name=gettext_lazy('ytm'))
     nav = models.FloatField(default=0.0, verbose_name=gettext_lazy('nav'))
+    factor = models.FloatField(default=1.0, verbose_name=gettext_lazy('factor'))
     cash_flow = models.FloatField(default=0.0, verbose_name=gettext_lazy('cash flow'))
     modified_duration = models.FloatField(default=0.0, verbose_name=gettext_lazy('modified duration'))
 
