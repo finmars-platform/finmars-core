@@ -65,6 +65,21 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
             PortfolioRegisterRecord.AUTOMATIC,
         )
 
+    def test_check_updated_prr_became_manual(self):
+        resp_data = self.create_portfolio_register_record()
+        resp_data["dealing_price_valuation_currency"] += self.random_int()
+        response = self.client.put(
+            f"{self.url}{resp_data['id']}/",
+            data=resp_data,
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        updated_data = response.json()
+        self.assertEqual(
+            updated_data["share_price_calculation_type"],
+            PortfolioRegisterRecord.MANUAL,
+        )
+
 
 # class PortfolioRegisterRecordEvViewSetTest(BaseTestCase):
 #     def setUp(self):
