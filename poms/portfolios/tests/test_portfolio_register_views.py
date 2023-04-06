@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 
-from poms.common.common_base_test import BaseTestCase, show_all_urls
+from poms.common.common_base_test import BaseTestCase
 
 
 class PortfolioRegisterRecordViewSetTest(BaseTestCase):
@@ -10,7 +10,6 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
         self.init_test_case()
         user = User.objects.first()
         self.client.force_authenticate(user)
-        self.pk = 1
         self.url = (
             f"/{settings.BASE_API_URL}/api/v1"
             f"/portfolios/portfolio-register-record/"
@@ -18,8 +17,10 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
 
     def test_ok(self):
         response = self.client.get(path=self.url, format="json")
-
         self.assertEqual(response.status_code, 200, response.content)
+
+    def test_created_ok(self):
+        pass
 
 
 class PortfolioRegisterRecordEvViewSetTest(BaseTestCase):
