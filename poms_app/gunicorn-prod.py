@@ -6,11 +6,11 @@ loglevel = "info"
 # The number of worker processes for handling requests
 workers = 4
 threads = 1
-timeout=180
+timeout = 180
 # The socket to bind
 bind = "0.0.0.0:8080"
 # PID file so you can easily fetch process ID
-#pidfile = "/var/run/gunicorn/prod.pid"
+# pidfile = "/var/run/gunicorn/prod.pid"
 # Daemonize the Gunicorn process (detach & enter background)
 # daemon = True
 accesslog = "/var/log/finmars/backend/gunicorn.access.log"
