@@ -212,7 +212,7 @@ class DbInitializer:
             user_code="-",
             short_name="-",
             public_name="-",
-            instrument_type_id=1,
+            instrument_type=InstrumentType.objects.first(),
             accrued_currency=self.usd,
             pricing_currency=self.usd,
             maturity_date=date.today(),
@@ -345,18 +345,17 @@ class DbInitializer:
         )
 
     def __init__(self):
-        print("----------- db initialization started -------------")
         self.master_user = self.get_or_create_master_user()
         self.group = self.create_unified_group()
         self.usd = self.get_or_create_currency_usd()
         self.strategies = self.get_or_create_strategies()
         self.counter_party = self.create_counter_party()
         self.responsible = self.create_responsible()
-        self.default_instrument = self.get_or_create_default_instrument()
         self.accounts, self.portfolios = self.create_accounts_and_portfolios()
-
+        self.transaction_types = self.get_or_create_types()
         self.instruments = self.get_or_create_instruments()
         self.transaction_classes = self.get_or_create_classes()
         self.transaction_types = self.get_or_create_types()
-
-        print("----------- db initialized -------------")
+        self.instruments = self.get_or_create_instruments()
+        self.default_instrument = self.get_or_create_default_instrument()
+        print("----------- db initialized with mandatory data -------------")
