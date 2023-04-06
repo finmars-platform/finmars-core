@@ -448,37 +448,3 @@ class ExpressionProcedureContextVariable(models.Model):
 
     def __str__(self):
         return self.name or ''
-
-
-class ExpressionProcedureInstance(BaseProcedureInstance):
-    procedure = models.ForeignKey(ExpressionProcedure, on_delete=models.CASCADE,
-                                  verbose_name=gettext_lazy('procedure'))
-
-    calculated_options_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('calculated options'))
-
-    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
-    result = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('result'))
-    log = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('log'))
-
-    class Meta:
-        ordering = ['-created']
-
-    @property
-    def calculated_options(self):
-        if self.calculated_options_data:
-            try:
-                return json.loads(self.calculated_options_data)
-            except (ValueError, TypeError):
-                return None
-        else:
-            return None
-
-    @calculated_options.setter
-    def calculated_options(self, val):
-        if val:
-            self.calculated_options_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
-        else:
-            self.calculated_options_data = None
-
-    def __str__(self):
-        return '%s [%s] by %s' % (self.procedure, self.id, self.member)

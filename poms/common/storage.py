@@ -1,10 +1,9 @@
+from django.core.files.storage import FileSystemStorage
+from poms_app import settings
+
 from storages.backends.azure_storage import AzureStorage
 from storages.backends.s3boto3 import S3Boto3Storage
 from storages.backends.sftpstorage import SFTPStorage
-from django.core.files.storage import FileSystemStorage
-
-
-from poms_app import settings
 
 
 def get_storage():

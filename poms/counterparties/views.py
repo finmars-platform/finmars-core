@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import django_filters
 from django_filters.rest_framework import FilterSet
 from rest_framework.settings import api_settings
+from rest_framework.decorators import action
 
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, AttributeFilter, \
     GroupsAttributeFilter, EntitySpecificFilter
@@ -143,6 +144,17 @@ class CounterpartyViewSet(AbstractWithObjectPermissionViewSet):
         'group', 'group__user_code', 'group__name', 'group__short_name', 'group__public_name',
     ]
 
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=CounterpartyLightSerializer)
+    def list_light(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
+
 
 class CounterpartyEvFilterSet(FilterSet):
     id = NoOpFilter()
@@ -197,7 +209,7 @@ class CounterpartyLightFilterSet(FilterSet):
         model = Counterparty
         fields = []
 
-
+# DEPRECATED
 class CounterpartyLightViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Counterparty.objects.select_related(
         'master_user'
@@ -369,6 +381,17 @@ class ResponsibleViewSet(AbstractWithObjectPermissionViewSet):
         'group', 'group__user_code', 'group__name', 'group__short_name', 'group__public_name',
     ]
 
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=ResponsibleLightSerializer)
+    def list_light(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
+
 
 class ResponsibleEvFilterSet(FilterSet):
     id = NoOpFilter()
@@ -426,7 +449,7 @@ class ResponsibleLightFilterSet(FilterSet):
         model = Responsible
         fields = []
 
-
+# DEPRECATED
 class ResponsibleLightViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Responsible.objects.select_related(
         'master_user',

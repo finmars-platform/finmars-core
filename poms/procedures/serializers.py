@@ -5,7 +5,7 @@ from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithTimeStampSerializer
 from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, PricingProcedureInstance, \
-    PricingParentProcedureInstance, RequestDataFileProcedureInstance, ExpressionProcedure, ExpressionProcedureInstance, \
+    PricingParentProcedureInstance, RequestDataFileProcedureInstance, ExpressionProcedure, \
     ExpressionProcedureContextVariable
 from poms.users.fields import MasterUserField
 
@@ -230,16 +230,3 @@ class RunExpressionProcedureSerializer(serializers.Serializer):
         context['instance'] = self.instance
 
         self.fields['procedure'] = serializers.PrimaryKeyRelatedField(read_only=True)
-
-
-class ExpressionProcedureInstanceSerializer(serializers.ModelSerializer):
-    procedure_object = ExpressionProcedureSerializer(source='procedure', read_only=True)
-
-    request_data = serializers.JSONField(allow_null=True, required=False)
-
-    class Meta:
-        model = ExpressionProcedureInstance
-        fields = ('master_user', 'id', 'request_data',
-                  'status', 'error_code', 'error_message',
-                  'created', 'modified', 'result', 'log', 'notes',
-                  'procedure', 'procedure_object')

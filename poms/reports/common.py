@@ -60,6 +60,7 @@ class Report(BaseReport):
                  show_transaction_details=False,
                  show_balance_exposure_details=False,
                  approach_multiplier=0.5,
+                 expression_iterations_count=1,
                  allocation_detailing=True,
                  pl_include_zero=True,
                  instruments=None,
@@ -114,6 +115,7 @@ class Report(BaseReport):
         self.show_transaction_details = show_transaction_details
         self.show_balance_exposure_details = show_balance_exposure_details
         self.approach_multiplier = approach_multiplier
+        self.expression_iterations_count = expression_iterations_count
         self.allocation_detailing = allocation_detailing
         self.pl_include_zero = pl_include_zero
 
@@ -272,6 +274,7 @@ class TransactionReport(BaseReport):
                  items=None,
                  date_field=None,
                  depth_level=None,
+                 expression_iterations_count=1,
                  filters=None):
         super(TransactionReport, self).__init__(id=id, master_user=master_user, member=member,
                                                 task_id=task_id, task_status=task_status)
@@ -330,6 +333,8 @@ class TransactionReport(BaseReport):
             self.depth_level = depth_level
         else:
             self.depth_level = 'base_transaction'
+
+        self.expression_iterations_count = expression_iterations_count
 
     def __str__(self):
         return 'TransactionReport:%s' % self.id

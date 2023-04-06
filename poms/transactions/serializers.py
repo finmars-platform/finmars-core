@@ -253,12 +253,12 @@ class TransactionTypeInputSerializer(serializers.ModelSerializer):
         #             target_attr = 'notification_class'
         #         else:
         #             raise ValidationError('Unknown content_type')
-        # 
+        #
         #         attrs = ['account', 'instrument_type', 'instrument', 'currency', 'counterparty', 'responsible',
         #                  'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
         #                  'payment_size_detail', 'pricing_policy', 'periodicity',
         #                  'accrual_calculation_model']
-        # 
+        #
         #         for attr in attrs:
         #             if attr != target_attr:
         #                 data[attr] = None
@@ -4189,7 +4189,13 @@ class ComplexTransactionDeleteSerializer(serializers.ModelSerializer):
             'code',
             'transaction_unique_code',
             'deleted_transaction_unique_code',
-            'modified'
+            'modified',
+            'text',
+            'user_text_1',
+            'user_text_2',
+            'user_text_3',
+            'user_text_4',
+            'user_text_5',
         ]
 
         read_only_fields = fields

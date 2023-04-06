@@ -48,7 +48,18 @@ class SchemeViewSet(AbstractModelViewSet):
         PomsConfigurationPermission
     ]
 
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=CsvImportSchemeLightSerializer)
+    def list_light(self, request, *args, **kwargs):
 
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
+
+# DEPRECATED
 class SchemeLightViewSet(AbstractModelViewSet):
     queryset = CsvImportScheme.objects
     serializer_class = CsvImportSchemeLightSerializer

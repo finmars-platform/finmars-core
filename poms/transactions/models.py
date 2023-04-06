@@ -1526,9 +1526,7 @@ class ComplexTransaction(DataTimeStampedModel):
             if hasattr(self, 'transaction_unique_code'):
                 self.deleted_transaction_unique_code = self.transaction_unique_code
 
-                self.transaction_unique_code = formula.safe_eval('generate_user_code("del", "", 1)',
-                                                                 context={
-                                                                     'master_user': self.master_user})  # Probably unnecessary
+                self.transaction_unique_code = None
 
                 fields_to_update.append('deleted_transaction_unique_code')
                 fields_to_update.append('transaction_unique_code')

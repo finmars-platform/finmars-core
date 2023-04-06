@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from poms.procedures.models import RequestDataFileProcedure, RequestDataFileProcedureInstance, PricingProcedure, \
-    PricingParentProcedureInstance, PricingProcedureInstance, ExpressionProcedureInstance, ExpressionProcedure, \
+    PricingParentProcedureInstance, PricingProcedureInstance, ExpressionProcedure, \
     ExpressionProcedureContextVariable
 
 
@@ -64,12 +64,3 @@ class ExpressionProcedureAdmin(admin.ModelAdmin):
 
 
 admin.site.register(ExpressionProcedure, ExpressionProcedureAdmin)
-
-
-class ExpressionProcedureInstanceAdmin(admin.ModelAdmin):
-    model = ExpressionProcedureInstance
-    list_display = ['id', 'master_user', 'procedure', 'created', 'modified', 'status']
-    raw_id_fields = ['master_user']
-
-
-admin.site.register(ExpressionProcedureInstance, ExpressionProcedureInstanceAdmin)

@@ -3,6 +3,7 @@ import csv
 import json
 import os
 import re
+import time
 import traceback
 from datetime import date
 from tempfile import NamedTemporaryFile
@@ -130,6 +131,8 @@ class TransactionImportProcess(object):
             import_system_message_performed_by = 'System'
             import_system_message_title = 'Transaction import from broker (start)'
 
+        self.prefetch_relations()
+
         send_system_message(master_user=self.master_user,
                             performed_by=import_system_message_performed_by,
                             section='import',
@@ -137,6 +140,36 @@ class TransactionImportProcess(object):
                             title=import_system_message_title,
                             description=self.member.username + ' started import with scheme ' + self.scheme.name,
                             )
+
+    def prefetch_relations(self):
+
+        st = time.perf_counter()
+
+        result = {}
+
+        def as_dict(items):
+            result = {}
+
+            for item in items:
+                result[item.user_code] = item
+
+            return result
+
+        result['accounts.account'] = as_dict(Account.objects.all())
+        result['portfolios.portfolio'] = as_dict(Portfolio.objects.all())
+        result['currencies.currency'] = as_dict(Currency.objects.all())
+        result['instruments.instrument'] = as_dict(Instrument.objects.all())
+        result['strategies.strategy1'] = as_dict(Strategy1.objects.all())
+        result['strategies.strategy2'] = as_dict(Strategy2.objects.all())
+        result['strategies.strategy3'] = as_dict(Strategy3.objects.all())
+        result['counterparties.counterparty'] = as_dict(Counterparty.objects.all())
+        result['counterparties.responsible'] = as_dict(Responsible.objects.all())
+        result['instruments.instrumenttype'] = as_dict(InstrumentType.objects.all())
+
+        self.prefetched_relations = result
+
+        _l.info('TransactionImportProcess: prefetch_relations done: %s',
+                "{:3.3f}".format(time.perf_counter() - st))
 
     def items_has_error(self):
 
@@ -150,7 +183,6 @@ class TransactionImportProcess(object):
                 error_rows_count = error_rows_count + 1
                 result = True
                 break
-
 
         return result
 
@@ -370,7 +402,19 @@ class TransactionImportProcess(object):
 
             try:
 
-                v = model_class.objects.get(master_user=self.master_user, user_code=value)
+                try:
+
+                    # optimized way of getting from prefetched dictionary
+
+                    content_type_key = i.content_type.app_label + '.' + i.content_type.model
+
+                    v = self.prefetched_relations[content_type_key][value]
+
+                except Exception as e:
+
+                    # old way of getting relations
+
+                    v = model_class.objects.get(master_user=self.master_user, user_code=value)
 
             except Exception:
 
@@ -447,7 +491,6 @@ class TransactionImportProcess(object):
                 for key, value in fields.items():
                     fields_dict[key] = str(value)
 
-
                 if error:
                     fields_dict['error_message'] = str(error)
 
@@ -508,6 +551,8 @@ class TransactionImportProcess(object):
     def fill_with_file_items(self):
 
         _l.info('TransactionImportProcess.Task %s. fill_with_raw_items INIT %s' % (self.task, self.process_type))
+
+        st = time.perf_counter()
 
         try:
 
@@ -641,6 +686,9 @@ class TransactionImportProcess(object):
                 'TransactionImportProcess.Task %s. fill_with_raw_items %s DONE items %s' % (
                     self.task, self.process_type, len(self.raw_items)))
 
+            _l.info('TransactionImportProcess: fill_with_raw_items done: %s',
+                    "{:3.3f}".format(time.perf_counter() - st))
+
         except Exception as e:
 
             _l.error('TransactionImportProcess.Task %s. fill_with_raw_items %s Exception %s' % (
@@ -651,6 +699,7 @@ class TransactionImportProcess(object):
     def fill_with_raw_items(self):
 
         _l.info('TransactionImportProcess.Task %s. fill_with_raw_items INIT %s' % (self.task, self.process_type))
+        st = time.perf_counter()
 
         try:
 
@@ -669,6 +718,8 @@ class TransactionImportProcess(object):
             _l.info(
                 'TransactionImportProcess.Task %s. fill_with_raw_items %s DONE items %s' % (
                     self.task, self.process_type, len(self.raw_items)))
+            _l.info('TransactionImportProcess: fill_with_raw_items done: %s',
+                    "{:3.3f}".format(time.perf_counter() - st))
 
         except Exception as e:
 
@@ -680,6 +731,8 @@ class TransactionImportProcess(object):
     def apply_conversion_to_raw_items(self):
 
         # EXECUTE CONVERSIONS ON SCHEME INPUTS
+
+        st = time.perf_counter()
 
         row_number = 1
         for raw_item in self.raw_items:
@@ -709,6 +762,9 @@ class TransactionImportProcess(object):
             self.conversion_items.append(conversion_item)
 
             row_number = row_number + 1
+
+        _l.info('TransactionImportProcess: apply_conversion_to_raw_items done: %s',
+                "{:3.3f}".format(time.perf_counter() - st))
 
     # We have formulas that lookup for rows
     # e.g. transaction_import.find_row
@@ -788,8 +844,13 @@ class TransactionImportProcess(object):
     def preprocess(self):
 
         _l.info('TransactionImportProcess.Task %s. preprocess INIT' % self.task)
+        st = time.perf_counter()
+        # self.recursive_preprocess(deep=2)
 
-        self.recursive_preprocess(deep=2)
+        if self.scheme.expression_iterations_count < 1:
+            self.scheme.expression_iterations_count = 1
+
+        self.recursive_preprocess(deep=self.scheme.expression_iterations_count)
 
         for preprocessed_item in self.preprocessed_items:
             item = TransactionImportProcessItem()
@@ -803,11 +864,13 @@ class TransactionImportProcess(object):
 
         _l.info(
             'TransactionImportProcess.Task %s. preprocess DONE items %s' % (self.task, len(self.preprocessed_items)))
+        _l.info('TransactionImportProcess: preprocess done: %s',
+                "{:3.3f}".format(time.perf_counter() - st))
 
     def process_items(self):
 
         _l.info('TransactionImportProcess.Task %s. process_items INIT' % self.task)
-
+        st = time.perf_counter()
         index = 0
 
         for item in self.items:
@@ -920,6 +983,8 @@ class TransactionImportProcess(object):
         self.result.items = self.items
 
         _l.info('TransactionImportProcess.Task %s. process_items DONE' % self.task)
+        _l.info('TransactionImportProcess: process_items done: %s',
+                "{:3.3f}".format(time.perf_counter() - st))
 
     def get_verbose_result(self):
 
@@ -988,11 +1053,9 @@ class TransactionImportProcess(object):
 
             self.result.reports = []
 
-
             # if self.items_has_error():
             self.result.reports.append(self.generate_file_report())
             self.result.reports.append(self.generate_json_report())
-
 
             if self.items_has_error():
                 error_rows_count = 0
