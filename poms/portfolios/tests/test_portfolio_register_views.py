@@ -3,7 +3,9 @@ from django.conf import settings
 from django.contrib.auth.models import User
 
 from poms.common.common_base_test import BaseTestCase, BIG
+from poms.portfolios.models import PortfolioRegisterRecord
 from poms.transactions.models import TransactionClass
+from poms.users.models import Member
 
 JSON_TYPE = "application/json"
 
@@ -12,20 +14,20 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        user = User.objects.first()
-        user.master_user = self.db_data.master_user
-        user.save()
-        self.client.force_authenticate(user)
+        self.user = User.objects.create(username="view_tester")
+        self.user.master_user = self.db_data.master_user
+        self.user.save()
+        self.member = Member.objects.create(
+            user=self.user,
+            master_user=self.user.master_user,
+            is_admin=True,
+        )
+        self.client.force_authenticate(self.user)
         self.url = (
-            f"/{settings.BASE_API_URL}/api/v1" f"/portfolios/portfolio-register-record/"
+            f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio-register-record/"
         )
 
-    def test_check_url(self):
-        response = self.client.get(path=self.url)
-        self.assertEqual(response.status_code, 200, response.content)
-        print(response.json())
-
-    def test_created_prr(self):
+    def create_portfolio_register_record(self):
         portfolio = self.db_data.portfolios[BIG]
         complex_transaction, transaction = self.db_data.cash_in_transaction(portfolio)
         trans_class = self.db_data.transaction_classes[TransactionClass.CASH_INFLOW]
@@ -49,6 +51,19 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
         }
         response = self.client.post(self.url, data=prr_data, format="json")
         self.assertEqual(response.status_code, 201, response.content)
+        return response.json()
+
+    def test_check_url(self):
+        response = self.client.get(path=self.url)
+        self.assertEqual(response.status_code, 200, response.content)
+
+    def test_created_prr_has_new_field(self):
+        resp_data = self.create_portfolio_register_record()
+        self.assertIn("share_price_calculation_type", resp_data)
+        self.assertEqual(
+            resp_data["share_price_calculation_type"],
+            PortfolioRegisterRecord.AUTOMATIC,
+        )
 
 
 # class PortfolioRegisterRecordEvViewSetTest(BaseTestCase):
