@@ -1,19 +1,14 @@
-from __future__ import unicode_literals
-
 from logging import getLogger
 
 from rest_framework import serializers
 
-from poms.accounts.fields import AccountField
 from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
-from poms.counterparties.fields import ResponsibleField, CounterpartyField
 from poms.instruments.handlers import InstrumentTypeProcess
 from poms.instruments.models import InstrumentType, Instrument
 from poms.instruments.serializers import InstrumentViewSerializer, PricingPolicySerializer, InstrumentSerializer
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord, PortfolioBundle
-from poms.transactions.fields import TransactionTypeField
 from poms.users.fields import MasterUserField
 from poms.users.models import EcosystemDefault
 

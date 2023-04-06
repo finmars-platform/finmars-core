@@ -402,16 +402,13 @@ class PortfolioRegisterRecordEvFilterSet(FilterSet):
 
 
 class PortfolioRegisterRecordViewSet(AbstractWithObjectPermissionViewSet):
-    queryset = PortfolioRegisterRecord.objects.select_related(
-        'master_user',
-    )
+    queryset = PortfolioRegisterRecord.objects.select_related('master_user')
     serializer_class = PortfolioRegisterRecordSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter
     ]
     filter_class = PortfolioRegisterRecordFilterSet
-    ordering_fields = [
-    ]
+    ordering_fields = []
 
 
 class PortfolioRegisterRecordEvViewSet(AbstractWithObjectPermissionViewSet):
