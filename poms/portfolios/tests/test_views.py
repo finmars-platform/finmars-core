@@ -13,7 +13,7 @@ class TransactionTypeViewSetTest(BaseTestCase):
         self.pk = 1
         self.url = (
             f"/{settings.BASE_API_URL}/api/v1"
-            f"/transactions/transaction-type/{self.pk}/recalculate-user-fields/"
+            f"/portfolios/transaction-type/{self.pk}/recalculate-user-fields/"
         )
 
     def test_ok(self):
