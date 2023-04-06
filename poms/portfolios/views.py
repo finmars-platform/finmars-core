@@ -462,18 +462,21 @@ class PortfolioRegisterRecordEvFilterSet(FilterSet):
 class PortfolioRegisterRecordViewSet(AbstractWithObjectPermissionViewSet):
     queryset = PortfolioRegisterRecord.objects.select_related(
         "master_user",
+    ).order_by(
+        "portfolio",
     )
     serializer_class = PortfolioRegisterRecordSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter
     ]
     filter_class = PortfolioRegisterRecordFilterSet
-    ordering_fields = []
 
 
 class PortfolioRegisterRecordEvViewSet(AbstractWithObjectPermissionViewSet):
     queryset = PortfolioRegisterRecord.objects.select_related(
         "master_user",
+    ).order_by(
+        "portfolio",
     )
     serializer_class = PortfolioRegisterRecordEvSerializer
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
@@ -482,7 +485,6 @@ class PortfolioRegisterRecordEvViewSet(AbstractWithObjectPermissionViewSet):
         GroupsAttributeFilter,
     ]
     filter_class = PortfolioRegisterRecordEvFilterSet
-    ordering_fields = []
 
 
 class PortfolioRegisterRecordEvGroupViewSet(
@@ -491,13 +493,15 @@ class PortfolioRegisterRecordEvGroupViewSet(
 ):
     queryset = PortfolioRegisterRecord.objects.select_related(
         "master_user",
+    ).order_by(
+        "portfolio",
     )
     serializer_class = PortfolioRegisterRecordSerializer
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = PortfolioRegisterRecordFilterSet
     filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
         OwnerByMasterUserFilter
     ]
+    filter_class = PortfolioRegisterRecordFilterSet
+    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
 
 
 class PortfolioBundleFilterSet(FilterSet):

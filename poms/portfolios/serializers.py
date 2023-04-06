@@ -338,7 +338,6 @@ class PortfolioRegisterSerializer(
         super(PortfolioRegisterSerializer, self).__init__(*args, **kwargs)
 
         from poms.currencies.serializers import CurrencyViewSerializer
-        from poms.portfolios.serializers import PortfolioViewSerializer
 
         self.fields["valuation_currency_object"] = CurrencyViewSerializer(
             source="valuation_currency", read_only=True
@@ -449,10 +448,9 @@ class PortfolioRegisterEvSerializer(
         ]
 
     def __init__(self, *args, **kwargs):
-        super(PortfolioRegisterEvSerializer, self).__init__(*args, **kwargs)
-
         from poms.currencies.serializers import CurrencyViewSerializer
-        from poms.portfolios.serializers import PortfolioViewSerializer
+
+        super(PortfolioRegisterEvSerializer, self).__init__(*args, **kwargs)
 
         self.fields["valuation_currency_object"] = CurrencyViewSerializer(
             source="valuation_currency", read_only=True

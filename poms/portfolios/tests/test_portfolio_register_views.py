@@ -13,10 +13,46 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
         self.pk = 1
         self.url = (
             f"/{settings.BASE_API_URL}/api/v1"
-            f"/portfolios/transaction-type/{self.pk}/recalculate-user-fields/"
+            f"/portfolios/portfolio-register-record/"
         )
 
     def test_ok(self):
-        response = self.client.post(path=self.url, format="json", data={})
+        response = self.client.get(path=self.url, format="json")
+
+        self.assertEqual(response.status_code, 200, response.content)
+
+
+class PortfolioRegisterRecordEvViewSetTest(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.init_test_case()
+        user = User.objects.first()
+        self.client.force_authenticate(user)
+        self.pk = 1
+        self.url = (
+            f"/{settings.BASE_API_URL}/api/v1"
+            f"/portfolios/portfolio-register-record-ev/"
+        )
+
+    def test_ok(self):
+        response = self.client.get(path=self.url, format="json")
+
+        self.assertEqual(response.status_code, 200, response.content)
+
+
+class PortfolioRegisterRecordEvGroupViewSetTest(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.init_test_case()
+        user = User.objects.first()
+        self.client.force_authenticate(user)
+        self.pk = 1
+        self.url = (
+            f"/{settings.BASE_API_URL}/api/v1"
+            f"/portfolios/portfolio-register-record-ev-group/"
+        )
+
+    def test_ok(self):
+        response = self.client.get(path=self.url, format="json")
 
         self.assertEqual(response.status_code, 200, response.content)
