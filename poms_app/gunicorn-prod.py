@@ -6,6 +6,7 @@ loglevel = "info"
 # The number of worker processes for handling requests
 workers = 2
 threads = 6
+timeout=180
 # The socket to bind
 bind = "0.0.0.0:8080"
 # PID file so you can easily fetch process ID

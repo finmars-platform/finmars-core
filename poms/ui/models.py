@@ -278,6 +278,7 @@ class InstrumentUserFieldModel(models.Model):
     name = models.CharField(max_length=255, default='', blank=True, verbose_name=gettext_lazy('name'))
 
 
+
 class ColumnSortData(models.Model):
     member = models.ForeignKey(Member, related_name='column_sort_data',
                                verbose_name=gettext_lazy('member'), on_delete=models.CASCADE)
