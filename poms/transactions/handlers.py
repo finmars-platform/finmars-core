@@ -2551,7 +2551,7 @@ class TransactionTypeProcess(object):
                 "{:3.3f}".format(time.perf_counter() - execute_uniqueness_expression_st))
 
         # _l.info("LOG %s" % self.complex_transaction.execution_log)
-        self.assign_permissions_to_complex_transaction()
+        # self.assign_permissions_to_complex_transaction()
 
         self.run_procedures_after_book()
 
