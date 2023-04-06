@@ -453,7 +453,18 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
     overheads = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
 
     notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-    comment = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    user_text_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    user_text_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    user_text_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+
+    user_number_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    user_number_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    user_number_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+
+    user_date_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    user_date_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    user_date_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+
 
     class Meta:
         model = TransactionTypeActionTransaction
@@ -514,7 +525,17 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
             'carry_amount',
             'overheads',
             'notes',
-            'comment',
+            'user_text_1',
+            'user_text_2',
+            'user_text_3',
+
+            'user_number_1',
+            'user_number_2',
+            'user_number_3',
+
+            'user_date_1',
+            'user_date_2',
+            'user_date_3',
 
             'action_notes'
         ]
@@ -2305,7 +2326,18 @@ class TransactionSerializer(ModelWithObjectPermissionSerializer):
             'overheads',
             'ytm_at_cost',
             'notes',
-            'comment',
+
+            'user_text_1',
+            'user_text_2',
+            'user_text_3',
+
+            'user_number_1',
+            'user_number_2',
+            'user_number_3',
+
+            'user_date_1',
+            'user_date_2',
+            'user_date_3',
 
             # 'transaction_class_object',
             # 'transaction_currency_object',
@@ -2684,13 +2716,14 @@ class ComplexTransactionMixin:
             data['text'] = instance._cached_text
         return data
 
-class ComplexTransactionInputSerializer(serializers.ModelSerializer):
 
+class ComplexTransactionInputSerializer(serializers.ModelSerializer):
     transaction_type_input = TransactionTypeInputField()
     transaction_type_input_object = TransactionTypeInputSerializer(source='transaction_type_input')
 
     value_type = serializers.SerializerMethodField(read_only=True)
     content_type = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = ComplexTransactionInput
         fields = [

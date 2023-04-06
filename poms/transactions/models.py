@@ -2,13 +2,13 @@ from __future__ import unicode_literals
 
 import json
 import logging
+import time
 import traceback
 from datetime import date
 from math import isnan
-import time
+
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
-
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
@@ -1060,8 +1060,32 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
     notes = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                              verbose_name=gettext_lazy('notes'))
 
-    comment = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
-                             verbose_name=gettext_lazy('comment'))
+    user_text_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=gettext_lazy('user_text_1'))
+
+    user_text_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=gettext_lazy('user_text_2'))
+
+    user_text_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=gettext_lazy('user_text_3'))
+
+    user_number_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                     verbose_name=gettext_lazy('user_number_1'))
+
+    user_number_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                     verbose_name=gettext_lazy('user_number_2'))
+
+    user_number_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                     verbose_name=gettext_lazy('user_number_3'))
+
+    user_date_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=gettext_lazy('user_date_1'))
+
+    user_date_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=gettext_lazy('user_date_2'))
+
+    user_date_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=gettext_lazy('user_date_3'))
 
     class Meta:
         verbose_name = gettext_lazy('transaction type action transaction')
@@ -1370,7 +1394,7 @@ class ComplexTransaction(DataTimeStampedModel):
 
     user_text_11 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 11'))
 
-    user_text_12 = models.TextField(null=True, blank=True, db_index=True,verbose_name=gettext_lazy('user text 12'))
+    user_text_12 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 12'))
 
     user_text_13 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 13'))
 
@@ -1526,8 +1550,6 @@ class ComplexTransaction(DataTimeStampedModel):
                 transaction.is_deleted = True
                 transaction.save()
 
-            from poms.common import formula
-
             if hasattr(self, 'transaction_unique_code'):
                 self.deleted_transaction_unique_code = self.transaction_unique_code
 
@@ -1649,7 +1671,8 @@ class Transaction(models.Model):
     cash_date = models.DateField(default=date_now, db_index=True, verbose_name=gettext_lazy("cash date"))
 
     # portfolio
-    portfolio = models.ForeignKey(Portfolio, on_delete=models.PROTECT, verbose_name=gettext_lazy("portfolio"), db_index=True)
+    portfolio = models.ForeignKey(Portfolio, on_delete=models.PROTECT, verbose_name=gettext_lazy("portfolio"),
+                                  db_index=True)
 
     # accounts
     account_position = models.ForeignKey(Account, related_name='transactions_account_position',
@@ -1739,7 +1762,18 @@ class Transaction(models.Model):
                                       'Absolute value of overheads (for calculations on the form)'))
 
     notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'), db_index=True)
-    comment = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('comment'), db_index=True)
+
+    user_text_1 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user_text_1'), db_index=True)
+    user_text_2 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user_text_2'), db_index=True)
+    user_text_3 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user_text_3'), db_index=True)
+
+    user_number_1 = models.FloatField(default=0.0, verbose_name=gettext_lazy('user_number_1'))
+    user_number_2 = models.FloatField(default=0.0, verbose_name=gettext_lazy('user_number_2'))
+    user_number_3 = models.FloatField(default=0.0, verbose_name=gettext_lazy('user_number_3'))
+
+    user_date_1 = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 1"))
+    user_date_2 = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 2"))
+    user_date_3 = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 3"))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 

@@ -70,8 +70,8 @@ class TransactionTypeProcess(object):
 
             if obj:
                 self.complex_transaction.execution_log = self.complex_transaction.execution_log + json.dumps(obj,
-                                                                                                         indent=4,
-                                                                                                         default=str) + '\n'
+                                                                                                             indent=4,
+                                                                                                             default=str) + '\n'
 
     def __init__(self,
                  process_mode=None,
@@ -104,7 +104,6 @@ class TransactionTypeProcess(object):
         _l.info('==== TransactionTypeProcess INIT ====')
 
         self.transaction_type = transaction_type
-
 
         master_user = self.transaction_type.master_user
         self.member = member
@@ -460,7 +459,8 @@ class TransactionTypeProcess(object):
         # _l.debug('setvalues %s' % self.values)
 
         for key, value in self.values.items():
-            self.record_execution_progress('Key: %s. Value: %s. Type: %s' % (key, value, type(self.values[key]).__name__))
+            self.record_execution_progress(
+                'Key: %s. Value: %s. Type: %s' % (key, value, type(self.values[key]).__name__))
 
     def book_create_instruments(self, actions, master_user, instrument_map, pass_download=False):
 
@@ -1792,10 +1792,50 @@ class TransactionTypeProcess(object):
                                       target=transaction, target_attr_name='notes',
                                       source=action_transaction, source_attr_name='notes')
 
-                    if action_transaction.comment is not None:
+                    if action_transaction.user_text_1 is not None:
                         self._set_val(errors=errors, values=self.values, default_value='',
-                                      target=transaction, target_attr_name='comment',
-                                      source=action_transaction, source_attr_name='comment')
+                                      target=transaction, target_attr_name='user_text_1',
+                                      source=action_transaction, source_attr_name='user_text_1')
+
+                    if action_transaction.user_text_2 is not None:
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=transaction, target_attr_name='user_text_2',
+                                      source=action_transaction, source_attr_name='user_text_2')
+
+                    if action_transaction.user_text_3 is not None:
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=transaction, target_attr_name='user_text_3',
+                                      source=action_transaction, source_attr_name='user_text_3')
+
+                    if action_transaction.user_number_1 is not None:
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=transaction, target_attr_name='user_number_1',
+                                      source=action_transaction, source_attr_name='user_number_1')
+
+                    if action_transaction.user_number_2 is not None:
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=transaction, target_attr_name='user_number_2',
+                                      source=action_transaction, source_attr_name='user_number_2')
+
+                    if action_transaction.user_number_3 is not None:
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=transaction, target_attr_name='user_number_3',
+                                      source=action_transaction, source_attr_name='user_number_3')
+
+                    if action_transaction.user_date_1 is not None:
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=transaction, target_attr_name='user_date_1',
+                                      source=action_transaction, source_attr_name='user_date_1')
+
+                    if action_transaction.user_date_2 is not None:
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=transaction, target_attr_name='user_date_2',
+                                      source=action_transaction, source_attr_name='user_date_2')
+
+                    if action_transaction.user_date_3 is not None:
+                        self._set_val(errors=errors, values=self.values, default_value='',
+                                      target=transaction, target_attr_name='user_date_3',
+                                      source=action_transaction, source_attr_name='user_date_3')
 
                     transaction_date_source = 'null'
 
@@ -2486,7 +2526,6 @@ class TransactionTypeProcess(object):
         self.record_execution_progress('+====+====+')
         self.record_execution_progress(' ')
 
-
         '''
         Executing complex_transaction.text expression
         '''
@@ -2511,7 +2550,6 @@ class TransactionTypeProcess(object):
         _l.info('TransactionTypeProcess: execute_uniqueness_expression done: %s',
                 "{:3.3f}".format(time.perf_counter() - execute_uniqueness_expression_st))
 
-
         # _l.info("LOG %s" % self.complex_transaction.execution_log)
         self.assign_permissions_to_complex_transaction()
 
@@ -2527,7 +2565,6 @@ class TransactionTypeProcess(object):
         self.record_execution_progress('Process time: %s' % "{:3.3f}".format(time.perf_counter() - process_st))
 
         self.complex_transaction.save()  # save executed text and date expression
-
 
         _l.info('TransactionTypeProcess: process done: %s',
                 "{:3.3f}".format(time.perf_counter() - process_st))
