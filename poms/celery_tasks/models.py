@@ -3,13 +3,11 @@ import logging
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import TimeStampedModel
 from poms.file_reports.models import FileReport
-from django.utils.timezone import now
-import datetime
-from poms_app import settings
 
 _l = logging.getLogger('poms.celery_tasks')
 
@@ -40,7 +38,6 @@ class CeleryTask(TimeStampedModel):
     STATUS_TRANSACTIONS_ABORTED = 'X'
     STATUS_REQUEST_SENT = 'S'
     STATUS_WAIT_RESPONSE = 'W'
-
 
     STATUS_CHOICES = (
         (STATUS_INIT, 'INIT'),
@@ -154,6 +151,15 @@ class CeleryTask(TimeStampedModel):
         self.progress_object = progress
 
         self.save()
+
+    def save(self, *args, **kwargs):
+
+        super(CeleryTask, self).save(*args, **kwargs)
+
+        count = CeleryTask.objects.all().count()
+
+        if count > 1000:
+            CeleryTask.objects.all().order_by('id')[0].delete()
 
 
 class CeleryTaskAttachment(models.Model):
