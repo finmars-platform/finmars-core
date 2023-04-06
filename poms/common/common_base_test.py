@@ -5,6 +5,21 @@ from datetime import date, datetime, timedelta
 from django.test import TestCase
 from rest_framework.test import APIClient
 
+from poms.accounts.models import Account
+from poms.counterparties.models import Counterparty, Responsible
+from poms.currencies.models import Currency
+from poms.instruments.models import Instrument, InstrumentClass, InstrumentType
+from poms.portfolios.models import Portfolio
+from poms.strategies.models import Strategy1, Strategy2, Strategy3
+from poms.transactions.models import (
+    ComplexTransaction,
+    Transaction,
+    TransactionClass,
+    TransactionType,
+    TransactionTypeGroup,
+)
+from poms.users.models import EcosystemDefault, MasterUser
+
 
 class TestMetaClass(type):
     def __new__(mcs, name, bases, dct):
@@ -218,14 +233,6 @@ class DbInitializer:
             user_code=USD.name,
             name=USD.name,
             default_fx_rate=USD.fx_rate,
-        )
-        self.euro = Currency.objects.filter(
-            user_code=EUR.name,
-        ).first() or Currency.objects.create(
-            master_user=self.master_user,
-            user_code=EUR.name,
-            name=EUR.name,
-            default_fx_rate=EUR.fx_rate,
         )
 
     def get_or_create_types(self, master_user) -> dict:
