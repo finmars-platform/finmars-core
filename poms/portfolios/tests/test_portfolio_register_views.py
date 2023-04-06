@@ -1,10 +1,10 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 
-from poms.common.common_base_test import BaseTestCase
+from poms.common.common_base_test import BaseTestCase, show_all_urls
 
 
-class TransactionTypeViewSetTest(BaseTestCase):
+class PortfolioRegisterRecordViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
