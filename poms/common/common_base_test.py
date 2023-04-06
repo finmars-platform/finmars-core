@@ -10,12 +10,14 @@ from poms.accounts.models import Account
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, InstrumentClass, InstrumentType
-from poms.portfolios.models import Portfolio
+from poms.portfolios.models import Portfolio, PortfolioRegister
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import (
     TransactionClass,
     TransactionType,
     TransactionTypeGroup,
+    Transaction,
+    ComplexTransaction,
 )
 from poms.users.models import EcosystemDefault, MasterUser
 
@@ -342,6 +344,62 @@ class DbInitializer:
             name=name,
             user_code=name,
             short_name=name,
+        )
+
+    def cash_in_transaction(self, portfolio: Portfolio, amount: int = 1000) -> tuple:
+        notes = f"Cash In {amount} {self.usd}"
+        op_date = date.today()
+        complex_transaction = ComplexTransaction.objects.create(
+            master_user=self.master_user,
+            date=op_date,
+            transaction_type=self.transaction_types[DEPOSIT],
+            text=notes,
+            user_text_10="1M",
+        )
+        account = portfolio.accounts.first()
+        transaction = Transaction.objects.create(
+            master_user=self.master_user,
+            account_position=account,
+            account_cash=account,
+            account_interim=account,
+            complex_transaction=complex_transaction,
+            portfolio=portfolio,
+            transaction_date=op_date,
+            accounting_date=op_date,
+            cash_date=op_date,
+            settlement_currency=self.usd,
+            transaction_currency=self.usd,
+            cash_consideration=amount,
+            carry_with_sign=0,
+            overheads_with_sign=0,
+            transaction_class=self.transaction_classes[TransactionClass.CASH_INFLOW],
+            factor=1,
+            reference_fx_rate=1,
+            instrument=self.default_instrument,
+            allocation_pl=self.default_instrument,
+            linked_instrument=self.default_instrument,
+            allocation_balance=self.default_instrument,
+            counterparty=self.counter_party,
+            responsible=self.responsible,
+            strategy1_cash=self.strategies[1],
+            strategy1_position=self.strategies[1],
+            strategy2_cash=self.strategies[2],
+            strategy2_position=self.strategies[2],
+            strategy3_cash=self.strategies[3],
+            strategy3_position=self.strategies[3],
+            notes=notes,
+        )
+        return complex_transaction, transaction
+
+    def create_portfolio_register(self, portfolio: Portfolio, instrument: Instrument):
+        return PortfolioRegister.objects.filter(
+            portfolio=portfolio,
+            linked_instrument=instrument,
+        ).first() or PortfolioRegister.objects.create(
+            master_user=self.master_user or MasterUser.objects.first(),
+            portfolio=portfolio,
+            linked_instrument=instrument,
+            valuation_currency=self.usd,
         )
 
     def __init__(self):
