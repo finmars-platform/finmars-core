@@ -16,6 +16,7 @@ from poms.portfolios.models import Portfolio
 from poms.transactions.models import Transaction, ComplexTransaction, TransactionType, ComplexTransactionInput, \
     TransactionTypeInput
 from poms.users.models import Group
+from poms.transactions.serializers import RecalculateUserFields
 
 _l = logging.getLogger('poms.transactions')
 
@@ -500,46 +501,52 @@ def execute_user_fields_expressions(complex_transaction, values, context, instan
                         setattr(complex_transaction, field_key, None)
 
 
-@shared_task(name='transactions.recalculate_user_fields', bind=True)
-def recalculate_user_fields(self, instance):
+@shared_task(name="transactions.recalculate_user_fields")
+def recalculate_user_fields(instance_data: dict):
+    instance = RecalculateUserFields(**instance_data)
     try:
+        _l.info(f"recalculate_user_fields: instance_data={instance_data}")
 
-        _l.info('recalculate_user_fields: instance.transaction_type_id %s' % instance.transaction_type_id)
-        # _l.debug('recalculate_attributes: context', context)
-
-        transaction_type = TransactionType.objects.get(id=instance.transaction_type_id,
-                                                       master_user=instance.master_user)
+        transaction_type = TransactionType.objects.get(
+            id=instance.transaction_type_id,
+            master_user=instance.master_user,
+        )
 
         complex_transactions = ComplexTransaction.objects.filter(
-            transaction_type=transaction_type)
+            transaction_type=transaction_type
+        )
 
-        _l.info('recalculate_user_fields: complex_transactions len %s' % len(complex_transactions))
+        _l.info(f"recalculate_user_fields: pk={instance.transaction_type_id}")
 
-        _l.info('recalculate_user_fields task id %s' % self.request.id)
+        celery_task = CeleryTask.objects.create(
+            master_user=instance.master_user,
+            member=instance.member,
+            status="P",
+            type="complex_transaction_user_field_recalculation",
+            celery_task_id=instance.transaction_type_id,  # pk from request
+        )
 
-        celery_task = CeleryTask.objects.create(master_user=instance.master_user,
-                                                member=instance.member,
-                                                status='P',
-                                                type='complex_transaction_user_field_recalculation',
-                                                celery_task_id=self.request.id)
+        _l.info(
+            f"recalculate_user_fields: complex_transactions "
+            f"len={len(complex_transactions)}"
+        )
 
-        celery_task.save()
-
-        context = {
-            'master_user': instance.master_user,
-            'member': instance.member
-        }
-
+        context = {"master_user": instance.master_user, "member": instance.member}
         for complex_transaction in complex_transactions:
             values = get_values(complex_transaction)
-
-            execute_user_fields_expressions(complex_transaction, values, context, instance)
+            execute_user_fields_expressions(
+                complex_transaction,
+                values,
+                context,
+                instance,
+            )
             complex_transaction.save()
 
-        celery_task.task_status = 'D'
-
+        celery_task.task_status = "D"
         celery_task.save()
 
     except Exception as e:
-        _l.info("Exception recalculate_user_fields %s" % e)
-        _l.info(traceback.format_exc())
+        _l.error(f"recalculate_user_fields: {repr(e)}\n{traceback.format_exc()}")
+
+    else:
+        return celery_task

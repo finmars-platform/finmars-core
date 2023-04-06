@@ -1,29 +1,33 @@
-from __future__ import unicode_literals
-
-from poms.common.tests import BaseApiWithPermissionTestCase, BaseAttributeTypeApiTestCase, \
-    BaseNamedModelTestCase
-from poms.transactions.models import TransactionType, TransactionTypeGroup, Transaction
+from poms.common.tests import (
+    BaseApiWithPermissionTestCase,
+    BaseAttributeTypeApiTestCase,
+    BaseNamedModelTestCase,
+)
+from poms.transactions.models import Transaction, TransactionType, TransactionTypeGroup
 
 
 def load_tests(loader, standard_tests, pattern):
     from poms.common.tests import load_tests as t
+
     return t(loader, standard_tests, pattern)
 
 
-class TransactionTypeGroupApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase):
+class TransactionTypeGroupApiTestCase(
+    BaseNamedModelTestCase, BaseApiWithPermissionTestCase
+):
     model = TransactionTypeGroup
 
     def setUp(self):
         super(TransactionTypeGroupApiTestCase, self).setUp()
 
-        self._url_list = '/api/v1/transactions/transaction-type-group/'
-        self._url_object = '/api/v1/transactions/transaction-type-group/%s/'
-        self._change_permission = 'change_transactiontypegroup'
+        self._url_list = "/api/v1/transactions/transaction-type-group/"
+        self._url_object = "/api/v1/transactions/transaction-type-group/%s/"
+        self._change_permission = "change_transactiontypegroup"
 
-    def _create_obj(self, name='transaction_type_group'):
+    def _create_obj(self, name="transaction_type_group"):
         return self.create_transaction_type_group(name, self._a_master_user)
 
-    def _get_obj(self, name='transaction_type_group'):
+    def _get_obj(self, name="transaction_type_group"):
         return self.get_transaction_type_group(name, self._a_master_user)
 
 
@@ -33,38 +37,42 @@ class TransactionTypeApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTe
     def setUp(self):
         super(TransactionTypeApiTestCase, self).setUp()
 
-        self._url_list = '/api/v1/transactions/transaction-type/'
-        self._url_object = '/api/v1/transactions/transaction-type/%s/'
+        self._url_list = "/api/v1/transactions/transaction-type/"
+        self._url_object = "/api/v1/transactions/transaction-type/%s/"
         # self._change_permission = 'change_transactiontype'
 
-        self.group_def = self.get_transaction_type_group('-', self._a_master_user)
+        self.group_def = self.get_transaction_type_group("-", self._a_master_user)
         # self.assign_perms(self.group_def, self._a, users=[self._a0, self._a1, self._a2], groups=['g1', 'g2'],
         #                   perms=get_perms_codename(self.group_def, ['change', 'view']))
 
-    def _create_obj(self, name='transaction_type'):
-        return self.create_transaction_type(name, self._a_master_user, group=self.group_def)
+    def _create_obj(self, name="transaction_type"):
+        return self.create_transaction_type(
+            name, self._a_master_user, group=self.group_def
+        )
 
-    def _get_obj(self, name='transaction_type'):
+    def _get_obj(self, name="transaction_type"):
         return self.get_transaction_type_group(name, self._a_master_user)
 
     def _make_new_data(self, **kwargs):
-        group = self.get_transaction_type_group(kwargs['group'],
-                                                self._a_master_user) if 'group' in kwargs else self.group_def
-        kwargs['group'] = group.id
+        group = (
+            self.get_transaction_type_group(kwargs["group"], self._a_master_user)
+            if "group" in kwargs
+            else self.group_def
+        )
+        kwargs["group"] = group.id
 
-        if 'display_expr' not in kwargs:
-            kwargs['display_expr'] = 'name'
-        if 'portfolios' not in kwargs:
-            kwargs['portfolios'] = []
-        if 'instrument_types' not in kwargs:
-            kwargs['instrument_types'] = []
-        if 'inputs' not in kwargs:
-            kwargs['inputs'] = []
-        if 'actions' not in kwargs:
-            kwargs['actions'] = []
+        if "display_expr" not in kwargs:
+            kwargs["display_expr"] = "name"
+        if "portfolios" not in kwargs:
+            kwargs["portfolios"] = []
+        if "instrument_types" not in kwargs:
+            kwargs["instrument_types"] = []
+        if "inputs" not in kwargs:
+            kwargs["inputs"] = []
+        if "actions" not in kwargs:
+            kwargs["actions"] = []
 
-        data = super(TransactionTypeApiTestCase, self)._make_new_data(**kwargs)
-        return data
+        return super(TransactionTypeApiTestCase, self)._make_new_data(**kwargs)
 
 
 class TransactionAttributeTypeApiTestCase(BaseAttributeTypeApiTestCase):
@@ -73,9 +81,10 @@ class TransactionAttributeTypeApiTestCase(BaseAttributeTypeApiTestCase):
     def setUp(self):
         super(TransactionAttributeTypeApiTestCase, self).setUp()
 
-        self._url_list = '/api/v1/transactions/transaction-attribute-type/'
-        self._url_object = '/api/v1/transactions/transaction-attribute-type/%s/'
+        self._url_list = "/api/v1/transactions/transaction-attribute-type/"
+        self._url_object = "/api/v1/transactions/transaction-attribute-type/%s/"
         # self._change_permission = 'change_transactionattributetype'
+
 
 # class TransactionApiTestCase(BaseNamedModelTestCase, BaseApiWithPermissionTestCase,
 #                             BaseApiWithAttributesTestCase):

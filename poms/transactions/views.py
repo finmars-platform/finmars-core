@@ -664,44 +664,45 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], url_path='recalculate-user-fields',
-            serializer_class=RecalculateUserFieldsSerializer)
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="recalculate-user-fields",
+        serializer_class=RecalculateUserFieldsSerializer,
+    )
     def recalculate_user_fields(self, request, pk):
+        print(f"pk={pk} request.data={request.data}")
 
-        context = {'request': request}
-
-        print('request.data %s' % request.data)
-
-        serializer = RecalculateUserFieldsSerializer(data=request.data, context=context)
+        serializer = RecalculateUserFieldsSerializer(
+            data=request.data,
+            context={"request": request},
+        )
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
-        task_id = instance.task_id
+        print(f"instance={instance}")
 
-        # signer = TimestampSigner()
+        if not instance.task_id:
+            instance.transaction_type_id = pk
 
-        print('instance %s' % instance)
+            celery_task = recalculate_user_fields.apply_async(
+                kwargs={
+                    "instance_data": RecalculateUserFieldsSerializer(
+                        instance=instance
+                    ).data,
+                }
+            )
 
-        if task_id:
+            print(f"celery_task.id={celery_task.id} status={celery_task.status}")
 
-            # TODO import-like status check chain someday
-            # TODO Right now is not important because status showed at Active Processes page
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            instance.task_id = celery_task.id
+            instance.task_status = celery_task.status
 
-        else:
+        deserializer = RecalculateUserFieldsSerializer(instance=instance)
 
-            instance.transaction_type_type_id = pk
-
-            res = recalculate_user_fields.apply_async(kwargs={'instance': instance})
-
-            # instance.task_id = signer.sign('%s' % res.id)
-            instance.task_id = res.id
-            instance.task_status = res.status
-
-            print('instance.task_id %s' % instance.task_id)
-
-            serializer = RecalculateUserFieldsSerializer(instance=instance, many=False)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        # TODO import-like status check chain someday
+        # TODO Right now is not important because status showed at Active Processes page
+        return Response(deserializer.data, status=status.HTTP_200_OK)
 
 
 class TransactionTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):

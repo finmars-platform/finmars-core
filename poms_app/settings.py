@@ -7,18 +7,19 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
-import os
 
+
+import os
+from django.utils.translation import gettext_lazy
 from poms_app.utils import ENV_BOOL, ENV_STR, ENV_INT, print_finmars
 
 print_finmars()
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-from django.utils.translation import gettext_lazy
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-DJANGO_LOG_LEVEL = ENV_STR('DJANGO_LOG_LEVEL', 'INFO')
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = ENV_BOOL('DEBUG', True)
 
 SECRET_KEY = ENV_STR('SECRET_KEY', "django_secret_key")
 SERVER_TYPE = ENV_STR('SERVER_TYPE', 'local')
@@ -30,8 +31,6 @@ HOST_URL = ENV_STR('HOST_URL', 'https://finmars.com') #
 JWT_SECRET_KEY = ENV_STR('JWT_SECRET_KEY', None)
 VERIFY_SSL = ENV_BOOL('VERIFY_SSL', True)
 ENABLE_DEV_DOCUMENTATION = ENV_BOOL('ENABLE_DEV_DOCUMENTATION', False)
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = ENV_BOOL('DEBUG', False)
 USE_FILESYSTEM_STORAGE = ENV_BOOL('USE_FILESYSTEM_STORAGE', False)
 MEDIA_ROOT = os.path.join(BASE_DIR, 'finmars_data')
 DOCS_ROOT = os.path.join(BASE_DIR, 'docs/build/html')
@@ -56,15 +55,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
 
-
-
     'django_filters',
 
     'mptt',
 
     'healthcheck',
 
-    'poms.history', # order is important because it registers models to listen to
+    'poms.history',  # order is important because it registers models to listen to
 
     'poms.system',
 
@@ -299,7 +296,7 @@ if SERVER_TYPE == "local":
     CORS_ALLOW_CREDENTIALS = True
     print("LOCAL development. CORS disabled")
 
-STATIC_URL = '/' + BASE_API_URL + '/api/static/'
+STATIC_URL = f'/{BASE_API_URL}/api/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')  # creates when collectstatic
 
 STATICFILES_DIR = (
@@ -334,17 +331,15 @@ CACHES = {
 #     },
 # }
 
-
-
 # SESSION_SERIALIZER = 'django.contrib.sessions.serializers.JSONSerializer'
 # SESSION_ENGINE = "poms.http_sessions.backends.cached_db"
 # SESSION_CACHE_ALIAS = 'http_session'
-
 
 SEND_LOGS_TO_FINMARS = ENV_BOOL('SEND_LOGS_TO_FINMARS', False)
 FINMARS_LOGSTASH_HOST = ENV_STR('FINMARS_LOGSTASH_HOST', '3.123.159.169')
 FINMARS_LOGSTASH_PORT = ENV_INT('FINMARS_LOGSTASH_PORT', 5044)
 
+DJANGO_LOG_LEVEL = ENV_STR('DJANGO_LOG_LEVEL', 'INFO')
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -573,7 +568,7 @@ BLOOMBERG_SANDBOX = True
 if os.environ.get('POMS_BLOOMBERG_SANDBOX') == 'False':
     BLOOMBERG_SANDBOX = False
 
-print('BLOOMBERG_SANDBOX %s ' % BLOOMBERG_SANDBOX)
+print(f'BLOOMBERG_SANDBOX {BLOOMBERG_SANDBOX} ')
 
 if BLOOMBERG_SANDBOX:
     BLOOMBERG_RETRY_DELAY = 0.1
@@ -632,8 +627,12 @@ if SERVER_TYPE == 'local' and USE_DEBUGGER:
 KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'https://eu-central.finmars.com')
 KEYCLOAK_REALM = os.environ.get('KEYCLOAK_REALM', 'finmars')
 KEYCLOAK_CLIENT_ID = os.environ.get('KEYCLOAK_CLIENT_ID', 'finmars')
-KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY',
-                                            None)  # not required anymore, api works in Bearer-only mod
+
+# not required anymore, api works in Bearer-only mod
+KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY', None)
 
 
-SIMPLE_JWT = {"SIGNING_KEY": os.getenv("SIGNING_KEY", SECRET_KEY), 'USER_ID_FIELD': 'username'}
+SIMPLE_JWT = {
+    "SIGNING_KEY": os.getenv("SIGNING_KEY", SECRET_KEY),
+    'USER_ID_FIELD': 'username'
+}
