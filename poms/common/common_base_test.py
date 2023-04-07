@@ -143,10 +143,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         self.db_data = DbInitializer()
 
 
-START_DATE = date(year=2020, month=1, day=1)
-END_DATE = date.today()
 MASTER_USER = "Experimental_Master"
-
 BUY_SELL = "Buy/Sell_unified"
 DEPOSIT = "Deposits/Withdraw_unified"
 FX = "FX/Forwards_unified"
