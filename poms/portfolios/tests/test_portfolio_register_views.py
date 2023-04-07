@@ -81,21 +81,14 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
         )
 
 
-# class PortfolioRegisterRecordEvViewSetTest(BaseTestCase):
-#     def setUp(self):
-#         super().setUp()
-#         self.init_test_case()
-#         user = User.objects.first()
-#         self.client.force_authenticate(user)
-#         self.url = (
-#             f"/{settings.BASE_API_URL}/api/v1"
-#             f"/portfolios/portfolio-register-record-ev/"
-#         )
-#
-#     def test_ok(self):
-#         response = self.client.get(path=self.url, format="json")
-#         self.assertEqual(response.status_code, 200, response.content)
-#         print(response.json())
+class PortfolioRegisterRecordEvViewSetTest(PortfolioRegisterRecordViewSetTest):
+    def setUp(self):
+        super().setUp()
+        self.url = (
+            f"/{settings.BASE_API_URL}/api/v1"
+            f"/portfolios/portfolio-register-record-ev/"
+        )
+
 
 
 # class PortfolioRegisterRecordEvGroupViewSetTest(BaseTestCase):
