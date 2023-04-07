@@ -39,13 +39,18 @@ def forwards_func(apps, schema_editor):
 
             for index in indexes:
 
-                if 'ui_transactionuserfieldmodel' in index['indexname']:
-                    print("Going to drop index %s" % indexes['indexname'])
-                    query = '''
-                    drop index %s;
-                    ''' % index['indexname']
+                try:
 
-                    cursor.execute(query)
+                    if 'ui_transactionuserfieldmodel' in index['indexname']:
+                        print("Going to drop index %s" % indexes['indexname'])
+                        query = '''
+                        drop index %s;
+                        ''' % index['indexname']
+
+                        cursor.execute(query)
+
+                except Exception as e:
+                    print("e %s " % e)
 
     except Exception as e:
         print('Django DB delete old index error %s' % e)
