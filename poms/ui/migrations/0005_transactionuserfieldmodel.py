@@ -10,21 +10,19 @@ def forwards_func(apps, schema_editor):
     from poms.reports.sql_builders.helpers import dictfetchall
     from django.db import connection
 
-    try:
-
-        query = '''
-        alter table ui_complextransactionuserfieldmodel
-        rename constraint ui_transactionuserfieldmodel_pkey to ui_complextransactionuserfieldmodel_pkey;
-        '''
-
-
-
-        with connection.cursor() as cursor:
-
-            cursor.execute(query)
-
-    except Exception as e:
-        print('Django DB Migration error %s' % e)
+    # try:
+    #
+    #     query = '''
+    #     alter table ui_complextransactionuserfieldmodel
+    #     rename constraint ui_transactionuserfieldmodel_pkey to ui_complextransactionuserfieldmodel_pkey;
+    #     '''
+    #
+    #     with connection.cursor() as cursor:
+    #
+    #         cursor.execute(query)
+    #
+    # except Exception as e:
+    #     print('Django DB Migration error %s' % e)
 
     try:
         with connection.cursor() as cursor:
