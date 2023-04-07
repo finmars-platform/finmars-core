@@ -260,8 +260,18 @@ class ColorPaletteColor(models.Model):
         ordering = ['order']
 
 
+class ComplexTransactionUserFieldModel(models.Model):
+    master_user = models.ForeignKey(MasterUser,
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+
+    key = models.CharField(max_length=255, unique=True, verbose_name=gettext_lazy('key'))
+    name = models.CharField(max_length=255, default='', blank=True, verbose_name=gettext_lazy('name'))
+
+    is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
+
+
 class TransactionUserFieldModel(models.Model):
-    master_user = models.ForeignKey(MasterUser, related_name='transaction_user_fields',
+    master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     key = models.CharField(max_length=255, unique=True, verbose_name=gettext_lazy('key'))
@@ -271,12 +281,11 @@ class TransactionUserFieldModel(models.Model):
 
 
 class InstrumentUserFieldModel(models.Model):
-    master_user = models.ForeignKey(MasterUser, related_name='instrument_user_fields',
+    master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     key = models.CharField(max_length=255, default='', blank=True, verbose_name=gettext_lazy('key'))
     name = models.CharField(max_length=255, default='', blank=True, verbose_name=gettext_lazy('name'))
-
 
 
 class ColumnSortData(models.Model):

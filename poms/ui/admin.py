@@ -3,8 +3,8 @@ from django.contrib import admin
 from poms.common.admin import AbstractModelAdmin
 from poms.ui.filters import LayoutContentTypeFilter
 from poms.ui.models import ListLayout, EditLayout, Bookmark, \
-    TransactionUserFieldModel, PortalInterfaceAccessModel, DashboardLayout, ContextMenuLayout, TemplateLayout, \
-    EntityTooltip, ColorPalette, ColorPaletteColor, CrossEntityAttributeExtension
+    ComplexTransactionUserFieldModel, PortalInterfaceAccessModel, DashboardLayout, ContextMenuLayout, TemplateLayout, \
+    EntityTooltip, ColorPalette, ColorPaletteColor, CrossEntityAttributeExtension, TransactionUserFieldModel
 
 
 class PortalInterfaceAccessModelAdmin(AbstractModelAdmin):
@@ -76,6 +76,18 @@ class CrossEntityAttributeExtensionAdmin(BaseLayoutAdmin):
 
 
 admin.site.register(CrossEntityAttributeExtension, CrossEntityAttributeExtensionAdmin)
+
+
+class ComplexTransactionUserFieldModelAdmin(BaseLayoutAdmin):
+    model = ComplexTransactionUserFieldModel
+    master_user_pasth = 'master_user'
+    list_display = ['id', 'master_user', 'name', 'key']
+    list_select_related = ['master_user']
+    search_fields = ['id', 'name', 'key']
+    raw_id_fields = ['master_user']
+
+
+admin.site.register(ComplexTransactionUserFieldModel, ComplexTransactionUserFieldModelAdmin)
 
 
 class TransactionUserFieldModelAdmin(BaseLayoutAdmin):
