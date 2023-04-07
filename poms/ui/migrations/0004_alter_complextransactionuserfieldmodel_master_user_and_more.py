@@ -43,9 +43,12 @@ def forwards_func(apps, schema_editor):
 
                     if 'ui_transactionuserfieldmodel' in index['indexname']:
                         print("Going to drop index %s" % indexes['indexname'])
+
+                        changed_index = index['indexname'].replace('ui_transactionuserfieldmodel', 'ui_complextransactionuserfieldmodel')
+
                         query = '''
-                        drop index %s;
-                        ''' % index['indexname']
+                        alter index %s rename to %s;
+                        ''' % (index['indexname'], changed_index)
 
                         cursor.execute(query)
 
