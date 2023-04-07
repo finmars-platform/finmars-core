@@ -39,7 +39,7 @@ def forwards_func(apps, schema_editor):
 
             for index in indexes:
 
-                if 'ui_transactionuserfieldmodel_pkey' in index['indexname']:
+                if 'ui_transactionuserfieldmodel' in index['indexname']:
                     print("Going to drop index %s" % indexes['indexname'])
                     query = '''
                     drop index %s;
