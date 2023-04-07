@@ -373,23 +373,3 @@ class PortfolioBundle(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("portfolio bundle")
         verbose_name_plural = gettext_lazy("portfolio bundles")
-
-
-# from django.db.models.signals import pre_save
-# from django.dispatch import receiver
-#
-#
-# @receiver(pre_save, sender=PortfolioRegisterRecord)
-# def check_required_field(sender, instance, **kwargs):
-#     if instance.pk:  # check if instance already exists in database
-#         original_instance = PortfolioRegisterRecord.objects.get(pk=instance.pk)
-#         if instance.required_field != original_instance.required_field:
-#             # Required field has changed, do something here
-#             pass
-#
-# from django.core.exceptions import ValidationError
-# from django.db import models
-#
-# class MyModel(models.Model):
-#     required_field = models.CharField(max_length=100)
-#
