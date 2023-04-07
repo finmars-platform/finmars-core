@@ -4,6 +4,67 @@ from django.db import migrations, models
 import django.db.models.deletion
 
 
+
+def forwards_func(apps, schema_editor):
+
+    from poms.reports.sql_builders.helpers import dictfetchall
+    from django.db import connection
+
+    try:
+
+        query = '''
+        alter table ui_complextransactionuserfieldmodel
+        rename constraint ui_transactionuserfieldmodel_pkey to ui_complextransactionuserfieldmodel_pkey;
+        '''
+
+
+
+        with connection.cursor() as cursor:
+
+            cursor.execute(query)
+
+    except Exception as e:
+        print('Django DB Migration error %s' % e)
+
+    try:
+        with connection.cursor() as cursor:
+            query_fetch = '''
+            select *
+                from pg_indexes where tablename='ui_complextransactionuserfieldmodel';
+            '''
+
+            cursor.execute(query_fetch)
+            indexes = dictfetchall(cursor)
+
+            print('indexes %s' % indexes)
+
+            for index in indexes:
+
+                try:
+
+                    if 'ui_transactionuserfieldmodel' in index['indexname']:
+                        print("Going to drop index %s" % indexes['indexname'])
+
+                        changed_index = index['indexname'].replace('ui_transactionuserfieldmodel', 'ui_complextransactionuserfieldmodel')
+
+                        query = '''
+                        alter index %s rename to %s;
+                        ''' % (index['indexname'], changed_index)
+
+                        cursor.execute(query)
+
+                except Exception as e:
+                    print("e %s " % e)
+
+    except Exception as e:
+        print('Django DB delete old index error %s' % e)
+
+
+
+def reverse_func(apps, schema_editor):
+    pass
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -12,6 +73,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(forwards_func, reverse_func),
         migrations.CreateModel(
             name='TransactionUserFieldModel',
             fields=[
