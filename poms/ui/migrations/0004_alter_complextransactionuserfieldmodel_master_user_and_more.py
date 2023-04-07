@@ -6,6 +6,9 @@ import django.db.models.deletion
 
 def forwards_func(apps, schema_editor):
 
+    from poms.reports.sql_builders.helpers import dictfetchall
+    from django.db import connection
+
     try:
 
         query = '''
@@ -13,7 +16,7 @@ def forwards_func(apps, schema_editor):
         rename constraint ui_transactionuserfieldmodel_pkey to ui_complextransactionuserfieldmodel_pkey;
         '''
 
-        from django.db import connection
+
 
         with connection.cursor() as cursor:
 
@@ -21,6 +24,31 @@ def forwards_func(apps, schema_editor):
 
     except Exception as e:
         print('Django DB Migration error %s' % e)
+
+    try:
+        with connection.cursor() as cursor:
+            query_fetch = '''
+            select *
+                from pg_indexes where tablename='ui_complextransactionuserfieldmodel';
+            '''
+
+            cursor.execute(query_fetch)
+            indexes = dictfetchall(cursor)
+
+            print('indexes %s' % indexes)
+
+            for index in indexes:
+
+                if 'ui_transactionuserfieldmodel_pkey' in index['indexname']:
+                    print("Going to drop index %s" % indexes['indexname'])
+                    query = '''
+                    drop index %s;
+                    ''' % index['indexname']
+
+                    cursor.execute(query)
+
+    except Exception as e:
+        print('Django DB delete old index error %s' % e)
 
 
 
