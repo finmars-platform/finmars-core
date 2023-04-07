@@ -7,8 +7,6 @@ from poms.portfolios.models import PortfolioRegisterRecord
 from poms.transactions.models import TransactionClass
 from poms.users.models import Member
 
-JSON_TYPE = "application/json"
-
 
 class PortfolioRegisterRecordViewSetTest(BaseTestCase):
     def setUp(self):
@@ -88,22 +86,3 @@ class PortfolioRegisterRecordEvViewSetTest(PortfolioRegisterRecordViewSetTest):
             f"/{settings.BASE_API_URL}/api/v1"
             f"/portfolios/portfolio-register-record-ev/"
         )
-
-
-
-# class PortfolioRegisterRecordEvGroupViewSetTest(BaseTestCase):
-#     def setUp(self):
-#         super().setUp()
-#         self.init_test_case()
-#         user = User.objects.first()
-#         self.client.force_authenticate(user)
-#         self.pk = 1
-#         self.url = (
-#             f"/{settings.BASE_API_URL}/api/v1"
-#             f"/portfolios/portfolio-register-record-ev-group/"
-#         )
-#
-#     def test_ok(self):
-#         response = self.client.get(path=self.url, format="json")
-#         self.assertEqual(response.status_code, 200, response.content)
-#         print(response.json())
