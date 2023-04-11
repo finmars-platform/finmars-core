@@ -2217,20 +2217,28 @@ class TransactionTypeProcess(object):
                     "message": "Skipped book. Transaction Unique code error"
                 })
 
-            elif self.uniqueness_reaction == 2 and exist and self.complex_transaction.transaction_unique_code:
+            elif self.uniqueness_reaction == 1 and not exist and self.complex_transaction.transaction_unique_code:
+
+                self.uniqueness_status = 'skip'
+
+                self.complex_transaction.transaction_unique_code = exist.transaction_unique_code
+                self.complex_transaction.code = exist.code
+
+            elif self.uniqueness_reaction == 2 and self.complex_transaction.transaction_unique_code:
 
                 self.uniqueness_status = 'booked_without_unique_code'
 
                 self.complex_transaction.transaction_unique_code = None
 
-            elif self.uniqueness_reaction == 3 and exist and self.complex_transaction.transaction_unique_code:
+            elif self.uniqueness_reaction == 3 and self.complex_transaction.transaction_unique_code:
 
                 self.uniqueness_status = 'overwrite'
 
                 self.complex_transaction.transaction_unique_code = exist.transaction_unique_code
                 self.complex_transaction.code = exist.code
 
-                exist.delete()
+                if exist:
+                    exist.delete()
 
             elif self.uniqueness_reaction == 4 and exist and self.complex_transaction.transaction_unique_code:
                 # TODO ask if behavior same as skip
