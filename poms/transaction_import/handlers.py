@@ -464,75 +464,73 @@ class TransactionImportProcess(object):
         # _l.info(
         #     'TransactionImportProcess.Task %s. book INIT item %s rule_scenario %s' % (self.task, item, rule_scenario))
 
-        with transaction.atomic():
+        try:
 
-            try:
+            fields = self.get_fields_for_item(item, rule_scenario)
+            if error:
+                fields['error_message'] = str(error)
 
-                fields = self.get_fields_for_item(item, rule_scenario)
-                if error:
-                    fields['error_message'] = str(error)
+            transaction_type_process_instance = TransactionTypeProcess(
+                linked_import_task=self.task,
+                transaction_type=rule_scenario.transaction_type,
+                default_values=fields,
+                context=self.context,
+                uniqueness_reaction=self.scheme.book_uniqueness_settings,
+                member=self.member,
+                source=item.file_inputs,
+                execution_context="import"
+            )
 
-                transaction_type_process_instance = TransactionTypeProcess(
-                    linked_import_task=self.task,
-                    transaction_type=rule_scenario.transaction_type,
-                    default_values=fields,
-                    context=self.context,
-                    uniqueness_reaction=self.scheme.book_uniqueness_settings,
-                    member=self.member,
-                    source=item.file_inputs,
-                    execution_context="import"
+            if not item.transaction_inputs:
+                item.transaction_inputs = {}
+
+            fields_dict = {}
+
+            for key, value in fields.items():
+                fields_dict[key] = str(value)
+
+            if error:
+                fields_dict['error_message'] = str(error)
+
+            item.transaction_inputs[rule_scenario.transaction_type.user_code] = fields_dict
+
+            transaction_type_process_instance.process()
+
+            if transaction_type_process_instance.uniqueness_status == 'skip':
+                item.status = 'skip'
+                item.error_message = item.error_message + 'Unique code already exist. Skip'
+
+            if transaction_type_process_instance.uniqueness_status == 'error':
+                item.status = 'error'
+                item.error_message = item.error_message + 'Unique code already exist. Error'
+
+            item.processed_rule_scenarios.append(rule_scenario)
+
+            if transaction_type_process_instance.complex_transaction:
+                trn = TransactionImportBookedTransaction(
+                    code=transaction_type_process_instance.complex_transaction.code,
+                    text=transaction_type_process_instance.complex_transaction.text,
+                    transaction_unique_code=transaction_type_process_instance.complex_transaction.transaction_unique_code,
                 )
 
-                if not item.transaction_inputs:
-                    item.transaction_inputs = {}
+                item.booked_transactions.append(trn)
 
-                fields_dict = {}
+            item.status = 'success'
+            item.message = "Transaction Booked %s" % transaction_type_process_instance.complex_transaction
 
-                for key, value in fields.items():
-                    fields_dict[key] = str(value)
+            # _l.info('TransactionImportProcess.Task %s. book SUCCESS item %s rule_scenario %s' % (
+            #     self.task, item, rule_scenario))
 
-                if error:
-                    fields_dict['error_message'] = str(error)
+            self.task.update_progress(
+                {
+                    'current': self.result.processed_rows,
+                    'total': len(self.items),
+                    'percent': round(self.result.processed_rows / (len(self.items) / 100)),
+                    'description': 'Going to book %s' % (rule_scenario.transaction_type.user_code)
+                }
+            )
 
-                item.transaction_inputs[rule_scenario.transaction_type.user_code] = fields_dict
-
-                transaction_type_process_instance.process()
-
-                if transaction_type_process_instance.uniqueness_status == 'skip':
-                    item.status = 'skip'
-                    item.error_message = item.error_message + 'Unique code already exist. Skip'
-
-                if transaction_type_process_instance.uniqueness_status == 'error':
-                    item.status = 'error'
-                    item.error_message = item.error_message + 'Unique code already exist. Error'
-
-                item.processed_rule_scenarios.append(rule_scenario)
-
-                if transaction_type_process_instance.complex_transaction:
-                    trn = TransactionImportBookedTransaction(
-                        code=transaction_type_process_instance.complex_transaction.code,
-                        text=transaction_type_process_instance.complex_transaction.text,
-                        transaction_unique_code=transaction_type_process_instance.complex_transaction.transaction_unique_code,
-                    )
-
-                    item.booked_transactions.append(trn)
-
-                item.status = 'success'
-                item.message = "Transaction Booked %s" % transaction_type_process_instance.complex_transaction
-
-                # _l.info('TransactionImportProcess.Task %s. book SUCCESS item %s rule_scenario %s' % (
-                #     self.task, item, rule_scenario))
-
-                self.task.update_progress(
-                    {
-                        'current': self.result.processed_rows,
-                        'total': len(self.items),
-                        'percent': round(self.result.processed_rows / (len(self.items) / 100)),
-                        'description': 'Going to book %s' % (rule_scenario.transaction_type.user_code)
-                    }
-                )
-
-            except Exception as e:
+        except Exception as e:
 
                 item.status = 'error'
                 item.error_message = item.error_message + 'Book Exception: ' + str(e)
