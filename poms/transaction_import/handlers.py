@@ -558,12 +558,13 @@ class TransactionImportProcess(object):
                 _l.error("TransactionImportProcess.Task %s. book Traceback %s " % (self.task, traceback.format_exc()))
 
                 transaction.set_rollback(True)
-                if raise_exception:
-
-                    if not isinstance(e, UniqueCodeError):
-                        raise Exception(e)
-                    else:
-                        _l.error("Code is not unique, skip %s" % str(e))
+                # WTF?
+                # if raise_exception:
+                #
+                #     if not isinstance(e, UniqueCodeError):
+                #         raise Exception(e)
+                #     else:
+                #         _l.error("Code is not unique, skip %s" % str(e))
 
     def fill_with_file_items(self):
 
