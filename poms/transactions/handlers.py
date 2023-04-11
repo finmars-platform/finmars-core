@@ -2224,7 +2224,7 @@ class TransactionTypeProcess(object):
                 self.uniqueness_status = 'skip'
 
 
-            elif self.uniqueness_reaction == 2 and self.complex_transaction.transaction_unique_code:
+            elif self.uniqueness_reaction == 2:
 
                 self.uniqueness_status = 'booked_without_unique_code'
 
