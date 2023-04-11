@@ -5,7 +5,7 @@ chdir = "/var/app/"
 loglevel = "info"
 # The number of worker processes for handling requests
 workers = 4
-threads = 1
+threads = 2
 timeout = 180
 # The socket to bind
 bind = "0.0.0.0:8080"
