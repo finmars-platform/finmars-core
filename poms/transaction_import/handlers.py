@@ -496,13 +496,13 @@ class TransactionImportProcess(object):
 
             transaction_type_process_instance.process()
 
-            if transaction_type_process_instance.uniqueness_status == 'skip':
-                item.status = 'skip'
-                item.error_message = item.error_message + 'Unique code already exist. Skip'
-
-            if transaction_type_process_instance.uniqueness_status == 'error':
-                item.status = 'error'
-                item.error_message = item.error_message + 'Unique code already exist. Error'
+            # if transaction_type_process_instance.uniqueness_status == 'skip':
+            #     item.status = 'skip'
+            #     item.error_message = item.error_message + 'Unique code already exist. Skip'
+            #
+            # if transaction_type_process_instance.uniqueness_status == 'error':
+            #     item.status = 'error'
+            #     item.error_message = item.error_message + 'Unique code already exist. Error'
 
             item.processed_rule_scenarios.append(rule_scenario)
 
