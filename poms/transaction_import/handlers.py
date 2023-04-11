@@ -538,7 +538,7 @@ class TransactionImportProcess(object):
                 _l.error("TransactionImportProcess.Task %s. book Exception %s " % (self.task, e))
                 _l.error("TransactionImportProcess.Task %s. book Traceback %s " % (self.task, traceback.format_exc()))
 
-                transaction.set_rollback(True)
+                # transaction.set_rollback(True)
                 if raise_exception:
 
                     if not isinstance(e, UniqueCodeError):
