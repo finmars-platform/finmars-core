@@ -1797,47 +1797,47 @@ class TransactionTypeProcess(object):
                                       source=action_transaction, source_attr_name='notes')
 
                     if action_transaction.user_text_1 is not None:
-                        self._set_val(errors=errors, values=self.values, default_value='',
+                        self._set_val(errors=errors, values=self.values, default_value=None,
                                       target=transaction, target_attr_name='user_text_1',
                                       source=action_transaction, source_attr_name='user_text_1')
 
                     if action_transaction.user_text_2 is not None:
-                        self._set_val(errors=errors, values=self.values, default_value='',
+                        self._set_val(errors=errors, values=self.values, default_value=None,
                                       target=transaction, target_attr_name='user_text_2',
                                       source=action_transaction, source_attr_name='user_text_2')
 
                     if action_transaction.user_text_3 is not None:
-                        self._set_val(errors=errors, values=self.values, default_value='',
+                        self._set_val(errors=errors, values=self.values, default_value=None,
                                       target=transaction, target_attr_name='user_text_3',
                                       source=action_transaction, source_attr_name='user_text_3')
 
                     if action_transaction.user_number_1 is not None:
-                        self._set_val(errors=errors, values=self.values, default_value='',
+                        self._set_val(errors=errors, values=self.values, default_value=None,
                                       target=transaction, target_attr_name='user_number_1',
                                       source=action_transaction, source_attr_name='user_number_1')
 
                     if action_transaction.user_number_2 is not None:
-                        self._set_val(errors=errors, values=self.values, default_value='',
+                        self._set_val(errors=errors, values=self.values, default_value=None,
                                       target=transaction, target_attr_name='user_number_2',
                                       source=action_transaction, source_attr_name='user_number_2')
 
                     if action_transaction.user_number_3 is not None:
-                        self._set_val(errors=errors, values=self.values, default_value='',
+                        self._set_val(errors=errors, values=self.values, default_value=None,
                                       target=transaction, target_attr_name='user_number_3',
                                       source=action_transaction, source_attr_name='user_number_3')
 
                     if action_transaction.user_date_1 is not None:
-                        self._set_val(errors=errors, values=self.values, default_value='',
+                        self._set_val(errors=errors, values=self.values, default_value=None,
                                       target=transaction, target_attr_name='user_date_1',
                                       source=action_transaction, source_attr_name='user_date_1')
 
                     if action_transaction.user_date_2 is not None:
-                        self._set_val(errors=errors, values=self.values, default_value='',
+                        self._set_val(errors=errors, values=self.values, default_value=None,
                                       target=transaction, target_attr_name='user_date_2',
                                       source=action_transaction, source_attr_name='user_date_2')
 
                     if action_transaction.user_date_3 is not None:
-                        self._set_val(errors=errors, values=self.values, default_value='',
+                        self._set_val(errors=errors, values=self.values, default_value=None,
                                       target=transaction, target_attr_name='user_date_3',
                                       source=action_transaction, source_attr_name='user_date_3')
 
