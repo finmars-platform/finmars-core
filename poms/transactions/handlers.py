@@ -1875,8 +1875,7 @@ class TransactionTypeProcess(object):
                         _l.debug(error)
 
                         self._add_err_msg(errors, 'non_field_errors',
-                                          gettext_lazy(
-                                              'Invalid transaction action fields (please, use type convertion).'))
+                                          str(error))
                     except DatabaseError:
                         self._add_err_msg(errors, 'non_field_errors', gettext_lazy('General DB error.'))
                     else:
