@@ -2207,7 +2207,9 @@ class TransactionTypeProcess(object):
 
             if self.uniqueness_reaction == 1 and exist and self.complex_transaction.transaction_unique_code:
 
-                self.complex_transaction.delete()
+                # self.complex_transaction.delete()
+
+                # Do not create new transaction if transcation with that code already exists
 
                 self.uniqueness_status = 'skip'
 
@@ -2218,10 +2220,9 @@ class TransactionTypeProcess(object):
 
             elif self.uniqueness_reaction == 1 and not exist and self.complex_transaction.transaction_unique_code:
 
+                # Just create complex transaction
                 self.uniqueness_status = 'skip'
 
-                self.complex_transaction.transaction_unique_code = exist.transaction_unique_code
-                self.complex_transaction.code = exist.code
 
             elif self.uniqueness_reaction == 2 and self.complex_transaction.transaction_unique_code:
 

@@ -998,9 +998,9 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
                 return Response(serializer.data)
             finally:
-                pass
-                # if instance.has_errors:
-                #     transaction.set_rollback(True)
+
+                if instance.has_errors:
+                    transaction.set_rollback(True)
 
     @action(detail=True, methods=['get', 'put'], url_path='book-pending',
             serializer_class=TransactionTypeProcessSerializer)
@@ -1025,9 +1025,8 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
                 serializer.save()
                 return Response(serializer.data)
             finally:
-                pass
-                # if instance.has_errors:
-                #     transaction.set_rollback(True)
+                if instance.has_errors:
+                    transaction.set_rollback(True)
 
     @action(detail=True, methods=['get', 'put'], url_path='recalculate',
             serializer_class=TransactionTypeRecalculateSerializer, permission_classes=[IsAuthenticated])
@@ -2383,9 +2382,9 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
             finally:
 
                 _l.debug('rebook done: %s', "{:3.3f}".format(time.perf_counter() - st))
-                pass
-                # if instance.has_errors:
-                #     transaction.set_rollback(True)
+
+                if instance.has_errors:
+                    transaction.set_rollback(True)
 
     @action(detail=True, methods=['get', 'put'], url_path='recalculate',
             serializer_class=TransactionTypeRecalculateSerializer, permission_classes=[IsAuthenticated])
@@ -2444,9 +2443,8 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
                 return Response(serializer.data)
             finally:
-                pass
-                # if instance.has_errors:
-                #     transaction.set_rollback(True)
+                if instance.has_errors:
+                    transaction.set_rollback(True)
 
     @action(detail=True, methods=['put'], url_path='update-properties',
             serializer_class=ComplexTransactionSimpleSerializer)
