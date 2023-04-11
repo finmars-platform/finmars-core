@@ -515,8 +515,27 @@ class TransactionImportProcess(object):
 
                 item.booked_transactions.append(trn)
 
-            item.status = 'success'
-            item.message = "Transaction Booked %s" % transaction_type_process_instance.complex_transaction
+            if transaction_type_process_instance.has_errors:
+                item.status = 'error'
+
+                errors = []
+
+                if transaction_type_process_instance.instruments_errors:
+                    errors = errors + transaction_type_process_instance.instruments_errors
+
+                if transaction_type_process_instance.value_errors:
+                    errors = errors + transaction_type_process_instance.value_errors
+
+                if transaction_type_process_instance.complex_transaction_errors:
+                    errors = errors + transaction_type_process_instance.complex_transaction_errors
+
+                if transaction_type_process_instance.transactions_errors:
+                    errors = errors + transaction_type_process_instance.transactions_errors
+
+                item.error_message = item.error_message + 'Book Exception: ' + json.dumps(errors, default=str)
+            else:
+                item.status = 'success'
+                item.message = "Transaction Booked %s" % transaction_type_process_instance.complex_transaction
 
             # _l.info('TransactionImportProcess.Task %s. book SUCCESS item %s rule_scenario %s' % (
             #     self.task, item, rule_scenario))
@@ -538,7 +557,7 @@ class TransactionImportProcess(object):
                 _l.error("TransactionImportProcess.Task %s. book Exception %s " % (self.task, e))
                 _l.error("TransactionImportProcess.Task %s. book Traceback %s " % (self.task, traceback.format_exc()))
 
-                # transaction.set_rollback(True)
+                transaction.set_rollback(True)
                 if raise_exception:
 
                     if not isinstance(e, UniqueCodeError):
