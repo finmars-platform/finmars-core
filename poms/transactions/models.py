@@ -331,12 +331,21 @@ class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         (TYPE_PROCEDURE, gettext_lazy('Procedure')),
     )
 
-    BOOK_WITHOUT_UNIQUE_CODE = 1
-    SKIP_BOOK_WITH_UNIQUE_CODE = 2
+    # 1 (SKIP, gettext_lazy('Skip')),
+    # 2 (BOOK_WITHOUT_UNIQUE_CODE, gettext_lazy('Book without Unique Code ')),
+    # 3 (OVERWRITE, gettext_lazy('Overwrite')),
+    # 4 (TREAT_AS_ERROR, gettext_lazy('Treat as error')),
+
+    SKIP = 1
+    BOOK_WITHOUT_UNIQUE_CODE = 2
+    OVERWRITE = 3
+    TREAT_AS_ERROR = 4
 
     BOOK_WITH_UNIQUE_CODE_CHOICES = (
-        (BOOK_WITHOUT_UNIQUE_CODE, gettext_lazy('Book without unique code')),
-        (SKIP_BOOK_WITH_UNIQUE_CODE, gettext_lazy('Skip')),
+        (SKIP, gettext_lazy('Skip')),
+        (BOOK_WITHOUT_UNIQUE_CODE, gettext_lazy('Book without Unique Code')),
+        (OVERWRITE, gettext_lazy('Overwrite')),
+        (TREAT_AS_ERROR, gettext_lazy('Treat As Error')), # Wtf?
     )
 
     master_user = models.ForeignKey(MasterUser, related_name='transaction_types',
