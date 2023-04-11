@@ -1776,9 +1776,9 @@ class Transaction(models.Model):
     user_text_2 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user_text_2'), db_index=True)
     user_text_3 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user_text_3'), db_index=True)
 
-    user_number_1 = models.FloatField(default=0.0, verbose_name=gettext_lazy('user_number_1'))
-    user_number_2 = models.FloatField(default=0.0, verbose_name=gettext_lazy('user_number_2'))
-    user_number_3 = models.FloatField(default=0.0, verbose_name=gettext_lazy('user_number_3'))
+    user_number_1 = models.FloatField(default=0.0, null=True, verbose_name=gettext_lazy('user_number_1'))
+    user_number_2 = models.FloatField(default=0.0, null=True, verbose_name=gettext_lazy('user_number_2'))
+    user_number_3 = models.FloatField(default=0.0, null=True, verbose_name=gettext_lazy('user_number_3'))
 
     user_date_1 = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 1"))
     user_date_2 = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 2"))
