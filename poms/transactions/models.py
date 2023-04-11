@@ -345,7 +345,7 @@ class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         (SKIP, gettext_lazy('Skip')),
         (BOOK_WITHOUT_UNIQUE_CODE, gettext_lazy('Book without Unique Code')),
         (OVERWRITE, gettext_lazy('Overwrite')),
-        (TREAT_AS_ERROR, gettext_lazy('Treat As Error')), # Wtf?
+        (TREAT_AS_ERROR, gettext_lazy('Treat As Error')),  # Wtf?
     )
 
     master_user = models.ForeignKey(MasterUser, related_name='transaction_types',
@@ -1078,22 +1078,22 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
     user_text_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                    verbose_name=gettext_lazy('user_text_3'))
 
-    user_number_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+    user_number_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
                                      verbose_name=gettext_lazy('user_number_1'))
 
-    user_number_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+    user_number_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
                                      verbose_name=gettext_lazy('user_number_2'))
 
-    user_number_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+    user_number_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
                                      verbose_name=gettext_lazy('user_number_3'))
 
-    user_date_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+    user_date_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
                                    verbose_name=gettext_lazy('user_date_1'))
 
-    user_date_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+    user_date_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
                                    verbose_name=gettext_lazy('user_date_2'))
 
-    user_date_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+    user_date_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
                                    verbose_name=gettext_lazy('user_date_3'))
 
     class Meta:
