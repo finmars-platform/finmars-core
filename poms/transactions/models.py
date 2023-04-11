@@ -1096,6 +1096,9 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
     user_date_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
                                    verbose_name=gettext_lazy('user_date_3'))
 
+    is_canceled = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
+                                   verbose_name=gettext_lazy('is canceled'))
+
     class Meta:
         verbose_name = gettext_lazy('transaction type action transaction')
         verbose_name_plural = gettext_lazy('transaction type action transactions')

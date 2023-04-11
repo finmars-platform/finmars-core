@@ -465,7 +465,6 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
     user_date_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
     user_date_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
 
-
     class Meta:
         model = TransactionTypeActionTransaction
         fields = [
@@ -537,7 +536,9 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
             'user_date_2',
             'user_date_3',
 
-            'action_notes'
+            'action_notes',
+
+            'is_canceled'
         ]
 
     def __init__(self, *args, **kwargs):

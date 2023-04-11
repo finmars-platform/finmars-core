@@ -1841,6 +1841,11 @@ class TransactionTypeProcess(object):
                                       target=transaction, target_attr_name='user_date_3',
                                       source=action_transaction, source_attr_name='user_date_3')
 
+                    if action_transaction.is_canceled is not None:
+                        self._set_val(errors=errors, values=self.values, default_value=False,
+                                      target=transaction, target_attr_name='is_canceled',
+                                      source=action_transaction, source_attr_name='is_canceled')
+
                     transaction_date_source = 'null'
 
                     if transaction.accounting_date is None:
@@ -2532,6 +2537,16 @@ class TransactionTypeProcess(object):
         self.book_create_transactions(actions, master_user, instrument_map)
         _l.info('TransactionTypeProcess: book_create_transactions_st done: %s',
                 "{:3.3f}".format(time.perf_counter() - book_create_transactions_st))
+
+        is_canceled = False
+        for trn in self.complex_transaction.transactions.all():
+            if trn.is_canceled:
+                is_canceled = True
+
+        if is_canceled:
+            self.record_execution_progress('Complex Transaction is canceled')
+
+        self.complex_transaction.is_canceled = is_canceled
 
         self.record_execution_progress('Complex Transaction %s Booked' % self.complex_transaction.code)
 
