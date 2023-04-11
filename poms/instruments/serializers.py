@@ -18,7 +18,7 @@ from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerial
     ModelMetaSerializer
 from poms.common.utils import date_now
 from poms.currencies.fields import CurrencyDefault
-from poms.currencies.serializers import CurrencyField, CurrencyViewSerializer
+from poms.currencies.serializers import CurrencyField, CurrencyViewSerializer, CurrencyEvalSerializer
 from poms.instruments.fields import InstrumentField, PricingPolicyField, InstrumentTypeField, CountryField, \
     PricingConditionField, PaymentSizeDetailField, DailyPricingModelField, PeriodicityField, \
     AccrualCalculationModelField
@@ -1288,15 +1288,23 @@ class InstrumentLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
 
 
 class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
+    pricing_currency = CurrencyEvalSerializer(read_only=True)
+    accrued_currency = CurrencyEvalSerializer(read_only=True)
 
     class Meta:
         model = Instrument
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name',
-            'public_name', 'is_active', 'is_deleted', 'is_enabled', 'has_linked_with_portfolio'
+            'public_name', 'is_active', 'is_deleted', 'is_enabled', 'has_linked_with_portfolio',
+            'pricing_currency', 'accrued_currency',
         ]
 
         read_only_fields = fields
+
+    def __init__(self, *args, **kwargs):
+        super(InstrumentEvalSerializer, self).__init__(*args, **kwargs)
+
+        # self.fields['pricing_currency'] = CurrencyEvalSerializer(read_only=True)
 
 
 class InstrumentForSelectSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
@@ -1419,7 +1427,7 @@ class AccrualCalculationScheduleSerializer(serializers.ModelSerializer):
 
     accrual_calculation_model = AccrualCalculationModelField()
     accrual_calculation_model_object = AccrualCalculationModelSerializer(source='accrual_calculation_model',
-                                                                                read_only=True)
+                                                                         read_only=True)
 
     periodicity = PeriodicityField(allow_null=False)
     periodicity_object = PeriodicitySerializer(source='periodicity', read_only=True)
@@ -1613,9 +1621,9 @@ class PriceHistorySerializer(ModelMetaSerializer):
         try:
 
             history_item = PriceHistoryError.objects.filter(instrument=instance.instrument,
-                                                         master_user=instance.instrument.master_user,
-                                                         date=instance.date,
-                                                         pricing_policy=instance.pricing_policy)[0]
+                                                            master_user=instance.instrument.master_user,
+                                                            date=instance.date,
+                                                            pricing_policy=instance.pricing_policy)[0]
 
             history_item.status = PriceHistoryError.STATUS_OVERWRITTEN
 
@@ -1855,7 +1863,6 @@ class InstrumentTypeProcessSerializer(serializers.Serializer):
         return validated_data
 
 
-
 class InstrumentTypeEvalSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)
@@ -1947,4 +1954,3 @@ class InstrumentTypeEvalSerializer(ModelWithUserCodeSerializer, ModelWithTimeSta
 
         self.fields['pricing_policies'] = InstrumentTypePricingPolicySerializer(many=True, required=False,
                                                                                 allow_null=True)
-
