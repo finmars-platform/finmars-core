@@ -140,20 +140,18 @@ class CeleryTask(TimeStampedModel):
 
     def update_progress(self, progress):
 
-        with transaction.atomic():
+        # {
+        #   current: 20,
+        #   total: 100,
+        #   percent: 20
+        #   description
+        # }
 
-            # {
-            #   current: 20,
-            #   total: 100,
-            #   percent: 20
-            #   description
-            # }
+        _l.info('update_progress %s' % progress)
 
-            _l.info('update_progress %s' % progress)
+        self.progress_object = progress
 
-            self.progress_object = progress
-
-            self.save()
+        self.save()
 
     def save(self, *args, **kwargs):
 

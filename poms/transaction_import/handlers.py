@@ -562,17 +562,17 @@ class TransactionImportProcess(object):
                 item.status = 'success'
                 item.message = "Transaction Booked %s" % transaction_type_process_instance.complex_transaction
 
-            # _l.info('TransactionImportProcess.Task %s. book SUCCESS item %s rule_scenario %s' % (
-            #     self.task, item, rule_scenario))
+                # _l.info('TransactionImportProcess.Task %s. book SUCCESS item %s rule_scenario %s' % (
+                #     self.task, item, rule_scenario))
 
-            self.task.update_progress(
-                {
-                    'current': self.result.processed_rows,
-                    'total': len(self.items),
-                    'percent': round(self.result.processed_rows / (len(self.items) / 100)),
-                    'description': 'Going to book %s' % (rule_scenario.transaction_type.user_code)
-                }
-            )
+                self.task.update_progress(
+                    {
+                        'current': self.result.processed_rows,
+                        'total': len(self.items),
+                        'percent': round(self.result.processed_rows / (len(self.items) / 100)),
+                        'description': 'Going to book %s' % (rule_scenario.transaction_type.user_code)
+                    }
+                )
 
         except Exception as e:
 
