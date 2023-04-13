@@ -534,6 +534,15 @@ class TransactionImportProcess(object):
 
                     item.error_message = item.error_message + 'Book Skip: ' + json.dumps(errors, default=str)
 
+                    self.task.update_progress(
+                        {
+                            'current': self.result.processed_rows,
+                            'total': len(self.items),
+                            'percent': round(self.result.processed_rows / (len(self.items) / 100)),
+                            'description': 'Going to book %s' % (rule_scenario.transaction_type.user_code)
+                        }
+                    )
+
                 else:
                     item.status = 'error'
 
@@ -556,7 +565,7 @@ class TransactionImportProcess(object):
 
                     item.error_message = item.error_message + 'Book Exception: ' + json.dumps(errors, default=str)
 
-                transaction.set_rollback(True)
+                    raise Exception('')
 
             else:
                 item.status = 'success'
