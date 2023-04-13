@@ -1,3 +1,4 @@
+import contextlib
 import json
 from logging import getLogger
 
@@ -158,7 +159,7 @@ class BloombergDataProviderCredentialSerializer(serializers.ModelSerializer):
             validated_data
         )
 
-        cert_file_path = settings.BASE_API_URL + "/brokers/bloomberg/%s" % p12cert.name
+        cert_file_path = f"{settings.BASE_API_URL}/brokers/bloomberg/{p12cert.name}"
 
         storage.save(cert_file_path, p12cert)
 
@@ -174,7 +175,7 @@ class BloombergDataProviderCredentialSerializer(serializers.ModelSerializer):
             instance, validated_data
         )
 
-        cert_file_path = settings.BASE_API_URL + "/brokers/bloomberg/%s" % p12cert.name
+        cert_file_path = f"{settings.BASE_API_URL}/brokers/bloomberg/{p12cert.name}"
 
         storage.save(cert_file_path, p12cert)
 
@@ -403,10 +404,8 @@ class InstrumentDownloadSchemeSerializer(
             input_id = input_values.pop("id", None)
             input0 = None
             if input_id:
-                try:
+                with contextlib.suppress(ObjectDoesNotExist):
                     input0 = instance.inputs.get(pk=input_id)
-                except ObjectDoesNotExist:
-                    pass
             if input0 is None:
                 input0 = InstrumentDownloadSchemeInput(scheme=instance)
             for name, value in input_values.items():
@@ -1498,7 +1497,6 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
         if settings.FINMARS_DATABASE_URL:
             # TODO FINMARS_DATABASE_REFACTOR
 
-            task_result_overrides = validated_data.get("task_result_overrides", None)
             instance = ImportInstrumentEntry(**validated_data)
 
             task = CeleryTask.objects.create(
@@ -1520,7 +1518,7 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
 
             instance.task_object = task
 
-            _l.info("ImportInstrumentCbondsSerializer create task id %s" % task.id)
+            _l.info(f"ImportInstrumentCbondsSerializer create task id {task.id}")
 
             download_instrument_finmars_database(task.id)
 
