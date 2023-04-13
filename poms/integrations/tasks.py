@@ -1010,9 +1010,10 @@ def download_instrument_finmars_database(task_id):
 
         task = CeleryTask.objects.get(id=task_id)
 
+        options = task.options_object
+
         headers = {"Accept": "application/json", "Content-type": "application/json"}
 
-        options = task.options_object
         # auth_url = settings.FINMARS_DATABASE_URL + 'api/authenticate'
         #
         # auth_request_body = {
@@ -1033,9 +1034,13 @@ def download_instrument_finmars_database(task_id):
 
         options["request_id"] = task.pk
         options["base_api_url"] = settings.BASE_API_URL
-        options[
-            "callback_url"
-        ] = f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}/api/instruments/fdb-create-from-callback/"
+        options["callback_url"] = (
+            "https://"
+            + settings.DOMAIN_NAME
+            + "/"
+            + settings.BASE_API_URL
+            + "/api/instruments/fdb-create-from-callback/"
+        )
 
         options["data"] = {}
 
@@ -1053,26 +1058,28 @@ def download_instrument_finmars_database(task_id):
 
         response = None
 
-        _l.info(f"download_instrument_finmars_database.options {request_options}")
+        _l.info("download_instrument_finmars_database.options %s" % request_options)
 
         try:
             response = requests.post(
-                url=f"{settings.FINMARS_DATABASE_URL}api/v1/export/instrument",
+                url=settings.FINMARS_DATABASE_URL + "api/v1/export/instrument",
                 data=json.dumps(request_options),
                 headers=headers,
                 timeout=25,
                 verify=settings.VERIFY_SSL,
             )
             _l.debug(
-                f"download_instrument_finmars_database.response.text {response.text} "
+                "download_instrument_finmars_database.response.text %s " % response.text
             )
             _l.info(
-                f"download_instrument_finmars_database.response.status_code {response.status_code} "
+                "download_instrument_finmars_database.response.status_code %s "
+                % response.status_code
             )
 
         except requests.exceptions.Timeout as e:
             _l.info(
-                f'download_instrument_finmars_database Finmars Database Timeout. Trying to create simple instrument {options["reference"]}'
+                "download_instrument_finmars_database Finmars Database Timeout. Trying to create simple instrument %s"
+                % options["reference"]
             )
 
             try:
@@ -1081,7 +1088,8 @@ def download_instrument_finmars_database(task_id):
                 )
 
                 _l.info(
-                    f'download_instrument_finmars_database Finmars Database Timeout. Simple instrument {options["reference"]} exist. Abort.'
+                    "download_instrument_finmars_database Finmars Database Timeout. Simple instrument %s exist. Abort."
+                    % options["reference"]
                 )
 
             except Exception as e:
@@ -1091,10 +1099,12 @@ def download_instrument_finmars_database(task_id):
                     instrument_type_code = "stocks"
 
                 _l.info(
-                    f'download_instrument_finmars_database Finmars Database Timeout. instrument_type_user_code {options["instrument_type_user_code"]}'
+                    "download_instrument_finmars_database Finmars Database Timeout. instrument_type_user_code %s"
+                    % options["instrument_type_user_code"]
                 )
                 _l.info(
-                    f'download_instrument_finmars_database Finmars Database Timeout. instrument_name {options["instrument_name"]}'
+                    "download_instrument_finmars_database Finmars Database Timeout. instrument_name %s"
+                    % options["instrument_name"]
                 )
 
                 if options["instrument_type_user_code"]:
@@ -1107,7 +1117,7 @@ def download_instrument_finmars_database(task_id):
 
                 instrument_name = options["instrument_name"]
 
-                if not instrument_name:
+                if not options["instrument_name"]:
                     instrument_name = options["reference"]
 
                 ecosystem_defaults = EcosystemDefault.objects.get(
@@ -1118,9 +1128,7 @@ def download_instrument_finmars_database(task_id):
                     master_user=task.master_user,
                     user_code=options["reference"],
                     name=instrument_name,
-                    short_name=f"{instrument_name} ("
-                    + options["reference"]
-                    + ")",
+                    short_name=instrument_name + " (" + options["reference"] + ")",
                     instrument_type=ecosystem_defaults.instrument_type,
                     accrued_currency=ecosystem_defaults.currency,
                     pricing_currency=ecosystem_defaults.currency,
@@ -1142,32 +1150,81 @@ def download_instrument_finmars_database(task_id):
 
                 instrument.save()
 
+                result = {"instrument_id": instrument.pk}
+
+                task.result_object = result
                 task.status = CeleryTask.STATUS_DONE
 
-                save_task_result(instrument, task)
-            return
+                task.save()
+
+            return task, errors
 
         except Exception as e:
             _l.debug(
-                f"download_instrument_finmars_database Can't send request to Finmars Database. {e}"
+                "download_instrument_finmars_database Can't send request to Finmars Database. %s"
+                % e
             )
 
-            errors.append(f"Request to broker failed. {str(e)}")
+            errors.append("Request to broker failed. %s" % str(e))
 
         try:
             data = response.json()
-            _l.info(f"download_instrument_finmars_database response data {data}")
+            _l.info("download_instrument_finmars_database response data %s" % data)
         except Exception as e:
-            _l.info(f"download_instrument_finmars_database response data Exception {e}")
-            errors.append(f"Could not parse response from broker. {response.text}")
+            _l.info(
+                "download_instrument_finmars_database response data Exception %s" % e
+            )
+
+            errors.append("Could not parse response from broker. %s" % response.text)
             return task, errors
 
         try:
-            return update_task_with_result(data, task, options)
+            result_instrument = None
+
+            if "instruments" in data["data"]:
+                if "currencies" in data["data"]:
+                    if data["data"]["currencies"]:
+                        for item in data["data"]["currencies"]:
+                            if item:
+                                currency = create_currency_cbond(
+                                    item, task.master_user, task.member
+                                )
+
+                for item in data["data"]["instruments"]:
+                    instrument = create_instrument_from_finmars_database(
+                        item, task.master_user, task.member
+                    )
+
+                    if instrument.user_code == options["reference"]:
+                        result_instrument = instrument
+
+            elif "items" in data["data"]:
+                for item in data["data"]["items"]:
+                    instrument = create_instrument_from_finmars_database(
+                        item, task.master_user, task.member
+                    )
+
+                    if instrument.user_code == options["reference"]:
+                        result_instrument = instrument
+
+            else:
+                instrument = create_instrument_from_finmars_database(
+                    data["data"], task.master_user, task.member
+                )
+                result_instrument = instrument
+
+            result = {"instrument_id": result_instrument.pk}
+
+            task.result_object = result
+
+            task.save()
+            return task, errors
+
         except Exception as e:
-            _l.error(f"download_instrument_finmars_database.e {e} ")
+            _l.error("download_instrument_finmars_database.e %s " % e)
             _l.error(
-                f"download_instrument_finmars_database.traceback {traceback.format_exc()} "
+                "download_instrument_finmars_database.traceback %s "
+                % traceback.format_exc()
             )
 
             task.error_message = str(e)
@@ -1179,55 +1236,6 @@ def download_instrument_finmars_database(task_id):
             f"download_instrument_finmars_database.error {e} "
             f"traceback {traceback.format_exc()}"
         )
-
-
-def save_task_error(err_msg: str, task: CeleryTask):
-    task.error_message = err_msg
-    task.status = CeleryTask.STATUS_ERROR
-    task.save()
-
-
-def save_task_result(instrument: Instrument, task: CeleryTask):
-    result = {"instrument_id": instrument.pk}
-    task.result_object = result
-    task.save()
-
-
-def update_task_with_result(data, task, options):
-    result_instrument = None
-
-    if "instruments" in data["data"]:
-        if "currencies" in data["data"] and data["data"]["currencies"]:
-            for item in data["data"]["currencies"]:
-                if item:
-                    create_currency_cbond(
-                        item, task.master_user, task.member
-                    )
-
-        for item in data["data"]["instruments"]:
-            instrument = create_instrument_from_finmars_database(
-                item, task.master_user, task.member
-            )
-
-            if instrument.user_code == options["reference"]:
-                result_instrument = instrument
-
-    elif "items" in data["data"]:
-        for item in data["data"]["items"]:
-            instrument = create_instrument_from_finmars_database(
-                item, task.master_user, task.member,
-            )
-
-            if instrument.user_code == options["reference"]:
-                result_instrument = instrument
-
-    else:
-        instrument = create_instrument_from_finmars_database(
-            data["data"], task.master_user, task.member,
-        )
-        result_instrument = instrument
-
-    save_task_result(result_instrument, task)
 
 
 @shared_task(name="integrations.download_instrument_finmars_database_async", bind=True)
