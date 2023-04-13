@@ -185,8 +185,6 @@ def calculate_portfolio_register_record(self, task_id):
             ],
         ).order_by("accounting_date")
 
-        transactions_dict = {}
-
         PortfolioRegisterRecord.objects.filter(
             master_user=master_user,
             portfolio_id__in=portfolio_ids,
@@ -198,7 +196,7 @@ def calculate_portfolio_register_record(self, task_id):
 
         count = 0
         total = len(transactions)
-
+        transactions_dict = {}
         for item in transactions:
             if item.portfolio_id not in transactions_dict:
                 transactions_dict[item.portfolio_id] = []
@@ -211,18 +209,17 @@ def calculate_portfolio_register_record(self, task_id):
                 portfolio_register = portfolio_registers_map[trn.portfolio_id]
 
                 record = PortfolioRegisterRecord()
-
                 record.master_user = master_user
-
                 record.portfolio_id = key
                 record.instrument_id = portfolio_register.linked_instrument_id
                 record.transaction_date = trn.accounting_date
                 record.transaction_code = trn.transaction_code
                 record.transaction_class_id = trn.transaction_class_id
                 record.cash_amount = trn.cash_consideration
-
                 record.cash_currency_id = trn.transaction_currency_id
                 record.valuation_currency_id = portfolio_register.valuation_currency_id
+                # TODO check if type Cash inflow/Outflow and Price != 0
+                record.share_price_calculation_type = PortfolioRegisterRecord.MANUAL
 
                 try:
                     previous_date_record = PortfolioRegisterRecord.objects.filter(
