@@ -218,8 +218,14 @@ def calculate_portfolio_register_record(self, task_id):
                 record.cash_amount = trn.cash_consideration
                 record.cash_currency_id = trn.transaction_currency_id
                 record.valuation_currency_id = portfolio_register.valuation_currency_id
-                # TODO check if type Cash inflow/Outflow and Price != 0
-                record.share_price_calculation_type = PortfolioRegisterRecord.MANUAL
+
+                if (
+                    record.transaction_class_id
+                    in (TransactionClass.CASH_INFLOW, TransactionClass.CASH_OUTFLOW)
+                    and (trn.trade_price > 0)
+                ):
+                    # if type Cash inflow/Outflow and Price != 0
+                    record.share_price_calculation_type = PortfolioRegisterRecord.MANUAL
 
                 try:
                     previous_date_record = PortfolioRegisterRecord.objects.filter(
@@ -228,7 +234,7 @@ def calculate_portfolio_register_record(self, task_id):
                         transaction_date__lt=record.transaction_date,
                     ).order_by("-id")[0]
                 except Exception as e:
-                    _l.error(f"Exceptino {e}")
+                    _l.error(f"Exception {e}")
                     previous_date_record = None
 
                 if record.cash_currency_id == record.valuation_currency_id:
@@ -250,7 +256,6 @@ def calculate_portfolio_register_record(self, task_id):
 
                         if record.cash_currency_id == ecosystem_defaults.currency_id:
                             cash_ccy_fx_rate = 1
-
                         else:
                             cash_ccy_fx_rate = CurrencyHistory.objects.get(
                                 currency_id=record.cash_currency_id,
