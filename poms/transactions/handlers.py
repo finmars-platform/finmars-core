@@ -2240,10 +2240,11 @@ class TransactionTypeProcess(object):
 
         elif self.uniqueness_reaction == 3 and self.complex_transaction.transaction_unique_code:
 
-            self.complex_transaction.transaction_unique_code = exist.transaction_unique_code
-            self.complex_transaction.code = exist.code
-
             if exist:
+
+                self.complex_transaction.transaction_unique_code = exist.transaction_unique_code
+                self.complex_transaction.code = exist.code
+
                 self.record_execution_progress(
                     'Unique Code is already in use, can create transaction. Previous Transaction is deleted (OVERWRITE)')
                 exist.delete()
