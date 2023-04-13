@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Optional, Any
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
@@ -10,6 +11,18 @@ from poms.common.models import TimeStampedModel
 from poms.file_reports.models import FileReport
 
 _l = logging.getLogger("poms.celery_tasks")
+
+
+def serialize_to_str(value: Any) -> Optional[str]:
+    return (
+        json.dumps(value, cls=DjangoJSONEncoder, sort_keys=True, indent=1)
+        if value
+        else None
+    )
+
+
+def deserialize_from_str(value: str) -> Optional[Any]:
+    return json.loads(value) if value else None
 
 
 class CeleryTask(TimeStampedModel):
@@ -66,7 +79,8 @@ class CeleryTask(TimeStampedModel):
         on_delete=models.SET_NULL,
     )
     is_system_task = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is system task")
+        default=False,
+        verbose_name=gettext_lazy("is system task"),
     )
     celery_task_id = models.CharField(
         null=True,
@@ -151,46 +165,32 @@ class CeleryTask(TimeStampedModel):
 
     @property
     def options_object(self):
-        return None if self.options is None else json.loads(self.options)
+        return deserialize_from_str(self.options)
 
     @options_object.setter
     def options_object(self, value):
-        if value is None:
-            self.options = None
-        else:
-            self.options = json.dumps(
-                value, cls=DjangoJSONEncoder, sort_keys=True, indent=1
-            )
+        self.options = serialize_to_str(value)
 
     @property
     def result_object(self):
-        return None if self.result is None else json.loads(self.result)
+        return deserialize_from_str(self.result)
 
     @result_object.setter
     def result_object(self, value):
-        if value is None:
-            self.result = None
-        else:
-            self.result = json.dumps(
-                value, cls=DjangoJSONEncoder, sort_keys=True, indent=1
-            )
+        self.result = serialize_to_str(value)
 
     @property
     def progress_object(self):
-        return None if self.progress is None else json.loads(self.progress)
+        return deserialize_from_str(self.progress)
 
     @progress_object.setter
     def progress_object(self, value):
-        if value is None:
-            self.progress = None
-        else:
-            self.progress = json.dumps(
-                value, cls=DjangoJSONEncoder, sort_keys=True, indent=1
-            )
+        self.progress = serialize_to_str(value)
 
     def add_attachment(self, file_report_id):
         CeleryTaskAttachment.objects.create(
-            celery_task=self, file_report_id=file_report_id
+            celery_task=self,
+            file_report_id=file_report_id,
         )
 
     def mark_task_as_finished(self):
