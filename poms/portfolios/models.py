@@ -335,18 +335,18 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
     #
     #     super(PortfolioRegisterRecord, self).save(*args, **kwargs)
 
-    def save(self, *args, **kwargs):
-        if self.pk:  # check if instance already exists in database
-            original_instance = PortfolioRegisterRecord.objects.get(pk=self.pk)
-            if (
-                self.dealing_price_valuation_currency
-                != original_instance.dealing_price_valuation_currency
-            ):
-                # dealing_price_valuation_currency field value has changed,
-                # update share_price_calculation_type to manual type
-                self.share_price_calculation_type = PortfolioRegisterRecord.MANUAL
-
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if self.pk:  # check if instance already exists in database
+    #         original_instance = PortfolioRegisterRecord.objects.get(pk=self.pk)
+    #         if (
+    #             self.dealing_price_valuation_currency
+    #             != original_instance.dealing_price_valuation_currency
+    #         ):
+    #             # dealing_price_valuation_currency field value has changed,
+    #             # update share_price_calculation_type to manual type
+    #             self.share_price_calculation_type = PortfolioRegisterRecord.MANUAL
+    #
+    #     super().save(*args, **kwargs)
 
     def __str__(self):
         return (
