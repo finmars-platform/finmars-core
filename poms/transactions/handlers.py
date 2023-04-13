@@ -2240,8 +2240,6 @@ class TransactionTypeProcess(object):
 
         elif self.uniqueness_reaction == 3 and self.complex_transaction.transaction_unique_code:
 
-
-
             self.complex_transaction.transaction_unique_code = exist.transaction_unique_code
             self.complex_transaction.code = exist.code
 
@@ -2542,7 +2540,8 @@ class TransactionTypeProcess(object):
 
         self.record_execution_progress('Process time: %s' % "{:3.3f}".format(time.perf_counter() - process_st))
 
-        self.complex_transaction.save()  # save executed text and date expression
+        if not self.has_errors:
+            self.complex_transaction.save()  # save executed text and date expression
 
         _l.info('TransactionTypeProcess: process done: %s',
                 "{:3.3f}".format(time.perf_counter() - process_st))
