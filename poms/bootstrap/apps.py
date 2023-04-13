@@ -167,16 +167,17 @@ class BootstrapConfig(AppConfig):
 
                 _l.info("Master user with name %s and base_api_url %s created" % (master_user.name, master_user.base_api_url))
 
-                member = Member.objects.create(user=user, master_user=master_user, is_owner=True, is_admin=True)
-                member.save()
-
-                _l.info("Owner Member created")
-
-                admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
-                admin_group.members.add(member.id)
-                admin_group.save()
-
-                _l.info("Admin Group Created")
+                # Probably deprecated
+                # member = Member.objects.create(user=user, master_user=master_user, is_owner=True, is_admin=True)
+                # member.save()
+                #
+                # _l.info("Owner Member created")
+                #
+                # admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
+                # admin_group.members.add(member.id)
+                # admin_group.save()
+                #
+                # _l.info("Admin Group Created")
 
             try:
 
