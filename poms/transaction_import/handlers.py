@@ -30,7 +30,7 @@ from poms.portfolios.models import Portfolio
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.system_messages.handlers import send_system_message
-from poms.transaction_import.exceptions import BookException, BookSkipException
+from poms.transaction_import.exceptions import BookException, BookSkipException, BookUnhandledException
 from poms.transaction_import.models import ProcessType, TransactionImportResult, \
     TransactionImportProcessItem, TransactionImportProcessPreprocessItem, TransactionImportBookedTransaction, \
     TransactionImportConversionItem
@@ -589,14 +589,10 @@ class TransactionImportProcess(object):
         except Exception as e:
 
             if (e.__class__.__name__ == 'BookException'):
-
-                if raise_exception:
-                    # Just to execute error rule scenario
-                    raise e
+                raise BookException(code=400, error_message=str(e))
             elif (e.__class__.__name__ == 'BookSkipException'):
 
-                _l.info("Skip, do nothing")
-                pass
+                raise BookSkipException(code=400, error_message=str(e))
 
             else:
 
@@ -608,7 +604,7 @@ class TransactionImportProcess(object):
 
                 if raise_exception:
                     # Just to execute error rule scenario
-                    raise e
+                    raise BookUnhandledException(code=500, error_message=str(e))
 
     def fill_with_file_items(self):
 
@@ -940,6 +936,7 @@ class TransactionImportProcess(object):
             for item in self.items:
 
                 sid = transaction.savepoint()
+                _l.info("Create checkpoint for %s" % index)
 
                 try:
 
@@ -987,19 +984,34 @@ class TransactionImportProcess(object):
                                     if selector_value.value == rule_value:
                                         found = True
                                         try:
+
                                             self.book(item, rule_scenario, raise_exception=True)
-                                        except Exception as e:
+
+                                        except BookSkipException:
+                                            _l.info("BookSkipException")
+                                            transaction.savepoint_rollback(sid)
+                                            break
+
+                                        except BookException:
+                                            _l.info("BookException")
+                                            transaction.savepoint_rollback(sid)
+                                            break
+
+                                        except BookUnhandledException as e:
                                             transaction.savepoint_rollback(sid)
 
                                             try:
                                                 self.book(item, self.error_rule_scenario, error=e)
-                                            except Exception as e:
+                                            except Exception as e: # any exception will work on error scenario
                                                 _l.error("Could not book error scenario %s" % e)
+                                                _l.info("Error Handler Savepoint rollback for %s" % index)
                                                 transaction.savepoint_rollback(sid)
                                             else:
                                                 # release the savepoint for this model
+                                                _l.info("Error Handler Savepoint commit for %s" % index)
                                                 transaction.savepoint_commit(sid)
                                         else:
+                                            _l.error("Could not book error scenario %s" % e)
                                             transaction.savepoint_commit(sid)
                             else:
                                 selector_values = rule_scenario.selector_values.all()
