@@ -5,6 +5,7 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
+from django.db import transaction
 
 from poms.common.models import TimeStampedModel
 from poms.file_reports.models import FileReport
@@ -139,18 +140,20 @@ class CeleryTask(TimeStampedModel):
 
     def update_progress(self, progress):
 
-        # {
-        #   current: 20,
-        #   total: 100,
-        #   percent: 20
-        #   description
-        # }
+        with transaction.atomic():
 
-        _l.info('update_progress %s' % progress)
+            # {
+            #   current: 20,
+            #   total: 100,
+            #   percent: 20
+            #   description
+            # }
 
-        self.progress_object = progress
+            _l.info('update_progress %s' % progress)
 
-        self.save()
+            self.progress_object = progress
+
+            self.save()
 
     def save(self, *args, **kwargs):
 
