@@ -263,7 +263,7 @@ def download_instrument(
     task=None,
     value_overrides=None,
 ):
-    _l.info("download_instrument value_overrides %s" % value_overrides)
+    _l.info(f"download_instrument value_overrides {value_overrides}")
     _l.info(
         "download_instrument: master_user_id=%s, task=%s, instrument_code=%s, instrument_download_scheme=%s",
         getattr(master_user, "id", None),
@@ -1006,7 +1006,7 @@ def download_instrument_finmars_database(task_id):
     errors = []
 
     try:
-        _l.info("download_instrument_finmars_database: task_id %s" % task_id)
+        _l.info(f"download_instrument_finmars_database: task_id {task_id}")
 
         task = CeleryTask.objects.get(id=task_id)
 
@@ -1232,15 +1232,15 @@ def download_instrument_finmars_database(task_id):
             task.save()
 
     except Exception as e:
-        _l.error("download_instrument_finmars_database.error %s " % e)
         _l.error(
-            "download_instrument_finmars_database.traceback %s" % traceback.format_exc()
+            f"download_instrument_finmars_database.error {e} "
+            f"traceback {traceback.format_exc()}"
         )
 
 
 @shared_task(name="integrations.download_instrument_finmars_database_async", bind=True)
 def download_instrument_finmars_database_async(self, task_id):
-    _l.info("download_instrument_finmars_database_async %s" % task_id)
+    _l.info(f"download_instrument_finmars_database_async {task_id}")
 
     download_instrument_finmars_database(task_id)
 
