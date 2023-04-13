@@ -3050,7 +3050,7 @@ class ComplexTransactionViewSerializer(ComplexTransactionMixin, serializers.Mode
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'transaction_type',
+            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'transaction_unique_code'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -3549,7 +3549,7 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
         fields = [
             'id', 'date', 'status', 'code', 'text', 'transaction_type', 'transactions', 'master_user',
 
-            'is_locked', 'is_canceled', 'error_code', 'visibility_status',
+            'is_locked', 'is_canceled', 'error_code', 'visibility_status', 'transaction_unique_code',
 
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',

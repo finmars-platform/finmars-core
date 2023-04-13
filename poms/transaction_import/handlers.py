@@ -460,7 +460,7 @@ class TransactionImportProcess(object):
 
         return fields
 
-    def book(self, item, rule_scenario, raise_exception=False, error=None):
+    def book(self, item, rule_scenario, error=None):
 
         # _l.info(
         #     'TransactionImportProcess.Task %s. book INIT item %s rule_scenario %s' % (self.task, item, rule_scenario))
@@ -588,7 +588,10 @@ class TransactionImportProcess(object):
 
         except Exception as e:
 
+            _l.error("TransactionImportProcess.Task %s. book Exception %s " % (self.task, e))
+
             if (e.__class__.__name__ == 'BookException'):
+
                 raise BookException(code=400, error_message=str(e))
             elif (e.__class__.__name__ == 'BookSkipException'):
 
@@ -599,12 +602,9 @@ class TransactionImportProcess(object):
                 item.status = 'error'
                 item.error_message = item.error_message + 'Unhandled Exception: ' + str(e)
 
-                _l.error("TransactionImportProcess.Task %s. book Exception %s " % (self.task, e))
                 _l.error("TransactionImportProcess.Task %s. book Traceback %s " % (self.task, traceback.format_exc()))
 
-                if raise_exception:
-                    # Just to execute error rule scenario
-                    raise BookUnhandledException(code=500, error_message=str(e))
+                raise BookUnhandledException(code=500, error_message=str(e))
 
     def fill_with_file_items(self):
 
@@ -985,7 +985,7 @@ class TransactionImportProcess(object):
                                         found = True
                                         try:
 
-                                            self.book(item, rule_scenario, raise_exception=True)
+                                            self.book(item, rule_scenario)
 
                                         except BookSkipException:
                                             _l.info("BookSkipException")
