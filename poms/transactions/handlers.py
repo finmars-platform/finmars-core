@@ -81,6 +81,7 @@ class TransactionTypeProcess(object):
                  recalculate_inputs=None,
                  has_errors=False,
                  value_errors=None,
+                 general_errors=None,
                  instruments=None,
                  instruments_errors=None,
                  complex_transaction=None,
@@ -175,6 +176,7 @@ class TransactionTypeProcess(object):
         self.recalculate_inputs = recalculate_inputs or []
 
         self.value_errors = value_errors or []
+        self.general_errors = general_errors or []
         self.transactions = transactions or []
         self.instruments = instruments or []
         self.instruments_errors = instruments_errors or []
@@ -2171,150 +2173,97 @@ class TransactionTypeProcess(object):
 
         self.record_execution_progress('Calculating Unique Code')
 
-        if self.uniqueness_reaction:
+        ctrn = formula.value_prepare(self.complex_transaction)
+        trns = formula.value_prepare(self.complex_transaction.transactions.all())
 
-            ctrn = formula.value_prepare(self.complex_transaction)
-            trns = formula.value_prepare(self.complex_transaction.transactions.all())
+        names = {
+            'complex_transaction': ctrn,
+            'transactions': trns,
+        }
 
-            names = {
-                'complex_transaction': ctrn,
-                'transactions': trns,
-            }
+        for key, value in self.values.items():
+            names[key] = value
 
-            for key, value in self.values.items():
-                names[key] = value
+        try:
 
-            try:
+            # _l.debug('names %s' % names)
+            # _l.debug('self._context %s' % self._context)
 
-                # _l.debug('names %s' % names)
-                # _l.debug('self._context %s' % self._context)
+            self.complex_transaction.transaction_unique_code = formula.safe_eval(
+                self.complex_transaction.transaction_type.transaction_unique_code_expr, names=names,
+                context=self._context)
 
-                self.complex_transaction.transaction_unique_code = formula.safe_eval(
-                    self.complex_transaction.transaction_type.transaction_unique_code_expr, names=names,
-                    context=self._context)
+        except Exception as e:
 
-            except Exception as e:
+            # _l.error('execute_uniqueness_expression.e %s ' % e)
+            # _l.info('execute_uniqueness_expression.names %s' % names)
+            # _l.info('execute_uniqueness_expression.names %s' % traceback.format_exc())
 
-                # _l.error('execute_uniqueness_expression.e %s ' % e)
-                # _l.info('execute_uniqueness_expression.names %s' % names)
-                # _l.info('execute_uniqueness_expression.names %s' % traceback.format_exc())
+            self.complex_transaction.transaction_unique_code = None
 
-                self.complex_transaction.transaction_unique_code = None
+        exist = None
 
+        try:
+            exist = ComplexTransaction.objects.exclude(transaction_unique_code=None).get(
+                master_user=self.transaction_type.master_user,
+                transaction_unique_code=self.complex_transaction.transaction_unique_code)
+        except Exception as e:
             exist = None
 
-            try:
-                exist = ComplexTransaction.objects.exclude(transaction_unique_code=None).get(
-                    master_user=self.transaction_type.master_user,
-                    transaction_unique_code=self.complex_transaction.transaction_unique_code)
-            except Exception as e:
-                exist = None
+        if self.uniqueness_reaction == 1 and exist and self.complex_transaction.transaction_unique_code:
 
-            if self.uniqueness_reaction == 1 and exist and self.complex_transaction.transaction_unique_code:
+            # self.complex_transaction.delete()
 
-                # self.complex_transaction.delete()
+            # Do not create new transaction if transcation with that code already exists
 
-                # Do not create new transaction if transcation with that code already exists
+            self.uniqueness_status = 'skip'
 
-                self.uniqueness_status = 'skip'
+            self.general_errors.append({
+                "reason": 409,
+                "message": "Skipped book. Transaction Unique code error"
+            })
 
-                raise UniqueCodeError({
-                    "reason": 410,
-                    "message": "Skipped book. Transaction Unique code error"
-                })
+        elif self.uniqueness_reaction == 1 and not exist and self.complex_transaction.transaction_unique_code:
 
-            elif self.uniqueness_reaction == 1 and not exist and self.complex_transaction.transaction_unique_code:
+            # Just create complex transaction
+            self.uniqueness_status = 'create'
 
-                # Just create complex transaction
-                self.uniqueness_status = 'skip'
+            self.record_execution_progress('Unique code is free, can create transaction. (SKIP)')
+
+        elif self.uniqueness_reaction == 2:
+
+            self.uniqueness_status = 'booked_without_unique_code'
+
+            self.record_execution_progress('Book without Unique Code')
+
+            self.complex_transaction.transaction_unique_code = None
+
+        elif self.uniqueness_reaction == 3 and self.complex_transaction.transaction_unique_code:
 
 
-            elif self.uniqueness_reaction == 2:
 
-                self.uniqueness_status = 'booked_without_unique_code'
+            self.complex_transaction.transaction_unique_code = exist.transaction_unique_code
+            self.complex_transaction.code = exist.code
 
-                self.complex_transaction.transaction_unique_code = None
-
-            elif self.uniqueness_reaction == 3 and self.complex_transaction.transaction_unique_code:
-
+            if exist:
+                self.record_execution_progress(
+                    'Unique Code is already in use, can create transaction. Previous Transaction is deleted (OVERWRITE)')
+                exist.delete()
                 self.uniqueness_status = 'overwrite'
+            else:
+                self.uniqueness_status = 'create'
+                self.record_execution_progress('Unique Code is free, can create transaction (OVERWRITE)')
 
-                self.complex_transaction.transaction_unique_code = exist.transaction_unique_code
-                self.complex_transaction.code = exist.code
+        elif self.uniqueness_reaction == 4 and exist and self.complex_transaction.transaction_unique_code:
+            # TODO ask if behavior same as skip
+            self.uniqueness_status = 'error'
 
-                if exist:
-                    exist.delete()
+            self.complex_transaction.delete()
 
-            elif self.uniqueness_reaction == 4 and exist and self.complex_transaction.transaction_unique_code:
-                # TODO ask if behavior same as skip
-                self.uniqueness_status = 'error'
-
-                self.complex_transaction.delete()
-
-                raise UniqueCodeError({
-                    "reason": 410,
-                    "message": "Skipped book. Transaction Unique code error"
-                })
-
-        # Deprecated
-        # else:  # default behaviour
-        #
-        #
-        #     # _l.debug('execute_uniqueness_expression default behavior')
-        #
-        #     if self.complex_transaction.transaction_type.transaction_unique_code_expr and \
-        #             (
-        #                     self.complex_transaction.status_id == ComplexTransaction.PRODUCTION or self.complex_transaction.status_id == ComplexTransaction.IGNORE) \
-        #             and not self.complex_transaction.is_canceled:
-        #
-        #         ctrn = formula.value_prepare(self.complex_transaction)
-        #         trns = formula.value_prepare(self.complex_transaction.transactions.all())
-        #
-        #         names = {
-        #             'complex_transaction': ctrn,
-        #             'transactions': trns,
-        #         }
-        #
-        #         for key, value in self.values.items():
-        #             names[key] = value
-        #
-        #         try:
-        #             self.complex_transaction.transaction_unique_code = formula.safe_eval(
-        #                 self.complex_transaction.transaction_type.transaction_unique_code_expr, names=names,
-        #                 context=self._context)
-        #         except Exception as e:
-        #
-        #             # _l.debug("Cant process transaction_unique_code %s" % e)
-        #
-        #             self.complex_transaction.transaction_unique_code = None
-        #
-        #         if self.complex_transaction.transaction_unique_code:
-        #
-        #             # _l.debug(
-        #             #     "execute_uniqueness_expression default behavior %s" % self.complex_transaction.transaction_unique_code)
-        #
-        #             try:
-        #
-        #                 exist = ComplexTransaction.objects.exclude(transaction_unique_code=None).get(
-        #                     master_user=self.transaction_type.master_user,
-        #                     transaction_unique_code=self.complex_transaction.transaction_unique_code)
-        #
-        #                 if self.complex_transaction.transaction_type.transaction_unique_code_options == TransactionType.BOOK_WITHOUT_UNIQUE_CODE:
-        #                     self.complex_transaction.transaction_unique_code = None
-        #
-        #                 if self.complex_transaction.transaction_type.transaction_unique_code_options == TransactionType.SKIP_BOOK_WITH_UNIQUE_CODE:
-        #                     self.complex_transaction.delete()
-        #
-        #                     raise ValidationError({
-        #                         "reason": 410,
-        #                         "message": "Skipped book. Transaction Unique code error"
-        #                     })
-        #
-        #             except ComplexTransaction.DoesNotExist:
-        #
-        #                 _l.debug("Unique code can be assigned")
-        #     else:
-        #         self.complex_transaction.transaction_unique_code = None
+            self.general_errors.append({
+                "reason": 410,
+                "message": "Skipped book. Transaction Unique code error"
+            })
 
         self.record_execution_progress('Unique Code: %s ' % self.complex_transaction.transaction_unique_code)
 
@@ -2699,6 +2648,7 @@ class TransactionTypeProcess(object):
     @property
     def has_errors(self):
         return bool(self.instruments_errors) or \
+               any(bool(e) for e in self.general_errors) or \
                any(bool(e) for e in self.value_errors) or \
                any(bool(e) for e in self.complex_transaction_errors) or \
                any(bool(e) for e in self.transactions_errors)

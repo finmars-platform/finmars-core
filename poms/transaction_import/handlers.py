@@ -34,7 +34,7 @@ from poms.transaction_import.models import ProcessType, TransactionImportResult,
     TransactionImportProcessItem, TransactionImportProcessPreprocessItem, TransactionImportBookedTransaction, \
     TransactionImportConversionItem
 from poms.transaction_import.serializers import TransactionImportResultSerializer
-from poms.transactions.handlers import TransactionTypeProcess, UniqueCodeError
+from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionTypeInput
 from poms.users.models import EcosystemDefault
 
@@ -470,12 +470,19 @@ class TransactionImportProcess(object):
             if error:
                 fields['error_message'] = str(error)
 
+            uniqueness_reaction = None
+
+            if self.scheme.book_uniqueness_settings == ComplexTransactionImportScheme.USE_TRANSACTION_TYPE_SETTING:
+                uniqueness_reaction = None
+            else:
+                uniqueness_reaction = self.scheme.book_uniqueness_settings
+
             transaction_type_process_instance = TransactionTypeProcess(
                 linked_import_task=self.task,
                 transaction_type=rule_scenario.transaction_type,
                 default_values=fields,
                 context=self.context,
-                uniqueness_reaction=self.scheme.book_uniqueness_settings,
+                uniqueness_reaction=uniqueness_reaction,
                 member=self.member,
                 source=item.file_inputs,
                 execution_context="import"
@@ -516,23 +523,41 @@ class TransactionImportProcess(object):
                 item.booked_transactions.append(trn)
 
             if transaction_type_process_instance.has_errors:
-                item.status = 'error'
 
-                errors = []
+                if transaction_type_process_instance.uniqueness_status == 'skip':
+                    item.status = 'skip'
 
-                if transaction_type_process_instance.instruments_errors:
-                    errors = errors + transaction_type_process_instance.instruments_errors
+                    errors = []
 
-                if transaction_type_process_instance.value_errors:
-                    errors = errors + transaction_type_process_instance.value_errors
+                    if transaction_type_process_instance.general_errors:
+                        errors = errors + transaction_type_process_instance.general_errors
 
-                if transaction_type_process_instance.complex_transaction_errors:
-                    errors = errors + transaction_type_process_instance.complex_transaction_errors
+                    item.error_message = item.error_message + 'Book Skip: ' + json.dumps(errors, default=str)
 
-                if transaction_type_process_instance.transactions_errors:
-                    errors = errors + transaction_type_process_instance.transactions_errors
+                else:
+                    item.status = 'error'
 
-                item.error_message = item.error_message + 'Book Exception: ' + json.dumps(errors, default=str)
+                    errors = []
+
+                    if transaction_type_process_instance.general_errors:
+                        errors = errors + transaction_type_process_instance.general_errors
+
+                    if transaction_type_process_instance.instruments_errors:
+                        errors = errors + transaction_type_process_instance.instruments_errors
+
+                    if transaction_type_process_instance.value_errors:
+                        errors = errors + transaction_type_process_instance.value_errors
+
+                    if transaction_type_process_instance.complex_transaction_errors:
+                        errors = errors + transaction_type_process_instance.complex_transaction_errors
+
+                    if transaction_type_process_instance.transactions_errors:
+                        errors = errors + transaction_type_process_instance.transactions_errors
+
+                    item.error_message = item.error_message + 'Book Exception: ' + json.dumps(errors, default=str)
+
+                transaction.set_rollback(True)
+
             else:
                 item.status = 'success'
                 item.message = "Transaction Booked %s" % transaction_type_process_instance.complex_transaction
@@ -551,20 +576,11 @@ class TransactionImportProcess(object):
 
         except Exception as e:
 
-                item.status = 'error'
-                item.error_message = item.error_message + 'Book Exception: ' + str(e)
+            item.status = 'error'
+            item.error_message = item.error_message + 'Book Exception: ' + str(e)
 
-                _l.error("TransactionImportProcess.Task %s. book Exception %s " % (self.task, e))
-                _l.error("TransactionImportProcess.Task %s. book Traceback %s " % (self.task, traceback.format_exc()))
-
-                transaction.set_rollback(True)
-                # WTF?
-                # if raise_exception:
-                #
-                #     if not isinstance(e, UniqueCodeError):
-                #         raise Exception(e)
-                #     else:
-                #         _l.error("Code is not unique, skip %s" % str(e))
+            _l.error("TransactionImportProcess.Task %s. book Exception %s " % (self.task, e))
+            _l.error("TransactionImportProcess.Task %s. book Traceback %s " % (self.task, traceback.format_exc()))
 
     def fill_with_file_items(self):
 

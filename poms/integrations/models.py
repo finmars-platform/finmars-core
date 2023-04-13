@@ -812,12 +812,14 @@ class ComplexTransactionImportScheme(NamedModel, DataTimeStampedModel):
     BOOK_WITHOUT_UNIQUE_CODE = 2
     OVERWRITE = 3
     TREAT_AS_ERROR = 4
+    USE_TRANSACTION_TYPE_SETTING = 5
 
     BOOK_UNIQUENESS_CHOICES = (
         (SKIP, gettext_lazy('Skip')),
         (BOOK_WITHOUT_UNIQUE_CODE, gettext_lazy('Book without Unique Code ')),
         (OVERWRITE, gettext_lazy('Overwrite')),
         (TREAT_AS_ERROR, gettext_lazy('Treat as error')),
+        (USE_TRANSACTION_TYPE_SETTING, gettext_lazy('Use Transaction Type Setting')),
     )
 
     user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
