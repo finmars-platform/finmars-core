@@ -990,12 +990,12 @@ class TransactionImportProcess(object):
                                         except BookSkipException:
                                             _l.info("BookSkipException")
                                             transaction.savepoint_rollback(sid)
-                                            break
+                                            continue
 
                                         except BookException:
                                             _l.info("BookException")
                                             transaction.savepoint_rollback(sid)
-                                            break
+                                            continue
 
                                         except BookUnhandledException as e:
                                             transaction.savepoint_rollback(sid)
