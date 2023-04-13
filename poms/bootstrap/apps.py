@@ -45,7 +45,6 @@ class BootstrapConfig(AppConfig):
         self.create_base_folders()
         self.register_at_authorizer_service()
 
-
     def create_finmars_bot(self):
 
         from django.contrib.auth.models import User
@@ -57,7 +56,6 @@ class BootstrapConfig(AppConfig):
         except Exception as e:
 
             user = User.objects.create(username='finmars_bot')
-
 
         try:
             from poms.users.models import Member
@@ -130,6 +128,7 @@ class BootstrapConfig(AppConfig):
 
                 except Exception as e:
                     _l.info("Create user error %s" % e)
+                    _l.info("Create user traceback %s" % traceback.format_exc())
 
             if user:
                 user_profile, created = UserProfile.objects.get_or_create(user_id=user.pk)
@@ -148,7 +147,8 @@ class BootstrapConfig(AppConfig):
 
                     master_user.save()
 
-                    _l.info("Master User From Backup Renamed to new Name %s and Base API URL %s" % (master_user.name, master_user.base_api_url))
+                    _l.info("Master User From Backup Renamed to new Name %s and Base API URL %s" % (
+                    master_user.name, master_user.base_api_url))
                     # Member.objects.filter(is_owner=False).delete()
 
             except Exception as e:
@@ -165,23 +165,24 @@ class BootstrapConfig(AppConfig):
 
                 master_user.save()
 
-                _l.info("Master user with name %s and base_api_url %s created" % (master_user.name, master_user.base_api_url))
+                _l.info("Master user with name %s and base_api_url %s created" % (
+                master_user.name, master_user.base_api_url))
 
-                # Probably deprecated
-                # member = Member.objects.create(user=user, master_user=master_user, is_owner=True, is_admin=True)
-                # member.save()
-                #
-                # _l.info("Owner Member created")
-                #
-                # admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
-                # admin_group.members.add(member.id)
-                # admin_group.save()
-                #
-                # _l.info("Admin Group Created")
+                member = Member.objects.create(user=user, username=user.username, master_user=master_user,
+                                               is_owner=True, is_admin=True)
+                member.save()
+
+                _l.info("Owner Member created")
+
+                admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
+                admin_group.members.add(member.id)
+                admin_group.save()
+
+                _l.info("Admin Group Created")
 
             try:
 
-                master_user = MasterUser.objects.all().first() # TODO, carefull if someday return to multi master user inside one db
+                master_user = MasterUser.objects.all().first()  # TODO, carefull if someday return to multi master user inside one db
 
                 master_user.base_api_url = settings.BASE_API_URL
                 master_user.save()
@@ -356,7 +357,6 @@ class BootstrapConfig(AppConfig):
             from poms.users.models import Member
 
             _l.info("create base folders if not exists")
-
 
             if not storage.exists(settings.BASE_API_URL + '/.system/.init'):
                 path = settings.BASE_API_URL + '/.system/.init'
