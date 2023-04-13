@@ -1076,6 +1076,9 @@ class TransactionImportProcess(object):
                         self.task, str(item.row_number), e))
                     _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Traceback %s' % (
                         self.task, str(item.row_number), traceback.format_exc()))
+                finally:
+
+                    index = index + 1
 
         self.result.items = self.items
 
