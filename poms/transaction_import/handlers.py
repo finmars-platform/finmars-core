@@ -1011,7 +1011,8 @@ class TransactionImportProcess(object):
                                                 _l.info("Error Handler Savepoint commit for %s" % index)
                                                 transaction.savepoint_commit(sid)
                                         else:
-                                            _l.error("Could not book error scenario %s" % e)
+                                            _l.info("Savepoint commit for %s" % index)
+                                            # _l.error("Could not book error scenario %s" % e)
                                             transaction.savepoint_commit(sid)
                             else:
                                 selector_values = rule_scenario.selector_values.all()
