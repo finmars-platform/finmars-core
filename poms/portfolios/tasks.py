@@ -219,12 +219,11 @@ def calculate_portfolio_register_record(self, task_id):
                 record.cash_currency_id = trn.transaction_currency_id
                 record.valuation_currency_id = portfolio_register.valuation_currency_id
 
-                if (
+                if ( # check if transaction is Cash Inflow/Outflow and Price != 0
                     record.transaction_class_id
                     in (TransactionClass.CASH_INFLOW, TransactionClass.CASH_OUTFLOW)
                     and (trn.trade_price > 0)
                 ):
-                    # if type Cash inflow/Outflow and Price != 0
                     record.share_price_calculation_type = PortfolioRegisterRecord.MANUAL
 
                 try:
