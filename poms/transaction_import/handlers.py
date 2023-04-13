@@ -30,6 +30,7 @@ from poms.portfolios.models import Portfolio
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.system_messages.handlers import send_system_message
+from poms.transaction_import.exceptions import BookException
 from poms.transaction_import.models import ProcessType, TransactionImportResult, \
     TransactionImportProcessItem, TransactionImportProcessPreprocessItem, TransactionImportBookedTransaction, \
     TransactionImportConversionItem
@@ -565,7 +566,7 @@ class TransactionImportProcess(object):
 
                     item.error_message = item.error_message + 'Book Exception: ' + json.dumps(errors, default=str)
 
-                    raise Exception('')
+                    raise BookException(code=400, error_message=item.error_message)
 
             else:
                 item.status = 'success'
@@ -585,15 +586,23 @@ class TransactionImportProcess(object):
 
         except Exception as e:
 
-            item.status = 'error'
-            item.error_message = item.error_message + 'Book Exception: ' + str(e)
+            if (e.__class__.__name__ == 'BookException'):
 
-            _l.error("TransactionImportProcess.Task %s. book Exception %s " % (self.task, e))
-            _l.error("TransactionImportProcess.Task %s. book Traceback %s " % (self.task, traceback.format_exc()))
+                if raise_exception:
+                    # Just to execute error rule scenar
+                    raise e
 
-            if raise_exception:
-                # Just to execute error rule scenar
-                raise e
+            else:
+
+                item.status = 'error'
+                item.error_message = item.error_message + 'Unhandled Exception: ' + str(e)
+
+                _l.error("TransactionImportProcess.Task %s. book Exception %s " % (self.task, e))
+                _l.error("TransactionImportProcess.Task %s. book Traceback %s " % (self.task, traceback.format_exc()))
+
+                if raise_exception:
+                    # Just to execute error rule scenar
+                    raise e
 
     def fill_with_file_items(self):
 
