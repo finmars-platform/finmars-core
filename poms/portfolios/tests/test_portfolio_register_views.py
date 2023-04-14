@@ -25,13 +25,20 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
             f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio-register-record/"
         )
 
-    def create_portfolio_register_record(self, trade_price: float = 0):
+    def create_portfolio_register_record(
+        self,
+        trade_price: float = 0,
+        t_class: int = 0,
+    ):
         portfolio = self.db_data.portfolios[BIG]
         complex_transaction, transaction = self.db_data.cash_in_transaction(portfolio)
         if trade_price > 0:
             transaction.trade_price = trade_price
             transaction.save()
-        trans_class = self.db_data.transaction_classes[TransactionClass.CASH_INFLOW]
+        if t_class == 0:
+            trans_class = self.db_data.transaction_classes[TransactionClass.CASH_INFLOW]
+        else:
+            trans_class = self.db_data.transaction_classes[t_class]
         instrument = self.db_data.instruments["Apple"]
         portfolio_register = self.db_data.create_portfolio_register(
             portfolio, instrument
@@ -72,6 +79,14 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
         self.assertEqual(
             resp_data["share_price_calculation_type"],
             PortfolioRegisterRecord.MANUAL,
+        )
+
+    def test_created_prr_has_new_field_automatic_if_not_cash_in_out(self):
+        resp_data = self.create_portfolio_register_record(trade_price=0.1, t_class=3)
+        self.assertIn("share_price_calculation_type", resp_data)
+        self.assertEqual(
+            resp_data["share_price_calculation_type"],
+            PortfolioRegisterRecord.AUTOMATIC,
         )
 
 
