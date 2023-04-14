@@ -3878,6 +3878,7 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
         self.fields['instruments_errors'] = serializers.ReadOnlyField()
         self.fields['complex_transaction_errors'] = serializers.ReadOnlyField()
         self.fields['transactions_errors'] = serializers.ReadOnlyField()
+        self.fields['general_errors'] = serializers.ReadOnlyField()
         self.fields['instruments'] = InstrumentSerializer(many=True, read_only=True, required=False, allow_null=True)
 
         self.fields['complex_transaction'] = TransactionTypeComplexTransactionSerializer(

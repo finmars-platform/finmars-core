@@ -957,76 +957,80 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
     @action(detail=True, methods=['get', 'put'], url_path='book', serializer_class=TransactionTypeProcessSerializer)
     def book(self, request, pk=None):
 
-        # Some Inputs can choose from which context variable it will take value
-        context_values = self.get_context_for_book(request)
-        # But by default Context Variables overwrites default value
-        # default_values = self.get_context_for_book(request)
+        with transaction.atomic():
 
-        # print("default_values %s" % default_values)
-        print("context_values %s" % context_values)
-        print("pk %s" % pk)
+            # Some Inputs can choose from which context variable it will take value
+            context_values = self.get_context_for_book(request)
+            # But by default Context Variables overwrites default value
+            # default_values = self.get_context_for_book(request)
 
-        transaction_type = TransactionType.objects.get(pk=pk)
+            # print("default_values %s" % default_values)
+            print("context_values %s" % context_values)
+            print("pk %s" % pk)
 
-        if request.method == 'GET':
+            transaction_type = TransactionType.objects.get(pk=pk)
 
-            instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
-                                              context=self.get_serializer_context(), context_values=context_values,
-                                              member=request.user.member)
+            if request.method == 'GET':
 
-            instance.complex_transaction.id = 0
+                instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
+                                                  context=self.get_serializer_context(), context_values=context_values,
+                                                  member=request.user.member)
 
-            serializer = self.get_serializer(instance=instance)
-            return Response(serializer.data)
-        else:
+                instance.complex_transaction.id = 0
 
-            complex_transaction_status = request.data['complex_transaction_status']
-
-            uniqueness_reaction = request.data.get('uniqueness_reaction', None)
-
-            instance = TransactionTypeProcess(process_mode=request.data['process_mode'],
-                                              transaction_type=transaction_type,
-                                              context=self.get_serializer_context(), context_values=context_values,
-                                              complex_transaction_status=complex_transaction_status,
-                                              uniqueness_reaction=uniqueness_reaction, member=request.user.member)
-
-            try:
-
-                serializer = self.get_serializer(instance=instance, data=request.data)
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
-
+                serializer = self.get_serializer(instance=instance)
                 return Response(serializer.data)
-            finally:
+            else:
 
-                if instance.has_errors:
-                    transaction.set_rollback(True)
+                complex_transaction_status = request.data['complex_transaction_status']
+
+                uniqueness_reaction = request.data.get('uniqueness_reaction', None)
+
+                instance = TransactionTypeProcess(process_mode=request.data['process_mode'],
+                                                  transaction_type=transaction_type,
+                                                  context=self.get_serializer_context(), context_values=context_values,
+                                                  complex_transaction_status=complex_transaction_status,
+                                                  uniqueness_reaction=uniqueness_reaction, member=request.user.member)
+
+                try:
+
+                    serializer = self.get_serializer(instance=instance, data=request.data)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+
+                    return Response(serializer.data)
+                finally:
+
+                    if instance.has_errors:
+                        transaction.set_rollback(True)
 
     @action(detail=True, methods=['get', 'put'], url_path='book-pending',
             serializer_class=TransactionTypeProcessSerializer)
     def book_pending(self, request, pk=None):
 
-        complex_transaction_status = ComplexTransaction.PENDING
+        with transaction.atomic():
 
-        transaction_type = TransactionType.objects.get(pk=pk)
+            complex_transaction_status = ComplexTransaction.PENDING
 
-        instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
-                                          context=self.get_serializer_context(),
-                                          complex_transaction_status=complex_transaction_status,
-                                          member=request.user.member)
+            transaction_type = TransactionType.objects.get(pk=pk)
 
-        if request.method == 'GET':
-            serializer = self.get_serializer(instance=instance)
-            return Response(serializer.data)
-        else:
-            try:
-                serializer = self.get_serializer(instance=instance, data=request.data)
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
+            instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
+                                              context=self.get_serializer_context(),
+                                              complex_transaction_status=complex_transaction_status,
+                                              member=request.user.member)
+
+            if request.method == 'GET':
+                serializer = self.get_serializer(instance=instance)
                 return Response(serializer.data)
-            finally:
-                if instance.has_errors:
-                    transaction.set_rollback(True)
+            else:
+                try:
+                    serializer = self.get_serializer(instance=instance, data=request.data)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+                    return Response(serializer.data)
+                finally:
+                    if instance.has_errors:
+                        transaction.set_rollback(True)
 
     @action(detail=True, methods=['get', 'put'], url_path='recalculate',
             serializer_class=TransactionTypeRecalculateSerializer, permission_classes=[IsAuthenticated])
@@ -2335,56 +2339,58 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
     @action(detail=True, methods=['get', 'put'], url_path='rebook', serializer_class=TransactionTypeProcessSerializer,
             permission_classes=[IsAuthenticated])
     def rebook(self, request, pk=None):
-        complex_transaction = self.get_object()
 
-        if request.method == 'GET':
+        with transaction.atomic():
+            complex_transaction = self.get_object()
 
-            instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
-                                              process_mode='rebook',
-                                              complex_transaction=complex_transaction,
-                                              clear_execution_log=False,
-                                              record_execution_log=False,
-                                              context=self.get_serializer_context(), member=request.user.member)
+            if request.method == 'GET':
 
-            serializer = self.get_serializer(instance=instance)
-            return Response(serializer.data)
-        else:
+                instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
+                                                  process_mode='rebook',
+                                                  complex_transaction=complex_transaction,
+                                                  clear_execution_log=False,
+                                                  record_execution_log=False,
+                                                  context=self.get_serializer_context(), member=request.user.member)
 
-            st = time.perf_counter()
-
-            _l.info('complex tt status %s' % request.data['complex_transaction_status'])
-
-            uniqueness_reaction = request.data.get('uniqueness_reaction', None)
-
-            # complex_transaction.execution_log = ''
-
-            instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
-                                              process_mode=request.data['process_mode'],
-                                              complex_transaction=complex_transaction,
-                                              complex_transaction_status=request.data['complex_transaction_status'],
-                                              context=self.get_serializer_context(),
-                                              uniqueness_reaction=uniqueness_reaction, member=request.user.member)
-
-            _l.info("==== INIT REBOOK ====")
-
-            try:
-
-                if request.data['complex_transaction']:
-                    if not request.data['complex_transaction']['status']:
-                        request.data['complex_transaction']['status'] = ComplexTransaction.PRODUCTION
-
-                serializer = self.get_serializer(instance=instance, data=request.data)
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
-
+                serializer = self.get_serializer(instance=instance)
                 return Response(serializer.data)
+            else:
 
-            finally:
+                st = time.perf_counter()
 
-                _l.debug('rebook done: %s', "{:3.3f}".format(time.perf_counter() - st))
+                _l.info('complex tt status %s' % request.data['complex_transaction_status'])
 
-                if instance.has_errors:
-                    transaction.set_rollback(True)
+                uniqueness_reaction = request.data.get('uniqueness_reaction', None)
+
+                # complex_transaction.execution_log = ''
+
+                instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
+                                                  process_mode=request.data['process_mode'],
+                                                  complex_transaction=complex_transaction,
+                                                  complex_transaction_status=request.data['complex_transaction_status'],
+                                                  context=self.get_serializer_context(),
+                                                  uniqueness_reaction=uniqueness_reaction, member=request.user.member)
+
+                _l.info("==== INIT REBOOK ====")
+
+                try:
+
+                    if request.data['complex_transaction']:
+                        if not request.data['complex_transaction']['status']:
+                            request.data['complex_transaction']['status'] = ComplexTransaction.PRODUCTION
+
+                    serializer = self.get_serializer(instance=instance, data=request.data)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+
+                    return Response(serializer.data)
+
+                finally:
+
+                    _l.debug('rebook done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
+                    if instance.has_errors:
+                        transaction.set_rollback(True)
 
     @action(detail=True, methods=['get', 'put'], url_path='recalculate',
             serializer_class=TransactionTypeRecalculateSerializer, permission_classes=[IsAuthenticated])
@@ -2423,28 +2429,30 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
             serializer_class=TransactionTypeProcessSerializer, permission_classes=[IsAuthenticated])
     def rebook_pending(self, request, pk=None):
 
-        complex_transaction = self.get_object()
+        with transaction.atomic():
 
-        complex_transaction.status_id = ComplexTransaction.PENDING
+            complex_transaction = self.get_object()
 
-        instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
-                                          process_mode='rebook',
-                                          complex_transaction=complex_transaction,
-                                          context=self.get_serializer_context(), member=request.user.member)
-        if request.method == 'GET':
-            serializer = self.get_serializer(instance=instance)
-            return Response(serializer.data)
-        else:
-            try:
+            complex_transaction.status_id = ComplexTransaction.PENDING
 
-                serializer = self.get_serializer(instance=instance, data=request.data)
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
-
+            instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
+                                              process_mode='rebook',
+                                              complex_transaction=complex_transaction,
+                                              context=self.get_serializer_context(), member=request.user.member)
+            if request.method == 'GET':
+                serializer = self.get_serializer(instance=instance)
                 return Response(serializer.data)
-            finally:
-                if instance.has_errors:
-                    transaction.set_rollback(True)
+            else:
+                try:
+
+                    serializer = self.get_serializer(instance=instance, data=request.data)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+
+                    return Response(serializer.data)
+                finally:
+                    if instance.has_errors:
+                        transaction.set_rollback(True)
 
     @action(detail=True, methods=['put'], url_path='update-properties',
             serializer_class=ComplexTransactionSimpleSerializer)
