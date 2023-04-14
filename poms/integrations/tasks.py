@@ -944,6 +944,7 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
                     "Could not parse response from broker. %s" % response.text
                 )
                 return task, errors
+
             try:
                 currency = create_currency_cbond(data, master_user, member)
 
