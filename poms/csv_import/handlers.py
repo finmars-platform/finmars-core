@@ -1405,7 +1405,7 @@ class SimpleImportProcess(object):
             if self.scheme.content_type.model == 'instrument':
                 from poms.instruments.handlers import InstrumentTypeProcess
 
-                instrument_type = InstrumentType.objects.get(id=item.final_inputs['instrument_type'])
+                instrument_type = InstrumentType.objects.get(user_code=item.final_inputs['instrument_type'])
 
                 process = InstrumentTypeProcess(instrument_type=instrument_type)
 
