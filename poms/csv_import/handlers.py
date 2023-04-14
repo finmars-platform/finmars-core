@@ -1418,7 +1418,10 @@ class SimpleImportProcess(object):
                 result_item = default_instrument_object
 
 
-            result_item.update(copy.copy(item.final_inputs))
+            for key, value in item.final_inputs.items():
+                if item.final_inputs[key] is not None:
+                    result_item[key] = item.final_inputs[key]
+
             result_item['attributes'] = self.fill_result_item_with_attributes(item)
             result_item = self.convert_relation_to_ids(item, result_item)
             result_item = self.remove_nullable_attributes(result_item)
