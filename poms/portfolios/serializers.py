@@ -501,6 +501,22 @@ class PortfolioRegisterRecordSerializer(
         model = PortfolioRegisterRecord
         fields = PORTFOLIO_REGISTER_RECORD_FIELDS
 
+    def create(self, validated_data: dict) -> PortfolioRegisterRecord:
+        from poms.transactions.models import TransactionClass
+
+        transaction = validated_data["transaction"]
+        transaction_class = validated_data["transaction_class"]
+        if (  # check if transaction is Cash Inflow/Outflow and Price != 0
+            transaction_class.id
+            in (TransactionClass.CASH_INFLOW, TransactionClass.CASH_OUTFLOW)
+            and (transaction.trade_price > 0)
+        ):
+            validated_data[
+                "share_price_calculation_type"
+            ] = PortfolioRegisterRecord.MANUAL
+
+        return super().create(validated_data)
+
 
 class PortfolioRegisterRecordEvSerializer(PortfolioRegisterRecordSerializer):
 
