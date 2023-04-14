@@ -4,14 +4,13 @@ import datetime
 import logging
 import math
 from datetime import timedelta
+from http import HTTPStatus
 
 import pandas as pd
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from rest_framework.views import exception_handler
-from http import HTTPStatus
-from django.utils.timezone import now
 
 from poms_app import settings
 
@@ -362,6 +361,11 @@ def convert_name_to_key(name):
 
 
 def check_if_last_day_of_month(to_date):
+    '''
+    Check if date is last day of month
+    :param to_date:
+    :return: bool
+    '''
     delta = datetime.timedelta(days=1)
     next_day = to_date + delta
     if to_date.month != next_day.month:
@@ -370,12 +374,25 @@ def check_if_last_day_of_month(to_date):
 
 
 def get_first_transaction(portfolio_id):
+
+    '''
+    Get first transaction of portfolio
+    :param portfolio_id:
+    :return: Transaction
+    '''
     from poms.transactions.models import Transaction
     transaction = Transaction.objects.filter(portfolio_id=portfolio_id).order_by('accounting_date')[0]
     return transaction
 
 
 def last_business_day_in_month(year: int, month: int, to_string=False):
+    '''
+    Get last business day of month
+    :param year:
+    :param month:
+    :param to_string:
+    :return: date or string
+    '''
     day = max(calendar.monthcalendar(year, month)[-1:][0][:5])
 
     d = datetime.datetime(year, month, day).date()
@@ -387,6 +404,13 @@ def last_business_day_in_month(year: int, month: int, to_string=False):
 
 
 def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=False):
+    '''
+    Get last business day of each month between two dates
+    :param date_from:
+    :param date_to:
+    :param to_string:
+    :return: list of dates or strings
+    '''
     months = get_list_of_months_between_two_dates(date_from, date_to)
     end_of_months = []
 
@@ -413,6 +437,12 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
 
 
 def str_to_date(d):
+
+    '''
+    Convert string to date
+    :param d:
+    :return:
+    '''
     if not isinstance(d, datetime.date):
         d = datetime.datetime.strptime(d, "%Y-%m-%d").date()
 
@@ -420,6 +450,11 @@ def str_to_date(d):
 
 
 def get_closest_bday_of_yesterday(to_string=False):
+    '''
+    Get the closest business day of yesterday
+    :param to_string:
+    :return: date or string
+    '''
     yesterday = datetime.date.today() - timedelta(days=1)
     return get_last_business_day(yesterday, to_string=to_string)
 
@@ -457,6 +492,12 @@ def finmars_exception_handler(exc, context):
 
 def get_serializer(content_type_key):
 
+    '''
+    Returns serializer for given content type key.
+    :param content_type_key:
+    :return: serializer class
+    '''
+
     from poms.instruments.serializers import InstrumentSerializer
 
     from poms.accounts.serializers import AccountSerializer
@@ -487,6 +528,11 @@ def get_serializer(content_type_key):
 
 
 def get_list_of_entity_attributes(content_type_key):
+    '''
+    Returns a list of attributes for a given entity type.
+    :param content_type_key:
+    :return: list of attributes
+    '''
 
     content_type = get_content_type_by_name(content_type_key)
     result = []
@@ -494,7 +540,6 @@ def get_list_of_entity_attributes(content_type_key):
     attribute_types = GenericAttributeType.objects.filter(content_type=content_type)
 
     for attribute_type in attribute_types:
-
         result.append({
             "name": attribute_type.name,
             "key": "attributes." + attribute_type.user_code,
