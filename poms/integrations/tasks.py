@@ -1046,7 +1046,7 @@ def update_task_instrument(instrument, task):
     task.save()
 
 
-def handle_response_data(data, task, options):
+def handle_database_response_data(data, task, options):
     result_instrument = None
 
     if "instruments" in data["data"]:
@@ -1185,7 +1185,7 @@ def download_instrument_finmars_database(task_id: int):
             return
 
         try:
-            handle_response_data(data, task, options)
+            handle_database_response_data(data, task, options)
             return
         except Exception as e:
             _l.error(
