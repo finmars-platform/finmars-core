@@ -1214,28 +1214,37 @@ class SimpleImportProcess(object):
                         }
 
                         if attribute_type.value_type == GenericAttributeType.STRING:
-                            attribute['value_string'] = item.final_inputs[entity_field.attribute_user_code]
+                            if item.final_inputs[entity_field.attribute_user_code]:
+                                attribute['value_string'] = item.final_inputs[entity_field.attribute_user_code]
 
                         if attribute_type.value_type == GenericAttributeType.NUMBER:
-                            attribute['value_float'] = item.final_inputs[entity_field.attribute_user_code]
+                            if item.final_inputs[entity_field.attribute_user_code]:
+                                attribute['value_float'] = item.final_inputs[entity_field.attribute_user_code]
 
                         if attribute_type.value_type == GenericAttributeType.CLASSIFIER:
-                            try:
-                                attribute['classifier'] = GenericClassifier.objects.get(attribute_type=attribute_type,
-                                                                                        name=item.final_inputs[
-                                                                                            entity_field.attribute_user_code]).id
-                            except Exception as e:
-                                _l.error('fill_result_item_with_attributes classifier error - item %s e %s' % (item, e))
 
-                                if not item.error_message:
-                                    item.error_message = ''
+                            if item.final_inputs[entity_field.attribute_user_code]:
 
-                                item.error_message = (item.error_message + '%s: %s, ') % (entity_field.attribute_user_code, str(e))
+                                try:
+                                    attribute['classifier'] = GenericClassifier.objects.get(
+                                        attribute_type=attribute_type,
+                                        name=item.final_inputs[
+                                            entity_field.attribute_user_code]).id
+                                except Exception as e:
+                                    _l.error(
+                                        'fill_result_item_with_attributes classifier error - item %s e %s' % (item, e))
 
-                                attribute['classifier'] = None
+                                    if not item.error_message:
+                                        item.error_message = ''
+
+                                    item.error_message = (item.error_message + '%s: %s, ') % (
+                                    entity_field.attribute_user_code, str(e))
+
+                                    attribute['classifier'] = None
 
                         if attribute_type.value_type == GenericAttributeType.DATE:
-                            attribute['value_date'] = item.final_inputs[entity_field.attribute_user_code]
+                            if item.final_inputs[entity_field.attribute_user_code]:
+                                attribute['value_date'] = item.final_inputs[entity_field.attribute_user_code]
 
                         result.append(attribute)
 
@@ -1265,23 +1274,25 @@ class SimpleImportProcess(object):
 
                             if item.final_inputs[entity_field.attribute_user_code]:
                                 try:
-                                    attribute['classifier'] = GenericClassifier.objects.get(attribute_type_id=attribute['attribute_type_object']['id'],
-                                                                                            name=item.final_inputs[
-                                                                                                entity_field.attribute_user_code]).id
+                                    attribute['classifier'] = GenericClassifier.objects.get(
+                                        attribute_type_id=attribute['attribute_type_object']['id'],
+                                        name=item.final_inputs[
+                                            entity_field.attribute_user_code]).id
                                 except Exception as e:
-                                    _l.error('fill_result_item_with_attributes classifier error - item %s e %s' % (item, e))
+                                    _l.error(
+                                        'fill_result_item_with_attributes classifier error - item %s e %s' % (item, e))
 
                                     if not item.error_message:
                                         item.error_message = ''
 
-                                    item.error_message = (item.error_message + '%s: %s, ') % (entity_field.attribute_user_code, str(e))
+                                    item.error_message = (item.error_message + '%s: %s, ') % (
+                                    entity_field.attribute_user_code, str(e))
 
                                     attribute['classifier'] = None
 
                         if attribute['attribute_type_object']['value_type'] == GenericAttributeType.DATE:
                             if item.final_inputs[entity_field.attribute_user_code]:
                                 attribute['value_date'] = item.final_inputs[entity_field.attribute_user_code]
-
 
         return result
 
@@ -1388,7 +1399,6 @@ class SimpleImportProcess(object):
 
         return result
 
-
     def import_item(self, item):
 
         content_type_key = self.scheme.content_type.app_label + '.' + self.scheme.content_type.model
@@ -1417,7 +1427,6 @@ class SimpleImportProcess(object):
 
                 result_item = default_instrument_object
 
-
             for key, value in item.final_inputs.items():
                 if item.final_inputs[key] is not None:
                     result_item[key] = item.final_inputs[key]
@@ -1438,7 +1447,7 @@ class SimpleImportProcess(object):
                 try:
 
                     formula.safe_eval(self.scheme.item_post_process_script, names=item.inputs,
-                                  context=self.context)
+                                      context=self.context)
 
                 except Exception as e:
 
@@ -1446,7 +1455,6 @@ class SimpleImportProcess(object):
                         item.error_message = ''
 
                     item.error_message = (item.error_message + 'Post script error: %s, ') % str(e)
-
 
             item.status = 'success'
             item.message = "Item Imported %s" % serializer.instance
@@ -1490,7 +1498,6 @@ class SimpleImportProcess(object):
 
                     self.overwrite_item_attributes(result_item, item)
                     result_item = self.convert_relation_to_ids(item, result_item)
-
 
                     serializer = serializer_class(data=result_item,
                                                   instance=instance,
