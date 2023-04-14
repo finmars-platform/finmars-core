@@ -1157,15 +1157,15 @@ def download_instrument_finmars_database(task_id: int):
                     master_user=task.master_user,
                     user_code=options["reference"],
                 )
-
                 _l.info(
                     f"download_instrument_finmars_database Finmars Database Timeout. "
                     f'Simple instrument {options["reference"]} exist. Abort.'
                 )
+                return
 
-            except Exception:
+            except Instrument.DoesNotExist:
                 create_simple_instrument(options, task)
-            return
+                return
 
         except Exception as e:
             _l.debug(
@@ -1185,6 +1185,7 @@ def download_instrument_finmars_database(task_id: int):
 
         try:
             handle_response_data(data, task, options)
+            return
         except Exception as e:
             _l.error(
                 f"download_instrument_finmars_database.e {e} "
