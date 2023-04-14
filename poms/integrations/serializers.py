@@ -1511,9 +1511,7 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
                 "instrument_name": instance.instrument_name,
                 "instrument_type_user_code": instance.instrument_type_code,
             }
-
             task.options_object = options
-
             task.save()
 
             instance.task_object = task
