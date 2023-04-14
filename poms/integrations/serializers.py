@@ -1521,7 +1521,7 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
             download_instrument_finmars_database(task.id)
 
             task.refresh_from_db()
-            if task.result_object:
+            if task.status == CeleryTask.STATUS_DONE and task.result_object:
                 instance.result_id = task.result_object["instrument_id"]
 
             return instance
