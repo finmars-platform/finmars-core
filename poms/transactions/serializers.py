@@ -2544,7 +2544,6 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
 
             'transaction_currency',
             'settlement_currency',
-
             'position_size_with_sign', 'cash_consideration', 'principal_with_sign',
             'carry_with_sign', 'overheads_with_sign', 'reference_fx_rate',
 
@@ -2576,7 +2575,10 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
             'position_amount', 'principal_amount',
             'carry_amount', 'overheads',
 
-            'notes'
+            'notes',
+            'user_text_1', 'user_text_2', 'user_text_3',
+            'user_number_1', 'user_number_2', 'user_number_3',
+            'user_date_1', 'user_date_2', 'user_date_3',
         ]
 
     def __init__(self, *args, **kwargs):
