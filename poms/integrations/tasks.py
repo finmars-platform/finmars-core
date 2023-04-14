@@ -1007,7 +1007,7 @@ def create_simple_instrument(options, task):
         master_user=task.master_user,
         user_code=options["reference"],
         name=instrument_name,
-        short_name=f"{instrument_name} (" + options["reference"] + ")",
+        short_name=f"{instrument_name} ({options['reference']})",
         instrument_type=ecosystem_defaults.instrument_type,
         accrued_currency=ecosystem_defaults.currency,
         pricing_currency=ecosystem_defaults.currency,
