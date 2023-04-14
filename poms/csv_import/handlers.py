@@ -1262,19 +1262,21 @@ class SimpleImportProcess(object):
                                 attribute['value_float'] = item.final_inputs[entity_field.attribute_user_code]
 
                         if attribute['attribute_type_object']['value_type'] == GenericAttributeType.CLASSIFIER:
-                            try:
-                                attribute['classifier'] = GenericClassifier.objects.get(attribute_type_id=attribute['attribute_type_object']['id'],
-                                                                                        name=item.final_inputs[
-                                                                                            entity_field.attribute_user_code]).id
-                            except Exception as e:
-                                _l.error('fill_result_item_with_attributes classifier error - item %s e %s' % (item, e))
 
-                                if not item.error_message:
-                                    item.error_message = ''
+                            if item.final_inputs[entity_field.attribute_user_code]:
+                                try:
+                                    attribute['classifier'] = GenericClassifier.objects.get(attribute_type_id=attribute['attribute_type_object']['id'],
+                                                                                            name=item.final_inputs[
+                                                                                                entity_field.attribute_user_code]).id
+                                except Exception as e:
+                                    _l.error('fill_result_item_with_attributes classifier error - item %s e %s' % (item, e))
 
-                                item.error_message = (item.error_message + '%s: %s, ') % (entity_field.attribute_user_code, str(e))
+                                    if not item.error_message:
+                                        item.error_message = ''
 
-                                attribute['classifier'] = None
+                                    item.error_message = (item.error_message + '%s: %s, ') % (entity_field.attribute_user_code, str(e))
+
+                                    attribute['classifier'] = None
 
                         if attribute['attribute_type_object']['value_type'] == GenericAttributeType.DATE:
                             if item.final_inputs[entity_field.attribute_user_code]:
