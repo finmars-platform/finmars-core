@@ -219,7 +219,7 @@ def calculate_portfolio_register_record(self, task_id):
                 record.cash_currency_id = trn.transaction_currency_id
                 record.valuation_currency_id = portfolio_register.valuation_currency_id
 
-                if ( # check if transaction is Cash Inflow/Outflow and Price != 0
+                if (  # check if transaction is Cash Inflow/Outflow and Price != 0
                     record.transaction_class_id
                     in (TransactionClass.CASH_INFLOW, TransactionClass.CASH_OUTFLOW)
                     and (trn.trade_price > 0)
@@ -267,7 +267,11 @@ def calculate_portfolio_register_record(self, task_id):
                             f"cash_ccy_fx_rate={cash_ccy_fx_rate} "
                         )
 
-                        record.fx_rate = cash_ccy_fx_rate / valuation_ccy_fx_rate
+                        record.fx_rate = (
+                            cash_ccy_fx_rate / valuation_ccy_fx_rate
+                            if valuation_ccy_fx_rate
+                            else 0
+                        )
 
                     except Exception as e:
                         _l.info(f"{log} fx rate lookup error {e}")
@@ -285,11 +289,11 @@ def calculate_portfolio_register_record(self, task_id):
                     portfolio_register.valuation_pricing_policy,
                 )
 
-                nav = 0
-                for item in balance_report.items:
-                    if item["market_value"]:
-                        nav = nav + item["market_value"]
-
+                nav = sum(
+                    item["market_value"]
+                    for item in balance_report.items
+                    if item["market_value"]
+                )
                 _l.info(f"{log} len(items)={len(balance_report.items)} nav={nav}")
 
                 record.nav_previous_day_valuation_currency = nav
@@ -307,26 +311,35 @@ def calculate_portfolio_register_record(self, task_id):
                 try:
                     if trn.trade_price:
                         record.dealing_price_valuation_currency = trn.trade_price
-                    else:
-                        if previous_date_record:
-                            # let's MOVE block NAV here
-                            record.dealing_price_valuation_currency = (
+                    elif previous_date_record:
+                        # let's MOVE block NAV here
+                        record.dealing_price_valuation_currency = (
+                            (
                                 record.nav_previous_day_valuation_currency
                                 / record.n_shares_previous_day
                             )
-                        else:
-                            record.dealing_price_valuation_currency = (
-                                portfolio_register.default_price
-                            )
+                            if record.n_shares_previous_day
+                            else 0
+                        )
+                    else:
+                        record.dealing_price_valuation_currency = (
+                            portfolio_register.default_price
+                        )
                 except Exception:
                     record.dealing_price_valuation_currency = (
                         portfolio_register.default_price
                     )
 
-                record.n_shares_added = trn.position_size_with_sign or (
-                    record.cash_amount_valuation_currency
-                    / record.dealing_price_valuation_currency
+                record.n_shares_added = (
+                    trn.position_size_with_sign
+                    or (
+                        record.cash_amount_valuation_currency
+                        / record.dealing_price_valuation_currency
+                    )
+                    if record.dealing_price_valuation_currency
+                    else 0
                 )
+
                 # record.n_shares_end_of_the_day =
                 # record.n_shares_previous_day + record.n_shares_added
                 # record.n_shares_end_of_the_day  - rolling n_shares,
@@ -349,7 +362,7 @@ def calculate_portfolio_register_record(self, task_id):
                 record.previous_date_record = previous_date_record
                 record.save()
 
-                count = count + 1
+                count += 1
 
                 task.update_progress(
                     {
