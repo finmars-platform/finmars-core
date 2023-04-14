@@ -1241,6 +1241,48 @@ class SimpleImportProcess(object):
 
         return result
 
+    def overwrite_item_attributes(self, result_item, item):
+
+        result = []
+
+        for attribute in result_item['attributes']:
+
+            for entity_field in self.scheme.entity_fields.all():
+
+                if entity_field.attribute_user_code:
+
+                    if entity_field.attribute_user_code == attribute['attribute_type_object']['user_code']:
+
+                        if attribute['attribute_type_object']['value_type'] == GenericAttributeType.STRING:
+                            if item.final_inputs[entity_field.attribute_user_code]:
+                                attribute['value_string'] = item.final_inputs[entity_field.attribute_user_code]
+
+                        if attribute['attribute_type_object']['value_type'] == GenericAttributeType.NUMBER:
+                            if item.final_inputs[entity_field.attribute_user_code]:
+                                attribute['value_float'] = item.final_inputs[entity_field.attribute_user_code]
+
+                        if attribute['attribute_type_object']['value_type'] == GenericAttributeType.CLASSIFIER:
+                            try:
+                                attribute['classifier'] = GenericClassifier.objects.get(attribute_type_id=attribute['attribute_type_object']['id'],
+                                                                                        name=item.final_inputs[
+                                                                                            entity_field.attribute_user_code]).id
+                            except Exception as e:
+                                _l.error('fill_result_item_with_attributes classifier error - item %s e %s' % (item, e))
+
+                                if not item.error_message:
+                                    item.error_message = ''
+
+                                item.error_message = (item.error_message + '%s: %s, ') % (entity_field.attribute_user_code, str(e))
+
+                                attribute['classifier'] = None
+
+                        if attribute['attribute_type_object']['value_type'] == GenericAttributeType.DATE:
+                            if item.final_inputs[entity_field.attribute_user_code]:
+                                attribute['value_date'] = item.final_inputs[entity_field.attribute_user_code]
+
+
+        return result
+
     def convert_relation_to_ids(self, item, result_item):
 
         relation_fields_map = {
@@ -1265,15 +1307,17 @@ class SimpleImportProcess(object):
 
             if key in relation_fields_map:
 
-                try:
-                    result_item[key] = relation_fields_map[key].objects.get(user_code=result_item[key]).id
-                except Exception as e:
-                    result_item[key] = None
+                if isinstance(result_item[key], str):
 
-                    if not item.error_message:
-                        item.error_message = ''
+                    try:
+                        result_item[key] = relation_fields_map[key].objects.get(user_code=result_item[key]).id
+                    except Exception as e:
+                        result_item[key] = None
 
-                    item.error_message = (item.error_message + '%s: %s, ') % (key, str(e))
+                        if not item.error_message:
+                            item.error_message = ''
+
+                        item.error_message = (item.error_message + '%s: %s, ') % (key, str(e))
 
         # _l.info('convert_relation_to_ids.result_item %s' % result_item)
 
@@ -1342,22 +1386,6 @@ class SimpleImportProcess(object):
 
         return result
 
-    def entity_specific_update(self, result_item):
-
-        if self.scheme.content_type.model == 'instrument':
-            from poms.instruments.handlers import InstrumentTypeProcess
-
-            instrument_type = InstrumentType.objects.get(id=result_item['instrument_type'])
-
-            process = InstrumentTypeProcess(instrument_type=instrument_type)
-
-            default_instrument_object = process.instrument
-
-            default_instrument_object.update(result_item)
-
-            result_item = default_instrument_object
-
-        return result_item
 
     def import_item(self, item):
 
@@ -1372,11 +1400,26 @@ class SimpleImportProcess(object):
 
             item.final_inputs = self.get_final_inputs(item)
 
-            result_item = copy.copy(item.final_inputs)
+            result_item = {}
+
+            if self.scheme.content_type.model == 'instrument':
+                from poms.instruments.handlers import InstrumentTypeProcess
+
+                instrument_type = InstrumentType.objects.get(id=item.final_inputs['instrument_type'])
+
+                process = InstrumentTypeProcess(instrument_type=instrument_type)
+
+                default_instrument_object = process.instrument
+
+                default_instrument_object.update(result_item)
+
+                result_item = default_instrument_object
+
+
+            result_item.update(copy.copy(item.final_inputs))
             result_item['attributes'] = self.fill_result_item_with_attributes(item)
             result_item = self.convert_relation_to_ids(item, result_item)
             result_item = self.remove_nullable_attributes(result_item)
-            result_item = self.entity_specific_update(result_item)
 
             # _l.info('result_item %s' % result_item)
 
@@ -1434,14 +1477,19 @@ class SimpleImportProcess(object):
 
                     item.final_inputs = self.get_final_inputs(item)
 
-                    result_item = copy.copy(item.final_inputs)
-                    result_item['attributes'] = self.fill_result_item_with_attributes(item)
+                    result_item = copy.copy(serializer_class(instance=instance, context=self.context).data)
+
+                    for key, value in item.final_inputs.items():
+                        if item.final_inputs[key] is not None:
+                            result_item[key] = item.final_inputs[key]
+
+                    self.overwrite_item_attributes(result_item, item)
                     result_item = self.convert_relation_to_ids(item, result_item)
-                    result_item = self.remove_nullable_attributes(result_item)
-                    result_item = self.entity_specific_update(result_item)
+
 
                     serializer = serializer_class(data=result_item,
                                                   instance=instance,
+                                                  partial=True,
                                                   context=self.context)
                     serializer.is_valid(raise_exception=True)
                     serializer.save()
