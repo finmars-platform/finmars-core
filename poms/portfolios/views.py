@@ -13,6 +13,7 @@ from poms.accounts.models import Account
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
     GroupsAttributeFilter, AttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
+from poms.common.utils import get_list_of_entity_attributes
 from poms.counterparties.models import Responsible, Counterparty
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
@@ -147,6 +148,82 @@ class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
         result = self.get_paginated_response(serializer.data)
 
         return result
+
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+
+        items = [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "accounts",
+                "name": "Accounts",
+                "value_content_type": "accounts.account",
+                "value_entity": "account",
+                "code": "user_code",
+                "value_type": "mc_field"
+
+            },
+            {
+                "key": "responsibles",
+                "name": "Responsibles",
+                "value_content_type": "counterparties.responsible",
+                "value_entity": "responsible",
+                "code": "user_code",
+                "value_type": "mc_field"
+            },
+            {
+                "key": "counterparties",
+                "name": "Counterparties",
+                "value_content_type": "counterparties.counterparty",
+                "value_entity": "counterparty",
+                "code": "user_code",
+                "value_type": "mc_field"
+            },
+            {
+                "key": "transaction_types",
+                "name": "Transaction types",
+                "value_content_type": "transactions.transactiontype",
+                "value_entity": "transaction-type",
+                "code": "user_code",
+                "value_type": "mc_field"
+            }
+        ]
+
+        items = items + get_list_of_entity_attributes('portfolios.portfolio')
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
+
 
 class PortfolioLightFilterSet(FilterSet):
     id = NoOpFilter()

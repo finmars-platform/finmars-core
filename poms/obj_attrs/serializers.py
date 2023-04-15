@@ -657,20 +657,20 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
         owner_model_content_type = ContentType.objects.get_for_model(parent.Meta.model)
         # root_model_content_type = ContentType.objects.get_for_model(self.root.Meta.model)
 
-        attribute_type = attrs['attribute_type']
-        if attribute_type.content_type_id != owner_model_content_type.id:
-            # raise ValidationError({
-            #     'attribute_type':
-            # })
-            self.fields['attribute_type'].fail('does_not_exist', pk_value=attribute_type.id)
+        # attribute_type = attrs['attribute_type']
+        # if attribute_type.content_type_id != owner_model_content_type.id:
+        #     # raise ValidationError({
+        #     #     'attribute_type':
+        #     # })
+        #     self.fields['attribute_type'].fail('does_not_exist', pk_value=attribute_type.id)
 
-        classifier = attrs.get('classifier', None)
-        if attribute_type.value_type == GenericAttributeType.CLASSIFIER and classifier:
-            if attribute_type.id != classifier.attribute_type_id:
-                # raise ValidationError(
-                #     {'classifier': gettext_lazy('Invalid pk "%(pk)s" - object does not exist.') % {
-                #         'pk': classifier.id}})
-                self.fields['classifier'].fail('does_not_exist', pk_value=classifier.id)
+        # classifier = attrs.get('classifier', None)
+        # if attribute_type.value_type == GenericAttributeType.CLASSIFIER and classifier:
+        #     if attribute_type.id != classifier.attribute_type_id:
+        #         # raise ValidationError(
+        #         #     {'classifier': gettext_lazy('Invalid pk "%(pk)s" - object does not exist.') % {
+        #         #         'pk': classifier.id}})
+        #         self.fields['classifier'].fail('does_not_exist', pk_value=classifier.id)
 
         return attrs
 

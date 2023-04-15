@@ -8,9 +8,9 @@ from rest_framework import serializers
 from poms.common.serializers import ModelWithTimeStampSerializer
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
-    ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
+    ConfigurationExportLayout, ComplexTransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPaletteColor, ColorPalette, \
-    CrossEntityAttributeExtension, ColumnSortData
+    CrossEntityAttributeExtension, ColumnSortData, TransactionUserFieldModel
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 
@@ -22,12 +22,21 @@ class PortalInterfaceAccessModelSerializer(serializers.ModelSerializer):
         ]
 
 
+class ComplexTransactionUserFieldSerializer(serializers.ModelSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = ComplexTransactionUserFieldModel
+        fields = ['id', 'master_user', 'key', 'name', 'is_active']
+
+
 class TransactionUserFieldSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
 
     class Meta:
         model = TransactionUserFieldModel
         fields = ['id', 'master_user', 'key', 'name', 'is_active']
+
 
 
 class ColorPaletteColorSerializer(serializers.ModelSerializer):
