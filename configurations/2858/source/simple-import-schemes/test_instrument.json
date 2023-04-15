@@ -1,0 +1,579 @@
+{
+    "id": 22,
+    "name": "test_instrument",
+    "user_code": "test_instrument",
+    "short_name": "test_instrument",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "instruments.instrument",
+    "csv_fields": [
+        {
+            "column": 1,
+            "name": "name",
+            "name_expr": "name",
+            "column_name": "name"
+        },
+        {
+            "column": 2,
+            "name": "user_code",
+            "name_expr": "user_code",
+            "column_name": "user_code"
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 1582,
+            "name": "user code",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "user_code",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1583,
+            "name": "name",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1584,
+            "name": "short name",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "short_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1585,
+            "name": "public name",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "public_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1586,
+            "name": "notes",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "notes",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1587,
+            "name": "instrument type",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "instrument_type",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1588,
+            "name": "pricing currency",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "pricing_currency",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1589,
+            "name": "price multiplier",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "price_multiplier",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1590,
+            "name": "accrued currency",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "accrued_currency",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1591,
+            "name": "accrued multiplier",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "accrued_multiplier",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1592,
+            "name": "payment size detail",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "payment_size_detail",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1593,
+            "name": "default price",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "default_price",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1594,
+            "name": "user text 2",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "user_text_2",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1595,
+            "name": "user text 3",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "user_text_3",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1596,
+            "name": "reference for pricing",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "reference_for_pricing",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1597,
+            "name": "pricing condition",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "pricing_condition",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1598,
+            "name": "maturity date",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "maturity_date",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1599,
+            "name": "maturity price",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "maturity_price",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1600,
+            "name": "Country",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "country",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1601,
+            "name": "Asset Sub-Type",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "asset_sub_type",
+            "use_default": true
+        },
+        {
+            "id": 1602,
+            "name": "Asset Type",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "asset_type",
+            "use_default": true
+        },
+        {
+            "id": 1603,
+            "name": "Asset Types",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "asset_types",
+            "use_default": true
+        },
+        {
+            "id": 1604,
+            "name": "BBG ID",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "bbg_id",
+            "use_default": true
+        },
+        {
+            "id": 1605,
+            "name": "Bond Rank Name",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "bond_rank_name",
+            "use_default": true
+        },
+        {
+            "id": 1606,
+            "name": "CUSIP",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "cusip",
+            "use_default": true
+        },
+        {
+            "id": 1607,
+            "name": "Country",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "country",
+            "use_default": true
+        },
+        {
+            "id": 1608,
+            "name": "Country of Issuer",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "country_of_issuer",
+            "use_default": true
+        },
+        {
+            "id": 1609,
+            "name": "Country of Risk",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "country_of_risk",
+            "use_default": true
+        },
+        {
+            "id": 1610,
+            "name": "Coupon Type",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "coupon_type",
+            "use_default": true
+        },
+        {
+            "id": 1611,
+            "name": "Emitent Name",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "emitent_name",
+            "use_default": true
+        },
+        {
+            "id": 1612,
+            "name": "ISIN",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "ISIN",
+            "use_default": true
+        },
+        {
+            "id": 1613,
+            "name": "Industry Sub-Group",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "Industry_Sub_Group",
+            "use_default": true
+        },
+        {
+            "id": 1614,
+            "name": "Liquidity",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "liquidity",
+            "use_default": true
+        },
+        {
+            "id": 1615,
+            "name": "Other ID",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "other_id",
+            "use_default": true
+        },
+        {
+            "id": 1616,
+            "name": "Placed Volume",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "placed_volume",
+            "use_default": true
+        },
+        {
+            "id": 1617,
+            "name": "Pricing Model",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_model",
+            "use_default": true
+        },
+        {
+            "id": 1618,
+            "name": "Pricing Policy Notes: -",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_notes_-",
+            "use_default": true
+        },
+        {
+            "id": 1619,
+            "name": "Pricing Policy Notes: Access_prices",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_notes_Access_prices",
+            "use_default": true
+        },
+        {
+            "id": 1620,
+            "name": "Pricing Policy Notes: Bloomberg_prices",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_notes_Bloomberg_prices",
+            "use_default": true
+        },
+        {
+            "id": 1621,
+            "name": "Pricing Policy Notes: DFT",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_notes_DFT",
+            "use_default": true
+        },
+        {
+            "id": 1622,
+            "name": "Pricing Policy Notes: Finmars_prices",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_notes_Finmars_prices",
+            "use_default": true
+        },
+        {
+            "id": 1623,
+            "name": "Pricing Policy Notes: Lombard_Price_Policy",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_notes_Lombard_Price_Policy",
+            "use_default": true
+        },
+        {
+            "id": 1624,
+            "name": "Pricing Policy Parameter: -",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_parameter_-",
+            "use_default": true
+        },
+        {
+            "id": 1625,
+            "name": "Pricing Policy Parameter: Access_prices",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_parameter_Access_prices",
+            "use_default": true
+        },
+        {
+            "id": 1626,
+            "name": "Pricing Policy Parameter: Bloomberg_prices",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_parameter_Bloomberg_prices",
+            "use_default": true
+        },
+        {
+            "id": 1627,
+            "name": "Pricing Policy Parameter: DFT",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_parameter_DFT",
+            "use_default": true
+        },
+        {
+            "id": 1628,
+            "name": "Pricing Policy Parameter: Finmars_prices",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_parameter_Finmars_prices",
+            "use_default": true
+        },
+        {
+            "id": 1629,
+            "name": "Pricing Policy Parameter: Lombard_Price_Policy",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_parameter_Lombard_Price_Policy",
+            "use_default": true
+        },
+        {
+            "id": 1630,
+            "name": "Pricing Policy Scheme: -",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_scheme_-",
+            "use_default": true
+        },
+        {
+            "id": 1631,
+            "name": "Pricing Policy Scheme: Access_prices",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_scheme_Access_prices",
+            "use_default": true
+        },
+        {
+            "id": 1632,
+            "name": "Pricing Policy Scheme: Bloomberg_prices",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_scheme_Bloomberg_prices",
+            "use_default": true
+        },
+        {
+            "id": 1633,
+            "name": "Pricing Policy Scheme: DFT",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_scheme_DFT",
+            "use_default": true
+        },
+        {
+            "id": 1634,
+            "name": "Pricing Policy Scheme: Finmars_prices",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_scheme_Finmars_prices",
+            "use_default": true
+        },
+        {
+            "id": 1635,
+            "name": "Pricing Policy Scheme: Lombard_Price_Policy",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "pricing_policy_scheme_Lombard_Price_Policy",
+            "use_default": true
+        },
+        {
+            "id": 1636,
+            "name": "Private Offering Name",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "private_offering_name",
+            "use_default": true
+        },
+        {
+            "id": 1637,
+            "name": "Risk rate",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "risk_rate",
+            "use_default": true
+        },
+        {
+            "id": 1638,
+            "name": "Sector",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "Sector",
+            "use_default": true
+        },
+        {
+            "id": 1639,
+            "name": "Sector",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "sector",
+            "use_default": true
+        },
+        {
+            "id": 1640,
+            "name": "Sector Type",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "sector_type",
+            "use_default": true
+        },
+        {
+            "id": 1641,
+            "name": "Ticker",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "Ticker",
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "skip",
+    "delimiter": ",",
+    "error_handler": "break",
+    "missing_data_handler": "throw_error",
+    "classifier_handler": "skip",
+    "column_matcher": "index",
+    "instrument_reference_column": "",
+    "item_post_process_script": "1 + 1",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

@@ -19,6 +19,7 @@ from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableMode
     DataTimeStampedModel
 from poms.common.utils import date_now
 from poms.common.utils import isclose
+from poms.configuration.models import ConfigurationModel
 from poms.counterparties.models import Responsible, Counterparty
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import Instrument, InstrumentClass, PricingPolicy, EventSchedule
@@ -314,7 +315,7 @@ class TransactionTypeGroup(NamedModel, FakeDeletableModel):
         ]
 
 
-class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel, ConfigurationModel):
     SHOW_PARAMETERS = 1
     HIDE_PARAMETERS = 2
 

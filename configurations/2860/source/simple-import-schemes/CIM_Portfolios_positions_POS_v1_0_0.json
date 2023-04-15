@@ -1,0 +1,78 @@
+{
+    "id": 32,
+    "name": "CIM Porfolios POS (from positions)",
+    "user_code": "CIM_Portfolios_positions_POS_v1_0_0",
+    "short_name": "CIM Porfolios POS (from positions)",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "portfolios.portfolio",
+    "csv_fields": [
+        {
+            "column": 1,
+            "name": "temp_portfolio",
+            "name_expr": "if_null(temp_portfolio, '-')",
+            "column_name": "account"
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 910,
+            "name": "User code",
+            "order": 0,
+            "expression": "temp_portfolio+\" (POS)\"",
+            "system_property_key": "user_code",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 911,
+            "name": "Name",
+            "order": 0,
+            "expression": "\"CIM\"+\" \"+str(temp_portfolio)+\" (POS)\"",
+            "system_property_key": "name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 912,
+            "name": "Short name",
+            "order": 0,
+            "expression": "\"CIM\"+\" \"+str(temp_portfolio)+\" (POS)\"",
+            "system_property_key": "short_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 913,
+            "name": "Public name",
+            "order": 0,
+            "expression": "\"CIM\"+\" \"+str(temp_portfolio)+\" (POS)\"",
+            "system_property_key": "public_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 914,
+            "name": "Notes",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "notes",
+            "attribute_user_code": null,
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "skip",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "classifier_handler": "skip",
+    "column_matcher": "name",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

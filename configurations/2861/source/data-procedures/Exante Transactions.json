@@ -1,0 +1,21 @@
+{
+    "id": 30,
+    "name": "Exante Transactions",
+    "user_code": "Exante Transactions",
+    "notes": null,
+    "provider": 6,
+    "scheme_user_code": "Exante_transactions_wocreate",
+    "scheme_type": "transaction_import",
+    "data": null,
+    "date_from_expr": "now()-days(30)",
+    "date_to_expr": "now()+days(1)",
+    "date_from": null,
+    "date_to": null,
+    "configuration_code": "com.finmars.local",
+    "provider_object": {
+        "id": 6,
+        "name": "Universal Provider",
+        "user_code": "universal",
+        "notes": ""
+    }
+}

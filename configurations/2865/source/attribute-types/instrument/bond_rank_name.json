@@ -1,0 +1,27 @@
+{
+    "id": 65,
+    "user_code": "bond_rank_name",
+    "name": "Bond Rank Name",
+    "short_name": "Bond Rank Name",
+    "public_name": null,
+    "notes": null,
+    "prefix": null,
+    "favorites": null,
+    "expr": "\"\"",
+    "can_recalculate": false,
+    "tooltip": "bond_rank_name",
+    "kind": 1,
+    "content_type": 68,
+    "value_type": 10,
+    "order": 0,
+    "is_hidden": false,
+    "classifiers": [],
+    "classifiers_flat": [],
+    "deleted_user_code": null,
+    "meta": {
+        "content_type": "obj_attrs.genericattributetype",
+        "app_label": "obj_attrs",
+        "model_name": "genericattributetype",
+        "space_code": "space00000"
+    }
+}

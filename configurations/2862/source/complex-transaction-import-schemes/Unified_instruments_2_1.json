@@ -1,0 +1,197 @@
+{
+    "id": 17,
+    "user_code": "Unified_instruments_2_1",
+    "name": "Unified_instruments_2_1",
+    "short_name": "Unified_instruments_2_1",
+    "public_name": null,
+    "notes": null,
+    "rule_expr": "type",
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "book_uniqueness_settings": 3,
+    "expression_iterations_count": 1,
+    "inputs": [
+        {
+            "id": 1160,
+            "name": "temp_ttype",
+            "column": 1,
+            "name_expr": "if_null(temp_ttype, '-')",
+            "column_name": "Trade Type"
+        },
+        {
+            "id": 1161,
+            "name": "temp_instrument",
+            "column": 6,
+            "name_expr": "if_null(temp_instrument, \"-\")",
+            "column_name": "Instrument"
+        },
+        {
+            "id": 1162,
+            "name": "temp_currency",
+            "column": 8,
+            "name_expr": "if_null(temp_currency, \"-\")",
+            "column_name": "Currency"
+        },
+        {
+            "id": 1163,
+            "name": "temp_sub_type",
+            "column": 2,
+            "name_expr": "if_null(temp_sub_type, \"-\")",
+            "column_name": "Sub-Type"
+        }
+    ],
+    "calculated_inputs": [
+        {
+            "id": 2265,
+            "name": "currency",
+            "column": 1,
+            "name_expr": "temp_currency"
+        },
+        {
+            "id": 2266,
+            "name": "isin",
+            "column": 2,
+            "name_expr": "temp_instrument"
+        },
+        {
+            "id": 2267,
+            "name": "type",
+            "column": 3,
+            "name_expr": "if temp_ttype == \"Transfer\":\n temp_ttype+' '+temp_subtype\nelif temp_sub_type  in [\"Coupon\", \"Depository Receipt fee\", \"Dividend\", \"Management fee\", \"Performance fee\"]:\n temp_ttype+' '+'(Instrument)'\nelse:\n temp_ttype"
+        }
+    ],
+    "rule_scenarios": [
+        {
+            "id": 523,
+            "is_default_rule_scenario": false,
+            "is_error_rule_scenario": false,
+            "name": "Upload Instruments",
+            "selector_values": [
+                "Instrument",
+                "Buy/Sell",
+                "Transfer Instrument",
+                "Expense/Income (Instrument)"
+            ],
+            "transaction_type": 15,
+            "fields": [
+                {
+                    "id": 9302,
+                    "transaction_type_input": 208,
+                    "value_expr": "isin",
+                    "transaction_type_input_object": {
+                        "id": 208,
+                        "name": "isin",
+                        "verbose_name": "ISIN",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 2
+                    }
+                },
+                {
+                    "id": 9303,
+                    "transaction_type_input": 207,
+                    "value_expr": "isin",
+                    "transaction_type_input_object": {
+                        "id": 207,
+                        "name": "instrument_description",
+                        "verbose_name": "Instrument Full Name",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 1
+                    }
+                },
+                {
+                    "id": 9304,
+                    "transaction_type_input": 205,
+                    "value_expr": "currency",
+                    "transaction_type_input_object": {
+                        "id": 205,
+                        "name": "currency",
+                        "verbose_name": "Currency",
+                        "value_type": 100,
+                        "content_type": "currencies.currency",
+                        "order": 0
+                    }
+                }
+            ],
+            "status": "active",
+            "transaction_type_object": {
+                "id": 15,
+                "name": "Upload Instrument",
+                "user_code": "Upload Instrument",
+                "inputs": [
+                    {
+                        "id": 205,
+                        "name": "currency",
+                        "verbose_name": "Currency",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 207,
+                        "name": "instrument_description",
+                        "verbose_name": "Instrument Full Name",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 208,
+                        "name": "isin",
+                        "verbose_name": "ISIN",
+                        "value_type": 10
+                    }
+                ]
+            }
+        },
+        {
+            "id": 524,
+            "is_default_rule_scenario": true,
+            "is_error_rule_scenario": false,
+            "name": "-",
+            "selector_values": [],
+            "transaction_type": 1,
+            "fields": [],
+            "status": "active",
+            "transaction_type_object": {
+                "id": 1,
+                "name": "-",
+                "user_code": "-",
+                "inputs": []
+            }
+        }
+    ],
+    "selector_values": [
+        {
+            "id": 751,
+            "value": "Instrument",
+            "notes": "Initial instrument",
+            "order": 0
+        },
+        {
+            "id": 752,
+            "value": "Buy/Sell",
+            "notes": "Buy/Sell",
+            "order": 1
+        },
+        {
+            "id": 753,
+            "value": "Transfer Instrument",
+            "notes": "Transfer Instrument",
+            "order": 2
+        },
+        {
+            "id": 754,
+            "value": "Expense/Income (Instrument)",
+            "notes": "Expense/Income (Instrument)",
+            "order": 3
+        }
+    ],
+    "recon_scenarios": [],
+    "recon_layout": null,
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "column_matcher": "index",
+    "filter_expression": null,
+    "has_header_row": true,
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

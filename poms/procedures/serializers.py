@@ -3,14 +3,14 @@ from rest_framework import serializers
 from poms.common import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import ModelWithTimeStampSerializer
+from poms.common.serializers import ModelWithTimeStampSerializer, ModelWithUserCodeSerializer
 from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, PricingProcedureInstance, \
     PricingParentProcedureInstance, RequestDataFileProcedureInstance, ExpressionProcedure, \
     ExpressionProcedureContextVariable
 from poms.users.fields import MasterUserField
 
 
-class PricingProcedureSerializer(serializers.ModelSerializer):
+class PricingProcedureSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     price_date_from_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True,
@@ -42,6 +42,8 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
                   'currency_pricing_scheme_filters',
                   'currency_pricing_condition_filters',
 
+                  'configuration_code'
+
                   )
 
     def to_representation(self, instance):
@@ -50,20 +52,20 @@ class PricingProcedureSerializer(serializers.ModelSerializer):
         if data['price_date_from_expr']:
 
             try:
-                data['price_date_from_calculated'] = formula.safe_eval(data['price_date_from_expr'], names={})
+                data['price_date_from_calculated'] = str(formula.safe_eval(data['price_date_from_expr'], names={}))
             except formula.InvalidExpression as e:
                 data['price_date_from_calculated'] = 'Invalid Expression'
         else:
-            data['price_date_from_calculated'] = data['price_date_from']
+            data['price_date_from_calculated'] = str(data['price_date_from'])
 
         if data['price_date_to_expr']:
 
             try:
-                data['price_date_to_calculated'] = formula.safe_eval(data['price_date_to_expr'], names={})
+                data['price_date_to_calculated'] = str(formula.safe_eval(data['price_date_to_expr'], names={}))
             except formula.InvalidExpression as e:
                 data['price_date_to_calculated'] = 'Invalid Expression'
         else:
-            data['price_date_to_calculated'] = data['price_date_to']
+            data['price_date_to_calculated'] = str(data['price_date_to'])
 
         return data
 
@@ -113,7 +115,7 @@ class RunProcedureSerializer(serializers.Serializer):
         self.fields['procedure'] = serializers.PrimaryKeyRelatedField(read_only=True)
 
 
-class RequestDataFileProcedureSerializer(ModelWithTimeStampSerializer):
+class RequestDataFileProcedureSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
     master_user = MasterUserField()
     data = serializers.JSONField(allow_null=True, required=False)
 
@@ -137,7 +139,7 @@ class RequestDataFileProcedureSerializer(ModelWithTimeStampSerializer):
 
             'date_from_expr', 'date_to_expr',
 
-            'date_from', 'date_to',
+            'date_from', 'date_to', 'configuration_code'
         ]
 
 
@@ -163,7 +165,7 @@ class ExpressionProcedureContextVariableSerializer(serializers.ModelSerializer):
                   'name', 'expression', 'notes')
 
 
-class ExpressionProcedureSerializer(ModelWithTimeStampSerializer):
+class ExpressionProcedureSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
     context_variables = ExpressionProcedureContextVariableSerializer(many=True, allow_null=True, required=False,
                                                                      read_only=False)
 
@@ -179,7 +181,7 @@ class ExpressionProcedureSerializer(ModelWithTimeStampSerializer):
             'id', 'master_user', 'name', 'user_code', 'notes',
             'data', 'context_variables',
 
-            'code',
+            'code', 'configuration_code'
         ]
 
     def save_context_variables(self, instance, items):

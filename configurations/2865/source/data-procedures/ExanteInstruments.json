@@ -1,0 +1,28 @@
+{
+    "id": 27,
+    "name": "ExanteInstruments",
+    "user_code": "ExanteInstruments",
+    "notes": null,
+    "provider": 6,
+    "scheme_user_code": "Exante_Instruments_transactions",
+    "scheme_type": "transaction_import",
+    "data": null,
+    "date_from_expr": "",
+    "date_to_expr": "",
+    "date_from": "2022-05-01",
+    "date_to": "2022-06-02",
+    "configuration_code": "com.finmars.local",
+    "deleted_user_code": null,
+    "provider_object": {
+        "id": 6,
+        "name": "Universal Provider",
+        "user_code": "universal",
+        "notes": ""
+    },
+    "meta": {
+        "content_type": "procedures.requestdatafileprocedure",
+        "app_label": "procedures",
+        "model_name": "requestdatafileprocedure",
+        "space_code": "space00000"
+    }
+}

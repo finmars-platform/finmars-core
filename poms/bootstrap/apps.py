@@ -44,6 +44,7 @@ class BootstrapConfig(AppConfig):
         self.load_init_configuration()
         self.create_base_folders()
         self.register_at_authorizer_service()
+        self.create_local_configuration()
 
     def create_finmars_bot(self):
 
@@ -68,7 +69,8 @@ class BootstrapConfig(AppConfig):
                 from poms.users.models import MasterUser
                 master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
-                member = Member.objects.create(user=user, username="finmars_bot", master_user=master_user, is_admin=True)
+                member = Member.objects.create(user=user, username="finmars_bot", master_user=master_user,
+                                               is_admin=True)
             except Exception as e:
                 _l.error("Warning. Could not creat finmars_bot")
 
@@ -148,7 +150,7 @@ class BootstrapConfig(AppConfig):
                     master_user.save()
 
                     _l.info("Master User From Backup Renamed to new Name %s and Base API URL %s" % (
-                    master_user.name, master_user.base_api_url))
+                        master_user.name, master_user.base_api_url))
                     # Member.objects.filter(is_owner=False).delete()
 
             except Exception as e:
@@ -166,7 +168,7 @@ class BootstrapConfig(AppConfig):
                 master_user.save()
 
                 _l.info("Master user with name %s and base_api_url %s created" % (
-                master_user.name, master_user.base_api_url))
+                    master_user.name, master_user.base_api_url))
 
                 member = Member.objects.create(user=user, username=user.username, master_user=master_user,
                                                is_owner=True, is_admin=True)
@@ -433,3 +435,15 @@ class BootstrapConfig(AppConfig):
 
         from poms.common.celery import cancel_existing_tasks
         cancel_existing_tasks(celery_app)
+
+    def create_local_configuration(self):
+
+        from poms.configuration.models import Configuration
+
+        try:
+            configuration = Configuration.objects.get(configuration_code="com.finmars.local")
+            _l.info("Local Configuration is already created")
+        except Configuration.DoesNotExist:
+            Configuration.objects.create(configuration_code="com.finmars.local", name="Local Configuration", version="1.0.0", description="Local Configuration")
+
+            _l.info("Local Configuration created")

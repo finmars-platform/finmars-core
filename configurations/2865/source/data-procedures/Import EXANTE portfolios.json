@@ -1,0 +1,28 @@
+{
+    "id": 32,
+    "name": "Import EXANTE portfolios",
+    "user_code": "Import EXANTE portfolios",
+    "notes": null,
+    "provider": 6,
+    "scheme_user_code": "Portfolio_Exante",
+    "scheme_type": "simple_import",
+    "data": null,
+    "date_from_expr": "",
+    "date_to_expr": "",
+    "date_from": "2022-06-01",
+    "date_to": "2022-06-01",
+    "configuration_code": "com.finmars.local",
+    "deleted_user_code": null,
+    "provider_object": {
+        "id": 6,
+        "name": "Universal Provider",
+        "user_code": "universal",
+        "notes": ""
+    },
+    "meta": {
+        "content_type": "procedures.requestdatafileprocedure",
+        "app_label": "procedures",
+        "model_name": "requestdatafileprocedure",
+        "space_code": "space00000"
+    }
+}

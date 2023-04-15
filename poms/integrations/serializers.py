@@ -1602,7 +1602,8 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
                   'delimiter', 'error_handler', 'missing_data_handler', 'column_matcher',
                   'filter_expression', 'has_header_row',
 
-                  'data_preprocess_expression'
+                  'data_preprocess_expression',
+                  'configuration_code'
 
                   ]
 

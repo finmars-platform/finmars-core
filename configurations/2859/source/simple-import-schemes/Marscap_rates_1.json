@@ -1,0 +1,81 @@
+{
+    "id": 20,
+    "name": "Marscap_rates_1",
+    "user_code": "Marscap_rates_1",
+    "short_name": "Marscap_rates_1",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "currencies.currencyhistory",
+    "csv_fields": [
+        {
+            "column": 1,
+            "name": "currency",
+            "name_expr": "currency",
+            "column_name": null
+        },
+        {
+            "column": 2,
+            "name": "date",
+            "name_expr": "date",
+            "column_name": null
+        },
+        {
+            "column": 4,
+            "name": "rate",
+            "name_expr": "rate",
+            "column_name": null
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 967,
+            "name": "Currency",
+            "order": 0,
+            "expression": "currency",
+            "system_property_key": "currency",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 968,
+            "name": "Pricing policy",
+            "order": 0,
+            "expression": "'Access_prices'",
+            "system_property_key": "pricing_policy",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 969,
+            "name": "Date",
+            "order": 0,
+            "expression": "parse_date(date, '%d/%m/%Y')",
+            "system_property_key": "date",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 970,
+            "name": "Fx rate",
+            "order": 0,
+            "expression": "1/float(rate)",
+            "system_property_key": "fx_rate",
+            "attribute_user_code": null,
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "overwrite",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "classifier_handler": "skip",
+    "column_matcher": "index",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

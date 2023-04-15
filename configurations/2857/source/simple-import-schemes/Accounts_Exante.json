@@ -1,0 +1,102 @@
+{
+    "id": 11,
+    "name": "Accounts (Exante)",
+    "user_code": "Accounts_Exante",
+    "short_name": "Accounts (Exante)",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "accounts.account",
+    "csv_fields": [
+        {
+            "column": 1,
+            "name": "account",
+            "name_expr": "if_null(account, '-')",
+            "column_name": "accountId"
+        },
+        {
+            "column": 1,
+            "name": "currency",
+            "name_expr": "if_null(currency, '-')",
+            "column_name": "account.currency"
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 436,
+            "name": "Type",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "type",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 435,
+            "name": "Notes",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "notes",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 434,
+            "name": "Public name",
+            "order": 0,
+            "expression": "str(account)+'_'+str(currency)",
+            "system_property_key": "public_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 433,
+            "name": "Short name",
+            "order": 0,
+            "expression": "str(account)+'_'+str(currency)",
+            "system_property_key": "short_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 432,
+            "name": "Name",
+            "order": 0,
+            "expression": "str(account)+'_'+str(currency)",
+            "system_property_key": "name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 431,
+            "name": "User code",
+            "order": 0,
+            "expression": "str(account)+'_'+str(currency)",
+            "system_property_key": "user_code",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 437,
+            "name": "Depository",
+            "order": 0,
+            "expression": "'Other'",
+            "system_property_key": null,
+            "attribute_user_code": null,
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "skip",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "classifier_handler": "skip",
+    "column_matcher": "name",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

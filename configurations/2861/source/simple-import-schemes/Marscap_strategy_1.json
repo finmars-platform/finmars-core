@@ -1,0 +1,87 @@
+{
+    "id": 24,
+    "name": "Marscap_strategy_1",
+    "user_code": "Marscap_strategy_1",
+    "short_name": "Marscap_strategy_1",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "strategies.strategy1",
+    "csv_fields": [
+        {
+            "column": 20,
+            "name": "name",
+            "name_expr": "if_null(name, '-')",
+            "column_name": null
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 865,
+            "name": "User code",
+            "order": 0,
+            "expression": "name",
+            "system_property_key": "user_code",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 866,
+            "name": "Name",
+            "order": 0,
+            "expression": "name",
+            "system_property_key": "name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 867,
+            "name": "Short name",
+            "order": 0,
+            "expression": "name",
+            "system_property_key": "short_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 868,
+            "name": "Public name",
+            "order": 0,
+            "expression": "name",
+            "system_property_key": "public_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 869,
+            "name": "Notes",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "notes",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 870,
+            "name": "Group",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "subgroup",
+            "attribute_user_code": null,
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "skip",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "classifier_handler": "skip",
+    "column_matcher": "index",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

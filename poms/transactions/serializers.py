@@ -1382,6 +1382,8 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
 
             'instrument_types', 'portfolios',
             'group_object',
+
+            'configuration_code'
         ]
 
 
@@ -1615,7 +1617,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             'inputs', 'actions', 'recon_fields', 'context_parameters', 'context_parameters_notes',
             'group_object',
 
-            'is_enabled'
+            'is_enabled',
+            'configuration_code'
         ]
 
     def validate(self, attrs):

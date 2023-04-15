@@ -1,0 +1,17 @@
+{
+    "id": 14,
+    "name": "Roll_FX_Rates",
+    "user_code": "Roll_FX_Rates",
+    "notes": null,
+    "data": null,
+    "context_variables": [],
+    "code": "policy = get_relation_by_user_code(\"instruments.pricingpolicy\", \"-\")\n\n\ncurrencies = get_currencies()\ndates = reverse(get_list_of_dates_between_two_dates(context_date_from, context_date_to))\n\nfor d in dates:\n    for currency in currencies:\n        fx_rate = get_fx_rate(d, currency, policy)\n        \n        if not fx_rate:\n            latest_fx_rate = get_latest_fx_rate(d - days(10), d, currency, policy, 0)\n            if latest_fx_rate:\n                add_fx_rate(date = d, currency = currency, pricing_policy = policy, fx_rate = latest_fx_rate)",
+    "configuration_code": "com.finmars.local",
+    "deleted_user_code": null,
+    "meta": {
+        "content_type": "procedures.expressionprocedure",
+        "app_label": "procedures",
+        "model_name": "expressionprocedure",
+        "space_code": "space00000"
+    }
+}

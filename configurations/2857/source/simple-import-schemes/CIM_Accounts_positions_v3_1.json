@@ -1,0 +1,105 @@
+{
+    "id": 16,
+    "name": "CIM Accounts (from positions)",
+    "user_code": "CIM_Accounts_positions_v3_1",
+    "short_name": "CIM Accounts (from positions)",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "accounts.account",
+    "csv_fields": [
+        {
+            "column": 1,
+            "name": "temp_iban",
+            "name_expr": "temp_iban",
+            "column_name": "security.ibans__account_iban_number"
+        },
+        {
+            "column": 2,
+            "name": "temp_ttype",
+            "name_expr": "if temp_ttype in [\"MAR\",\"INA\",\"GAR\"]:\n temp_ttype\nelse:\n ''",
+            "column_name": "typinsges__financial_instrument_type_for_management"
+        },
+        {
+            "column": 3,
+            "name": "temp_currency",
+            "name_expr": "if_null(temp_currency, '-')",
+            "column_name": "devactifs__asset_currency"
+        },
+        {
+            "column": 4,
+            "name": "temp_portfolio",
+            "name_expr": "if_null(temp_portfolio, '-')",
+            "column_name": "account"
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 477,
+            "name": "Name",
+            "order": 0,
+            "expression": "if temp_ttype:\n    \"CIM\"+\" \"+str(temp_portfolio)+\" \"+str(temp_ttype)+\" \"+temp_currency\nelif temp_iban and not temp_ttype:\n    \"CIM\"+\" \"+str(temp_portfolio)+\" \"+temp_currency\nelse:\n    \"CIM\"+\" \"+str(temp_portfolio)",
+            "system_property_key": "name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 478,
+            "name": "Short name",
+            "order": 0,
+            "expression": "if temp_ttype:\n    \"CIM\"+\" \"+str(temp_portfolio)+\" \"+str(temp_ttype)+\" \"+temp_currency\nelif temp_iban and not temp_ttype:\n    \"CIM\"+\" \"+str(temp_portfolio)+\" \"+temp_currency\nelse:\n    \"CIM\"+\" \"+str(temp_portfolio)",
+            "system_property_key": "short_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 476,
+            "name": "User code",
+            "order": 0,
+            "expression": "if temp_iban:\n temp_iban\nelif temp_ttype:\n \"CIM\"+\" \"+str(temp_portfolio)+\" \"+str(temp_ttype)+\" \"+temp_currency\nelse:\n \"CIM\"+\" \"+str(temp_portfolio)",
+            "system_property_key": "user_code",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 479,
+            "name": "Public name",
+            "order": 0,
+            "expression": "if temp_ttype:\n    \"CIM\"+\" \"+str(temp_portfolio)+\" \"+str(temp_ttype)+\" \"+temp_currency\nelif temp_iban and not temp_ttype:\n    \"CIM\"+\" \"+str(temp_portfolio)+\" \"+temp_currency\nelse:\n    \"CIM\"+\" \"+str(temp_portfolio)",
+            "system_property_key": "public_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 480,
+            "name": "Notes",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "notes",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 481,
+            "name": "Type",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "type",
+            "attribute_user_code": null,
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "overwrite",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "classifier_handler": "skip",
+    "column_matcher": "name",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

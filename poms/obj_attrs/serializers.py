@@ -351,7 +351,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
                   'favorites',
                   'expr', 'can_recalculate',
                   'tooltip',
-                  'kind',
+                  'kind', 'content_type',
                   'value_type', 'order', 'is_hidden', 'classifiers', 'classifiers_flat']
 
     def __init__(self, *args, **kwargs):

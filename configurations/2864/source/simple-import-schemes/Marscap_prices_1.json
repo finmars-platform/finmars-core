@@ -1,0 +1,96 @@
+{
+    "id": 21,
+    "name": "Marscap_prices_1",
+    "user_code": "Marscap_prices_1",
+    "short_name": "Marscap_prices_1",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "instruments.pricehistory",
+    "csv_fields": [
+        {
+            "column": 1,
+            "name": "date",
+            "name_expr": "date",
+            "column_name": null
+        },
+        {
+            "column": 2,
+            "name": "instrument",
+            "name_expr": "instrument",
+            "column_name": null
+        },
+        {
+            "column": 4,
+            "name": "price",
+            "name_expr": "if_null(price, 0)",
+            "column_name": null
+        },
+        {
+            "column": 6,
+            "name": "accrued",
+            "name_expr": "if_null(accrued, 0)",
+            "column_name": null
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 1002,
+            "name": "Instrument",
+            "order": 0,
+            "expression": "instrument",
+            "system_property_key": "instrument",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1003,
+            "name": "Pricing policy",
+            "order": 0,
+            "expression": "'Access_prices'",
+            "system_property_key": "pricing_policy",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1004,
+            "name": "Date",
+            "order": 0,
+            "expression": "universal_parse_date(str(date))",
+            "system_property_key": "date",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1005,
+            "name": "Principal price",
+            "order": 0,
+            "expression": "price",
+            "system_property_key": "principal_price",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1006,
+            "name": "Accrued price",
+            "order": 0,
+            "expression": "accrued",
+            "system_property_key": "accrued_price",
+            "attribute_user_code": null,
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "overwrite",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "classifier_handler": "skip",
+    "column_matcher": "index",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

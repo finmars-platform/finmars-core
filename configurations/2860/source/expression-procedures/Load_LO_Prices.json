@@ -1,0 +1,10 @@
+{
+    "id": 10,
+    "name": "Load_Lombard_Prices",
+    "user_code": "Load_LO_Prices",
+    "notes": null,
+    "data": null,
+    "context_variables": [],
+    "code": "for mydate in get_list_of_dates_between_two_dates(context_date_from, context_date_to):\r\n    run_data_procedure('Lombard (Prices - FX 1)',date_from = str(mydate), date_to = str(mydate), user_context = {\"context_date\":str(mydate)})\r\n    send_system_message ('Importing prices from Lombard on '+str(mydate))",
+    "configuration_code": "com.finmars.local"
+}

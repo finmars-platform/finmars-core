@@ -1,0 +1,4067 @@
+{
+    "id": 28,
+    "user_code": "LO_Positions_next_day_v1",
+    "name": "LO Positions",
+    "short_name": "LO Positions",
+    "public_name": null,
+    "notes": null,
+    "rule_expr": "trade_type",
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "book_uniqueness_settings": 2,
+    "expression_iterations_count": 1,
+    "inputs": [
+        {
+            "id": 1383,
+            "name": "temp_request_date",
+            "column": 1,
+            "name_expr": "if temp_request_date:\n    parse_date(temp_request_date[6:8]+'.'+temp_request_date[4:6]+'.'+temp_request_date[0:4],['%d.%m.%Y'])\nelse:\n    '-'",
+            "column_name": "fcdatef"
+        },
+        {
+            "id": 1384,
+            "name": "temp_total",
+            "column": 2,
+            "name_expr": "if not temp_total:\n    0\nelse:\n    temp_total=replace(temp_total,' ','')\n    float(if_null(temp_total,0))",
+            "column_name": "ccamc"
+        },
+        {
+            "id": 1385,
+            "name": "temp_isin",
+            "column": 3,
+            "name_expr": "if not temp_isin:\n    '-'\nelse:\n    temp_isin=replace(temp_isin,' ','')\n    str(if_null(temp_isin,'-'))",
+            "column_name": "ccodeisin"
+        },
+        {
+            "id": 1386,
+            "name": "temp_transaction_currency",
+            "column": 4,
+            "name_expr": "if_null(temp_transaction_currency,'-')",
+            "column_name": "cdevise"
+        },
+        {
+            "id": 1387,
+            "name": "temp_accrued",
+            "column": 5,
+            "name_expr": "if not temp_accrued:\n    0\nelse:\n    temp_accrued=replace(temp_accrued,' ','')\n    float(if_null(temp_accrued,0))",
+            "column_name": "fcintcourus"
+        },
+        {
+            "id": 1388,
+            "name": "temp_portfolio",
+            "column": 6,
+            "name_expr": "if_null(temp_portfolio,'-')",
+            "column_name": "cnoclinodos"
+        },
+        {
+            "id": 1389,
+            "name": "temp_price",
+            "column": 7,
+            "name_expr": "if not temp_price:\n    0\nelse:\n    temp_price=replace(temp_price,' ','')\n    float(if_null(temp_price,0))",
+            "column_name": "cpamc"
+        },
+        {
+            "id": 1390,
+            "name": "temp_ttype",
+            "column": 8,
+            "name_expr": "temp_ttype",
+            "column_name": "crepschemagenlb"
+        },
+        {
+            "id": 1391,
+            "name": "temp_position",
+            "column": 9,
+            "name_expr": "if temp_position:\n    float(temp_position)\nelse:\n    0",
+            "column_name": "fcsolde"
+        },
+        {
+            "id": 1392,
+            "name": "temp_amount_sell",
+            "column": 10,
+            "name_expr": "if not temp_amount_sell:\n    0\nelse:\n    temp_amount_sell=replace(temp_amount_sell,' ','')\n    float(if_null(temp_amount_sell,0))",
+            "column_name": "fcamounttopaymc"
+        },
+        {
+            "id": 1393,
+            "name": "temp_amount_buy",
+            "column": 11,
+            "name_expr": "if not temp_amount_buy:\n    0\nelse:\n    temp_amount_buy=replace(temp_amount_buy,' ','')\n    float(if_null(temp_amount_buy,0))",
+            "column_name": "fcamounttoreceivemc"
+        },
+        {
+            "id": 1394,
+            "name": "temp_maturity_date",
+            "column": 12,
+            "name_expr": "if temp_maturity_date:\n    parse_date(temp_maturity_date[6:8]+'.'+temp_maturity_date[4:6]+'.'+temp_maturity_date[0:4],['%d.%m.%Y'])\nelse:\n    '-'",
+            "column_name": "fcdateexpiration"
+        },
+        {
+            "id": 1395,
+            "name": "temp_fx_rate",
+            "column": 13,
+            "name_expr": "if not temp_fx_rate:\n    1\nelse:\n    temp_fx_rate=replace(temp_fx_rate,' ','')\n    float(if_null(temp_fx_rate,1))",
+            "column_name": "fccdechangeregl"
+        },
+        {
+            "id": 1396,
+            "name": "temp_currency_sell",
+            "column": 14,
+            "name_expr": "if_null(temp_currency_sell,'-')",
+            "column_name": "fcpayablecurrency"
+        },
+        {
+            "id": 1397,
+            "name": "temp_currency_buy",
+            "column": 15,
+            "name_expr": "if_null(temp_currency_buy,'-')",
+            "column_name": "fcreceivablecurrency"
+        },
+        {
+            "id": 1398,
+            "name": "temp_cash",
+            "column": 16,
+            "name_expr": "float(temp_cash)",
+            "column_name": "ccamoncotpo"
+        },
+        {
+            "id": 1399,
+            "name": "temp_info",
+            "column": 17,
+            "name_expr": "if not temp_info:\n    '-'\nelse:\n    temp_info=replace(temp_info,' ','')\n    str(if_null(temp_info,'-'))",
+            "column_name": "fclibelle"
+        },
+        {
+            "id": 1400,
+            "name": "temp_price_futures",
+            "column": 18,
+            "name_expr": "if not temp_price_futures:\n    0\nelse:\n    temp_price_futures=replace(temp_price_futures,' ','')\n    float(if_null(temp_price_futures,0))",
+            "column_name": "fccours"
+        },
+        {
+            "id": 1401,
+            "name": "temp_obl_key",
+            "column": 19,
+            "name_expr": "if not temp_obl_key:\n    '-'\nelse:\n    temp_obl_key=replace(temp_obl_key,' ','')\n    str(if_null(temp_obl_key,'-'))",
+            "column_name": "crepoblkey"
+        },
+        {
+            "id": 1402,
+            "name": "temp_account_type",
+            "column": 20,
+            "name_expr": "temp_account_type",
+            "column_name": "ccoderubrique"
+        },
+        {
+            "id": 1403,
+            "name": "temp_description_instrument",
+            "column": 21,
+            "name_expr": "temp_description_instrument",
+            "column_name": "vinstrlonamede"
+        },
+        {
+            "id": 1404,
+            "name": "temp_instr_type",
+            "column": 22,
+            "name_expr": "if not temp_instr_type:\n    '-'\nelse:\n    temp_instr_type=replace(temp_instr_type,' ','')\n    str(if_null(temp_instr_type,'-'))",
+            "column_name": "crepschematypevehicule"
+        }
+    ],
+    "calculated_inputs": [
+        {
+            "id": 2675,
+            "name": "account_cash",
+            "column": 2,
+            "name_expr": "account_cash=temp_portfolio\n    \nif temp_transaction_currency=='USD':\n    account_cash +temp_account_type+'333'\nelif temp_transaction_currency=='EUR':\n    account_cash +temp_account_type+ '814'\nelif temp_transaction_currency=='GBP':\n    account_cash +temp_account_type+ '402'\nelif temp_transaction_currency=='CHF':\n    account_cash +temp_account_type+ '001'\nelif temp_transaction_currency=='HKD':\n    account_cash +temp_account_type + '470'\nelse:\n    '-'"
+        },
+        {
+            "id": 2676,
+            "name": "account_position",
+            "column": 3,
+            "name_expr": "if temp_instr_type == \"060_BondFuture\":\n    temp_account_type = 'FU'\n    if temp_transaction_currency=='USD':\n        temp_portfolio +temp_account_type+'333'\n    elif temp_transaction_currency=='EUR':\n        temp_portfolio +temp_account_type+ '814'\n    elif temp_transaction_currency=='GBP':\n        temp_portfolio +temp_account_type+ '402'\n    elif temp_transaction_currency=='CHF':\n        temp_portfolio +temp_account_type+ '001'\n    elif temp_transaction_currency=='HKD':\n        temp_portfolio +temp_account_type + '470'\n    else:\n        '-'\nelse:\n    temp_portfolio"
+        },
+        {
+            "id": 2677,
+            "name": "accrued_price",
+            "column": 5,
+            "name_expr": "0"
+        },
+        {
+            "id": 2678,
+            "name": "accrued_wsign",
+            "column": 6,
+            "name_expr": "temp_accrued"
+        },
+        {
+            "id": 2679,
+            "name": "allocation_pl",
+            "column": 7,
+            "name_expr": "'-'"
+        },
+        {
+            "id": 2680,
+            "name": "amount_buy",
+            "column": 8,
+            "name_expr": "temp_amount_buy"
+        },
+        {
+            "id": 2681,
+            "name": "amount_sell",
+            "column": 9,
+            "name_expr": "abs(temp_amount_sell)"
+        },
+        {
+            "id": 2682,
+            "name": "cash_consideration",
+            "column": 10,
+            "name_expr": "if \"EUROBUND\" in temp_info:\n    0\nelse:\n    temp_total"
+        },
+        {
+            "id": 2683,
+            "name": "charges",
+            "column": 11,
+            "name_expr": "0"
+        },
+        {
+            "id": 2684,
+            "name": "charges_percent",
+            "column": 12,
+            "name_expr": "0"
+        },
+        {
+            "id": 2685,
+            "name": "commission",
+            "column": 13,
+            "name_expr": "0"
+        },
+        {
+            "id": 2686,
+            "name": "counterparty",
+            "column": 14,
+            "name_expr": "'-'"
+        },
+        {
+            "id": 2687,
+            "name": "currency_buy",
+            "column": 15,
+            "name_expr": "temp_currency_buy"
+        },
+        {
+            "id": 2688,
+            "name": "currency_sell",
+            "column": 16,
+            "name_expr": "temp_currency_sell"
+        },
+        {
+            "id": 2689,
+            "name": "fees_taxes",
+            "column": 17,
+            "name_expr": "0"
+        },
+        {
+            "id": 2690,
+            "name": "front_office_notes",
+            "column": 18,
+            "name_expr": "'-'"
+        },
+        {
+            "id": 2691,
+            "name": "fx_rate",
+            "column": 19,
+            "name_expr": "round(temp_fx_rate,5)"
+        },
+        {
+            "id": 2692,
+            "name": "fx_rate_reverse",
+            "column": 20,
+            "name_expr": "round(1/temp_fx_rate,5)"
+        },
+        {
+            "id": 2693,
+            "name": "instrument",
+            "column": 21,
+            "name_expr": "if \"EUROBUND\" in temp_info:\n    'LO_' + temp_isin\nelif \"CDS\" in temp_description_instrument:\n    temp_description_instrument\nelse:\n    temp_isin"
+        },
+        {
+            "id": 2694,
+            "name": "linked_instrument",
+            "column": 22,
+            "name_expr": "'-'"
+        },
+        {
+            "id": 2695,
+            "name": "middle_office_notes",
+            "column": 23,
+            "name_expr": "'-'"
+        },
+        {
+            "id": 2696,
+            "name": "other_commissions",
+            "column": 24,
+            "name_expr": "0"
+        },
+        {
+            "id": 2697,
+            "name": "portfolio",
+            "column": 25,
+            "name_expr": "temp_portfolio + \" (POS)\""
+        },
+        {
+            "id": 2698,
+            "name": "position",
+            "column": 26,
+            "name_expr": "temp_position"
+        },
+        {
+            "id": 2699,
+            "name": "principal_price",
+            "column": 27,
+            "name_expr": "temp_price"
+        },
+        {
+            "id": 2700,
+            "name": "principal_wsign",
+            "column": 28,
+            "name_expr": "if temp_ttype in ['Structured products','Bonds','Convertible or warrant Bonds','Derivatives']:\n    float(temp_position)*float(temp_price)/100\nelif temp_ttype in ['Equities','Real Estate','Other investments','Hedge Funds']:\n    float(temp_position)*float(temp_price)\nelse:\n    0"
+        },
+        {
+            "id": 2701,
+            "name": "proceeds",
+            "column": 29,
+            "name_expr": "if \"EUROBUND\" in temp_info:\n    0\nelse:\n    temp_total"
+        },
+        {
+            "id": 2702,
+            "name": "responsible",
+            "column": 30,
+            "name_expr": "'-'"
+        },
+        {
+            "id": 2703,
+            "name": "selector_cashflow",
+            "column": 31,
+            "name_expr": "'Deposit'"
+        },
+        {
+            "id": 2704,
+            "name": "selector_trade_type",
+            "column": 33,
+            "name_expr": "'Buy'"
+        },
+        {
+            "id": 2705,
+            "name": "settlement_currency",
+            "column": 34,
+            "name_expr": "temp_transaction_currency"
+        },
+        {
+            "id": 2706,
+            "name": "source",
+            "column": 35,
+            "name_expr": "'Lombard import'"
+        },
+        {
+            "id": 2707,
+            "name": "stamp_duty",
+            "column": 36,
+            "name_expr": "0"
+        },
+        {
+            "id": 2708,
+            "name": "strategy1",
+            "column": 37,
+            "name_expr": "'-'"
+        },
+        {
+            "id": 2709,
+            "name": "trade_date",
+            "column": 38,
+            "name_expr": "temp_request_date"
+        },
+        {
+            "id": 2710,
+            "name": "transaction_code",
+            "column": 39,
+            "name_expr": "'-'"
+        },
+        {
+            "id": 2711,
+            "name": "transaction_currency",
+            "column": 40,
+            "name_expr": "temp_transaction_currency"
+        },
+        {
+            "id": 2712,
+            "name": "value_date",
+            "column": 41,
+            "name_expr": "if temp_maturity_date!='-':\n    temp_maturity_date\nelse:\n    temp_request_date"
+        },
+        {
+            "id": 2713,
+            "name": "account_cash_sell",
+            "column": 42,
+            "name_expr": "if temp_currency_sell=='USD':\n    temp_portfolio +'00'+'333'\nelif temp_currency_sell=='EUR':\n    temp_portfolio +'00'+ '814'\nelif temp_currency_sell=='GBP':\n    temp_portfolio +'00'+ '402'\nelif temp_currency_sell=='CHF':\n    temp_portfolio +'00'+ '001'\nelif temp_currency_sell=='HKD':\n    temp_portfolio +'00' + '470'\nelse:\n    '-'"
+        },
+        {
+            "id": 2714,
+            "name": "account_cash_buy",
+            "column": 43,
+            "name_expr": "if temp_currency_buy=='USD':\n    temp_portfolio +'00'+'333'\nelif temp_currency_buy=='EUR':\n    temp_portfolio +'00'+ '814'\nelif temp_currency_buy=='GBP':\n    temp_portfolio +'00'+ '402'\nelif temp_currency_buy=='CHF':\n    temp_portfolio +'00'+ '001'\nelif temp_currency_buy=='HKD':\n    temp_portfolio +'00' + '470'\nelse:\n    '-'"
+        },
+        {
+            "id": 2715,
+            "name": "account_position_sell",
+            "column": 44,
+            "name_expr": "account_cash_sell=temp_portfolio\nif temp_currency_sell=='USD':\n    account_cash_sell +'29'+'333'\nelif temp_currency_sell=='EUR':\n    account_cash_sell +'29'+ '814'\nelif temp_currency_sell=='GBP':\n    account_cash_sell +'29'+ '402'\nelif temp_currency_sell=='CHF':\n    account_cash_sell +'29'+ '001'\nelif temp_currency_sell=='HKD':\n    account_cash_sell +'29' + '470'\nelse:\n    '-'"
+        },
+        {
+            "id": 2716,
+            "name": "account_position_buy",
+            "column": 45,
+            "name_expr": "if temp_currency_buy=='USD':\n    temp_portfolio +'29'+'333'\nelif temp_currency_buy=='EUR':\n    temp_portfolio +'29'+ '814'\nelif temp_currency_buy=='GBP':\n    temp_portfolio +'29'+ '402'\nelif temp_currency_buy=='CHF':\n    temp_portfolio +'29'+ '001'\nelif temp_currency_buy=='HKD':\n    temp_portfolio +'29' + '470'\nelse:\n    '-'"
+        },
+        {
+            "id": 2717,
+            "name": "trade_type",
+            "column": 46,
+            "name_expr": "temp_ttype"
+        }
+    ],
+    "rule_scenarios": [
+        {
+            "id": 613,
+            "is_default_rule_scenario": false,
+            "is_error_rule_scenario": false,
+            "name": "Buy",
+            "selector_values": [
+                "Structured products",
+                "Real Estate",
+                "Bonds",
+                "Equities",
+                "Other investments",
+                "Convertible or warrant Bonds",
+                "Hedge Funds",
+                "Derivatives",
+                "Futures",
+                "Short-term instruments"
+            ],
+            "transaction_type": 16,
+            "fields": [
+                {
+                    "id": 10875,
+                    "transaction_type_input": 225,
+                    "value_expr": "middle_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 225,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 17
+                    }
+                },
+                {
+                    "id": 10876,
+                    "transaction_type_input": 224,
+                    "value_expr": "linked_instrument",
+                    "transaction_type_input_object": {
+                        "id": 224,
+                        "name": "linked_instrument",
+                        "verbose_name": "Linked Instrument",
+                        "value_type": 100,
+                        "content_type": "instruments.instrument",
+                        "order": 16
+                    }
+                },
+                {
+                    "id": 10877,
+                    "transaction_type_input": 223,
+                    "value_expr": "instrument",
+                    "transaction_type_input_object": {
+                        "id": 223,
+                        "name": "instrument",
+                        "verbose_name": "Instrument",
+                        "value_type": 100,
+                        "content_type": "instruments.instrument",
+                        "order": 15
+                    }
+                },
+                {
+                    "id": 10878,
+                    "transaction_type_input": 222,
+                    "value_expr": "fx_rate_reverse",
+                    "transaction_type_input_object": {
+                        "id": 222,
+                        "name": "fx_rate_reverse",
+                        "verbose_name": "FX Rate (Reverse)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 14
+                    }
+                },
+                {
+                    "id": 10879,
+                    "transaction_type_input": 221,
+                    "value_expr": "fx_rate",
+                    "transaction_type_input_object": {
+                        "id": 221,
+                        "name": "fx_rate",
+                        "verbose_name": "FX Rate (Units of Settlement Сurrency per 1 Unit of Transaction Сurrency)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 13
+                    }
+                },
+                {
+                    "id": 10880,
+                    "transaction_type_input": 228,
+                    "value_expr": "position",
+                    "transaction_type_input_object": {
+                        "id": 228,
+                        "name": "position",
+                        "verbose_name": "Position",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 20
+                    }
+                },
+                {
+                    "id": 10881,
+                    "transaction_type_input": 212,
+                    "value_expr": "accrued_price",
+                    "transaction_type_input_object": {
+                        "id": 212,
+                        "name": "accrued_price",
+                        "verbose_name": "Accrued Price (%)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 2
+                    }
+                },
+                {
+                    "id": 10882,
+                    "transaction_type_input": 211,
+                    "value_expr": "account_position",
+                    "transaction_type_input_object": {
+                        "id": 211,
+                        "name": "account_position",
+                        "verbose_name": "Account for Position",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 1
+                    }
+                },
+                {
+                    "id": 10883,
+                    "transaction_type_input": 226,
+                    "value_expr": "other_commissions",
+                    "transaction_type_input_object": {
+                        "id": 226,
+                        "name": "other_commissions",
+                        "verbose_name": "Other Commissions",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 18
+                    }
+                },
+                {
+                    "id": 10884,
+                    "transaction_type_input": 220,
+                    "value_expr": "front_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 220,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 12
+                    }
+                },
+                {
+                    "id": 10885,
+                    "transaction_type_input": 219,
+                    "value_expr": "fees_taxes",
+                    "transaction_type_input_object": {
+                        "id": 219,
+                        "name": "fees_taxes",
+                        "verbose_name": "Fees/Taxes",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 11
+                    }
+                },
+                {
+                    "id": 10886,
+                    "transaction_type_input": 218,
+                    "value_expr": "counterparty",
+                    "transaction_type_input_object": {
+                        "id": 218,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100,
+                        "content_type": "counterparties.counterparty",
+                        "order": 10
+                    }
+                },
+                {
+                    "id": 10887,
+                    "transaction_type_input": 240,
+                    "value_expr": "transaction_currency",
+                    "transaction_type_input_object": {
+                        "id": 240,
+                        "name": "transaction_currency",
+                        "verbose_name": "Transaction Currency",
+                        "value_type": 100,
+                        "content_type": "currencies.currency",
+                        "order": 32
+                    }
+                },
+                {
+                    "id": 10888,
+                    "transaction_type_input": 239,
+                    "value_expr": "transaction_code",
+                    "transaction_type_input_object": {
+                        "id": 239,
+                        "name": "transaction_code",
+                        "verbose_name": "Unique Сode",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 31
+                    }
+                },
+                {
+                    "id": 10889,
+                    "transaction_type_input": 227,
+                    "value_expr": "portfolio",
+                    "transaction_type_input_object": {
+                        "id": 227,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100,
+                        "content_type": "portfolios.portfolio",
+                        "order": 19
+                    }
+                },
+                {
+                    "id": 10890,
+                    "transaction_type_input": 236,
+                    "value_expr": "stamp_duty",
+                    "transaction_type_input_object": {
+                        "id": 236,
+                        "name": "stamp_duty",
+                        "verbose_name": "Stamp Duty",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 28
+                    }
+                },
+                {
+                    "id": 10891,
+                    "transaction_type_input": 234,
+                    "value_expr": "settlement_currency",
+                    "transaction_type_input_object": {
+                        "id": 234,
+                        "name": "settlement_currency",
+                        "verbose_name": "Settlement Currency",
+                        "value_type": 100,
+                        "content_type": "currencies.currency",
+                        "order": 26
+                    }
+                },
+                {
+                    "id": 10892,
+                    "transaction_type_input": 233,
+                    "value_expr": "selector_trade_type",
+                    "transaction_type_input_object": {
+                        "id": 233,
+                        "name": "selector_trade_type",
+                        "verbose_name": "Trade Type",
+                        "value_type": 110,
+                        "content_type": null,
+                        "order": 25
+                    }
+                },
+                {
+                    "id": 10893,
+                    "transaction_type_input": 235,
+                    "value_expr": "source",
+                    "transaction_type_input_object": {
+                        "id": 235,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 27
+                    }
+                },
+                {
+                    "id": 10894,
+                    "transaction_type_input": 210,
+                    "value_expr": "account_position",
+                    "transaction_type_input_object": {
+                        "id": 210,
+                        "name": "account_cash",
+                        "verbose_name": "Account for Cash",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 0
+                    }
+                },
+                {
+                    "id": 10895,
+                    "transaction_type_input": 238,
+                    "value_expr": "trade_date",
+                    "transaction_type_input_object": {
+                        "id": 238,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 30
+                    }
+                },
+                {
+                    "id": 10896,
+                    "transaction_type_input": 237,
+                    "value_expr": "strategy1",
+                    "transaction_type_input_object": {
+                        "id": 237,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100,
+                        "content_type": "strategies.strategy1",
+                        "order": 29
+                    }
+                },
+                {
+                    "id": 10897,
+                    "transaction_type_input": 232,
+                    "value_expr": "responsible",
+                    "transaction_type_input_object": {
+                        "id": 232,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100,
+                        "content_type": "counterparties.responsible",
+                        "order": 24
+                    }
+                },
+                {
+                    "id": 10898,
+                    "transaction_type_input": 231,
+                    "value_expr": "proceeds",
+                    "transaction_type_input_object": {
+                        "id": 231,
+                        "name": "proceeds",
+                        "verbose_name": "Proceeds",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 23
+                    }
+                },
+                {
+                    "id": 10899,
+                    "transaction_type_input": 213,
+                    "value_expr": "accrued_wsign",
+                    "transaction_type_input_object": {
+                        "id": 213,
+                        "name": "accrued_wsign",
+                        "verbose_name": "Accrued",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 3
+                    }
+                },
+                {
+                    "id": 10900,
+                    "transaction_type_input": 214,
+                    "value_expr": "allocation_pl",
+                    "transaction_type_input_object": {
+                        "id": 214,
+                        "name": "allocation_pl",
+                        "verbose_name": "Allocation for PL",
+                        "value_type": 100,
+                        "content_type": "instruments.instrument",
+                        "order": 4
+                    }
+                },
+                {
+                    "id": 10901,
+                    "transaction_type_input": 215,
+                    "value_expr": "cash_consideration",
+                    "transaction_type_input_object": {
+                        "id": 215,
+                        "name": "cash_consideration",
+                        "verbose_name": "Cash Consideration",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 7
+                    }
+                },
+                {
+                    "id": 10902,
+                    "transaction_type_input": 230,
+                    "value_expr": "principal_wsign",
+                    "transaction_type_input_object": {
+                        "id": 230,
+                        "name": "principal_wsign",
+                        "verbose_name": "Principal",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 22
+                    }
+                },
+                {
+                    "id": 10903,
+                    "transaction_type_input": 241,
+                    "value_expr": "value_date",
+                    "transaction_type_input_object": {
+                        "id": 241,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 33
+                    }
+                },
+                {
+                    "id": 10904,
+                    "transaction_type_input": 217,
+                    "value_expr": "commission",
+                    "transaction_type_input_object": {
+                        "id": 217,
+                        "name": "commission",
+                        "verbose_name": "Commission",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 9
+                    }
+                },
+                {
+                    "id": 10905,
+                    "transaction_type_input": 216,
+                    "value_expr": "charges",
+                    "transaction_type_input_object": {
+                        "id": 216,
+                        "name": "charges",
+                        "verbose_name": "Charges",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 8
+                    }
+                },
+                {
+                    "id": 10906,
+                    "transaction_type_input": 229,
+                    "value_expr": "principal_price",
+                    "transaction_type_input_object": {
+                        "id": 229,
+                        "name": "principal_price",
+                        "verbose_name": "Price",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 21
+                    }
+                }
+            ],
+            "status": "active",
+            "transaction_type_object": {
+                "id": 16,
+                "name": "Buy/Sell",
+                "user_code": "Buy/Sell_unified",
+                "inputs": [
+                    {
+                        "id": 210,
+                        "name": "account_cash",
+                        "verbose_name": "Account for Cash",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 211,
+                        "name": "account_position",
+                        "verbose_name": "Account for Position",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 212,
+                        "name": "accrued_price",
+                        "verbose_name": "Accrued Price (%)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 213,
+                        "name": "accrued_wsign",
+                        "verbose_name": "Accrued",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 214,
+                        "name": "allocation_pl",
+                        "verbose_name": "Allocation for PL",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 441,
+                        "name": "button_recalculate_cash",
+                        "verbose_name": "Recalculate Cash",
+                        "value_type": 120
+                    },
+                    {
+                        "id": 442,
+                        "name": "button_recalculate_proceeds",
+                        "verbose_name": "Recalculate Proceeds",
+                        "value_type": 120
+                    },
+                    {
+                        "id": 215,
+                        "name": "cash_consideration",
+                        "verbose_name": "Cash Consideration",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 216,
+                        "name": "charges",
+                        "verbose_name": "Charges",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 217,
+                        "name": "commission",
+                        "verbose_name": "Commission",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 218,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 219,
+                        "name": "fees_taxes",
+                        "verbose_name": "Fees/Taxes",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 220,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 221,
+                        "name": "fx_rate",
+                        "verbose_name": "FX Rate (Units of Settlement Сurrency per 1 Unit of Transaction Сurrency)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 222,
+                        "name": "fx_rate_reverse",
+                        "verbose_name": "FX Rate (Reverse)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 223,
+                        "name": "instrument",
+                        "verbose_name": "Instrument",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 224,
+                        "name": "linked_instrument",
+                        "verbose_name": "Linked Instrument",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 225,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 226,
+                        "name": "other_commissions",
+                        "verbose_name": "Other Commissions",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 227,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 228,
+                        "name": "position",
+                        "verbose_name": "Position",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 229,
+                        "name": "principal_price",
+                        "verbose_name": "Price",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 230,
+                        "name": "principal_wsign",
+                        "verbose_name": "Principal",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 231,
+                        "name": "proceeds",
+                        "verbose_name": "Proceeds",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 232,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 233,
+                        "name": "selector_trade_type",
+                        "verbose_name": "Trade Type",
+                        "value_type": 110
+                    },
+                    {
+                        "id": 234,
+                        "name": "settlement_currency",
+                        "verbose_name": "Settlement Currency",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 235,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 236,
+                        "name": "stamp_duty",
+                        "verbose_name": "Stamp Duty",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 237,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 238,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40
+                    },
+                    {
+                        "id": 239,
+                        "name": "transaction_code",
+                        "verbose_name": "Unique Сode",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 240,
+                        "name": "transaction_currency",
+                        "verbose_name": "Transaction Currency",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 241,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value)",
+                        "value_type": 40
+                    }
+                ]
+            }
+        },
+        {
+            "id": 614,
+            "is_default_rule_scenario": false,
+            "is_error_rule_scenario": false,
+            "name": "Deposit (for Instrument)",
+            "selector_values": [
+                "Structured products",
+                "Real Estate",
+                "Bonds",
+                "Equities",
+                "Other investments",
+                "Convertible or warrant Bonds",
+                "Hedge Funds",
+                "Derivatives",
+                "Futures",
+                "Short-term instruments"
+            ],
+            "transaction_type": 17,
+            "fields": [
+                {
+                    "id": 10907,
+                    "transaction_type_input": 244,
+                    "value_expr": "charges_percent",
+                    "transaction_type_input_object": {
+                        "id": 244,
+                        "name": "charges_percent",
+                        "verbose_name": "Charges (%)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 3
+                    }
+                },
+                {
+                    "id": 10908,
+                    "transaction_type_input": 245,
+                    "value_expr": "counterparty",
+                    "transaction_type_input_object": {
+                        "id": 245,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100,
+                        "content_type": "counterparties.counterparty",
+                        "order": 4
+                    }
+                },
+                {
+                    "id": 10909,
+                    "transaction_type_input": 246,
+                    "value_expr": "front_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 246,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 5
+                    }
+                },
+                {
+                    "id": 10910,
+                    "transaction_type_input": 243,
+                    "value_expr": "charges",
+                    "transaction_type_input_object": {
+                        "id": 243,
+                        "name": "charges",
+                        "verbose_name": "Charges",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 2
+                    }
+                },
+                {
+                    "id": 10911,
+                    "transaction_type_input": 250,
+                    "value_expr": "responsible",
+                    "transaction_type_input_object": {
+                        "id": 250,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100,
+                        "content_type": "counterparties.responsible",
+                        "order": 9
+                    }
+                },
+                {
+                    "id": 10912,
+                    "transaction_type_input": 252,
+                    "value_expr": "source",
+                    "transaction_type_input_object": {
+                        "id": 252,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 11
+                    }
+                },
+                {
+                    "id": 10913,
+                    "transaction_type_input": 253,
+                    "value_expr": "strategy1",
+                    "transaction_type_input_object": {
+                        "id": 253,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100,
+                        "content_type": "strategies.strategy1",
+                        "order": 12
+                    }
+                },
+                {
+                    "id": 10914,
+                    "transaction_type_input": 254,
+                    "value_expr": "trade_date",
+                    "transaction_type_input_object": {
+                        "id": 254,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 13
+                    }
+                },
+                {
+                    "id": 10915,
+                    "transaction_type_input": 255,
+                    "value_expr": "transaction_code",
+                    "transaction_type_input_object": {
+                        "id": 255,
+                        "name": "transaction_code",
+                        "verbose_name": "Unique Сode",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 15
+                    }
+                },
+                {
+                    "id": 10916,
+                    "transaction_type_input": 256,
+                    "value_expr": "transaction_currency",
+                    "transaction_type_input_object": {
+                        "id": 256,
+                        "name": "transaction_currency",
+                        "verbose_name": "Transaction Currency",
+                        "value_type": 100,
+                        "content_type": "currencies.currency",
+                        "order": 16
+                    }
+                },
+                {
+                    "id": 10917,
+                    "transaction_type_input": 257,
+                    "value_expr": "value_date",
+                    "transaction_type_input_object": {
+                        "id": 257,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 17
+                    }
+                },
+                {
+                    "id": 10918,
+                    "transaction_type_input": 247,
+                    "value_expr": "middle_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 247,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 6
+                    }
+                },
+                {
+                    "id": 10919,
+                    "transaction_type_input": 248,
+                    "value_expr": "portfolio",
+                    "transaction_type_input_object": {
+                        "id": 248,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100,
+                        "content_type": "portfolios.portfolio",
+                        "order": 7
+                    }
+                },
+                {
+                    "id": 10920,
+                    "transaction_type_input": 249,
+                    "value_expr": "cash_consideration",
+                    "transaction_type_input_object": {
+                        "id": 249,
+                        "name": "position",
+                        "verbose_name": "Position",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 8
+                    }
+                },
+                {
+                    "id": 10921,
+                    "transaction_type_input": 242,
+                    "value_expr": "account_position",
+                    "transaction_type_input_object": {
+                        "id": 242,
+                        "name": "account_cash",
+                        "verbose_name": "Account for Cash",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 0
+                    }
+                },
+                {
+                    "id": 10922,
+                    "transaction_type_input": 251,
+                    "value_expr": "selector_cashflow",
+                    "transaction_type_input_object": {
+                        "id": 251,
+                        "name": "selector_cashflow",
+                        "verbose_name": "Type (Deposit/Withdraw)",
+                        "value_type": 110,
+                        "content_type": null,
+                        "order": 10
+                    }
+                }
+            ],
+            "status": "active",
+            "transaction_type_object": {
+                "id": 17,
+                "name": "Deposits/Withdraws",
+                "user_code": "Deposits/Withdraws_unified",
+                "inputs": [
+                    {
+                        "id": 242,
+                        "name": "account_cash",
+                        "verbose_name": "Account for Cash",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 460,
+                        "name": "account_interim",
+                        "verbose_name": "Interim Account",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 243,
+                        "name": "charges",
+                        "verbose_name": "Charges",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 244,
+                        "name": "charges_percent",
+                        "verbose_name": "Charges (%)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 245,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 246,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 247,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 248,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 249,
+                        "name": "position",
+                        "verbose_name": "Position",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 250,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 251,
+                        "name": "selector_cashflow",
+                        "verbose_name": "Type (Deposit/Withdraw)",
+                        "value_type": 110
+                    },
+                    {
+                        "id": 252,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 253,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 254,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40
+                    },
+                    {
+                        "id": 461,
+                        "name": "trade_price",
+                        "verbose_name": "Trade Price (Price of Share)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 255,
+                        "name": "transaction_code",
+                        "verbose_name": "Unique Сode",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 256,
+                        "name": "transaction_currency",
+                        "verbose_name": "Transaction Currency",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 257,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value)",
+                        "value_type": 40
+                    }
+                ]
+            }
+        },
+        {
+            "id": 615,
+            "is_default_rule_scenario": false,
+            "is_error_rule_scenario": false,
+            "name": "Deposit",
+            "selector_values": [
+                "Cash"
+            ],
+            "transaction_type": 17,
+            "fields": [
+                {
+                    "id": 10923,
+                    "transaction_type_input": 251,
+                    "value_expr": "selector_cashflow",
+                    "transaction_type_input_object": {
+                        "id": 251,
+                        "name": "selector_cashflow",
+                        "verbose_name": "Type (Deposit/Withdraw)",
+                        "value_type": 110,
+                        "content_type": null,
+                        "order": 10
+                    }
+                },
+                {
+                    "id": 10924,
+                    "transaction_type_input": 257,
+                    "value_expr": "value_date",
+                    "transaction_type_input_object": {
+                        "id": 257,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 17
+                    }
+                },
+                {
+                    "id": 10925,
+                    "transaction_type_input": 242,
+                    "value_expr": "account_cash",
+                    "transaction_type_input_object": {
+                        "id": 242,
+                        "name": "account_cash",
+                        "verbose_name": "Account for Cash",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 0
+                    }
+                },
+                {
+                    "id": 10926,
+                    "transaction_type_input": 243,
+                    "value_expr": "charges",
+                    "transaction_type_input_object": {
+                        "id": 243,
+                        "name": "charges",
+                        "verbose_name": "Charges",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 2
+                    }
+                },
+                {
+                    "id": 10927,
+                    "transaction_type_input": 244,
+                    "value_expr": "charges_percent",
+                    "transaction_type_input_object": {
+                        "id": 244,
+                        "name": "charges_percent",
+                        "verbose_name": "Charges (%)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 3
+                    }
+                },
+                {
+                    "id": 10928,
+                    "transaction_type_input": 245,
+                    "value_expr": "counterparty",
+                    "transaction_type_input_object": {
+                        "id": 245,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100,
+                        "content_type": "counterparties.counterparty",
+                        "order": 4
+                    }
+                },
+                {
+                    "id": 10929,
+                    "transaction_type_input": 256,
+                    "value_expr": "transaction_currency",
+                    "transaction_type_input_object": {
+                        "id": 256,
+                        "name": "transaction_currency",
+                        "verbose_name": "Transaction Currency",
+                        "value_type": 100,
+                        "content_type": "currencies.currency",
+                        "order": 16
+                    }
+                },
+                {
+                    "id": 10930,
+                    "transaction_type_input": 255,
+                    "value_expr": "transaction_code",
+                    "transaction_type_input_object": {
+                        "id": 255,
+                        "name": "transaction_code",
+                        "verbose_name": "Unique Сode",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 15
+                    }
+                },
+                {
+                    "id": 10931,
+                    "transaction_type_input": 250,
+                    "value_expr": "responsible",
+                    "transaction_type_input_object": {
+                        "id": 250,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100,
+                        "content_type": "counterparties.responsible",
+                        "order": 9
+                    }
+                },
+                {
+                    "id": 10932,
+                    "transaction_type_input": 249,
+                    "value_expr": "temp_cash",
+                    "transaction_type_input_object": {
+                        "id": 249,
+                        "name": "position",
+                        "verbose_name": "Position",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 8
+                    }
+                },
+                {
+                    "id": 10933,
+                    "transaction_type_input": 248,
+                    "value_expr": "portfolio",
+                    "transaction_type_input_object": {
+                        "id": 248,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100,
+                        "content_type": "portfolios.portfolio",
+                        "order": 7
+                    }
+                },
+                {
+                    "id": 10934,
+                    "transaction_type_input": 247,
+                    "value_expr": "middle_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 247,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 6
+                    }
+                },
+                {
+                    "id": 10935,
+                    "transaction_type_input": 246,
+                    "value_expr": "front_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 246,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 5
+                    }
+                },
+                {
+                    "id": 10936,
+                    "transaction_type_input": 252,
+                    "value_expr": "source",
+                    "transaction_type_input_object": {
+                        "id": 252,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 11
+                    }
+                },
+                {
+                    "id": 10937,
+                    "transaction_type_input": 253,
+                    "value_expr": "strategy1",
+                    "transaction_type_input_object": {
+                        "id": 253,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100,
+                        "content_type": "strategies.strategy1",
+                        "order": 12
+                    }
+                },
+                {
+                    "id": 10938,
+                    "transaction_type_input": 254,
+                    "value_expr": "trade_date",
+                    "transaction_type_input_object": {
+                        "id": 254,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 13
+                    }
+                }
+            ],
+            "status": "active",
+            "transaction_type_object": {
+                "id": 17,
+                "name": "Deposits/Withdraws",
+                "user_code": "Deposits/Withdraws_unified",
+                "inputs": [
+                    {
+                        "id": 242,
+                        "name": "account_cash",
+                        "verbose_name": "Account for Cash",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 460,
+                        "name": "account_interim",
+                        "verbose_name": "Interim Account",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 243,
+                        "name": "charges",
+                        "verbose_name": "Charges",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 244,
+                        "name": "charges_percent",
+                        "verbose_name": "Charges (%)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 245,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 246,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 247,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 248,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 249,
+                        "name": "position",
+                        "verbose_name": "Position",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 250,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 251,
+                        "name": "selector_cashflow",
+                        "verbose_name": "Type (Deposit/Withdraw)",
+                        "value_type": 110
+                    },
+                    {
+                        "id": 252,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 253,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 254,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40
+                    },
+                    {
+                        "id": 461,
+                        "name": "trade_price",
+                        "verbose_name": "Trade Price (Price of Share)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 255,
+                        "name": "transaction_code",
+                        "verbose_name": "Unique Сode",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 256,
+                        "name": "transaction_currency",
+                        "verbose_name": "Transaction Currency",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 257,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value)",
+                        "value_type": 40
+                    }
+                ]
+            }
+        },
+        {
+            "id": 616,
+            "is_default_rule_scenario": false,
+            "is_error_rule_scenario": false,
+            "name": "FX Forwards",
+            "selector_values": [
+                "Currency forwards"
+            ],
+            "transaction_type": 39,
+            "fields": [
+                {
+                    "id": 10939,
+                    "transaction_type_input": 646,
+                    "value_expr": "allocation_pl",
+                    "transaction_type_input_object": {
+                        "id": 646,
+                        "name": "allocation_pl",
+                        "verbose_name": "Allocation for PL",
+                        "value_type": 100,
+                        "content_type": "instruments.instrument",
+                        "order": 4
+                    }
+                },
+                {
+                    "id": 10940,
+                    "transaction_type_input": 645,
+                    "value_expr": "account_position_sell",
+                    "transaction_type_input_object": {
+                        "id": 645,
+                        "name": "account_position_sell",
+                        "verbose_name": "Account Position (Sell)",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 3
+                    }
+                },
+                {
+                    "id": 10941,
+                    "transaction_type_input": 644,
+                    "value_expr": "account_position_buy",
+                    "transaction_type_input_object": {
+                        "id": 644,
+                        "name": "account_position_buy",
+                        "verbose_name": "Account Position (Buy)",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 2
+                    }
+                },
+                {
+                    "id": 10942,
+                    "transaction_type_input": 643,
+                    "value_expr": "account_cash_sell",
+                    "transaction_type_input_object": {
+                        "id": 643,
+                        "name": "account_cash_sell",
+                        "verbose_name": "Account Cash (Sell)",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 1
+                    }
+                },
+                {
+                    "id": 10943,
+                    "transaction_type_input": 642,
+                    "value_expr": "account_cash_buy",
+                    "transaction_type_input_object": {
+                        "id": 642,
+                        "name": "account_cash_buy",
+                        "verbose_name": "Account Cash (Buy)",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 0
+                    }
+                },
+                {
+                    "id": 10944,
+                    "transaction_type_input": 663,
+                    "value_expr": "value_date",
+                    "transaction_type_input_object": {
+                        "id": 663,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value/Forward)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 21
+                    }
+                },
+                {
+                    "id": 10945,
+                    "transaction_type_input": 662,
+                    "value_expr": "transaction_code",
+                    "transaction_type_input_object": {
+                        "id": 662,
+                        "name": "transaction_code",
+                        "verbose_name": "Transaction Code",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 20
+                    }
+                },
+                {
+                    "id": 10946,
+                    "transaction_type_input": 661,
+                    "value_expr": "trade_date",
+                    "transaction_type_input_object": {
+                        "id": 661,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 19
+                    }
+                },
+                {
+                    "id": 10947,
+                    "transaction_type_input": 660,
+                    "value_expr": "strategy1",
+                    "transaction_type_input_object": {
+                        "id": 660,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100,
+                        "content_type": "strategies.strategy1",
+                        "order": 18
+                    }
+                },
+                {
+                    "id": 10948,
+                    "transaction_type_input": 659,
+                    "value_expr": "source",
+                    "transaction_type_input_object": {
+                        "id": 659,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 17
+                    }
+                },
+                {
+                    "id": 10949,
+                    "transaction_type_input": 658,
+                    "value_expr": "responsible",
+                    "transaction_type_input_object": {
+                        "id": 658,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100,
+                        "content_type": "counterparties.responsible",
+                        "order": 16
+                    }
+                },
+                {
+                    "id": 10950,
+                    "transaction_type_input": 657,
+                    "value_expr": "portfolio",
+                    "transaction_type_input_object": {
+                        "id": 657,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100,
+                        "content_type": "portfolios.portfolio",
+                        "order": 15
+                    }
+                },
+                {
+                    "id": 10951,
+                    "transaction_type_input": 656,
+                    "value_expr": "middle_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 656,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 14
+                    }
+                },
+                {
+                    "id": 10952,
+                    "transaction_type_input": 655,
+                    "value_expr": "linked_instrument",
+                    "transaction_type_input_object": {
+                        "id": 655,
+                        "name": "linked_instrument",
+                        "verbose_name": "Linked Instrument",
+                        "value_type": 100,
+                        "content_type": "instruments.instrument",
+                        "order": 13
+                    }
+                },
+                {
+                    "id": 10953,
+                    "transaction_type_input": 654,
+                    "value_expr": "fx_rate_reverse",
+                    "transaction_type_input_object": {
+                        "id": 654,
+                        "name": "fx_rate_reverse",
+                        "verbose_name": "FX Rate (Reverse)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 12
+                    }
+                },
+                {
+                    "id": 10954,
+                    "transaction_type_input": 647,
+                    "value_expr": "amount_buy",
+                    "transaction_type_input_object": {
+                        "id": 647,
+                        "name": "amount_buy",
+                        "verbose_name": "Amount (Buy)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 5
+                    }
+                },
+                {
+                    "id": 10955,
+                    "transaction_type_input": 648,
+                    "value_expr": "amount_sell",
+                    "transaction_type_input_object": {
+                        "id": 648,
+                        "name": "amount_sell",
+                        "verbose_name": "Amount (Sell)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 6
+                    }
+                },
+                {
+                    "id": 10956,
+                    "transaction_type_input": 650,
+                    "value_expr": "currency_buy",
+                    "transaction_type_input_object": {
+                        "id": 650,
+                        "name": "currency_buy",
+                        "verbose_name": "Currency (Buy)",
+                        "value_type": 100,
+                        "content_type": "currencies.currency",
+                        "order": 8
+                    }
+                },
+                {
+                    "id": 10957,
+                    "transaction_type_input": 651,
+                    "value_expr": "currency_sell",
+                    "transaction_type_input_object": {
+                        "id": 651,
+                        "name": "currency_sell",
+                        "verbose_name": "Currency (Sell)",
+                        "value_type": 100,
+                        "content_type": "currencies.currency",
+                        "order": 9
+                    }
+                },
+                {
+                    "id": 10958,
+                    "transaction_type_input": 652,
+                    "value_expr": "front_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 652,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 10
+                    }
+                },
+                {
+                    "id": 10959,
+                    "transaction_type_input": 653,
+                    "value_expr": "fx_rate",
+                    "transaction_type_input_object": {
+                        "id": 653,
+                        "name": "fx_rate",
+                        "verbose_name": "FX Rate",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 11
+                    }
+                },
+                {
+                    "id": 10960,
+                    "transaction_type_input": 649,
+                    "value_expr": "counterparty",
+                    "transaction_type_input_object": {
+                        "id": 649,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100,
+                        "content_type": "counterparties.counterparty",
+                        "order": 7
+                    }
+                }
+            ],
+            "status": "active",
+            "transaction_type_object": {
+                "id": 39,
+                "name": "LO Forwards (Open)",
+                "user_code": "Forwards_unified_lombard",
+                "inputs": [
+                    {
+                        "id": 642,
+                        "name": "account_cash_buy",
+                        "verbose_name": "Account Cash (Buy)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 643,
+                        "name": "account_cash_sell",
+                        "verbose_name": "Account Cash (Sell)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 644,
+                        "name": "account_position_buy",
+                        "verbose_name": "Account Position (Buy)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 645,
+                        "name": "account_position_sell",
+                        "verbose_name": "Account Position (Sell)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 646,
+                        "name": "allocation_pl",
+                        "verbose_name": "Allocation for PL",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 647,
+                        "name": "amount_buy",
+                        "verbose_name": "Amount (Buy)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 648,
+                        "name": "amount_sell",
+                        "verbose_name": "Amount (Sell)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 649,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 650,
+                        "name": "currency_buy",
+                        "verbose_name": "Currency (Buy)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 651,
+                        "name": "currency_sell",
+                        "verbose_name": "Currency (Sell)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 652,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 653,
+                        "name": "fx_rate",
+                        "verbose_name": "FX Rate",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 654,
+                        "name": "fx_rate_reverse",
+                        "verbose_name": "FX Rate (Reverse)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 655,
+                        "name": "linked_instrument",
+                        "verbose_name": "Linked Instrument",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 656,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 657,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 658,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 659,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 660,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 661,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40
+                    },
+                    {
+                        "id": 662,
+                        "name": "transaction_code",
+                        "verbose_name": "Transaction Code",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 663,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value/Forward)",
+                        "value_type": 40
+                    }
+                ]
+            }
+        },
+        {
+            "id": 617,
+            "is_default_rule_scenario": true,
+            "is_error_rule_scenario": false,
+            "name": "-",
+            "selector_values": [],
+            "transaction_type": 1,
+            "fields": [],
+            "status": "active",
+            "transaction_type_object": {
+                "id": 1,
+                "name": "-",
+                "user_code": "-",
+                "inputs": []
+            }
+        },
+        {
+            "id": 618,
+            "is_default_rule_scenario": false,
+            "is_error_rule_scenario": false,
+            "name": "Sell-next-day",
+            "selector_values": [
+                "Structured products",
+                "Real Estate",
+                "Bonds",
+                "Equities",
+                "Other investments",
+                "Convertible or warrant Bonds",
+                "Hedge Funds",
+                "Derivatives",
+                "Futures",
+                "Short-term instruments"
+            ],
+            "transaction_type": 16,
+            "fields": [
+                {
+                    "id": 10961,
+                    "transaction_type_input": 210,
+                    "value_expr": "account_position",
+                    "transaction_type_input_object": {
+                        "id": 210,
+                        "name": "account_cash",
+                        "verbose_name": "Account for Cash",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 0
+                    }
+                },
+                {
+                    "id": 10962,
+                    "transaction_type_input": 241,
+                    "value_expr": "value_date+days(1)",
+                    "transaction_type_input_object": {
+                        "id": 241,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 33
+                    }
+                },
+                {
+                    "id": 10963,
+                    "transaction_type_input": 240,
+                    "value_expr": "transaction_currency",
+                    "transaction_type_input_object": {
+                        "id": 240,
+                        "name": "transaction_currency",
+                        "verbose_name": "Transaction Currency",
+                        "value_type": 100,
+                        "content_type": "currencies.currency",
+                        "order": 32
+                    }
+                },
+                {
+                    "id": 10964,
+                    "transaction_type_input": 239,
+                    "value_expr": "transaction_code",
+                    "transaction_type_input_object": {
+                        "id": 239,
+                        "name": "transaction_code",
+                        "verbose_name": "Unique Сode",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 31
+                    }
+                },
+                {
+                    "id": 10965,
+                    "transaction_type_input": 238,
+                    "value_expr": "trade_date+days(1)",
+                    "transaction_type_input_object": {
+                        "id": 238,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 30
+                    }
+                },
+                {
+                    "id": 10966,
+                    "transaction_type_input": 237,
+                    "value_expr": "strategy1",
+                    "transaction_type_input_object": {
+                        "id": 237,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100,
+                        "content_type": "strategies.strategy1",
+                        "order": 29
+                    }
+                },
+                {
+                    "id": 10967,
+                    "transaction_type_input": 236,
+                    "value_expr": "stamp_duty",
+                    "transaction_type_input_object": {
+                        "id": 236,
+                        "name": "stamp_duty",
+                        "verbose_name": "Stamp Duty",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 28
+                    }
+                },
+                {
+                    "id": 10968,
+                    "transaction_type_input": 235,
+                    "value_expr": "source",
+                    "transaction_type_input_object": {
+                        "id": 235,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 27
+                    }
+                },
+                {
+                    "id": 10969,
+                    "transaction_type_input": 234,
+                    "value_expr": "settlement_currency",
+                    "transaction_type_input_object": {
+                        "id": 234,
+                        "name": "settlement_currency",
+                        "verbose_name": "Settlement Currency",
+                        "value_type": 100,
+                        "content_type": "currencies.currency",
+                        "order": 26
+                    }
+                },
+                {
+                    "id": 10970,
+                    "transaction_type_input": 233,
+                    "value_expr": "'Sell'",
+                    "transaction_type_input_object": {
+                        "id": 233,
+                        "name": "selector_trade_type",
+                        "verbose_name": "Trade Type",
+                        "value_type": 110,
+                        "content_type": null,
+                        "order": 25
+                    }
+                },
+                {
+                    "id": 10971,
+                    "transaction_type_input": 232,
+                    "value_expr": "responsible",
+                    "transaction_type_input_object": {
+                        "id": 232,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100,
+                        "content_type": "counterparties.responsible",
+                        "order": 24
+                    }
+                },
+                {
+                    "id": 10972,
+                    "transaction_type_input": 231,
+                    "value_expr": "proceeds",
+                    "transaction_type_input_object": {
+                        "id": 231,
+                        "name": "proceeds",
+                        "verbose_name": "Proceeds",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 23
+                    }
+                },
+                {
+                    "id": 10973,
+                    "transaction_type_input": 230,
+                    "value_expr": "principal_wsign",
+                    "transaction_type_input_object": {
+                        "id": 230,
+                        "name": "principal_wsign",
+                        "verbose_name": "Principal",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 22
+                    }
+                },
+                {
+                    "id": 10974,
+                    "transaction_type_input": 229,
+                    "value_expr": "principal_price",
+                    "transaction_type_input_object": {
+                        "id": 229,
+                        "name": "principal_price",
+                        "verbose_name": "Price",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 21
+                    }
+                },
+                {
+                    "id": 10975,
+                    "transaction_type_input": 228,
+                    "value_expr": "position",
+                    "transaction_type_input_object": {
+                        "id": 228,
+                        "name": "position",
+                        "verbose_name": "Position",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 20
+                    }
+                },
+                {
+                    "id": 10976,
+                    "transaction_type_input": 227,
+                    "value_expr": "portfolio",
+                    "transaction_type_input_object": {
+                        "id": 227,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100,
+                        "content_type": "portfolios.portfolio",
+                        "order": 19
+                    }
+                },
+                {
+                    "id": 10977,
+                    "transaction_type_input": 222,
+                    "value_expr": "fx_rate_reverse",
+                    "transaction_type_input_object": {
+                        "id": 222,
+                        "name": "fx_rate_reverse",
+                        "verbose_name": "FX Rate (Reverse)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 14
+                    }
+                },
+                {
+                    "id": 10978,
+                    "transaction_type_input": 221,
+                    "value_expr": "fx_rate",
+                    "transaction_type_input_object": {
+                        "id": 221,
+                        "name": "fx_rate",
+                        "verbose_name": "FX Rate (Units of Settlement Сurrency per 1 Unit of Transaction Сurrency)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 13
+                    }
+                },
+                {
+                    "id": 10979,
+                    "transaction_type_input": 220,
+                    "value_expr": "front_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 220,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 12
+                    }
+                },
+                {
+                    "id": 10980,
+                    "transaction_type_input": 219,
+                    "value_expr": "fees_taxes",
+                    "transaction_type_input_object": {
+                        "id": 219,
+                        "name": "fees_taxes",
+                        "verbose_name": "Fees/Taxes",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 11
+                    }
+                },
+                {
+                    "id": 10981,
+                    "transaction_type_input": 218,
+                    "value_expr": "counterparty",
+                    "transaction_type_input_object": {
+                        "id": 218,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100,
+                        "content_type": "counterparties.counterparty",
+                        "order": 10
+                    }
+                },
+                {
+                    "id": 10982,
+                    "transaction_type_input": 217,
+                    "value_expr": "commission",
+                    "transaction_type_input_object": {
+                        "id": 217,
+                        "name": "commission",
+                        "verbose_name": "Commission",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 9
+                    }
+                },
+                {
+                    "id": 10983,
+                    "transaction_type_input": 216,
+                    "value_expr": "charges",
+                    "transaction_type_input_object": {
+                        "id": 216,
+                        "name": "charges",
+                        "verbose_name": "Charges",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 8
+                    }
+                },
+                {
+                    "id": 10984,
+                    "transaction_type_input": 215,
+                    "value_expr": "cash_consideration",
+                    "transaction_type_input_object": {
+                        "id": 215,
+                        "name": "cash_consideration",
+                        "verbose_name": "Cash Consideration",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 7
+                    }
+                },
+                {
+                    "id": 10985,
+                    "transaction_type_input": 214,
+                    "value_expr": "allocation_pl",
+                    "transaction_type_input_object": {
+                        "id": 214,
+                        "name": "allocation_pl",
+                        "verbose_name": "Allocation for PL",
+                        "value_type": 100,
+                        "content_type": "instruments.instrument",
+                        "order": 4
+                    }
+                },
+                {
+                    "id": 10986,
+                    "transaction_type_input": 213,
+                    "value_expr": "accrued_wsign",
+                    "transaction_type_input_object": {
+                        "id": 213,
+                        "name": "accrued_wsign",
+                        "verbose_name": "Accrued",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 3
+                    }
+                },
+                {
+                    "id": 10987,
+                    "transaction_type_input": 212,
+                    "value_expr": "accrued_price",
+                    "transaction_type_input_object": {
+                        "id": 212,
+                        "name": "accrued_price",
+                        "verbose_name": "Accrued Price (%)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 2
+                    }
+                },
+                {
+                    "id": 10988,
+                    "transaction_type_input": 211,
+                    "value_expr": "account_position",
+                    "transaction_type_input_object": {
+                        "id": 211,
+                        "name": "account_position",
+                        "verbose_name": "Account for Position",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 1
+                    }
+                },
+                {
+                    "id": 10989,
+                    "transaction_type_input": 224,
+                    "value_expr": "linked_instrument",
+                    "transaction_type_input_object": {
+                        "id": 224,
+                        "name": "linked_instrument",
+                        "verbose_name": "Linked Instrument",
+                        "value_type": 100,
+                        "content_type": "instruments.instrument",
+                        "order": 16
+                    }
+                },
+                {
+                    "id": 10990,
+                    "transaction_type_input": 223,
+                    "value_expr": "instrument",
+                    "transaction_type_input_object": {
+                        "id": 223,
+                        "name": "instrument",
+                        "verbose_name": "Instrument",
+                        "value_type": 100,
+                        "content_type": "instruments.instrument",
+                        "order": 15
+                    }
+                },
+                {
+                    "id": 10991,
+                    "transaction_type_input": 226,
+                    "value_expr": "other_commissions",
+                    "transaction_type_input_object": {
+                        "id": 226,
+                        "name": "other_commissions",
+                        "verbose_name": "Other Commissions",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 18
+                    }
+                },
+                {
+                    "id": 10992,
+                    "transaction_type_input": 225,
+                    "value_expr": "middle_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 225,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 17
+                    }
+                }
+            ],
+            "status": "active",
+            "transaction_type_object": {
+                "id": 16,
+                "name": "Buy/Sell",
+                "user_code": "Buy/Sell_unified",
+                "inputs": [
+                    {
+                        "id": 210,
+                        "name": "account_cash",
+                        "verbose_name": "Account for Cash",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 211,
+                        "name": "account_position",
+                        "verbose_name": "Account for Position",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 212,
+                        "name": "accrued_price",
+                        "verbose_name": "Accrued Price (%)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 213,
+                        "name": "accrued_wsign",
+                        "verbose_name": "Accrued",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 214,
+                        "name": "allocation_pl",
+                        "verbose_name": "Allocation for PL",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 441,
+                        "name": "button_recalculate_cash",
+                        "verbose_name": "Recalculate Cash",
+                        "value_type": 120
+                    },
+                    {
+                        "id": 442,
+                        "name": "button_recalculate_proceeds",
+                        "verbose_name": "Recalculate Proceeds",
+                        "value_type": 120
+                    },
+                    {
+                        "id": 215,
+                        "name": "cash_consideration",
+                        "verbose_name": "Cash Consideration",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 216,
+                        "name": "charges",
+                        "verbose_name": "Charges",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 217,
+                        "name": "commission",
+                        "verbose_name": "Commission",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 218,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 219,
+                        "name": "fees_taxes",
+                        "verbose_name": "Fees/Taxes",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 220,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 221,
+                        "name": "fx_rate",
+                        "verbose_name": "FX Rate (Units of Settlement Сurrency per 1 Unit of Transaction Сurrency)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 222,
+                        "name": "fx_rate_reverse",
+                        "verbose_name": "FX Rate (Reverse)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 223,
+                        "name": "instrument",
+                        "verbose_name": "Instrument",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 224,
+                        "name": "linked_instrument",
+                        "verbose_name": "Linked Instrument",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 225,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 226,
+                        "name": "other_commissions",
+                        "verbose_name": "Other Commissions",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 227,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 228,
+                        "name": "position",
+                        "verbose_name": "Position",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 229,
+                        "name": "principal_price",
+                        "verbose_name": "Price",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 230,
+                        "name": "principal_wsign",
+                        "verbose_name": "Principal",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 231,
+                        "name": "proceeds",
+                        "verbose_name": "Proceeds",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 232,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 233,
+                        "name": "selector_trade_type",
+                        "verbose_name": "Trade Type",
+                        "value_type": 110
+                    },
+                    {
+                        "id": 234,
+                        "name": "settlement_currency",
+                        "verbose_name": "Settlement Currency",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 235,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 236,
+                        "name": "stamp_duty",
+                        "verbose_name": "Stamp Duty",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 237,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 238,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40
+                    },
+                    {
+                        "id": 239,
+                        "name": "transaction_code",
+                        "verbose_name": "Unique Сode",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 240,
+                        "name": "transaction_currency",
+                        "verbose_name": "Transaction Currency",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 241,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value)",
+                        "value_type": 40
+                    }
+                ]
+            }
+        },
+        {
+            "id": 619,
+            "is_default_rule_scenario": false,
+            "is_error_rule_scenario": false,
+            "name": "Withdraw-next-day",
+            "selector_values": [
+                "Structured products",
+                "Real Estate",
+                "Bonds",
+                "Equities",
+                "Other investments",
+                "Convertible or warrant Bonds",
+                "Hedge Funds",
+                "Derivatives",
+                "Futures",
+                "Short-term instruments"
+            ],
+            "transaction_type": 17,
+            "fields": [
+                {
+                    "id": 10993,
+                    "transaction_type_input": 257,
+                    "value_expr": "value_date+days(1)",
+                    "transaction_type_input_object": {
+                        "id": 257,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 17
+                    }
+                },
+                {
+                    "id": 10994,
+                    "transaction_type_input": 256,
+                    "value_expr": "transaction_currency",
+                    "transaction_type_input_object": {
+                        "id": 256,
+                        "name": "transaction_currency",
+                        "verbose_name": "Transaction Currency",
+                        "value_type": 100,
+                        "content_type": "currencies.currency",
+                        "order": 16
+                    }
+                },
+                {
+                    "id": 10995,
+                    "transaction_type_input": 255,
+                    "value_expr": "transaction_code",
+                    "transaction_type_input_object": {
+                        "id": 255,
+                        "name": "transaction_code",
+                        "verbose_name": "Unique Сode",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 15
+                    }
+                },
+                {
+                    "id": 10996,
+                    "transaction_type_input": 254,
+                    "value_expr": "trade_date+days(1)",
+                    "transaction_type_input_object": {
+                        "id": 254,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 13
+                    }
+                },
+                {
+                    "id": 10997,
+                    "transaction_type_input": 253,
+                    "value_expr": "strategy1",
+                    "transaction_type_input_object": {
+                        "id": 253,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100,
+                        "content_type": "strategies.strategy1",
+                        "order": 12
+                    }
+                },
+                {
+                    "id": 10998,
+                    "transaction_type_input": 252,
+                    "value_expr": "source",
+                    "transaction_type_input_object": {
+                        "id": 252,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 11
+                    }
+                },
+                {
+                    "id": 10999,
+                    "transaction_type_input": 251,
+                    "value_expr": "'Withdraw'",
+                    "transaction_type_input_object": {
+                        "id": 251,
+                        "name": "selector_cashflow",
+                        "verbose_name": "Type (Deposit/Withdraw)",
+                        "value_type": 110,
+                        "content_type": null,
+                        "order": 10
+                    }
+                },
+                {
+                    "id": 11000,
+                    "transaction_type_input": 242,
+                    "value_expr": "account_position",
+                    "transaction_type_input_object": {
+                        "id": 242,
+                        "name": "account_cash",
+                        "verbose_name": "Account for Cash",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 0
+                    }
+                },
+                {
+                    "id": 11001,
+                    "transaction_type_input": 250,
+                    "value_expr": "responsible",
+                    "transaction_type_input_object": {
+                        "id": 250,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100,
+                        "content_type": "counterparties.responsible",
+                        "order": 9
+                    }
+                },
+                {
+                    "id": 11002,
+                    "transaction_type_input": 249,
+                    "value_expr": "cash_consideration",
+                    "transaction_type_input_object": {
+                        "id": 249,
+                        "name": "position",
+                        "verbose_name": "Position",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 8
+                    }
+                },
+                {
+                    "id": 11003,
+                    "transaction_type_input": 248,
+                    "value_expr": "portfolio",
+                    "transaction_type_input_object": {
+                        "id": 248,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100,
+                        "content_type": "portfolios.portfolio",
+                        "order": 7
+                    }
+                },
+                {
+                    "id": 11004,
+                    "transaction_type_input": 247,
+                    "value_expr": "middle_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 247,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 6
+                    }
+                },
+                {
+                    "id": 11005,
+                    "transaction_type_input": 246,
+                    "value_expr": "front_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 246,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 5
+                    }
+                },
+                {
+                    "id": 11006,
+                    "transaction_type_input": 245,
+                    "value_expr": "counterparty",
+                    "transaction_type_input_object": {
+                        "id": 245,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100,
+                        "content_type": "counterparties.counterparty",
+                        "order": 4
+                    }
+                },
+                {
+                    "id": 11007,
+                    "transaction_type_input": 244,
+                    "value_expr": "charges_percent",
+                    "transaction_type_input_object": {
+                        "id": 244,
+                        "name": "charges_percent",
+                        "verbose_name": "Charges (%)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 3
+                    }
+                },
+                {
+                    "id": 11008,
+                    "transaction_type_input": 243,
+                    "value_expr": "charges",
+                    "transaction_type_input_object": {
+                        "id": 243,
+                        "name": "charges",
+                        "verbose_name": "Charges",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 2
+                    }
+                }
+            ],
+            "status": "active",
+            "transaction_type_object": {
+                "id": 17,
+                "name": "Deposits/Withdraws",
+                "user_code": "Deposits/Withdraws_unified",
+                "inputs": [
+                    {
+                        "id": 242,
+                        "name": "account_cash",
+                        "verbose_name": "Account for Cash",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 460,
+                        "name": "account_interim",
+                        "verbose_name": "Interim Account",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 243,
+                        "name": "charges",
+                        "verbose_name": "Charges",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 244,
+                        "name": "charges_percent",
+                        "verbose_name": "Charges (%)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 245,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 246,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 247,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 248,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 249,
+                        "name": "position",
+                        "verbose_name": "Position",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 250,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 251,
+                        "name": "selector_cashflow",
+                        "verbose_name": "Type (Deposit/Withdraw)",
+                        "value_type": 110
+                    },
+                    {
+                        "id": 252,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 253,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 254,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40
+                    },
+                    {
+                        "id": 461,
+                        "name": "trade_price",
+                        "verbose_name": "Trade Price (Price of Share)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 255,
+                        "name": "transaction_code",
+                        "verbose_name": "Unique Сode",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 256,
+                        "name": "transaction_currency",
+                        "verbose_name": "Transaction Currency",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 257,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value)",
+                        "value_type": 40
+                    }
+                ]
+            }
+        },
+        {
+            "id": 620,
+            "is_default_rule_scenario": false,
+            "is_error_rule_scenario": false,
+            "name": "Withdraw-cash-next-day",
+            "selector_values": [
+                "Cash"
+            ],
+            "transaction_type": 17,
+            "fields": [
+                {
+                    "id": 11009,
+                    "transaction_type_input": 257,
+                    "value_expr": "value_date+days(1)",
+                    "transaction_type_input_object": {
+                        "id": 257,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 17
+                    }
+                },
+                {
+                    "id": 11010,
+                    "transaction_type_input": 256,
+                    "value_expr": "transaction_currency",
+                    "transaction_type_input_object": {
+                        "id": 256,
+                        "name": "transaction_currency",
+                        "verbose_name": "Transaction Currency",
+                        "value_type": 100,
+                        "content_type": "currencies.currency",
+                        "order": 16
+                    }
+                },
+                {
+                    "id": 11011,
+                    "transaction_type_input": 243,
+                    "value_expr": "charges",
+                    "transaction_type_input_object": {
+                        "id": 243,
+                        "name": "charges",
+                        "verbose_name": "Charges",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 2
+                    }
+                },
+                {
+                    "id": 11012,
+                    "transaction_type_input": 242,
+                    "value_expr": "account_cash",
+                    "transaction_type_input_object": {
+                        "id": 242,
+                        "name": "account_cash",
+                        "verbose_name": "Account for Cash",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 0
+                    }
+                },
+                {
+                    "id": 11013,
+                    "transaction_type_input": 255,
+                    "value_expr": "transaction_code",
+                    "transaction_type_input_object": {
+                        "id": 255,
+                        "name": "transaction_code",
+                        "verbose_name": "Unique Сode",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 15
+                    }
+                },
+                {
+                    "id": 11014,
+                    "transaction_type_input": 254,
+                    "value_expr": "trade_date+days(1)",
+                    "transaction_type_input_object": {
+                        "id": 254,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 13
+                    }
+                },
+                {
+                    "id": 11015,
+                    "transaction_type_input": 253,
+                    "value_expr": "strategy1",
+                    "transaction_type_input_object": {
+                        "id": 253,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100,
+                        "content_type": "strategies.strategy1",
+                        "order": 12
+                    }
+                },
+                {
+                    "id": 11016,
+                    "transaction_type_input": 252,
+                    "value_expr": "source",
+                    "transaction_type_input_object": {
+                        "id": 252,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 11
+                    }
+                },
+                {
+                    "id": 11017,
+                    "transaction_type_input": 251,
+                    "value_expr": "'Withdraw'",
+                    "transaction_type_input_object": {
+                        "id": 251,
+                        "name": "selector_cashflow",
+                        "verbose_name": "Type (Deposit/Withdraw)",
+                        "value_type": 110,
+                        "content_type": null,
+                        "order": 10
+                    }
+                },
+                {
+                    "id": 11018,
+                    "transaction_type_input": 250,
+                    "value_expr": "responsible",
+                    "transaction_type_input_object": {
+                        "id": 250,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100,
+                        "content_type": "counterparties.responsible",
+                        "order": 9
+                    }
+                },
+                {
+                    "id": 11019,
+                    "transaction_type_input": 249,
+                    "value_expr": "position",
+                    "transaction_type_input_object": {
+                        "id": 249,
+                        "name": "position",
+                        "verbose_name": "Position",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 8
+                    }
+                },
+                {
+                    "id": 11020,
+                    "transaction_type_input": 248,
+                    "value_expr": "portfolio",
+                    "transaction_type_input_object": {
+                        "id": 248,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100,
+                        "content_type": "portfolios.portfolio",
+                        "order": 7
+                    }
+                },
+                {
+                    "id": 11021,
+                    "transaction_type_input": 247,
+                    "value_expr": "middle_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 247,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 6
+                    }
+                },
+                {
+                    "id": 11022,
+                    "transaction_type_input": 246,
+                    "value_expr": "front_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 246,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 5
+                    }
+                },
+                {
+                    "id": 11023,
+                    "transaction_type_input": 245,
+                    "value_expr": "counterparty",
+                    "transaction_type_input_object": {
+                        "id": 245,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100,
+                        "content_type": "counterparties.counterparty",
+                        "order": 4
+                    }
+                },
+                {
+                    "id": 11024,
+                    "transaction_type_input": 244,
+                    "value_expr": "charges_percent",
+                    "transaction_type_input_object": {
+                        "id": 244,
+                        "name": "charges_percent",
+                        "verbose_name": "Charges (%)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 3
+                    }
+                }
+            ],
+            "status": "active",
+            "transaction_type_object": {
+                "id": 17,
+                "name": "Deposits/Withdraws",
+                "user_code": "Deposits/Withdraws_unified",
+                "inputs": [
+                    {
+                        "id": 242,
+                        "name": "account_cash",
+                        "verbose_name": "Account for Cash",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 460,
+                        "name": "account_interim",
+                        "verbose_name": "Interim Account",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 243,
+                        "name": "charges",
+                        "verbose_name": "Charges",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 244,
+                        "name": "charges_percent",
+                        "verbose_name": "Charges (%)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 245,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 246,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 247,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 248,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 249,
+                        "name": "position",
+                        "verbose_name": "Position",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 250,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 251,
+                        "name": "selector_cashflow",
+                        "verbose_name": "Type (Deposit/Withdraw)",
+                        "value_type": 110
+                    },
+                    {
+                        "id": 252,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 253,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 254,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40
+                    },
+                    {
+                        "id": 461,
+                        "name": "trade_price",
+                        "verbose_name": "Trade Price (Price of Share)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 255,
+                        "name": "transaction_code",
+                        "verbose_name": "Unique Сode",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 256,
+                        "name": "transaction_currency",
+                        "verbose_name": "Transaction Currency",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 257,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value)",
+                        "value_type": 40
+                    }
+                ]
+            }
+        },
+        {
+            "id": 621,
+            "is_default_rule_scenario": false,
+            "is_error_rule_scenario": false,
+            "name": "FX Forwards-next-day",
+            "selector_values": [
+                "Currency forwards"
+            ],
+            "transaction_type": 40,
+            "fields": [
+                {
+                    "id": 11025,
+                    "transaction_type_input": 664,
+                    "value_expr": "account_cash_buy",
+                    "transaction_type_input_object": {
+                        "id": 664,
+                        "name": "account_cash_buy",
+                        "verbose_name": "Account Cash (Buy)",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 0
+                    }
+                },
+                {
+                    "id": 11026,
+                    "transaction_type_input": 681,
+                    "value_expr": "source",
+                    "transaction_type_input_object": {
+                        "id": 681,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 17
+                    }
+                },
+                {
+                    "id": 11027,
+                    "transaction_type_input": 680,
+                    "value_expr": "responsible",
+                    "transaction_type_input_object": {
+                        "id": 680,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100,
+                        "content_type": "counterparties.responsible",
+                        "order": 16
+                    }
+                },
+                {
+                    "id": 11028,
+                    "transaction_type_input": 679,
+                    "value_expr": "portfolio",
+                    "transaction_type_input_object": {
+                        "id": 679,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100,
+                        "content_type": "portfolios.portfolio",
+                        "order": 15
+                    }
+                },
+                {
+                    "id": 11029,
+                    "transaction_type_input": 678,
+                    "value_expr": "middle_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 678,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 14
+                    }
+                },
+                {
+                    "id": 11030,
+                    "transaction_type_input": 677,
+                    "value_expr": "linked_instrument",
+                    "transaction_type_input_object": {
+                        "id": 677,
+                        "name": "linked_instrument",
+                        "verbose_name": "Linked Instrument",
+                        "value_type": 100,
+                        "content_type": "instruments.instrument",
+                        "order": 13
+                    }
+                },
+                {
+                    "id": 11031,
+                    "transaction_type_input": 676,
+                    "value_expr": "fx_rate_reverse",
+                    "transaction_type_input_object": {
+                        "id": 676,
+                        "name": "fx_rate_reverse",
+                        "verbose_name": "FX Rate (Reverse)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 12
+                    }
+                },
+                {
+                    "id": 11032,
+                    "transaction_type_input": 675,
+                    "value_expr": "fx_rate",
+                    "transaction_type_input_object": {
+                        "id": 675,
+                        "name": "fx_rate",
+                        "verbose_name": "FX Rate",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 11
+                    }
+                },
+                {
+                    "id": 11033,
+                    "transaction_type_input": 674,
+                    "value_expr": "front_office_notes",
+                    "transaction_type_input_object": {
+                        "id": 674,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 10
+                    }
+                },
+                {
+                    "id": 11034,
+                    "transaction_type_input": 673,
+                    "value_expr": "currency_sell",
+                    "transaction_type_input_object": {
+                        "id": 673,
+                        "name": "currency_sell",
+                        "verbose_name": "Currency (Sell)",
+                        "value_type": 100,
+                        "content_type": "currencies.currency",
+                        "order": 9
+                    }
+                },
+                {
+                    "id": 11035,
+                    "transaction_type_input": 685,
+                    "value_expr": "value_date+days(1)",
+                    "transaction_type_input_object": {
+                        "id": 685,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value/Forward)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 21
+                    }
+                },
+                {
+                    "id": 11036,
+                    "transaction_type_input": 684,
+                    "value_expr": "transaction_code",
+                    "transaction_type_input_object": {
+                        "id": 684,
+                        "name": "transaction_code",
+                        "verbose_name": "Transaction Code",
+                        "value_type": 10,
+                        "content_type": null,
+                        "order": 20
+                    }
+                },
+                {
+                    "id": 11037,
+                    "transaction_type_input": 683,
+                    "value_expr": "trade_date+days(1)",
+                    "transaction_type_input_object": {
+                        "id": 683,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 19
+                    }
+                },
+                {
+                    "id": 11038,
+                    "transaction_type_input": 682,
+                    "value_expr": "strategy1",
+                    "transaction_type_input_object": {
+                        "id": 682,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100,
+                        "content_type": "strategies.strategy1",
+                        "order": 18
+                    }
+                },
+                {
+                    "id": 11039,
+                    "transaction_type_input": 672,
+                    "value_expr": "currency_buy",
+                    "transaction_type_input_object": {
+                        "id": 672,
+                        "name": "currency_buy",
+                        "verbose_name": "Currency (Buy)",
+                        "value_type": 100,
+                        "content_type": "currencies.currency",
+                        "order": 8
+                    }
+                },
+                {
+                    "id": 11040,
+                    "transaction_type_input": 671,
+                    "value_expr": "counterparty",
+                    "transaction_type_input_object": {
+                        "id": 671,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100,
+                        "content_type": "counterparties.counterparty",
+                        "order": 7
+                    }
+                },
+                {
+                    "id": 11041,
+                    "transaction_type_input": 670,
+                    "value_expr": "-amount_sell",
+                    "transaction_type_input_object": {
+                        "id": 670,
+                        "name": "amount_sell",
+                        "verbose_name": "Amount (Sell)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 6
+                    }
+                },
+                {
+                    "id": 11042,
+                    "transaction_type_input": 669,
+                    "value_expr": "-amount_buy",
+                    "transaction_type_input_object": {
+                        "id": 669,
+                        "name": "amount_buy",
+                        "verbose_name": "Amount (Buy)",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 5
+                    }
+                },
+                {
+                    "id": 11043,
+                    "transaction_type_input": 668,
+                    "value_expr": "allocation_pl",
+                    "transaction_type_input_object": {
+                        "id": 668,
+                        "name": "allocation_pl",
+                        "verbose_name": "Allocation for PL",
+                        "value_type": 100,
+                        "content_type": "instruments.instrument",
+                        "order": 4
+                    }
+                },
+                {
+                    "id": 11044,
+                    "transaction_type_input": 667,
+                    "value_expr": "account_position_sell",
+                    "transaction_type_input_object": {
+                        "id": 667,
+                        "name": "account_position_sell",
+                        "verbose_name": "Account Position (Sell)",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 3
+                    }
+                },
+                {
+                    "id": 11045,
+                    "transaction_type_input": 666,
+                    "value_expr": "account_position_buy",
+                    "transaction_type_input_object": {
+                        "id": 666,
+                        "name": "account_position_buy",
+                        "verbose_name": "Account Position (Buy)",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 2
+                    }
+                },
+                {
+                    "id": 11046,
+                    "transaction_type_input": 665,
+                    "value_expr": "account_cash_sell",
+                    "transaction_type_input_object": {
+                        "id": 665,
+                        "name": "account_cash_sell",
+                        "verbose_name": "Account Cash (Sell)",
+                        "value_type": 100,
+                        "content_type": "accounts.account",
+                        "order": 1
+                    }
+                }
+            ],
+            "status": "active",
+            "transaction_type_object": {
+                "id": 40,
+                "name": "LO Forwards (Next day)",
+                "user_code": "Forwards_unified_lombard_next_day",
+                "inputs": [
+                    {
+                        "id": 664,
+                        "name": "account_cash_buy",
+                        "verbose_name": "Account Cash (Buy)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 665,
+                        "name": "account_cash_sell",
+                        "verbose_name": "Account Cash (Sell)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 666,
+                        "name": "account_position_buy",
+                        "verbose_name": "Account Position (Buy)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 667,
+                        "name": "account_position_sell",
+                        "verbose_name": "Account Position (Sell)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 668,
+                        "name": "allocation_pl",
+                        "verbose_name": "Allocation for PL",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 669,
+                        "name": "amount_buy",
+                        "verbose_name": "Amount (Buy)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 670,
+                        "name": "amount_sell",
+                        "verbose_name": "Amount (Sell)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 671,
+                        "name": "counterparty",
+                        "verbose_name": "Counterparty",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 672,
+                        "name": "currency_buy",
+                        "verbose_name": "Currency (Buy)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 673,
+                        "name": "currency_sell",
+                        "verbose_name": "Currency (Sell)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 674,
+                        "name": "front_office_notes",
+                        "verbose_name": "Front Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 675,
+                        "name": "fx_rate",
+                        "verbose_name": "FX Rate",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 676,
+                        "name": "fx_rate_reverse",
+                        "verbose_name": "FX Rate (Reverse)",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 677,
+                        "name": "linked_instrument",
+                        "verbose_name": "Linked Instrument",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 678,
+                        "name": "middle_office_notes",
+                        "verbose_name": "Middle Office Notes",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 679,
+                        "name": "portfolio",
+                        "verbose_name": "Portfolio",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 680,
+                        "name": "responsible",
+                        "verbose_name": "Responsible",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 681,
+                        "name": "source",
+                        "verbose_name": "Source",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 682,
+                        "name": "strategy1",
+                        "verbose_name": "Strategy (1)",
+                        "value_type": 100
+                    },
+                    {
+                        "id": 683,
+                        "name": "trade_date",
+                        "verbose_name": "Date (Trade)",
+                        "value_type": 40
+                    },
+                    {
+                        "id": 684,
+                        "name": "transaction_code",
+                        "verbose_name": "Transaction Code",
+                        "value_type": 10
+                    },
+                    {
+                        "id": 685,
+                        "name": "value_date",
+                        "verbose_name": "Date (Value/Forward)",
+                        "value_type": 40
+                    }
+                ]
+            }
+        }
+    ],
+    "selector_values": [
+        {
+            "id": 911,
+            "value": "Structured products",
+            "notes": "",
+            "order": 0
+        },
+        {
+            "id": 912,
+            "value": "Real Estate",
+            "notes": "",
+            "order": 1
+        },
+        {
+            "id": 913,
+            "value": "Bonds",
+            "notes": "",
+            "order": 2
+        },
+        {
+            "id": 914,
+            "value": "Equities",
+            "notes": "",
+            "order": 3
+        },
+        {
+            "id": 915,
+            "value": "Other investments",
+            "notes": "",
+            "order": 4
+        },
+        {
+            "id": 916,
+            "value": "Convertible or warrant Bonds",
+            "notes": "",
+            "order": 5
+        },
+        {
+            "id": 917,
+            "value": "Cash",
+            "notes": "",
+            "order": 6
+        },
+        {
+            "id": 918,
+            "value": "Hedge Funds",
+            "notes": "",
+            "order": 7
+        },
+        {
+            "id": 919,
+            "value": "Derivatives",
+            "notes": "",
+            "order": 8
+        },
+        {
+            "id": 920,
+            "value": "Currency forwards",
+            "notes": "",
+            "order": 9
+        },
+        {
+            "id": 921,
+            "value": "Futures",
+            "notes": "",
+            "order": 10
+        },
+        {
+            "id": 922,
+            "value": "Short-term instruments",
+            "notes": "",
+            "order": 11
+        }
+    ],
+    "recon_scenarios": [],
+    "recon_layout": null,
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "column_matcher": "name",
+    "filter_expression": null,
+    "has_header_row": false,
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

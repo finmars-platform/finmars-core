@@ -374,7 +374,6 @@ def check_if_last_day_of_month(to_date):
 
 
 def get_first_transaction(portfolio_id):
-
     '''
     Get first transaction of portfolio
     :param portfolio_id:
@@ -437,7 +436,6 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
 
 
 def str_to_date(d):
-
     '''
     Convert string to date
     :param d:
@@ -491,14 +489,13 @@ def finmars_exception_handler(exc, context):
 
 
 def get_serializer(content_type_key):
-
     '''
     Returns serializer for given content type key.
     :param content_type_key:
     :return: serializer class
     '''
 
-    from poms.instruments.serializers import InstrumentSerializer
+    from poms.instruments.serializers import InstrumentSerializer, InstrumentTypeSerializer
 
     from poms.accounts.serializers import AccountSerializer
     from poms.accounts.serializers import AccountTypeSerializer
@@ -510,8 +507,20 @@ def get_serializer(content_type_key):
     from poms.strategies.serializers import Strategy1Serializer
     from poms.strategies.serializers import Strategy2Serializer
 
+    from poms.transactions.serializers import TransactionTypeSerializer
+    from poms.csv_import.serializers import CsvImportSchemeSerializer
+
+    from poms.integrations.serializers import ComplexTransactionImportSchemeSerializer
+    from poms.procedures.serializers import PricingProcedureSerializer
+    from poms.procedures.serializers import ExpressionProcedureSerializer
+    from poms.procedures.serializers import RequestDataFileProcedureSerializer
+    from poms.schedules.serializers import ScheduleSerializer
+
+    from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
     serializer_map = {
+        'transactions.transactiontype': TransactionTypeSerializer,
         'instruments.instrument': InstrumentSerializer,
+        'instruments.instrumenttype': InstrumentTypeSerializer,
         'accounts.account': AccountSerializer,
         'accounts.accounttype': AccountTypeSerializer,
         'portfolios.portfolio': PortfolioSerializer,
@@ -522,6 +531,16 @@ def get_serializer(content_type_key):
         'strategies.strategy1': Strategy1Serializer,
         'strategies.strategy2': Strategy2Serializer,
         'strategies.strategy3': Strategy2Serializer,
+
+        'csv_import.csvimportscheme': CsvImportSchemeSerializer,
+        'integrations.complextransactionimportscheme': ComplexTransactionImportSchemeSerializer,
+        'procedures.pricingprocedure': PricingProcedureSerializer,
+        'procedures.expressionprocedure': ExpressionProcedureSerializer,
+        'procedures.requestdatafileprocedure': RequestDataFileProcedureSerializer,
+        'schedules.schedule': ScheduleSerializer,
+        'obj_attrs.genericattributetype': GenericAttributeTypeSerializer,
+
+
     }
 
     return serializer_map[content_type_key]

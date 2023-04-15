@@ -433,7 +433,8 @@ class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
 
             'pricing_condition', 'pricing_condition_object',
 
-            'default_price', 'maturity_date', 'maturity_price', 'reference_for_pricing'
+            'default_price', 'maturity_date', 'maturity_price', 'reference_for_pricing',
+            'configuration_code'
 
         ]
 

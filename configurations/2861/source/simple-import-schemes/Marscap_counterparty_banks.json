@@ -1,0 +1,165 @@
+{
+    "id": 28,
+    "name": "Marscap_counterparty_banks",
+    "user_code": "Marscap_counterparty_banks",
+    "short_name": "Marscap_counterparty_banks",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "counterparties.counterparty",
+    "csv_fields": [
+        {
+            "column": 1,
+            "name": "RIAD_CODE",
+            "name_expr": "RIAD_CODE",
+            "column_name": null
+        },
+        {
+            "column": 2,
+            "name": "LEI",
+            "name_expr": "LEI",
+            "column_name": null
+        },
+        {
+            "column": 3,
+            "name": "COUNTRY_OF_REGISTRATION",
+            "name_expr": "COUNTRY_OF_REGISTRATION",
+            "column_name": null
+        },
+        {
+            "column": 4,
+            "name": "name",
+            "name_expr": "if_null(name, '-')",
+            "column_name": null
+        },
+        {
+            "column": 5,
+            "name": "BOX",
+            "name_expr": "BOX",
+            "column_name": null
+        },
+        {
+            "column": 6,
+            "name": "ADDRESS",
+            "name_expr": "ADDRESS",
+            "column_name": null
+        },
+        {
+            "column": 7,
+            "name": "POSTAL",
+            "name_expr": "POSTAL",
+            "column_name": null
+        },
+        {
+            "column": 8,
+            "name": "CITY",
+            "name_expr": "CITY",
+            "column_name": null
+        },
+        {
+            "column": 9,
+            "name": "CATEGORY",
+            "name_expr": "CATEGORY",
+            "column_name": null
+        },
+        {
+            "column": 10,
+            "name": "HEAD_COUNTRY_OF_REGISTRATION",
+            "name_expr": "HEAD_COUNTRY_OF_REGISTRATION",
+            "column_name": null
+        },
+        {
+            "column": 11,
+            "name": "HEAD_NAME",
+            "name_expr": "HEAD_NAME",
+            "column_name": null
+        },
+        {
+            "column": 12,
+            "name": "HEAD_RIAD_CODE",
+            "name_expr": "HEAD_RIAD_CODE",
+            "column_name": null
+        },
+        {
+            "column": 13,
+            "name": "HEAD_LEI",
+            "name_expr": "HEAD_LEI",
+            "column_name": null
+        },
+        {
+            "column": 14,
+            "name": "REPORT",
+            "name_expr": "REPORT",
+            "column_name": null
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 888,
+            "name": "Name",
+            "order": 0,
+            "expression": "name",
+            "system_property_key": "name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 889,
+            "name": "Short name",
+            "order": 0,
+            "expression": "name",
+            "system_property_key": "short_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 890,
+            "name": "Public name",
+            "order": 0,
+            "expression": "name",
+            "system_property_key": "public_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 891,
+            "name": "Notes",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "notes",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 892,
+            "name": "Group",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "group",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 887,
+            "name": "User code",
+            "order": 0,
+            "expression": "RIAD_CODE",
+            "system_property_key": "user_code",
+            "attribute_user_code": null,
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "skip",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "classifier_handler": "append",
+    "column_matcher": "index",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

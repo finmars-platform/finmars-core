@@ -1,0 +1,21 @@
+{
+    "id": 4,
+    "user_code": "lo_de",
+    "name": "LO DE (Forex Contract)",
+    "short_name": "LO DE (Forex Contract)",
+    "public_name": "LO DE (Forex Contract)",
+    "notes": null,
+    "show_transaction_details": false,
+    "transaction_details_expr": "\"\"",
+    "is_deleted": false,
+    "is_enabled": true,
+    "attributes": [],
+    "deleted_user_code": null,
+    "meta": {
+        "content_type": "accounts.accounttype",
+        "app_label": "accounts",
+        "model_name": "accounttype",
+        "space_code": "space00000"
+    },
+    "object_permissions": []
+}

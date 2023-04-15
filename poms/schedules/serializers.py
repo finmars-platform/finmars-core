@@ -41,7 +41,8 @@ class ScheduleSerializer(serializers.ModelSerializer):
             'id', 'master_user', 'name', 'user_code', 'notes',
             'is_enabled', 'cron_expr', 'procedures',
             'last_run_at', 'next_run_at', 'error_handler',
-            'data'
+            'data',
+            'configuration_code'
         ]
         read_only_fields = ['last_run_at', 'next_run_at']
 

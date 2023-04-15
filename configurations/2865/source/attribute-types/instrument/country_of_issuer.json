@@ -1,0 +1,3149 @@
+{
+    "id": 3,
+    "user_code": "country_of_issuer",
+    "name": "Country of Issuer",
+    "short_name": "Country of Issuer",
+    "public_name": null,
+    "notes": null,
+    "prefix": null,
+    "favorites": null,
+    "expr": "\"\"",
+    "can_recalculate": false,
+    "tooltip": null,
+    "kind": 1,
+    "content_type": 68,
+    "value_type": 30,
+    "order": 0,
+    "is_hidden": false,
+    "classifiers": [
+        {
+            "id": 536,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 541,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 546,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 18,
+            "name": "Afghanistan - AFG",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 19,
+            "name": "Åland Islands - ALA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 20,
+            "name": "Albania - ALB",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 21,
+            "name": "Algeria - DZA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 22,
+            "name": "American Samoa - ASM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 23,
+            "name": "Andorra - AND",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 24,
+            "name": "Angola - AGO",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 25,
+            "name": "Anguilla - AIA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 26,
+            "name": "Antarctica - ATA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 27,
+            "name": "Antigua and Barbuda - ATG",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 28,
+            "name": "Argentina - ARG",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 29,
+            "name": "Armenia - ARM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 30,
+            "name": "Aruba - ABW",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 31,
+            "name": "Australia - AUS",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 32,
+            "name": "Austria - AUT",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 33,
+            "name": "Azerbaijan - AZE",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 34,
+            "name": "Bahamas - BHS",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 35,
+            "name": "Bahrain - BHR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 36,
+            "name": "Bangladesh - BGD",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 37,
+            "name": "Barbados - BRB",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 38,
+            "name": "Belarus - BLR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 39,
+            "name": "Belgium - BEL",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 40,
+            "name": "Belize - BLZ",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 41,
+            "name": "Benin - BEN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 42,
+            "name": "Bermuda - BMU",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 43,
+            "name": "Bhutan - BTN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 44,
+            "name": "Bolivia plurinational state of - BOL",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 45,
+            "name": "Bonaire Sint Eustatius and Saba - BES",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 46,
+            "name": "Bosnia and Herzegovina - BIH",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 47,
+            "name": "Botswana - BWA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 48,
+            "name": "Bouvet Island - BVT",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 49,
+            "name": "Brazil - BRA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 50,
+            "name": "British Indian Ocean Territory - IOT",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 51,
+            "name": "Brunei Darussalam - BRN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 52,
+            "name": "Bulgaria - BGR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 53,
+            "name": "Burkina Faso - BFA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 54,
+            "name": "Burma - MMR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 55,
+            "name": "Burundi - BDI",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 56,
+            "name": "Cambodia - KHM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 57,
+            "name": "Cameroon - CMR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 58,
+            "name": "Canada - CAN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 59,
+            "name": "Cape Verde - CPV",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 60,
+            "name": "Cayman Islands - CYM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 61,
+            "name": "Central African Republic - CAF",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 62,
+            "name": "Chad - TCD",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 63,
+            "name": "Chile - CHL",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 64,
+            "name": "China - CHN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 65,
+            "name": "Christmas Island - CXR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 66,
+            "name": "Cocos (Keeling) Islands - CCK",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 67,
+            "name": "Colombia - COL",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 68,
+            "name": "Comoros - COM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 69,
+            "name": "Congo - COG",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 70,
+            "name": "Congo Democratic Republic of the - COD",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 71,
+            "name": "Cook Islands - COK",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 72,
+            "name": "Costa Rica - CRI",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 73,
+            "name": "Cote d'Ivoire - CIV",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 74,
+            "name": "Croatia - HRV",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 75,
+            "name": "Cuba - CUB",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 76,
+            "name": "Curaçao - CUW",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 77,
+            "name": "Cyprus - CYP",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 78,
+            "name": "Czech Republic - CZE",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 79,
+            "name": "Denmark - DNK",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 80,
+            "name": "Djibouti - DJI",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 81,
+            "name": "Dominica - DMA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 82,
+            "name": "Dominican Republic - DOM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 83,
+            "name": "Ecuador - ECU",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 84,
+            "name": "Egypt - EGY",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 85,
+            "name": "El Salvador - SLV",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 86,
+            "name": "Equatorial Guinea - GNQ",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 87,
+            "name": "Eritrea - ERI",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 88,
+            "name": "Estonia - EST",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 89,
+            "name": "Eswatini - SWZ",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 90,
+            "name": "Ethiopia - ETH",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 91,
+            "name": "Falkland Islands (Malvinas) - FLK",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 92,
+            "name": "Faroe Islands - FRO",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 93,
+            "name": "Fiji - FJI",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 94,
+            "name": "Finland - FIN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 95,
+            "name": "France - FRA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 96,
+            "name": "French Guiana - GUF",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 97,
+            "name": "French Polynesia - PYF",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 98,
+            "name": "French Southern Territories - ATF",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 99,
+            "name": "Gabon - GAB",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 100,
+            "name": "Gambia - GMB",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 101,
+            "name": "Georgia - GEO",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 102,
+            "name": "Germany - DEU",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 103,
+            "name": "Ghana - GHA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 104,
+            "name": "Gibraltar - GIB",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 105,
+            "name": "Greece - GRC",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 106,
+            "name": "Greenland - GRL",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 107,
+            "name": "Grenada - GRD",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 108,
+            "name": "Guadeloupe - GLP",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 109,
+            "name": "Guam - GUM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 110,
+            "name": "Guatemala - GTM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 111,
+            "name": "Guernsey - GGY",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 112,
+            "name": "Guinea-Bissau - GNB",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 113,
+            "name": "Guinea - GIN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 114,
+            "name": "Guyana - GUY",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 115,
+            "name": "Haiti - HTI",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 116,
+            "name": "Heard Island and McDonald Islands - HMD",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 117,
+            "name": "Holy See (Vatican City State) - VAT",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 118,
+            "name": "Honduras - HND",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 119,
+            "name": "Hong Kong - HKG",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 120,
+            "name": "Hungary - HUN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 121,
+            "name": "Iceland - ISL",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 122,
+            "name": "India - IND",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 123,
+            "name": "Indonesia - IDN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 124,
+            "name": "Iran Islamic Republic of - IRN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 125,
+            "name": "Iraq - IRQ",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 126,
+            "name": "Ireland - IRL",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 127,
+            "name": "Isle of Man - IMN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 128,
+            "name": "Israel - ISR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 129,
+            "name": "Italy - ITA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 130,
+            "name": "Jamaica - JAM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 131,
+            "name": "Japan - JPN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 132,
+            "name": "Jersey - JEY",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 133,
+            "name": "Jordan - JOR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 134,
+            "name": "Kazakhstan - KAZ",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 135,
+            "name": "Kenya - KEN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 136,
+            "name": "Kiribati - KIR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 137,
+            "name": "Korea Democratic People's republic of - PRK",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 138,
+            "name": "Korea Republic of - KOR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 139,
+            "name": "Kuwait - KWT",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 140,
+            "name": "Kyrgyzstan - KGZ",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 141,
+            "name": "Lao People's Democratic Republic - LAO",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 142,
+            "name": "Latvia - LVA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 143,
+            "name": "Lebanon - LBN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 144,
+            "name": "Lesotho - LSO",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 145,
+            "name": "Liberia - LBR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 146,
+            "name": "Libyan Arab Jamahiriya - LBY",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 147,
+            "name": "Liechtenstein - LIE",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 148,
+            "name": "Lithuania - LTU",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 149,
+            "name": "Luxembourg - LUX",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 150,
+            "name": "Macao - MAC",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 151,
+            "name": "Macedonia The Former Yugoslav Republic Of - MKD",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 152,
+            "name": "Madagascar - MDG",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 153,
+            "name": "Malawi - MWI",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 154,
+            "name": "Malaysia - MYS",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 155,
+            "name": "Maldives - MDV",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 156,
+            "name": "Mali - MLI",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 157,
+            "name": "Malta - MLT",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 158,
+            "name": "Marshall Islands - MHL",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 159,
+            "name": "Martinique - MTQ",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 160,
+            "name": "Mauritania - MRT",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 161,
+            "name": "Mauritius - MUS",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 162,
+            "name": "Mayotte - MYT",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 163,
+            "name": "Mexico - MEX",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 164,
+            "name": "Micronesia Federated States of - FSM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 165,
+            "name": "Moldova - MDA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 166,
+            "name": "Monaco - MCO",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 167,
+            "name": "Mongolia - MNG",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 168,
+            "name": "Montenegro - MNE",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 169,
+            "name": "Montserrat - MSR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 170,
+            "name": "Morocco - MAR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 171,
+            "name": "Mozambique - MOZ",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 172,
+            "name": "Namibia - NAM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 173,
+            "name": "Nauru - NRU",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 174,
+            "name": "Nepal - NPL",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 175,
+            "name": "Netherlands - NLD",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 176,
+            "name": "New Caledonia - NCL",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 177,
+            "name": "New Zealand - NZL",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 178,
+            "name": "Nicaragua - NIC",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 179,
+            "name": "Nigeria - NGA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 180,
+            "name": "Niger - NER",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 181,
+            "name": "Niue - NIU",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 182,
+            "name": "Norfolk Island - NFK",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 183,
+            "name": "Northern Mariana Islands - MNP",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 184,
+            "name": "Norway - NOR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 185,
+            "name": "Oman - OMN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 186,
+            "name": "Pakistan - PAK",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 187,
+            "name": "Palau - PLW",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 188,
+            "name": "Palestinian Territory Occupied - PSE",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 189,
+            "name": "Panama - PAN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 190,
+            "name": "Papua New Guinea - PNG",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 191,
+            "name": "Paraguay - PRY",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 192,
+            "name": "Peru - PER",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 193,
+            "name": "Philippines - PHL",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 194,
+            "name": "Pitcairn - PCN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 195,
+            "name": "Poland - POL",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 196,
+            "name": "Portugal - PRT",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 197,
+            "name": "Puerto Rico - PRI",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 198,
+            "name": "Qatar - QAT",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 199,
+            "name": "Reunion - REU",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 200,
+            "name": "Romania - ROU",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 201,
+            "name": "Russian Federation - RUS",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 202,
+            "name": "Rwanda - RWA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 203,
+            "name": "Saint Barthélemy - BLM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 204,
+            "name": "Saint Helena Ascension And Tristan Da Cunha - SHN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 205,
+            "name": "Saint Kitts and Nevis - KNA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 206,
+            "name": "Saint Lucia - LCA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 207,
+            "name": "Saint Martin (French Part) - MAF",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 208,
+            "name": "Saint Pierre and Miquelon - SPM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 209,
+            "name": "Saint Vincent and the Grenadines - VCT",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 210,
+            "name": "Samoa - WSM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 211,
+            "name": "San Marino - SMR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 212,
+            "name": "Sao Tome and Principe - STP",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 213,
+            "name": "Saudi Arabia - SAU",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 214,
+            "name": "Senegal - SEN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 215,
+            "name": "Serbia - SRB",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 216,
+            "name": "Seychelles - SYC",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 217,
+            "name": "Sierra Leone - SLE",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 218,
+            "name": "Singapore - SGP",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 219,
+            "name": "Sint Maarten - SXM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 220,
+            "name": "Slovakia - SVK",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 221,
+            "name": "Slovenia - SVN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 222,
+            "name": "Solomon Islands - SLB",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 223,
+            "name": "Somalia - SOM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 224,
+            "name": "South Africa - ZAF",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 225,
+            "name": "South Georgia and the South Sandwich Islands - SGS",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 226,
+            "name": "South Ossetia - OST",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 227,
+            "name": "South Sudan - SSD",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 228,
+            "name": "Spain - ESP",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 229,
+            "name": "Sri Lanka - LKA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 230,
+            "name": "Sudan - SDN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 231,
+            "name": "Suriname - SUR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 232,
+            "name": "Svalbard and Jan Mayen - SJM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 233,
+            "name": "Sweden - SWE",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 234,
+            "name": "Switzerland - CHE",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 235,
+            "name": "Syrian Arab Republic - SYR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 236,
+            "name": "Taiwan Province of China - TWN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 237,
+            "name": "Tajikistan - TJK",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 238,
+            "name": "Tanzania United Republic Of - TZA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 239,
+            "name": "Thailand - THA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 240,
+            "name": "Timor-Leste - TLS",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 241,
+            "name": "Togo - TGO",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 242,
+            "name": "Tokelau - TKL",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 243,
+            "name": "Tonga - TON",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 244,
+            "name": "Trinidad and Tobago - TTO",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 245,
+            "name": "Tunisia - TUN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 246,
+            "name": "Turkey - TUR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 247,
+            "name": "Turkmenistan - TKM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 248,
+            "name": "Turks and Caicos Islands - TCA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 249,
+            "name": "Tuvalu - TUV",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 250,
+            "name": "Uganda - UGA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 251,
+            "name": "Ukraine - UKR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 252,
+            "name": "United Arab Emirates - ARE",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 253,
+            "name": "United Kingdom - GBR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 254,
+            "name": "United States Minor Outlying Islands - UMI",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 255,
+            "name": "United States - USA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 256,
+            "name": "Uruguay - URY",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 257,
+            "name": "Uzbekistan - UZB",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 258,
+            "name": "Vanuatu - VUT",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 259,
+            "name": "Venezuela - VEN",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 260,
+            "name": "Vietnam - VNM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 261,
+            "name": "Virgin Islands British - VGB",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 262,
+            "name": "Virgin Islands U.S. - VIR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 263,
+            "name": "Wallis and Futuna - WLF",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 264,
+            "name": "Western Sahara - ESH",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 265,
+            "name": "Yemen - YEM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 266,
+            "name": "Zambia - ZMB",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 267,
+            "name": "Zimbabwe - ZWE",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 897,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 902,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 907,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 912,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 917,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 922,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 984,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "children": []
+        }
+    ],
+    "classifiers_flat": [
+        {
+            "id": 536,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 541,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 546,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 18,
+            "name": "Afghanistan - AFG",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 19,
+            "name": "Åland Islands - ALA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 20,
+            "name": "Albania - ALB",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 21,
+            "name": "Algeria - DZA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 22,
+            "name": "American Samoa - ASM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 23,
+            "name": "Andorra - AND",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 24,
+            "name": "Angola - AGO",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 25,
+            "name": "Anguilla - AIA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 26,
+            "name": "Antarctica - ATA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 27,
+            "name": "Antigua and Barbuda - ATG",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 28,
+            "name": "Argentina - ARG",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 29,
+            "name": "Armenia - ARM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 30,
+            "name": "Aruba - ABW",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 31,
+            "name": "Australia - AUS",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 32,
+            "name": "Austria - AUT",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 33,
+            "name": "Azerbaijan - AZE",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 34,
+            "name": "Bahamas - BHS",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 35,
+            "name": "Bahrain - BHR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 36,
+            "name": "Bangladesh - BGD",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 37,
+            "name": "Barbados - BRB",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 38,
+            "name": "Belarus - BLR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 39,
+            "name": "Belgium - BEL",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 40,
+            "name": "Belize - BLZ",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 41,
+            "name": "Benin - BEN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 42,
+            "name": "Bermuda - BMU",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 43,
+            "name": "Bhutan - BTN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 44,
+            "name": "Bolivia plurinational state of - BOL",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 45,
+            "name": "Bonaire Sint Eustatius and Saba - BES",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 46,
+            "name": "Bosnia and Herzegovina - BIH",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 47,
+            "name": "Botswana - BWA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 48,
+            "name": "Bouvet Island - BVT",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 49,
+            "name": "Brazil - BRA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 50,
+            "name": "British Indian Ocean Territory - IOT",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 51,
+            "name": "Brunei Darussalam - BRN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 52,
+            "name": "Bulgaria - BGR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 53,
+            "name": "Burkina Faso - BFA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 54,
+            "name": "Burma - MMR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 55,
+            "name": "Burundi - BDI",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 56,
+            "name": "Cambodia - KHM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 57,
+            "name": "Cameroon - CMR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 58,
+            "name": "Canada - CAN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 59,
+            "name": "Cape Verde - CPV",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 60,
+            "name": "Cayman Islands - CYM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 61,
+            "name": "Central African Republic - CAF",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 62,
+            "name": "Chad - TCD",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 63,
+            "name": "Chile - CHL",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 64,
+            "name": "China - CHN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 65,
+            "name": "Christmas Island - CXR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 66,
+            "name": "Cocos (Keeling) Islands - CCK",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 67,
+            "name": "Colombia - COL",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 68,
+            "name": "Comoros - COM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 69,
+            "name": "Congo - COG",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 70,
+            "name": "Congo Democratic Republic of the - COD",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 71,
+            "name": "Cook Islands - COK",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 72,
+            "name": "Costa Rica - CRI",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 73,
+            "name": "Cote d'Ivoire - CIV",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 74,
+            "name": "Croatia - HRV",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 75,
+            "name": "Cuba - CUB",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 76,
+            "name": "Curaçao - CUW",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 77,
+            "name": "Cyprus - CYP",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 78,
+            "name": "Czech Republic - CZE",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 79,
+            "name": "Denmark - DNK",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 80,
+            "name": "Djibouti - DJI",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 81,
+            "name": "Dominica - DMA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 82,
+            "name": "Dominican Republic - DOM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 83,
+            "name": "Ecuador - ECU",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 84,
+            "name": "Egypt - EGY",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 85,
+            "name": "El Salvador - SLV",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 86,
+            "name": "Equatorial Guinea - GNQ",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 87,
+            "name": "Eritrea - ERI",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 88,
+            "name": "Estonia - EST",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 89,
+            "name": "Eswatini - SWZ",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 90,
+            "name": "Ethiopia - ETH",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 91,
+            "name": "Falkland Islands (Malvinas) - FLK",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 92,
+            "name": "Faroe Islands - FRO",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 93,
+            "name": "Fiji - FJI",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 94,
+            "name": "Finland - FIN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 95,
+            "name": "France - FRA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 96,
+            "name": "French Guiana - GUF",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 97,
+            "name": "French Polynesia - PYF",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 98,
+            "name": "French Southern Territories - ATF",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 99,
+            "name": "Gabon - GAB",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 100,
+            "name": "Gambia - GMB",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 101,
+            "name": "Georgia - GEO",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 102,
+            "name": "Germany - DEU",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 103,
+            "name": "Ghana - GHA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 104,
+            "name": "Gibraltar - GIB",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 105,
+            "name": "Greece - GRC",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 106,
+            "name": "Greenland - GRL",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 107,
+            "name": "Grenada - GRD",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 108,
+            "name": "Guadeloupe - GLP",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 109,
+            "name": "Guam - GUM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 110,
+            "name": "Guatemala - GTM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 111,
+            "name": "Guernsey - GGY",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 112,
+            "name": "Guinea-Bissau - GNB",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 113,
+            "name": "Guinea - GIN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 114,
+            "name": "Guyana - GUY",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 115,
+            "name": "Haiti - HTI",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 116,
+            "name": "Heard Island and McDonald Islands - HMD",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 117,
+            "name": "Holy See (Vatican City State) - VAT",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 118,
+            "name": "Honduras - HND",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 119,
+            "name": "Hong Kong - HKG",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 120,
+            "name": "Hungary - HUN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 121,
+            "name": "Iceland - ISL",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 122,
+            "name": "India - IND",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 123,
+            "name": "Indonesia - IDN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 124,
+            "name": "Iran Islamic Republic of - IRN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 125,
+            "name": "Iraq - IRQ",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 126,
+            "name": "Ireland - IRL",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 127,
+            "name": "Isle of Man - IMN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 128,
+            "name": "Israel - ISR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 129,
+            "name": "Italy - ITA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 130,
+            "name": "Jamaica - JAM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 131,
+            "name": "Japan - JPN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 132,
+            "name": "Jersey - JEY",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 133,
+            "name": "Jordan - JOR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 134,
+            "name": "Kazakhstan - KAZ",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 135,
+            "name": "Kenya - KEN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 136,
+            "name": "Kiribati - KIR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 137,
+            "name": "Korea Democratic People's republic of - PRK",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 138,
+            "name": "Korea Republic of - KOR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 139,
+            "name": "Kuwait - KWT",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 140,
+            "name": "Kyrgyzstan - KGZ",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 141,
+            "name": "Lao People's Democratic Republic - LAO",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 142,
+            "name": "Latvia - LVA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 143,
+            "name": "Lebanon - LBN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 144,
+            "name": "Lesotho - LSO",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 145,
+            "name": "Liberia - LBR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 146,
+            "name": "Libyan Arab Jamahiriya - LBY",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 147,
+            "name": "Liechtenstein - LIE",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 148,
+            "name": "Lithuania - LTU",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 149,
+            "name": "Luxembourg - LUX",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 150,
+            "name": "Macao - MAC",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 151,
+            "name": "Macedonia The Former Yugoslav Republic Of - MKD",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 152,
+            "name": "Madagascar - MDG",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 153,
+            "name": "Malawi - MWI",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 154,
+            "name": "Malaysia - MYS",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 155,
+            "name": "Maldives - MDV",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 156,
+            "name": "Mali - MLI",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 157,
+            "name": "Malta - MLT",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 158,
+            "name": "Marshall Islands - MHL",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 159,
+            "name": "Martinique - MTQ",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 160,
+            "name": "Mauritania - MRT",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 161,
+            "name": "Mauritius - MUS",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 162,
+            "name": "Mayotte - MYT",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 163,
+            "name": "Mexico - MEX",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 164,
+            "name": "Micronesia Federated States of - FSM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 165,
+            "name": "Moldova - MDA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 166,
+            "name": "Monaco - MCO",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 167,
+            "name": "Mongolia - MNG",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 168,
+            "name": "Montenegro - MNE",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 169,
+            "name": "Montserrat - MSR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 170,
+            "name": "Morocco - MAR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 171,
+            "name": "Mozambique - MOZ",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 172,
+            "name": "Namibia - NAM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 173,
+            "name": "Nauru - NRU",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 174,
+            "name": "Nepal - NPL",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 175,
+            "name": "Netherlands - NLD",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 176,
+            "name": "New Caledonia - NCL",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 177,
+            "name": "New Zealand - NZL",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 178,
+            "name": "Nicaragua - NIC",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 179,
+            "name": "Nigeria - NGA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 180,
+            "name": "Niger - NER",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 181,
+            "name": "Niue - NIU",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 182,
+            "name": "Norfolk Island - NFK",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 183,
+            "name": "Northern Mariana Islands - MNP",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 184,
+            "name": "Norway - NOR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 185,
+            "name": "Oman - OMN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 186,
+            "name": "Pakistan - PAK",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 187,
+            "name": "Palau - PLW",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 188,
+            "name": "Palestinian Territory Occupied - PSE",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 189,
+            "name": "Panama - PAN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 190,
+            "name": "Papua New Guinea - PNG",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 191,
+            "name": "Paraguay - PRY",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 192,
+            "name": "Peru - PER",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 193,
+            "name": "Philippines - PHL",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 194,
+            "name": "Pitcairn - PCN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 195,
+            "name": "Poland - POL",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 196,
+            "name": "Portugal - PRT",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 197,
+            "name": "Puerto Rico - PRI",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 198,
+            "name": "Qatar - QAT",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 199,
+            "name": "Reunion - REU",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 200,
+            "name": "Romania - ROU",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 201,
+            "name": "Russian Federation - RUS",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 202,
+            "name": "Rwanda - RWA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 203,
+            "name": "Saint Barthélemy - BLM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 204,
+            "name": "Saint Helena Ascension And Tristan Da Cunha - SHN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 205,
+            "name": "Saint Kitts and Nevis - KNA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 206,
+            "name": "Saint Lucia - LCA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 207,
+            "name": "Saint Martin (French Part) - MAF",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 208,
+            "name": "Saint Pierre and Miquelon - SPM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 209,
+            "name": "Saint Vincent and the Grenadines - VCT",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 210,
+            "name": "Samoa - WSM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 211,
+            "name": "San Marino - SMR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 212,
+            "name": "Sao Tome and Principe - STP",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 213,
+            "name": "Saudi Arabia - SAU",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 214,
+            "name": "Senegal - SEN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 215,
+            "name": "Serbia - SRB",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 216,
+            "name": "Seychelles - SYC",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 217,
+            "name": "Sierra Leone - SLE",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 218,
+            "name": "Singapore - SGP",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 219,
+            "name": "Sint Maarten - SXM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 220,
+            "name": "Slovakia - SVK",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 221,
+            "name": "Slovenia - SVN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 222,
+            "name": "Solomon Islands - SLB",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 223,
+            "name": "Somalia - SOM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 224,
+            "name": "South Africa - ZAF",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 225,
+            "name": "South Georgia and the South Sandwich Islands - SGS",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 226,
+            "name": "South Ossetia - OST",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 227,
+            "name": "South Sudan - SSD",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 228,
+            "name": "Spain - ESP",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 229,
+            "name": "Sri Lanka - LKA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 230,
+            "name": "Sudan - SDN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 231,
+            "name": "Suriname - SUR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 232,
+            "name": "Svalbard and Jan Mayen - SJM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 233,
+            "name": "Sweden - SWE",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 234,
+            "name": "Switzerland - CHE",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 235,
+            "name": "Syrian Arab Republic - SYR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 236,
+            "name": "Taiwan Province of China - TWN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 237,
+            "name": "Tajikistan - TJK",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 238,
+            "name": "Tanzania United Republic Of - TZA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 239,
+            "name": "Thailand - THA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 240,
+            "name": "Timor-Leste - TLS",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 241,
+            "name": "Togo - TGO",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 242,
+            "name": "Tokelau - TKL",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 243,
+            "name": "Tonga - TON",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 244,
+            "name": "Trinidad and Tobago - TTO",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 245,
+            "name": "Tunisia - TUN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 246,
+            "name": "Turkey - TUR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 247,
+            "name": "Turkmenistan - TKM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 248,
+            "name": "Turks and Caicos Islands - TCA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 249,
+            "name": "Tuvalu - TUV",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 250,
+            "name": "Uganda - UGA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 251,
+            "name": "Ukraine - UKR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 252,
+            "name": "United Arab Emirates - ARE",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 253,
+            "name": "United Kingdom - GBR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 254,
+            "name": "United States Minor Outlying Islands - UMI",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 255,
+            "name": "United States - USA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 256,
+            "name": "Uruguay - URY",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 257,
+            "name": "Uzbekistan - UZB",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 258,
+            "name": "Vanuatu - VUT",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 259,
+            "name": "Venezuela - VEN",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 260,
+            "name": "Vietnam - VNM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 261,
+            "name": "Virgin Islands British - VGB",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 262,
+            "name": "Virgin Islands U.S. - VIR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 263,
+            "name": "Wallis and Futuna - WLF",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 264,
+            "name": "Western Sahara - ESH",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 265,
+            "name": "Yemen - YEM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 266,
+            "name": "Zambia - ZMB",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 267,
+            "name": "Zimbabwe - ZWE",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 897,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 902,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 907,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 912,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 917,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 922,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 984,
+            "name": "Abkhazia - ABH",
+            "level": 0,
+            "parent": null
+        }
+    ],
+    "deleted_user_code": null,
+    "meta": {
+        "content_type": "obj_attrs.genericattributetype",
+        "app_label": "obj_attrs",
+        "model_name": "genericattributetype",
+        "space_code": "space00000"
+    }
+}

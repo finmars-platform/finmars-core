@@ -24,6 +24,7 @@ from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableMode
     DataTimeStampedModel
 from poms.common.utils import date_now, isclose
 from poms.common.wrapper_models import NamedModelAutoMapping
+from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import CurrencyHistory
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.obj_perms.models import GenericObjectPermission
@@ -455,7 +456,7 @@ class PricingPolicy(NamedModel, DataTimeStampedModel):
     #     super(PricingPolicy, self).delete(*args, **kwargs)
 
 
-class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel, ConfigurationModel):
     master_user = models.ForeignKey(MasterUser, related_name='instrument_types',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     instrument_class = models.ForeignKey(InstrumentClass, related_name='instrument_types', on_delete=models.PROTECT,

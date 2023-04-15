@@ -36,6 +36,7 @@ import poms.system_messages.views as system_messages
 import poms.transactions.views as transactions
 import poms.ui.views as ui
 import poms.users.views as users
+import poms.configuration.views as configuration
 import poms.widgets.views as widgets
 from finmars_standardized_errors.views import ErrorRecordViewSet
 from poms.auth_tokens.views import ObtainAuthToken, SetAuthToken, CreateUser, CreateMasterUser, CreateMember, \
@@ -252,6 +253,9 @@ router.register(r'transactions/recalculate-permission-transaction',
                 transactions.RecalculatePermissionTransactionViewSet, 'recalculatepermissiontranscation')
 router.register(r'transactions/recalculate-permission-complex-transaction',
                 transactions.RecalculatePermissionComplexTransactionViewSet, 'recalculatepermissioncomplextrasaction')
+
+router.register(r'configuration/configuration', configuration.ConfigurationViewSet)
+
 
 router.register(r'transactions/bank-file', integrations.TransactionFileResultViewSet)  # deprecated?
 

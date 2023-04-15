@@ -15,6 +15,7 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.models import TimeStampedModel, AbstractClassModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel, \
     NamedModel
+from poms.configuration.models import ConfigurationModel
 from poms.integrations.storage import import_config_storage
 from poms.obj_attrs.models import GenericClassifier, GenericAttributeType
 
@@ -807,7 +808,7 @@ COLUMN_MATCHER_CHOICES = [
 ]
 
 
-class ComplexTransactionImportScheme(NamedModel, DataTimeStampedModel):
+class ComplexTransactionImportScheme(NamedModel, DataTimeStampedModel, ConfigurationModel):
     SKIP = 1
     BOOK_WITHOUT_UNIQUE_CODE = 2
     OVERWRITE = 3

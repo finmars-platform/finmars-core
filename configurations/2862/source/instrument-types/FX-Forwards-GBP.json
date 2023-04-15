@@ -1,0 +1,610 @@
+{
+    "id": 42,
+    "user_code": "FX-Forwards-GBP",
+    "name": "FX-Forwards-GBP",
+    "short_name": "FX-Forwards-GBP",
+    "public_name": "FX-Forwards-GBP",
+    "notes": "FX-Forwards-GBP",
+    "is_deleted": false,
+    "instrument_form_layouts": null,
+    "instrument_class": 2,
+    "instrument_class_object": {
+        "id": 2,
+        "user_code": "EVENT_AT_MATURITY",
+        "name": "Event at Maturity",
+        "description": "Event at Maturity"
+    },
+    "one_off_event": 1,
+    "one_off_event_object": {
+        "id": 1,
+        "user_code": "-",
+        "name": "-",
+        "short_name": "-",
+        "public_name": null,
+        "is_deleted": false,
+        "object_permissions": []
+    },
+    "regular_event": 1,
+    "regular_event_object": {
+        "id": 1,
+        "user_code": "-",
+        "name": "-",
+        "short_name": "-",
+        "public_name": null,
+        "is_deleted": false,
+        "object_permissions": []
+    },
+    "factor_same": 1,
+    "factor_same_object": {
+        "id": 1,
+        "user_code": "-",
+        "name": "-",
+        "short_name": "-",
+        "public_name": null,
+        "is_deleted": false,
+        "object_permissions": []
+    },
+    "factor_up": 1,
+    "factor_up_object": {
+        "id": 1,
+        "user_code": "-",
+        "name": "-",
+        "short_name": "-",
+        "public_name": null,
+        "is_deleted": false,
+        "object_permissions": []
+    },
+    "factor_down": 1,
+    "factor_down_object": {
+        "id": 1,
+        "user_code": "-",
+        "name": "-",
+        "short_name": "-",
+        "public_name": null,
+        "is_deleted": false,
+        "object_permissions": []
+    },
+    "is_enabled": true,
+    "pricing_policies": [
+        {
+            "id": 312,
+            "pricing_policy": 7,
+            "pricing_scheme": 2,
+            "notes": "",
+            "default_value": null,
+            "attribute_key": "default_price",
+            "data": null,
+            "overwrite_default_parameters": false,
+            "pricing_policy_object": {
+                "id": 7,
+                "user_code": "Access_prices",
+                "name": "Access Prices",
+                "short_name": "Access Prices",
+                "notes": null,
+                "expr": "",
+                "deleted_user_code": null,
+                "meta": {
+                    "content_type": "instruments.pricingpolicy",
+                    "app_label": "instruments",
+                    "model_name": "pricingpolicy",
+                    "space_code": "space00000"
+                }
+            },
+            "pricing_scheme_object": {
+                "id": 2,
+                "name": "Manual",
+                "user_code": "Manual",
+                "notes": "Prices for manual input",
+                "notes_for_users": "Prices must be manually added by user (or automatically from any parameter f.e. default price)",
+                "notes_for_parameter": "",
+                "error_handler": 2,
+                "type": 3,
+                "type_settings": {
+                    "id": 1,
+                    "instrument_pricing_scheme": 2,
+                    "expr": "parameter",
+                    "default_value": null,
+                    "attribute_key": "default_price",
+                    "value_type": 20,
+                    "pricing_error_text_expr": null,
+                    "accrual_calculation_method": 1,
+                    "accrual_expr": null,
+                    "accrual_error_text_expr": "'Formula error'"
+                },
+                "type_object": {
+                    "id": 3,
+                    "name": "Single Parameter Formula",
+                    "notes": "",
+                    "input_type": 2
+                }
+            }
+        },
+        {
+            "id": 313,
+            "pricing_policy": 8,
+            "pricing_scheme": 3,
+            "notes": "",
+            "default_value": null,
+            "attribute_key": null,
+            "data": null,
+            "overwrite_default_parameters": false,
+            "pricing_policy_object": {
+                "id": 8,
+                "user_code": "Bloomberg_prices",
+                "name": "Bloomberg Prices",
+                "short_name": "Bloomberg Prices",
+                "notes": null,
+                "expr": "",
+                "deleted_user_code": null,
+                "meta": {
+                    "content_type": "instruments.pricingpolicy",
+                    "app_label": "instruments",
+                    "model_name": "pricingpolicy",
+                    "space_code": "space00000"
+                }
+            },
+            "pricing_scheme_object": {
+                "id": 3,
+                "name": "Bonds and stocks (Bloomberg)",
+                "user_code": "Bonds and stocks (Bloomberg)",
+                "notes": "Scheme for bonds and stocks from Bloomberg",
+                "notes_for_users": "To download prices from Bloomberg, scheme uses specific parameters (for bonds - ISIN Corp, for stocks - Ticker Equity)",
+                "notes_for_parameter": "1 You should enter specific field for Bloomberg request - for example PX_BID for bid parameter, PX_ASK for ask parameter\n2 You should save formula for final price - for example ask, bid or (ask+bid)/2",
+                "error_handler": 2,
+                "type": 5,
+                "type_settings": {
+                    "id": 1,
+                    "instrument_pricing_scheme": 3,
+                    "expr": "last",
+                    "default_value": null,
+                    "attribute_key": "reference_for_pricing",
+                    "value_type": 10,
+                    "pricing_error_text_expr": "'bloom error'",
+                    "accrual_calculation_method": 2,
+                    "accrual_expr": null,
+                    "accrual_error_text_expr": "'schedule error'",
+                    "bid_historical": "PX_BID",
+                    "bid_yesterday": "PX_BID",
+                    "ask_historical": "PX_ASK",
+                    "ask_yesterday": "PX_ASK",
+                    "last_historical": "PX_LAST",
+                    "last_yesterday": "PX_LAST",
+                    "accrual_historical": null,
+                    "accrual_yesterday": null
+                },
+                "type_object": {
+                    "id": 5,
+                    "name": "Bloomberg",
+                    "notes": "",
+                    "input_type": 2
+                }
+            }
+        },
+        {
+            "id": 314,
+            "pricing_policy": 6,
+            "pricing_scheme": null,
+            "notes": "",
+            "default_value": null,
+            "attribute_key": null,
+            "data": null,
+            "overwrite_default_parameters": false,
+            "pricing_policy_object": {
+                "id": 6,
+                "user_code": "DFT",
+                "name": "DFT",
+                "short_name": "DFT",
+                "notes": null,
+                "expr": "(ask+bid)/2",
+                "deleted_user_code": null,
+                "meta": {
+                    "content_type": "instruments.pricingpolicy",
+                    "app_label": "instruments",
+                    "model_name": "pricingpolicy",
+                    "space_code": "space00000"
+                }
+            },
+            "pricing_scheme_object": null
+        },
+        {
+            "id": 315,
+            "pricing_policy": 5,
+            "pricing_scheme": 4,
+            "notes": "",
+            "default_value": null,
+            "attribute_key": null,
+            "data": null,
+            "overwrite_default_parameters": false,
+            "pricing_policy_object": {
+                "id": 5,
+                "user_code": "Finmars_prices",
+                "name": "Finmars Prices",
+                "short_name": "CBONDS prices",
+                "notes": "",
+                "expr": "",
+                "deleted_user_code": null,
+                "meta": {
+                    "content_type": "instruments.pricingpolicy",
+                    "app_label": "instruments",
+                    "model_name": "pricingpolicy",
+                    "space_code": "space00000"
+                }
+            },
+            "pricing_scheme_object": {
+                "id": 4,
+                "name": "Bonds and stocks (CBONDS)",
+                "user_code": "Bonds and stocks (CBONDS)",
+                "notes": "Scheme for bonds and stocks from CBONDS",
+                "notes_for_users": "To download prices from CBONDS, scheme uses specific parameters (for bonds and stocks - ISIN)",
+                "notes_for_parameter": "",
+                "error_handler": 1,
+                "type": 9,
+                "type_settings": {
+                    "id": 2,
+                    "instrument_pricing_scheme": 4,
+                    "expr": "close",
+                    "default_value": null,
+                    "attribute_key": "attributes.ISIN",
+                    "value_type": 10,
+                    "accrual_calculation_method": 2,
+                    "accrual_expr": null,
+                    "accrual_error_text_expr": "'schedule error'",
+                    "pricing_error_text_expr": "'error'"
+                },
+                "type_object": {
+                    "id": 9,
+                    "name": "CBONDS",
+                    "notes": "",
+                    "input_type": 2
+                }
+            }
+        },
+        {
+            "id": 316,
+            "pricing_policy": 9,
+            "pricing_scheme": 2,
+            "notes": "",
+            "default_value": null,
+            "attribute_key": null,
+            "data": null,
+            "overwrite_default_parameters": false,
+            "pricing_policy_object": {
+                "id": 9,
+                "user_code": "Lombard_Price_Policy",
+                "name": "Lombard Prices",
+                "short_name": "Lombard Prices",
+                "notes": null,
+                "expr": "",
+                "deleted_user_code": null,
+                "meta": {
+                    "content_type": "instruments.pricingpolicy",
+                    "app_label": "instruments",
+                    "model_name": "pricingpolicy",
+                    "space_code": "space00000"
+                }
+            },
+            "pricing_scheme_object": {
+                "id": 2,
+                "name": "Manual",
+                "user_code": "Manual",
+                "notes": "Prices for manual input",
+                "notes_for_users": "Prices must be manually added by user (or automatically from any parameter f.e. default price)",
+                "notes_for_parameter": "",
+                "error_handler": 2,
+                "type": 3,
+                "type_settings": {
+                    "id": 1,
+                    "instrument_pricing_scheme": 2,
+                    "expr": "parameter",
+                    "default_value": null,
+                    "attribute_key": "default_price",
+                    "value_type": 20,
+                    "pricing_error_text_expr": null,
+                    "accrual_calculation_method": 1,
+                    "accrual_expr": null,
+                    "accrual_error_text_expr": "'Formula error'"
+                },
+                "type_object": {
+                    "id": 3,
+                    "name": "Single Parameter Formula",
+                    "notes": "",
+                    "input_type": 2
+                }
+            }
+        },
+        {
+            "id": 311,
+            "pricing_policy": 1,
+            "pricing_scheme": 9,
+            "notes": "",
+            "default_value": null,
+            "attribute_key": "maturity_date",
+            "data": {
+                "tenors": [
+                    {
+                        "index": 1,
+                        "price_ticker": "USDGBP1M Curncy",
+                        "tenor_type": "1m"
+                    },
+                    {
+                        "index": 2,
+                        "price_ticker": "USDGBP2M Curncy",
+                        "tenor_type": "2m"
+                    },
+                    {
+                        "index": 3,
+                        "price_ticker": "USDGBP3M Curncy",
+                        "tenor_type": "3m"
+                    },
+                    {
+                        "index": 4,
+                        "price_ticker": "USDGBP4M Curncy",
+                        "tenor_type": "4m"
+                    },
+                    {
+                        "index": 5,
+                        "price_ticker": "USDGBP5M Curncy",
+                        "tenor_type": "5m"
+                    },
+                    {
+                        "index": 6,
+                        "price_ticker": "USDGBP6M Curncy",
+                        "tenor_type": "6m"
+                    },
+                    {
+                        "index": 7,
+                        "price_ticker": "USDGBP7M Curncy",
+                        "tenor_type": "7m"
+                    },
+                    {
+                        "index": 8,
+                        "price_ticker": "USDGBP8M Curncy",
+                        "tenor_type": "8m"
+                    },
+                    {
+                        "index": 9,
+                        "price_ticker": "USDGBP9M Curncy",
+                        "tenor_type": "9m"
+                    },
+                    {
+                        "index": 10,
+                        "price_ticker": "USDGBP10M Curncy",
+                        "tenor_type": "10m"
+                    },
+                    {
+                        "index": 11,
+                        "price_ticker": "USDGBP11M Curncy",
+                        "tenor_type": "11m"
+                    },
+                    {
+                        "index": 12,
+                        "price_ticker": "USDGBP12M Curncy",
+                        "tenor_type": "12m"
+                    },
+                    {
+                        "index": 13,
+                        "price_ticker": "USDGBP1Y Curncy",
+                        "tenor_type": "1y"
+                    },
+                    {
+                        "index": 14,
+                        "price_ticker": "USDGBP15M Curncy",
+                        "tenor_type": "15m"
+                    },
+                    {
+                        "index": 15,
+                        "price_ticker": "USDGBP18M Curncy",
+                        "tenor_type": "18m"
+                    },
+                    {
+                        "index": 16,
+                        "price_ticker": "USDGBP1W Curncy",
+                        "tenor_type": "1w"
+                    },
+                    {
+                        "index": 17,
+                        "price_ticker": "USDGBP2W Curncy",
+                        "tenor_type": "2w"
+                    },
+                    {
+                        "index": 18,
+                        "price_ticker": "USDGBP3W Curncy",
+                        "tenor_type": "3w"
+                    }
+                ]
+            },
+            "overwrite_default_parameters": true,
+            "pricing_policy_object": {
+                "id": 1,
+                "user_code": "-",
+                "name": "-",
+                "short_name": "-",
+                "notes": null,
+                "expr": "(ask+bid)/2",
+                "deleted_user_code": null,
+                "meta": {
+                    "content_type": "instruments.pricingpolicy",
+                    "app_label": "instruments",
+                    "model_name": "pricingpolicy",
+                    "space_code": "space00000"
+                }
+            },
+            "pricing_scheme_object": {
+                "id": 9,
+                "name": "Forwards GBP (Bloomberg)",
+                "user_code": "Forwards GBP (Bloomberg)",
+                "notes": "Scheme for Forwards GBP from Bloomberg",
+                "notes_for_users": "To download prices from Bloomberg, scheme uses specific parameters (USDGBP+PERIOD Curncy)",
+                "notes_for_parameter": "",
+                "error_handler": 1,
+                "type": 8,
+                "type_settings": {
+                    "id": 4,
+                    "instrument_pricing_scheme": 9,
+                    "expr": "1/price",
+                    "default_value": null,
+                    "attribute_key": "maturity_date",
+                    "value_type": 40,
+                    "pricing_error_text_expr": "'Error Here'",
+                    "accrual_calculation_method": 1,
+                    "accrual_expr": null,
+                    "accrual_error_text_expr": null,
+                    "price_code": "PX_LAST",
+                    "data": {
+                        "tenors": [
+                            {
+                                "index": 1,
+                                "price_ticker": "USDGBP1M Curncy",
+                                "tenor_type": "1m"
+                            },
+                            {
+                                "index": 2,
+                                "price_ticker": "USDGBP2M Curncy",
+                                "tenor_type": "2m"
+                            },
+                            {
+                                "index": 3,
+                                "price_ticker": "USDGBP3M Curncy",
+                                "tenor_type": "3m"
+                            },
+                            {
+                                "index": 4,
+                                "price_ticker": "USDGBP4M Curncy",
+                                "tenor_type": "4m"
+                            },
+                            {
+                                "index": 5,
+                                "price_ticker": "USDGBP5M Curncy",
+                                "tenor_type": "5m"
+                            },
+                            {
+                                "index": 6,
+                                "price_ticker": "USDGBP6M Curncy",
+                                "tenor_type": "6m"
+                            },
+                            {
+                                "index": 7,
+                                "price_ticker": "USDGBP7M Curncy",
+                                "tenor_type": "7m"
+                            },
+                            {
+                                "index": 8,
+                                "price_ticker": "USDGBP8M Curncy",
+                                "tenor_type": "8m"
+                            },
+                            {
+                                "index": 9,
+                                "price_ticker": "USDGBP9M Curncy",
+                                "tenor_type": "9m"
+                            },
+                            {
+                                "index": 10,
+                                "price_ticker": "USDGBP10M Curncy",
+                                "tenor_type": "10m"
+                            },
+                            {
+                                "index": 11,
+                                "price_ticker": "USDGBP11M Curncy",
+                                "tenor_type": "11m"
+                            },
+                            {
+                                "index": 12,
+                                "price_ticker": "USDGBP12M Curncy",
+                                "tenor_type": "12m"
+                            },
+                            {
+                                "index": 13,
+                                "price_ticker": "USDGBP1Y Curncy",
+                                "tenor_type": "1y"
+                            },
+                            {
+                                "index": 14,
+                                "price_ticker": "USDGBP15M Curncy",
+                                "tenor_type": "15m"
+                            },
+                            {
+                                "index": 15,
+                                "price_ticker": "USDGBP18M Curncy",
+                                "tenor_type": "18m"
+                            },
+                            {
+                                "index": 16,
+                                "price_ticker": "USDGBP1W Curncy",
+                                "tenor_type": "1w"
+                            },
+                            {
+                                "index": 17,
+                                "price_ticker": "USDGBP2W Curncy",
+                                "tenor_type": "2w"
+                            },
+                            {
+                                "index": 18,
+                                "price_ticker": "USDGBP3W Curncy",
+                                "tenor_type": "3w"
+                            }
+                        ]
+                    }
+                },
+                "type_object": {
+                    "id": 8,
+                    "name": "Bloomberg Forwards",
+                    "notes": "",
+                    "input_type": 3
+                }
+            }
+        }
+    ],
+    "has_second_exposure_currency": false,
+    "accruals": [],
+    "events": [],
+    "instrument_attributes": [],
+    "instrument_factor_schedules": [],
+    "payment_size_detail": 1,
+    "payment_size_detail_object": {
+        "id": 1,
+        "user_code": "PERCENT",
+        "name": "% per annum",
+        "description": "% per annum"
+    },
+    "accrued_currency": 5,
+    "accrued_currency_object": 5,
+    "accrued_multiplier": 1.0,
+    "default_accrued": 0.0,
+    "exposure_calculation_model": 1,
+    "co_directional_exposure_currency": "GBP",
+    "counter_directional_exposure_currency": "GBP",
+    "co_directional_exposure_currency_value_type": 100,
+    "counter_directional_exposure_currency_value_type": 100,
+    "long_underlying_instrument": null,
+    "short_underlying_instrument": null,
+    "underlying_long_multiplier": 1.0,
+    "underlying_short_multiplier": 1.0,
+    "long_underlying_exposure": null,
+    "short_underlying_exposure": null,
+    "position_reporting": 1,
+    "instrument_factor_schedule_data": null,
+    "pricing_currency": 2,
+    "pricing_currency_object": 2,
+    "price_multiplier": 1.0,
+    "pricing_condition": 2,
+    "pricing_condition_object": {
+        "id": 2,
+        "user_code": "RUN_VALUATION_IF_OPEN",
+        "name": "Run Valuation: if non-zero position",
+        "description": "Run Valuation: if non-zero position"
+    },
+    "default_price": 1.0,
+    "maturity_date": "2222-11-11",
+    "maturity_price": 1.0,
+    "reference_for_pricing": "",
+    "configuration_code": "com.finmars.local",
+    "attributes": [],
+    "deleted_user_code": null,
+    "meta": {
+        "content_type": "instruments.instrumenttype",
+        "app_label": "instruments",
+        "model_name": "instrumenttype",
+        "space_code": "space00000"
+    },
+    "object_permissions": []
+}

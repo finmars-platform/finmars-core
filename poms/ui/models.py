@@ -9,6 +9,7 @@ from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
 from poms.common.models import AbstractClassModel, NamedModel, TimeStampedModel
+from poms.configuration.models import ConfigurationModel
 from poms.configuration_sharing.models import SharedConfigurationFile
 from poms.users.models import MasterUser, Member
 
@@ -228,7 +229,7 @@ class CrossEntityAttributeExtension(models.Model):
         ]
 
 
-class ColorPalette(NamedModel):
+class ColorPalette(NamedModel, ConfigurationModel):
     master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, default='', blank=True, verbose_name=gettext_lazy('name'))
     is_default = models.BooleanField(default=False, verbose_name=gettext_lazy('is default'))
@@ -260,7 +261,7 @@ class ColorPaletteColor(models.Model):
         ordering = ['order']
 
 
-class ComplexTransactionUserFieldModel(models.Model):
+class ComplexTransactionUserFieldModel(ConfigurationModel):
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -270,7 +271,7 @@ class ComplexTransactionUserFieldModel(models.Model):
     is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
 
 
-class TransactionUserFieldModel(models.Model):
+class TransactionUserFieldModel(ConfigurationModel):
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -280,7 +281,7 @@ class TransactionUserFieldModel(models.Model):
     is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
 
 
-class InstrumentUserFieldModel(models.Model):
+class InstrumentUserFieldModel(ConfigurationModel):
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -583,7 +584,7 @@ class Dashboard(models.Model):
         verbose_name = gettext_lazy('dashboard')
         verbose_name_plural = gettext_lazy('dashboard')
 
-
+# Deprecated
 class Configuration(BaseUIModel):
     master_user = models.ForeignKey(MasterUser, related_name='configuration_files',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)

@@ -122,6 +122,8 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
                   'column_matcher', 'instrument_reference_column', 'item_post_process_script',
                   'data_preprocess_expression',
 
+                  'configuration_code'
+
                   )
 
     def create_entity_fields_if_not_exist(self, scheme):

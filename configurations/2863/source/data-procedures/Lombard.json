@@ -1,0 +1,21 @@
+{
+    "id": 35,
+    "name": "Lombard",
+    "user_code": "Lombard",
+    "notes": null,
+    "provider": 6,
+    "scheme_user_code": "CIM_Transactions_v3_0",
+    "scheme_type": "transaction_import",
+    "data": null,
+    "date_from_expr": "",
+    "date_to_expr": "",
+    "date_from": "2022-01-01",
+    "date_to": "2022-04-30",
+    "configuration_code": "com.finmars.local",
+    "provider_object": {
+        "id": 6,
+        "name": "Universal Provider",
+        "user_code": "universal",
+        "notes": ""
+    }
+}

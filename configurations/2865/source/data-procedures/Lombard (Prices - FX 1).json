@@ -1,0 +1,28 @@
+{
+    "id": 51,
+    "name": "Lombard (Prices - FX 1)",
+    "user_code": "Lombard (Prices - FX 1)",
+    "notes": null,
+    "provider": 6,
+    "scheme_user_code": "LO_Prices_FX_1v1_0_0",
+    "scheme_type": "simple_import",
+    "data": null,
+    "date_from_expr": "now()-days(1)",
+    "date_to_expr": "now()-days(1)",
+    "date_from": null,
+    "date_to": null,
+    "configuration_code": "com.finmars.local",
+    "deleted_user_code": null,
+    "provider_object": {
+        "id": 6,
+        "name": "Universal Provider",
+        "user_code": "universal",
+        "notes": ""
+    },
+    "meta": {
+        "content_type": "procedures.requestdatafileprocedure",
+        "app_label": "procedures",
+        "model_name": "requestdatafileprocedure",
+        "space_code": "space00000"
+    }
+}

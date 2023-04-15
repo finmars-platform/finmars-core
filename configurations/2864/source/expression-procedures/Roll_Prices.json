@@ -1,0 +1,10 @@
+{
+    "id": 15,
+    "name": "Roll_Prices",
+    "user_code": "Roll_Prices",
+    "notes": null,
+    "data": null,
+    "context_variables": [],
+    "code": "policy = get_relation_by_user_code(\"instruments.pricingpolicy\", \"-\")\n#instrument_user_codes = [\"Anson_B\",\"Blackwall_R\",\"Cobia\",\"Fenghe_A\",\"Fenghe_Feb22\",\"Kerrisdale_D\",\"Rosalind_Nov21\",\"Taiga_A\",\"Tamarack_A\",\"Westerly\"] \ninstruments = get_instruments()\ninstruments = []\nfor iuc in instrument_user_codes: \n    instruments.append(  get_relation_by_user_code(\"instruments.instrument\", iuc) )\n\ndates = reverse(get_list_of_dates_between_two_dates(context_date_from, context_date_to))\n\nfor d in dates:\n    for instrument in instruments:\n        price = get_principal_price(d, instrument, policy)\n        accrued = get_accrued_price(d, instrument, policy)\n        if (not price) and (price != 0):\n            latest_price = get_latest_principal_price(d - days(365), d, instrument, policy, 0)\n            if latest_price or latest_price == 0:\n                new_accrued = calculate_accrued_price(instrument, d)\n                add_price_history(date = d, instrument = instrument, pricing_policy = policy, principal_price = latest_price, accrued_price = new_accrued)\n        #if not accrued and not (price == 0 and latest_price == 0):\n                #new_accrued = calculate_accrued_price(instrument, d)\n                #add_price_history(date = d, instrument = instrument, pricing_policy = policy, principal_price = None, accrued_price = new_accrued)",
+    "configuration_code": "com.finmars.local"
+}

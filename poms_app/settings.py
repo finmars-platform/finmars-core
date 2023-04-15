@@ -86,14 +86,14 @@ INSTALLED_APPS = [
     'poms.csv_import',
     'poms.transaction_import',
     'poms.complex_import',
-    'poms.configuration_export',
-    'poms.configuration_import',
+    'poms.configuration_export', # DEPRECATED
+    'poms.configuration_import', # DEPRECATED
     'poms.reference_tables',
     'poms.celery_tasks',
 
     'poms.reconciliation',
     'poms.file_reports',
-    'poms.configuration_sharing',
+    'poms.configuration_sharing', # DEPRECATED
     'poms.pricing',
 
     'poms.schedules',

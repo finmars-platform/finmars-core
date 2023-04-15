@@ -9,6 +9,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import NamedModel, DataTimeStampedModel
+from poms.configuration.models import ConfigurationModel
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import MasterUser
 
@@ -23,7 +24,7 @@ def validate_crontab(value):
         raise ValidationError(gettext_lazy('A valid cron string is required.'))
 
 
-class Schedule(NamedModel):
+class Schedule(NamedModel, ConfigurationModel):
     '''
         Simply schedules, User Defined
 

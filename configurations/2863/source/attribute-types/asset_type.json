@@ -1,0 +1,772 @@
+{
+    "id": 55,
+    "user_code": "asset_type",
+    "name": "Asset Type",
+    "short_name": "Asset Type",
+    "public_name": null,
+    "notes": null,
+    "prefix": null,
+    "favorites": null,
+    "expr": "\"\"",
+    "can_recalculate": false,
+    "tooltip": "Security Type",
+    "kind": 1,
+    "value_type": 30,
+    "order": 0,
+    "is_hidden": false,
+    "classifiers": [
+        {
+            "id": 643,
+            "name": "",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 644,
+            "name": "-",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 927,
+            "name": "-",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 645,
+            "name": "211",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 646,
+            "name": "Basic Materials",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 647,
+            "name": "Basket Notes",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 648,
+            "name": "Bond Futures",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 649,
+            "name": "Bonds",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 650,
+            "name": "Callable Bank Deposit",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 651,
+            "name": "Call Options",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 652,
+            "name": "Cash",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 653,
+            "name": "Commodity",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 654,
+            "name": "Commodity Futures",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 655,
+            "name": "Communications",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 656,
+            "name": "Consumer, Cyclical",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 657,
+            "name": "Consumer, Non-cyclical",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 658,
+            "name": "Convertible Bonds",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 659,
+            "name": "Convertible or warrant Bonds",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 660,
+            "name": "Currency forwards",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 661,
+            "name": "<Custody Fees>",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 662,
+            "name": "Derivatives",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 663,
+            "name": "DR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 664,
+            "name": "Energy",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 665,
+            "name": "Equities",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 666,
+            "name": "ETFs",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 667,
+            "name": "Exchange Derivatives",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 668,
+            "name": "Fees",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 669,
+            "name": "Financial",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 670,
+            "name": "Fixed Income Directional",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 671,
+            "name": "Funds",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 672,
+            "name": "FX Forwards",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 673,
+            "name": "GDR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 674,
+            "name": "Government",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 675,
+            "name": "Hedge Funds",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 676,
+            "name": "Index Futures",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 677,
+            "name": "Index Linked Bonds",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 678,
+            "name": "Index Option",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 679,
+            "name": "Industrial",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 680,
+            "name": "Instr Type",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 681,
+            "name": "Insurance",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 682,
+            "name": "Loans",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 683,
+            "name": "<Management Fees>",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 684,
+            "name": "(Monetary)",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 685,
+            "name": "N.A.",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 686,
+            "name": "<Payables / Receivables>",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 687,
+            "name": "Performance Fees",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 688,
+            "name": "Perpetuities",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 689,
+            "name": "Preferred Stocks",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 690,
+            "name": "Private Credit",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 691,
+            "name": "Private Loans",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 692,
+            "name": "Promissory Note",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 693,
+            "name": "[Provisions]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 694,
+            "name": "Put Options",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 695,
+            "name": "Real Estate",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 696,
+            "name": "REIT",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 697,
+            "name": "Short Term Notes",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 698,
+            "name": "Stocks",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 699,
+            "name": "Structured Products",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 700,
+            "name": "T-Bills",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 701,
+            "name": "Technology",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 702,
+            "name": "Utilities",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 703,
+            "name": "Warrants",
+            "level": 0,
+            "children": []
+        }
+    ],
+    "classifiers_flat": [
+        {
+            "id": 643,
+            "name": "",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 644,
+            "name": "-",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 927,
+            "name": "-",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 645,
+            "name": "211",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 646,
+            "name": "Basic Materials",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 647,
+            "name": "Basket Notes",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 648,
+            "name": "Bond Futures",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 649,
+            "name": "Bonds",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 650,
+            "name": "Callable Bank Deposit",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 651,
+            "name": "Call Options",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 652,
+            "name": "Cash",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 653,
+            "name": "Commodity",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 654,
+            "name": "Commodity Futures",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 655,
+            "name": "Communications",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 656,
+            "name": "Consumer, Cyclical",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 657,
+            "name": "Consumer, Non-cyclical",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 658,
+            "name": "Convertible Bonds",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 659,
+            "name": "Convertible or warrant Bonds",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 660,
+            "name": "Currency forwards",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 661,
+            "name": "<Custody Fees>",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 662,
+            "name": "Derivatives",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 663,
+            "name": "DR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 664,
+            "name": "Energy",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 665,
+            "name": "Equities",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 666,
+            "name": "ETFs",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 667,
+            "name": "Exchange Derivatives",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 668,
+            "name": "Fees",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 669,
+            "name": "Financial",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 670,
+            "name": "Fixed Income Directional",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 671,
+            "name": "Funds",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 672,
+            "name": "FX Forwards",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 673,
+            "name": "GDR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 674,
+            "name": "Government",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 675,
+            "name": "Hedge Funds",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 676,
+            "name": "Index Futures",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 677,
+            "name": "Index Linked Bonds",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 678,
+            "name": "Index Option",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 679,
+            "name": "Industrial",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 680,
+            "name": "Instr Type",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 681,
+            "name": "Insurance",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 682,
+            "name": "Loans",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 683,
+            "name": "<Management Fees>",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 684,
+            "name": "(Monetary)",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 685,
+            "name": "N.A.",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 686,
+            "name": "<Payables / Receivables>",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 687,
+            "name": "Performance Fees",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 688,
+            "name": "Perpetuities",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 689,
+            "name": "Preferred Stocks",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 690,
+            "name": "Private Credit",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 691,
+            "name": "Private Loans",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 692,
+            "name": "Promissory Note",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 693,
+            "name": "[Provisions]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 694,
+            "name": "Put Options",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 695,
+            "name": "Real Estate",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 696,
+            "name": "REIT",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 697,
+            "name": "Short Term Notes",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 698,
+            "name": "Stocks",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 699,
+            "name": "Structured Products",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 700,
+            "name": "T-Bills",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 701,
+            "name": "Technology",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 702,
+            "name": "Utilities",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 703,
+            "name": "Warrants",
+            "level": 0,
+            "parent": null
+        }
+    ],
+    "deleted_user_code": null,
+    "meta": {
+        "content_type": "obj_attrs.genericattributetype",
+        "app_label": "obj_attrs",
+        "model_name": "genericattributetype",
+        "space_code": "space00000"
+    }
+}

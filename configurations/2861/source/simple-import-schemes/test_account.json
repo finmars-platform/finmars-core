@@ -1,0 +1,111 @@
+{
+    "id": 41,
+    "name": "test_account",
+    "user_code": "test_account",
+    "short_name": "test_account",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "accounts.account",
+    "csv_fields": [
+        {
+            "column": 1,
+            "name": "name",
+            "name_expr": "name",
+            "column_name": "name"
+        },
+        {
+            "column": 2,
+            "name": "user_code",
+            "name_expr": "user_code",
+            "column_name": "user_code"
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 1454,
+            "name": "User code",
+            "order": 0,
+            "expression": "user_code",
+            "system_property_key": "user_code",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1455,
+            "name": "Name",
+            "order": 0,
+            "expression": "name",
+            "system_property_key": "name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1456,
+            "name": "Short name",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "short_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1457,
+            "name": "Public name",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "public_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1458,
+            "name": "Notes",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "notes",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1459,
+            "name": "Type",
+            "order": 0,
+            "expression": "'-'",
+            "system_property_key": "type",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1460,
+            "name": "Depository",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "Depository",
+            "use_default": true
+        },
+        {
+            "id": 1461,
+            "name": "Depository",
+            "order": 0,
+            "expression": "",
+            "system_property_key": null,
+            "attribute_user_code": "Depository",
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "overwrite",
+    "delimiter": ",",
+    "error_handler": "break",
+    "missing_data_handler": "set_defaults",
+    "classifier_handler": "skip",
+    "column_matcher": "index",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

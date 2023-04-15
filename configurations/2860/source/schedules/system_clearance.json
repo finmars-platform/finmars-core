@@ -1,0 +1,20 @@
+{
+    "id": 21,
+    "name": "System Clearance",
+    "user_code": "system_clearance",
+    "notes": null,
+    "is_enabled": true,
+    "cron_expr": "0 6 * * *",
+    "procedures": [
+        {
+            "type": "expression_procedure",
+            "user_code": "system_clearance",
+            "order": 0
+        }
+    ],
+    "last_run_at": "2023-02-27T23:11:31+0000",
+    "next_run_at": "2023-02-28T06:00:00+0000",
+    "error_handler": "break",
+    "data": null,
+    "configuration_code": "com.finmars.local"
+}

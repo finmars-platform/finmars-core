@@ -9,9 +9,9 @@ class ConfigurationModel(models.Model):
     '''
     configuration_code = models.CharField(max_length=255,
                                           default='com.finmars.local',
-                                          verbose_name=gettext_lazy('configuration code'))
+                                          verbose_name=gettext_lazy('Configuration Code'))
 
-    user_code = models.CharField(max_length=510, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+    user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('User Code'))
 
     class Meta:
         abstract = True
@@ -47,3 +47,7 @@ class Configuration(models.Model):
     short_name = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('short name'))
     notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
     version = models.CharField(max_length=255, verbose_name=gettext_lazy('version'))
+
+
+    def __str__(self):
+        return '%s (%s)' % (self.configuration_code, self.version)

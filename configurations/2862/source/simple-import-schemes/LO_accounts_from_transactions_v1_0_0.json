@@ -1,0 +1,93 @@
+{
+    "id": 36,
+    "name": "LO Accounts (from Transactions) 1.0.0",
+    "user_code": "LO_accounts_from_transactions_v1_0_0",
+    "short_name": "LO Accounts (from Transactions) 1.0.0",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "accounts.account",
+    "csv_fields": [
+        {
+            "column": 1,
+            "name": "temp_account",
+            "name_expr": "if_null(str(temp_account),'-')",
+            "column_name": "accn_nb"
+        },
+        {
+            "column": 2,
+            "name": "temp_account_type",
+            "name_expr": "if_null(str(temp_account_type),'-')",
+            "column_name": "accn_type"
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 956,
+            "name": "User code",
+            "order": 0,
+            "expression": "str(temp_account)",
+            "system_property_key": "user_code",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 957,
+            "name": "Name",
+            "order": 0,
+            "expression": "'LO '+str(temp_account)",
+            "system_property_key": "name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 958,
+            "name": "Short name",
+            "order": 0,
+            "expression": "str(temp_account)",
+            "system_property_key": "short_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 959,
+            "name": "Public name",
+            "order": 0,
+            "expression": "'LO '+str(temp_account)",
+            "system_property_key": "public_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 960,
+            "name": "Notes",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "notes",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 961,
+            "name": "Type",
+            "order": 0,
+            "expression": "'lo_'+lower(temp_account_type)",
+            "system_property_key": "type",
+            "attribute_user_code": null,
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "skip",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "classifier_handler": "skip",
+    "column_matcher": "name",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}
