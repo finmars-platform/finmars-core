@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from poms.common.fields import PrimaryKeyRelatedFilteredField
+from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeOrPrimaryKeyRelatedField
 from poms.currencies.models import Currency
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -35,7 +35,7 @@ class SystemCurrencyDefault(object):
         return ecosystem_default.currency
 
 
-class CurrencyField(PrimaryKeyRelatedFilteredField):
+class CurrencyField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Currency.objects
     filter_backends = (
         OwnerByMasterUserFilter,

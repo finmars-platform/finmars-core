@@ -152,6 +152,7 @@ class RequestDataFileProcedureInstanceSerializer(serializers.ModelSerializer):
                   'status', 'error_code', 'error_message',
                   'linked_import_task',
                   'created', 'modified',
+                  'response_data',
                   'procedure', 'procedure_object')
 
 

@@ -57,8 +57,10 @@ from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import TransactionClass, TransactionTypeGroup, TransactionType, TransactionTypeInput
 from poms.transactions.serializers import TransactionTypeGroupSerializer, TransactionTypeSerializer
-from poms.ui.models import ListLayout, InstrumentUserFieldModel, TransactionUserFieldModel, DashboardLayout, EditLayout, \
-    ContextMenuLayout, TemplateLayout, EntityTooltip, ColorPalette, ColumnSortData, CrossEntityAttributeExtension
+from poms.ui.models import ListLayout, InstrumentUserFieldModel, ComplexTransactionUserFieldModel, DashboardLayout, \
+    EditLayout, \
+    ContextMenuLayout, TemplateLayout, EntityTooltip, ColorPalette, ColumnSortData, CrossEntityAttributeExtension, \
+    TransactionUserFieldModel
 from poms.ui.serializers import EditLayoutSerializer, ListLayoutSerializer, DashboardLayoutSerializer, \
     InstrumentUserFieldSerializer, ContextMenuLayoutSerializer, \
     TemplateLayoutSerializer, EntityTooltipSerializer, ColorPaletteSerializer, ColumnSortDataSerializer, \
@@ -2514,6 +2516,56 @@ class ConfigurationImportManager(object):
 
         _l.info('Import Configuration Instrument User Fields done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
+    def import_complex_transaction_user_fields(self, configuration_section):
+
+        st = time.perf_counter()
+
+        for item in configuration_section['items']:
+
+            if 'ui.complextransactionuserfieldmodel' in item['entity']:
+
+                self.instance.stats['configuration'][item['entity']] = []
+
+                if 'content' in item:
+
+                    for content_object in item['content']:
+
+                        stats = {
+                            'content_type': item['entity'],
+                            'mode': self.instance.mode,
+                            'item': content_object,
+                            'error': {
+                                'message': None
+                            },
+                            'status': 'info'
+                        }
+
+                        try:
+
+                            try:
+                                instance = ComplexTransactionUserFieldModel.objects.get(
+                                    master_user=self.master_user, key=content_object['key'])
+                                instance.name = content_object['name']
+                                instance.is_active = content_object['is_active']
+                                instance.save()
+
+                            except ComplexTransactionUserFieldModel.DoesNotExist:
+                                ComplexTransactionUserFieldModel.objects.create(
+                                    is_active=content_object['is_active'], name=content_object['name'],
+                                    master_user=self.master_user, key=content_object['key'])
+
+
+                        except Exception as error:
+                            stats['status'] = 'error'
+                            stats['error']['message'] = 'Complex Transaction User Field %s already exists' % content_object[
+                                'name']
+
+                        self.instance.stats['configuration'][item['entity']].append(stats)
+
+                        self.update_progress(message='Import Transaction Labels')
+
+        _l.info('Import Configuration Complex Transaction User Fields done %s' % "{:3.3f}".format(time.perf_counter() - st))
+
     def import_transaction_user_fields(self, configuration_section):
 
         st = time.perf_counter()
@@ -2563,6 +2615,7 @@ class ConfigurationImportManager(object):
                         self.update_progress(message='Import Transaction Labels')
 
         _l.info('Import Configuration Transaction User Fields done %s' % "{:3.3f}".format(time.perf_counter() - st))
+
 
     def import_instrument_pricing_schemes(self, configuration_section):
 
@@ -3054,6 +3107,7 @@ class ConfigurationImportManager(object):
                 self.import_download_instrument_schemes(configuration_section)
 
                 self.import_instrument_user_fields(configuration_section)
+                self.import_complex_transaction_user_fields(configuration_section)
                 self.import_transaction_user_fields(configuration_section)
                 self.import_entity_tooltips(configuration_section)
                 self.import_color_palettes(configuration_section)

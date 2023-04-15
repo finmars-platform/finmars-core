@@ -183,6 +183,10 @@ def serialize_transaction_report_item(item):
 
     }
 
+    result['transaction_item_name'] = item['transaction_item_name']
+    result['transaction_item_short_name'] = item['transaction_item_short_name']
+    result['transaction_item_user_code'] = item['transaction_item_user_code']
+
     # Complex Transaction Fields
 
     # result['complex_transaction.status'] = item['complex_transaction_status']
@@ -263,6 +267,18 @@ def serialize_transaction_report_item(item):
     result['entry_item_type'] = item['entry_item_type']
     result['entry_item_type_name'] = item['entry_item_type_name']
 
+    result['user_text_1'] = item['user_text_1']
+    result['user_text_2'] = item['user_text_2']
+    result['user_text_3'] = item['user_text_3']
+
+    result['user_number_1'] = item['user_number_1']
+    result['user_number_2'] = item['user_number_2']
+    result['user_number_3'] = item['user_number_3']
+
+    result['user_date_1'] = item['user_date_1']
+    result['user_date_2'] = item['user_date_2']
+    result['user_date_3'] = item['user_date_3']
+
     return result
 
 
@@ -311,6 +327,7 @@ def serialize_balance_report_item(item):
     result["instrument_principal_price"] = item["instrument_principal_price"]
     result["instrument_accrued_price"] = item["instrument_accrued_price"]
     result["instrument_factor"] = item["instrument_factor"]
+    result["daily_price_change"] = item["daily_price_change"]
 
     result["account"] = item["account_position_id"]
 
@@ -337,6 +354,8 @@ def serialize_balance_report_item(item):
 
     # result["pricing_currency"] = item["pricing_currency_id"]
     # result["currency"] = None
+
+    result["fx_rate"] = item["fx_rate"]
 
     result["position_size"] = item["position_size"]
     result["nominal_position_size"] = item["nominal_position_size"]
@@ -487,6 +506,7 @@ def serialize_pl_report_item(item):
     result["instrument_principal_price"] = item["instrument_principal_price"]
     result["instrument_accrued_price"] = item["instrument_accrued_price"]
     result["instrument_factor"] = item["instrument_factor"]
+    result["daily_price_change"] = item["daily_price_change"]
 
     #
     result["position_size"] = item["position_size"]

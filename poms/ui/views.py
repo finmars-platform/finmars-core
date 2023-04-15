@@ -9,15 +9,15 @@ from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter
 from poms.common.mixins import DestroySystemicModelMixin
 from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
-    ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
+    ConfigurationExportLayout, ComplexTransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, CrossEntityAttributeExtension, \
-    ColumnSortData
+    ColumnSortData, TransactionUserFieldModel
 from poms.ui.serializers import ListLayoutSerializer, \
     EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
-    TransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
+    ComplexTransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
     DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer, EntityTooltipSerializer, \
     ColorPaletteSerializer, ListLayoutLightSerializer, DashboardLayoutLightSerializer, \
-    CrossEntityAttributeExtensionSerializer, ColumnSortDataSerializer
+    CrossEntityAttributeExtensionSerializer, ColumnSortDataSerializer, TransactionUserFieldSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 
 
@@ -50,6 +50,15 @@ class PortalInterfaceAccessViewSet(AbstractReadOnlyModelViewSet):
     serializer_class = PortalInterfaceAccessModelSerializer
     pagination_class = None
 
+
+class ComplexTransactionUserFieldViewSet(AbstractModelViewSet):
+    queryset = ComplexTransactionUserFieldModel.objects.select_related(
+        'master_user',
+    )
+    serializer_class = ComplexTransactionUserFieldSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
 
 class TransactionUserFieldViewSet(AbstractModelViewSet):
     queryset = TransactionUserFieldModel.objects.select_related(

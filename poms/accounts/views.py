@@ -10,6 +10,8 @@ from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer, 
 from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, \
     GroupsAttributeFilter, AttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
+from poms.common.utils import get_list_of_entity_attributes
+from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
@@ -19,7 +21,7 @@ from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
 from poms.users.filters import OwnerByMasterUserFilter
-
+from rest_framework.response import Response
 
 class AccountTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = AccountType
@@ -66,6 +68,59 @@ class AccountTypeViewSet(AbstractWithObjectPermissionViewSet):
     ordering_fields = [
         'user_code', 'name', 'short_name', 'public_name', 'show_transaction_details'
     ]
+
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+
+        items = [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+            },
+            {
+                "key": "show_transaction_details",
+                "name": "Show transaction details",
+                "value_type": 50,
+            },
+            {
+                "key": "transaction_details_expr",
+                "name": "Transaction details expr",
+                "value_type": 10
+            }
+        ]
+
+        items = items + get_list_of_entity_attributes('accounts.accounttype')
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
+
 
 
 class AccountTypeEvFilterSet(FilterSet):
@@ -207,6 +262,56 @@ class AccountViewSet(AbstractWithObjectPermissionViewSet):
         result = self.get_paginated_response(serializer.data)
 
         return result
+
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+
+        items = [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "type",
+                "name": "Type",
+                "value_type": "field",
+                "value_content_type": "accounts.accounttype",
+                "value_entity": "account-type",
+                "code": "user_code"
+            }
+        ]
+
+        items = items + get_list_of_entity_attributes('accounts.account')
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
 
 
 class AccountEvFilterSet(FilterSet):

@@ -2,13 +2,13 @@ from __future__ import unicode_literals
 
 import json
 import logging
+import time
 import traceback
 from datetime import date
 from math import isnan
-import time
+
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
-
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
@@ -331,12 +331,21 @@ class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         (TYPE_PROCEDURE, gettext_lazy('Procedure')),
     )
 
-    BOOK_WITHOUT_UNIQUE_CODE = 1
-    SKIP_BOOK_WITH_UNIQUE_CODE = 2
+    # 1 (SKIP, gettext_lazy('Skip')),
+    # 2 (BOOK_WITHOUT_UNIQUE_CODE, gettext_lazy('Book without Unique Code ')),
+    # 3 (OVERWRITE, gettext_lazy('Overwrite')),
+    # 4 (TREAT_AS_ERROR, gettext_lazy('Treat as error')),
+
+    SKIP = 1
+    BOOK_WITHOUT_UNIQUE_CODE = 2
+    OVERWRITE = 3
+    TREAT_AS_ERROR = 4
 
     BOOK_WITH_UNIQUE_CODE_CHOICES = (
-        (BOOK_WITHOUT_UNIQUE_CODE, gettext_lazy('Book without unique code')),
-        (SKIP_BOOK_WITH_UNIQUE_CODE, gettext_lazy('Skip')),
+        (SKIP, gettext_lazy('Skip')),
+        (BOOK_WITHOUT_UNIQUE_CODE, gettext_lazy('Book without Unique Code')),
+        (OVERWRITE, gettext_lazy('Overwrite')),
+        (TREAT_AS_ERROR, gettext_lazy('Treat As Error')),  # Wtf?
     )
 
     master_user = models.ForeignKey(MasterUser, related_name='transaction_types',
@@ -1060,6 +1069,36 @@ class TransactionTypeActionTransaction(TransactionTypeAction):
     notes = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                              verbose_name=gettext_lazy('notes'))
 
+    user_text_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=gettext_lazy('user_text_1'))
+
+    user_text_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=gettext_lazy('user_text_2'))
+
+    user_text_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
+                                   verbose_name=gettext_lazy('user_text_3'))
+
+    user_number_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
+                                     verbose_name=gettext_lazy('user_number_1'))
+
+    user_number_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
+                                     verbose_name=gettext_lazy('user_number_2'))
+
+    user_number_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
+                                     verbose_name=gettext_lazy('user_number_3'))
+
+    user_date_1 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
+                                   verbose_name=gettext_lazy('user_date_1'))
+
+    user_date_2 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
+                                   verbose_name=gettext_lazy('user_date_2'))
+
+    user_date_3 = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
+                                   verbose_name=gettext_lazy('user_date_3'))
+
+    is_canceled = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, null=True,
+                                   verbose_name=gettext_lazy('is canceled'))
+
     class Meta:
         verbose_name = gettext_lazy('transaction type action transaction')
         verbose_name_plural = gettext_lazy('transaction type action transactions')
@@ -1315,6 +1354,7 @@ class ComplexTransaction(DataTimeStampedModel):
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     transaction_type = models.ForeignKey(TransactionType, on_delete=models.PROTECT,
+                                         db_index=True,
                                          verbose_name=gettext_lazy('transaction type'))
 
     is_deleted = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is deleted'))
@@ -1333,75 +1373,76 @@ class ComplexTransaction(DataTimeStampedModel):
                                                          db_index=True,
                                                          verbose_name=gettext_lazy('visibility_status'))
 
-    code = models.IntegerField(default=0, verbose_name=gettext_lazy('code'))
+    code = models.IntegerField(default=0, verbose_name=gettext_lazy('code'), db_index=True)
 
     transaction_unique_code = models.CharField(max_length=255, null=True, blank=True,
+                                               db_index=True,
                                                verbose_name=gettext_lazy('transaction unique code'))
 
     deleted_transaction_unique_code = models.CharField(max_length=255, null=True, blank=True,
                                                        verbose_name=gettext_lazy('deleted transaction unique code'))
 
-    text = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('text'))
+    text = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('text'), db_index=True)
 
-    user_text_1 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 1'))
+    user_text_1 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 1'))
 
-    user_text_2 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 2'))
+    user_text_2 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 2'))
 
-    user_text_3 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 3'))
+    user_text_3 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 3'))
 
-    user_text_4 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 4'))
+    user_text_4 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 4'))
 
-    user_text_5 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 5'))
+    user_text_5 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 5'))
 
-    user_text_6 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 6'))
+    user_text_6 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 6'))
 
-    user_text_7 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 7'))
+    user_text_7 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 7'))
 
-    user_text_8 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 8'))
+    user_text_8 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 8'))
 
-    user_text_9 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 9'))
+    user_text_9 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 9'))
 
-    user_text_10 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 10'))
+    user_text_10 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 10'))
 
-    user_text_11 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 11'))
+    user_text_11 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 11'))
 
-    user_text_12 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 12'))
+    user_text_12 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 12'))
 
-    user_text_13 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 13'))
+    user_text_13 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 13'))
 
-    user_text_14 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 14'))
+    user_text_14 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 14'))
 
-    user_text_15 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 15'))
+    user_text_15 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 15'))
 
-    user_text_16 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 16'))
+    user_text_16 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 16'))
 
-    user_text_17 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 17'))
+    user_text_17 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 17'))
 
-    user_text_18 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 18'))
+    user_text_18 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 18'))
 
-    user_text_19 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 19'))
+    user_text_19 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 19'))
 
-    user_text_20 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 20'))
+    user_text_20 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 20'))
 
-    user_text_21 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 21'))
+    user_text_21 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 21'))
 
-    user_text_22 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 22'))
+    user_text_22 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 22'))
 
-    user_text_23 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 23'))
+    user_text_23 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 23'))
 
-    user_text_24 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 24'))
+    user_text_24 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 24'))
 
-    user_text_25 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 25'))
+    user_text_25 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 25'))
 
-    user_text_26 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 26'))
+    user_text_26 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 26'))
 
-    user_text_27 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 27'))
+    user_text_27 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 27'))
 
-    user_text_28 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 28'))
+    user_text_28 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 28'))
 
-    user_text_29 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 29'))
+    user_text_29 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 29'))
 
-    user_text_30 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user text 30'))
+    user_text_30 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 30'))
 
     user_number_1 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 1'))
 
@@ -1500,6 +1541,21 @@ class ComplexTransaction(DataTimeStampedModel):
         # _l.info("ComplexTransaction.save text %s" % self.text)
         # _l.info("ComplexTransaction.save date %s" % self.date)
 
+        is_new = self.pk is None
+
+        if self.transaction_unique_code:
+
+            if is_new:
+
+                count = ComplexTransaction.objects.exclude(pk=self.pk).filter(
+                    transaction_unique_code=self.transaction_unique_code).count()
+            else:
+                count = ComplexTransaction.objects.filter(
+                    transaction_unique_code=self.transaction_unique_code).count()
+
+            if count > 0:
+                raise Exception("Transaction Unique Code must be unique")
+
         if self.code is None or self.code == 0:
             self.code = FakeSequence.next_value(self.transaction_type.master_user, 'complex_transaction', d=100)
         # _l.info("ComplexTransaction.save code %s" % self.code)
@@ -1520,8 +1576,6 @@ class ComplexTransaction(DataTimeStampedModel):
             for transaction in self.transactions.all():
                 transaction.is_deleted = True
                 transaction.save()
-
-            from poms.common import formula
 
             if hasattr(self, 'transaction_unique_code'):
                 self.deleted_transaction_unique_code = self.transaction_unique_code
@@ -1609,8 +1663,8 @@ class Transaction(models.Model):
                                             verbose_name=gettext_lazy('complex transaction'))
     complex_transaction_order = models.PositiveSmallIntegerField(default=0.0, verbose_name=gettext_lazy(
         'complex transaction order'))
-    transaction_code = models.IntegerField(default=0, verbose_name=gettext_lazy('transaction code'))
-    transaction_class = models.ForeignKey(TransactionClass, on_delete=models.PROTECT,
+    transaction_code = models.IntegerField(default=0, verbose_name=gettext_lazy('transaction code'), db_index=True)
+    transaction_class = models.ForeignKey(TransactionClass, on_delete=models.PROTECT, db_index=True,
                                           verbose_name=gettext_lazy("transaction class"))
 
     # is_locked = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is locked'))
@@ -1644,7 +1698,8 @@ class Transaction(models.Model):
     cash_date = models.DateField(default=date_now, db_index=True, verbose_name=gettext_lazy("cash date"))
 
     # portfolio
-    portfolio = models.ForeignKey(Portfolio, on_delete=models.PROTECT, verbose_name=gettext_lazy("portfolio"))
+    portfolio = models.ForeignKey(Portfolio, on_delete=models.PROTECT, verbose_name=gettext_lazy("portfolio"),
+                                  db_index=True)
 
     # accounts
     account_position = models.ForeignKey(Account, related_name='transactions_account_position',
@@ -1733,7 +1788,19 @@ class Transaction(models.Model):
                                   help_text=gettext_lazy(
                                       'Absolute value of overheads (for calculations on the form)'))
 
-    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
+    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'), db_index=True)
+
+    user_text_1 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user_text_1'), db_index=True)
+    user_text_2 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user_text_2'), db_index=True)
+    user_text_3 = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('user_text_3'), db_index=True)
+
+    user_number_1 = models.FloatField(default=0.0, null=True, verbose_name=gettext_lazy('user_number_1'))
+    user_number_2 = models.FloatField(default=0.0, null=True, verbose_name=gettext_lazy('user_number_2'))
+    user_number_3 = models.FloatField(default=0.0, null=True, verbose_name=gettext_lazy('user_number_3'))
+
+    user_date_1 = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 1"))
+    user_date_2 = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 2"))
+    user_date_3 = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 3"))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
@@ -1743,7 +1810,9 @@ class Transaction(models.Model):
         verbose_name = gettext_lazy('transaction')
         verbose_name_plural = gettext_lazy('transactions')
         index_together = [
-            ['master_user', 'transaction_code']
+            ['master_user', 'transaction_code'],
+            ['accounting_date', 'cash_date'],
+            ['master_user', 'transaction_class', 'accounting_date']
         ]
         ordering = ['transaction_date', 'transaction_code']
 
