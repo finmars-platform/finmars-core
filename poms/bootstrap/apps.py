@@ -85,6 +85,10 @@ class BootstrapConfig(AppConfig):
         from django.contrib.auth.models import User
         from poms.users.models import Member, MasterUser, Group, UserProfile
 
+        if not settings.AUTHORIZER_URL:
+            _l.error("load_master_user_data: AUTHORIZER_URL is not defined!")
+            return
+
         try:
             _l.info("load_master_user_data processing")
 
@@ -200,6 +204,10 @@ class BootstrapConfig(AppConfig):
 
     def register_at_authorizer_service(self):
 
+        if not settings.AUTHORIZER_URL:
+            _l.error("register_at_authorizer_service: AUTHORIZER_URL is not defined!")
+            return
+
         try:
             _l.info("register_at_authorizer_service processing")
 
@@ -227,6 +235,10 @@ class BootstrapConfig(AppConfig):
         from django.contrib.auth.models import User
 
         from poms.users.models import Member, MasterUser
+
+        if not settings.AUTHORIZER_URL:
+            _l.error("sync_users_at_authorizer_service: AUTHORIZER_URL is not defined!")
+            return
 
         try:
             _l.info("sync_users_at_authorizer_service processing")
@@ -304,6 +316,10 @@ class BootstrapConfig(AppConfig):
         from django.db import transaction
         from poms.configuration_import.tasks import configuration_import_as_json
 
+        if not settings.AUTHORIZER_URL:
+            _l.error("load_init_configuration: AUTHORIZER_URL is not defined!")
+            return
+
         try:
             _l.info("load_init_configuration processing")
 
@@ -349,17 +365,18 @@ class BootstrapConfig(AppConfig):
             _l.info("load_init_configuration error %s" % e)
 
     def create_base_folders(self):
+        from poms_app import settings
+        from poms.users.models import Member
+        from poms.common.storage import get_storage
+        from tempfile import NamedTemporaryFile
 
+        storage = get_storage()
+        if not storage:
+            _l.error("create_base_folders: no storage defined!")
+            return
+
+        _l.info("create base folders in storage, if not exists")
         try:
-
-            from poms.common.storage import get_storage
-            from tempfile import NamedTemporaryFile
-            storage = get_storage()
-            from poms_app import settings
-            from poms.users.models import Member
-
-            _l.info("create base folders if not exists")
-
             if not storage.exists(settings.BASE_API_URL + '/.system/.init'):
                 path = settings.BASE_API_URL + '/.system/.init'
 
