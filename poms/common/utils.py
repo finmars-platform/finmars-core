@@ -4,14 +4,13 @@ import datetime
 import logging
 import math
 from datetime import timedelta
+from http import HTTPStatus
 
 import pandas as pd
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from rest_framework.views import exception_handler
-from http import HTTPStatus
-from django.utils.timezone import now
 
 from poms_app import settings
 
@@ -362,6 +361,11 @@ def convert_name_to_key(name):
 
 
 def check_if_last_day_of_month(to_date):
+    '''
+    Check if date is last day of month
+    :param to_date:
+    :return: bool
+    '''
     delta = datetime.timedelta(days=1)
     next_day = to_date + delta
     if to_date.month != next_day.month:
@@ -370,12 +374,24 @@ def check_if_last_day_of_month(to_date):
 
 
 def get_first_transaction(portfolio_id):
+    '''
+    Get first transaction of portfolio
+    :param portfolio_id:
+    :return: Transaction
+    '''
     from poms.transactions.models import Transaction
     transaction = Transaction.objects.filter(portfolio_id=portfolio_id).order_by('accounting_date')[0]
     return transaction
 
 
 def last_business_day_in_month(year: int, month: int, to_string=False):
+    '''
+    Get last business day of month
+    :param year:
+    :param month:
+    :param to_string:
+    :return: date or string
+    '''
     day = max(calendar.monthcalendar(year, month)[-1:][0][:5])
 
     d = datetime.datetime(year, month, day).date()
@@ -387,6 +403,13 @@ def last_business_day_in_month(year: int, month: int, to_string=False):
 
 
 def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=False):
+    '''
+    Get last business day of each month between two dates
+    :param date_from:
+    :param date_to:
+    :param to_string:
+    :return: list of dates or strings
+    '''
     months = get_list_of_months_between_two_dates(date_from, date_to)
     end_of_months = []
 
@@ -413,6 +436,11 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
 
 
 def str_to_date(d):
+    '''
+    Convert string to date
+    :param d:
+    :return:
+    '''
     if not isinstance(d, datetime.date):
         d = datetime.datetime.strptime(d, "%Y-%m-%d").date()
 
@@ -420,6 +448,11 @@ def str_to_date(d):
 
 
 def get_closest_bday_of_yesterday(to_string=False):
+    '''
+    Get the closest business day of yesterday
+    :param to_string:
+    :return: date or string
+    '''
     yesterday = datetime.date.today() - timedelta(days=1)
     return get_last_business_day(yesterday, to_string=to_string)
 
@@ -453,3 +486,85 @@ def finmars_exception_handler(exc, context):
         error["details"] = response.data
         response.data = error_payload
     return response
+
+
+def get_serializer(content_type_key):
+    '''
+    Returns serializer for given content type key.
+    :param content_type_key:
+    :return: serializer class
+    '''
+
+    from poms.instruments.serializers import InstrumentSerializer, InstrumentTypeSerializer
+
+    from poms.accounts.serializers import AccountSerializer
+    from poms.accounts.serializers import AccountTypeSerializer
+    from poms.portfolios.serializers import PortfolioSerializer
+    from poms.instruments.serializers import PriceHistorySerializer
+    from poms.currencies.serializers import CurrencyHistorySerializer
+    from poms.counterparties.serializers import CounterpartySerializer
+    from poms.counterparties.serializers import ResponsibleSerializer
+    from poms.strategies.serializers import Strategy1Serializer
+    from poms.strategies.serializers import Strategy2Serializer
+
+    from poms.transactions.serializers import TransactionTypeSerializer
+    from poms.csv_import.serializers import CsvImportSchemeSerializer
+
+    from poms.integrations.serializers import ComplexTransactionImportSchemeSerializer
+    from poms.procedures.serializers import PricingProcedureSerializer
+    from poms.procedures.serializers import ExpressionProcedureSerializer
+    from poms.procedures.serializers import RequestDataFileProcedureSerializer
+    from poms.schedules.serializers import ScheduleSerializer
+
+    from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
+    serializer_map = {
+        'transactions.transactiontype': TransactionTypeSerializer,
+        'instruments.instrument': InstrumentSerializer,
+        'instruments.instrumenttype': InstrumentTypeSerializer,
+        'accounts.account': AccountSerializer,
+        'accounts.accounttype': AccountTypeSerializer,
+        'portfolios.portfolio': PortfolioSerializer,
+        'instruments.pricehistory': PriceHistorySerializer,
+        'currencies.currencyhistory': CurrencyHistorySerializer,
+        'counterparties.counterparty': CounterpartySerializer,
+        'counterparties.responsible': ResponsibleSerializer,
+        'strategies.strategy1': Strategy1Serializer,
+        'strategies.strategy2': Strategy2Serializer,
+        'strategies.strategy3': Strategy2Serializer,
+
+        'csv_import.csvimportscheme': CsvImportSchemeSerializer,
+        'integrations.complextransactionimportscheme': ComplexTransactionImportSchemeSerializer,
+        'procedures.pricingprocedure': PricingProcedureSerializer,
+        'procedures.expressionprocedure': ExpressionProcedureSerializer,
+        'procedures.requestdatafileprocedure': RequestDataFileProcedureSerializer,
+        'schedules.schedule': ScheduleSerializer,
+        'obj_attrs.genericattributetype': GenericAttributeTypeSerializer,
+
+
+    }
+
+    return serializer_map[content_type_key]
+
+
+def get_list_of_entity_attributes(content_type_key):
+    '''
+    Returns a list of attributes for a given entity type.
+    :param content_type_key:
+    :return: list of attributes
+    '''
+
+    content_type = get_content_type_by_name(content_type_key)
+    result = []
+    from poms.obj_attrs.models import GenericAttributeType
+    attribute_types = GenericAttributeType.objects.filter(content_type=content_type)
+
+    for attribute_type in attribute_types:
+        result.append({
+            "name": attribute_type.name,
+            "key": "attributes." + attribute_type.user_code,
+            "value_type": attribute_type.value_type,
+            "tooltip": attribute_type.tooltip,
+            "can_recalculate": attribute_type.can_recalculate
+        })
+
+    return result

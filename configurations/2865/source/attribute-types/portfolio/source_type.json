@@ -1,0 +1,27 @@
+{
+    "id": 198,
+    "user_code": "source_type",
+    "name": "Source Type",
+    "short_name": "Source Type",
+    "public_name": null,
+    "notes": null,
+    "prefix": null,
+    "favorites": null,
+    "expr": "\"\"",
+    "can_recalculate": false,
+    "tooltip": "Source Type",
+    "kind": 1,
+    "content_type": 85,
+    "value_type": 10,
+    "order": 0,
+    "is_hidden": false,
+    "classifiers": [],
+    "classifiers_flat": [],
+    "deleted_user_code": null,
+    "meta": {
+        "content_type": "obj_attrs.genericattributetype",
+        "app_label": "obj_attrs",
+        "model_name": "genericattributetype",
+        "space_code": "space00000"
+    }
+}

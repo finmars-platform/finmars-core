@@ -1,0 +1,21 @@
+{
+    "id": 25,
+    "name": "Exante Accounts",
+    "user_code": "Exante Accounts",
+    "notes": null,
+    "provider": 6,
+    "scheme_user_code": "Accounts_Exante",
+    "scheme_type": "simple_import",
+    "data": null,
+    "date_from_expr": "now()-days(1)",
+    "date_to_expr": "now()",
+    "date_from": null,
+    "date_to": null,
+    "configuration_code": "com.finmars.local",
+    "provider_object": {
+        "id": 6,
+        "name": "Universal Provider",
+        "user_code": "universal",
+        "notes": ""
+    }
+}

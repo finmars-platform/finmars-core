@@ -1,0 +1,184 @@
+{
+    "id": 1,
+    "user_code": "Depository",
+    "name": "Depository",
+    "short_name": "Currency (U)",
+    "public_name": null,
+    "notes": null,
+    "prefix": null,
+    "favorites": null,
+    "expr": "\"\"",
+    "can_recalculate": false,
+    "tooltip": "Depository",
+    "kind": 1,
+    "value_type": 30,
+    "order": 0,
+    "is_hidden": false,
+    "classifiers": [
+        {
+            "id": 1,
+            "name": "CIM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 2,
+            "name": "Other",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 3,
+            "name": "Lombard",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 4,
+            "name": "Interactive Broker",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 539,
+            "name": "CIM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 544,
+            "name": "CIM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 895,
+            "name": "CIM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 900,
+            "name": "CIM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 905,
+            "name": "CIM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 910,
+            "name": "CIM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 915,
+            "name": "CIM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 920,
+            "name": "CIM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 925,
+            "name": "CIM",
+            "level": 0,
+            "children": []
+        }
+    ],
+    "classifiers_flat": [
+        {
+            "id": 1,
+            "name": "CIM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 2,
+            "name": "Other",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 3,
+            "name": "Lombard",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 4,
+            "name": "Interactive Broker",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 539,
+            "name": "CIM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 544,
+            "name": "CIM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 895,
+            "name": "CIM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 900,
+            "name": "CIM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 905,
+            "name": "CIM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 910,
+            "name": "CIM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 915,
+            "name": "CIM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 920,
+            "name": "CIM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 925,
+            "name": "CIM",
+            "level": 0,
+            "parent": null
+        }
+    ],
+    "deleted_user_code": null,
+    "meta": {
+        "content_type": "obj_attrs.genericattributetype",
+        "app_label": "obj_attrs",
+        "model_name": "genericattributetype",
+        "space_code": "space00000"
+    }
+}

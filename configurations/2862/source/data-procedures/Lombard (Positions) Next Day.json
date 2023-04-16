@@ -1,0 +1,21 @@
+{
+    "id": 49,
+    "name": "Lombard (Positions) Next Day",
+    "user_code": "Lombard (Positions) Next Day",
+    "notes": null,
+    "provider": 6,
+    "scheme_user_code": "LO_Positions_next_day_v1",
+    "scheme_type": "transaction_import",
+    "data": null,
+    "date_from_expr": "now()-days(1)",
+    "date_to_expr": "now()-days(1)",
+    "date_from": null,
+    "date_to": null,
+    "configuration_code": "com.finmars.local",
+    "provider_object": {
+        "id": 6,
+        "name": "Universal Provider",
+        "user_code": "universal",
+        "notes": ""
+    }
+}

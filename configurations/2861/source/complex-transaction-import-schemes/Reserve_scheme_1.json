@@ -1,0 +1,534 @@
+{
+    "id": 22,
+    "user_code": "Reserve_scheme_1",
+    "name": "Reserve_scheme_1",
+    "short_name": "Reserve_scheme_1",
+    "public_name": null,
+    "notes": null,
+    "rule_expr": "ttype",
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "book_uniqueness_settings": 2,
+    "expression_iterations_count": 1,
+    "inputs": [
+        {
+            "id": 1292,
+            "name": "ttype",
+            "column": 1,
+            "name_expr": "ttype",
+            "column_name": "ttype"
+        },
+        {
+            "id": 1293,
+            "name": "transaction_instrument",
+            "column": 2,
+            "name_expr": "if_null(transaction_instrument, '-')",
+            "column_name": "Security ID"
+        },
+        {
+            "id": 1294,
+            "name": "maturity_date",
+            "column": 19,
+            "name_expr": "if_null(maturity_date, '01/01/2999')",
+            "column_name": "Maturity"
+        },
+        {
+            "id": 1295,
+            "name": "accrual_size",
+            "column": 20,
+            "name_expr": "if_null(accrual_size, 0)",
+            "column_name": "Coupon Size, pp"
+        },
+        {
+            "id": 1296,
+            "name": "first_date",
+            "column": 26,
+            "name_expr": "if_null(first_date,  '01/01/2999')",
+            "column_name": "First Coupon Date"
+        },
+        {
+            "id": 1297,
+            "name": "start_date",
+            "column": 24,
+            "name_expr": "if_null(start_date,  '01/01/2999')",
+            "column_name": "First Interest Accrual Date"
+        }
+    ],
+    "calculated_inputs": [],
+    "rule_scenarios": [
+        {
+            "id": 573,
+            "is_default_rule_scenario": false,
+            "is_error_rule_scenario": false,
+            "name": "Instrument",
+            "selector_values": [
+                "Instrument"
+            ],
+            "transaction_type": 43,
+            "fields": [
+                {
+                    "id": 10222,
+                    "transaction_type_input": 730,
+                    "value_expr": "if len(str(first_date)) > 10:\n    first_date = str(first_date)[0:10]\nstr(parse_date(first_date, '%Y-%m-%d'))",
+                    "transaction_type_input_object": {
+                        "id": 730,
+                        "name": "first_date",
+                        "verbose_name": "First date",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 2
+                    }
+                },
+                {
+                    "id": 10223,
+                    "transaction_type_input": 728,
+                    "value_expr": "accrual_size",
+                    "transaction_type_input_object": {
+                        "id": 728,
+                        "name": "accrual_size",
+                        "verbose_name": "Accrual size",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 0
+                    }
+                },
+                {
+                    "id": 10224,
+                    "transaction_type_input": 729,
+                    "value_expr": "1",
+                    "transaction_type_input_object": {
+                        "id": 729,
+                        "name": "factor",
+                        "verbose_name": "Factor",
+                        "value_type": 20,
+                        "content_type": null,
+                        "order": 1
+                    }
+                },
+                {
+                    "id": 10225,
+                    "transaction_type_input": 731,
+                    "value_expr": "if len(str(maturity_date)) > 10:\n    maturity_date = str(maturity_date)[0:10]\nstr(parse_date(maturity_date, '%Y-%m-%d'))",
+                    "transaction_type_input_object": {
+                        "id": 731,
+                        "name": "maturity_date",
+                        "verbose_name": "Maturity date",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 3
+                    }
+                },
+                {
+                    "id": 10226,
+                    "transaction_type_input": 732,
+                    "value_expr": "if len(str(start_date)) > 10:\n    start_date  = str(start_date)[0:10]\nstr(parse_date(start_date, '%Y-%m-%d'))",
+                    "transaction_type_input_object": {
+                        "id": 732,
+                        "name": "start_date",
+                        "verbose_name": "Start date",
+                        "value_type": 40,
+                        "content_type": null,
+                        "order": 4
+                    }
+                },
+                {
+                    "id": 10227,
+                    "transaction_type_input": 733,
+                    "value_expr": "transaction_instrument",
+                    "transaction_type_input_object": {
+                        "id": 733,
+                        "name": "transaction_instrument",
+                        "verbose_name": "Transaction Instrument",
+                        "value_type": 100,
+                        "content_type": "instruments.instrument",
+                        "order": 5
+                    }
+                }
+            ],
+            "status": "active",
+            "transaction_type_object": {
+                "id": 43,
+                "name": "Instrument Create (import)",
+                "user_code": "Instr_Create",
+                "inputs": [
+                    {
+                        "id": 728,
+                        "name": "accrual_size",
+                        "verbose_name": "Accrual size",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 729,
+                        "name": "factor",
+                        "verbose_name": "Factor",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 730,
+                        "name": "first_date",
+                        "verbose_name": "First date",
+                        "value_type": 40
+                    },
+                    {
+                        "id": 731,
+                        "name": "maturity_date",
+                        "verbose_name": "Maturity date",
+                        "value_type": 40
+                    },
+                    {
+                        "id": 732,
+                        "name": "start_date",
+                        "verbose_name": "Start date",
+                        "value_type": 40
+                    },
+                    {
+                        "id": 733,
+                        "name": "transaction_instrument",
+                        "verbose_name": "Transaction Instrument",
+                        "value_type": 100
+                    }
+                ]
+            }
+        },
+        {
+            "id": 574,
+            "is_default_rule_scenario": false,
+            "is_error_rule_scenario": false,
+            "name": "Instrument Transfer",
+            "selector_values": [],
+            "transaction_type": 43,
+            "fields": [],
+            "status": "active",
+            "transaction_type_object": {
+                "id": 43,
+                "name": "Instrument Create (import)",
+                "user_code": "Instr_Create",
+                "inputs": [
+                    {
+                        "id": 728,
+                        "name": "accrual_size",
+                        "verbose_name": "Accrual size",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 729,
+                        "name": "factor",
+                        "verbose_name": "Factor",
+                        "value_type": 20
+                    },
+                    {
+                        "id": 730,
+                        "name": "first_date",
+                        "verbose_name": "First date",
+                        "value_type": 40
+                    },
+                    {
+                        "id": 731,
+                        "name": "maturity_date",
+                        "verbose_name": "Maturity date",
+                        "value_type": 40
+                    },
+                    {
+                        "id": 732,
+                        "name": "start_date",
+                        "verbose_name": "Start date",
+                        "value_type": 40
+                    },
+                    {
+                        "id": 733,
+                        "name": "transaction_instrument",
+                        "verbose_name": "Transaction Instrument",
+                        "value_type": 100
+                    }
+                ]
+            }
+        },
+        {
+            "id": 575,
+            "is_default_rule_scenario": true,
+            "is_error_rule_scenario": false,
+            "name": "-",
+            "selector_values": [],
+            "transaction_type": 1,
+            "fields": [],
+            "status": "active",
+            "transaction_type_object": {
+                "id": 1,
+                "name": "-",
+                "user_code": "-",
+                "inputs": []
+            }
+        }
+    ],
+    "selector_values": [
+        {
+            "id": 819,
+            "value": "Instrument",
+            "notes": "Instrument",
+            "order": 0
+        }
+    ],
+    "recon_scenarios": [
+        {
+            "id": 1,
+            "name": "Sell instrument",
+            "line_reference_id": "ticker",
+            "reference_date": "parse_date(accounting_date, '%d.%m.%Y')",
+            "fields": [
+                {
+                    "id": 1,
+                    "reference_name": "transaction_instrument",
+                    "description": "Transaction Instrument, Position and Date",
+                    "value_string": "transaction_instrument",
+                    "value_float": "position",
+                    "value_date": "parse_date(accounting_date, '%d.%m.%Y')"
+                },
+                {
+                    "id": 2,
+                    "reference_name": "cash_consideration",
+                    "description": "Cash Consideration, Account and Cash date",
+                    "value_string": "account_cash",
+                    "value_float": "proceeds",
+                    "value_date": "parse_date(settlement_date, '%d.%m.%Y')"
+                }
+            ],
+            "selector_values": []
+        },
+        {
+            "id": 2,
+            "name": "Buy instrument",
+            "line_reference_id": "ticker",
+            "reference_date": "parse_date(accounting_date, '%d.%m.%Y')",
+            "fields": [
+                {
+                    "id": 3,
+                    "reference_name": "cash_consideration",
+                    "description": "Cash consideration, Account and Cash date",
+                    "value_string": "account_cash",
+                    "value_float": "proceeds",
+                    "value_date": "parse_date(settlement_date, '%d.%m.%Y')"
+                },
+                {
+                    "id": 4,
+                    "reference_name": "transaction_instrument",
+                    "description": "Transaction Instrument, Position and Date",
+                    "value_string": "transaction_instrument",
+                    "value_float": "position",
+                    "value_date": "parse_date(accounting_date, '%d.%m.%Y')"
+                }
+            ],
+            "selector_values": []
+        },
+        {
+            "id": 3,
+            "name": "FX Buy",
+            "line_reference_id": "ticker",
+            "reference_date": "parse_date(accounting_date, '%d.%m.%Y')",
+            "fields": [
+                {
+                    "id": 5,
+                    "reference_name": "transaction_currency",
+                    "description": "Currency to buy, Position and Date",
+                    "value_string": "transaction_currency",
+                    "value_float": "position",
+                    "value_date": "parse_date(accounting_date, '%d.%m.%Y')"
+                }
+            ],
+            "selector_values": []
+        },
+        {
+            "id": 4,
+            "name": "FX Sell",
+            "line_reference_id": "ticker",
+            "reference_date": "parse_date(accounting_date, '%d.%m.%Y')",
+            "fields": [
+                {
+                    "id": 6,
+                    "reference_name": "transaction_currency",
+                    "description": "Currency to sell, Position and Date",
+                    "value_string": "transaction_currency",
+                    "value_float": "position",
+                    "value_date": "parse_date(accounting_date, '%d.%m.%Y')"
+                }
+            ],
+            "selector_values": []
+        },
+        {
+            "id": 5,
+            "name": "FX Transfer",
+            "line_reference_id": "ticker",
+            "reference_date": "parse_date(accounting_date, '%d.%m.%Y')",
+            "fields": [
+                {
+                    "id": 7,
+                    "reference_name": "transaction_currency",
+                    "description": "Transaction Currency, Position and Date",
+                    "value_string": "transaction_currency",
+                    "value_float": "position",
+                    "value_date": "parse_date(accounting_date, '%d.%m.%Y')"
+                }
+            ],
+            "selector_values": []
+        },
+        {
+            "id": 6,
+            "name": "Instrument Transfer",
+            "line_reference_id": "ticker",
+            "reference_date": "parse_date(accounting_date, '%d.%m.%Y')",
+            "fields": [
+                {
+                    "id": 8,
+                    "reference_name": "transaction_instrument",
+                    "description": "Transaction Instrument, Position and Date",
+                    "value_string": "transaction_instrument",
+                    "value_float": "position",
+                    "value_date": "parse_date(accounting_date, '%d.%m.%Y')"
+                }
+            ],
+            "selector_values": []
+        },
+        {
+            "id": 7,
+            "name": "Instrument Income",
+            "line_reference_id": "ticker",
+            "reference_date": "parse_date(accounting_date, '%d.%m.%Y')",
+            "fields": [
+                {
+                    "id": 9,
+                    "reference_name": "transaction_instrument",
+                    "description": "Transaction Instrument, Accrued and Date",
+                    "value_string": "transaction_instrument",
+                    "value_float": "carry",
+                    "value_date": "parse_date(accounting_date, '%d.%m.%Y')"
+                },
+                {
+                    "id": 10,
+                    "reference_name": "cash_consideration",
+                    "description": "Cash Consideration, Account and Cash date",
+                    "value_string": "account_cash",
+                    "value_float": "proceeds",
+                    "value_date": "parse_date(settlement_date, '%d.%m.%Y')"
+                }
+            ],
+            "selector_values": []
+        },
+        {
+            "id": 8,
+            "name": "Instrument Expense",
+            "line_reference_id": "ticker",
+            "reference_date": "parse_date(accounting_date, '%d.%m.%Y')",
+            "fields": [
+                {
+                    "id": 11,
+                    "reference_name": "transaction_instrument",
+                    "description": "Transaction Instrument, Accrued and Date",
+                    "value_string": "transaction_instrument",
+                    "value_float": "carry",
+                    "value_date": "parse_date(accounting_date, '%d.%m.%Y')"
+                },
+                {
+                    "id": 12,
+                    "reference_name": "cash_consideration",
+                    "description": "Cash Consideration, Account and Cash date",
+                    "value_string": "account_cash",
+                    "value_float": "proceeds",
+                    "value_date": "parse_date(settlement_date, '%d.%m.%Y')"
+                }
+            ],
+            "selector_values": []
+        },
+        {
+            "id": 9,
+            "name": "Non-Instrument Income",
+            "line_reference_id": "ticker",
+            "reference_date": "parse_date(accounting_date, '%d.%m.%Y')",
+            "fields": [
+                {
+                    "id": 13,
+                    "reference_name": "transaction_currency",
+                    "description": "Transaction Currency, Incomeand Date",
+                    "value_string": "transaction_currency",
+                    "value_float": "carry",
+                    "value_date": "parse_date(accounting_date, '%d.%m.%Y')"
+                },
+                {
+                    "id": 14,
+                    "reference_name": "cash_consideration",
+                    "description": "Cash Consideration, Account and Cash date",
+                    "value_string": "account_cash",
+                    "value_float": "proceeds",
+                    "value_date": "parse_date(settlement_date, '%d.%m.%Y')"
+                }
+            ],
+            "selector_values": []
+        },
+        {
+            "id": 10,
+            "name": "Non-Instrument Expense",
+            "line_reference_id": "ticker",
+            "reference_date": "parse_date(accounting_date, '%d.%m.%Y')",
+            "fields": [
+                {
+                    "id": 15,
+                    "reference_name": "transaction_currency",
+                    "description": "Transaction Currency, Expense and Date",
+                    "value_string": "transaction_currency",
+                    "value_float": "carry",
+                    "value_date": "parse_date(accounting_date, '%d.%m.%Y')"
+                },
+                {
+                    "id": 16,
+                    "reference_name": "cash_consideration",
+                    "description": "Cash Consideration, Account and Cash date",
+                    "value_string": "account_cash",
+                    "value_float": "proceeds",
+                    "value_date": "parse_date(settlement_date, '%d.%m.%Y')"
+                }
+            ],
+            "selector_values": []
+        },
+        {
+            "id": 11,
+            "name": "Subscription",
+            "line_reference_id": "ticker",
+            "reference_date": "parse_date(accounting_date, '%d.%m.%Y')",
+            "fields": [
+                {
+                    "id": 17,
+                    "reference_name": "cash_consideration",
+                    "description": "Cash Consideration, Account and Cash date",
+                    "value_string": "account_cash",
+                    "value_float": "position",
+                    "value_date": "parse_date(settlement_date, '%d.%m.%Y')"
+                }
+            ],
+            "selector_values": []
+        },
+        {
+            "id": 12,
+            "name": "Redemption",
+            "line_reference_id": "ticker",
+            "reference_date": "parse_date(accounting_date, '%d.%m.%Y')",
+            "fields": [
+                {
+                    "id": 18,
+                    "reference_name": "cash_consideration",
+                    "description": "Cash Consideration, Account and Cash date",
+                    "value_string": "account_cash",
+                    "value_float": "position",
+                    "value_date": "parse_date(settlement_date, '%d.%m.%Y')"
+                }
+            ],
+            "selector_values": []
+        }
+    ],
+    "recon_layout": null,
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "throw_error",
+    "column_matcher": "index",
+    "filter_expression": null,
+    "has_header_row": true,
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

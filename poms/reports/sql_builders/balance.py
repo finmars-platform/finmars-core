@@ -1,11 +1,12 @@
 import logging
 import os
 import time
-
+from datetime import timedelta
 from django.conf import settings
 from django.db import connection
 
 from poms.accounts.models import Account, AccountType
+from poms.common.utils import get_last_business_day
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, InstrumentType, LongUnderlyingExposure, ShortUnderlyingExposure, \
     ExposureCalculationModel
@@ -88,6 +89,10 @@ class BalanceReportBuilderSql:
             fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
                 self.instance)
 
+            self.bday_yesterday_of_report_date = get_last_business_day(self.instance.report_date - timedelta(days=1), to_string=True)
+
+            _l.info('====report_date %s' % self.instance.report_date)
+            _l.info('====bday_yesterday_of_report_date %s' % self.bday_yesterday_of_report_date)
             # _l.debug('report_date: "%s"' % self.instance.report_date)
             # _l.debug('report_fx_rate: "%s"' % report_fx_rate)
             # _l.debug('default_currency_id: "%s"' % self.ecosystem_defaults.currency_id)
@@ -117,7 +122,8 @@ class BalanceReportBuilderSql:
                                        tt_consolidation_columns=tt_consolidation_columns,
                                        tt_in1_consolidation_columns=tt_in1_consolidation_columns,
                                        transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
-                                       filter_query_for_balance_in_multipliers_table='')
+                                       filter_query_for_balance_in_multipliers_table='',
+                                       bday_yesterday_of_report_date=self.bday_yesterday_of_report_date)
             # filter_query_for_balance_in_multipliers_table=' where multiplier = 1') # TODO ask for right where expression
 
             ######################################
@@ -444,11 +450,14 @@ class BalanceReportBuilderSql:
                     instrument_principal_price,
                     instrument_accrued_price,
                     instrument_factor,
+                    daily_price_change,
                     
                     currency_id,
                     
                     item_type,
                     item_type_name,
+                    
+                    fx_rate,
                     
                     position_size,
                     nominal_position_size,
@@ -580,6 +589,21 @@ class BalanceReportBuilderSql:
                             
                         (2) as item_type,
                         ('Currency') as item_type_name,
+                        
+                        (1) as price,
+                        case when settlement_currency_id = {default_currency_id}
+                            then 1
+                            else
+                                (select
+                            fx_rate
+                         from currencies_currencyhistory
+                         where
+                            currency_id = settlement_currency_id and
+                            date = '{report_date}' and
+                            pricing_policy_id = {pricing_policy_id}
+                        )
+                        end as fx_rate,
+                        
                             
                         position_size,
                         (position_size) as nominal_position_size,
@@ -588,12 +612,13 @@ class BalanceReportBuilderSql:
                         c.short_name,
                         c.user_code,
                         
-                        (-1) as pricing_currency_id, -- TODO WTF?
-                        (0) as instrument_pricing_currency_fx_rate,
+                        (settlement_currency_id) as pricing_currency_id,
+                        (0) as instrument_pricing_currency_fx_rate, -- WTF?
                         (0) as instrument_accrued_currency_fx_rate,
-                        (0) as instrument_principal_price,
+                        (1) as instrument_principal_price,
                         (0) as instrument_accrued_price,
                         (1) as instrument_factor,
+                        (0) as daily_price_change,
                         
                         (c.id) as co_directional_exposure_currency_id,
                         (-1) as counter_directional_exposure_currency_id,
@@ -816,11 +841,14 @@ class BalanceReportBuilderSql:
                     instrument_principal_price,
                     instrument_accrued_price,
                     instrument_factor,
+                    daily_price_change,
                     
                     currency_id,
                     
                     item_type,
                     item_type_name,
+                    
+                    fx_rate,
                     
                     position_size,
                     nominal_position_size,
@@ -957,11 +985,15 @@ class BalanceReportBuilderSql:
                         instrument_principal_price,
                         instrument_accrued_price,
                         instrument_factor,
+                        daily_price_change,
                         
                         (-1) as currency_id,
                         
                         item_type,
                         item_type_name,
+                        
+                        price,
+                        fx_rate,
                         
                         position_size,
                         nominal_position_size,
@@ -1109,6 +1141,9 @@ class BalanceReportBuilderSql:
 
                         (1) as item_type,
                         ('Instrument') as item_type_name,
+                        
+                        (principal_price) as price,
+                        (pch_fx_rate) as fx_rate,
     
                         name,
                         short_name,
@@ -1137,6 +1172,12 @@ class BalanceReportBuilderSql:
                         (principal_price) as instrument_principal_price,
                         (accrued_price) as instrument_accrued_price,
                         (factor) as instrument_factor,
+                        
+                        case when coalesce(yesterday_principal_price,0) = 0
+                                then 0
+                                else
+                                    (principal_price - yesterday_principal_price) / yesterday_principal_price
+                        end as daily_price_change,
                     
                         
                         (long_delta) as instrument_long_delta,
@@ -1332,6 +1373,15 @@ class BalanceReportBuilderSql:
                             as principal_price,
                             
                             (select 
+                                principal_price
+                            from instruments_pricehistory
+                            where 
+                                instrument_id=i.id and 
+                                date = '{bday_yesterday_of_report_date}' and
+                                pricing_policy_id = {pricing_policy_id})
+                            as yesterday_principal_price,
+                            
+                            (select 
                                 factor
                             from instruments_pricehistory
                             where 
@@ -1511,7 +1561,8 @@ class BalanceReportBuilderSql:
 
                                  pl_query=pl_query,
                                  pl_left_join_consolidation=pl_left_join_consolidation,
-                                 fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string
+                                 fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
+                                 bday_yesterday_of_report_date=self.bday_yesterday_of_report_date
                                  )
 
             if settings.DEBUG:
@@ -1618,6 +1669,9 @@ class BalanceReportBuilderSql:
                 result_item["instrument_principal_price"] = item["instrument_principal_price"]
                 result_item["instrument_accrued_price"] = item["instrument_accrued_price"]
                 result_item["instrument_factor"] = item["instrument_factor"]
+                result_item["daily_price_change"] = item["daily_price_change"]
+
+                result_item["fx_rate"] = item["fx_rate"]
 
                 # _l.info('item %s' % item)
                 result_item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
@@ -1763,6 +1817,7 @@ class BalanceReportBuilderSql:
                                 "instrument_principal_price": None,
                                 "instrument_accrued_price": None,
                                 "instrument_factor": None,
+                                "daily_price_change": None,
 
                                 "market_value": None,
                                 "market_value_loc": None,

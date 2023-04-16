@@ -15,6 +15,7 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.models import TimeStampedModel, AbstractClassModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel, \
     NamedModel
+from poms.configuration.models import ConfigurationModel
 from poms.integrations.storage import import_config_storage
 from poms.obj_attrs.models import GenericClassifier, GenericAttributeType
 
@@ -807,17 +808,19 @@ COLUMN_MATCHER_CHOICES = [
 ]
 
 
-class ComplexTransactionImportScheme(NamedModel, DataTimeStampedModel):
+class ComplexTransactionImportScheme(NamedModel, DataTimeStampedModel, ConfigurationModel):
     SKIP = 1
     BOOK_WITHOUT_UNIQUE_CODE = 2
     OVERWRITE = 3
     TREAT_AS_ERROR = 4
+    USE_TRANSACTION_TYPE_SETTING = 5
 
     BOOK_UNIQUENESS_CHOICES = (
         (SKIP, gettext_lazy('Skip')),
         (BOOK_WITHOUT_UNIQUE_CODE, gettext_lazy('Book without Unique Code ')),
         (OVERWRITE, gettext_lazy('Overwrite')),
         (TREAT_AS_ERROR, gettext_lazy('Treat as error')),
+        (USE_TRANSACTION_TYPE_SETTING, gettext_lazy('Use Transaction Type Setting')),
     )
 
     user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))

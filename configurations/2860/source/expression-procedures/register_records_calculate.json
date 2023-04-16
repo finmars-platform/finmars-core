@@ -1,0 +1,10 @@
+{
+    "id": 13,
+    "name": "Register Record Calculate",
+    "user_code": "register_records_calculate",
+    "notes": null,
+    "data": null,
+    "context_variables": [],
+    "code": "run_task('portfolios.calculate_portfolio_register_record',options={})",
+    "configuration_code": "com.finmars.local"
+}

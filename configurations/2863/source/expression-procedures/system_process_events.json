@@ -1,0 +1,10 @@
+{
+    "id": 6,
+    "name": "System Process Events",
+    "user_code": "system_process_events",
+    "notes": null,
+    "data": null,
+    "context_variables": [],
+    "code": "run_task('instruments.process_events',options={})",
+    "configuration_code": "com.finmars.local"
+}

@@ -1,0 +1,78 @@
+{
+    "id": 12,
+    "name": "Portfolio_Exante",
+    "user_code": "Portfolio_Exante",
+    "short_name": "Portfolio_Exante",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "portfolios.portfolio",
+    "csv_fields": [
+        {
+            "column": 1,
+            "name": "account",
+            "name_expr": "if_null(account, '-')",
+            "column_name": "accountId"
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 438,
+            "name": "User code",
+            "order": 0,
+            "expression": "account",
+            "system_property_key": "user_code",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 439,
+            "name": "Name",
+            "order": 0,
+            "expression": "account",
+            "system_property_key": "name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 440,
+            "name": "Short name",
+            "order": 0,
+            "expression": "account",
+            "system_property_key": "short_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 441,
+            "name": "Public name",
+            "order": 0,
+            "expression": "account",
+            "system_property_key": "public_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 442,
+            "name": "Notes",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "notes",
+            "attribute_user_code": null,
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "skip",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "classifier_handler": "skip",
+    "column_matcher": "name",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

@@ -1,0 +1,196 @@
+{
+    "id": 5,
+    "user_code": "liquidity",
+    "name": "Liquidity",
+    "short_name": "Liquidity",
+    "public_name": null,
+    "notes": null,
+    "prefix": null,
+    "favorites": null,
+    "expr": "\"\"",
+    "can_recalculate": false,
+    "tooltip": "Liquidity",
+    "kind": 1,
+    "value_type": 30,
+    "order": 0,
+    "is_hidden": false,
+    "classifiers": [
+        {
+            "id": 538,
+            "name": "Budget",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 543,
+            "name": "Budget",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 548,
+            "name": "Budget",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 520,
+            "name": "Contingent",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 521,
+            "name": "Illiquid",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 522,
+            "name": "Liquid",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 523,
+            "name": "Realizable",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 899,
+            "name": "Budget",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 904,
+            "name": "Budget",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 909,
+            "name": "Budget",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 914,
+            "name": "Budget",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 919,
+            "name": "Budget",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 924,
+            "name": "Budget",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 987,
+            "name": "Budget",
+            "level": 0,
+            "children": []
+        }
+    ],
+    "classifiers_flat": [
+        {
+            "id": 538,
+            "name": "Budget",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 543,
+            "name": "Budget",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 548,
+            "name": "Budget",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 520,
+            "name": "Contingent",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 521,
+            "name": "Illiquid",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 522,
+            "name": "Liquid",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 523,
+            "name": "Realizable",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 899,
+            "name": "Budget",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 904,
+            "name": "Budget",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 909,
+            "name": "Budget",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 914,
+            "name": "Budget",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 919,
+            "name": "Budget",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 924,
+            "name": "Budget",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 987,
+            "name": "Budget",
+            "level": 0,
+            "parent": null
+        }
+    ],
+    "deleted_user_code": null,
+    "meta": {
+        "content_type": "obj_attrs.genericattributetype",
+        "app_label": "obj_attrs",
+        "model_name": "genericattributetype",
+        "space_code": "space00000"
+    }
+}

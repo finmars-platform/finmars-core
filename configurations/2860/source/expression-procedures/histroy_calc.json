@@ -1,0 +1,10 @@
+{
+    "id": 9,
+    "name": "History records Calculate",
+    "user_code": "histroy_calc",
+    "notes": null,
+    "data": null,
+    "context_variables": [],
+    "code": "run_task('portfolios.calculate_portfolio_register_price_history')",
+    "configuration_code": "com.finmars.local"
+}

@@ -1,0 +1,10 @@
+{
+    "id": 17,
+    "name": "System Clearance",
+    "user_code": "system_clearance",
+    "notes": "Removing task older then month",
+    "data": null,
+    "context_variables": [],
+    "code": "run_task(\"celery_tasks.remove_old_tasks\")",
+    "configuration_code": "com.finmars.local"
+}

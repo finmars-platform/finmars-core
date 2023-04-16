@@ -1,0 +1,78 @@
+{
+    "id": 34,
+    "name": "LO Portfolios POS (from Transactions) 1.0.0",
+    "user_code": "LO_portfolios_POS_from_transactions_v1_0_0",
+    "short_name": "LO Portfolios POS (from Transactions) 1.0.0",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "portfolios.portfolio",
+    "csv_fields": [
+        {
+            "column": 1,
+            "name": "temp_portfolio",
+            "name_expr": "if_null(str(temp_portfolio)[0:8],'-')",
+            "column_name": "accn_nb"
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 946,
+            "name": "User code",
+            "order": 0,
+            "expression": "str(temp_portfolio)+ \" (POS)\"",
+            "system_property_key": "user_code",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 947,
+            "name": "Name",
+            "order": 0,
+            "expression": "'LO '+str(temp_portfolio)+ \" (POS)\"",
+            "system_property_key": "name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 948,
+            "name": "Short name",
+            "order": 0,
+            "expression": "'LO '+str(temp_portfolio)+ \" (POS)\"",
+            "system_property_key": "short_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 949,
+            "name": "Public name",
+            "order": 0,
+            "expression": "'LO '+str(temp_portfolio)+ \" (POS)\"",
+            "system_property_key": "public_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 950,
+            "name": "Notes",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "notes",
+            "attribute_user_code": null,
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "skip",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "classifier_handler": "skip",
+    "column_matcher": "name",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

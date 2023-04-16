@@ -17,6 +17,7 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common import formula
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.storage import get_storage
+from poms.common.utils import get_serializer
 from poms.csv_import.models import CsvImportScheme, SimpleImportResult, ProcessType, SimpleImportProcessPreprocessItem, \
     SimpleImportConversionItem, SimpleImportProcessItem, SimpleImportImportedItem
 from poms.csv_import.serializers import SimpleImportResultSerializer
@@ -856,36 +857,6 @@ class SimpleImportProcess(object):
 
         _l.info('SimpleImportProcess.Task %s. process_type %s' % (self.task, self.process_type))
 
-    def get_serializer(self, content_type_key):
-
-        from poms.instruments.serializers import InstrumentSerializer
-
-        from poms.accounts.serializers import AccountSerializer
-        from poms.accounts.serializers import AccountTypeSerializer
-        from poms.portfolios.serializers import PortfolioSerializer
-        from poms.instruments.serializers import PriceHistorySerializer
-        from poms.currencies.serializers import CurrencyHistorySerializer
-        from poms.counterparties.serializers import CounterpartySerializer
-        from poms.counterparties.serializers import ResponsibleSerializer
-        from poms.strategies.serializers import Strategy1Serializer
-        from poms.strategies.serializers import Strategy2Serializer
-
-        serializer_map = {
-            'instruments.instrument': InstrumentSerializer,
-            'accounts.account': AccountSerializer,
-            'accounts.accounttype': AccountTypeSerializer,
-            'portfolios.portfolio': PortfolioSerializer,
-            'instruments.pricehistory': PriceHistorySerializer,
-            'currencies.currencyhistory': CurrencyHistorySerializer,
-            'counterparties.counterparty': CounterpartySerializer,
-            'counterparties.responsible': ResponsibleSerializer,
-            'strategies.strategy1': Strategy1Serializer,
-            'strategies.strategy2': Strategy2Serializer,
-            'strategies.strategy3': Strategy2Serializer,
-        }
-
-        return serializer_map[content_type_key]
-
     def get_verbose_result(self):
 
         imported_count = 0
@@ -1243,30 +1214,85 @@ class SimpleImportProcess(object):
                         }
 
                         if attribute_type.value_type == GenericAttributeType.STRING:
-                            attribute['value_string'] = item.final_inputs[entity_field.attribute_user_code]
+                            if item.final_inputs[entity_field.attribute_user_code]:
+                                attribute['value_string'] = item.final_inputs[entity_field.attribute_user_code]
 
                         if attribute_type.value_type == GenericAttributeType.NUMBER:
-                            attribute['value_float'] = item.final_inputs[entity_field.attribute_user_code]
+                            if item.final_inputs[entity_field.attribute_user_code]:
+                                attribute['value_float'] = item.final_inputs[entity_field.attribute_user_code]
 
                         if attribute_type.value_type == GenericAttributeType.CLASSIFIER:
-                            try:
-                                attribute['classifier'] = GenericClassifier.objects.get(attribute_type=attribute_type,
-                                                                                        name=item.final_inputs[
-                                                                                            entity_field.attribute_user_code]).id
-                            except Exception as e:
-                                _l.error('fill_result_item_with_attributes classifier error - item %s e %s' % (item, e))
 
-                                if not item.error_message:
-                                    item.error_message = ''
+                            if item.final_inputs[entity_field.attribute_user_code]:
 
-                                item.error_message = (item.error_message + '%s: %s, ') % (entity_field.attribute_user_code, str(e))
+                                try:
+                                    attribute['classifier'] = GenericClassifier.objects.get(
+                                        attribute_type=attribute_type,
+                                        name=item.final_inputs[
+                                            entity_field.attribute_user_code]).id
+                                except Exception as e:
+                                    _l.error(
+                                        'fill_result_item_with_attributes classifier error - item %s e %s' % (item, e))
 
-                                attribute['classifier'] = None
+                                    if not item.error_message:
+                                        item.error_message = ''
+
+                                    item.error_message = (item.error_message + '%s: %s, ') % (
+                                    entity_field.attribute_user_code, str(e))
+
+                                    attribute['classifier'] = None
 
                         if attribute_type.value_type == GenericAttributeType.DATE:
-                            attribute['value_date'] = item.final_inputs[entity_field.attribute_user_code]
+                            if item.final_inputs[entity_field.attribute_user_code]:
+                                attribute['value_date'] = item.final_inputs[entity_field.attribute_user_code]
 
                         result.append(attribute)
+
+        return result
+
+    def overwrite_item_attributes(self, result_item, item):
+
+        result = []
+
+        for attribute in result_item['attributes']:
+
+            for entity_field in self.scheme.entity_fields.all():
+
+                if entity_field.attribute_user_code:
+
+                    if entity_field.attribute_user_code == attribute['attribute_type_object']['user_code']:
+
+                        if attribute['attribute_type_object']['value_type'] == GenericAttributeType.STRING:
+                            if item.final_inputs[entity_field.attribute_user_code]:
+                                attribute['value_string'] = item.final_inputs[entity_field.attribute_user_code]
+
+                        if attribute['attribute_type_object']['value_type'] == GenericAttributeType.NUMBER:
+                            if item.final_inputs[entity_field.attribute_user_code]:
+                                attribute['value_float'] = item.final_inputs[entity_field.attribute_user_code]
+
+                        if attribute['attribute_type_object']['value_type'] == GenericAttributeType.CLASSIFIER:
+
+                            if item.final_inputs[entity_field.attribute_user_code]:
+                                try:
+                                    attribute['classifier'] = GenericClassifier.objects.get(
+                                        attribute_type_id=attribute['attribute_type_object']['id'],
+                                        name=item.final_inputs[
+                                            entity_field.attribute_user_code]).id
+                                except Exception as e:
+                                    _l.error(
+                                        'fill_result_item_with_attributes classifier error - item %s e %s' % (item, e))
+
+                                    if not item.error_message:
+                                        item.error_message = ''
+
+                                    item.error_message = (item.error_message + '%s: %s, ') % (
+                                    entity_field.attribute_user_code, str(e))
+
+                                    attribute['classifier'] = None
+
+                        if attribute['attribute_type_object']['value_type'] == GenericAttributeType.DATE:
+                            if item.final_inputs[entity_field.attribute_user_code]:
+                                attribute['value_date'] = item.final_inputs[entity_field.attribute_user_code]
 
         return result
 
@@ -1294,15 +1320,17 @@ class SimpleImportProcess(object):
 
             if key in relation_fields_map:
 
-                try:
-                    result_item[key] = relation_fields_map[key].objects.get(user_code=result_item[key]).id
-                except Exception as e:
-                    result_item[key] = None
+                if isinstance(result_item[key], str):
 
-                    if not item.error_message:
-                        item.error_message = ''
+                    try:
+                        result_item[key] = relation_fields_map[key].objects.get(user_code=result_item[key]).id
+                    except Exception as e:
+                        result_item[key] = None
 
-                    item.error_message = (item.error_message + '%s: %s, ') % (key, str(e))
+                        if not item.error_message:
+                            item.error_message = ''
+
+                        item.error_message = (item.error_message + '%s: %s, ') % (key, str(e))
 
         # _l.info('convert_relation_to_ids.result_item %s' % result_item)
 
@@ -1371,28 +1399,11 @@ class SimpleImportProcess(object):
 
         return result
 
-    def entity_specific_update(self, result_item):
-
-        if self.scheme.content_type.model == 'instrument':
-            from poms.instruments.handlers import InstrumentTypeProcess
-
-            instrument_type = InstrumentType.objects.get(id=result_item['instrument_type'])
-
-            process = InstrumentTypeProcess(instrument_type=instrument_type)
-
-            default_instrument_object = process.instrument
-
-            default_instrument_object.update(result_item)
-
-            result_item = default_instrument_object
-
-        return result_item
-
     def import_item(self, item):
 
         content_type_key = self.scheme.content_type.app_label + '.' + self.scheme.content_type.model
 
-        serializer_class = self.get_serializer(content_type_key)
+        serializer_class = get_serializer(content_type_key)
 
         if not item.imported_items:
             item.imported_items = []
@@ -1401,11 +1412,29 @@ class SimpleImportProcess(object):
 
             item.final_inputs = self.get_final_inputs(item)
 
-            result_item = copy.copy(item.final_inputs)
+            result_item = {}
+
+            if self.scheme.content_type.model == 'instrument':
+                from poms.instruments.handlers import InstrumentTypeProcess
+
+                instrument_type = InstrumentType.objects.get(user_code=item.final_inputs['instrument_type'])
+
+                process = InstrumentTypeProcess(instrument_type=instrument_type)
+
+                default_instrument_object = process.instrument
+
+                default_instrument_object.update(result_item)
+
+                result_item = default_instrument_object
+
+            for key, value in item.final_inputs.items():
+                if item.final_inputs[key] is not None:
+                    result_item[key] = item.final_inputs[key]
+
+            # TODO do not overwrite existing values from Instrument Type for Instrument
             result_item['attributes'] = self.fill_result_item_with_attributes(item)
             result_item = self.convert_relation_to_ids(item, result_item)
             result_item = self.remove_nullable_attributes(result_item)
-            result_item = self.entity_specific_update(result_item)
 
             # _l.info('result_item %s' % result_item)
 
@@ -1419,7 +1448,7 @@ class SimpleImportProcess(object):
                 try:
 
                     formula.safe_eval(self.scheme.item_post_process_script, names=item.inputs,
-                                  context=self.context)
+                                      context=self.context)
 
                 except Exception as e:
 
@@ -1427,7 +1456,6 @@ class SimpleImportProcess(object):
                         item.error_message = ''
 
                     item.error_message = (item.error_message + 'Post script error: %s, ') % str(e)
-
 
             item.status = 'success'
             item.message = "Item Imported %s" % serializer.instance
@@ -1463,14 +1491,18 @@ class SimpleImportProcess(object):
 
                     item.final_inputs = self.get_final_inputs(item)
 
-                    result_item = copy.copy(item.final_inputs)
-                    result_item['attributes'] = self.fill_result_item_with_attributes(item)
+                    result_item = copy.copy(serializer_class(instance=instance, context=self.context).data)
+
+                    for key, value in item.final_inputs.items():
+                        if item.final_inputs[key] is not None:
+                            result_item[key] = item.final_inputs[key]
+
+                    self.overwrite_item_attributes(result_item, item)
                     result_item = self.convert_relation_to_ids(item, result_item)
-                    result_item = self.remove_nullable_attributes(result_item)
-                    result_item = self.entity_specific_update(result_item)
 
                     serializer = serializer_class(data=result_item,
                                                   instance=instance,
+                                                  partial=True,
                                                   context=self.context)
                     serializer.is_valid(raise_exception=True)
                     serializer.save()

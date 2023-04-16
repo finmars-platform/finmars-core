@@ -1,0 +1,105 @@
+{
+    "id": 13,
+    "name": "Prices (Exante)",
+    "user_code": "Prices_Exante",
+    "short_name": "Prices (Exante)",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "instruments.pricehistory",
+    "csv_fields": [
+        {
+            "column": 1,
+            "name": "price",
+            "name_expr": "float(if_null(price, 0))",
+            "column_name": "price"
+        },
+        {
+            "column": 1,
+            "name": "date",
+            "name_expr": "date",
+            "column_name": "date"
+        },
+        {
+            "column": 1,
+            "name": "instrument",
+            "name_expr": "if_null(instrument, '-')",
+            "column_name": "instrument.identifiers.ISIN"
+        },
+        {
+            "column": 1,
+            "name": "instrument_name",
+            "name_expr": "if_null(instrument_name, '-')",
+            "column_name": "instrument.description"
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 1642,
+            "name": "Instrument",
+            "order": 0,
+            "expression": "iff(instrument=='-', instrument_name, instrument)",
+            "system_property_key": "instrument",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1643,
+            "name": "Pricing policy",
+            "order": 0,
+            "expression": "'-'",
+            "system_property_key": "pricing_policy",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1644,
+            "name": "Date",
+            "order": 0,
+            "expression": "parse_date(date, '%Y-%m-%d')",
+            "system_property_key": "date",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1645,
+            "name": "Principal price",
+            "order": 0,
+            "expression": "price",
+            "system_property_key": "principal_price",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1646,
+            "name": "Accrued price",
+            "order": 0,
+            "expression": "0",
+            "system_property_key": "accrued_price",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 1647,
+            "name": "factor",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "factor",
+            "attribute_user_code": null,
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "overwrite",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "throw_error",
+    "classifier_handler": "skip",
+    "column_matcher": "name",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

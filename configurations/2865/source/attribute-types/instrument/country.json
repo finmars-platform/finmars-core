@@ -1,0 +1,689 @@
+{
+    "id": 205,
+    "user_code": "country",
+    "name": "Country",
+    "short_name": "Country",
+    "public_name": null,
+    "notes": null,
+    "prefix": null,
+    "favorites": null,
+    "expr": "\"\"",
+    "can_recalculate": false,
+    "tooltip": null,
+    "kind": 1,
+    "content_type": 68,
+    "value_type": 30,
+    "order": 0,
+    "is_hidden": false,
+    "classifiers": [
+        {
+            "id": 929,
+            "name": "-",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 930,
+            "name": "[Alternative]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 931,
+            "name": "Argentina",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 932,
+            "name": "Azerbaijan",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 933,
+            "name": "[Bank Loans]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 934,
+            "name": "Belarus",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 935,
+            "name": "Belgium",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 936,
+            "name": "Brazil",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 937,
+            "name": "Britain",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 938,
+            "name": "Bulgaria",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 939,
+            "name": "[Bund Future]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 940,
+            "name": "Canada",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 941,
+            "name": "China",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 942,
+            "name": "Colombia",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 943,
+            "name": "Croatia",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 944,
+            "name": "[Crypto]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 945,
+            "name": "Cuba",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 946,
+            "name": "Denmark",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 947,
+            "name": "[DM Currency]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 948,
+            "name": "Ecuador",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 949,
+            "name": "[Equity]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 950,
+            "name": "[Fees]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 951,
+            "name": "[Fixed Income]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 952,
+            "name": "France",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 953,
+            "name": "[FX Forward]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 954,
+            "name": "Germany",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 955,
+            "name": "Ghana",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 956,
+            "name": "Global",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 957,
+            "name": "[Gold]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 958,
+            "name": "Israel",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 959,
+            "name": "Kazakhstan",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 960,
+            "name": "Mexico",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 961,
+            "name": "Monetary",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 962,
+            "name": "[Money Market]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 963,
+            "name": "Mongolia",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 964,
+            "name": "Netherlands",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 965,
+            "name": "Nigeria",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 966,
+            "name": "Oman",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 967,
+            "name": "[Options]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 968,
+            "name": "[Precious Metals]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 969,
+            "name": "[Private Credit]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 970,
+            "name": "[Private Loans]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 971,
+            "name": "[Real Estate]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 972,
+            "name": "Russia",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 973,
+            "name": "Switzerland",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 974,
+            "name": "Tajikistan",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 975,
+            "name": "Turkey",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 976,
+            "name": "UK",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 977,
+            "name": "Ukraine",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 978,
+            "name": "United States",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 979,
+            "name": "Uruguay",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 980,
+            "name": "Venezuela",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 981,
+            "name": "[Volatility]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 982,
+            "name": "[Xtreme]",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 983,
+            "name": "Zambia",
+            "level": 0,
+            "children": []
+        }
+    ],
+    "classifiers_flat": [
+        {
+            "id": 929,
+            "name": "-",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 930,
+            "name": "[Alternative]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 931,
+            "name": "Argentina",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 932,
+            "name": "Azerbaijan",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 933,
+            "name": "[Bank Loans]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 934,
+            "name": "Belarus",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 935,
+            "name": "Belgium",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 936,
+            "name": "Brazil",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 937,
+            "name": "Britain",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 938,
+            "name": "Bulgaria",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 939,
+            "name": "[Bund Future]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 940,
+            "name": "Canada",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 941,
+            "name": "China",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 942,
+            "name": "Colombia",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 943,
+            "name": "Croatia",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 944,
+            "name": "[Crypto]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 945,
+            "name": "Cuba",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 946,
+            "name": "Denmark",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 947,
+            "name": "[DM Currency]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 948,
+            "name": "Ecuador",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 949,
+            "name": "[Equity]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 950,
+            "name": "[Fees]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 951,
+            "name": "[Fixed Income]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 952,
+            "name": "France",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 953,
+            "name": "[FX Forward]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 954,
+            "name": "Germany",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 955,
+            "name": "Ghana",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 956,
+            "name": "Global",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 957,
+            "name": "[Gold]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 958,
+            "name": "Israel",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 959,
+            "name": "Kazakhstan",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 960,
+            "name": "Mexico",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 961,
+            "name": "Monetary",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 962,
+            "name": "[Money Market]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 963,
+            "name": "Mongolia",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 964,
+            "name": "Netherlands",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 965,
+            "name": "Nigeria",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 966,
+            "name": "Oman",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 967,
+            "name": "[Options]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 968,
+            "name": "[Precious Metals]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 969,
+            "name": "[Private Credit]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 970,
+            "name": "[Private Loans]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 971,
+            "name": "[Real Estate]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 972,
+            "name": "Russia",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 973,
+            "name": "Switzerland",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 974,
+            "name": "Tajikistan",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 975,
+            "name": "Turkey",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 976,
+            "name": "UK",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 977,
+            "name": "Ukraine",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 978,
+            "name": "United States",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 979,
+            "name": "Uruguay",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 980,
+            "name": "Venezuela",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 981,
+            "name": "[Volatility]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 982,
+            "name": "[Xtreme]",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 983,
+            "name": "Zambia",
+            "level": 0,
+            "parent": null
+        }
+    ],
+    "deleted_user_code": null,
+    "meta": {
+        "content_type": "obj_attrs.genericattributetype",
+        "app_label": "obj_attrs",
+        "model_name": "genericattributetype",
+        "space_code": "space00000"
+    }
+}

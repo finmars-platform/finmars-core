@@ -19,6 +19,7 @@ _l = logging.getLogger('poms.history')
 # Just not to log history for too meta models
 excluded_to_track_history_models = [
 
+    'celery_tasks.celerytask',
     'celery_tasks.celerytaskattachment',
 
     'system_messages.systemmessage',

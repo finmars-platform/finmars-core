@@ -1,0 +1,78 @@
+{
+    "id": 8,
+    "name": "Portfolios_from_file_2_0",
+    "user_code": "Portfolios_from_file_2_0",
+    "short_name": "Portfolios_from_file_2_0",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "portfolios.portfolio",
+    "csv_fields": [
+        {
+            "column": 16,
+            "name": "portfolio",
+            "name_expr": "if_null(portfolio, '-')",
+            "column_name": "Portfolio"
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 847,
+            "name": "User code",
+            "order": 0,
+            "expression": "portfolio",
+            "system_property_key": "user_code",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 848,
+            "name": "Name",
+            "order": 0,
+            "expression": "portfolio",
+            "system_property_key": "name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 849,
+            "name": "Short name",
+            "order": 0,
+            "expression": "portfolio",
+            "system_property_key": "short_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 850,
+            "name": "Public name",
+            "order": 0,
+            "expression": "portfolio",
+            "system_property_key": "public_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 851,
+            "name": "Notes",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "notes",
+            "attribute_user_code": null,
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "skip",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "classifier_handler": "skip",
+    "column_matcher": "name",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

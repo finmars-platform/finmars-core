@@ -1,0 +1,10 @@
+{
+    "id": 5,
+    "name": "System Generate Events",
+    "user_code": "system_generate_events",
+    "notes": null,
+    "data": null,
+    "context_variables": [],
+    "code": "run_task('instruments.generate_events',options={})",
+    "configuration_code": "com.finmars.local"
+}

@@ -36,6 +36,7 @@ import poms.system_messages.views as system_messages
 import poms.transactions.views as transactions
 import poms.ui.views as ui
 import poms.users.views as users
+import poms.configuration.views as configuration
 import poms.widgets.views as widgets
 from finmars_standardized_errors.views import ErrorRecordViewSet
 from poms.auth_tokens.views import ObtainAuthToken, SetAuthToken, CreateUser, CreateMasterUser, CreateMember, \
@@ -253,6 +254,9 @@ router.register(r'transactions/recalculate-permission-transaction',
 router.register(r'transactions/recalculate-permission-complex-transaction',
                 transactions.RecalculatePermissionComplexTransactionViewSet, 'recalculatepermissioncomplextrasaction')
 
+router.register(r'configuration/configuration', configuration.ConfigurationViewSet)
+
+
 router.register(r'transactions/bank-file', integrations.TransactionFileResultViewSet)  # deprecated?
 
 router.register(r'specific-data/values-for-select', common.ValuesForSelectViewSet, 'valuesforselect')
@@ -266,6 +270,7 @@ router.register(r'ui/edit-layout', ui.EditLayoutViewSet)
 router.register(r'ui/bookmark', ui.BookmarkViewSet)
 router.register(r'ui/configuration', ui.ConfigurationViewSet)
 router.register(r'ui/configuration-export-layout', ui.ConfigurationExportLayoutViewSet)
+router.register(r'ui/complex-transaction-user-field', ui.ComplexTransactionUserFieldViewSet)
 router.register(r'ui/transaction-user-field', ui.TransactionUserFieldViewSet)
 router.register(r'ui/instrument-user-field', ui.InstrumentUserFieldViewSet)
 router.register(r'ui/entity-tooltip', ui.EntityTooltipViewSet)
@@ -364,6 +369,7 @@ router.register(r'utils/system-logs', api.SystemLogsViewSet, 'system-logs')
 router.register(r'utils/calendar-events', api.CalendarEventsViewSet, 'calendar-events')
 router.register(r'utils/tables-size', api.TablesSizeViewSet, 'tables-size')
 router.register(r'utils/recycle-bin', api.RecycleBinViewSet, 'recycle-bin')
+router.register(r'utils/universal-input', api.UniversalInputViewSet, 'universalInput')
 
 router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
 router.register(r'import/csv/scheme-light', csv_import.SchemeLightViewSet, 'import_csv_scheme_light')  # deprecated

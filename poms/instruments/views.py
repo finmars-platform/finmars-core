@@ -1,7 +1,6 @@
 from __future__ import unicode_literals
 
 import datetime
-import json
 import logging
 
 import django_filters
@@ -9,7 +8,7 @@ import requests
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models import Prefetch, Q, Case, When, Value, BooleanField
+from django.db.models import Prefetch, Q, Case, When, Value
 from django.utils import timezone
 from django_filters.rest_framework import FilterSet
 from rest_framework import serializers
@@ -22,14 +21,13 @@ from rest_framework.views import APIView
 
 from poms.accounts.models import Account
 from poms.accounts.models import AccountType
-
 from poms.common.authentication import get_access_token
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
     ModelExtMultipleChoiceFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter
 from poms.common.jwt import encode_with_jwt
 from poms.common.mixins import UpdateModelMixinExt
 from poms.common.pagination import CustomPaginationMixin
-from poms.common.utils import date_now
+from poms.common.utils import date_now, get_list_of_entity_attributes
 from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.csv_import.handlers import handler_instrument_object
 from poms.currencies.models import Currency
@@ -162,7 +160,6 @@ class PricingPolicyViewSet(AbstractModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='light', serializer_class=PricingPolicyLightSerializer)
     def list_light(self, request, *args, **kwargs):
-
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
@@ -170,6 +167,7 @@ class PricingPolicyViewSet(AbstractModelViewSet):
         result = self.get_paginated_response(serializer.data)
 
         return result
+
 
 # DEPRECATED
 class PricingPolicyLightViewSet(AbstractModelViewSet):
@@ -293,6 +291,216 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         serializer = self.get_serializer(instance=instance)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+
+        items = [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "is_active",
+                "name": "Is active",
+                "value_type": 50
+            },
+            {
+                "key": "instrument_class",
+                "name": "Instrument class",
+                "value_type": "field",
+                "value_content_type": "instruments.instrumentclass",
+                "value_entity": "instrument-class",
+                "code": "user_code"
+            },
+            {
+                "key": "one_off_event",
+                "name": "One off event",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "value_content_type": "transactions.transactiontype",
+                "code": "user_code"
+            },
+            {
+                "key": "regular_event",
+                "name": "Regular event",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "value_content_type": "transactions.transactiontype",
+                "code": "user_code"
+            },
+            {
+                "key": "factor_same",
+                "name": "Factor same",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "value_content_type": "transactions.transactiontype",
+                "code": "user_code"
+            },
+            {
+                "key": "factor_up",
+                "name": "Factor up",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "value_content_type": "transactions.transactiontype",
+                "code": "user_code"
+            },
+            {
+                "key": "factor_down",
+                "name": "Factor down",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "value_content_type": "transactions.transactiontype",
+                "code": "user_code"
+            },
+            {
+                "key": "has_second_exposure_currency",
+                "name": "Has second exposure currency",
+                "value_type": 50
+            },
+            {
+                "key": "object_permissions",
+                "name": "Object permissions",
+                "value_type": "mc_field"
+            },
+            {
+                "key": "underlying_long_multiplier",
+                "name": "Underlying long multiplier",
+                "value_type": 20
+            },
+            {
+                "key": "underlying_short_multiplier",
+                "name": "Underlying short multiplier",
+                "value_type": 20
+            },
+
+            {
+                "key": "co_directional_exposure_currency",
+                "name": "Exposure Co-Directional Currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "counter_directional_exposure_currency",
+                "name": "Exposure Counter-Directional Currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "long_underlying_exposure",
+                "name": "Long Underlying Exposure",
+                "value_content_type": "instruments.longunderlyingexposure",
+                "value_entity": "long-underlying-exposure",
+                "value_type": "field"
+            },
+            {
+                "key": "short_underlying_exposure",
+                "name": "Short Underlying Exposure",
+                "value_content_type": "instruments.shortunderlyingexposure",
+                "value_entity": "short-underlying-exposure",
+                "value_type": "field"
+            },
+            {
+                "key": "exposure_calculation_model",
+                "name": "Exposure Calculation Model",
+                "value_content_type": "instruments.exposurecalculationmodel",
+                "value_entity": "exposure-calculation-model",
+                "value_type": "field"
+            },
+
+            {
+                "key": "long_underlying_instrument",
+                "name": "Long Underlying Instrument",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "value_type": "field"
+            },
+            {
+                "key": "short_underlying_instrument",
+                "name": "Short Underlying Instrument",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "value_type": "field"
+            },
+            {
+                "key": "accrued_currency",
+                "name": "Accrued currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "accrued_multiplier",
+                "name": "Accrued multiplier",
+                "value_type": 20
+            },
+            {
+                "key": "payment_size_detail",
+                "name": "Payment size detail",
+                "value_content_type": "instruments.paymentsizedetail",
+                "value_entity": "payment-size-detail",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "default_accrued",
+                "name": "Default accrued",
+                "value_type": 20
+            },
+
+            {
+                "key": "default_price",
+                "name": "Default price",
+                "value_type": 20
+            },
+            {
+                "key": "maturity_date",
+                "name": "Maturity date",
+                "value_type": 40
+            },
+            {
+                "key": "maturity_price",
+                "name": "Maturity price",
+                "value_type": 20
+            }
+        ]
+
+        items = items + get_list_of_entity_attributes('instruments.instrumenttype')
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
 
     @action(detail=True, methods=['get', 'put'], url_path='update-pricing', permission_classes=[IsAuthenticated])
     def update_pricing(self, request, pk=None):
@@ -421,6 +629,7 @@ class InstrumentTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, C
         EntitySpecificFilter
     ]
 
+
 # DEPRECATED
 class InstrumentTypeLightViewSet(AbstractWithObjectPermissionViewSet):
     queryset = InstrumentType.objects.select_related(
@@ -523,8 +732,6 @@ class InstrumentFilterSet(FilterSet):
         fields = []
 
 
-# For usual GET/PUT/ADD/CREATE
-# Not for getting List
 class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
     queryset = Instrument.objects.select_related(
         'instrument_type',
@@ -596,6 +803,232 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
         result = self.get_paginated_response(serializer.data)
 
         return result
+
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+
+        items = [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "instrument_type",
+                "name": "Instrument type",
+                "value_type": "field",
+                "value_content_type": "instruments.instrumenttype",
+                "value_entity": "instrument-type",
+                "code": "user_code"
+            },
+            {
+                "key": "is_active",
+                "name": "Is active",
+                "value_type": 50
+            },
+            {
+                "key": "has_linked_with_portfolio",
+                "name": "Has linked with portfolio",
+                "value_type": 50
+            },
+            {
+                "key": "reference_for_pricing",
+                "name": "Reference for pricing",
+                "value_type": 10
+            },
+            {
+                "key": "pricing_currency",
+                "name": "Pricing currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "price_multiplier",
+                "name": "Price multiplier",
+                "value_type": 20
+            },
+            {
+                "key": "position_reporting",
+                "name": "Position reporting",
+                "value_content_type": "instruments.positionreporting",
+                "value_entity": "position-reporting",
+                "value_type": "field",
+            },
+            {
+                "key": "accrued_currency",
+                "name": "Accrued currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "maturity_date",
+                "name": "Maturity date",
+                "value_type": 40
+            },
+            {
+                "key": "maturity_price",
+                "name": "Maturity price",
+                "value_type": 20
+            },
+            {
+                "key": "accrued_multiplier",
+                "name": "Accrued multiplier",
+                "value_type": 20
+            },
+            {
+                "key": "pricing_condition",
+                "name": "Pricing Condition",
+                "value_content_type": "instruments.pricingcondition",
+                "value_entity": "pricing-condition",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "payment_size_detail",
+                "name": "Accrual Size Clarification",
+                "value_content_type": "instruments.paymentsizedetail",
+                "value_entity": "payment-size-detail",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "default_price",
+                "name": "Default price",
+                "value_type": 20
+            },
+            {
+                "key": "default_accrued",
+                "name": "Default accrued",
+                "value_type": 20
+            },
+            {
+                "key": "user_text_1",
+                "name": "User text 1",
+                "value_type": 10
+            },
+            {
+                "key": "user_text_2",
+                "name": "User text 2",
+                "value_type": 10
+            },
+            {
+                "key": "user_text_3",
+                "name": "User text 3",
+                "value_type": 10
+            },
+            {
+                "key": "object_permissions",
+                "name": "Object permissions",
+                "value_type": "mc_field"
+            },
+
+            {
+                "key": "underlying_long_multiplier",
+                "name": "Underlying long multiplier",
+                "value_type": 20
+            },
+            {
+                "key": "underlying_short_multiplier",
+                "name": "Underlying short multiplier",
+                "value_type": 20
+            },
+
+            {
+                "key": "co_directional_exposure_currency",
+                "name": "Exposure Co-Directional Currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "counter_directional_exposure_currency",
+                "name": "Exposure Counter-Directional Currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "long_underlying_exposure",
+                "name": "Long Underlying Exposure",
+                "value_content_type": "instruments.longunderlyingexposure",
+                "value_entity": "long-underlying-exposure",
+                "value_type": "field"
+            },
+            {
+                "key": "short_underlying_exposure",
+                "name": "Short Underlying Exposure",
+                "value_content_type": "instruments.shortunderlyingexposure",
+                "value_entity": "short-underlying-exposure",
+                "value_type": "field"
+            },
+            {
+                "key": "exposure_calculation_model",
+                "name": "Exposure Calculation Model",
+                "value_content_type": "instruments.exposurecalculationmodel",
+                "value_entity": "exposure-calculation-model",
+                "value_type": "field"
+            },
+
+            {
+                "key": "long_underlying_instrument",
+                "name": "Long Underlying Instrument",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "value_type": "field"
+            },
+            {
+                "key": "short_underlying_instrument",
+                "name": "Short Underlying Instrument",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "value_type": "field"
+            },
+            {
+                "key": "country",
+                "name": "Country",
+                "value_content_type": "instruments.country",
+                "value_entity": "country",
+                "code": "user_code",
+                "value_type": "field"
+            }
+        ]
+
+        items = items + get_list_of_entity_attributes('instruments.instrument')
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
 
     @action(detail=False, methods=['post'], url_path='rebuild-events', serializer_class=serializers.Serializer)
     def rebuild_all_events(self, request):
@@ -832,8 +1265,6 @@ class InstrumentFDBCreateFromCallbackViewSet(APIView):
 
         try:
 
-
-
             _l.info("InstrumentFDBCreateFromCallbackViewSet.data %s" % request.data)
             _l.info("InstrumentFDBCreateFromCallbackViewSet.request_id %s" % request.data['request_id'])
 
@@ -1004,78 +1435,77 @@ class InstrumentDatabaseSearchViewSet(APIView):
 
             if settings.FINMARS_DATABASE_URL:
 
-                    headers = {
-                        'Accept': 'application/json',
-                        'Content-type': 'application/json'
-                    }
+                headers = {
+                    'Accept': 'application/json',
+                    'Content-type': 'application/json'
+                }
 
-                    # auth_url = settings.FINMARS_DATABASE_URL + 'api/authenticate'
-                    #
-                    # auth_request_body = {
-                    #     "username": settings.FINMARS_DATABASE_USER,
-                    #     "password": settings.FINMARS_DATABASE_PASSWORD
-                    # }
-                    #
-                    # auth_response = requests.post(url=auth_url, headers=headers, data=json.dumps(auth_request_body), verify=settings.VERIFY_SSL)
-                    #
-                    # auth_response_json = auth_response.json()
-                    #
-                    # auth_token = auth_response_json['id_token']
+                # auth_url = settings.FINMARS_DATABASE_URL + 'api/authenticate'
+                #
+                # auth_request_body = {
+                #     "username": settings.FINMARS_DATABASE_USER,
+                #     "password": settings.FINMARS_DATABASE_PASSWORD
+                # }
+                #
+                # auth_response = requests.post(url=auth_url, headers=headers, data=json.dumps(auth_request_body), verify=settings.VERIFY_SSL)
+                #
+                # auth_response_json = auth_response.json()
+                #
+                # auth_token = auth_response_json['id_token']
 
-                    # TODO FINMARS_DATABASE_REFACTOR
+                # TODO FINMARS_DATABASE_REFACTOR
 
-                    name = request.query_params.get('name', '')
-                    size = request.query_params.get('size', 40)
-                    page = request.query_params.get('page', 1)
+                name = request.query_params.get('name', '')
+                size = request.query_params.get('size', 40)
+                page = request.query_params.get('page', 1)
 
-                    page = int(page)
+                page = int(page)
 
-                    if page == 0:
-                        page = 1
+                if page == 0:
+                    page = 1
 
-                    instruments_url = settings.FINMARS_DATABASE_URL + 'api/v1/instrument-narrow/?page=' + str(
-                        page) + '&page_size=' + str(size) + '&query=' + name
+                instruments_url = settings.FINMARS_DATABASE_URL + 'api/v1/instrument-narrow/?page=' + str(
+                    page) + '&page_size=' + str(size) + '&query=' + name
 
-                    headers['Authorization'] = 'Bearer ' + get_access_token(request)
+                headers['Authorization'] = 'Bearer ' + get_access_token(request)
 
-                    _l.info("InstrumentDatabaseSearchViewSet.requesting url %s" % instruments_url)
+                _l.info("InstrumentDatabaseSearchViewSet.requesting url %s" % instruments_url)
 
-                    response = requests.get(url=instruments_url, headers=headers, verify=settings.VERIFY_SSL)
+                response = requests.get(url=instruments_url, headers=headers, verify=settings.VERIFY_SSL)
 
-                    response_json = response.json()
+                response_json = response.json()
 
-                    _l.info('response_json %s' % response_json)
+                _l.info('response_json %s' % response_json)
 
-                    # TODO refactor Interface and refactor mappedItems
-                    # foundItems
-                    # pageNum: 0
-                    # pageSize: 20
-                    # resultCount: 816
+                # TODO refactor Interface and refactor mappedItems
+                # foundItems
+                # pageNum: 0
+                # pageSize: 20
+                # resultCount: 816
 
-                    mappedItems = []
+                mappedItems = []
 
+                for item in response_json['results']:
+                    mappedItem = {}
 
-                    for item in response_json['results']:
-                        mappedItem = {}
+                    mappedItem['instrumentType'] = item['instrument_type']
+                    mappedItem['issueName'] = item['name']
+                    mappedItem['referenceId'] = item['isin']
+                    # mappedItem['last_cbonds_update'] = item['modified_at'].split('T')[0]
 
-                        mappedItem['instrumentType'] = item['instrument_type']
-                        mappedItem['issueName'] = item['name']
-                        mappedItem['referenceId'] = item['isin']
-                        # mappedItem['last_cbonds_update'] = item['modified_at'].split('T')[0]
+                    mappedItem['commonCode'] = ''
+                    mappedItem['figi'] = ''
+                    mappedItem['issuerName'] = ''
+                    mappedItem['wkn'] = ''
 
-                        mappedItem['commonCode'] = ''
-                        mappedItem['figi'] = ''
-                        mappedItem['issuerName'] = ''
-                        mappedItem['wkn'] = ''
+                    mappedItems.append(mappedItem)
 
-                        mappedItems.append(mappedItem)
-
-                    result = {
-                        'foundItems': mappedItems,
-                        'pageNum': int(page),
-                        'pageSize': int(size),
-                        'resultCount': response_json['count']
-                    }
+                result = {
+                    'foundItems': mappedItems,
+                    'pageNum': int(page),
+                    'pageSize': int(size),
+                    'resultCount': response_json['count']
+                }
             else:
                 result = {
                     'foundItems': [],
@@ -1231,6 +1661,87 @@ class PriceHistoryViewSet(AbstractModelViewSet):
         'pricing_policy__public_name',
         'date', 'principal_price', 'accrued_price',
     ]
+
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+        items = [
+            {
+                "key": "instrument",
+                "name": "Instrument",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "date",
+                "name": "Date",
+                "value_type": 40
+            },
+            {
+                "key": "pricing_policy",
+                "name": "Pricing policy",
+                "value_content_type": "instruments.pricingpolicy",
+                "value_entity": "pricing_policy",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "principal_price",
+                "name": "Principal price",
+                "value_type": 20
+            },
+            {
+                "key": "accrued_price",
+                "name": "Accrued price",
+                "value_type": 20
+            },
+            {
+                "key": "long_delta",
+                "name": "Long delta",
+                "value_type": 20
+            },
+            {
+                "key": "short_delta",
+                "name": "Short delta",
+                "value_type": 20
+            },
+            {
+                "key": "nav",
+                "name": "NAV",
+                "value_type": 20
+            },
+            {
+                "key": "cash_flow",
+                "name": "Cash Flow",
+                "value_type": 20
+            },
+            {
+                "key": "factor",
+                "name": "Factor",
+                "value_type": 20
+            },
+            {
+                "key": "procedure_modified_datetime",
+                "name": "Modified Date And Time",
+                "value_type": 80,
+            },
+
+            {
+                "key": "is_temporary_price",
+                "name": "Is Temporary Price",
+                "value_type": 50
+            }
+        ]
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
 
 
 class PriceHistoryEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):

@@ -1,0 +1,20 @@
+{
+    "id": 16,
+    "name": "Lombard (Daily) - Prices",
+    "user_code": "Lombard (Daily) - Prices",
+    "notes": null,
+    "is_enabled": true,
+    "cron_expr": "40 10 * * *",
+    "procedures": [
+        {
+            "type": "data_procedure",
+            "user_code": "Lombard (Prices)",
+            "order": 0
+        }
+    ],
+    "last_run_at": "2023-02-27T23:11:28+0000",
+    "next_run_at": "2023-02-28T10:40:00+0000",
+    "error_handler": "continue",
+    "data": null,
+    "configuration_code": "com.finmars.local"
+}

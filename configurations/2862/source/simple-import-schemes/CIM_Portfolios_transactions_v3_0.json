@@ -1,0 +1,78 @@
+{
+    "id": 15,
+    "name": "CIM Portfolios (from transactions)",
+    "user_code": "CIM_Portfolios_transactions_v3_0",
+    "short_name": "CIM Portfolios (from transactions)",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "portfolios.portfolio",
+    "csv_fields": [
+        {
+            "column": 1,
+            "name": "temp_portfolio",
+            "name_expr": "if_null(temp_portfolio, '-')",
+            "column_name": "account"
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 472,
+            "name": "Name",
+            "order": 0,
+            "expression": "\"CIM\"+\" \"+str(temp_portfolio)",
+            "system_property_key": "name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 473,
+            "name": "Short name",
+            "order": 0,
+            "expression": "\"CIM\"+\" \"+str(temp_portfolio)",
+            "system_property_key": "short_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 471,
+            "name": "User code",
+            "order": 0,
+            "expression": "temp_portfolio",
+            "system_property_key": "user_code",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 474,
+            "name": "Public name",
+            "order": 0,
+            "expression": "\"CIM\"+\" \"+str(temp_portfolio)",
+            "system_property_key": "public_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 475,
+            "name": "Notes",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "notes",
+            "attribute_user_code": null,
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "skip",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "classifier_handler": "skip",
+    "column_matcher": "name",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

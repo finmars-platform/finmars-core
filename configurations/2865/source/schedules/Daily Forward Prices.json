@@ -1,0 +1,25 @@
+{
+    "id": 11,
+    "name": "Daily Forward Prices",
+    "user_code": "Daily Forward Prices",
+    "notes": "Daily Forward Prices from Finmars",
+    "is_enabled": true,
+    "cron_expr": "37 15 * * *",
+    "procedures": [
+        {
+            "type": "pricing_procedure",
+            "user_code": "Daily FX Rates and Prices - 2 STEP (Finmars)",
+            "order": 0
+        },
+        {
+            "type": "pricing_procedure",
+            "user_code": "Daily FX Rates and Prices - 4 STEP (Finmars)",
+            "order": 1
+        }
+    ],
+    "last_run_at": "2023-02-27T23:11:24+0000",
+    "next_run_at": "2023-02-28T15:37:00+0000",
+    "error_handler": "continue",
+    "data": null,
+    "configuration_code": "com.finmars.local"
+}

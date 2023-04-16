@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import json
 from datetime import date, datetime, timedelta
 from functools import lru_cache
 
@@ -23,7 +24,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from poms.api.serializers import LanguageSerializer, Language, TimezoneSerializer, Timezone, ExpressionSerializer
 from poms.common.utils import get_list_of_business_days_between_two_dates, get_closest_bday_of_yesterday, \
-    get_list_of_dates_between_two_dates, last_day_of_month
+    get_list_of_dates_between_two_dates, last_day_of_month, get_serializer, get_content_type_by_name
 from poms.common.views import AbstractViewSet, AbstractApiView
 from poms.currencies.models import Currency
 from poms.instruments.models import PriceHistory, PricingPolicy, Instrument
@@ -828,6 +829,31 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
                              queue='backend-delete-queue')
 
         return Response({"task_id": celery_task.id})
+
+
+class UniversalInputViewSet(AbstractViewSet):
+
+
+
+    def create(self, request):
+
+        data = json.loads(request.data)
+
+        from poms.celery_tasks.models import CeleryTask
+        celery_task = CeleryTask.objects.create(
+            member=self.request.user.member,
+            master_user=self.request.user.master_user,
+            options_object=data,
+            type='universal_input'
+        )
+
+        from poms.celery_tasks.tasks import universal_input
+
+        universal_input.apply_async(kwargs={"task_id": celery_task.id})
+
+        # _l.info('UniversalInputViewSet.data %s' % data)
+
+        return Response({"status": "ok", "task_id": celery_task.id})
 
 
 class CalendarEventsViewSet(AbstractViewSet):

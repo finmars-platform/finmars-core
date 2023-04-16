@@ -1,0 +1,1169 @@
+{
+    "id": 54,
+    "user_code": "asset_sub_type",
+    "name": "Asset Sub-Type",
+    "short_name": "Asset Sub-Type",
+    "public_name": null,
+    "notes": null,
+    "prefix": null,
+    "favorites": "Performance Fees",
+    "expr": "\"\"",
+    "can_recalculate": false,
+    "tooltip": "Security Group",
+    "kind": 1,
+    "content_type": 68,
+    "value_type": 30,
+    "order": 0,
+    "is_hidden": false,
+    "classifiers": [
+        {
+            "id": 549,
+            "name": "-",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 926,
+            "name": "-",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 550,
+            "name": "<Accruals>",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 551,
+            "name": "AGROKOR D.D",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 552,
+            "name": "Alternative",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 553,
+            "name": "AT&T Inc",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 554,
+            "name": "AVANGARDCO INVESTMENTS",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 555,
+            "name": "Baidu Inc",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 556,
+            "name": "Basket Notes",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 557,
+            "name": "BEIJING AIRPORT",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 558,
+            "name": "Bond Futures",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 559,
+            "name": "Bonds",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 560,
+            "name": "BROADMARK REALTY CAPITAL INC",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 561,
+            "name": "BULGARIA STEEL FINANCE",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 562,
+            "name": "Callable Bank Deposit",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 563,
+            "name": "Call Options",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 564,
+            "name": "Cash",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 565,
+            "name": "Commodity",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 566,
+            "name": "Commodity Futures",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 567,
+            "name": "<Custody Fees>",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 568,
+            "name": "Discovery Inc",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 569,
+            "name": "DR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 570,
+            "name": "Emerald Fund SCA SICAV-FIS - M",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 571,
+            "name": "Equity",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 572,
+            "name": "ETFs",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 573,
+            "name": "Exchange Derivatives",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 574,
+            "name": "Fees",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 575,
+            "name": "Finex SICAV SIF SA - JC Specia",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 576,
+            "name": "Fixed Income",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 577,
+            "name": "FORTEBANK JSC",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 578,
+            "name": "Funds",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 579,
+            "name": "Futu Holdings Ltd",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 580,
+            "name": "FX Forwards",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 581,
+            "name": "GDR",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 582,
+            "name": "Globaltrans Investment PLC",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 583,
+            "name": "Golden Eagle Retail Group Ltd",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 584,
+            "name": "Halyk Savings Bank of Kazakhst",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 585,
+            "name": "Hybrid",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 586,
+            "name": "Imperial Brands PLC",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 587,
+            "name": "Index Option",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 588,
+            "name": "INTERNATIONAL PETROLEUM",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 589,
+            "name": "Kinder Morgan Inc",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 590,
+            "name": "KREMIKOVTZI AD",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 591,
+            "name": "Loans",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 592,
+            "name": "Long Term Growth Fund",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 593,
+            "name": "Luxembourg Life Fund II - Abso",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 594,
+            "name": "Magnitogorsk Iron & Steel Work",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 595,
+            "name": "Mail.Ru Group Ltd",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 596,
+            "name": "<Management Fees>",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 597,
+            "name": "MMC Norilsk Nickel PJSC",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 598,
+            "name": "Momo Inc",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 599,
+            "name": "Money Market",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 600,
+            "name": "MRSK Volgi",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 601,
+            "name": "New Oriental Education & Techn",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 602,
+            "name": "Novolipetsk Steel PJSC",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 603,
+            "name": "Office Properties Income Trust",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 604,
+            "name": "Orange SA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 605,
+            "name": "OTC Derivatives",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 606,
+            "name": "<Payables / Receivables>",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 607,
+            "name": "Performance Fees",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 608,
+            "name": "Perpetuities",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 609,
+            "name": "PETROLEOS DE VENEZUELA S",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 610,
+            "name": "Pinduoduo Inc",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 611,
+            "name": "Preferred Stocks",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 612,
+            "name": "Private Credit",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 613,
+            "name": "Private Loans",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 614,
+            "name": "Promissory Note",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 615,
+            "name": "ProShares UltraPro Short S&P 5",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 616,
+            "name": "PROVINCIA DE BUENOS AIRE",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 617,
+            "name": "PROVINCIA DE CORDOBA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 618,
+            "name": "PROVINCIA DE ENTRE RIOS",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 619,
+            "name": "Proximus SADP",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 620,
+            "name": "Put Options",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 621,
+            "name": "REIT",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 622,
+            "name": "REPUBLIC OF ARGENTINA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 623,
+            "name": "REPUBLIC OF VENEZUELA",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 624,
+            "name": "Royal Dutch Shell PLC",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 625,
+            "name": "Sabra Health Care REIT Inc",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 626,
+            "name": "Sberbank of Russia",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 627,
+            "name": "Security Type",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 628,
+            "name": "Severstal PJSC",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 629,
+            "name": "Specific Assets",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 630,
+            "name": "Stocks",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 631,
+            "name": "Surgutneftegas OJSC",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 632,
+            "name": "Surgutneftegas PJSC",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 633,
+            "name": "T-Bills",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 634,
+            "name": "TCA Global Credit Master Fund",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 635,
+            "name": "TREASURY BILL",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 636,
+            "name": "UKRLANDFARMING PLC",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 637,
+            "name": "Up Fintech Holding Ltd",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 638,
+            "name": "Victus European Student Accomm",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 639,
+            "name": "Warrants",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 640,
+            "name": "Western Union Co/The",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 641,
+            "name": "Wirecard AG",
+            "level": 0,
+            "children": []
+        },
+        {
+            "id": 642,
+            "name": "WIRECARD AG",
+            "level": 0,
+            "children": []
+        }
+    ],
+    "classifiers_flat": [
+        {
+            "id": 549,
+            "name": "-",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 926,
+            "name": "-",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 550,
+            "name": "<Accruals>",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 551,
+            "name": "AGROKOR D.D",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 552,
+            "name": "Alternative",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 553,
+            "name": "AT&T Inc",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 554,
+            "name": "AVANGARDCO INVESTMENTS",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 555,
+            "name": "Baidu Inc",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 556,
+            "name": "Basket Notes",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 557,
+            "name": "BEIJING AIRPORT",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 558,
+            "name": "Bond Futures",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 559,
+            "name": "Bonds",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 560,
+            "name": "BROADMARK REALTY CAPITAL INC",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 561,
+            "name": "BULGARIA STEEL FINANCE",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 562,
+            "name": "Callable Bank Deposit",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 563,
+            "name": "Call Options",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 564,
+            "name": "Cash",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 565,
+            "name": "Commodity",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 566,
+            "name": "Commodity Futures",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 567,
+            "name": "<Custody Fees>",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 568,
+            "name": "Discovery Inc",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 569,
+            "name": "DR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 570,
+            "name": "Emerald Fund SCA SICAV-FIS - M",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 571,
+            "name": "Equity",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 572,
+            "name": "ETFs",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 573,
+            "name": "Exchange Derivatives",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 574,
+            "name": "Fees",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 575,
+            "name": "Finex SICAV SIF SA - JC Specia",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 576,
+            "name": "Fixed Income",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 577,
+            "name": "FORTEBANK JSC",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 578,
+            "name": "Funds",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 579,
+            "name": "Futu Holdings Ltd",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 580,
+            "name": "FX Forwards",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 581,
+            "name": "GDR",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 582,
+            "name": "Globaltrans Investment PLC",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 583,
+            "name": "Golden Eagle Retail Group Ltd",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 584,
+            "name": "Halyk Savings Bank of Kazakhst",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 585,
+            "name": "Hybrid",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 586,
+            "name": "Imperial Brands PLC",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 587,
+            "name": "Index Option",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 588,
+            "name": "INTERNATIONAL PETROLEUM",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 589,
+            "name": "Kinder Morgan Inc",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 590,
+            "name": "KREMIKOVTZI AD",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 591,
+            "name": "Loans",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 592,
+            "name": "Long Term Growth Fund",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 593,
+            "name": "Luxembourg Life Fund II - Abso",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 594,
+            "name": "Magnitogorsk Iron & Steel Work",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 595,
+            "name": "Mail.Ru Group Ltd",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 596,
+            "name": "<Management Fees>",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 597,
+            "name": "MMC Norilsk Nickel PJSC",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 598,
+            "name": "Momo Inc",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 599,
+            "name": "Money Market",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 600,
+            "name": "MRSK Volgi",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 601,
+            "name": "New Oriental Education & Techn",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 602,
+            "name": "Novolipetsk Steel PJSC",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 603,
+            "name": "Office Properties Income Trust",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 604,
+            "name": "Orange SA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 605,
+            "name": "OTC Derivatives",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 606,
+            "name": "<Payables / Receivables>",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 607,
+            "name": "Performance Fees",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 608,
+            "name": "Perpetuities",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 609,
+            "name": "PETROLEOS DE VENEZUELA S",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 610,
+            "name": "Pinduoduo Inc",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 611,
+            "name": "Preferred Stocks",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 612,
+            "name": "Private Credit",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 613,
+            "name": "Private Loans",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 614,
+            "name": "Promissory Note",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 615,
+            "name": "ProShares UltraPro Short S&P 5",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 616,
+            "name": "PROVINCIA DE BUENOS AIRE",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 617,
+            "name": "PROVINCIA DE CORDOBA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 618,
+            "name": "PROVINCIA DE ENTRE RIOS",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 619,
+            "name": "Proximus SADP",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 620,
+            "name": "Put Options",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 621,
+            "name": "REIT",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 622,
+            "name": "REPUBLIC OF ARGENTINA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 623,
+            "name": "REPUBLIC OF VENEZUELA",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 624,
+            "name": "Royal Dutch Shell PLC",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 625,
+            "name": "Sabra Health Care REIT Inc",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 626,
+            "name": "Sberbank of Russia",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 627,
+            "name": "Security Type",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 628,
+            "name": "Severstal PJSC",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 629,
+            "name": "Specific Assets",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 630,
+            "name": "Stocks",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 631,
+            "name": "Surgutneftegas OJSC",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 632,
+            "name": "Surgutneftegas PJSC",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 633,
+            "name": "T-Bills",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 634,
+            "name": "TCA Global Credit Master Fund",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 635,
+            "name": "TREASURY BILL",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 636,
+            "name": "UKRLANDFARMING PLC",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 637,
+            "name": "Up Fintech Holding Ltd",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 638,
+            "name": "Victus European Student Accomm",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 639,
+            "name": "Warrants",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 640,
+            "name": "Western Union Co/The",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 641,
+            "name": "Wirecard AG",
+            "level": 0,
+            "parent": null
+        },
+        {
+            "id": 642,
+            "name": "WIRECARD AG",
+            "level": 0,
+            "parent": null
+        }
+    ],
+    "deleted_user_code": null,
+    "meta": {
+        "content_type": "obj_attrs.genericattributetype",
+        "app_label": "obj_attrs",
+        "model_name": "genericattributetype",
+        "space_code": "space00000"
+    }
+}

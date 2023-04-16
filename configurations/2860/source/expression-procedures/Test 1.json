@@ -1,0 +1,10 @@
+{
+    "id": 7,
+    "name": "Test 1",
+    "user_code": "Test 1",
+    "notes": null,
+    "data": null,
+    "context_variables": [],
+    "code": "test()",
+    "configuration_code": "com.finmars.local"
+}

@@ -1,0 +1,87 @@
+{
+    "id": 5,
+    "name": "Strategies_from_file",
+    "user_code": "Strategies_from_file",
+    "short_name": "Strategies_from_file",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "strategies.strategy1",
+    "csv_fields": [
+        {
+            "column": 15,
+            "name": "strategy",
+            "name_expr": "if_null(strategy, '-')",
+            "column_name": "Strategy"
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 829,
+            "name": "User code",
+            "order": 0,
+            "expression": "strategy",
+            "system_property_key": "user_code",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 830,
+            "name": "Name",
+            "order": 0,
+            "expression": "strategy",
+            "system_property_key": "name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 831,
+            "name": "Short name",
+            "order": 0,
+            "expression": "strategy",
+            "system_property_key": "short_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 832,
+            "name": "Public name",
+            "order": 0,
+            "expression": "strategy",
+            "system_property_key": "public_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 833,
+            "name": "Notes",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "notes",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 834,
+            "name": "Group",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "subgroup",
+            "attribute_user_code": null,
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "skip",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "classifier_handler": "skip",
+    "column_matcher": "index",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}

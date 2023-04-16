@@ -1,0 +1,87 @@
+{
+    "id": 30,
+    "name": "Marscap_responsible_1",
+    "user_code": "Marscap_responsible_1",
+    "short_name": "Marscap_responsible_1",
+    "public_name": null,
+    "notes": null,
+    "filter_expr": "",
+    "content_type": "counterparties.responsible",
+    "csv_fields": [
+        {
+            "column": 21,
+            "name": "responsible",
+            "name_expr": "if_null(responsible, '-')",
+            "column_name": "Trader"
+        }
+    ],
+    "entity_fields": [
+        {
+            "id": 898,
+            "name": "User code",
+            "order": 0,
+            "expression": "responsible",
+            "system_property_key": "user_code",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 899,
+            "name": "Name",
+            "order": 0,
+            "expression": "responsible",
+            "system_property_key": "name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 900,
+            "name": "Short name",
+            "order": 0,
+            "expression": "responsible",
+            "system_property_key": "short_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 901,
+            "name": "Public name",
+            "order": 0,
+            "expression": "responsible",
+            "system_property_key": "public_name",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 902,
+            "name": "Notes",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "notes",
+            "attribute_user_code": null,
+            "use_default": true
+        },
+        {
+            "id": 903,
+            "name": "Group",
+            "order": 0,
+            "expression": "",
+            "system_property_key": "group",
+            "attribute_user_code": null,
+            "use_default": true
+        }
+    ],
+    "calculated_inputs": [],
+    "spreadsheet_start_cell": "A1",
+    "spreadsheet_active_tab_name": "",
+    "mode": "skip",
+    "delimiter": ",",
+    "error_handler": "continue",
+    "missing_data_handler": "set_defaults",
+    "classifier_handler": "skip",
+    "column_matcher": "index",
+    "instrument_reference_column": "",
+    "item_post_process_script": "",
+    "data_preprocess_expression": "",
+    "configuration_code": "com.finmars.local"
+}
