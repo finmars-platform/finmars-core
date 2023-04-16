@@ -30,10 +30,8 @@ class ConfigurationModel(models.Model):
         
     '''
     def save(self, *args, **kwargs):
-
-        if self.configuration_code not in self.user_code:
-
-            self.user_code = str(self.configuration_code) + ':' + str(self.user_code)
+        if self.user_code and self.configuration_code not in self.user_code:
+            self.user_code = f'{self.configuration_code}:{self.user_code}'
 
         super(ConfigurationModel, self).save(*args, **kwargs)
 
@@ -48,6 +46,5 @@ class Configuration(models.Model):
     notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
     version = models.CharField(max_length=255, verbose_name=gettext_lazy('version'))
 
-
     def __str__(self):
-        return '%s (%s)' % (self.configuration_code, self.version)
+        return f'{self.configuration_code} ({self.version})'

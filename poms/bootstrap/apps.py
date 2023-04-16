@@ -444,6 +444,11 @@ class BootstrapConfig(AppConfig):
             configuration = Configuration.objects.get(configuration_code="com.finmars.local")
             _l.info("Local Configuration is already created")
         except Configuration.DoesNotExist:
-            Configuration.objects.create(configuration_code="com.finmars.local", name="Local Configuration", version="1.0.0", description="Local Configuration")
+            Configuration.objects.create(
+                configuration_code="com.finmars.local",
+                name="Local Configuration",
+                version="1.0.0",
+                # description="Local Configuration",
+            )
 
             _l.info("Local Configuration created")
