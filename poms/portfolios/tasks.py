@@ -12,7 +12,11 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_list_of_dates_between_two_dates
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import PricingPolicy
-from poms.portfolios.models import PortfolioRegister, PortfolioRegisterRecord
+from poms.portfolios.models import (
+    PortfolioRegister,
+    PortfolioRegisterRecord,
+    get_price_calculation_type,
+)
 from poms.reports.common import Report
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.system_messages.handlers import send_system_message
@@ -214,17 +218,14 @@ def calculate_portfolio_register_record(self, task_id):
                 record.instrument_id = portfolio_register.linked_instrument_id
                 record.transaction_date = trn.accounting_date
                 record.transaction_code = trn.transaction_code
-                record.transaction_class_id = trn.transaction_class_id
                 record.cash_amount = trn.cash_consideration
                 record.cash_currency_id = trn.transaction_currency_id
                 record.valuation_currency_id = portfolio_register.valuation_currency_id
-
-                if (  # check if transaction is Cash Inflow/Outflow and Price != 0
-                    record.transaction_class_id
-                    in (TransactionClass.CASH_INFLOW, TransactionClass.CASH_OUTFLOW)
-                    and (trn.trade_price > 0)
-                ):
-                    record.share_price_calculation_type = PortfolioRegisterRecord.MANUAL
+                record.transaction_class = trn.transaction_class
+                record.share_price_calculation_type = get_price_calculation_type(
+                    transaction_class=trn.transaction_class,
+                    transaction=trn,
+                )
 
                 try:
                     previous_date_record = PortfolioRegisterRecord.objects.filter(
