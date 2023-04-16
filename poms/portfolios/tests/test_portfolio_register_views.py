@@ -1,26 +1,16 @@
 from datetime import date
-from django.conf import settings
-from django.contrib.auth.models import User
 
-from poms.common.common_base_test import BaseTestCase, BIG
+from django.conf import settings
+
+from poms.common.common_base_test import BIG, BaseTestCase
 from poms.portfolios.models import PortfolioRegisterRecord
 from poms.transactions.models import TransactionClass
-from poms.users.models import Member
 
 
 class PortfolioRegisterRecordViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.user = User.objects.create(username="view_tester")
-        self.user.master_user = self.db_data.master_user
-        self.user.save()
-        self.member = Member.objects.create(
-            user=self.user,
-            master_user=self.user.master_user,
-            is_admin=True,
-        )
-        self.client.force_authenticate(self.user)
         self.url = (
             f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio-register-record/"
         )
@@ -41,7 +31,8 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
             trans_class = self.db_data.transaction_classes[t_class]
         instrument = self.db_data.instruments["Apple"]
         portfolio_register = self.db_data.create_portfolio_register(
-            portfolio, instrument
+            portfolio,
+            instrument,
         )
         prr_data = {
             "portfolio": portfolio.id,

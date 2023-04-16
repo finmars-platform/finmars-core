@@ -3,6 +3,7 @@ import string
 from datetime import date, datetime, timedelta
 
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.test import TestCase
 from rest_framework.test import APIClient
 
@@ -13,13 +14,13 @@ from poms.instruments.models import Instrument, InstrumentClass, InstrumentType
 from poms.portfolios.models import Portfolio, PortfolioRegister
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import (
+    ComplexTransaction,
+    Transaction,
     TransactionClass,
     TransactionType,
     TransactionTypeGroup,
-    Transaction,
-    ComplexTransaction,
 )
-from poms.users.models import EcosystemDefault, MasterUser
+from poms.users.models import EcosystemDefault, MasterUser, Member
 
 
 def show_all_urls():
@@ -141,6 +142,15 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
     def init_test_case(self):
         self.client = APIClient()
         self.db_data = DbInitializer()
+        self.user = User.objects.create(username="view_tester")
+        self.user.master_user = self.db_data.master_user
+        self.user.save()
+        self.member = Member.objects.create(
+            user=self.user,
+            master_user=self.user.master_user,
+            is_admin=True,
+        )
+        self.client.force_authenticate(self.user)
 
 
 MASTER_USER = "Experimental_Master"
@@ -182,10 +192,13 @@ USD = "USD"
 
 class DbInitializer:
     def get_or_create_master_user(self) -> MasterUser:
-        master_user = MasterUser.objects.first() or MasterUser.objects.create_master_user(
-            name=MASTER_USER,
-            journal_status="disabled",
-            base_api_url=settings.BASE_API_URL,
+        master_user = (
+            MasterUser.objects.first()
+            or MasterUser.objects.create_master_user(
+                name=MASTER_USER,
+                journal_status="disabled",
+                base_api_url=settings.BASE_API_URL,
+            )
         )
         EcosystemDefault.objects.get_or_create(master_user=master_user)
         return master_user
@@ -408,9 +421,7 @@ class DbInitializer:
         self.responsible = self.create_responsible()
         self.accounts, self.portfolios = self.create_accounts_and_portfolios()
         self.transaction_types = self.get_or_create_types()
-        self.instruments = self.get_or_create_instruments()
         self.transaction_classes = self.get_or_create_classes()
-        self.transaction_types = self.get_or_create_types()
         self.instruments = self.get_or_create_instruments()
         self.default_instrument = self.get_or_create_default_instrument()
-        print("----------- db initialized with mandatory data -------------")
+        print("\n----------- db initialized, start tests -------------\n")
