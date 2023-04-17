@@ -1696,85 +1696,6 @@ def test_certificate(master_user=None, member=None, task=None):
         return task, False
 
 
-# DEPRECATED SINCE 22.09.2020 DELETE SOON
-# def download_pricing(master_user=None, member=None, date_from=None, date_to=None, is_yesterday=None, balance_date=None,
-#                      fill_days=None, override_existed=None, task=None):
-#     _l.info('download pricing')
-#
-#     _l.debug('download_pricing: master_user_id=%s, task=%s, date_from=%s, date_to=%s, is_yesterday=%s,'
-#             ' balance_date=%s, fill_days=%s, override_existed=%s',
-#             getattr(master_user, 'id', None), getattr(task, 'info', None), date_from, date_to, is_yesterday,
-#             balance_date, fill_days, override_existed)
-#     if task is None:
-#         with transaction.atomic():
-#             options = {
-#                 'date_from': date_from,
-#                 'date_to': date_to,
-#                 'is_yesterday': is_yesterday,
-#                 'balance_date': balance_date,
-#                 'fill_days': fill_days,
-#                 'override_existed': override_existed,
-#             }
-#             task = Task(
-#                 master_user=master_user,
-#                 member=member,
-#                 provider_id=None,
-#                 status=Task.STATUS_PENDING,
-#                 action=Task.ACTION_PRICING
-#             )
-#             task.options_object = options
-#             task.save()
-#
-#             if member:
-#                 celery_task = CeleryTask.objects.create(master_user=master_user,
-#                                                         member=member,
-#                                                         task_status=task.status,
-#                                                         started_at=datetime_now(),
-#                                                         task_type='user_download_pricing', task_id=task.id)
-#             else:
-#                 celery_task = CeleryTask.objects.create(master_user=master_user,
-#                                                         task_status=task.status,
-#                                                         started_at=datetime_now(),
-#                                                         task_type='automated_download_pricing', task_id=task.id)
-#
-#             celery_task.save()
-#
-#             # transaction.on_commit(lambda: download_pricing_async.apply_async(kwargs={'task_id': task.id}, countdown=1))
-#             transaction.on_commit(lambda: download_pricing_async.apply_async(kwargs={'task_id': task.id}))
-#         return task, False
-#     else:
-#         if task.status == Task.STATUS_DONE:
-#
-#             try:
-#                 celery_task = CeleryTask.objects.get(master_user=master_user, task_id=task.id,
-#                                                      task_type='user_download_pricing')
-#
-#                 celery_task.task_status = Task.STATUS_DONE
-#                 celery_task.save()
-#
-#             except CeleryTask.DoesNotExist:
-#                 celery_task = None
-#
-#             return task, True
-#         return task, False
-
-
-# @shared_task(name='integrations.file_import_delete', ignore_result=True)
-# def file_import_delete_async(path):
-#     _l.debug('file_import_delete_async: path=%s', path)
-#     import_file_storage.delete(path)
-#
-#
-# def schedule_file_import_delete(path, countdown=None):
-#     if countdown == 0:
-#         file_import_delete_async(path=path)
-#     else:
-#         if not getattr(settings, 'CELERY_TASK_ALWAYS_EAGER', False):
-#             countdown = countdown or 600
-#             _l.debug('schedule_file_import_delete: path=%s, countdown=%s', path, countdown)
-#             file_import_delete_async.apply_async(kwargs={'path': path}, countdown=countdown)
-
-
 def generate_file_report(result_object, master_user, scheme, type, name, context=None):
     def get_unique_columns(res_object):
         unique_columns = []
@@ -2215,26 +2136,6 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
 
         # TODO Generate File Report Here
 
-        # DEPRECATED
-        # send_websocket_message(data={
-        #     'type': 'transaction_import_status',
-        #     'payload': {'task_id': task_id,
-        #                 'state': Task.STATUS_DONE,
-        #                 'error_rows': result_object['error_rows'],
-        #                 'total_rows': result_object['total_rows'],
-        #                 'processed_rows': result_object['processed_rows'],
-        #                 'stats_file_report': result_object['stats_file_report'],
-        #                 'scheme': scheme.id,
-        #                 'scheme_object': {
-        #                     'id': scheme.id,
-        #                     'scheme_name': scheme.user_code,
-        #                     'delimiter': scheme.delimiter,
-        #                     'error_handler': scheme.error_handler,
-        #                     'missing_data_handler': scheme.missing_data_handler
-        #                 }}
-        # }, level="member",
-        #     context={"master_user": master_user, "member": member})
-
         celery_task.result_object = result_object
 
         celery_task.status = CeleryTask.STATUS_DONE
@@ -2302,13 +2203,6 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
         rule_scenarios = scheme.rule_scenarios.prefetch_related(
             "transaction_type", "fields", "fields__transaction_type_input"
         ).all()
-
-        # _l.info('scheme %s - inputs=%s, rules=%s', scheme,
-        #         [(i.name, i.column) for i in scheme_inputs],
-        #         [(r.transaction_type.user_code) for r in rule_scenarios])
-        #
-        # _l.info('scheme %s - column_matcher %s', (scheme, scheme.column_matcher))
-        # _l.info('scheme %s - has_header_row %s', (scheme, scheme.has_header_row))
 
         default_rule_scenario = None
 
@@ -2646,10 +2540,6 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                             reader.append(row_values)
 
                         row_number = row_number + 1
-
-            first_row = None
-
-            # reader = [{}]
 
             _process_list_of_items(reader)
 
