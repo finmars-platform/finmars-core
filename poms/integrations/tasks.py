@@ -2064,10 +2064,8 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
     result.append(f"Error handle, {instance.error_handling}")
     # result.append('Filename, ' + instance.file.name)
     result.append(
-        "Import Rules - if object is not found, " + instance.missing_data_handler
+        f"Import Rules - if object is not found, {instance.missing_data_handler}"
     )
-
-    rowsSuccessCount = 0
 
     if instance.error_handling == "break":
         if instance.error_row_index:
@@ -2078,8 +2076,8 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
         rowsSuccessCount = instance.total_rows - len(error_rows)
 
     result.append(f"Rows total, {str(instance.total_rows)}")
-    result.append("Rows success import, " + str(rowsSuccessCount))
-    result.append("Rows fail import, " + str(len(error_rows)))
+    result.append(f"Rows success import, {rowsSuccessCount}")
+    result.append(f"Rows fail import, {len(error_rows)}")
 
     columns = generate_columns_for_file(instance)
 
@@ -2093,9 +2091,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
     result.append(column_row)
 
     for error_row in instance.error_rows:
-        content = []
-
-        content.append(error_row["original_row_index"])
+        content = [error_row["original_row_index"]]
 
         content += error_row["error_data"]["data"]["imported_columns"]
         content = (
@@ -2121,7 +2117,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
 
     current_date_time = now().strftime("%Y-%m-%d-%H-%M")
 
-    file_name = "file_report_%s.csv" % current_date_time
+    file_name = f"file_report_{current_date_time}.csv"
 
     file_report = FileReport()
 
@@ -2138,7 +2134,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
     file_report.save()
 
     _l.debug(f"file_report {file_report}")
-    _l.debug("file_report %s" % file_report.file_url)
+    _l.debug(f"file_report {file_report.file_url}")
 
     return file_report.pk
 
@@ -2170,8 +2166,8 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
         }
 
         _l.info(
-            "complex_transaction_csv_file_import_parallel_finish iterating over %s childs"
-            % len(celery_task.children.all())
+            f"complex_transaction_csv_file_import_parallel_finish iterating over "
+            f"{len(celery_task.children.all())} childs"
         )
 
         for sub_task in celery_task.children.all():
@@ -2203,7 +2199,8 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
             == "procedure"
         ):
             _l.info(
-                "complex_transaction_csv_file_import_parallel_finish send final import message"
+                "complex_transaction_csv_file_import_parallel_finish send "
+                "final import message"
             )
 
             send_system_message(
@@ -2216,8 +2213,7 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
             send_system_message(
                 master_user=celery_task.master_user,
                 performed_by="System",
-                description="User %s Transaction Import Finished"
-                % celery_task.member.username,
+                description=f"User {celery_task.member.username} Transaction Import Finished",
                 attachments=[result_object["stats_file_report"]],
             )
 
