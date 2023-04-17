@@ -445,7 +445,7 @@ def create_instrument_from_finmars_database(data, master_user, member):
     except Exception as e:
         _l.info(f"create_instrument_from_finmars_database error {e}")
         _l.info(traceback.format_exc())
-        raise Exception(e)
+        raise Exception(e) from e
 
 
 def create_instrument_cbond(data, master_user, member):
