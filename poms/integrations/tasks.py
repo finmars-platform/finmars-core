@@ -40,8 +40,6 @@ from poms.common.crypto.RSACipher import RSACipher
 from poms.common.formula import ExpressionEvalError
 from poms.common.jwt import encode_with_jwt
 from poms.common.models import ProxyRequest, ProxyUser
-
-# from poms.common.websockets import send_websocket_message
 from poms.common.storage import get_storage
 from poms.counterparties.models import Counterparty, Responsible
 from poms.counterparties.serializers import CounterpartySerializer
