@@ -508,8 +508,6 @@ def create_instrument_cbond(data, master_user, member):
             master_user=master_user, content_type=content_type
         )
 
-        instrument_type = None
-
         try:
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user, user_code=instrument_data["instrument_type"]
@@ -631,7 +629,7 @@ def create_currency_cbond(data, master_user, member):
             raise Exception(serializer.errors)
 
     except Exception as e:
-        _l.info("CurrencyExternalAPIViewSet error %s" % e)
+        _l.info(f"CurrencyExternalAPIViewSet error {e}")
         _l.info(traceback.format_exc())
         raise Exception(e)
 
@@ -651,13 +649,9 @@ def download_instrument_cbond(
             getattr(master_user, "id", None),
             instrument_code,
         )
-
         options = {
             "isin": instrument_code,
         }
-
-        task = None
-
         with transaction.atomic():
             task = CeleryTask(
                 master_user=master_user,
@@ -668,8 +662,6 @@ def download_instrument_cbond(
             task.options_object = options
             task.save()
 
-        headers = {"Content-type": "application/json"}
-
         payload_jwt = {
             "sub": settings.BASE_API_URL,  # "user_id_or_name",
             "role": 0,  # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
@@ -677,17 +669,17 @@ def download_instrument_cbond(
 
         token = encode_with_jwt(payload_jwt)
 
-        headers["Authorization"] = "Bearer %s" % token
-
+        headers = {
+            "Content-type": "application/json",
+            "Authorization": f"Bearer {token}",
+        }
         options["request_id"] = task.pk
         options["base_api_url"] = settings.BASE_API_URL
         options["callback_url"] = (
-            "https://"
-            + settings.DOMAIN_NAME
-            + "/"
-            + settings.BASE_API_URL
-            + "/api/instruments/fdb-create-from-callback/"
+            f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
+            f"/api/instruments/fdb-create-from-callback/"
         )
+
         options["token"] = "fd09a190279e45a2bbb52fcabb7899bd"
 
         options["data"] = {}
@@ -699,53 +691,52 @@ def download_instrument_cbond(
 
         # OLD ASYNC CODE
         # try:
-        #     response = requests.post(url=str(settings.CBONDS_BROKER_URL) + '/request-instrument/', data=json.dumps(options), headers=headers)
+        #     response = requests.post(url=str(settings.CBONDS_BROKER_URL) +
+        #     '/request-instrument/', data=json.dumps(options), headers=headers)
         #     _l.info('response download_instrument_cbond %s' % response)
         # except Exception as e:
         #     _l.debug("Can't send request to CBONDS BROKER. %s" % e)
 
-        _l.info("options %s" % options)
-        _l.info("settings.CBONDS_BROKER_URL %s" % settings.CBONDS_BROKER_URL)
+        _l.info(f"options {options}")
+        _l.info(f"settings.CBONDS_BROKER_URL {settings.CBONDS_BROKER_URL}")
 
         try:
             response = requests.post(
-                url=str(settings.CBONDS_BROKER_URL) + "export/",
+                url=f"{str(settings.CBONDS_BROKER_URL)}export/",
                 data=json.dumps(options),
                 headers=headers,
                 timeout=25,
             )
-            _l.info("response download_instrument_cbond %s" % response)
-            _l.info("data response.text %s " % response.text)
-            _l.info("data response.status_code %s " % response.status_code)
+            _l.info(f"response download_instrument_cbond {response}")
+            _l.info(f"data response.text {response.text} ")
+            _l.info(f"data response.status_code {response.status_code} ")
 
-        except requests.exceptions.Timeout as e:
+        except requests.exceptions.Timeout:
             _l.info(
-                "Finmars Database Timeout. Trying to create simple instrument %s"
-                % instrument_code
+                f"Finmars Database Timeout. Trying to create simple "
+                f"instrument {instrument_code}"
             )
 
             try:
-                instrument = Instrument.objects.get(
-                    master_user=master_user, user_code=instrument_code
+                Instrument.objects.get(
+                    master_user=master_user,
+                    user_code=instrument_code,
                 )
 
                 _l.info(
-                    "Finmars Database Timeout. Simple instrument %s exist. Abort."
-                    % instrument_code
+                    f"Finmars Database Timeout. Simple instrument {instrument_code}"
+                    f" exist. Abort."
                 )
 
-            except Exception as e:
+            except Exception:
                 itype = None
 
                 if instrument_type_code == "equity":
                     instrument_type_code = "stocks"
 
                 _l.info(
-                    "Finmars Database Timeout. instrument_type_code %s"
-                    % instrument_type_code
-                )
-                _l.info(
-                    "Finmars Database Timeout. instrument_name %s" % instrument_name
+                    f"Finmars Database Timeout. instrument_type_code "
+                    f"{instrument_type_code} instrument_name {instrument_name}"
                 )
 
                 if instrument_type_code:
@@ -753,7 +744,7 @@ def download_instrument_cbond(
                         itype = InstrumentType.objects.get(
                             master_user=master_user, user_code=instrument_type_code
                         )
-                    except Exception as e:
+                    except Exception:
                         itype = None
 
                 if not instrument_name:
@@ -767,7 +758,7 @@ def download_instrument_cbond(
                     master_user=master_user,
                     user_code=instrument_code,
                     name=instrument_name,
-                    short_name=instrument_name + " (" + instrument_code + ")",
+                    short_name=f"{instrument_name} ({instrument_code})",
                     instrument_type=ecosystem_defaults.instrument_type,
                     accrued_currency=ecosystem_defaults.currency,
                     pricing_currency=ecosystem_defaults.currency,
@@ -789,26 +780,21 @@ def download_instrument_cbond(
 
                 instrument.save()
 
-                result = {"instrument_id": instrument.pk}
-
-                task.result_object = result
-
-                task.save()
-
+                _extracted_from_download_instrument_cbond_154(instrument, task)
             return task, errors
 
         except Exception as e:
-            _l.debug("Can't send request to CBONDS BROKER. %s" % e)
+            _l.debug(f"Can't send request to CBONDS BROKER. {e}")
 
-            errors.append("Request to broker failed. %s" % str(e))
+            errors.append(f"Request to broker failed. {str(e)}")
 
         try:
             data = response.json()
-            _l.info("Cbond response data %s" % data)
+            _l.info(f"Cbond response data {data}")
         except Exception as e:
-            _l.info("Cbond response data Exception %s" % e)
+            _l.info(f"Cbond response data Exception {e}")
 
-            errors.append("Could not parse response from broker. %s" % response.text)
+            errors.append(f"Could not parse response from broker. {response.text}")
             return task, errors
 
         try:
@@ -837,28 +823,30 @@ def download_instrument_cbond(
                 instrument = create_instrument_cbond(data["data"], master_user, member)
                 result_instrument = instrument
 
-            result = {"instrument_id": result_instrument.pk}
-
-            task.result_object = result
-
-            task.save()
-            return task, errors
+            _extracted_from_download_instrument_cbond_154(result_instrument, task)
 
         except Exception as e:
-            errors.append("Could not create instrument. %s" % str(e))
+            errors.append(f"Could not create instrument. {str(e)}")
             return task, errors
 
-        _l.info("data %s " % data)
+        _l.info(f"data {data} ")
 
         return task, errors
 
     except Exception as e:
-        _l.info("error %s " % e)
-        _l.info(traceback.format_exc())
-
-        errors.append("Something went wrong. %s" % str(e))
+        _l.info(f"error {e} traceback.format_exc()")
+        errors.append(f"Something went wrong. {str(e)}")
 
         return None, errors
+
+
+# TODO Rename this here and in `download_instrument_cbond`
+def _extracted_from_download_instrument_cbond_154(arg0, task):
+    result = {"instrument_id": arg0.pk}
+
+    task.result_object = result
+
+    task.save()
 
 
 def download_currency_cbond(currency_code=None, master_user=None, member=None):
@@ -1357,8 +1345,7 @@ def download_instrument_pricing_async(self, task_id):
         else:
             task.status = CeleryTask.STATUS_WAIT_RESPONSE
 
-    response_id = options.get("response_id", None)
-    if response_id:
+    if response_id := options.get("response_id", None):
         task.response_id = response_id
     task.options_object = options
     task.save()
@@ -1423,7 +1410,7 @@ def test_certificate_async(self, task_id):
         task.save()
         return
     else:
-        _l.debug("handle_test_certificate_async task: result %s" % result)
+        _l.debug(f"handle_test_certificate_async task: result {result}")
         _l.debug(
             "handle_test_certificate_async task: result is authorized %s"
             % result["is_authorized"]
@@ -1535,8 +1522,7 @@ def download_currency_pricing_async(self, task_id):
         else:
             task.status = CeleryTask.STATUS_WAIT_RESPONSE
 
-    response_id = options.get("response_id", None)
-    if response_id:
+    if response_id := options.get("response_id", None):
         task.response_id = response_id
 
     task.options_object = options
@@ -1892,7 +1878,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
 
         return result
 
-    _l.info("generate_file_report error_handler %s" % scheme.error_handler)
+    _l.info(f"generate_file_report error_handler {scheme.error_handler}")
     _l.info(
         "generate_file_report missing_data_handler %s" % scheme.missing_data_handler
     )
@@ -1905,11 +1891,11 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
             error_rows.append(item)
 
     result.append(f"Type, {name}")
-    result.append("Scheme, " + scheme.user_code)
+    result.append(f"Scheme, {scheme.user_code}")
     result.append("Error handle, " + scheme.error_handler)
     # result.append('Filename, ' + instance.file.name)
     result.append(
-        "Import Rules - if object is not found, " + scheme.missing_data_handler
+        f"Import Rules - if object is not found, {scheme.missing_data_handler}"
     )
 
     rowsSuccessCount = 0
@@ -1924,7 +1910,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
 
     result.append("Rows total, " + str(result_object["total_rows"]))
     result.append("Rows success import, " + str(rowsSuccessCount))
-    result.append("Rows fail import, " + str(len(error_rows)))
+    result.append(f"Rows fail import, {len(error_rows)}")
 
     columns = generate_columns_for_file(result_object)
 
@@ -1980,7 +1966,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
     file_report.save()
 
     _l.debug("file_report %s" % file_report)
-    _l.debug("file_report %s" % file_report.file_url)
+    _l.debug(f"file_report {file_report.file_url}")
 
     return file_report.pk
 
@@ -2099,7 +2085,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
     else:
         rowsSuccessCount = instance.total_rows - len(error_rows)
 
-    result.append("Rows total, " + str(instance.total_rows))
+    result.append(f"Rows total, {str(instance.total_rows)}")
     result.append("Rows success import, " + str(rowsSuccessCount))
     result.append("Rows fail import, " + str(len(error_rows)))
 
@@ -2108,7 +2094,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
     column_row_list = []
 
     for item in columns:
-        column_row_list.append('"' + str(item) + '"')
+        column_row_list.append(f'"{str(item)}"')
 
     column_row = ",".join(column_row_list)
 
@@ -2133,7 +2119,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
         content_row_list = []
 
         for item in content:
-            content_row_list.append('"' + str(item) + '"')
+            content_row_list.append(f'"{str(item)}"')
 
         content_row = ",".join(content_row_list)
 
@@ -2151,7 +2137,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
 
     file_report.upload_file(file_name=file_name, text=result, master_user=master_user)
     file_report.master_user = master_user
-    file_report.name = "%s %s" % (name, current_date_time)
+    file_report.name = f"{name} {current_date_time}"
     file_report.file_name = file_name
     file_report.type = type
     file_report.notes = "System File"
