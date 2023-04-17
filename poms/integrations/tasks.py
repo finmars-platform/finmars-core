@@ -97,7 +97,6 @@ from poms.users.models import EcosystemDefault
 
 _l = logging.getLogger("poms.integrations")
 
-
 storage = get_storage()
 
 
@@ -110,6 +109,7 @@ def health_check():
     result = health_check_async.apply_async()
     with contextlib.suppress(TimeoutError):
         return result.get(timeout=0.5, interval=0.1)
+
     return False
 
 
@@ -230,8 +230,7 @@ def download_instrument_async(self, task_id=None):
         else:
             task.status = CeleryTask.STATUS_WAIT_RESPONSE
 
-    response_id = options.get("response_id", None)
-    if response_id:
+    if response_id := options.get("response_id", None):
         task.response_id = response_id
 
     task.options_object = options
@@ -245,7 +244,8 @@ def download_instrument_async(self, task_id=None):
                 countdown=provider.get_retry_delay(),
                 max_retries=provider.get_max_retries(),
             )
-            # self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries(), throw=False)
+            # self.retry(countdown=provider.get_retry_delay(), max_retries=
+            # provider.get_max_retries(), throw=False)
         except MaxRetriesExceededError:
             task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
@@ -292,7 +292,8 @@ def download_instrument(
             task.options_object = options
             task.save()
             # transaction.on_commit(
-            #     lambda: download_instrument_async.apply_async(kwargs={'task_id': task.id}, countdown=1))
+            #     lambda: download_instrument_async.apply_async(
+            #     kwargs={'task_id': task.id}, countdown=1))
             transaction.on_commit(
                 lambda: download_instrument_async.apply_async(
                     kwargs={"task_id": task.id}
@@ -323,9 +324,9 @@ def download_instrument(
 
 
 def create_instrument_from_finmars_database(data, master_user, member):
-    try:
-        from poms.instruments.serializers import InstrumentSerializer
+    from poms.instruments.serializers import InstrumentSerializer
 
+    try:
         ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
         content_type = ContentType.objects.get(
             model="instrument", app_label="instruments"
@@ -344,40 +345,41 @@ def create_instrument_from_finmars_database(data, master_user, member):
         )
 
         # TODO remove stocks ASAP as configuration ready
-        if (
-            instrument_data["instrument_type"]["user_code"] == "stocks"
-            or instrument_data["instrument_type"]["user_code"] == "stock"
-        ):
-            if "default_exchange" in instrument_data:
-                if instrument_data["default_exchange"]:
-                    if "default_currency_code" in instrument_data:
-                        if instrument_data["default_currency_code"]:
-                            # isin.exchange:currency
+        if instrument_data["instrument_type"]["user_code"] in [
+            "stocks",
+            "stock",
+        ]:
+            if (
+                "default_exchange" in instrument_data
+                and instrument_data["default_exchange"]
+                and "default_currency_code" in instrument_data
+                and instrument_data["default_currency_code"]
+            ):
+                # isin.exchange:currency
 
-                            if "." in instrument_data["user_code"]:
-                                if ":" in instrument_data["user_code"]:
-                                    instrument_data[
-                                        "reference_for_pricing"
-                                    ] = instrument_data["user_code"]
-                                else:
-                                    instrument_data["reference_for_pricing"] = (
-                                        instrument_data["user_code"]
-                                        + ":"
-                                        + instrument_data["default_currency_code"]
-                                    )
-                            else:
-                                instrument_data["reference_for_pricing"] = (
-                                    instrument_data["user_code"]
-                                    + "."
-                                    + instrument_data["default_exchange"]
-                                    + ":"
-                                    + instrument_data["default_currency_code"]
-                                )
+                if "." in instrument_data["user_code"]:
+                    if ":" in instrument_data["user_code"]:
+                        instrument_data["reference_for_pricing"] = instrument_data[
+                            "user_code"
+                        ]
+                    else:
+                        instrument_data["reference_for_pricing"] = (
+                            instrument_data["user_code"]
+                            + ":"
+                            + instrument_data["default_currency_code"]
+                        )
+                else:
+                    instrument_data["reference_for_pricing"] = (
+                        instrument_data["user_code"]
+                        + "."
+                        + instrument_data["default_exchange"]
+                        + ":"
+                        + instrument_data["default_currency_code"]
+                    )
 
-                            _l.info(
-                                "Reference for pricing updated %s"
-                                % instrument_data["reference_for_pricing"]
-                            )
+                _l.info(
+                    f'Reference for pricing updated {instrument_data["reference_for_pricing"]}'
+                )
 
             _l.info("Overwrite Pricing Currency for stock")
             if "default_currency_code" in instrument_data:
@@ -399,124 +401,6 @@ def create_instrument_from_finmars_database(data, master_user, member):
             _l.info(
                 f'Instrument Type {instrument_data["instrument_type"]["user_code"]} '
                 f"is not found {e}"
-            )
-
-            raise Exception(
-                f'Instrument Type {instrument_data["instrument_type"]} is not found {e}'
-            )
-
-        object_data = handler_instrument_object(
-            instrument_data,
-            instrument_type,
-            master_user,
-            ecosystem_defaults,
-            attribute_types,
-        )
-
-        object_data["short_name"] = (
-            object_data["name"] + " (" + object_data["user_code"] + ")"
-        )
-
-        try:
-            instance = Instrument.objects.get(
-                master_user=master_user, user_code=object_data["user_code"]
-            )
-
-            instance.is_active = True
-
-            serializer = InstrumentSerializer(
-                data=object_data, context=context, instance=instance
-            )
-        except Instrument.DoesNotExist:
-            serializer = InstrumentSerializer(data=object_data, context=context)
-
-        is_valid = serializer.is_valid()
-
-        if is_valid:
-            instrument = serializer.save()
-
-            _l.info("Instrument is imported successfully")
-
-            return instrument
-        else:
-            _l.info(f"InstrumentExternalAPIViewSet error {serializer.errors}")
-            raise Exception(serializer.errors)
-
-    except Exception as e:
-        _l.info(f"create_instrument_from_finmars_database error {e}")
-        _l.info(traceback.format_exc())
-        raise Exception(e)
-
-
-def create_instrument_cbond(data, master_user, member):
-    try:
-        from poms.instruments.serializers import InstrumentSerializer
-
-        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
-        content_type = ContentType.objects.get(
-            model="instrument", app_label="instruments"
-        )
-
-        proxy_user = ProxyUser(member, master_user)
-        proxy_request = ProxyRequest(proxy_user)
-
-        context = {"master_user": master_user, "request": proxy_request}
-
-        instrument_data = {
-            key: None if value == "null" else value for key, value in data.items()
-        }
-        if instrument_data["instrument_type"] == "stocks":
-            if "default_exchange" in instrument_data:
-                if instrument_data["default_exchange"]:
-                    if "default_currency_code" in instrument_data:
-                        if instrument_data["default_currency_code"]:
-                            # isin.exchange:currency
-
-                            if "." in instrument_data["user_code"]:
-                                if ":" in instrument_data["user_code"]:
-                                    instrument_data[
-                                        "reference_for_pricing"
-                                    ] = instrument_data["user_code"]
-                                else:
-                                    instrument_data["reference_for_pricing"] = (
-                                        instrument_data["user_code"]
-                                        + ":"
-                                        + instrument_data["default_currency_code"]
-                                    )
-                            else:
-                                instrument_data["reference_for_pricing"] = (
-                                    instrument_data["user_code"]
-                                    + "."
-                                    + instrument_data["default_exchange"]
-                                    + ":"
-                                    + instrument_data["default_currency_code"]
-                                )
-
-                            _l.info(
-                                "Reference for pricing updated %s"
-                                % instrument_data["reference_for_pricing"]
-                            )
-
-            _l.info("Overwrite Pricing Currency for stock")
-            if "default_currency_code" in instrument_data:
-                instrument_data["pricing_currency"] = instrument_data[
-                    "default_currency_code"
-                ]
-
-        attribute_types = GenericAttributeType.objects.filter(
-            master_user=master_user, content_type=content_type
-        )
-
-        instrument_type = None
-
-        try:
-            instrument_type = InstrumentType.objects.get(
-                master_user=master_user, user_code=instrument_data["instrument_type"]
-            )
-
-        except Exception as e:
-            _l.info(
-                f'Instrument Type {instrument_data["instrument_type"]} is not found {e}'
             )
 
             raise Exception(
@@ -548,9 +432,122 @@ def create_instrument_cbond(data, master_user, member):
         except Instrument.DoesNotExist:
             serializer = InstrumentSerializer(data=object_data, context=context)
 
-        is_valid = serializer.is_valid()
+        if serializer.is_valid():
+            instrument = serializer.save()
 
-        if is_valid:
+            _l.info("Instrument is imported successfully")
+
+            return instrument
+        else:
+            _l.info(f"InstrumentExternalAPIViewSet error {serializer.errors}")
+            raise Exception(serializer.errors)
+
+    except Exception as e:
+        _l.info(f"create_instrument_from_finmars_database error {e}")
+        _l.info(traceback.format_exc())
+        raise Exception(e)
+
+
+def create_instrument_cbond(data, master_user, member):
+    from poms.instruments.serializers import InstrumentSerializer
+
+    try:
+        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+        content_type = ContentType.objects.get(
+            model="instrument", app_label="instruments"
+        )
+
+        proxy_user = ProxyUser(member, master_user)
+        proxy_request = ProxyRequest(proxy_user)
+
+        context = {"master_user": master_user, "request": proxy_request}
+
+        instrument_data = {
+            key: None if value == "null" else value for key, value in data.items()
+        }
+        if instrument_data["instrument_type"] == "stocks":
+            if (
+                "default_exchange" in instrument_data
+                and instrument_data["default_exchange"]
+                and "default_currency_code" in instrument_data
+                and instrument_data["default_currency_code"]
+            ):
+                # isin.exchange:currency
+
+                if "." in instrument_data["user_code"]:
+                    if ":" in instrument_data["user_code"]:
+                        instrument_data["reference_for_pricing"] = instrument_data[
+                            "user_code"
+                        ]
+                    else:
+                        instrument_data["reference_for_pricing"] = (
+                            instrument_data["user_code"]
+                            + ":"
+                            + instrument_data["default_currency_code"]
+                        )
+                else:
+                    instrument_data["reference_for_pricing"] = (
+                        instrument_data["user_code"]
+                        + "."
+                        + instrument_data["default_exchange"]
+                        + ":"
+                        + instrument_data["default_currency_code"]
+                    )
+
+                _l.info(
+                    f'Reference for pricing updated {instrument_data["reference_for_pricing"]}'
+                )
+
+            _l.info("Overwrite Pricing Currency for stock")
+            if "default_currency_code" in instrument_data:
+                instrument_data["pricing_currency"] = instrument_data[
+                    "default_currency_code"
+                ]
+
+        attribute_types = GenericAttributeType.objects.filter(
+            master_user=master_user, content_type=content_type
+        )
+
+        instrument_type = None
+
+        try:
+            instrument_type = InstrumentType.objects.get(
+                master_user=master_user, user_code=instrument_data["instrument_type"]
+            )
+
+        except Exception as e:
+            err_msg = (
+                f'Instrument Type {instrument_data["instrument_type"]} is not found {e}'
+            )
+            _l.info(err_msg)
+            raise Exception(err_msg) from e
+
+        object_data = handler_instrument_object(
+            instrument_data,
+            instrument_type,
+            master_user,
+            ecosystem_defaults,
+            attribute_types,
+        )
+
+        object_data["short_name"] = (
+            object_data["name"] + " (" + object_data["user_code"] + ")"
+        )
+
+        try:
+            instance = Instrument.objects.get(
+                master_user=master_user, user_code=object_data["user_code"]
+            )
+
+            instance.is_active = True
+
+            serializer = InstrumentSerializer(
+                data=object_data, context=context, instance=instance
+            )
+        except Instrument.DoesNotExist:
+            serializer = InstrumentSerializer(data=object_data, context=context)
+
+        if serializer.is_valid():
             instrument = serializer.save()
 
             _l.info("Instrument is imported successfully")
@@ -618,9 +615,7 @@ def create_currency_cbond(data, master_user, member):
         except Currency.DoesNotExist:
             serializer = CurrencySerializer(data=currency_data, context=context)
 
-        is_valid = serializer.is_valid()
-
-        if is_valid:
+        if serializer.is_valid():
             currency = serializer.save()
 
             for policy in currency.pricing_policies.all():
@@ -1376,7 +1371,8 @@ def download_instrument_pricing_async(self, task_id):
                 countdown=provider.get_retry_delay(),
                 max_retries=provider.get_max_retries(),
             )
-            # self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries(), throw=False)
+            # self.retry(countdown=provider.get_retry_delay(), max_retries=
+            # provider.get_max_retries(), throw=False)
         except MaxRetriesExceededError:
             task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
@@ -1880,13 +1876,15 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
                     + error_row["error_data"]["data"]["transaction_type_selector"][0]
                 )
 
-                if column == unique_column:
-                    if error_row["error_data"]["data"]["executed_input_expressions"][
+                if (
+                    column == unique_column
+                    and error_row["error_data"]["data"]["executed_input_expressions"][
                         item_column_index
-                    ]:
-                        result[index] = error_row["error_data"]["data"][
-                            "executed_input_expressions"
-                        ][item_column_index]
+                    ]
+                ):
+                    result[index] = error_row["error_data"]["data"][
+                        "executed_input_expressions"
+                    ][item_column_index]
 
                 item_column_index = item_column_index + 1
 
@@ -1906,7 +1904,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
         if item["level"] == "error":
             error_rows.append(item)
 
-    result.append("Type, " + name)
+    result.append(f"Type, {name}")
     result.append("Scheme, " + scheme.user_code)
     result.append("Error handle, " + scheme.error_handler)
     # result.append('Filename, ' + instance.file.name)
@@ -1940,11 +1938,8 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
     result.append(column_row)
 
     for error_row in result_object["error_rows"]:
-        content = []
-
-        content.append(error_row["original_row_index"])
-
-        content = content + error_row["error_data"]["data"]["imported_columns"]
+        content = [error_row["original_row_index"]]
+        content += error_row["error_data"]["data"]["imported_columns"]
         content = (
             content + error_row["error_data"]["data"]["converted_imported_columns"]
         )
@@ -1968,7 +1963,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
 
     current_date_time = now().strftime("%Y-%m-%d-%H-%M")
 
-    file_name = "file_report_%s.csv" % current_date_time
+    file_name = f"file_report_{current_date_time}.csv"
 
     file_report = FileReport()
 
@@ -2012,7 +2007,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
     def generate_columns_for_file(instance):
         columns = ["Row number"]
 
-        _l.debug("instance %s" % instance)
+        _l.debug(f"instance {instance}")
 
         if len(instance.error_rows):
             columns = (
@@ -2087,7 +2082,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
         if item["level"] == "error":
             error_rows.append(item)
 
-    result.append("Type, " + "Transaction Import")
+    result.append("Type, Transaction Import")
     result.append("Error handle, " + instance.error_handling)
     # result.append('Filename, ' + instance.file.name)
     result.append(
@@ -2124,7 +2119,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
 
         content.append(error_row["original_row_index"])
 
-        content = content + error_row["error_data"]["data"]["imported_columns"]
+        content += error_row["error_data"]["data"]["imported_columns"]
         content = (
             content + error_row["error_data"]["data"]["converted_imported_columns"]
         )
@@ -2176,7 +2171,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
 def complex_transaction_csv_file_import_parallel_finish(self, task_id):
     try:
         _l.info(
-            "complex_transaction_csv_file_import_parallel_finish task_id %s " % task_id
+            f"complex_transaction_csv_file_import_parallel_finish task_id {task_id} "
         )
 
         celery_task = CeleryTask.objects.get(pk=task_id)
@@ -2276,7 +2271,7 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
         celery_task.save()
 
     except Exception as e:
-        _l.info("Exception occurred %s" % e)
+        _l.info(f"Exception occurred {e}")
         _l.info(traceback.format_exc())
 
 
