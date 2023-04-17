@@ -1026,7 +1026,7 @@ def create_simple_instrument(options, task):
 
     instrument.save()
 
-    update_task_instrument(instrument, task)
+    update_task_with_instrument(instrument, task)
 
 
 def update_task_with_error(task: CeleryTask, err_msg: str):
@@ -1035,7 +1035,7 @@ def update_task_with_error(task: CeleryTask, err_msg: str):
     task.save()
 
 
-def update_task_instrument(instrument, task):
+def update_task_with_instrument(instrument, task):
     result = {"instrument_id": instrument.pk}
     task.result_object = result
     task.status = CeleryTask.STATUS_DONE
@@ -1076,7 +1076,7 @@ def handle_database_response_data(data, task, options):
         )
         result_instrument = instrument
 
-    update_task_instrument(result_instrument, task)
+    update_task_with_instrument(result_instrument, task)
 
 
 def download_instrument_finmars_database(task_id: int):
@@ -1252,35 +1252,25 @@ def download_unified_data(
 
             response = None
 
-            path = ""
-
-            if entity_type == "counterparty":
-                path = "company"
-
+            path = "company" if entity_type == "counterparty" else ""
             try:
                 response = requests.get(
-                    url=str(settings.UNIFIED_DATA_PROVIDER_URL)
-                    + "data/"
-                    + path
-                    + "/"
-                    + id
-                    + "/",
+                    url=f"{str(settings.UNIFIED_DATA_PROVIDER_URL)}data/{path}/{id}/",
                     headers=headers,
                     verify=settings.VERIFY_SSL,
                 )
-                _l.info("response download_unified_data %s" % response)
-                _l.info("data response.text %s " % response.text)
+                _l.info(f"response download_unified_data {response}")
+                _l.info(f"data response.text {response.text} ")
             except Exception as e:
-                _l.debug("Can't send request to Unified Data Provider. %s" % e)
+                _l.debug(f"Can't send request to Unified Data Provider. {e}")
 
-                errors.append("Request to unified data provider. %s" % str(e))
+                errors.append(f"Request to unified data provider. {str(e)}")
 
             try:
                 data = response.json()
             except Exception as e:
                 errors.append(
-                    "Could not parse response from unified data provider. %s"
-                    % response.text
+                    f"Could not parse response from unified data provider. {response.text}"
                 )
                 return task, errors
             try:
@@ -1312,16 +1302,16 @@ def download_unified_data(
                 return task, errors
 
             except Exception as e:
-                errors.append("Could not create record. %s" % str(e))
+                errors.append(f"Could not create record. {str(e)}")
                 return task, errors
 
             return task, errors
 
     except Exception as e:
-        _l.info("error %s " % e)
+        _l.info(f"error {e} ")
         _l.info(traceback.format_exc())
 
-        errors.append("Something went wrong. %s" % str(e))
+        errors.append(f"Something went wrong. {str(e)}")
 
         return None, errors
 
