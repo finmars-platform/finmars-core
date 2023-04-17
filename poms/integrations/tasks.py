@@ -1,3 +1,4 @@
+import contextlib
 import copy
 import csv
 import hashlib
@@ -41,6 +42,7 @@ from poms.common.jwt import encode_with_jwt
 from poms.common.models import ProxyRequest, ProxyUser
 
 # from poms.common.websockets import send_websocket_message
+from poms.common.storage import get_storage
 from poms.counterparties.models import Counterparty, Responsible
 from poms.counterparties.serializers import CounterpartySerializer
 from poms.csv_import.handlers import handler_instrument_object
@@ -95,7 +97,6 @@ from poms.users.models import EcosystemDefault
 
 _l = logging.getLogger("poms.integrations")
 
-from poms.common.storage import get_storage
 
 storage = get_storage()
 
@@ -107,10 +108,8 @@ def health_check_async():
 
 def health_check():
     result = health_check_async.apply_async()
-    try:
+    with contextlib.suppress(TimeoutError):
         return result.get(timeout=0.5, interval=0.1)
-    except TimeoutError:
-        pass
     return False
 
 
@@ -338,8 +337,7 @@ def create_instrument_from_finmars_database(data, master_user, member):
         context = {"master_user": master_user, "request": proxy_request}
 
         instrument_data = {
-            key: None if value == "null" else value
-            for key, value in data.items()
+            key: None if value == "null" else value for key, value in data.items()
         }
         _l.info(
             f"create_instrument_from_finmars_database.instrument_data {instrument_data}"
@@ -400,7 +398,7 @@ def create_instrument_from_finmars_database(data, master_user, member):
         except Exception as e:
             _l.info(
                 f'Instrument Type {instrument_data["instrument_type"]["user_code"]} '
-                f'is not found {e}'
+                f"is not found {e}"
             )
 
             raise Exception(
@@ -465,8 +463,7 @@ def create_instrument_cbond(data, master_user, member):
         context = {"master_user": master_user, "request": proxy_request}
 
         instrument_data = {
-            key: None if value == "null" else value
-            for key, value in data.items()
+            key: None if value == "null" else value for key, value in data.items()
         }
         if instrument_data["instrument_type"] == "stocks":
             if "default_exchange" in instrument_data:
