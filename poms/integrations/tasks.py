@@ -934,11 +934,8 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
                 #     currency = create_currency_cbond(data['data'], master_user, member)
 
                 result = {"currency_id": currency.pk}
-
                 task.result_object = result
-
                 task.save()
-                return task, errors
 
             except Exception as e:
                 errors.append(f"Could not create currency. {str(e)}")
@@ -1275,11 +1272,8 @@ def download_unified_data(
                     record = serializer.save()
 
                 result = {"id": record.pk}
-
                 task.result_object = result
-
                 task.save()
-                return task, errors
 
             except Exception as e:
                 errors.append(f"Could not create record. {str(e)}")
@@ -1465,7 +1459,8 @@ def test_certificate_async(self, task_id):
                 countdown=provider.get_retry_delay(),
                 max_retries=provider.get_max_retries(),
             )
-            # self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries(), throw=False)
+            # self.retry(countdown=provider.get_retry_delay(),
+            # max_retries=provider.get_max_retries(), throw=False)
         except MaxRetriesExceededError:
             task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
@@ -1536,7 +1531,8 @@ def download_currency_pricing_async(self, task_id):
                 countdown=provider.get_retry_delay(),
                 max_retries=provider.get_max_retries(),
             )
-            # self.retry(countdown=provider.get_retry_delay(), max_retries=provider.get_max_retries(), throw=False)
+            # self.retry(countdown=provider.get_retry_delay(),
+            # max_retries=provider.get_max_retries(), throw=False)
         except MaxRetriesExceededError:
             task.status = CeleryTask.STATUS_TIMEOUT
             task.save()
@@ -1697,7 +1693,7 @@ def test_certificate(master_user=None, member=None, task=None):
             return task, False
 
     except Exception as e:
-        _l.info("test_certificate error %s " % e)
+        _l.info(f"test_certificate error {e} ")
         _l.info(traceback.print_exc())
 
         return task, False
@@ -1807,12 +1803,9 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
         # _l.debug('res_object %s' % res_object)
 
         if len(res_object["error_rows"]):
-            columns = (
-                columns
-                + res_object["error_rows"][0]["error_data"]["columns"][
-                    "imported_columns"
-                ]
-            )
+            columns += res_object["error_rows"][0]["error_data"]["columns"][
+                "imported_columns"
+            ]
             columns = (
                 columns
                 + res_object["error_rows"][0]["error_data"]["columns"][
@@ -1892,7 +1885,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
 
     result.append(f"Type, {name}")
     result.append(f"Scheme, {scheme.user_code}")
-    result.append("Error handle, " + scheme.error_handler)
+    result.append(f"Error handle, {scheme.error_handler}")
     # result.append('Filename, ' + instance.file.name)
     result.append(
         f"Import Rules - if object is not found, {scheme.missing_data_handler}"
@@ -1909,7 +1902,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
         rowsSuccessCount = result_object["total_rows"] - len(error_rows)
 
     result.append("Rows total, " + str(result_object["total_rows"]))
-    result.append("Rows success import, " + str(rowsSuccessCount))
+    result.append(f"Rows success import, {rowsSuccessCount}")
     result.append(f"Rows fail import, {len(error_rows)}")
 
     columns = generate_columns_for_file(result_object)
@@ -1917,7 +1910,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
     column_row_list = []
 
     for item in columns:
-        column_row_list.append('"' + str(item) + '"')
+        column_row_list.append(f'"{str(item)}"')
 
     column_row = ",".join(column_row_list)
 
@@ -1939,7 +1932,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
         content_row_list = []
 
         for item in content:
-            content_row_list.append('"' + str(item) + '"')
+            content_row_list.append(f'"{str(item)}"')
 
         content_row = ",".join(content_row_list)
 
@@ -1957,7 +1950,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
 
     file_report.upload_file(file_name=file_name, text=result, master_user=master_user)
     file_report.master_user = master_user
-    file_report.name = "%s %s" % (name, current_date_time) + ".csv"
+    file_report.name = f"{name} {current_date_time}.csv"
     file_report.file_name = file_name
     file_report.type = type
     file_report.notes = "System File"
@@ -1996,10 +1989,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
         _l.debug(f"instance {instance}")
 
         if len(instance.error_rows):
-            columns = (
-                columns
-                + instance.error_rows[0]["error_data"]["columns"]["imported_columns"]
-            )
+            columns += instance.error_rows[0]["error_data"]["columns"]["imported_columns"]
             columns = (
                 columns
                 + instance.error_rows[0]["error_data"]["columns"][
@@ -2047,13 +2037,15 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
                     + error_row["error_data"]["data"]["transaction_type_selector"][0]
                 )
 
-                if column == unique_column:
-                    if error_row["error_data"]["data"]["executed_input_expressions"][
-                        item_column_index
-                    ]:
-                        result[index] = error_row["error_data"]["data"][
-                            "executed_input_expressions"
-                        ][item_column_index]
+                if (
+                    column == unique_column
+                    and error_row["error_data"]["data"][
+                        "executed_input_expressions"
+                    ][item_column_index]
+                ):
+                    result[index] = error_row["error_data"]["data"][
+                        "executed_input_expressions"
+                    ][item_column_index]
 
                 item_column_index = item_column_index + 1
 
@@ -2069,7 +2061,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
             error_rows.append(item)
 
     result.append("Type, Transaction Import")
-    result.append("Error handle, " + instance.error_handling)
+    result.append(f"Error handle, {instance.error_handling}")
     # result.append('Filename, ' + instance.file.name)
     result.append(
         "Import Rules - if object is not found, " + instance.missing_data_handler
@@ -2145,7 +2137,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
 
     file_report.save()
 
-    _l.debug("file_report %s" % file_report)
+    _l.debug(f"file_report {file_report}")
     _l.debug("file_report %s" % file_report.file_url)
 
     return file_report.pk
