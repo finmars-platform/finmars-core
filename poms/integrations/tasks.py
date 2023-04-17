@@ -186,6 +186,19 @@ def mail_managers(subject, message):
     )
 
 
+def update_task_with_error(task: CeleryTask, err_msg: str):
+    task.error_message = err_msg
+    task.status = CeleryTask.STATUS_ERROR
+    task.save()
+
+
+def update_task_with_instrument(instrument, task):
+    result = {"instrument_id": instrument.pk}
+    task.result_object = result
+    task.status = CeleryTask.STATUS_DONE
+    task.save()
+
+
 @shared_task(name="integrations.download_instrument", bind=True, ignore_result=False)
 def download_instrument_async(self, task_id=None):
     task = CeleryTask.objects.get(pk=task_id)
@@ -689,14 +702,6 @@ def download_instrument_cbond(
 
         response = None
 
-        # OLD ASYNC CODE
-        # try:
-        #     response = requests.post(url=str(settings.CBONDS_BROKER_URL) +
-        #     '/request-instrument/', data=json.dumps(options), headers=headers)
-        #     _l.info('response download_instrument_cbond %s' % response)
-        # except Exception as e:
-        #     _l.debug("Can't send request to CBONDS BROKER. %s" % e)
-
         _l.info(f"options {options}")
         _l.info(f"settings.CBONDS_BROKER_URL {settings.CBONDS_BROKER_URL}")
 
@@ -780,7 +785,7 @@ def download_instrument_cbond(
 
                 instrument.save()
 
-                _extracted_from_download_instrument_cbond_154(instrument, task)
+                update_task_with_instrument(instrument, task)
             return task, errors
 
         except Exception as e:
@@ -823,7 +828,7 @@ def download_instrument_cbond(
                 instrument = create_instrument_cbond(data["data"], master_user, member)
                 result_instrument = instrument
 
-            _extracted_from_download_instrument_cbond_154(result_instrument, task)
+            update_task_with_instrument(result_instrument, task)
 
         except Exception as e:
             errors.append(f"Could not create instrument. {str(e)}")
@@ -838,15 +843,6 @@ def download_instrument_cbond(
         errors.append(f"Something went wrong. {str(e)}")
 
         return None, errors
-
-
-# TODO Rename this here and in `download_instrument_cbond`
-def _extracted_from_download_instrument_cbond_154(arg0, task):
-    result = {"instrument_id": arg0.pk}
-
-    task.result_object = result
-
-    task.save()
 
 
 def download_currency_cbond(currency_code=None, master_user=None, member=None):
@@ -1005,18 +1001,6 @@ def create_simple_instrument(options, task):
 
     update_task_with_instrument(instrument, task)
 
-
-def update_task_with_error(task: CeleryTask, err_msg: str):
-    task.error_message = err_msg
-    task.status = CeleryTask.STATUS_ERROR
-    task.save()
-
-
-def update_task_with_instrument(instrument, task):
-    result = {"instrument_id": instrument.pk}
-    task.result_object = result
-    task.status = CeleryTask.STATUS_DONE
-    task.save()
 
 
 def handle_database_response_data(data, task, options):
@@ -1245,7 +1229,7 @@ def download_unified_data(
 
             try:
                 data = response.json()
-            except Exception as e:
+            except Exception:
                 errors.append(
                     f"Could not parse response from unified data provider. {response.text}"
                 )
@@ -1307,7 +1291,6 @@ def download_instrument_pricing_async(self, task_id):
 
     try:
         provider_id = 1  # bloomberg
-
         provider = get_provider(task.master_user, provider_id)
     except Exception:
         _l.debug("provider load error", exc_info=True)
@@ -1322,7 +1305,7 @@ def download_instrument_pricing_async(self, task_id):
         return
 
     if task.status not in [CeleryTask.STATUS_PENDING, CeleryTask.STATUS_WAIT_RESPONSE]:
-        _l.warn("invalid task status")
+        _l.warning("invalid task status")
         return
 
     options = task.options_object
@@ -1390,7 +1373,7 @@ def test_certificate_async(self, task_id):
         return
 
     if task.status not in [CeleryTask.STATUS_PENDING, CeleryTask.STATUS_WAIT_RESPONSE]:
-        _l.warn("invalid task status")
+        _l.warning("invalid task status")
         return
 
     options = task.options_object
