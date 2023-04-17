@@ -1330,7 +1330,7 @@ def download_instrument_pricing_async(self, task_id):
     try:
         result, is_ready = provider.download_instrument_pricing(options)
     except Exception:
-        _l.warn("provider processing error", exc_info=True)
+        _l.warning("provider processing error", exc_info=True)
         task.status = CeleryTask.STATUS_ERROR
     else:
         if is_ready:
@@ -1397,17 +1397,16 @@ def test_certificate_async(self, task_id):
 
     try:
         result = provider.test_certificate(options)
-    except Exception as e:
-        _l.warn("provider processing error", exc_info=True)
+    except Exception:
+        _l.warning("provider processing error", exc_info=True)
         task.status = CeleryTask.STATUS_ERROR
-
         task.save()
         return
     else:
         _l.debug(f"handle_test_certificate_async task: result {result}")
         _l.debug(
-            "handle_test_certificate_async task: result is authorized %s"
-            % result["is_authorized"]
+            f'handle_test_certificate_async task: result is authorized '
+            f'{result["is_authorized"]}'
         )
 
         task.status = CeleryTask.STATUS_DONE
@@ -1415,8 +1414,6 @@ def test_certificate_async(self, task_id):
 
         task.options_object = options
         task.save()
-
-        import_config = None
 
         try:
             import_config = BloombergDataProviderCredential.objects.get(
@@ -1500,7 +1497,7 @@ def download_currency_pricing_async(self, task_id):
         return
 
     if task.status not in [CeleryTask.STATUS_PENDING, CeleryTask.STATUS_WAIT_RESPONSE]:
-        _l.warn("invalid task status")
+        _l.warning("invalid task status")
         return
 
     options = task.options_object
@@ -1508,7 +1505,7 @@ def download_currency_pricing_async(self, task_id):
     try:
         result, is_ready = provider.download_currency_pricing(options)
     except Exception:
-        _l.warn("provider processing error", exc_info=True)
+        _l.warning("provider processing error", exc_info=True)
         task.status = CeleryTask.STATUS_ERROR
     else:
         if is_ready:
@@ -1873,7 +1870,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
 
     _l.info(f"generate_file_report error_handler {scheme.error_handler}")
     _l.info(
-        "generate_file_report missing_data_handler %s" % scheme.missing_data_handler
+        f"generate_file_report missing_data_handler {scheme.missing_data_handler}"
     )
 
     result = []
