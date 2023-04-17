@@ -457,7 +457,9 @@ router.register(r'explorer/explorer', explorer.ExplorerViewSet, 'explorer')
 router.register(r'explorer/view', explorer.ExplorerViewFileViewSet, 'explorer_view')
 router.register(r'explorer/upload', explorer.ExplorerUploadViewSet, 'explorer_upload')
 router.register(r'explorer/delete', explorer.ExplorerDeleteViewSet, 'explorer_delete')
-router.register(r'explorer/create_folder', explorer.ExplorerCreateFolderViewSet, 'explorer_create_folder')
+router.register(r'explorer/create-folder', explorer.ExplorerCreateFolderViewSet, 'explorer_create_folder')
+router.register(r'explorer/delete-folder', explorer.ExplorerDeleteFolderViewSet, 'explorer_delete_folder')
+router.register(r'explorer/download-folder-as-zip', explorer.DownloadFolderAsZipViewSet, 'download_folder_as_zip')
 
 router.register(r'debug/logs', common.DebugLogViewSet, 'debug_log')  # Deprecated
 router.register(r'errors/error', ErrorRecordViewSet, 'error')

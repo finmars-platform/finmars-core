@@ -45,9 +45,10 @@ class Configuration(models.Model):
     # High New Worth Individual
     name = models.CharField(max_length=255, verbose_name=gettext_lazy('name'))
     short_name = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('short name'))
-    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
+    description = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
     version = models.CharField(max_length=255, verbose_name=gettext_lazy('version'))
 
+    from_marketplace = models.BooleanField(default=False, verbose_name=gettext_lazy('from marketplace'))
 
     def __str__(self):
         return '%s (%s)' % (self.configuration_code, self.version)

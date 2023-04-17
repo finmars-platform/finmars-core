@@ -517,6 +517,12 @@ def get_serializer(content_type_key):
     from poms.schedules.serializers import ScheduleSerializer
 
     from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
+    from poms.ui.serializers import DashboardLayoutSerializer
+    from poms.ui.serializers import ListLayoutSerializer
+    from poms.ui.serializers import ContextMenuLayoutSerializer
+    from poms.ui.serializers import ComplexTransactionUserFieldSerializer
+    from poms.ui.serializers import TransactionUserFieldSerializer
+    from poms.ui.serializers import InstrumentUserFieldSerializer
     serializer_map = {
         'transactions.transactiontype': TransactionTypeSerializer,
         'instruments.instrument': InstrumentSerializer,
@@ -539,6 +545,13 @@ def get_serializer(content_type_key):
         'procedures.requestdatafileprocedure': RequestDataFileProcedureSerializer,
         'schedules.schedule': ScheduleSerializer,
         'obj_attrs.genericattributetype': GenericAttributeTypeSerializer,
+
+        'ui.dashboardlayout': DashboardLayoutSerializer,
+        'ui.listlayout': ListLayoutSerializer,
+        'ui.contextmenulayout': ContextMenuLayoutSerializer,
+        'ui.complextransactionuserfieldmodel': ComplexTransactionUserFieldSerializer,
+        'ui.transactionuserfieldmodel': TransactionUserFieldSerializer,
+        'ui.instrumentuserfieldmodel': InstrumentUserFieldSerializer
 
 
     }

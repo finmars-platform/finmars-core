@@ -17,7 +17,7 @@ from rest_framework.serializers import ListSerializer
 from poms.common.fields import ExpressionField
 from poms.common.formula import safe_eval, ExpressionEvalError
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import ModelWithUserCodeSerializer
+from poms.common.serializers import ModelWithUserCodeSerializer, ModelMetaSerializer
 from poms.integrations.models import PortfolioClassifierMapping, ProviderClass, AccountClassifierMapping, \
     CounterpartyClassifierMapping, ResponsibleClassifierMapping, InstrumentClassifierMapping
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
@@ -335,7 +335,7 @@ class GenericAttributeTypeOptionIsHiddenField(serializers.BooleanField):
 
 
 # class GenericAttributeTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
-class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
+class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     is_hidden = GenericAttributeTypeOptionIsHiddenField()
     classifiers = GenericClassifierSerializer(required=False, allow_null=True, many=True)

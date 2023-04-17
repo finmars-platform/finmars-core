@@ -3,14 +3,14 @@ from rest_framework import serializers
 from poms.common import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import ModelWithTimeStampSerializer, ModelWithUserCodeSerializer
+from poms.common.serializers import ModelWithTimeStampSerializer, ModelWithUserCodeSerializer, ModelMetaSerializer
 from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, PricingProcedureInstance, \
     PricingParentProcedureInstance, RequestDataFileProcedureInstance, ExpressionProcedure, \
     ExpressionProcedureContextVariable
 from poms.users.fields import MasterUserField
 
 
-class PricingProcedureSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
+class PricingProcedureSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
 
     price_date_from_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True,
@@ -115,7 +115,7 @@ class RunProcedureSerializer(serializers.Serializer):
         self.fields['procedure'] = serializers.PrimaryKeyRelatedField(read_only=True)
 
 
-class RequestDataFileProcedureSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
+class RequestDataFileProcedureSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     data = serializers.JSONField(allow_null=True, required=False)
 
@@ -165,7 +165,7 @@ class ExpressionProcedureContextVariableSerializer(serializers.ModelSerializer):
                   'name', 'expression', 'notes')
 
 
-class ExpressionProcedureSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer):
+class ExpressionProcedureSerializer(ModelWithTimeStampSerializer, ModelWithUserCodeSerializer, ModelMetaSerializer):
     context_variables = ExpressionProcedureContextVariableSerializer(many=True, allow_null=True, required=False,
                                                                      read_only=False)
 
