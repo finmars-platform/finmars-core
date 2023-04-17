@@ -1,4 +1,3 @@
-from enum import IntEnum
 import json
 import logging
 from dataclasses import dataclass
@@ -24,7 +23,7 @@ SERVICE_URLS = {
 }
 
 
-class Status(IntEnum):
+class Status:
     NO_ANSWER = 0
     DATA_READY = 1
     TASK_READY = 2
@@ -32,8 +31,8 @@ class Status(IntEnum):
 
 
 @dataclass
-class ServiceMonad:
-    status: int = Status.NO_ANSWER.value
+class Monad:
+    status: int = Status.NO_ANSWER
     task_id: int = 0
     message: str = ""
     data: Any = None
@@ -56,7 +55,7 @@ class HttpClient:
         )
         self.session = requests.Session()
         self.session.mount("https://", HTTPAdapter(max_retries=self.retries))
-        self.session.mount("http://", HTTPAdapter(max_retries=self.retries))
+        # self.session.mount("http://", HTTPAdapter(max_retries=self.retries))
 
     def _fetch_response(self, method, url, **kwargs) -> dict:
         if not url:
@@ -94,26 +93,24 @@ class DatabaseService:
     def __init__(self):
         self.http_client = HttpClient()
 
-    def get_info(self, service: str, request_options: dict) -> ServiceMonad:
+    def get_info(self, service: str, request_options: dict) -> Monad:
         _l.info(f"{log} started, service={service} request_options={request_options}")
 
         if service not in SERVICE_URLS or not request_options:
             raise RuntimeError(f"{log} invalid args!")
 
         try:
-            response_data = self.http_client.post(
+            data = self.http_client.post(
                 POST,
                 url=SERVICE_URLS[service],
                 data=json.dumps(request_options),
             )
         except HttpClientError as err:
-            monad = ServiceMonad(status=Status.ERROR.value, message=str(err))
+            monad = Monad(status=Status.ERROR, message=str(err))
         else:
-            if "task_id" in response_data:
-                monad = ServiceMonad(
-                    status=Status.TASK_READY.value, task_id=response_data["task_id"]
-                )
+            if "task_id" in data:
+                monad = Monad(status=Status.TASK_READY, task_id=data["task_id"])
             else:
-                monad = ServiceMonad(Status.DATA_READY.value, data=response_data)
+                monad = Monad(status=Status.DATA_READY, data=data)
 
         return monad
