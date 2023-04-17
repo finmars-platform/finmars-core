@@ -1955,8 +1955,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
 
     file_report.save()
 
-    _l.debug("file_report %s" % file_report)
-    _l.debug(f"file_report {file_report.file_url}")
+    _l.debug(f"file_report {file_report} {file_report.file_url}")
 
     return file_report.pk
 
