@@ -313,28 +313,28 @@ def download_instrument(
                     kwargs={"task_id": task.id}
                 )
             )
-        return task, None, None
-    else:
-        if task.status == CeleryTask.STATUS_DONE:
-            provider_id = 1  # bloomberg
+    elif task.status == CeleryTask.STATUS_DONE:
+        return create_instrument_with_updated_data(task, value_overrides)
 
-            provider = get_provider(task.master_user, provider_id)
+    return task, None, None
 
-            options = task.options_object
-            values = task.result_object.copy()
-            if value_overrides:
-                values.update(value_overrides)
 
-            instrument_download_scheme_id = options["instrument_download_scheme_id"]
-            instrument_download_scheme = InstrumentDownloadScheme.objects.get(
-                pk=instrument_download_scheme_id
-            )
+def create_instrument_with_updated_data(task, value_overrides):
+    provider = get_provider(task.master_user, 1)
+    options = task.options_object
+    values = task.result_object.copy()
+    if value_overrides:
+        values.update(value_overrides)
 
-            instrument, errors = provider.create_instrument(
-                instrument_download_scheme, values
-            )
-            return task, instrument, errors
-        return task, None, None
+    instrument_download_scheme_id = options["instrument_download_scheme_id"]
+    instrument_download_scheme = InstrumentDownloadScheme.objects.get(
+        pk=instrument_download_scheme_id
+    )
+    instrument, errors = provider.create_instrument(
+        instrument_download_scheme,
+        values,
+    )
+    return task, instrument, errors
 
 
 def create_instrument_from_finmars_database(data, master_user, member):
@@ -810,7 +810,7 @@ def download_instrument_cbond(
                 if "currencies" in data:
                     for item in data["currencies"]:
                         if item:
-                            currency = create_currency_cbond(item, master_user, member)
+                            create_currency_cbond(item, master_user, member)
 
                 for item in data["instruments"]:
                     instrument = create_instrument_cbond(item, master_user, member)
@@ -871,7 +871,7 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
 
             payload_jwt = {
                 "sub": settings.BASE_API_URL,  # "user_id_or_name",
-                "role": 0,  # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
+                "role": 0,  # 0 - ordinary user, 1 - admin (access to /loadfi & /loadeq)
             }
 
             token = encode_with_jwt(payload_jwt)
@@ -887,13 +887,6 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
             options["data"] = {}
 
             response = None
-
-            # OLD ASYNC CODE
-            # try:
-            #     response = requests.post(url=str(settings.CBONDS_BROKER_URL) + '/request-instrument/', data=json.dumps(options), headers=headers)
-            #     _l.info('response download_instrument_cbond %s' % response)
-            # except Exception as e:
-            #     _l.debug("Can't send request to CBONDS BROKER. %s" % e)
 
             _l.info(f"options {options}")
             _l.info(f"settings.CBONDS_BROKER_URL {settings.CBONDS_BROKER_URL}")
@@ -943,8 +936,7 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
             return task, errors
 
     except Exception as e:
-        _l.info(f"error {e} ")
-        _l.info(traceback.format_exc())
+        _l.info(f"error {e} {traceback.format_exc()}")
 
         errors.append(f"Something went wrong. {str(e)}")
 
@@ -1648,7 +1640,6 @@ def test_certificate(master_user=None, member=None, task=None):
     try:
         if task is None:
             with transaction.atomic():
-                options = {}
                 # DEPRECATED, REFACTOR SOON
                 task = CeleryTask(
                     master_user=master_user,
@@ -1657,6 +1648,7 @@ def test_certificate(master_user=None, member=None, task=None):
                     type="test_certificate",
                 )
 
+                options = {}
                 task.options_object = options
                 task.save()
 
@@ -1666,12 +1658,10 @@ def test_certificate(master_user=None, member=None, task=None):
                     )
                 )
 
-            return task, False
-        else:
-            if task.status == CeleryTask.STATUS_DONE:
-                return task, True
-            return task, False
+        elif task.status == CeleryTask.STATUS_DONE:
+            return task, True
 
+        return task, False
     except Exception as e:
         _l.info(f"test_certificate error {e} ")
         _l.info(traceback.print_exc())
@@ -4543,8 +4533,8 @@ def complex_transaction_csv_file_import_by_procedure_json(
     self, procedure_instance_id, celery_task_id
 ):
     _l.info(
-        "complex_transaction_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s"
-        % (procedure_instance_id, celery_task_id)
+        f"complex_transaction_csv_file_import_by_procedure_json  procedure_instance_id "
+        f"{procedure_instance_id} celery_task_id {celery_task_id}"
     )
 
     from poms.procedures.models import RequestDataFileProcedureInstance
@@ -4558,8 +4548,8 @@ def complex_transaction_csv_file_import_by_procedure_json(
 
     try:
         _l.info(
-            "complex_transaction_csv_file_import_by_procedure_json looking for scheme %s "
-            % procedure_instance.procedure.scheme_user_code
+            f"complex_transaction_csv_file_import_by_procedure_json looking for "
+            f"scheme {procedure_instance.procedure.scheme_user_code}"
         )
 
         scheme = ComplexTransactionImportScheme.objects.get(
@@ -4581,8 +4571,9 @@ def complex_transaction_csv_file_import_by_procedure_json(
         celery_task.options_object = options_object
         celery_task.save()
 
-        text = "Data File Procedure %s. File is received. Importing JSON" % (
-            procedure_instance.procedure.user_code
+        text = (
+            f"Data File Procedure {procedure_instance.procedure.user_code}. "
+            f"File is received. Importing JSON"
         )
 
         send_system_message(
@@ -4601,11 +4592,11 @@ def complex_transaction_csv_file_import_by_procedure_json(
         )
 
     except Exception as e:
-        _l.info("complex_transaction_csv_file_import_by_procedure_json e %s" % e)
+        _l.info(f"complex_transaction_csv_file_import_by_procedure_json err {e}")
 
-        text = "Data File Procedure %s. Can't import json, Error %s" % (
-            procedure_instance.procedure.user_code,
-            e,
+        text = (
+            f"Data File Procedure {procedure_instance.procedure.user_code}. "
+            f"Can't import json, Error {e}"
         )
 
         send_system_message(
@@ -4615,8 +4606,8 @@ def complex_transaction_csv_file_import_by_procedure_json(
         )
 
         _l.debug(
-            "complex_transaction_csv_file_import_by_procedure scheme %s not found"
-            % procedure_instance.procedure.scheme_name
+            f"complex_transaction_csv_file_import_by_procedure scheme "
+            f"{procedure_instance.procedure.scheme_name} not found"
         )
 
         procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
