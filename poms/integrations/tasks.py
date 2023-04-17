@@ -286,7 +286,8 @@ def download_instrument(
 
     if task is None:
         provider = get_provider(
-            instrument_download_scheme.master_user, instrument_download_scheme.provider
+            instrument_download_scheme.master_user,
+            instrument_download_scheme.provider,
         )
         if not provider.is_valid_reference(instrument_code):
             raise ValueError("Invalid instrument_code value")
@@ -1002,7 +1003,6 @@ def create_simple_instrument(options, task):
     update_task_with_instrument(instrument, task)
 
 
-
 def handle_database_response_data(data, task, options):
     result_instrument = None
 
@@ -1388,7 +1388,7 @@ def test_certificate_async(self, task_id):
     else:
         _l.debug(f"handle_test_certificate_async task: result {result}")
         _l.debug(
-            f'handle_test_certificate_async task: result is authorized '
+            f"handle_test_certificate_async task: result is authorized "
             f'{result["is_authorized"]}'
         )
 
@@ -1773,9 +1773,7 @@ def generate_file_report(result_object, master_user, scheme, type, name, context
         return result
 
     _l.info(f"generate_file_report error_handler {scheme.error_handler}")
-    _l.info(
-        f"generate_file_report missing_data_handler {scheme.missing_data_handler}"
-    )
+    _l.info(f"generate_file_report missing_data_handler {scheme.missing_data_handler}")
 
     result = []
     error_rows = []
@@ -1889,7 +1887,9 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
         _l.debug(f"instance {instance}")
 
         if len(instance.error_rows):
-            columns += instance.error_rows[0]["error_data"]["columns"]["imported_columns"]
+            columns += instance.error_rows[0]["error_data"]["columns"][
+                "imported_columns"
+            ]
             columns = (
                 columns
                 + instance.error_rows[0]["error_data"]["columns"][
@@ -1939,9 +1939,9 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
 
                 if (
                     column == unique_column
-                    and error_row["error_data"]["data"][
-                        "executed_input_expressions"
-                    ][item_column_index]
+                    and error_row["error_data"]["data"]["executed_input_expressions"][
+                        item_column_index
+                    ]
                 ):
                     result[index] = error_row["error_data"]["data"][
                         "executed_input_expressions"
