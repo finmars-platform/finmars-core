@@ -892,8 +892,6 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
             task.options_object = options
             task.save()
 
-            headers = {"Content-type": "application/json"}
-
             payload_jwt = {
                 "sub": settings.BASE_API_URL,  # "user_id_or_name",
                 "role": 0,  # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
@@ -901,8 +899,10 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
 
             token = encode_with_jwt(payload_jwt)
 
-            headers["Authorization"] = "Bearer %s" % token
-
+            headers = {
+                "Content-type": "application/json",
+                "Authorization": f"Bearer {token}",
+            }
             options["request_id"] = task.pk
             options["base_api_url"] = settings.BASE_API_URL
             options["token"] = "fd09a190279e45a2bbb52fcabb7899bd"
@@ -918,31 +918,27 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
             # except Exception as e:
             #     _l.debug("Can't send request to CBONDS BROKER. %s" % e)
 
-            _l.info("options %s" % options)
-            _l.info("settings.CBONDS_BROKER_URL %s" % settings.CBONDS_BROKER_URL)
+            _l.info(f"options {options}")
+            _l.info(f"settings.CBONDS_BROKER_URL {settings.CBONDS_BROKER_URL}")
 
             try:
                 # TODO refactor to /export/currency when available
                 response = requests.get(
-                    url=str(settings.CBONDS_BROKER_URL)
-                    + "instr/currency/"
-                    + currency_code,
+                    url=f"{str(settings.CBONDS_BROKER_URL)}instr/currency/{currency_code}",
                     headers=headers,
                     verify=settings.VERIFY_SSL,
                 )
-                _l.info("response download_currency_cbond %s" % response)
-                _l.info("data response.text %s " % response.text)
+                _l.info(f"response download_currency_cbond {response}")
+                _l.info(f"data response.text {response.text} ")
             except Exception as e:
-                _l.debug("Can't send request to CBONDS BROKER. %s" % e)
+                _l.debug(f"Can't send request to CBONDS BROKER. {e}")
 
-                errors.append("Request to broker failed. %s" % str(e))
+                errors.append(f"Request to broker failed. {str(e)}")
 
             try:
                 data = response.json()
             except Exception as e:
-                errors.append(
-                    "Could not parse response from broker. %s" % response.text
-                )
+                errors.append(f"Could not parse response from broker. {response.text}")
                 return task, errors
 
             try:
@@ -965,18 +961,18 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
                 return task, errors
 
             except Exception as e:
-                errors.append("Could not create currency. %s" % str(e))
+                errors.append(f"Could not create currency. {str(e)}")
                 return task, errors
 
-            _l.info("data %s " % data)
+            _l.info(f"data {data} ")
 
             return task, errors
 
     except Exception as e:
-        _l.info("error %s " % e)
+        _l.info(f"error {e} ")
         _l.info(traceback.format_exc())
 
-        errors.append("Something went wrong. %s" % str(e))
+        errors.append(f"Something went wrong. {str(e)}")
 
         return None, errors
 
