@@ -1516,7 +1516,7 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
 
             instance.task_object = task
 
-            _l.info(f"ImportInstrumentCbondsSerializer create task id {task.id}")
+            _l.info(f"{self.__class__.__name__} created task id {task.id}")
 
             download_instrument_finmars_database(task.id)
 
