@@ -3,7 +3,6 @@ from django.utils.translation import gettext_lazy
 
 
 class ConfigurationModel(models.Model):
-
     '''
     just a good remainder to find entity by configuration_code
     '''
@@ -29,11 +28,20 @@ class ConfigurationModel(models.Model):
         and :* is user_code qualifier
         
     '''
+
     def save(self, *args, **kwargs):
 
         if self.configuration_code not in self.user_code:
 
-            self.user_code = str(self.configuration_code) + ':' + str(self.user_code)
+            if self.content_type:  # In case if it Attribute Type or Layout
+
+                content_type_key = self.content_type.app_label + '.' + self.content_type.model
+
+                self.user_code = str(self.configuration_code) + ':' + content_type_key + ':' + str(self.user_code)
+
+            else:
+
+                self.user_code = str(self.configuration_code) + ':' + str(self.user_code)
 
         super(ConfigurationModel, self).save(*args, **kwargs)
 

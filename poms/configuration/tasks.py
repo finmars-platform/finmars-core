@@ -1,9 +1,11 @@
+import json
 import logging
 import os
 import traceback
 
 import requests
 from celery import shared_task
+from django.utils.timezone import now
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyRequest, ProxyUser
@@ -11,6 +13,7 @@ from poms.common.storage import download_folder_as_zip, get_storage
 from poms.common.utils import get_serializer
 from poms.configuration.models import Configuration
 from poms.configuration.utils import unzip_to_directory, list_json_files, read_json_file
+from poms.file_reports.models import FileReport
 from poms_app import settings
 
 _l = logging.getLogger('poms.configuration')
@@ -26,6 +29,33 @@ def import_configuration(self, task_id):
     task.celery_task_id = self.request.id
     task.status = CeleryTask.STATUS_PENDING
     task.save()
+
+    def generate_json_report(task, stats):
+
+        result = stats
+
+        current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+        file_name = 'file_report_%s_task_%s.json' % (current_date_time, task.id)
+
+        file_report = FileReport()
+
+        _l.info('TransactionImportProcess.generate_json_report uploading file')
+
+        file_report.upload_file(file_name=file_name, text=json.dumps(result, indent=4, default=str),
+                                master_user=task.master_user)
+        file_report.master_user = task.master_user
+        file_report.name = 'Configuration Import %s (Task %s).json' % (current_date_time, task.id)
+        file_report.file_name = file_name
+        file_report.type = 'configuration.import_configuration'
+        file_report.notes = 'System File'
+        file_report.content_type = 'application/json'
+
+        file_report.save()
+
+        _l.info('ConfigurationImportManager.json_report %s' % file_report)
+        _l.info('ConfigurationImportManager.json_report %s' % file_report.file_url)
+
+        return file_report
 
     try:
 
@@ -62,9 +92,16 @@ def import_configuration(self, task_id):
 
         index = 0
 
+        stats = {
+            "configuration": {
+
+            }
+        }
+
         for json_file in json_files:
 
             if 'manifest.json' in json_file:
+                index = index + 1
                 continue
 
             task.update_progress(
@@ -76,29 +113,82 @@ def import_configuration(self, task_id):
                 }
             )
 
-            json_data = read_json_file(json_file)
+            try:
 
-            content_type = json_data['meta']['content_type']
-            user_code = json_data.get('user_code')
-            SerializerClass = get_serializer(content_type)
+                json_data = read_json_file(json_file)
 
-            Model = SerializerClass.Meta.model
+                content_type = json_data['meta']['content_type']
+                user_code = json_data.get('user_code')
+                SerializerClass = get_serializer(content_type)
 
-            if user_code is not None:
-                # Check if the instance already exists
-                instance = Model.objects.filter(user_code=user_code).first()
-            else:
-                instance = None
+                Model = SerializerClass.Meta.model
 
-            serializer = SerializerClass(instance=instance, data=json_data, context=context)
+                if user_code is not None:
+                    # Check if the instance already exists
+                    instance = Model.objects.filter(user_code=user_code).first()
+                else:
+                    instance = None
 
-            if serializer.is_valid():
-                # Perform any desired actions, such as saving the data to the database
-                serializer.save()
-            else:
-                print(f"Invalid data in {json_file}: {serializer.errors}")
+                serializer = SerializerClass(instance=instance, data=json_data, context=context)
+
+                if serializer.is_valid():
+                    # Perform any desired actions, such as saving the data to the database
+                    serializer.save()
+
+                    stats['configuration'][json_file] = {
+                        'status': 'success'
+                    }
+
+                    task.update_progress(
+                        {
+                            'current': index,
+                            'total': len(json_files),
+                            'percent': round(index / (len(json_files) / 100)),
+                            'description': 'Imported %s' % json_file
+                        }
+                    )
+
+                else:
+                    stats['configuration'][json_file] = {
+                        'status': 'error',
+                        'error_message': str(serializer.errors)
+                    }
+                    print(f"Invalid data in {json_file}: {serializer.errors}")
+
+                    task.update_progress(
+                        {
+                            'current': index,
+                            'total': len(json_files),
+                            'percent': round(index / (len(json_files) / 100)),
+                            'description': 'Error %s' % json_file
+                        }
+                    )
+
+
+
+            except Exception as e:
+                stats['configuration'][json_file] = {
+                    'status': 'error',
+                    'error_message': str(e)
+                }
+
+                task.update_progress(
+                    {
+                        'current': index,
+                        'total': len(json_files),
+                        'percent': round(index / (len(json_files) / 100)),
+                        'description': 'Error %s' % json_file
+                    }
+                )
 
             index = index + 1
+
+        file_report = generate_json_report(task, stats)
+
+        task.add_attachment(file_report.id)
+
+        task.status = CeleryTask.STATUS_DONE
+        task.save()
 
     except Exception as e:
 
@@ -132,9 +222,9 @@ def push_configuration_to_marketplace(self, task_id):
 
         configuration = Configuration.objects.get(configuration_code=options_object['configuration_code'])
 
-        path = settings.BASE_API_URL + '/configurations/' + configuration.configuration_code + '/' + configuration.version
-
-        if not storage.exists(path):
+        if configuration.from_marketplace:
+            path = settings.BASE_API_URL + '/configurations/' + configuration.configuration_code + '/' + configuration.version
+        else:
             path = settings.BASE_API_URL + '/configurations/custom/' + configuration.configuration_code + '/' + configuration.version
 
         zip_file_path = download_folder_as_zip(path)
