@@ -17,7 +17,7 @@ from rest_framework.serializers import ListSerializer
 from poms.common.fields import ExpressionField
 from poms.common.formula import safe_eval, ExpressionEvalError
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import ModelWithUserCodeSerializer
+from poms.common.serializers import ModelWithUserCodeSerializer, ModelMetaSerializer
 from poms.integrations.models import PortfolioClassifierMapping, ProviderClass, AccountClassifierMapping, \
     CounterpartyClassifierMapping, ResponsibleClassifierMapping, InstrumentClassifierMapping
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
@@ -335,7 +335,7 @@ class GenericAttributeTypeOptionIsHiddenField(serializers.BooleanField):
 
 
 # class GenericAttributeTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
-class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
+class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     is_hidden = GenericAttributeTypeOptionIsHiddenField()
     classifiers = GenericClassifierSerializer(required=False, allow_null=True, many=True)
@@ -351,7 +351,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
                   'favorites',
                   'expr', 'can_recalculate',
                   'tooltip',
-                  'kind',
+                  'kind', 'content_type',
                   'value_type', 'order', 'is_hidden', 'classifiers', 'classifiers_flat']
 
     def __init__(self, *args, **kwargs):
@@ -657,20 +657,20 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
         owner_model_content_type = ContentType.objects.get_for_model(parent.Meta.model)
         # root_model_content_type = ContentType.objects.get_for_model(self.root.Meta.model)
 
-        attribute_type = attrs['attribute_type']
-        if attribute_type.content_type_id != owner_model_content_type.id:
-            # raise ValidationError({
-            #     'attribute_type':
-            # })
-            self.fields['attribute_type'].fail('does_not_exist', pk_value=attribute_type.id)
+        # attribute_type = attrs['attribute_type']
+        # if attribute_type.content_type_id != owner_model_content_type.id:
+        #     # raise ValidationError({
+        #     #     'attribute_type':
+        #     # })
+        #     self.fields['attribute_type'].fail('does_not_exist', pk_value=attribute_type.id)
 
-        classifier = attrs.get('classifier', None)
-        if attribute_type.value_type == GenericAttributeType.CLASSIFIER and classifier:
-            if attribute_type.id != classifier.attribute_type_id:
-                # raise ValidationError(
-                #     {'classifier': gettext_lazy('Invalid pk "%(pk)s" - object does not exist.') % {
-                #         'pk': classifier.id}})
-                self.fields['classifier'].fail('does_not_exist', pk_value=classifier.id)
+        # classifier = attrs.get('classifier', None)
+        # if attribute_type.value_type == GenericAttributeType.CLASSIFIER and classifier:
+        #     if attribute_type.id != classifier.attribute_type_id:
+        #         # raise ValidationError(
+        #         #     {'classifier': gettext_lazy('Invalid pk "%(pk)s" - object does not exist.') % {
+        #         #         'pk': classifier.id}})
+        #         self.fields['classifier'].fail('does_not_exist', pk_value=classifier.id)
 
         return attrs
 

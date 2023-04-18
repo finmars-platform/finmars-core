@@ -30,11 +30,12 @@ from poms.portfolios.models import Portfolio
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.system_messages.handlers import send_system_message
+from poms.transaction_import.exceptions import BookException, BookSkipException, BookUnhandledException
 from poms.transaction_import.models import ProcessType, TransactionImportResult, \
     TransactionImportProcessItem, TransactionImportProcessPreprocessItem, TransactionImportBookedTransaction, \
     TransactionImportConversionItem
 from poms.transaction_import.serializers import TransactionImportResultSerializer
-from poms.transactions.handlers import TransactionTypeProcess, UniqueCodeError
+from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionTypeInput
 from poms.users.models import EcosystemDefault
 
@@ -459,64 +460,117 @@ class TransactionImportProcess(object):
 
         return fields
 
-    def book(self, item, rule_scenario, raise_exception=False, error=None):
+    def book(self, item, rule_scenario, error=None):
 
         # _l.info(
         #     'TransactionImportProcess.Task %s. book INIT item %s rule_scenario %s' % (self.task, item, rule_scenario))
 
-        with transaction.atomic():
+        try:
 
-            try:
+            fields = self.get_fields_for_item(item, rule_scenario)
+            if error:
+                fields['error_message'] = str(error)
 
-                fields = self.get_fields_for_item(item, rule_scenario)
-                if error:
-                    fields['error_message'] = str(error)
+            uniqueness_reaction = None
 
-                transaction_type_process_instance = TransactionTypeProcess(
-                    linked_import_task=self.task,
-                    transaction_type=rule_scenario.transaction_type,
-                    default_values=fields,
-                    context=self.context,
-                    uniqueness_reaction=self.scheme.book_uniqueness_settings,
-                    member=self.member,
-                    source=item.file_inputs,
-                    execution_context="import"
+            if self.scheme.book_uniqueness_settings == ComplexTransactionImportScheme.USE_TRANSACTION_TYPE_SETTING:
+                uniqueness_reaction = None
+            else:
+                uniqueness_reaction = self.scheme.book_uniqueness_settings
+
+            transaction_type_process_instance = TransactionTypeProcess(
+                linked_import_task=self.task,
+                transaction_type=rule_scenario.transaction_type,
+                default_values=fields,
+                context=self.context,
+                uniqueness_reaction=uniqueness_reaction,
+                member=self.member,
+                source=item.file_inputs,
+                execution_context="import"
+            )
+
+            if not item.transaction_inputs:
+                item.transaction_inputs = {}
+
+            fields_dict = {}
+
+            for key, value in fields.items():
+                fields_dict[key] = str(value)
+
+            if error:
+                fields_dict['error_message'] = str(error)
+
+            item.transaction_inputs[rule_scenario.transaction_type.user_code] = fields_dict
+
+            transaction_type_process_instance.process()
+
+            # if transaction_type_process_instance.uniqueness_status == 'skip':
+            #     item.status = 'skip'
+            #     item.error_message = item.error_message + 'Unique code already exist. Skip'
+            #
+            # if transaction_type_process_instance.uniqueness_status == 'error':
+            #     item.status = 'error'
+            #     item.error_message = item.error_message + 'Unique code already exist. Error'
+
+            item.processed_rule_scenarios.append(rule_scenario)
+
+            if transaction_type_process_instance.complex_transaction:
+                trn = TransactionImportBookedTransaction(
+                    code=transaction_type_process_instance.complex_transaction.code,
+                    text=transaction_type_process_instance.complex_transaction.text,
+                    transaction_unique_code=transaction_type_process_instance.complex_transaction.transaction_unique_code,
                 )
 
-                if not item.transaction_inputs:
-                    item.transaction_inputs = {}
+                item.booked_transactions.append(trn)
 
-                fields_dict = {}
-
-                for key, value in fields.items():
-                    fields_dict[key] = str(value)
-
-                if error:
-                    fields_dict['error_message'] = str(error)
-
-                item.transaction_inputs[rule_scenario.transaction_type.user_code] = fields_dict
-
-                transaction_type_process_instance.process()
+            if transaction_type_process_instance.has_errors:
 
                 if transaction_type_process_instance.uniqueness_status == 'skip':
                     item.status = 'skip'
-                    item.error_message = item.error_message + 'Unique code already exist. Skip'
 
-                if transaction_type_process_instance.uniqueness_status == 'error':
-                    item.status = 'error'
-                    item.error_message = item.error_message + 'Unique code already exist. Error'
+                    errors = []
 
-                item.processed_rule_scenarios.append(rule_scenario)
+                    if transaction_type_process_instance.general_errors:
+                        errors = errors + transaction_type_process_instance.general_errors
 
-                if transaction_type_process_instance.complex_transaction:
-                    trn = TransactionImportBookedTransaction(
-                        code=transaction_type_process_instance.complex_transaction.code,
-                        text=transaction_type_process_instance.complex_transaction.text,
-                        transaction_unique_code=transaction_type_process_instance.complex_transaction.transaction_unique_code,
+                    item.error_message = item.error_message + 'Book Skip: ' + json.dumps(errors, default=str)
+
+                    self.task.update_progress(
+                        {
+                            'current': self.result.processed_rows,
+                            'total': len(self.items),
+                            'percent': round(self.result.processed_rows / (len(self.items) / 100)),
+                            'description': 'Going to book %s' % (rule_scenario.transaction_type.user_code)
+                        }
                     )
 
-                    item.booked_transactions.append(trn)
+                    raise BookSkipException(code=409, error_message=item.error_message)
 
+                else:
+                    item.status = 'error'
+
+                    errors = []
+
+                    if transaction_type_process_instance.general_errors:
+                        errors = errors + transaction_type_process_instance.general_errors
+
+                    if transaction_type_process_instance.instruments_errors:
+                        errors = errors + transaction_type_process_instance.instruments_errors
+
+                    if transaction_type_process_instance.value_errors:
+                        errors = errors + transaction_type_process_instance.value_errors
+
+                    if transaction_type_process_instance.complex_transaction_errors:
+                        errors = errors + transaction_type_process_instance.complex_transaction_errors
+
+                    if transaction_type_process_instance.transactions_errors:
+                        errors = errors + transaction_type_process_instance.transactions_errors
+
+                    item.error_message = item.error_message + 'Book Exception: ' + json.dumps(errors, default=str)
+
+                    raise BookException(code=400, error_message=item.error_message)
+
+            else:
                 item.status = 'success'
                 item.message = "Transaction Booked %s" % transaction_type_process_instance.complex_transaction
 
@@ -532,21 +586,25 @@ class TransactionImportProcess(object):
                     }
                 )
 
-            except Exception as e:
+        except Exception as e:
+
+            _l.error("TransactionImportProcess.Task %s. book Exception %s " % (self.task, e))
+
+            if (e.__class__.__name__ == 'BookException'):
+
+                raise BookException(code=400, error_message=str(e))
+            elif (e.__class__.__name__ == 'BookSkipException'):
+
+                raise BookSkipException(code=400, error_message=str(e))
+
+            else:
 
                 item.status = 'error'
-                item.error_message = item.error_message + 'Book Exception: ' + str(e)
+                item.error_message = item.error_message + 'Unhandled Exception: ' + str(e)
 
-                _l.error("TransactionImportProcess.Task %s. book Exception %s " % (self.task, e))
                 _l.error("TransactionImportProcess.Task %s. book Traceback %s " % (self.task, traceback.format_exc()))
 
-                transaction.set_rollback(True)
-                if raise_exception:
-
-                    if not isinstance(e, UniqueCodeError):
-                        raise Exception(e)
-                    else:
-                        _l.error("Code is not unique, skip %s" % str(e))
+                raise BookUnhandledException(code=500, error_message=str(e))
 
     def fill_with_file_items(self):
 
@@ -873,112 +931,149 @@ class TransactionImportProcess(object):
         st = time.perf_counter()
         index = 0
 
-        for item in self.items:
+        with transaction.atomic():
 
-            try:
+            for item in self.items:
 
-                _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ========' % (
-                    self.task, str(item.row_number), str(self.result.total_rows)))
+                sid = transaction.savepoint()
+                _l.info("Create checkpoint for %s" % index)
 
-                if self.scheme.filter_expression:
+                try:
 
-                    # expr = Expression.parseString("a == 1 and b == 2")
-                    expr = Expression.parseString(self.scheme.filter_expression)
+                    _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ========' % (
+                        self.task, str(item.row_number), str(self.result.total_rows)))
 
-                    if expr(item.inputs):
-                        # filter passed
-                        pass
+                    if self.scheme.filter_expression:
+
+                        # expr = Expression.parseString("a == 1 and b == 2")
+                        expr = Expression.parseString(self.scheme.filter_expression)
+
+                        if expr(item.inputs):
+                            # filter passed
+                            pass
+                        else:
+
+                            item.status = 'skip'
+                            item.message = 'Skipped due filter'
+
+                            _l.info(
+                                'TransactionImportProcess.Task %s. Row skipped due filter %s' % (
+                                    self.task, str(item.row_number)))
+                            continue
+
+                    rule_value = self.get_rule_value_for_item(item)
+
+                    item.processed_rule_scenarios = []
+                    item.booked_transactions = []
+
+                    _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ======== %s ' % (
+                        self.task, str(item.row_number), str(self.result.total_rows), rule_value))
+
+                    if rule_value:
+
+                        found = False
+
+                        for rule_scenario in self.scheme.rule_scenarios.all():
+
+                            if rule_scenario.status != 'skip':
+
+                                selector_values = rule_scenario.selector_values.all()
+
+                                for selector_value in selector_values:
+
+                                    if selector_value.value == rule_value:
+                                        found = True
+                                        try:
+
+                                            self.book(item, rule_scenario)
+
+                                        except BookSkipException:
+                                            _l.info("BookSkipException")
+                                            transaction.savepoint_rollback(sid)
+                                            continue
+
+                                        except (BookUnhandledException, BookException) as e:
+                                            transaction.savepoint_rollback(sid)
+
+                                            try:
+                                                self.book(item, self.error_rule_scenario, error=e)
+                                            except Exception as e: # any exception will work on error scenario
+                                                _l.error("Could not book error scenario %s" % e)
+                                                _l.info("Error Handler Savepoint rollback for %s" % index)
+                                                transaction.savepoint_rollback(sid)
+                                            else:
+                                                # release the savepoint for this model
+                                                _l.info("Error Handler Savepoint commit for %s" % index)
+                                                transaction.savepoint_commit(sid)
+                                        else:
+                                            _l.info("Savepoint commit for %s" % index)
+                                            # _l.error("Could not book error scenario %s" % e)
+                                            transaction.savepoint_commit(sid)
+                            else:
+                                selector_values = rule_scenario.selector_values.all()
+
+                                for selector_value in selector_values:
+
+                                    if selector_value.value == rule_value:
+                                        found = True
+
+                        if not found:
+                            item.status = 'skip'
+                            item.message = 'Selector %s does not match anything in scheme' % rule_value
+                            try:
+                                self.book(item, self.default_rule_scenario)
+                            except Exception as e:
+                                _l.error("Could not book default scenario %s" % e)
+                                transaction.savepoint_rollback(sid)
+                            else:
+                                # release the savepoint for this model
+                                transaction.savepoint_commit(sid)
                     else:
 
                         item.status = 'skip'
-                        item.message = 'Skipped due filter'
-
-                        _l.info(
-                            'TransactionImportProcess.Task %s. Row skipped due filter %s' % (
-                                self.task, str(item.row_number)))
-                        continue
-
-                rule_value = self.get_rule_value_for_item(item)
-
-                item.processed_rule_scenarios = []
-                item.booked_transactions = []
-
-                _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ======== %s ' % (
-                    self.task, str(item.row_number), str(self.result.total_rows), rule_value))
-
-                if rule_value:
-
-                    found = False
-
-                    for rule_scenario in self.scheme.rule_scenarios.all():
-
-                        if rule_scenario.status != 'skip':
-
-                            selector_values = rule_scenario.selector_values.all()
-
-                            for selector_value in selector_values:
-
-                                if selector_value.value == rule_value:
-                                    found = True
-                                    try:
-                                        self.book(item, rule_scenario, raise_exception=True)
-                                    except Exception as e:
-                                        self.book(item, self.error_rule_scenario, error=e)
-                        else:
-                            selector_values = rule_scenario.selector_values.all()
-
-                            for selector_value in selector_values:
-
-                                if selector_value.value == rule_value:
-                                    found = True
-
-                    if not found:
-                        item.status = 'skip'
                         item.message = 'Selector %s does not match anything in scheme' % rule_value
+
                         self.book(item, self.default_rule_scenario)
-                else:
 
-                    item.status = 'skip'
-                    item.message = 'Selector %s does not match anything in scheme' % rule_value
+                    self.result.processed_rows = self.result.processed_rows + 1
 
-                    self.book(item, self.default_rule_scenario)
+                    # DEPRECATED
+                    # send_websocket_message(data={
+                    #     'type': 'transaction_import_status',
+                    #     'payload': {
+                    #         'parent_task_id': self.task.parent_id,
+                    #         'task_id': self.task.id,
+                    #         'state': CeleryTask.STATUS_PENDING,
+                    #         'processed_rows': self.result.processed_rows,
+                    #         'total_rows': self.result.total_rows,
+                    #         'scheme_name': self.scheme.user_code,
+                    #         'file_name': self.result.file_name}
+                    # }, level="member",
+                    #     context=self.context)
 
-                self.result.processed_rows = self.result.processed_rows + 1
-
-                # DEPRECATED
-                # send_websocket_message(data={
-                #     'type': 'transaction_import_status',
-                #     'payload': {
-                #         'parent_task_id': self.task.parent_id,
-                #         'task_id': self.task.id,
-                #         'state': CeleryTask.STATUS_PENDING,
-                #         'processed_rows': self.result.processed_rows,
-                #         'total_rows': self.result.total_rows,
-                #         'scheme_name': self.scheme.user_code,
-                #         'file_name': self.result.file_name}
-                # }, level="member",
-                #     context=self.context)
-
-                self.task.update_progress(
-                    {
-                        'current': self.result.processed_rows,
-                        'total': len(self.items),
-                        'percent': round(self.result.processed_rows / (len(self.items) / 100)),
-                        'description': 'Row %s processed' % self.result.processed_rows
-                    }
-                )
+                    self.task.update_progress(
+                        {
+                            'current': self.result.processed_rows,
+                            'total': len(self.items),
+                            'percent': round(self.result.processed_rows / (len(self.items) / 100)),
+                            'description': 'Row %s processed' % self.result.processed_rows
+                        }
+                    )
 
 
 
-            except Exception as e:
+                except Exception as e:
 
-                item.status = 'error'
-                item.message = 'Error %s' % e
+                    item.status = 'error'
+                    item.message = 'Error %s' % e
 
-                _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Exception %s' % (
-                    self.task, str(item.row_number), e))
-                _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Traceback %s' % (
-                    self.task, str(item.row_number), traceback.format_exc()))
+                    _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Exception %s' % (
+                        self.task, str(item.row_number), e))
+                    _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Traceback %s' % (
+                        self.task, str(item.row_number), traceback.format_exc()))
+                finally:
+
+                    index = index + 1
 
         self.result.items = self.items
 

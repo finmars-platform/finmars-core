@@ -20,6 +20,7 @@ from poms.accounts.models import Account, AccountType
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, ModelExtMultipleChoiceFilter, \
     NoOpFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter, ComplexTransactionStatusFilter
 from poms.common.pagination import CustomPaginationMixin
+from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import AbstractClassModelViewSet, AbstractAsyncViewSet
 from poms.counterparties.models import Responsible, Counterparty, ResponsibleGroup, CounterpartyGroup
 from poms.currencies.models import Currency
@@ -264,6 +265,7 @@ class TransactionTypeEvViewSet(AbstractWithObjectPermissionViewSet):
         'group__public_name',
     ]
 
+
 # DEPRECATED
 class TransactionTypeLightViewSet(AbstractWithObjectPermissionViewSet):
     queryset = TransactionType.objects.select_related('group').prefetch_related(
@@ -292,6 +294,7 @@ class TransactionTypeLightViewSet(AbstractWithObjectPermissionViewSet):
         'group__short_name',
         'group__public_name',
     ]
+
 
 # DEPRECATED
 class TransactionTypeLightWithInputsViewSet(AbstractWithObjectPermissionViewSet):
@@ -386,7 +389,8 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
 
         return result
 
-    @action(detail=False, methods=['get'], url_path='light-with-inputs', serializer_class=TransactionTypeLightSerializerWithInputs)
+    @action(detail=False, methods=['get'], url_path='light-with-inputs',
+            serializer_class=TransactionTypeLightSerializerWithInputs)
     def list_light_with_inputs(self, request, *args, **kwargs):
 
         queryset = self.filter_queryset(self.get_queryset())
@@ -396,6 +400,396 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         result = self.get_paginated_response(serializer.data)
 
         return result
+
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+        items = [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "group",
+                "name": "Group",
+                "value_type": "field"
+            },
+            {
+                "key": "display_expr",
+                "name": "Display Expression",
+                "value_type": 10
+            },
+            {
+                "key": "instrument_types",
+                "name": "Instrument types",
+                "value_content_type": "instruments.instrumenttype",
+                "value_entity": "instrument-type",
+                "code": "user_code",
+                "value_type": "mc_field"
+            },
+            {
+                "key": "portfolios",
+                "name": "Portfolios",
+                "value_content_type": "portfolios.portfolio",
+                "value_entity": "portfolio",
+                "code": "user_code",
+                "value_type": "mc_field"
+            },
+            {
+                "key": "object_permissions",
+                "name": "Object permissions",
+                "value_type": "mc_field"
+            },
+            {
+                "key": "user_text_1",
+                "name": "User Text 1",
+                "value_type": 10
+            },
+            {
+                "key": "user_text_2",
+                "name": "User Text 2",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_3",
+                "name": "User Text 3",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_4",
+                "name": "User Text 4",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_5",
+                "name": "User Text 5",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_6",
+                "name": "User Text 6",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_7",
+                "name": "User Text 7",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_8",
+                "name": "User Text 8",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_9",
+                "name": "User Text 9",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_10",
+                "name": "User Text 10",
+                "value_type": 10
+            },
+            {
+                "key": "user_text_11",
+                "name": "User Text 11",
+                "value_type": 10
+            },
+            {
+                "key": "user_text_12",
+                "name": "User Text 12",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_13",
+                "name": "User Text 13",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_14",
+                "name": "User Text 14",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_15",
+                "name": "User Text 15",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_16",
+                "name": "User Text 16",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_17",
+                "name": "User Text 17",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_18",
+                "name": "User Text 18",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_19",
+                "name": "User Text 19",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_20",
+                "name": "User Text 20",
+                "value_type": 10
+            },
+            {
+                "key": "user_text_21",
+                "name": "User Text 21",
+                "value_type": 10
+            },
+            {
+                "key": "user_text_22",
+                "name": "User Text 22",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_23",
+                "name": "User Text 23",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_24",
+                "name": "User Text 24",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_25",
+                "name": "User Text 25",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_26",
+                "name": "User Text 26",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_27",
+                "name": "User Text 27",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_28",
+                "name": "User Text 28",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_29",
+                "name": "User Text 29",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_30",
+                "name": "User Text 30",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_1",
+                "name": "User Number 1",
+                "value_type": 10
+            },
+            {
+                "key": "user_number_2",
+                "name": "User Number 2",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_3",
+                "name": "User Number 3",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_4",
+                "name": "User Number 4",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_5",
+                "name": "User Number 5",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_6",
+                "name": "User Number 6",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_7",
+                "name": "User Number 7",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_8",
+                "name": "User Number 8",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_9",
+                "name": "User Number 9",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_10",
+                "name": "User Number 10",
+                "value_type": 10
+            },
+            {
+                "key": "user_number_11",
+                "name": "User Number 11",
+                "value_type": 10
+            },
+            {
+                "key": "user_number_12",
+                "name": "User Number 12",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_13",
+                "name": "User Number 13",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_14",
+                "name": "User Number 14",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_15",
+                "name": "User Number 15",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_16",
+                "name": "User Number 16",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_17",
+                "name": "User Number 17",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_18",
+                "name": "User Number 18",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_19",
+                "name": "User Number 19",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_20",
+                "name": "User Number 20",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_date_1",
+                "name": "User Date 1",
+                "value_type": 10
+            },
+            {
+                "key": "user_date_2",
+                "name": "User Date 2",
+                "value_type": 10
+            },
+            {
+                "key": "user_date_3",
+                "name": "User Date 3",
+                "value_type": 10
+            },
+            {
+                "key": "user_date_4",
+                "name": "User Date 4",
+                "value_type": 10
+            },
+            {
+                "key": "user_date_5",
+                "name": "User Date 5",
+                "value_type": 10
+            }
+        ]
+
+        items = items + get_list_of_entity_attributes('transactions.transactiontype')
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
+
 
     def get_context_for_book(self, request):
 
@@ -563,75 +957,80 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
     @action(detail=True, methods=['get', 'put'], url_path='book', serializer_class=TransactionTypeProcessSerializer)
     def book(self, request, pk=None):
 
-        # Some Inputs can choose from which context variable it will take value
-        context_values = self.get_context_for_book(request)
-        # But by default Context Variables overwrites default value
-        # default_values = self.get_context_for_book(request)
+        with transaction.atomic():
 
-        # print("default_values %s" % default_values)
-        print("context_values %s" % context_values)
-        print("pk %s" % pk)
+            # Some Inputs can choose from which context variable it will take value
+            context_values = self.get_context_for_book(request)
+            # But by default Context Variables overwrites default value
+            # default_values = self.get_context_for_book(request)
 
-        transaction_type = TransactionType.objects.get(pk=pk)
+            # print("default_values %s" % default_values)
+            print("context_values %s" % context_values)
+            print("pk %s" % pk)
 
-        if request.method == 'GET':
+            transaction_type = TransactionType.objects.get(pk=pk)
 
-            instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
-                                              context=self.get_serializer_context(), context_values=context_values,
-                                              member=request.user.member)
+            if request.method == 'GET':
 
-            instance.complex_transaction.id = 0
+                instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
+                                                  context=self.get_serializer_context(), context_values=context_values,
+                                                  member=request.user.member)
 
-            serializer = self.get_serializer(instance=instance)
-            return Response(serializer.data)
-        else:
+                instance.complex_transaction.id = 0
 
-            complex_transaction_status = request.data['complex_transaction_status']
-
-            uniqueness_reaction = request.data.get('uniqueness_reaction', None)
-
-            instance = TransactionTypeProcess(process_mode=request.data['process_mode'],
-                                              transaction_type=transaction_type,
-                                              context=self.get_serializer_context(), context_values=context_values,
-                                              complex_transaction_status=complex_transaction_status,
-                                              uniqueness_reaction=uniqueness_reaction, member=request.user.member)
-
-            try:
-
-                serializer = self.get_serializer(instance=instance, data=request.data)
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
-
+                serializer = self.get_serializer(instance=instance)
                 return Response(serializer.data)
-            finally:
-                if instance.has_errors:
-                    transaction.set_rollback(True)
+            else:
+
+                complex_transaction_status = request.data['complex_transaction_status']
+
+                uniqueness_reaction = request.data.get('uniqueness_reaction', None)
+
+                instance = TransactionTypeProcess(process_mode=request.data['process_mode'],
+                                                  transaction_type=transaction_type,
+                                                  context=self.get_serializer_context(), context_values=context_values,
+                                                  complex_transaction_status=complex_transaction_status,
+                                                  uniqueness_reaction=uniqueness_reaction, member=request.user.member)
+
+                try:
+
+                    serializer = self.get_serializer(instance=instance, data=request.data)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+
+                    return Response(serializer.data)
+                finally:
+
+                    if instance.has_errors:
+                        transaction.set_rollback(True)
 
     @action(detail=True, methods=['get', 'put'], url_path='book-pending',
             serializer_class=TransactionTypeProcessSerializer)
     def book_pending(self, request, pk=None):
 
-        complex_transaction_status = ComplexTransaction.PENDING
+        with transaction.atomic():
 
-        transaction_type = TransactionType.objects.get(pk=pk)
+            complex_transaction_status = ComplexTransaction.PENDING
 
-        instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
-                                          context=self.get_serializer_context(),
-                                          complex_transaction_status=complex_transaction_status,
-                                          member=request.user.member)
+            transaction_type = TransactionType.objects.get(pk=pk)
 
-        if request.method == 'GET':
-            serializer = self.get_serializer(instance=instance)
-            return Response(serializer.data)
-        else:
-            try:
-                serializer = self.get_serializer(instance=instance, data=request.data)
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
+            instance = TransactionTypeProcess(process_mode='book', transaction_type=transaction_type,
+                                              context=self.get_serializer_context(),
+                                              complex_transaction_status=complex_transaction_status,
+                                              member=request.user.member)
+
+            if request.method == 'GET':
+                serializer = self.get_serializer(instance=instance)
                 return Response(serializer.data)
-            finally:
-                if instance.has_errors:
-                    transaction.set_rollback(True)
+            else:
+                try:
+                    serializer = self.get_serializer(instance=instance, data=request.data)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+                    return Response(serializer.data)
+                finally:
+                    if instance.has_errors:
+                        transaction.set_rollback(True)
 
     @action(detail=True, methods=['get', 'put'], url_path='recalculate',
             serializer_class=TransactionTypeRecalculateSerializer, permission_classes=[IsAuthenticated])
@@ -1086,6 +1485,234 @@ class TransactionViewSet(AbstractWithObjectPermissionViewSet):
         # Deprecated 2023-03-10
         # instance.calc_cash_by_formulas()
 
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+        items = [
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "transaction_code",
+                "name": "Transaction Code",
+                "value_type": 20
+            },
+            {
+                "key": "transaction_class",
+                "name": "Transaction class",
+                "value_content_type": "transactions.transactionclass",
+                "value_entity": "transaction_class",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "portfolio",
+                "name": "Portfolio",
+                "value_content_type": "portfolios.portfolio",
+                "value_entity": "portfolio",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "transaction_currency",
+                "name": "Transaction currency",
+                "value_type": "field"
+            },
+            {
+                "key": "instrument",
+                "name": "Instrument",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "position_size_with_sign",
+                "name": "Position Size with sign",
+                "value_type": 20
+            },
+            {
+                "key": "settlement_currency",
+                "name": "Settlement currency",
+                "value_type": "field"
+            },
+            {
+                "key": "cash_consideration",
+                "name": "Cash consideration",
+                "value_type": 20
+            },
+            {
+                "key": "principal_with_sign",
+                "name": "Principal with sign",
+                "value_type": 20
+            },
+            {
+                "key": "carry_with_sign",
+                "name": "Carry with sign",
+                "value_type": 20
+            },
+            {
+                "key": "overheads_with_sign",
+                "name": "Overheads with sign",
+                "value_type": 20
+            },
+            {
+                "key": "accounting_date",
+                "name": "Accounting date",
+                "value_type": 40
+            },
+            {
+                "key": "cash_date",
+                "name": "Cash date",
+                "value_type": 40
+            },
+            {
+                "key": "account_cash",
+                "name": "Account cash",
+                "value_type": 'field'
+            },
+            {
+                "key": "account_position",
+                "name": "Account position",
+                "value_type": 'field'
+            },
+            {
+                "key": "account_interim",
+                "name": "Account interim",
+                "value_type": 'field'
+            },
+            {
+                "key": "strategy1_position",
+                "name": "Strategy1 position",
+                "value_type": 'field'
+            },
+            {
+                "key": "strategy1_cash",
+                "name": "Strategy1 cash",
+                "value_type": 'field'
+            },
+            {
+                "key": "strategy2_position",
+                "name": "Strategy2 position",
+                "value_type": 'field'
+            },
+            {
+                "key": "strategy2_cash",
+                "name": "Strategy2 cash",
+                "value_type": 'field'
+            },
+            {
+                "key": "strategy3_position",
+                "name": "Strategy3 position",
+                "value_type": 'field'
+            },
+            {
+                "key": "strategy3_cash",
+                "name": "Strategy3 cash",
+                "value_type": 'field'
+            },
+            {
+                "key": "reference_fx_rate",
+                "name": "Reference fx rate",
+                "value_type": 20
+            },
+            {
+                "key": "is_locked",
+                "name": "Is locked",
+                "value_type": 50
+            },
+            {
+                "key": "is_canceled",
+                "name": "Is canceled",
+                "value_type": 50
+            },
+            {
+                "key": "factor",
+                "name": "Factor",
+                "value_type": 20
+            },
+            {
+                "key": "principal_amount",
+                "name": "Principal amount",
+                "value_type": 20
+            },
+            {
+                "key": "carry_amount",
+                "name": "Carry amount",
+                "value_type": 20
+            },
+            {
+                "key": "overheads",
+                "name": "overheads",
+                "value_type": 20
+            },
+            {
+                "key": "responsible",
+                "name": "Responsible",
+                "value_content_type": "counterparties.responsible",
+                "value_entity": "responsible",
+                "code": "user_code",
+                "value_type": 'field'
+            },
+            {
+                "key": "counterparty",
+                "name": "Counterparty",
+                "value_content_type": "counterparties.counterparty",
+                "value_entity": "counterparty",
+                "code": "user_code",
+                "value_type": 'field'
+            },
+            {
+                "key": "trade_price",
+                "name": "Trade price",
+                "value_type": 20
+            },
+            {
+                "key": "object_permissions_user",
+                "name": "Users permissions",
+                "value_type": "mc_field"
+            },
+            {
+                "key": "object_permissions_group",
+                "name": "Groups permissions",
+                "value_type": "mc_field"
+            },
+            {
+                "key": "allocation_balance",
+                "name": "Allocation Balance",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "code": "user_code",
+                "value_type": 'field'
+            },
+            {
+                "key": "allocation_pl",
+                "name": "Allocation P&L",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "code": "user_code",
+                "value_type": 'field'
+            },
+            {
+                "key": "linked_instrument",
+                "name": "Linked instrument",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "code": "user_code",
+                "value_type": 'field'
+            }
+        ]
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
+
 
 class TransactionEvViewSet(AbstractWithObjectPermissionViewSet):
     queryset = qs = Transaction.objects.select_related(
@@ -1296,7 +1923,6 @@ class ComplexTransactionFilterSet(FilterSet):
         fields = []
 
 
-# class ComplexTransactionViewSet(AbstractModelViewSet):
 class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
     queryset = get_complex_transaction_queryset(select_related=False, transactions=True)
     serializer_class = ComplexTransactionSerializer
@@ -1325,6 +1951,387 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
 
         return result
 
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+
+        items = [
+            {
+                "key": "code",
+                "name": "Code",
+                "value_type": 20
+            },
+            {
+                "key": "date",
+                "name": "Date",
+                "value_type": 40
+            },
+            {
+                "key": "status",
+                "name": "Status",
+                "value_type": "field",
+                "value_entity": "complex-transaction-status",
+                "code": "user_code",
+                "value_content_type": "transactions.complextransactionstatus",
+            },
+            {
+                "key": "is_locked",
+                "name": "Is locked",
+                "value_type": 50
+            },
+            {
+                "key": "is_canceled",
+                "name": "Is canceled",
+                "value_type": 50
+            },
+            {
+                "key": "transaction_unique_code",
+                "name": "Transaction Unique Code",
+                "value_type": 10
+            },
+            {
+                "key": "text",
+                "name": "Description",
+                "value_type": 10
+            },
+            {
+                "key": "transaction_type",
+                "name": "Transaction Type",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "code": "user_code",
+                "value_content_type": "transactions.transactiontype",
+            },
+
+            {
+                "key": "user_text_1",
+                "name": "User Text 1",
+                "value_type": 10
+            },
+            {
+                "key": "user_text_2",
+                "name": "User Text 2",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_3",
+                "name": "User Text 3",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_4",
+                "name": "User Text 4",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_5",
+                "name": "User Text 5",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_6",
+                "name": "User Text 6",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_7",
+                "name": "User Text 7",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_8",
+                "name": "User Text 8",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_9",
+                "name": "User Text 9",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_10",
+                "name": "User Text 10",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_11",
+                "name": "User Text 11",
+                "value_type": 10
+            },
+            {
+                "key": "user_text_12",
+                "name": "User Text 12",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_13",
+                "name": "User Text 13",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_14",
+                "name": "User Text 14",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_15",
+                "name": "User Text 15",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_16",
+                "name": "User Text 16",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_17",
+                "name": "User Text 17",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_18",
+                "name": "User Text 18",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_19",
+                "name": "User Text 19",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_20",
+                "name": "User Text 20",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_21",
+                "name": "User Text 21",
+                "value_type": 10
+            },
+            {
+                "key": "user_text_22",
+                "name": "User Text 22",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_23",
+                "name": "User Text 23",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_24",
+                "name": "User Text 24",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_25",
+                "name": "User Text 25",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_26",
+                "name": "User Text 26",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_27",
+                "name": "User Text 27",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_28",
+                "name": "User Text 28",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_29",
+                "name": "User Text 29",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_text_30",
+                "name": "User Text 30",
+                "value_type": 10
+            },
+
+            {
+                "key": "user_number_1",
+                "name": "User Number 1",
+                "value_type": 20
+            },
+            {
+                "key": "user_number_2",
+                "name": "User Number 2",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_3",
+                "name": "User Number 3",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_4",
+                "name": "User Number 4",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_5",
+                "name": "User Number 5",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_6",
+                "name": "User Number 6",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_7",
+                "name": "User Number 7",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_8",
+                "name": "User Number 8",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_9",
+                "name": "User Number 9",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_10",
+                "name": "User Number 10",
+                "value_type": 20
+            },
+            {
+                "key": "user_number_11",
+                "name": "User Number 11",
+                "value_type": 20
+            },
+            {
+                "key": "user_number_12",
+                "name": "User Number 12",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_13",
+                "name": "User Number 13",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_14",
+                "name": "User Number 14",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_15",
+                "name": "User Number 15",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_16",
+                "name": "User Number 16",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_17",
+                "name": "User Number 17",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_18",
+                "name": "User Number 18",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_19",
+                "name": "User Number 19",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_number_20",
+                "name": "User Number 20",
+                "value_type": 20
+            },
+
+            {
+                "key": "user_date_1",
+                "name": "User Date 1",
+                "value_type": 40
+            },
+            {
+                "key": "user_date_2",
+                "name": "User Date 2",
+                "value_type": 40
+            },
+            {
+                "key": "user_date_3",
+                "name": "User Date 3",
+                "value_type": 40
+            },
+            {
+                "key": "user_date_4",
+                "name": "User Date 4",
+                "value_type": 40
+            },
+            {
+                "key": "user_date_5",
+                "name": "User Date 5",
+                "value_type": 40
+            }
+        ]
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
+
     # def perform_update(self, serializer):
     #     if serializer.is_locked:
     #         raise PermissionDenied()
@@ -1333,56 +2340,58 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
     @action(detail=True, methods=['get', 'put'], url_path='rebook', serializer_class=TransactionTypeProcessSerializer,
             permission_classes=[IsAuthenticated])
     def rebook(self, request, pk=None):
-        complex_transaction = self.get_object()
 
-        if request.method == 'GET':
+        with transaction.atomic():
+            complex_transaction = self.get_object()
 
-            instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
-                                              process_mode='rebook',
-                                              complex_transaction=complex_transaction,
-                                              clear_execution_log=False,
-                                              record_execution_log=False,
-                                              context=self.get_serializer_context(), member=request.user.member)
+            if request.method == 'GET':
 
-            serializer = self.get_serializer(instance=instance)
-            return Response(serializer.data)
-        else:
+                instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
+                                                  process_mode='rebook',
+                                                  complex_transaction=complex_transaction,
+                                                  clear_execution_log=False,
+                                                  record_execution_log=False,
+                                                  context=self.get_serializer_context(), member=request.user.member)
 
-            st = time.perf_counter()
-
-            _l.info('complex tt status %s' % request.data['complex_transaction_status'])
-
-            uniqueness_reaction = request.data.get('uniqueness_reaction', None)
-
-            # complex_transaction.execution_log = ''
-
-            instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
-                                              process_mode=request.data['process_mode'],
-                                              complex_transaction=complex_transaction,
-                                              complex_transaction_status=request.data['complex_transaction_status'],
-                                              context=self.get_serializer_context(),
-                                              uniqueness_reaction=uniqueness_reaction, member=request.user.member)
-
-            _l.info("==== INIT REBOOK ====")
-
-            try:
-
-                if request.data['complex_transaction']:
-                    if not request.data['complex_transaction']['status']:
-                        request.data['complex_transaction']['status'] = ComplexTransaction.PRODUCTION
-
-                serializer = self.get_serializer(instance=instance, data=request.data)
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
-
+                serializer = self.get_serializer(instance=instance)
                 return Response(serializer.data)
+            else:
 
-            finally:
+                st = time.perf_counter()
 
-                _l.debug('rebook done: %s', "{:3.3f}".format(time.perf_counter() - st))
+                _l.info('complex tt status %s' % request.data['complex_transaction_status'])
 
-                if instance.has_errors:
-                    transaction.set_rollback(True)
+                uniqueness_reaction = request.data.get('uniqueness_reaction', None)
+
+                # complex_transaction.execution_log = ''
+
+                instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
+                                                  process_mode=request.data['process_mode'],
+                                                  complex_transaction=complex_transaction,
+                                                  complex_transaction_status=request.data['complex_transaction_status'],
+                                                  context=self.get_serializer_context(),
+                                                  uniqueness_reaction=uniqueness_reaction, member=request.user.member)
+
+                _l.info("==== INIT REBOOK ====")
+
+                try:
+
+                    if request.data['complex_transaction']:
+                        if not request.data['complex_transaction']['status']:
+                            request.data['complex_transaction']['status'] = ComplexTransaction.PRODUCTION
+
+                    serializer = self.get_serializer(instance=instance, data=request.data)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+
+                    return Response(serializer.data)
+
+                finally:
+
+                    _l.debug('rebook done: %s', "{:3.3f}".format(time.perf_counter() - st))
+
+                    if instance.has_errors:
+                        transaction.set_rollback(True)
 
     @action(detail=True, methods=['get', 'put'], url_path='recalculate',
             serializer_class=TransactionTypeRecalculateSerializer, permission_classes=[IsAuthenticated])
@@ -1421,28 +2430,30 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
             serializer_class=TransactionTypeProcessSerializer, permission_classes=[IsAuthenticated])
     def rebook_pending(self, request, pk=None):
 
-        complex_transaction = self.get_object()
+        with transaction.atomic():
 
-        complex_transaction.status_id = ComplexTransaction.PENDING
+            complex_transaction = self.get_object()
 
-        instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
-                                          process_mode='rebook',
-                                          complex_transaction=complex_transaction,
-                                          context=self.get_serializer_context(), member=request.user.member)
-        if request.method == 'GET':
-            serializer = self.get_serializer(instance=instance)
-            return Response(serializer.data)
-        else:
-            try:
+            complex_transaction.status_id = ComplexTransaction.PENDING
 
-                serializer = self.get_serializer(instance=instance, data=request.data)
-                serializer.is_valid(raise_exception=True)
-                serializer.save()
-
+            instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
+                                              process_mode='rebook',
+                                              complex_transaction=complex_transaction,
+                                              context=self.get_serializer_context(), member=request.user.member)
+            if request.method == 'GET':
+                serializer = self.get_serializer(instance=instance)
                 return Response(serializer.data)
-            finally:
-                if instance.has_errors:
-                    transaction.set_rollback(True)
+            else:
+                try:
+
+                    serializer = self.get_serializer(instance=instance, data=request.data)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+
+                    return Response(serializer.data)
+                finally:
+                    if instance.has_errors:
+                        transaction.set_rollback(True)
 
     @action(detail=True, methods=['put'], url_path='update-properties',
             serializer_class=ComplexTransactionSimpleSerializer)
@@ -1458,7 +2469,6 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
         serializer = self.get_serializer(instance=complex_transaction, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-
 
         return Response(serializer.data)
 
@@ -1591,6 +2601,7 @@ class ComplexTransactionEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSe
         AttributeFilter,
         ComplexTransactionStatusFilter,
     ]
+
 
 # DEPRECATED
 class ComplexTransactionLightViewSet(AbstractWithObjectPermissionViewSet):

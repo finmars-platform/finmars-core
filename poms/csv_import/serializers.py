@@ -5,7 +5,7 @@ from rest_framework import serializers
 
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import ModelWithTimeStampSerializer, ModelWithUserCodeSerializer
+from poms.common.serializers import ModelWithTimeStampSerializer, ModelWithUserCodeSerializer, ModelMetaSerializer
 from poms.common.storage import get_storage
 from poms.users.fields import MasterUserField, HiddenMemberField
 from poms_app import settings
@@ -93,7 +93,7 @@ class CsvImportSchemeCalculatedInputSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'column', 'name_expr']
 
 
-class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
+class CsvImportSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     csv_fields = CsvFieldSerializer(many=True)
     entity_fields = EntityFieldSerializer(many=True)
@@ -121,6 +121,8 @@ class CsvImportSchemeSerializer(ModelWithTimeStampSerializer):
                   'mode', 'delimiter', 'error_handler', 'missing_data_handler', 'classifier_handler',
                   'column_matcher', 'instrument_reference_column', 'item_post_process_script',
                   'data_preprocess_expression',
+
+                  'configuration_code'
 
                   )
 

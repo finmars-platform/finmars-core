@@ -2,11 +2,14 @@ from __future__ import unicode_literals
 
 import django_filters
 from django_filters.rest_framework import FilterSet
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.decorators import action
 from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, AttributeFilter, \
     GroupsAttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
+from poms.common.utils import get_list_of_entity_attributes
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet
 from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
@@ -200,7 +203,6 @@ class Strategy1ViewSet(AbstractWithObjectPermissionViewSet):
 
     @action(detail=False, methods=['get'], url_path='light', serializer_class=Strategy1LightSerializer)
     def list_light(self, request, *args, **kwargs):
-
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
@@ -208,6 +210,55 @@ class Strategy1ViewSet(AbstractWithObjectPermissionViewSet):
         result = self.get_paginated_response(serializer.data)
 
         return result
+
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+        items = [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "subgroup",
+                "name": "Group",
+                "value_type": "field",
+                "value_entity": "strategy-1-subgroup",
+                "value_content_type": "strategies.strategy1subgroup",
+                "code": "user_code"
+            }
+        ]
+
+        items = items + get_list_of_entity_attributes('strategies.strategy1')
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
 
 
 class Strategy1EvFilterSet(FilterSet):
@@ -268,6 +319,7 @@ class Strategy1LightFilterSet(FilterSet):
     class Meta:
         model = Strategy1
         fields = []
+
 
 # DEPRECATED
 class Strategy1LightViewSet(AbstractWithObjectPermissionViewSet):
@@ -451,7 +503,6 @@ class Strategy2ViewSet(Strategy1ViewSet):
 
     @action(detail=False, methods=['get'], url_path='light', serializer_class=Strategy2LightSerializer)
     def list_light(self, request, *args, **kwargs):
-
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
@@ -459,6 +510,55 @@ class Strategy2ViewSet(Strategy1ViewSet):
         result = self.get_paginated_response(serializer.data)
 
         return result
+
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+        items = [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "subgroup",
+                "name": "Group",
+                "value_type": "field",
+                "value_entity": "strategy-2-subgroup",
+                "value_content_type": "strategies.strategy2subgroup",
+                "code": "user_code"
+            }
+        ]
+
+        items = items + get_list_of_entity_attributes('strategies.strategy2')
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
 
 
 class Strategy2EvFilterSet(Strategy1FilterSet):
@@ -507,6 +607,7 @@ class Strategy2LightFilterSet(FilterSet):
     class Meta:
         model = Strategy2
         fields = []
+
 
 # DEPRECATED
 class Strategy2LightViewSet(Strategy1ViewSet):
@@ -683,7 +784,6 @@ class Strategy3ViewSet(Strategy1ViewSet):
 
     @action(detail=False, methods=['get'], url_path='light', serializer_class=Strategy3LightSerializer)
     def list_light(self, request, *args, **kwargs):
-
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
@@ -691,6 +791,55 @@ class Strategy3ViewSet(Strategy1ViewSet):
         result = self.get_paginated_response(serializer.data)
 
         return result
+
+    @action(detail=False, methods=['get'], url_path='attributes')
+    def list_attributes(self, request, *args, **kwargs):
+        items = [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "subgroup",
+                "name": "Group",
+                "value_type": "field",
+                "value_entity": "strategy-3-subgroup",
+                "value_content_type": "strategies.strategy3subgroup",
+                "code": "user_code"
+            }
+        ]
+
+        items = items + get_list_of_entity_attributes('strategies.strategy3')
+
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items
+        }
+
+        return Response(result)
 
 
 class Strategy3EvFilterSet(Strategy1FilterSet):
@@ -739,6 +888,7 @@ class Strategy3LightFilterSet(FilterSet):
     class Meta:
         model = Strategy3
         fields = []
+
 
 # DEPRECATED
 class Strategy3LightViewSet(Strategy1ViewSet):

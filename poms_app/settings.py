@@ -41,7 +41,7 @@ SUPERSET_URL = os.environ.get('SUPERSET_URL', None)
 UNIFIED_DATA_PROVIDER_URL = os.environ.get('UNIFIED_DATA_PROVIDER_URL', None)
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 ROUND_NDIGITS = ENV_INT('ROUND_NDIGITS', 6)
-
+FILE_UPLOAD_MAX_MEMORY_SIZE = 0 # Important, that all files write to temporary file no matter size
 ALLOWED_HOSTS = ['*']
 
 # Application definition
@@ -86,14 +86,14 @@ INSTALLED_APPS = [
     'poms.csv_import',
     'poms.transaction_import',
     'poms.complex_import',
-    'poms.configuration_export',
-    'poms.configuration_import',
+    'poms.configuration_export', # DEPRECATED
+    'poms.configuration_import', # DEPRECATED
     'poms.reference_tables',
     'poms.celery_tasks',
 
     'poms.reconciliation',
     'poms.file_reports',
-    'poms.configuration_sharing',
+    'poms.configuration_sharing', # DEPRECATED
     'poms.pricing',
 
     'poms.schedules',
@@ -222,7 +222,8 @@ DATABASES = {
         'USER': ENV_STR('DB_USER', "postgres"),
         'PASSWORD': ENV_STR('DB_PASSWORD', "postgres"),
         'HOST': ENV_STR('DB_HOST', "localhost"),
-        'PORT': ENV_INT('DB_PORT', 5432)
+        'PORT': ENV_INT('DB_PORT', 5432),
+        'CONN_MAX_AGE': ENV_INT('CONN_MAX_AGE', 60)
     }
 }
 

@@ -3,6 +3,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import DataTimeStampedModel, NamedModel, EXPRESSION_FIELD_LENGTH
+from poms.configuration.models import ConfigurationModel
 from poms.users.models import MasterUser
 
 ERROR_HANDLER_CHOICES = [
@@ -37,7 +38,7 @@ COLUMN_MATCHER_CHOICES = [
 ]
 
 
-class CsvImportScheme(NamedModel, DataTimeStampedModel):
+class CsvImportScheme(NamedModel, DataTimeStampedModel, ConfigurationModel):
     content_type = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type'), on_delete=models.CASCADE)
     master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)

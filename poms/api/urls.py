@@ -36,6 +36,7 @@ import poms.system_messages.views as system_messages
 import poms.transactions.views as transactions
 import poms.ui.views as ui
 import poms.users.views as users
+import poms.configuration.views as configuration
 import poms.widgets.views as widgets
 from finmars_standardized_errors.views import ErrorRecordViewSet
 from poms.auth_tokens.views import ObtainAuthToken, SetAuthToken, CreateUser, CreateMasterUser, CreateMember, \
@@ -253,6 +254,9 @@ router.register(r'transactions/recalculate-permission-transaction',
 router.register(r'transactions/recalculate-permission-complex-transaction',
                 transactions.RecalculatePermissionComplexTransactionViewSet, 'recalculatepermissioncomplextrasaction')
 
+router.register(r'configuration/configuration', configuration.ConfigurationViewSet)
+
+
 router.register(r'transactions/bank-file', integrations.TransactionFileResultViewSet)  # deprecated?
 
 router.register(r'specific-data/values-for-select', common.ValuesForSelectViewSet, 'valuesforselect')
@@ -266,6 +270,7 @@ router.register(r'ui/edit-layout', ui.EditLayoutViewSet)
 router.register(r'ui/bookmark', ui.BookmarkViewSet)
 router.register(r'ui/configuration', ui.ConfigurationViewSet)
 router.register(r'ui/configuration-export-layout', ui.ConfigurationExportLayoutViewSet)
+router.register(r'ui/complex-transaction-user-field', ui.ComplexTransactionUserFieldViewSet)
 router.register(r'ui/transaction-user-field', ui.TransactionUserFieldViewSet)
 router.register(r'ui/instrument-user-field', ui.InstrumentUserFieldViewSet)
 router.register(r'ui/entity-tooltip', ui.EntityTooltipViewSet)
@@ -364,6 +369,7 @@ router.register(r'utils/system-logs', api.SystemLogsViewSet, 'system-logs')
 router.register(r'utils/calendar-events', api.CalendarEventsViewSet, 'calendar-events')
 router.register(r'utils/tables-size', api.TablesSizeViewSet, 'tables-size')
 router.register(r'utils/recycle-bin', api.RecycleBinViewSet, 'recycle-bin')
+router.register(r'utils/universal-input', api.UniversalInputViewSet, 'universalInput')
 
 router.register(r'import/csv/scheme', csv_import.SchemeViewSet, 'import_csv_scheme')
 router.register(r'import/csv/scheme-light', csv_import.SchemeLightViewSet, 'import_csv_scheme_light')  # deprecated
@@ -451,7 +457,9 @@ router.register(r'explorer/explorer', explorer.ExplorerViewSet, 'explorer')
 router.register(r'explorer/view', explorer.ExplorerViewFileViewSet, 'explorer_view')
 router.register(r'explorer/upload', explorer.ExplorerUploadViewSet, 'explorer_upload')
 router.register(r'explorer/delete', explorer.ExplorerDeleteViewSet, 'explorer_delete')
-router.register(r'explorer/create_folder', explorer.ExplorerCreateFolderViewSet, 'explorer_create_folder')
+router.register(r'explorer/create-folder', explorer.ExplorerCreateFolderViewSet, 'explorer_create_folder')
+router.register(r'explorer/delete-folder', explorer.ExplorerDeleteFolderViewSet, 'explorer_delete_folder')
+router.register(r'explorer/download-folder-as-zip', explorer.DownloadFolderAsZipViewSet, 'download_folder_as_zip')
 
 router.register(r'debug/logs', common.DebugLogViewSet, 'debug_log')  # Deprecated
 router.register(r'errors/error', ErrorRecordViewSet, 'error')

@@ -6,12 +6,13 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.models import NamedModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel
 from poms.common.wrapper_models import NamedModelAutoMapping
+from poms.configuration.models import ConfigurationModel
 from poms.obj_attrs.models import GenericAttribute
 from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser
 
 
-class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel, ConfigurationModel):
     '''
 
     Meta Entity, part of Finmars Configuration

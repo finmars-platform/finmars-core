@@ -49,9 +49,9 @@ from poms.transactions.models import TransactionType, TransactionTypeInput, Tran
     TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
     TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionInstrumentFactorSchedule, \
     TransactionTypeActionInstrumentManualPricingFormula, NotificationClass, EventClass, TransactionClass
-from poms.ui.models import EditLayout, ListLayout, Bookmark, TransactionUserFieldModel, InstrumentUserFieldModel, \
+from poms.ui.models import EditLayout, ListLayout, Bookmark, ComplexTransactionUserFieldModel, InstrumentUserFieldModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, ColorPaletteColor, ColumnSortData, \
-    CrossEntityAttributeExtension
+    CrossEntityAttributeExtension, TransactionUserFieldModel
 from poms.ui.serializers import BookmarkSerializer
 from poms_app import settings
 
@@ -344,7 +344,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         _l.debug('ConfigurationExportViewSet createConfiguration got custom fields done: %s',
                  "{:3.3f}".format(time.perf_counter() - custom_fields_st))
 
-        get_transaction_user_fields = self.get_transaction_user_fields()
+        complex_transaction_user_fields = self.get_complex_transaction_user_fields()
+        transaction_user_fields = self.get_transaction_user_fields()
         instrument_user_fields = self.get_instrument_user_fields()
 
         # Pricing
@@ -444,7 +445,8 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             configuration["body"].append(transaction_report_custom_fields)
 
             if self.access_table['ui.userfield']:
-                configuration["body"].append(get_transaction_user_fields)
+                configuration["body"].append(complex_transaction_user_fields)
+                configuration["body"].append(transaction_user_fields)
                 configuration["body"].append(instrument_user_fields)
 
             configuration["body"].append(entity_tooltips)
@@ -1376,6 +1378,31 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
 
         result = {
             "entity": "ui.crossentityattributeextension",
+            "count": len(results),
+            "content": results
+        }
+
+        return result
+
+    def get_complex_transaction_user_fields(self):
+
+        user_fields = to_json_objects(
+            ComplexTransactionUserFieldModel.objects.filter(master_user=self._master_user))
+
+        results = []
+
+        for user_field in user_fields:
+            result_item = user_field["fields"]
+            result_item.pop("master_user", None)
+
+            clear_none_attrs(result_item)
+
+            results.append(result_item)
+
+        delete_prop(results, 'pk')
+
+        result = {
+            "entity": "ui.complextransactionuserfieldmodel",
             "count": len(results),
             "content": results
         }

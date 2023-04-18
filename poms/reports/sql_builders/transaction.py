@@ -176,6 +176,11 @@ class TransactionReportBuilderSql:
                       -- transaction fields
                       -- t.*,-- exclude transaction fields, only complex transaction fields left
                       -- complex transaction fields
+                      
+                      (null) as transaction_item_name,
+                      (null) as transaction_item_short_name,
+                      (null) as transaction_item_user_code,
+                      
                       tc.status_id as complex_transaction_status,
                       tc.code as complex_transaction_code,
                       tc.text as complex_transaction_text,
@@ -275,6 +280,7 @@ class TransactionReportBuilderSql:
             query = query.format(begin_date=self.instance.begin_date,
                                  end_date=self.instance.end_date,
                                  master_user_id=self.instance.master_user.id,
+                                 default_instrument_id=self.ecosystem_defaults.instrument_id,
                                  statuses=statuses_str,
                                  filter_sql_string=filter_sql_string,
                                  date_filter_sql_string=date_filter_sql_string
@@ -316,6 +322,24 @@ class TransactionReportBuilderSql:
                     SELECT
                       -- transaction fields
                       t.*,
+                      
+                      case when (t.instrument_id = null OR t.instrument_id = {default_instrument_id})
+                         then t.notes
+                         else
+                           i.name
+                      end as transaction_item_name,
+                      
+                      case when (t.instrument_id = null OR t.instrument_id = {default_instrument_id})
+                         then t.notes
+                         else
+                           i.user_code
+                      end as transaction_item_user_code,
+                      
+                      case when (t.instrument_id = null OR t.instrument_id = {default_instrument_id})
+                         then t.notes
+                         else
+                           i.short_name
+                      end as transaction_item_short_name,
                       -- complex transaction fields
                       tc.status_id as complex_transaction_status,
                       tc.code as complex_transaction_code,
@@ -386,6 +410,7 @@ class TransactionReportBuilderSql:
                     INNER JOIN transactions_complextransaction tc on t.complex_transaction_id = tc.id
                     INNER JOIN transactions_transactiontype tt on tc.transaction_type_id = tt.id
                     INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
+                    INNER JOIN instruments_instrument i on t.instrument_id = i.id
                     INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
                     WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND NOT tc.is_deleted AND tc.status_id IN {statuses} {filter_sql_string}
                     {user_filters}
@@ -415,6 +440,7 @@ class TransactionReportBuilderSql:
             query = query.format(begin_date=self.instance.begin_date,
                                  end_date=self.instance.end_date,
                                  master_user_id=self.instance.master_user.id,
+                                 default_instrument_id=self.ecosystem_defaults.instrument_id,
                                  statuses=statuses_str,
                                  filter_sql_string=filter_sql_string,
                                  date_filter_sql_string=date_filter_sql_string,
@@ -454,8 +480,30 @@ class TransactionReportBuilderSql:
 
             query = """
                     SELECT
+                        
+                      
+                    
                       -- transaction fields
                       t.*,
+                      
+                      case when (t.instrument_id = null OR t.instrument_id = {default_instrument_id})
+                         then t.notes
+                         else
+                           i.name
+                      end as transaction_item_name,
+                      
+                      case when (t.instrument_id = null OR t.instrument_id = {default_instrument_id})
+                         then t.notes
+                         else
+                           i.user_code
+                      end as transaction_item_user_code,
+                      
+                      case when (t.instrument_id = null OR t.instrument_id = {default_instrument_id})
+                         then t.notes
+                         else
+                           i.short_name
+                      end as transaction_item_short_name,
+                      
                       -- complex transaction fields
                       tc.status_id as complex_transaction_status,
                       tc.code as complex_transaction_code,
@@ -525,6 +573,7 @@ class TransactionReportBuilderSql:
                     FROM transactions_transaction as t
                     INNER JOIN transactions_complextransaction tc on t.complex_transaction_id = tc.id
                     INNER JOIN transactions_transactiontype tt on tc.transaction_type_id = tt.id
+                    INNER JOIN instruments_instrument i on t.instrument_id = i.id
                     INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
                     INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
                     WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND NOT tc.is_deleted AND tc.status_id IN {statuses} {filter_sql_string}
@@ -555,6 +604,7 @@ class TransactionReportBuilderSql:
 
             query = query.format(begin_date=self.instance.begin_date,
                                  end_date=self.instance.end_date,
+                                 default_instrument_id=self.ecosystem_defaults.instrument_id,
                                  master_user_id=self.instance.master_user.id,
                                  statuses=statuses_str,
                                  filter_sql_string=filter_sql_string,

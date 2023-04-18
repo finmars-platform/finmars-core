@@ -4,7 +4,7 @@ from poms.accounts.fields import AccountTypeField
 from poms.accounts.models import Account, AccountType
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField
@@ -12,7 +12,7 @@ from poms.users.fields import MasterUserField
 
 
 class AccountTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                            ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
+                            ModelWithAttributesSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     transaction_details_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                                allow_null=True, default='""')
@@ -51,7 +51,7 @@ class AccountTypeViewSerializer(ModelWithObjectPermissionSerializer):
 
 
 class AccountSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
-                        ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+                        ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     type = AccountTypeField()
     portfolios = PortfolioField(many=True, required=False, allow_null=True)

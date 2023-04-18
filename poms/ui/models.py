@@ -9,6 +9,7 @@ from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
 from poms.common.models import AbstractClassModel, NamedModel, TimeStampedModel
+from poms.configuration.models import ConfigurationModel
 from poms.configuration_sharing.models import SharedConfigurationFile
 from poms.users.models import MasterUser, Member
 
@@ -228,7 +229,7 @@ class CrossEntityAttributeExtension(models.Model):
         ]
 
 
-class ColorPalette(NamedModel):
+class ColorPalette(NamedModel, ConfigurationModel):
     master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     name = models.CharField(max_length=255, default='', blank=True, verbose_name=gettext_lazy('name'))
     is_default = models.BooleanField(default=False, verbose_name=gettext_lazy('is default'))
@@ -260,8 +261,8 @@ class ColorPaletteColor(models.Model):
         ordering = ['order']
 
 
-class TransactionUserFieldModel(models.Model):
-    master_user = models.ForeignKey(MasterUser, related_name='transaction_user_fields',
+class ComplexTransactionUserFieldModel(ConfigurationModel):
+    master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     key = models.CharField(max_length=255, unique=True, verbose_name=gettext_lazy('key'))
@@ -270,8 +271,18 @@ class TransactionUserFieldModel(models.Model):
     is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
 
 
-class InstrumentUserFieldModel(models.Model):
-    master_user = models.ForeignKey(MasterUser, related_name='instrument_user_fields',
+class TransactionUserFieldModel(ConfigurationModel):
+    master_user = models.ForeignKey(MasterUser,
+                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+
+    key = models.CharField(max_length=255, unique=True, verbose_name=gettext_lazy('key'))
+    name = models.CharField(max_length=255, default='', blank=True, verbose_name=gettext_lazy('name'))
+
+    is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
+
+
+class InstrumentUserFieldModel(ConfigurationModel):
+    master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     key = models.CharField(max_length=255, default='', blank=True, verbose_name=gettext_lazy('key'))
@@ -315,7 +326,7 @@ class ColumnSortData(models.Model):
             self.json_data = None
 
 
-class BaseUIModel(models.Model):
+class BaseUIModel(ConfigurationModel):
     json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
     origin_for_global_layout = models.ForeignKey(SharedConfigurationFile,
@@ -573,7 +584,7 @@ class Dashboard(models.Model):
         verbose_name = gettext_lazy('dashboard')
         verbose_name_plural = gettext_lazy('dashboard')
 
-
+# Deprecated
 class Configuration(BaseUIModel):
     master_user = models.ForeignKey(MasterUser, related_name='configuration_files',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)

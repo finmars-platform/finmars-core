@@ -1,14 +1,12 @@
 from __future__ import unicode_literals
 
 import logging
-import traceback
 
 from django.core.cache import cache
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.serializers import Serializer
 
 from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
@@ -103,49 +101,66 @@ class BalanceReportViewSet(AbstractViewSet):
     serializer_class = BalanceReportSerializer
 
     def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
 
-        _l.info("Create start")
+        instance.auth_time = self.auth_time
 
-        st = time.perf_counter()
+        builder = BalanceReportBuilderSql(instance=instance)
+        instance = builder.build_balance()
 
-        key = generate_report_unique_hash('report', 'balance', request.data, request.user.master_user,
-                                          request.user.member)
+        instance.task_id = 1
+        instance.task_status = "SUCCESS"
 
-        cached_data = cache.get(key)
+        serialize_report_st = time.perf_counter()
+        serializer = self.get_serializer(instance=instance, many=False)
 
-        if not cached_data:
-            _l.info("Could not find in cache")
+        _l.info('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            instance = serializer.save()
-
-            instance.auth_time = self.auth_time
-
-
-
-            builder = BalanceReportBuilderSql(instance=instance)
-            instance = builder.build_balance()
-
-            instance.task_id = 1
-            instance.task_status = "SUCCESS"
-
-            serialize_report_st = time.perf_counter()
-            serializer = self.get_serializer(instance=instance, many=False)
-
-            cached_data = serializer.data
-
-            _l.info('serializer.data.auth_time %s' % serializer.data['auth_time'])
-            _l.info('serializer.data.execution_time %s' % serializer.data['execution_time'])
-            _l.info('serializer.data.relation_prefetch_time %s' % serializer.data['relation_prefetch_time'])
-            _l.info('serializer.data.serialization_time %s' % serializer.data['serialization_time'])
-
-            cache.set(key, cached_data)
-
-        _l.debug('BalanceReportViewSet done: %s' % "{:3.3f}".format(time.perf_counter() - st))
-
-        return Response(cached_data, status=status.HTTP_200_OK)
+        # _l.info("Create start")
+        #
+        # st = time.perf_counter()
+        #
+        # key = generate_report_unique_hash('report', 'balance', request.data, request.user.master_user,
+        #                                   request.user.member)
+        #
+        # cached_data = cache.get(key)
+        #
+        # if not cached_data:
+        #     _l.info("Could not find in cache")
+        #
+        #     serializer = self.get_serializer(data=request.data)
+        #     serializer.is_valid(raise_exception=True)
+        #     instance = serializer.save()
+        #
+        #     instance.auth_time = self.auth_time
+        #
+        #
+        #
+        #     builder = BalanceReportBuilderSql(instance=instance)
+        #     instance = builder.build_balance()
+        #
+        #     instance.task_id = 1
+        #     instance.task_status = "SUCCESS"
+        #
+        #     serialize_report_st = time.perf_counter()
+        #     serializer = self.get_serializer(instance=instance, many=False)
+        #
+        #     cached_data = serializer.data
+        #
+        #     _l.info('serializer.data.auth_time %s' % serializer.data['auth_time'])
+        #     _l.info('serializer.data.execution_time %s' % serializer.data['execution_time'])
+        #     _l.info('serializer.data.relation_prefetch_time %s' % serializer.data['relation_prefetch_time'])
+        #     _l.info('serializer.data.serialization_time %s' % serializer.data['serialization_time'])
+        #
+        #     cache.set(key, cached_data)
+        #
+        # _l.debug('BalanceReportViewSet done: %s' % "{:3.3f}".format(time.perf_counter() - st))
+        #
+        # return Response(cached_data, status=status.HTTP_200_OK)
 
 
 class PLReportViewSet(AbstractViewSet):
@@ -154,32 +169,53 @@ class PLReportViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         serialize_report_st = time.perf_counter()
 
-        key = generate_report_unique_hash('report', 'pl', request.data, request.user.master_user, request.user.member)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
 
-        cached_data = cache.get(key)
+        builder = PLReportBuilderSql(instance=instance)
+        instance = builder.build_report()
 
-        if not cached_data:
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            instance = serializer.save()
+        instance.task_id = 1
+        instance.task_status = "SUCCESS"
 
-            builder = PLReportBuilderSql(instance=instance)
-            instance = builder.build_report()
+        instance.auth_time = self.auth_time
 
-            instance.task_id = 1
-            instance.task_status = "SUCCESS"
+        serializer = self.get_serializer(instance=instance, many=False)
 
-            instance.auth_time = self.auth_time
+        _l.debug('PL Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
-            serializer = self.get_serializer(instance=instance, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-            _l.debug('PL Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
-
-            cached_data = serializer.data
-
-            cache.set(key, cached_data)
-
-        return Response(cached_data, status=status.HTTP_200_OK)
+        # Cache (DEPRECATED)
+        # serialize_report_st = time.perf_counter()
+        #
+        # key = generate_report_unique_hash('report', 'pl', request.data, request.user.master_user, request.user.member)
+        #
+        # cached_data = cache.get(key)
+        #
+        # if not cached_data:
+        #     serializer = self.get_serializer(data=request.data)
+        #     serializer.is_valid(raise_exception=True)
+        #     instance = serializer.save()
+        #
+        #     builder = PLReportBuilderSql(instance=instance)
+        #     instance = builder.build_report()
+        #
+        #     instance.task_id = 1
+        #     instance.task_status = "SUCCESS"
+        #
+        #     instance.auth_time = self.auth_time
+        #
+        #     serializer = self.get_serializer(instance=instance, many=False)
+        #
+        #     _l.debug('PL Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        #
+        #     cached_data = serializer.data
+        #
+        #     cache.set(key, cached_data)
+        #
+        # return Response(cached_data, status=status.HTTP_200_OK)
 
 
 class TransactionReportViewSet(AbstractViewSet):
@@ -188,33 +224,54 @@ class TransactionReportViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         serialize_report_st = time.perf_counter()
 
-        key = generate_report_unique_hash('report', 'transaction', request.data, request.user.master_user,
-                                          request.user.member)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
 
-        cached_data = cache.get(key)
+        builder = TransactionReportBuilderSql(instance=instance)
+        instance = builder.build_transaction()
 
-        if not cached_data:
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            instance = serializer.save()
+        instance.auth_time = self.auth_time
 
-            builder = TransactionReportBuilderSql(instance=instance)
-            instance = builder.build_transaction()
+        instance.task_id = 1
+        instance.task_status = "SUCCESS"
 
-            instance.auth_time = self.auth_time
+        serializer = self.get_serializer(instance=instance, many=False)
 
-            instance.task_id = 1
-            instance.task_status = "SUCCESS"
+        _l.debug('Transaction Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
 
-            serializer = self.get_serializer(instance=instance, many=False)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-            _l.debug('Balance Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        # Cache (DEPRECATED)
+        # serialize_report_st = time.perf_counter()
+        #
+        # key = generate_report_unique_hash('report', 'transaction', request.data, request.user.master_user,
+        #                                   request.user.member)
+        #
+        # cached_data = cache.get(key)
+        #
+        # if not cached_data:
+        #     serializer = self.get_serializer(data=request.data)
+        #     serializer.is_valid(raise_exception=True)
+        #     instance = serializer.save()
+        #
+        #     builder = TransactionReportBuilderSql(instance=instance)
+        #     instance = builder.build_transaction()
+        #
+        #     instance.auth_time = self.auth_time
+        #
+        #     instance.task_id = 1
+        #     instance.task_status = "SUCCESS"
+        #
+        #     serializer = self.get_serializer(instance=instance, many=False)
+        #
+        #     _l.debug('Transaction Report done: %s' % "{:3.3f}".format(time.perf_counter() - serialize_report_st))
+        #
+        #     cached_data = serializer.data
+        #
+        #     cache.set(key, cached_data)
 
-            cached_data = serializer.data
-
-            cache.set(key, cached_data)
-
-        return Response(cached_data, status=status.HTTP_200_OK)
+        # return Response(cached_data, status=status.HTTP_200_OK)
 
 
 class PriceHistoryCheckViewSet(AbstractViewSet):

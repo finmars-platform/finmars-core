@@ -6,11 +6,12 @@ from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
 from poms.common.models import NamedModel, EXPRESSION_FIELD_LENGTH
+from poms.configuration.models import ConfigurationModel
 from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser, Member
 
 
-class GenericAttributeType(NamedModel):
+class GenericAttributeType(NamedModel, ConfigurationModel):
     '''
     Important Entity, which allows users to create own columns
     it support following data types

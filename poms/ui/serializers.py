@@ -5,12 +5,12 @@ from django.db import IntegrityError
 from mptt.utils import get_cached_trees
 from rest_framework import serializers
 
-from poms.common.serializers import ModelWithTimeStampSerializer
+from poms.common.serializers import ModelWithTimeStampSerializer, ModelMetaSerializer
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
-    ConfigurationExportLayout, TransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
+    ConfigurationExportLayout, ComplexTransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPaletteColor, ColorPalette, \
-    CrossEntityAttributeExtension, ColumnSortData
+    CrossEntityAttributeExtension, ColumnSortData, TransactionUserFieldModel
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 
@@ -22,12 +22,21 @@ class PortalInterfaceAccessModelSerializer(serializers.ModelSerializer):
         ]
 
 
-class TransactionUserFieldSerializer(serializers.ModelSerializer):
+class ComplexTransactionUserFieldSerializer(ModelMetaSerializer):
+    master_user = MasterUserField()
+
+    class Meta:
+        model = ComplexTransactionUserFieldModel
+        fields = ['id', 'master_user', 'key', 'name', 'is_active']
+
+
+class TransactionUserFieldSerializer(ModelMetaSerializer):
     master_user = MasterUserField()
 
     class Meta:
         model = TransactionUserFieldModel
         fields = ['id', 'master_user', 'key', 'name', 'is_active']
+
 
 
 class ColorPaletteColorSerializer(serializers.ModelSerializer):
@@ -86,7 +95,7 @@ class ColorPaletteSerializer(serializers.ModelSerializer):
         return instance
 
 
-class EntityTooltipSerializer(serializers.ModelSerializer):
+class EntityTooltipSerializer(ModelMetaSerializer):
     master_user = MasterUserField()
 
     content_type = LayoutContentTypeField()
@@ -122,7 +131,7 @@ class ColumnSortDataSerializer(serializers.ModelSerializer):
         fields = ['id', 'member', 'name', 'user_code', 'column_key', 'is_common', 'data']
 
 
-class InstrumentUserFieldSerializer(serializers.ModelSerializer):
+class InstrumentUserFieldSerializer(ModelMetaSerializer):
     master_user = MasterUserField()
 
     class Meta:
@@ -139,7 +148,7 @@ class TemplateLayoutSerializer(serializers.ModelSerializer):
         fields = ['id', 'member', 'type', 'name', 'user_code', 'is_default', 'data']
 
 
-class ContextMenuLayoutSerializer(ModelWithTimeStampSerializer):
+class ContextMenuLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
     member = HiddenMemberField()
     data = serializers.JSONField(allow_null=False)
 
@@ -149,7 +158,7 @@ class ContextMenuLayoutSerializer(ModelWithTimeStampSerializer):
                   'sourced_from_global_layout']
 
 
-class ListLayoutSerializer(ModelWithTimeStampSerializer):
+class ListLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
     member = HiddenMemberField()
     content_type = LayoutContentTypeField()
     data = serializers.JSONField(allow_null=False)
@@ -202,7 +211,7 @@ class ListLayoutLightSerializer(ModelWithTimeStampSerializer):
                   'origin_for_global_layout', 'sourced_from_global_layout']
 
 
-class DashboardLayoutSerializer(ModelWithTimeStampSerializer):
+class DashboardLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
     member = HiddenMemberField()
     data = serializers.JSONField(allow_null=False)
 
@@ -230,7 +239,7 @@ class ConfigurationExportLayoutSerializer(ModelWithTimeStampSerializer):
         fields = ['id', 'member', 'name', 'is_default', 'data']
 
 
-class EditLayoutSerializer(ModelWithTimeStampSerializer):
+class EditLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
     member = HiddenMemberField()
     content_type = LayoutContentTypeField()
     data = serializers.JSONField(allow_null=False)

@@ -15,7 +15,8 @@ from poms.accounts.models import Account
 from poms.common import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, \
+    ModelMetaSerializer
 from poms.counterparties.fields import ResponsibleField, CounterpartyField, ResponsibleDefault, CounterpartyDefault
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.fields import CurrencyField, CurrencyDefault, SystemCurrencyDefault
@@ -37,7 +38,7 @@ from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Fiel
     Strategy3Default
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.fields import TransactionTypeInputContentTypeField, \
-    TransactionTypeGroupField, ReadOnlyContentTypeField
+    TransactionTypeGroupField, ReadOnlyContentTypeField, TransactionTypeInputField
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionClass, Transaction, TransactionType, TransactionTypeAction, \
     TransactionTypeActionTransaction, TransactionTypeActionInstrument, TransactionTypeInput, TransactionTypeGroup, \
@@ -45,7 +46,7 @@ from poms.transactions.models import TransactionClass, Transaction, TransactionT
     TransactionTypeActionInstrumentManualPricingFormula, \
     TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
     TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionExecuteCommand, \
-    TransactionTypeInputSettings, ComplexTransactionStatus, TransactionTypeContextParameter
+    TransactionTypeInputSettings, ComplexTransactionStatus, TransactionTypeContextParameter, ComplexTransactionInput
 from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.utils import get_member_from_context
 
@@ -452,6 +453,17 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
     overheads = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
 
     notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    user_text_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    user_text_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    user_text_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+
+    user_number_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    user_number_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    user_number_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+
+    user_date_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    user_date_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    user_date_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
 
     class Meta:
         model = TransactionTypeActionTransaction
@@ -512,8 +524,21 @@ class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
             'carry_amount',
             'overheads',
             'notes',
+            'user_text_1',
+            'user_text_2',
+            'user_text_3',
 
-            'action_notes'
+            'user_number_1',
+            'user_number_2',
+            'user_number_3',
+
+            'user_date_1',
+            'user_date_2',
+            'user_date_3',
+
+            'action_notes',
+
+            'is_canceled'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -1357,6 +1382,8 @@ class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelW
 
             'instrument_types', 'portfolios',
             'group_object',
+
+            'configuration_code'
         ]
 
 
@@ -1401,7 +1428,7 @@ class TransactionTypeLightSerializerWithInputs(TransactionTypeLightSerializer):
 
 
 class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                                ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
+                                ModelWithAttributesSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     group = TransactionTypeGroupField(required=False, allow_null=False)
     date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -1590,7 +1617,8 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
             'inputs', 'actions', 'recon_fields', 'context_parameters', 'context_parameters_notes',
             'group_object',
 
-            'is_enabled'
+            'is_enabled',
+            'configuration_code'
         ]
 
     def validate(self, attrs):
@@ -2303,6 +2331,18 @@ class TransactionSerializer(ModelWithObjectPermissionSerializer):
             'ytm_at_cost',
             'notes',
 
+            'user_text_1',
+            'user_text_2',
+            'user_text_3',
+
+            'user_number_1',
+            'user_number_2',
+            'user_number_3',
+
+            'user_date_1',
+            'user_date_2',
+            'user_date_3',
+
             # 'transaction_class_object',
             # 'transaction_currency_object',
             # 'linked_instrument_object',
@@ -2507,7 +2547,6 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
 
             'transaction_currency',
             'settlement_currency',
-
             'position_size_with_sign', 'cash_consideration', 'principal_with_sign',
             'carry_with_sign', 'overheads_with_sign', 'reference_fx_rate',
 
@@ -2539,7 +2578,10 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
             'position_amount', 'principal_amount',
             'carry_amount', 'overheads',
 
-            'notes'
+            'notes',
+            'user_text_1', 'user_text_2', 'user_text_3',
+            'user_number_1', 'user_number_2', 'user_number_3',
+            'user_date_1', 'user_date_2', 'user_date_3',
         ]
 
     def __init__(self, *args, **kwargs):
@@ -2681,8 +2723,37 @@ class ComplexTransactionMixin:
         return data
 
 
+class ComplexTransactionInputSerializer(serializers.ModelSerializer):
+    transaction_type_input = TransactionTypeInputField()
+    transaction_type_input_object = TransactionTypeInputSerializer(source='transaction_type_input')
+
+    value_type = serializers.SerializerMethodField(read_only=True)
+    content_type = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = ComplexTransactionInput
+        fields = [
+            'transaction_type_input',
+            'transaction_type_input_object',
+            'content_type',
+            'value_type',
+            'value_string',
+            'value_float',
+            'value_date',
+            'value_relation',
+        ]
+
+    def get_value_type(self, instance):
+        return instance.transaction_type_input.value_type
+
+    def get_content_type(self, instance):
+        if instance.transaction_type_input.content_type:
+            return instance.transaction_type_input.content_type.app_label + '.' + instance.transaction_type_input.content_type.model
+        return None
+
+
 class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
-                                   ModelWithTimeStampSerializer):
+                                   ModelWithTimeStampSerializer, ModelMetaSerializer):
     # text = serializers.SerializerMethodField()
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -2690,6 +2761,8 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
 
     recon_fields = ReconciliationComplexTransactionFieldSerializer(required=False, many=True)
     source = serializers.JSONField(read_only=True, allow_null=True)
+
+    inputs = ComplexTransactionInputSerializer(many=True)
 
     def __init__(self, *args, **kwargs):
         super(ComplexTransactionSerializer, self).__init__(*args, **kwargs)
@@ -2728,7 +2801,7 @@ class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWit
 
             'recon_fields',
 
-            'execution_log', 'source'
+            'execution_log', 'source', 'inputs'
 
         ]
 
@@ -2982,7 +3055,7 @@ class ComplexTransactionViewSerializer(ComplexTransactionMixin, serializers.Mode
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'transaction_type',
+            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'transaction_unique_code'
         ]
 
     def __init__(self, *args, **kwargs):
@@ -3481,7 +3554,7 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
         fields = [
             'id', 'date', 'status', 'code', 'text', 'transaction_type', 'transactions', 'master_user',
 
-            'is_locked', 'is_canceled', 'error_code', 'visibility_status',
+            'is_locked', 'is_canceled', 'error_code', 'visibility_status', 'transaction_unique_code',
 
             'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
             'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
@@ -3810,6 +3883,7 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
         self.fields['instruments_errors'] = serializers.ReadOnlyField()
         self.fields['complex_transaction_errors'] = serializers.ReadOnlyField()
         self.fields['transactions_errors'] = serializers.ReadOnlyField()
+        self.fields['general_errors'] = serializers.ReadOnlyField()
         self.fields['instruments'] = InstrumentSerializer(many=True, read_only=True, required=False, allow_null=True)
 
         self.fields['complex_transaction'] = TransactionTypeComplexTransactionSerializer(
