@@ -1034,56 +1034,44 @@ def handle_database_response_data(data, task, options):
 
 def download_instrument_finmars_database(task_id: int):
     func = "download_instrument_finmars_database:"
-    _l.info(f"{func} task_id {task_id}")
+    _l.info(f"{func} started, task_id={task_id}")
 
     try:
-        # auth_url = settings.FINMARS_DATABASE_URL + 'api/authenticate'
-        #
-        # auth_request_body = {
-        #     "username": settings.FINMARS_DATABASE_USER,
-        #     "password": settings.FINMARS_DATABASE_PASSWORD
-        # }
-        #
-        # auth_response = requests.post(url=auth_url, headers=headers, data=json.dumps(auth_request_body), verify=settings.VERIFY_SSL)
-        #
-        # _l.info("download_instrument_finmars_database.authorized")
-        # _l.debug('auth_response %s' % auth_response.text)
-        #
-        # auth_response_json = auth_response.json()
-        #
-        # auth_token = auth_response_json['id_token']
-
-        # headers['Authorization'] = 'Bearer ' + get_access_token(request)
-
         task = CeleryTask.objects.get(id=task_id)
-        callback_url = (
-            f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
-            f"/api/instruments/fdb-create-from-callback/"
-        )
-        options = task.options_object
-        options["request_id"] = task.pk
-        options["base_api_url"] = settings.BASE_API_URL
-        options["callback_url"] = callback_url
-        options["data"] = {}
-        task.options_object = options
-        task.save()
+    except CeleryTask.DoesNotExist:
+        _l.error(f"{func} no task with id={task_id}!")
+        return
 
-        request_options = {
-            # "isin": options["reference"],  # deprecated
-            "reference": options["reference"],
-            "request_id": options["request_id"],
-            "base_api_url": options["base_api_url"],
-            "callback_url": options["callback_url"],
-            "data": {},
-        }
+    callback_url = (
+        f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
+        f"/api/instruments/fdb-create-from-callback/"
+    )
+    options = task.options_object
+    options["request_id"] = task.pk
+    options["base_api_url"] = settings.BASE_API_URL
+    options["callback_url"] = callback_url
+    options["data"] = {}
+    task.options_object = options
+    task.save()
 
-        _l.info(f"{func} request_options={request_options}")
+    request_options = {
+        # "isin": options["reference"],  # deprecated
+        "reference": options["reference"],
+        "request_id": options["request_id"],
+        "base_api_url": options["base_api_url"],
+        "callback_url": options["callback_url"],
+        "data": {},
+    }
 
+    _l.info(f"{func} request_options={request_options}")
+
+    try:
         result: Monad = DatabaseService().get_info("instrument", request_options)
+
         if result.status == MonadStatus.DATA_READY:
             handle_database_response_data(result.data, task, options)
         elif result.status == MonadStatus.TASK_READY:
-            task.status = CeleryTask.STATUS_PENDING
+            task.status = CeleryTask.STATUS_WAIT_RESPONSE
             task.data["task_id"] = result.task_id
         elif result.status == MonadStatus.ERROR:
             try:
@@ -1091,19 +1079,20 @@ def download_instrument_finmars_database(task_id: int):
                     master_user=task.master_user,
                     user_code=options["reference"],
                 )
-                _l.info(f"{func} Simple instrument {options['reference']} exists")
-                update_task_with_instrument(instrument, task)
+                _l.info(f"{func} simple instrument {options['reference']} exists")
 
             except Instrument.DoesNotExist:
                 instrument = create_simple_instrument(options, task)
-                update_task_with_instrument(instrument, task)
+
+            update_task_with_instrument(instrument, task)
+
         else:
             update_task_with_error(task, "No meaningful answer from Database service")
 
     except Exception as e:
-        _l.error(
-            f"{func} unexpected error {repr(e)} traceback {traceback.format_exc()}"
-        )
+        err_msg = f"{func} unexpected error {repr(e)} trace {traceback.format_exc()}"
+        _l.error(err_msg)
+        update_task_with_error(task, err_msg)
 
 
 @shared_task(name="integrations.download_instrument_finmars_database_async", bind=True)
