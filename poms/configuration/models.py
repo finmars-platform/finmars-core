@@ -33,7 +33,7 @@ class ConfigurationModel(models.Model):
 
         if self.configuration_code not in self.user_code:
 
-            if self.content_type:  # In case if it Attribute Type or Layout
+            if hasattr(self, 'content_type') and self.content_type:  # In case if it Attribute Type or Layout
 
                 content_type_key = self.content_type.app_label + '.' + self.content_type.model
 
