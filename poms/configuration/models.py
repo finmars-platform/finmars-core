@@ -31,7 +31,7 @@ class ConfigurationModel(models.Model):
 
     def save(self, *args, **kwargs):
 
-        if self.configuration_code not in self.user_code:
+        if self.user_code and self.configuration_code not in self.user_code:
 
             if hasattr(self, 'content_type') and self.content_type:  # In case if it Attribute Type or Layout
 
