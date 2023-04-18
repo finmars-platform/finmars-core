@@ -36,7 +36,7 @@ class ConfigurationModel(models.Model):
 
         if self.configuration_code not in self.user_code:
 
-            self.configuration_code = replace_special_chars_and_spaces(self.configuration_code).lower()
+            self.user_code = replace_special_chars_and_spaces(self.user_code).lower()
 
             if hasattr(self, 'content_type') and self.content_type:  # In case if it Attribute Type or Layout
 
