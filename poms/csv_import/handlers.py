@@ -1497,7 +1497,9 @@ class SimpleImportProcess(object):
                         if item.final_inputs[key] is not None:
                             result_item[key] = item.final_inputs[key]
 
-                    self.overwrite_item_attributes(result_item, item)
+                     if self.scheme.content_type.model not in ['pricehistory', 'currencyhistory']:
+                        self.overwrite_item_attributes(result_item, item)
+                        
                     result_item = self.convert_relation_to_ids(item, result_item)
 
                     serializer = serializer_class(data=result_item,
