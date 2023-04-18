@@ -37,9 +37,11 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common import formula
 from poms.common.crypto.AESCipher import AESCipher
 from poms.common.crypto.RSACipher import RSACipher
+from poms.common.database_client import DatabaseService
 from poms.common.formula import ExpressionEvalError
 from poms.common.jwt import encode_with_jwt
 from poms.common.models import ProxyRequest, ProxyUser
+from poms.common.monad import Monad, MonadStatus
 from poms.common.storage import get_storage
 from poms.counterparties.models import Counterparty, Responsible
 from poms.counterparties.serializers import CounterpartySerializer
@@ -941,7 +943,7 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
         return None, errors
 
 
-def create_simple_instrument(options, task):
+def create_simple_instrument(options, task) -> Instrument:
     _l.info(
         f"download_instrument_finmars_database Finmars Database Timeout."
         f' instrument_type_user_code {options["instrument_type_user_code"]}'
@@ -990,7 +992,7 @@ def create_simple_instrument(options, task):
 
     instrument.save()
 
-    update_task_with_instrument(instrument, task)
+    return instrument
 
 
 def handle_database_response_data(data, task, options):
@@ -1031,11 +1033,10 @@ def handle_database_response_data(data, task, options):
 
 
 def download_instrument_finmars_database(task_id: int):
+    func = "download_instrument_finmars_database:"
+    _l.info(f"{func} task_id {task_id}")
+
     try:
-        _l.info(f"download_instrument_finmars_database: task_id {task_id}")
-
-        task = CeleryTask.objects.get(id=task_id)
-
         # auth_url = settings.FINMARS_DATABASE_URL + 'api/authenticate'
         #
         # auth_request_body = {
@@ -1054,6 +1055,7 @@ def download_instrument_finmars_database(task_id: int):
 
         # headers['Authorization'] = 'Bearer ' + get_access_token(request)
 
+        task = CeleryTask.objects.get(id=task_id)
         callback_url = (
             f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
             f"/api/instruments/fdb-create-from-callback/"
@@ -1067,7 +1069,7 @@ def download_instrument_finmars_database(task_id: int):
         task.save()
 
         request_options = {
-            "isin": options["reference"],  # deprecated
+            # "isin": options["reference"],  # deprecated
             "reference": options["reference"],
             "request_id": options["request_id"],
             "base_api_url": options["base_api_url"],
@@ -1075,77 +1077,32 @@ def download_instrument_finmars_database(task_id: int):
             "data": {},
         }
 
-        _l.info(f"download_instrument_finmars_database.options {request_options}")
+        _l.info(f"{func} request_options={request_options}")
 
-        headers = {"Accept": "application/json", "Content-type": "application/json"}
-        try:
-            response = requests.post(
-                url=f"{settings.FINMARS_DATABASE_URL}api/v1/export/instrument",
-                data=json.dumps(request_options),
-                headers=headers,
-                timeout=25,
-                verify=settings.VERIFY_SSL,
-            )
-            _l.debug(
-                f"download_instrument_finmars_database.response.text {response.text} "
-            )
-            _l.info(
-                f"download_instrument_finmars_database.response."
-                f"status_code {response.status_code} "
-            )
-
-        except requests.exceptions.Timeout:
-            _l.info(
-                f"download_instrument_finmars_database Finmars Database Timeout. "
-                f'Trying to create simple instrument {options["reference"]}'
-            )
-
+        result: Monad = DatabaseService().get_info("instrument", request_options)
+        if result.status == MonadStatus.DATA_READY:
+            handle_database_response_data(result.data, task, options)
+        elif result.status == MonadStatus.TASK_READY:
+            task.status = CeleryTask.STATUS_PENDING
+            task.data["task_id"] = result.task_id
+        elif result.status == MonadStatus.ERROR:
             try:
-                Instrument.objects.get(
+                instrument = Instrument.objects.get(
                     master_user=task.master_user,
                     user_code=options["reference"],
                 )
-                _l.info(
-                    f"download_instrument_finmars_database Finmars Database Timeout. "
-                    f'Simple instrument {options["reference"]} exist. Abort.'
-                )
-                return
+                _l.info(f"{func} Simple instrument {options['reference']} exists")
+                update_task_with_instrument(instrument, task)
 
             except Instrument.DoesNotExist:
-                create_simple_instrument(options, task)
-                return
-
-        except Exception as e:
-            _l.debug(
-                f"download_instrument_finmars_database Can't send request to "
-                f"Finmars Database. {e}"
-            )
-            update_task_with_error(task, f"Request to broker failed. {str(e)}")
-            return
-
-        try:
-            data = response.json()
-            _l.info(f"download_instrument_finmars_database response data {data}")
-        except Exception as e:
-            _l.info(f"download_instrument_finmars_database response data Exception {e}")
-            update_task_with_error(task, f"Could not parse response from broker. {e}")
-            return
-
-        try:
-            handle_database_response_data(data, task, options)
-            return
-        except Exception as e:
-            _l.error(
-                f"download_instrument_finmars_database.e {e} "
-                f"traceback {traceback.format_exc()} "
-            )
-            update_task_with_error(task, str(e))
-            return
+                instrument = create_simple_instrument(options, task)
+                update_task_with_instrument(instrument, task)
+        else:
+            update_task_with_error(task, "No meaningful answer from Database service")
 
     except Exception as e:
         _l.error(
-            f"download_instrument_finmars_database.error {e} "
-            f"traceback {traceback.format_exc()}"
+            f"{func} unexpected error {repr(e)} traceback {traceback.format_exc()}"
         )
 
 

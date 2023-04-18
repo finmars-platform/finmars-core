@@ -10,15 +10,12 @@ from requests.exceptions import RequestException
 _l = logging.getLogger("default")
 log = Path(__file__).stem
 
-MAX_RETRIES = 5
+MAX_RETRIES = 3
 MAX_TIMEOUT = 600  # secs
-MAX_SLEEP = 3  # secs
+MAX_SLEEP = 2  # secs
 GET = "get"
 POST = "post"
 HEADERS = {"Accept": "application/json", "Content-type": "application/json"}
-SERVICE_URLS = {
-    "instrument": f"{settings.FINMARS_DATABASE_URL}api/v1/export/instrument",
-}
 
 
 class HttpClientError(Exception):
@@ -27,7 +24,7 @@ class HttpClientError(Exception):
 
 class HttpClient:
     """
-    Simple HTTP client, which works only with declared in SERVICE_URLS services
+    Simple HTTP client
     """
 
     def __init__(self, max_timeout=MAX_TIMEOUT, max_retries=MAX_RETRIES):

@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import Any
 
 
-class Status:
+class MonadStatus:
     NO_ANSWER = 0
     DATA_READY = 1
     TASK_READY = 2
@@ -19,7 +19,7 @@ class Status:
 
 @dataclass
 class Monad:
-    status: int = Status.NO_ANSWER
+    status: int = MonadStatus.NO_ANSWER
     task_id: int = 0
     message: str = ""
     data: Any = None
