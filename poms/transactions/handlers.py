@@ -2247,7 +2247,7 @@ class TransactionTypeProcess(object):
 
                 self.record_execution_progress(
                     'Unique Code is already in use, can create transaction. Previous Transaction is deleted (OVERWRITE)')
-                exist.delete()
+                exist.fake_delete()
                 self.uniqueness_status = 'overwrite'
             else:
                 self.uniqueness_status = 'create'
@@ -2257,7 +2257,7 @@ class TransactionTypeProcess(object):
             # TODO ask if behavior same as skip
             self.uniqueness_status = 'error'
 
-            self.complex_transaction.delete()
+            self.complex_transaction.fake_delete()
 
             self.general_errors.append({
                 "reason": 410,
@@ -2536,7 +2536,7 @@ class TransactionTypeProcess(object):
             self.complex_transaction.transactions.all().delete()
 
         if self.complex_transaction.transaction_type.type == TransactionType.TYPE_PROCEDURE:
-            self.complex_transaction.delete()
+            self.complex_transaction.fake_delete()
             self.complex_transaction = None
 
         self.record_execution_progress('Process time: %s' % "{:3.3f}".format(time.perf_counter() - process_st))
