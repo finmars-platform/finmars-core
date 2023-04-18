@@ -935,9 +935,6 @@ class TransactionImportProcess(object):
 
             for item in self.items:
 
-                sid = transaction.savepoint()
-                _l.info("Create checkpoint for %s" % index)
-
                 try:
 
                     _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ========' % (
@@ -982,6 +979,10 @@ class TransactionImportProcess(object):
                                 for selector_value in selector_values:
 
                                     if selector_value.value == rule_value:
+
+                                        sid = transaction.savepoint()
+                                        _l.info("Create checkpoint for %s" % index)
+
                                         found = True
                                         try:
 
@@ -1018,6 +1019,10 @@ class TransactionImportProcess(object):
                                         found = True
 
                         if not found:
+                            
+                            sid = transaction.savepoint()
+                            _l.info("Create checkpoint for %s" % index)
+
                             item.status = 'skip'
                             item.message = 'Selector %s does not match anything in scheme' % rule_value
                             try:
