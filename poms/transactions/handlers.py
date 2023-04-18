@@ -2249,7 +2249,7 @@ class TransactionTypeProcess(object):
 
                 self.record_execution_progress(
                     'Unique Code is already in use, can create transaction. Previous Transaction is deleted (OVERWRITE)')
-                exist.delete()
+                exist.fake_delete()
                 self.uniqueness_status = 'overwrite'
             else:
                 self.uniqueness_status = 'create'
