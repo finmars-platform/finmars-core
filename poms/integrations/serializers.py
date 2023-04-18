@@ -1149,7 +1149,7 @@ class ImportInstrumentSerializer(serializers.Serializer):
         return {}
 
 
-class ImportInstrumentCbondsSerializer(serializers.Serializer):
+class ImportInstrumentDatabaseSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
     instrument_code = serializers.CharField(required=True)

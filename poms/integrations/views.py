@@ -5,11 +5,10 @@ import logging
 import django_filters
 from celery.result import AsyncResult
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Prefetch
 from django.http import HttpResponse
 from django_filters.rest_framework import FilterSet, DjangoFilterBackend
-from rest_framework.exceptions import MethodNotAllowed, ValidationError
+from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
