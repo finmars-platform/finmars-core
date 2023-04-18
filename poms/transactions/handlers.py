@@ -2210,6 +2210,8 @@ class TransactionTypeProcess(object):
         except Exception as e:
             exist = None
 
+        _l.info('execute_uniqueness_expression.uniqueness_reaction %s' % self.uniqueness_reaction)
+
         if self.uniqueness_reaction == 1 and exist and self.complex_transaction.transaction_unique_code:
 
             # self.complex_transaction.delete()
@@ -2541,7 +2543,18 @@ class TransactionTypeProcess(object):
 
         self.record_execution_progress('Process time: %s' % "{:3.3f}".format(time.perf_counter() - process_st))
 
+        _l.info("TransactionTypeProcess: Before Final save has errors %s" % self.has_errors)
+
         if not self.has_errors:
+
+            if self.complex_transaction.transaction_unique_code:
+
+                count = ComplexTransaction.objects.filter(
+                    transaction_unique_code=self.complex_transaction.transaction_unique_code).count()
+
+                if count > 0:
+                    raise Exception("Transaction Unique Code must be unique")
+
             self.complex_transaction.save()  # save executed text and date expression
 
         _l.info('TransactionTypeProcess: process done: %s',
