@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 from tempfile import NamedTemporaryFile
 from django.http import HttpResponse
 
@@ -17,7 +18,7 @@ from poms_app import settings
 
 _l = logging.getLogger('poms.explorer')
 
-from poms.common.storage import get_storage
+from poms.common.storage import get_storage, delete_folder, download_folder_as_zip
 
 storage = get_storage()
 
@@ -288,3 +289,50 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
         return Response({
             "path": path
         })
+
+
+class ExplorerDeleteFolderViewSet(AbstractViewSet):
+    serializer_class = ExplorerSerializer
+
+    def create(self, request):
+
+        path = request.data.get('path')
+
+        # TODO validate path that eiher public/import/system or user home folder
+
+        if not path:
+            raise ValidationError("Path is required")
+        else:
+            path = settings.BASE_API_URL + '/' + path
+
+        delete_folder(path)
+
+        return Response({
+            "status": 'ok'
+        })
+
+
+class DownloadFolderAsZipViewSet(AbstractViewSet):
+    serializer_class = ExplorerSerializer
+
+    def create(self, request):
+
+        path = request.data.get('path')
+
+        # TODO validate path that eiher public/import/system or user home folder
+
+        if not path:
+            raise ValidationError("Path is required")
+        else:
+            path = settings.BASE_API_URL + '/' + path
+
+        zip_file_path = download_folder_as_zip(path)
+
+        # Serve the zip file as a response
+        response = FileResponse(open(zip_file_path, 'rb'), content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="archive.zip"'
+
+        return response
+
+
+

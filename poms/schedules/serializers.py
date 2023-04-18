@@ -4,6 +4,7 @@ from rest_framework import serializers
 from rest_framework.fields import empty
 
 from poms.common.fields import DateTimeTzAwareField
+from poms.common.serializers import ModelMetaSerializer
 from poms.schedules.models import ScheduleProcedure, Schedule
 from poms.users.fields import MasterUserField
 
@@ -27,7 +28,7 @@ class RunScheduleSerializer(serializers.Serializer):
         context['instance'] = self.instance
 
 
-class ScheduleSerializer(serializers.ModelSerializer):
+class ScheduleSerializer(ModelMetaSerializer):
     master_user = MasterUserField()
     last_run_at = DateTimeTzAwareField(read_only=True)
     next_run_at = DateTimeTzAwareField(read_only=True)

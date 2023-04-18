@@ -1428,7 +1428,7 @@ class TransactionTypeLightSerializerWithInputs(TransactionTypeLightSerializer):
 
 
 class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
-                                ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
+                                ModelWithAttributesSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     group = TransactionTypeGroupField(required=False, allow_null=False)
     date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,

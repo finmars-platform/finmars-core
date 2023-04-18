@@ -15,7 +15,8 @@ from poms.celery_tasks.models import CeleryTask
 from poms.celery_tasks.serializers import CeleryTaskSerializer
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, \
+    ModelMetaSerializer
 from poms.counterparties.fields import CounterpartyField, ResponsibleField
 from poms.currencies.fields import CurrencyField, CurrencyDefault
 from poms.currencies.models import CurrencyHistory
@@ -1570,7 +1571,7 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
         return ret
 
 
-class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
+class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     rule_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
     data_preprocess_expression = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default='',
@@ -1592,7 +1593,10 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
     class Meta:
         model = ComplexTransactionImportScheme
         fields = ['id', 'master_user',
-                  'user_code', 'name', 'short_name', 'public_name', 'notes',
+
+                  'user_code', 'configuration_code',
+
+                  'name', 'short_name', 'public_name', 'notes',
                   'rule_expr', 'spreadsheet_start_cell', 'spreadsheet_active_tab_name',
                   'book_uniqueness_settings', 'expression_iterations_count',
 
@@ -1603,7 +1607,6 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
                   'filter_expression', 'has_header_row',
 
                   'data_preprocess_expression',
-                  'configuration_code'
 
                   ]
 

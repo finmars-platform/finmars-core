@@ -326,7 +326,7 @@ class ColumnSortData(models.Model):
             self.json_data = None
 
 
-class BaseUIModel(models.Model):
+class BaseUIModel(ConfigurationModel):
     json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
     origin_for_global_layout = models.ForeignKey(SharedConfigurationFile,

@@ -397,6 +397,16 @@ class BootstrapConfig(AppConfig):
 
                     _l.info("create public folder")
 
+            if not storage.exists(settings.BASE_API_URL + '/configurations/.init'):
+                path = settings.BASE_API_URL + '/configurations/.init'
+
+                with NamedTemporaryFile() as tmpf:
+                    tmpf.write(b'')
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
+                    _l.info("create configurations folder")
+
             if not storage.exists(settings.BASE_API_URL + '/workflows/.init'):
                 path = settings.BASE_API_URL + '/workflows/.init'
 
