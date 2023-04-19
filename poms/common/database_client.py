@@ -4,7 +4,7 @@ from pathlib import Path
 
 from django.conf import settings
 
-from poms.common.http_client import HttpClient, HttpClientError, POST
+from poms.common.http_client import HttpClient, HttpClientError
 from poms.common.monad import Monad, MonadStatus
 
 _l = logging.getLogger("default")
@@ -31,12 +31,11 @@ class DatabaseService:
 
         try:
             data = self.http_client.post(
-                POST,
                 url=SERVICE_URLS[service],
                 data=json.dumps(request_options),
             )
         except HttpClientError as err:
-            monad = Monad(status=MonadStatus.ERROR, message=str(err))
+            monad = Monad(status=MonadStatus.ERROR, message=repr(err))
         else:
             if "task_id" in data:
                 monad = Monad(status=MonadStatus.TASK_READY, task_id=data["task_id"])
