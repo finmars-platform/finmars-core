@@ -4,6 +4,8 @@ from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.monad import Monad, MonadStatus
+from poms.celery_tasks.models import CeleryTask
+from poms.instruments.models import Instrument
 
 
 class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
@@ -32,6 +34,24 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         }
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 200, response.content)
+
+        data = response.json()
+        self.assertEqual(data["instrument_code"], reference)
+        self.assertEqual(data["instrument_name"], name)
+        self.assertEqual(data["instrument_type_code"], "bonds")
+        self.assertIsNone(data["errors"])
+
+        celery_task = CeleryTask.objects.get(pk=data["task"])
+        print(celery_task.options_object)
+        print(celery_task.result_object)
+
+        simple_instrument = Instrument.objects.get(pk=data["result_id"])
+        print(
+            simple_instrument.is_active,
+            simple_instrument.instrument_type_id,
+            simple_instrument.pricing_currency,
+            simple_instrument.default_price,
+        )
 
         # {
         #     'instrument_code': 'XXVJRNNMTE', 'instrument_name': 'NVJXVHMVGH',
