@@ -6,7 +6,7 @@ from celery import shared_task
 from django.conf import settings
 
 from poms.common.models import ProxyUser, ProxyRequest
-from poms.procedures.handlers import DataProcedureProcess
+
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import MasterUser
@@ -19,6 +19,8 @@ _l = logging.getLogger('poms.procedures')
 
 @shared_task(name='procedures.execute_data_procedure', bind=True, ignore_result=True)
 def execute_data_procedure(self, procedure_instance_id, date_from=None, date_to=None, options=None):
+
+    from poms.procedures.handlers import DataProcedureProcess
 
     procedure_instance = RequestDataFileProcedureInstance.objects.get(pk=procedure_instance_id)
 
