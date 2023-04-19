@@ -20,17 +20,24 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         response = self.client.post(path=self.url, format="json", data={})
         self.assertEqual(response.status_code, 400, response.content)
 
+    @BaseTestCase.cases(
+        ("bonds_777", "bonds", 777),
+        ("bonds_111", "bonds", 111),
+        ("stocks_333", "stocks", 333),
+        ("stocks_999", "stocks", 999),
+    )
     @mock.patch("poms.common.database_client.DatabaseService.get_info")
-    def test__task_ready(self, mock_get_info):
+    def test__task_ready(self, type_code, task_id, mock_get_info):
         mock_get_info.return_value = Monad(
-            status=MonadStatus.TASK_READY, data={"task_id": 777}
+            status=MonadStatus.TASK_READY,
+            task_id=task_id,
         )
         reference = self.random_string()
         name = self.random_string()
         request_data = {
             "instrument_code": reference,
             "instrument_name": name,
-            "instrument_type_code": "bonds",
+            "instrument_type_code": type_code,
         }
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 200, response.content)
@@ -38,24 +45,18 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         data = response.json()
         self.assertEqual(data["instrument_code"], reference)
         self.assertEqual(data["instrument_name"], name)
-        self.assertEqual(data["instrument_type_code"], "bonds")
+        self.assertEqual(data["instrument_type_code"], type_code)
         self.assertIsNone(data["errors"])
 
-        celery_task = CeleryTask.objects.get(pk=data["task"])
-        print(celery_task.options_object)
-        print(celery_task.result_object)
-
         simple_instrument = Instrument.objects.get(pk=data["result_id"])
-        print(
-            simple_instrument.is_active,
-            simple_instrument.instrument_type_id,
-            simple_instrument.pricing_currency,
-            simple_instrument.default_price,
+        self.assertFalse(simple_instrument.is_active)
+        celery_task = CeleryTask.objects.get(pk=data["task"])
+        options = celery_task.options_object
+        callback_url = (
+            f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
+            f"/api/instruments/fdb-create-from-callback/"
         )
-
-        # {
-        #     'instrument_code': 'XXVJRNNMTE', 'instrument_name': 'NVJXVHMVGH',
-        #     'instrument_type_code': 'bonds', 'task': 1, 'result_id': 13, 'errors': None
-        # }
-
-        print(response.json())
+        self.assertEqual(options["callback_url"], callback_url)
+        results = celery_task.result_object
+        self.assertEqual(results["instrument_id"], simple_instrument.id)
+        self.assertEqual(results["task_id"], task_id)
