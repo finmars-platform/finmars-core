@@ -3360,7 +3360,7 @@ def configuration_import_as_json(self, task_id):
 
     except Exception as e:
 
-        send_system_message(master_user=self.master_user, action_status="required", type="warning",
+        send_system_message(master_user=task.master_user, action_status="required", type="warning",
                             title='Configuration Import Failed. Task id: %s' % task_id,
                             description=str(e))
 
