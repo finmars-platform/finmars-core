@@ -166,7 +166,7 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
 
         return Response({
             'procedure_id': pk,
-            'procedure_instance_id': instance.procedure_instance.id
+            'procedure_instance_id': procedure_instance.id
         })
 
     @action(detail=False, methods=['post'], url_path='execute')
