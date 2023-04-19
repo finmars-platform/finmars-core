@@ -26,7 +26,7 @@ _l = logging.getLogger('poms.procedures')
 class DataProcedureProcess(object):
 
     def __init__(self, procedure=None, master_user=None, date_from=None, date_to=None, member=None,
-                 schedule_instance=None, context=None):
+                 schedule_instance=None, context=None, procedure_instance=None):
 
         _l.info('DataProcedureProcess. Master user: %s. Procedure: %s' % (master_user, procedure))
 
@@ -38,6 +38,7 @@ class DataProcedureProcess(object):
         self.context = context
 
         self.execute_procedure_date_expressions()
+        self.procedure_instance = procedure_instance
 
         if date_from:
             self.procedure.date_from = date_from
@@ -288,17 +289,20 @@ class DataProcedureProcess(object):
 
             with transaction.atomic():
 
-                self.procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
-                                                                                          master_user=self.master_user,
-                                                                                          status=RequestDataFileProcedureInstance.STATUS_PENDING,
-                                                                                          schedule_instance=self.schedule_instance,
-                                                                                          action='request_transaction_file',
-                                                                                          provider='finmars',
 
-                                                                                          action_verbose='Request file with Transactions',
-                                                                                          provider_verbose='Finmars'
+                if not self.procedure_instance:
 
-                                                                                          )
+                    self.procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
+                                                                                              master_user=self.master_user,
+                                                                                              status=RequestDataFileProcedureInstance.STATUS_PENDING,
+                                                                                              schedule_instance=self.schedule_instance,
+                                                                                              action='request_transaction_file',
+                                                                                              provider='finmars',
+
+                                                                                              action_verbose='Request file with Transactions',
+                                                                                              provider_verbose='Finmars'
+
+                                                                                              )
 
                 if self.member:
                     self.procedure_instance.started_by = RequestDataFileProcedureInstance.STARTED_BY_MEMBER

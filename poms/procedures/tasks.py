@@ -6,6 +6,7 @@ from celery import shared_task
 from django.conf import settings
 
 from poms.common.models import ProxyUser, ProxyRequest
+from poms.procedures.handlers import DataProcedureProcess
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import MasterUser
@@ -13,6 +14,36 @@ from django.utils.timezone import now
 from datetime import timedelta
 
 _l = logging.getLogger('poms.procedures')
+
+
+
+@shared_task(name='procedures.execute_data_procedure', bind=True, ignore_result=True)
+def execute_data_procedure(self, procedure_instance_id, date_from=None, date_to=None, options=None):
+
+    procedure_instance = RequestDataFileProcedureInstance.objects.get(pk=procedure_instance_id)
+
+    master_user = procedure_instance.master_user
+    procedure = procedure_instance.procedure
+    member = procedure_instance.member
+
+    instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member, procedure_instance=procedure_instance)
+
+    if date_from:
+        instance.update_procedure_date_from(date_from)
+    if date_to:
+        instance.update_procedure_date_to(date_to)
+
+    if options:
+        instance.update_procedure_options(options)
+
+    instance.process()
+
+    text = "Data File Procedure %s. Start processing" % procedure.name
+
+    send_system_message(master_user=master_user,
+                        performed_by='System',
+                        description=text)
+
 
 
 @shared_task(name='procedures.procedure_request_data_file', bind=True, ignore_result=True)
