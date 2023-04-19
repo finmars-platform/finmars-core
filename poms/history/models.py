@@ -469,6 +469,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
             )
 
         except Exception as e:
+            _l.error("Could not save history user_code %s" % user_code)
             _l.error("Could not save history exception %s" % e)
             _l.error("Could not save history traceback %s" % traceback.format_exc())
 
