@@ -127,6 +127,7 @@ def get_data_access_table(member):
 
 
 def get_configuration_access_table(member):
+    #Deprecated
     result = {
         'obj_attrs.attributetype': False,
         'reference_tables.referencetable': False,
@@ -140,32 +141,32 @@ def get_configuration_access_table(member):
         'ui.userfield': False
     }
 
-    if member.is_admin:
-        result = {
-            'obj_attrs.attributetype': True,
-            'reference_tables.referencetable': True,
-            'ui.templatelayout': True,
-            'integrations.mappingtable': True,
-            'integrations.pricedownloadscheme': True,
-            'integrations.instrumentdownloadscheme': True,
-            'csv_import.csvimportscheme': True,
-            'integrations.complextransactionimportscheme': True,
-            'complex_import.compleximportscheme': True,
-            'ui.userfield': True
-        }
+    # if member.is_admin:
+    result = {
+        'obj_attrs.attributetype': True,
+        'reference_tables.referencetable': True,
+        'ui.templatelayout': True,
+        'integrations.mappingtable': True,
+        'integrations.pricedownloadscheme': True,
+        'integrations.instrumentdownloadscheme': True,
+        'csv_import.csvimportscheme': True,
+        'integrations.complextransactionimportscheme': True,
+        'complex_import.compleximportscheme': True,
+        'ui.userfield': True
+    }
 
-    if not member.is_admin:
-        for group in member.groups.all():
-            if group.permission_table:
-
-                if group.permission_table['configuration']:
-
-                    for perm_config in group.permission_table['configuration']:
-
-                        if not result[perm_config['content_type']]:
-
-                            if perm_config['data']['creator_view']:
-                                result[perm_config['content_type']] = True
+    # if not member.is_admin:
+    #     for group in member.groups.all():
+    #         if group.permission_table:
+    #
+    #             if group.permission_table['configuration']:
+    #
+    #                 for perm_config in group.permission_table['configuration']:
+    #
+    #                     if not result[perm_config['content_type']]:
+    #
+    #                         if perm_config['data']['creator_view']:
+    #                             result[perm_config['content_type']] = True
 
     return result
 
