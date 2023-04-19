@@ -1184,8 +1184,11 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
             download_instrument_finmars_database(task.id)
 
             task.refresh_from_db()
-            if task and task.result_object:
+
+            if task.result_object:
                 instance.result_id = task.result_object.get('instrument_id')
+            if task.error_message:
+                instance.errors = task.error_message
 
             instance.task_object = task
             return instance

@@ -9,6 +9,7 @@ from poms.instruments.models import Instrument
 
 
 class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
+
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -60,3 +61,49 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         results = celery_task.result_object
         self.assertEqual(results["instrument_id"], simple_instrument.id)
         self.assertEqual(results["task_id"], task_id)
+
+    # @mock.patch("poms.common.database_client.DatabaseService.get_info")
+    # def test__data_ready(self, type_code, mock_get_info):
+    #     mock_get_info.return_value = Monad(
+    #         status=MonadStatus.DATA_READY,
+    #         data={
+    #
+    #         },
+    #     )
+    #     reference = self.random_string()
+    #     name = self.random_string()
+    #     request_data = {
+    #         "instrument_code": reference,
+    #         "instrument_name": name,
+    #         "instrument_type_code": type_code,
+    #     }
+    #     response = self.client.post(path=self.url, format="json", data=request_data)
+    #     self.assertEqual(response.status_code, 200, response.content)
+    #
+    #     data = response.json()
+
+    @mock.patch("poms.common.database_client.DatabaseService.get_info")
+    def test__error(self, mock_get_info):
+        message = self.random_string()
+        mock_get_info.return_value = Monad(
+            status=MonadStatus.ERROR,
+            message=message,
+        )
+
+        request_data = {
+            "instrument_code": "reference",
+            "instrument_name": "name",
+            "instrument_type_code": "any",
+        }
+        response = self.client.post(path=self.url, format="json", data=request_data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        data = response.json()
+        self.assertIsNone(data["result_id"])
+        self.assertIn(message, data["errors"])
+
+
+    # {
+    #     'instrument_code': 'EUYFZWTDYT', 'instrument_name': 'RLENTLJSQR',
+    #     'instrument_type_code': 'any', 'task': 1, 'result_id': None, 'errors': None
+    # }
