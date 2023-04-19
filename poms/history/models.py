@@ -109,7 +109,7 @@ class HistoricalRecord(models.Model):
     member = models.ForeignKey('users.Member', null=True, blank=True, verbose_name=gettext_lazy('member'),
                                on_delete=models.SET_NULL)
 
-    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+    user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('user code'))
     action = models.CharField(max_length=25, default=ACTION_CHANGE, choices=ACTION_CHOICES,
                               verbose_name='action')
     content_type = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type'), on_delete=models.CASCADE)
