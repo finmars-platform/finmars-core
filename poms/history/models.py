@@ -153,12 +153,12 @@ class HistoricalRecord(models.Model):
         ordering = ['-created']
 
 
-def get_user_code_from_instance(instance):
+def get_user_code_from_instance(instance, content_type_key):
     user_code = None
 
     if getattr(instance, 'transaction_unique_code', None):
         user_code = instance.transaction_unique_code
-    elif getattr(instance, 'code', None):
+    elif getattr(instance, 'code', None) and content_type_key == 'transactions.transaction':
         user_code = instance.code
     elif getattr(instance, 'user_code', None):
         user_code = instance.user_code
@@ -276,7 +276,8 @@ def get_notes_for_history_record(user_code, content_type, serialized_data):
         last_record = \
             HistoricalRecord.objects.filter(user_code=user_code, content_type=content_type,
                                             action__in=[HistoricalRecord.ACTION_CREATE, HistoricalRecord.ACTION_CHANGE,
-                                                        HistoricalRecord.ACTION_DELETE, HistoricalRecord.ACTION_DANGER]).order_by('-created')[0]
+                                                        HistoricalRecord.ACTION_DELETE,
+                                                        HistoricalRecord.ACTION_DANGER]).order_by('-created')[0]
 
         everything_is_dict = json.loads(
             json.dumps(serialized_data))  # because deep diff counts different Dict and Ordered dict
@@ -401,7 +402,6 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
                 pass
 
             if not already_disabled:
-
                 data = get_serialized_data(sender, instance)
 
                 HistoricalRecord.objects.create(
@@ -422,7 +422,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
 
             content_type = ContentType.objects.get_for_model(sender)
             content_type_key = get_model_content_type_as_text(sender)
-            user_code = get_user_code_from_instance(instance)
+            user_code = get_user_code_from_instance(instance, content_type_key)
 
             exist = False
 
