@@ -568,7 +568,7 @@ class ConfigurationImportManager(object):
 
                         content_type = ContentType.objects.get(app_label=app_label, model=model)
 
-                        content_object['content_type_id'] = content_type.id
+                        content_object['content_type'] = content_type.id
 
                         _l.info('content_object %s' % content_object)
 
@@ -588,7 +588,7 @@ class ConfigurationImportManager(object):
                         try:
 
                             serializer.is_valid(raise_exception=True)
-                            serializer.save(content_type=content_type)
+                            serializer.save()
 
                         except Exception as error:
 
