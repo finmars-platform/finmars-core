@@ -62,25 +62,31 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.assertEqual(results["instrument_id"], simple_instrument.id)
         self.assertEqual(results["task_id"], task_id)
 
-    # @mock.patch("poms.common.database_client.DatabaseService.get_info")
-    # def test__data_ready(self, type_code, mock_get_info):
-    #     mock_get_info.return_value = Monad(
-    #         status=MonadStatus.DATA_READY,
-    #         data={
-    #
-    #         },
-    #     )
-    #     reference = self.random_string()
-    #     name = self.random_string()
-    #     request_data = {
-    #         "instrument_code": reference,
-    #         "instrument_name": name,
-    #         "instrument_type_code": type_code,
-    #     }
-    #     response = self.client.post(path=self.url, format="json", data=request_data)
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     data = response.json()
+    @BaseTestCase.cases(
+        ("bonds", "bonds"),
+        ("stocks", "stocks"),
+    )
+    @mock.patch("poms.common.database_client.DatabaseService.get_info")
+    @mock.patch("poms.integrations.tasks.update_task_with_database_data")
+    def test__data_ready(self, type_code, mock_update_data, mock_get_info):
+        mock_get_info.return_value = Monad(
+            status=MonadStatus.DATA_READY,
+            data={},
+        )
+        reference = self.random_string()
+        name = self.random_string()
+        request_data = {
+            "instrument_code": reference,
+            "instrument_name": name,
+            "instrument_type_code": type_code,
+        }
+        response = self.client.post(path=self.url, format="json", data=request_data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        mock_update_data.assert_called_once()
+
+        data = response.json()
+        self.assertEqual(data["instrument_type_code"], type_code)
 
     @mock.patch("poms.common.database_client.DatabaseService.get_info")
     def test__error(self, mock_get_info):

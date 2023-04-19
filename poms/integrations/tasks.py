@@ -1096,7 +1096,7 @@ def download_instrument_finmars_database(task_id: int):
             )
 
         else:
-            err_msg = f"{func} database service error {monad.message}"
+            err_msg = f"{func} error: {monad.message}"
             _l.error(err_msg)
             update_task_with_error(task, err_msg)
 
