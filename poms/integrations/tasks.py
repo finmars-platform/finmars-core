@@ -1006,8 +1006,11 @@ def update_task_with_database_data(
 ):
     result_instrument = None
     options = task.options_object
+    func = "update_task_with_database_data:"
 
     if "instruments" in data["data"]:
+        _l.info(f"{func} instruments in data")
+
         if "currencies" in data["data"] and data["data"]["currencies"]:
             for item in data["data"]["currencies"]:
                 if item:
@@ -1022,6 +1025,8 @@ def update_task_with_database_data(
                 result_instrument = instrument
 
     elif "items" in data["data"]:
+        _l.info(f"{func} items in data")
+
         for item in data["data"]["items"]:
             instrument = create_instrument_from_finmars_database(
                 item, task.master_user, task.member
@@ -1031,6 +1036,8 @@ def update_task_with_database_data(
                 result_instrument = instrument
 
     else:
+        _l.info(f"{func} create instrument from data")
+
         instrument = create_instrument_from_finmars_database(
             data["data"],
             task.master_user,
@@ -1082,6 +1089,8 @@ def download_instrument_finmars_database(task_id: int):
         monad: Monad = DatabaseService().get_info("instrument", options)
 
         if monad.status == MonadStatus.DATA_READY:
+            _l.info(f"{func} received data={monad.data}")
+
             update_task_with_database_data(
                 data=monad.data,
                 task=task,
@@ -1089,6 +1098,8 @@ def download_instrument_finmars_database(task_id: int):
             )
 
         elif monad.status == MonadStatus.TASK_READY:
+            _l.info(f"{func} received task_id={monad.task_id}")
+
             update_task_with_simple_instrument(
                 remote_task_id=monad.task_id,
                 task=task,
@@ -1096,12 +1107,12 @@ def download_instrument_finmars_database(task_id: int):
             )
 
         else:
-            err_msg = f"{func} error: {monad.message}"
+            err_msg = f"{func} received error={monad.message}"
             _l.error(err_msg)
             update_task_with_error(task, err_msg)
 
     except Exception as e:
-        err_msg = f"{func} unexpected error {repr(e)} trace {traceback.format_exc()}"
+        err_msg = f"{func} unexpected error={repr(e)} trace={traceback.format_exc()}"
         _l.error(err_msg)
         update_task_with_error(task, err_msg)
 
