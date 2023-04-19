@@ -4,9 +4,9 @@
 chdir = "/var/app/"
 loglevel = "info"
 # The number of worker processes for handling requests
-workers = 4
-threads = 4
-timeout = 180
+workers = 5
+threads = 2
+timeout = 300
 # The socket to bind
 bind = "0.0.0.0:8080"
 # PID file so you can easily fetch process ID
