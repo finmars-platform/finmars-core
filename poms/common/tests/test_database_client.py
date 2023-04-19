@@ -50,3 +50,22 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.assertEqual(monad.task_id, 0)
         self.assertIsNone(monad.data)
         self.assertEqual(monad.message, repr(HttpClientError("test")))
+
+    @BaseTestCase.cases(
+        ("wrong_service",  "xxx_service"),
+        ("empty_service",  ""),
+        ("no_service",  None),
+    )
+    def test__wrong_service(self, service):
+        data = {"items": []}
+
+        with self.assertRaises(RuntimeError):
+            self.service.get_info(service, data)
+
+    @BaseTestCase.cases(
+        ("none_data",  None),
+        ("empty_data",  {}),
+    )
+    def test__no_data(self, data):
+        with self.assertRaises(RuntimeError):
+            self.service.get_info("instrument", data)
