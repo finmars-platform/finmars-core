@@ -384,13 +384,12 @@ class CreateMember(APIView):
         #
         # user_profile = UserProfile.objects.get(user_unique_id=user_id)
 
-
         user, created = User.objects.get_or_create(username=username)
 
         master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
         try:
-            member = Member.objects.create(user=user, master_user=master_user)
+            member = Member.objects.create(user=user, username=user.username, master_user=master_user)
             member.save()
 
             admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
