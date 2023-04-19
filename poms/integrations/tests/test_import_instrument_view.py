@@ -101,9 +101,3 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         data = response.json()
         self.assertIsNone(data["result_id"])
         self.assertIn(message, data["errors"])
-
-
-    # {
-    #     'instrument_code': 'EUYFZWTDYT', 'instrument_name': 'RLENTLJSQR',
-    #     'instrument_type_code': 'any', 'task': 1, 'result_id': None, 'errors': None
-    # }
