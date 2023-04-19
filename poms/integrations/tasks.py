@@ -192,7 +192,9 @@ def update_task_with_error(task: CeleryTask, err_msg: str):
     task.save()
 
 
-def update_task_with_instrument_id(instrument, task):
+def update_task_with_instrument_id(
+    instrument: Instrument, task: CeleryTask, new_status: str = CeleryTask.STATUS_DONE
+):
     if not instrument or not task:
         _l.error(
             f"update_task_with_instrument error: missing task={task} or "
@@ -203,7 +205,7 @@ def update_task_with_instrument_id(instrument, task):
     result = task.result_object or {}
     result["instrument_id"] = instrument.pk
     task.result_object = result
-    task.status = CeleryTask.STATUS_DONE
+    task.status = new_status
     task.save()
 
 
@@ -999,7 +1001,9 @@ def create_simple_instrument(task) -> Instrument:
     return instrument
 
 
-def update_task_with_database_data(data: dict, task: CeleryTask):
+def update_task_with_database_data(
+    data: dict, task: CeleryTask, new_status: str = CeleryTask.STATUS_DONE
+):
     result_instrument = None
     options = task.options_object
 
@@ -1034,16 +1038,18 @@ def update_task_with_database_data(data: dict, task: CeleryTask):
         )
         result_instrument = instrument
 
-    update_task_with_instrument_id(result_instrument, task)
+    update_task_with_instrument_id(result_instrument, task, new_status=new_status)
 
 
-def update_task_with_simple_instrument(task_id: int, task: CeleryTask):
+def update_task_with_simple_instrument(
+    remote_task_id: int, task: CeleryTask, new_status: str
+):
     result = task.result_object or {}
-    result["task_id"] = task_id
+    result["task_id"] = remote_task_id
     if instrument := create_simple_instrument(task):
         result["instrument_id"] = instrument.pk
     task.result_object = result
-    task.status = CeleryTask.STATUS_PENDING
+    task.status = new_status
     task.save()
 
 
@@ -1076,10 +1082,18 @@ def download_instrument_finmars_database(task_id: int):
         monad: Monad = DatabaseService().get_info("instrument", options)
 
         if monad.status == MonadStatus.DATA_READY:
-            update_task_with_database_data(monad.data, task)
+            update_task_with_database_data(
+                data=monad.data,
+                task=task,
+                new_status=CeleryTask.STATUS_DONE,
+            )
 
         elif monad.status == MonadStatus.TASK_READY:
-            update_task_with_simple_instrument(monad.task_id, task)
+            update_task_with_simple_instrument(
+                remote_task_id=monad.task_id,
+                task=task,
+                new_status=CeleryTask.STATUS_PENDING,
+            )
 
         else:
             err_msg = f"{func} database service error {monad.message}"
