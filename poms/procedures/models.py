@@ -340,7 +340,7 @@ class RequestDataFileProcedure(BaseProcedure):
 
     scheme_type = models.CharField(max_length=255, choices=SCHEME_TYPE_CHOICES, default='transaction_import')
 
-    scheme_user_code = models.CharField(max_length=255)
+    scheme_user_code = models.CharField(max_length=1024)
 
     date_from = models.DateField(null=True, blank=True, verbose_name=gettext_lazy('price date from'))
 
