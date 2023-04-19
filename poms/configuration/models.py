@@ -1,6 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy
 
+from poms.configuration.utils import replace_special_chars_and_spaces
+
 
 class ConfigurationModel(models.Model):
     '''
@@ -31,7 +33,10 @@ class ConfigurationModel(models.Model):
 
     def save(self, *args, **kwargs):
 
+
         if self.user_code and self.configuration_code not in self.user_code:
+
+            self.user_code = replace_special_chars_and_spaces(self.user_code).lower()
 
             if hasattr(self, 'content_type') and self.content_type:  # In case if it Attribute Type or Layout
 

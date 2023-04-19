@@ -1541,21 +1541,7 @@ class ComplexTransaction(DataTimeStampedModel):
         # _l.info("ComplexTransaction.save status %s" % self.status)
         # _l.info("ComplexTransaction.save text %s" % self.text)
         # _l.info("ComplexTransaction.save date %s" % self.date)
-
-        is_new = self.pk is None
-
-        if self.transaction_unique_code:
-
-            if is_new:
-
-                count = ComplexTransaction.objects.exclude(pk=self.pk).filter(
-                    transaction_unique_code=self.transaction_unique_code).count()
-            else:
-                count = ComplexTransaction.objects.filter(
-                    transaction_unique_code=self.transaction_unique_code).count()
-
-            if count > 0:
-                raise Exception("Transaction Unique Code must be unique")
+        _l.info("ComplexTransaction.save transaction_unique_code %s" % self.transaction_unique_code)
 
         if self.code is None or self.code == 0:
             self.code = FakeSequence.next_value(self.transaction_type.master_user, 'complex_transaction', d=100)

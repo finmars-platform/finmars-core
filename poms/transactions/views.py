@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import logging
 import time
+import traceback
 
 import django_filters
 from django.core.exceptions import ObjectDoesNotExist
@@ -789,7 +790,6 @@ class TransactionTypeViewSet(AbstractWithObjectPermissionViewSet):
         }
 
         return Response(result)
-
 
     def get_context_for_book(self, request):
 
@@ -2341,21 +2341,24 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
             permission_classes=[IsAuthenticated])
     def rebook(self, request, pk=None):
 
-        with transaction.atomic():
-            complex_transaction = self.get_object()
+        complex_transaction = self.get_object()
 
-            if request.method == 'GET':
+        if request.method == 'GET':
 
-                instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
-                                                  process_mode='rebook',
-                                                  complex_transaction=complex_transaction,
-                                                  clear_execution_log=False,
-                                                  record_execution_log=False,
-                                                  context=self.get_serializer_context(), member=request.user.member)
+            instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
+                                              process_mode='rebook',
+                                              complex_transaction=complex_transaction,
+                                              clear_execution_log=False,
+                                              record_execution_log=False,
+                                              context=self.get_serializer_context(), member=request.user.member)
 
-                serializer = self.get_serializer(instance=instance)
-                return Response(serializer.data)
-            else:
+            serializer = self.get_serializer(instance=instance)
+            return Response(serializer.data)
+        else:
+
+            with transaction.atomic():
+
+                savepoint = transaction.savepoint()
 
                 st = time.perf_counter()
 
@@ -2384,14 +2387,31 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                     serializer.is_valid(raise_exception=True)
                     serializer.save()
 
+                    if instance.has_errors:
+                        transaction.savepoint_rollback(savepoint)
+
+                        errors = [
+                            instance.general_errors,
+                            instance.transactions_errors,
+                            instance.complex_transaction_errors,
+                            instance.value_errors,
+                            instance.instruments_errors
+                        ]
+
+                        raise Exception("Rebook error %s" % errors)
+                    else:
+                        transaction.savepoint_commit(savepoint)
+
                     return Response(serializer.data)
 
-                finally:
+                except Exception as e:
 
-                    _l.debug('rebook done: %s', "{:3.3f}".format(time.perf_counter() - st))
+                    _l.error('rebook error %s' % e)
+                    _l.error('rebook traceback %s' % traceback.format_exc())
 
-                    if instance.has_errors:
-                        transaction.set_rollback(True)
+                    transaction.savepoint_rollback(savepoint)
+
+                    raise Exception(e)
 
     @action(detail=True, methods=['get', 'put'], url_path='recalculate',
             serializer_class=TransactionTypeRecalculateSerializer, permission_classes=[IsAuthenticated])
