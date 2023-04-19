@@ -138,16 +138,31 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         master_user = request.user.master_user
         member = request.user.member
 
-        instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member)
-        instance.process()
+        procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=procedure,
+                                                                             master_user=master_user,
+                                                                             member=member,
+                                                                             status=RequestDataFileProcedureInstance.STATUS_PENDING,
+                                                                             schedule_instance=None,
+                                                                             action='request_transaction_file',
+                                                                             provider='finmars',
+                                                                             action_verbose='Request file with Transactions',
+                                                                             provider_verbose='Finmars'
+                                                                             )
 
-        text = "Data File Procedure %s. Start processing" % procedure.name
+        execute_data_procedure.apply_async(
+            kwargs={'procedure_instance_id': procedure_instance.id
+                    })
 
-        send_system_message(master_user=master_user,
-                            performed_by='System',
-                            description=text)
-
-        serializer = self.get_serializer(instance=instance)
+        # instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member)
+        # instance.process()
+        #
+        # text = "Data File Procedure %s. Start processing" % procedure.name
+        #
+        # send_system_message(master_user=master_user,
+        #                     performed_by='System',
+        #                     description=text)
+        #
+        # serializer = self.get_serializer(instance=instance)
 
         return Response({
             'procedure_id': pk,
