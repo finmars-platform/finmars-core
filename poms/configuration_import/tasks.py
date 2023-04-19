@@ -87,6 +87,9 @@ def check_configuration_section(configuration_access_table):
 
 
 def get_data_access_table(member):
+
+    # Deprecated
+
     result = {
 
         'portfolios.portfolio': False,
@@ -103,22 +106,22 @@ def get_data_access_table(member):
         'accounts.accounttype': False
     }
 
-    for group in member.groups.all():
-        if group.permission_table:
+    # for group in member.groups.all():
+    #     if group.permission_table:
+    #
+    #         if group.permission_table['data']:
+    #
+    #             for perm_config in group.permission_table['data']:
+    #
+    #                 result[perm_config['content_type']] = False
+    #
+    #                 if perm_config['data']['create_objects']:
+    #                     result[perm_config['content_type']] = True
+    #
+    # if member.is_admin:
 
-            if group.permission_table['data']:
-
-                for perm_config in group.permission_table['data']:
-
-                    result[perm_config['content_type']] = False
-
-                    if perm_config['data']['create_objects']:
-                        result[perm_config['content_type']] = True
-
-    if member.is_admin:
-
-        for key, value in result.items():
-            result[key] = True
+    for key, value in result.items():
+        result[key] = True
 
     return result
 
@@ -182,7 +185,7 @@ class ConfigurationImportManager(object):
 
     def __init__(self, instance):
 
-        # _l.info('master_user %s ' % instance.master_user)
+        _l.info('master_user %s ' % instance.master_user)
         # _l.info('class instance %s' % instance.master_user.__class__.__name__)
 
         self.master_user = instance.master_user
