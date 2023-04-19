@@ -1172,7 +1172,7 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
                 verbose_name="Download Instrument From Finmars Database",
                 type='download_instrument_from_finmars_database'
             )
-            task.result_object = {
+            task.options_object = {
                 'reference': instance.instrument_code,
                 'instrument_name': instance.instrument_name,
                 'instrument_type_user_code': instance.instrument_type_code

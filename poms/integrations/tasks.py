@@ -200,9 +200,9 @@ def update_task_with_instrument_id(instrument, task):
         )
         return
 
-    options = task.result_object
-    options["instrument_id"] = instrument.pk
-    task.result_object = options
+    result = task.result_object or {}
+    result["instrument_id"] = instrument.pk
+    task.result_object = result
     task.status = CeleryTask.STATUS_DONE
     task.save()
 
@@ -951,7 +951,8 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
         return None, errors
 
 
-def create_simple_instrument(options, task) -> Instrument:
+def create_simple_instrument(task) -> Instrument:
+    options = task.options_object
     _l.info(
         f"create_simple_instrument: instrument_type_user_code= "
         f"{options['instrument_type_user_code']} "
@@ -998,10 +999,9 @@ def create_simple_instrument(options, task) -> Instrument:
     return instrument
 
 
-def update_task_with_database_data(result: Monad, task: CeleryTask):
+def update_task_with_database_data(data: dict, task: CeleryTask):
     result_instrument = None
-    options = task.result_object
-    data = result.data
+    options = task.options_object
 
     if "instruments" in data["data"]:
         if "currencies" in data["data"] and data["data"]["currencies"]:
@@ -1037,12 +1037,12 @@ def update_task_with_database_data(result: Monad, task: CeleryTask):
     update_task_with_instrument_id(result_instrument, task)
 
 
-def update_task_with_simple_instrument(result: Monad, task: CeleryTask):
-    options = task.result_object
-    options["task_id"] = result.task_id
-    if instrument := create_simple_instrument(options, task):
-        options["instrument_id"] = instrument.pk
-    task.result_object = options
+def update_task_with_simple_instrument(task_id: int, task: CeleryTask):
+    result = task.result_object or {}
+    result["task_id"] = task_id
+    if instrument := create_simple_instrument(task):
+        result["instrument_id"] = instrument.pk
+    task.result_object = result
     task.status = CeleryTask.STATUS_PENDING
     task.save()
 
@@ -1061,7 +1061,7 @@ def download_instrument_finmars_database(task_id: int):
         f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
         f"/api/instruments/fdb-create-from-callback/"
     )
-    options = task.options_object
+    options = task.options_object or {}
     options["request_id"] = task.pk
     options["base_api_url"] = settings.BASE_API_URL
     options["callback_url"] = callback_url
@@ -1073,16 +1073,16 @@ def download_instrument_finmars_database(task_id: int):
     _l.info(f"{func} request_options={options}")
 
     try:
-        result: Monad = DatabaseService().get_info("instrument", options)
+        monad: Monad = DatabaseService().get_info("instrument", options)
 
-        if result.status == MonadStatus.DATA_READY:
-            update_task_with_database_data(result, task)
+        if monad.status == MonadStatus.DATA_READY:
+            update_task_with_database_data(monad.data, task)
 
-        elif result.status == MonadStatus.TASK_READY:
-            update_task_with_simple_instrument(result, task)
+        elif monad.status == MonadStatus.TASK_READY:
+            update_task_with_simple_instrument(monad.task_id, task)
 
         else:
-            err_msg = f"{func} database service error {result.message}"
+            err_msg = f"{func} database service error {monad.message}"
             _l.error(err_msg)
             update_task_with_error(task, err_msg)
 
