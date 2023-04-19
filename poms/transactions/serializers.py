@@ -3941,25 +3941,25 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
         instance.value_errors = []
 
         # if instance.is_book:
-        ctrn_values = validated_data.get('complex_transaction', None)
-        if ctrn_values:
-            ctrn_ser = ComplexTransactionSerializer(instance=instance.complex_transaction, context=self.context)
-            ctrn_values = ctrn_values.copy()
-
-            is_date_was_empty = False
-            if not ctrn_values.get('date', None):
-                ctrn_values['date'] = datetime.date.min
-                is_date_was_empty = True
-
-            if instance.complex_transaction:
-                ctrn = ctrn_ser.update(ctrn_ser.instance, ctrn_values)
-            else:
-                ctrn = ctrn_ser.create(ctrn_values)
-
-            if is_date_was_empty:
-                ctrn.date = None
-
-            instance.complex_transaction = ctrn
+        # ctrn_values = validated_data.get('complex_transaction', None)
+        # if ctrn_values:
+        #     ctrn_ser = ComplexTransactionSerializer(instance=instance.complex_transaction, context=self.context)
+        #     ctrn_values = ctrn_values.copy()
+        #
+        #     is_date_was_empty = False
+        #     if not ctrn_values.get('date', None):
+        #         ctrn_values['date'] = datetime.date.min
+        #         is_date_was_empty = True
+        #
+        #     if instance.complex_transaction:
+        #         ctrn = ctrn_ser.update(ctrn_ser.instance, ctrn_values)
+        #     else:
+        #         ctrn = ctrn_ser.create(ctrn_values)
+        #
+        #     if is_date_was_empty:
+        #         ctrn.date = None
+        #
+        #     instance.complex_transaction = ctrn
 
         _l.info("==== PROCESS REBOOK ====")
         instance.process()
