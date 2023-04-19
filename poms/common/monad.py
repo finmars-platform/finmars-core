@@ -11,15 +11,15 @@ from typing import Any
 
 
 class MonadStatus:
-    NO_ANSWER = 0
-    DATA_READY = 1
-    TASK_READY = 2
-    ERROR = 666
+    UNCOMPLETED = "uncompleted"
+    DATA_READY = "data_ready"
+    TASK_READY = "task_ready"
+    ERROR = "error"
 
 
 @dataclass
 class Monad:
-    status: int = MonadStatus.NO_ANSWER
+    status: int = MonadStatus.UNCOMPLETED
     task_id: int = 0
     message: str = ""
     data: Any = None

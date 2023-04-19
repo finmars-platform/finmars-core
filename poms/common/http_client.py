@@ -10,9 +10,9 @@ from requests.exceptions import RequestException
 _l = logging.getLogger("default")
 log = Path(__file__).stem
 
-MAX_RETRIES = 3
-MAX_TIMEOUT = 600  # secs
-MAX_SLEEP = 2  # secs
+MAX_RETRIES = 1
+MAX_TIMEOUT = 3  # secs
+MAX_SLEEP = 1  # secs
 GET = "get"
 POST = "post"
 HEADERS = {"Accept": "application/json", "Content-type": "application/json"}

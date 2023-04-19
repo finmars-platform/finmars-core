@@ -192,9 +192,17 @@ def update_task_with_error(task: CeleryTask, err_msg: str):
     task.save()
 
 
-def update_task_with_instrument(instrument, task):
-    result = {"instrument_id": instrument.pk}
-    task.result_object = result
+def update_task_with_instrument_id(instrument, task):
+    if not instrument or not task:
+        _l.error(
+            f"update_task_with_instrument error: missing task={task} or "
+            f"instrument={instrument}!"
+        )
+        return
+
+    options = task.result_object
+    options["instrument_id"] = instrument.pk
+    task.result_object = options
     task.status = CeleryTask.STATUS_DONE
     task.save()
 
@@ -786,7 +794,7 @@ def download_instrument_cbond(
 
                 instrument.save()
 
-                update_task_with_instrument(instrument, task)
+                update_task_with_instrument_id(instrument, task)
             return task, errors
 
         except Exception as e:
@@ -829,7 +837,7 @@ def download_instrument_cbond(
                 instrument = create_instrument_cbond(data["data"], master_user, member)
                 result_instrument = instrument
 
-            update_task_with_instrument(result_instrument, task)
+            update_task_with_instrument_id(result_instrument, task)
 
         except Exception as e:
             errors.append(f"Could not create instrument. {str(e)}")
@@ -945,23 +953,20 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
 
 def create_simple_instrument(options, task) -> Instrument:
     _l.info(
-        f"download_instrument_finmars_database Finmars Database Timeout."
-        f' instrument_type_user_code {options["instrument_type_user_code"]}'
-    )
-    _l.info(
-        f"download_instrument_finmars_database Finmars Database Timeout. "
-        f'instrument_name {options["instrument_name"]}'
+        f"create_simple_instrument: instrument_type_user_code= "
+        f"{options['instrument_type_user_code']} "
+        f"instrument_name={options['instrument_name']}"
     )
 
-    itype = None
+    i_type = None
     if options["instrument_type_user_code"]:
         try:
-            itype = InstrumentType.objects.get(
+            i_type = InstrumentType.objects.get(
                 master_user=task.master_user,
                 user_code=options["reference"],
             )
         except Exception:
-            itype = None
+            i_type = None
 
     instrument_name = options["instrument_name"] or options["reference"]
     ecosystem_defaults = EcosystemDefault.objects.get(master_user=task.master_user)
@@ -978,11 +983,8 @@ def create_simple_instrument(options, task) -> Instrument:
         counter_directional_exposure_currency=ecosystem_defaults.currency,
     )
 
-    instrument.is_active = False
-
-    if itype:
-        instrument.instrument_type = itype
-
+    if i_type:
+        instrument.instrument_type = i_type
         small_item = {
             "user_code": options["reference"],
             "instrument_type": options["instrument_type_user_code"],
@@ -990,13 +992,16 @@ def create_simple_instrument(options, task) -> Instrument:
 
         create_instrument_cbond(small_item, task.master_user, task.member)
 
+    instrument.is_active = False
     instrument.save()
 
     return instrument
 
 
-def handle_database_response_data(data, task, options):
+def update_task_with_database_data(result: Monad, task: CeleryTask):
     result_instrument = None
+    options = task.result_object
+    data = result.data
 
     if "instruments" in data["data"]:
         if "currencies" in data["data"] and data["data"]["currencies"]:
@@ -1029,7 +1034,17 @@ def handle_database_response_data(data, task, options):
         )
         result_instrument = instrument
 
-    update_task_with_instrument(result_instrument, task)
+    update_task_with_instrument_id(result_instrument, task)
+
+
+def update_task_with_simple_instrument(result: Monad, task: CeleryTask):
+    options = task.result_object
+    options["task_id"] = result.task_id
+    if instrument := create_simple_instrument(options, task):
+        options["instrument_id"] = instrument.pk
+    task.result_object = options
+    task.status = CeleryTask.STATUS_PENDING
+    task.save()
 
 
 def download_instrument_finmars_database(task_id: int):
@@ -1051,43 +1066,25 @@ def download_instrument_finmars_database(task_id: int):
     options["base_api_url"] = settings.BASE_API_URL
     options["callback_url"] = callback_url
     options["data"] = {}
+
     task.options_object = options
     task.save()
 
-    request_options = {
-        # "isin": options["reference"],  # deprecated
-        "reference": options["reference"],
-        "request_id": options["request_id"],
-        "base_api_url": options["base_api_url"],
-        "callback_url": options["callback_url"],
-        "data": {},
-    }
-
-    _l.info(f"{func} request_options={request_options}")
+    _l.info(f"{func} request_options={options}")
 
     try:
-        result: Monad = DatabaseService().get_info("instrument", request_options)
+        result: Monad = DatabaseService().get_info("instrument", options)
 
         if result.status == MonadStatus.DATA_READY:
-            handle_database_response_data(result.data, task, options)
+            update_task_with_database_data(result, task)
+
         elif result.status == MonadStatus.TASK_READY:
-            task.status = CeleryTask.STATUS_WAIT_RESPONSE
-            task.data["task_id"] = result.task_id
-        elif result.status == MonadStatus.ERROR:
-            try:
-                instrument = Instrument.objects.get(
-                    master_user=task.master_user,
-                    user_code=options["reference"],
-                )
-                _l.info(f"{func} simple instrument {options['reference']} exists")
-
-            except Instrument.DoesNotExist:
-                instrument = create_simple_instrument(options, task)
-
-            update_task_with_instrument(instrument, task)
+            update_task_with_simple_instrument(result, task)
 
         else:
-            update_task_with_error(task, "No meaningful answer from Database service")
+            err_msg = f"{func} database service error {result.message}"
+            _l.error(err_msg)
+            update_task_with_error(task, err_msg)
 
     except Exception as e:
         err_msg = f"{func} unexpected error {repr(e)} trace {traceback.format_exc()}"
