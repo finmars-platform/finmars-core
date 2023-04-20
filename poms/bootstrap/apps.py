@@ -370,6 +370,16 @@ class BootstrapConfig(AppConfig):
 
                     _l.info("create .system folder")
 
+            if not storage.exists(settings.BASE_API_URL + '/.system/log/.init'):
+                path = settings.BASE_API_URL + '/.system/log/.init'
+
+                with NamedTemporaryFile() as tmpf:
+                    tmpf.write(b'')
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
+                    _l.info("create system log folder")
+
             if not storage.exists(settings.BASE_API_URL + '/public/.init'):
                 path = settings.BASE_API_URL + '/public/.init'
 
@@ -445,6 +455,8 @@ class BootstrapConfig(AppConfig):
 
         from poms.common.celery import cancel_existing_tasks
         cancel_existing_tasks(celery_app)
+        from poms.common.celery import cancel_existing_procedures
+        cancel_existing_procedures(celery_app)
 
     def create_local_configuration(self):
 
