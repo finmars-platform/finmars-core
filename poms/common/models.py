@@ -19,7 +19,7 @@ class OwnerModel(models.Model):
         abstract = True
 
 class NamedModel(models.Model):
-    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+    user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('user code'))
     name = models.CharField(max_length=255, verbose_name=gettext_lazy('name'))
     # short_name = models.CharField(max_length=50, null=True, blank=True, verbose_name=gettext_lazy('short name'))
     short_name = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('short name'))

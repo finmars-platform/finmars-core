@@ -87,6 +87,9 @@ def check_configuration_section(configuration_access_table):
 
 
 def get_data_access_table(member):
+
+    # Deprecated
+
     result = {
 
         'portfolios.portfolio': False,
@@ -103,27 +106,28 @@ def get_data_access_table(member):
         'accounts.accounttype': False
     }
 
-    for group in member.groups.all():
-        if group.permission_table:
+    # for group in member.groups.all():
+    #     if group.permission_table:
+    #
+    #         if group.permission_table['data']:
+    #
+    #             for perm_config in group.permission_table['data']:
+    #
+    #                 result[perm_config['content_type']] = False
+    #
+    #                 if perm_config['data']['create_objects']:
+    #                     result[perm_config['content_type']] = True
+    #
+    # if member.is_admin:
 
-            if group.permission_table['data']:
-
-                for perm_config in group.permission_table['data']:
-
-                    result[perm_config['content_type']] = False
-
-                    if perm_config['data']['create_objects']:
-                        result[perm_config['content_type']] = True
-
-    if member.is_admin:
-
-        for key, value in result.items():
-            result[key] = True
+    for key, value in result.items():
+        result[key] = True
 
     return result
 
 
 def get_configuration_access_table(member):
+    #Deprecated
     result = {
         'obj_attrs.attributetype': False,
         'reference_tables.referencetable': False,
@@ -137,32 +141,32 @@ def get_configuration_access_table(member):
         'ui.userfield': False
     }
 
-    if member.is_admin:
-        result = {
-            'obj_attrs.attributetype': True,
-            'reference_tables.referencetable': True,
-            'ui.templatelayout': True,
-            'integrations.mappingtable': True,
-            'integrations.pricedownloadscheme': True,
-            'integrations.instrumentdownloadscheme': True,
-            'csv_import.csvimportscheme': True,
-            'integrations.complextransactionimportscheme': True,
-            'complex_import.compleximportscheme': True,
-            'ui.userfield': True
-        }
+    # if member.is_admin:
+    result = {
+        'obj_attrs.attributetype': True,
+        'reference_tables.referencetable': True,
+        'ui.templatelayout': True,
+        'integrations.mappingtable': True,
+        'integrations.pricedownloadscheme': True,
+        'integrations.instrumentdownloadscheme': True,
+        'csv_import.csvimportscheme': True,
+        'integrations.complextransactionimportscheme': True,
+        'complex_import.compleximportscheme': True,
+        'ui.userfield': True
+    }
 
-    if not member.is_admin:
-        for group in member.groups.all():
-            if group.permission_table:
-
-                if group.permission_table['configuration']:
-
-                    for perm_config in group.permission_table['configuration']:
-
-                        if not result[perm_config['content_type']]:
-
-                            if perm_config['data']['creator_view']:
-                                result[perm_config['content_type']] = True
+    # if not member.is_admin:
+    #     for group in member.groups.all():
+    #         if group.permission_table:
+    #
+    #             if group.permission_table['configuration']:
+    #
+    #                 for perm_config in group.permission_table['configuration']:
+    #
+    #                     if not result[perm_config['content_type']]:
+    #
+    #                         if perm_config['data']['creator_view']:
+    #                             result[perm_config['content_type']] = True
 
     return result
 
@@ -182,7 +186,7 @@ class ConfigurationImportManager(object):
 
     def __init__(self, instance):
 
-        # _l.info('master_user %s ' % instance.master_user)
+        _l.info('master_user %s ' % instance.master_user)
         # _l.info('class instance %s' % instance.master_user.__class__.__name__)
 
         self.master_user = instance.master_user
@@ -564,7 +568,7 @@ class ConfigurationImportManager(object):
 
                         content_type = ContentType.objects.get(app_label=app_label, model=model)
 
-                        content_object['content_type_id'] = content_type.id
+                        content_object['content_type'] = content_type.id
 
                         _l.info('content_object %s' % content_object)
 
@@ -584,7 +588,7 @@ class ConfigurationImportManager(object):
                         try:
 
                             serializer.is_valid(raise_exception=True)
-                            serializer.save(content_type=content_type)
+                            serializer.save()
 
                         except Exception as error:
 
@@ -3356,7 +3360,7 @@ def configuration_import_as_json(self, task_id):
 
     except Exception as e:
 
-        send_system_message(master_user=self.master_user, action_status="required", type="warning",
+        send_system_message(master_user=task.master_user, action_status="required", type="warning",
                             title='Configuration Import Failed. Task id: %s' % task_id,
                             description=str(e))
 

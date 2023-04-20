@@ -823,7 +823,7 @@ class ComplexTransactionImportScheme(NamedModel, DataTimeStampedModel, Configura
         (USE_TRANSACTION_TYPE_SETTING, gettext_lazy('Use Transaction Type Setting')),
     )
 
-    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+    user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('user code'))
 
     book_uniqueness_settings = models.PositiveSmallIntegerField(default=SKIP, choices=BOOK_UNIQUENESS_CHOICES,
                                                                 verbose_name=gettext_lazy('book uniqueness settings'))

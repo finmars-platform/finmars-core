@@ -294,7 +294,7 @@ class ColumnSortData(models.Model):
                                verbose_name=gettext_lazy('member'), on_delete=models.CASCADE)
 
     name = models.CharField(max_length=255, default='', blank=True, verbose_name=gettext_lazy('name'))
-    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+    user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('user code'))
 
     column_key = models.CharField(max_length=255, null=True, default='', blank=True,
                                   verbose_name=gettext_lazy('column key'))
@@ -365,7 +365,7 @@ class TemplateLayout(BaseUIModel):
                                verbose_name=gettext_lazy('member'), on_delete=models.CASCADE)
     type = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=gettext_lazy('type'))
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=gettext_lazy('name'))
-    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+    user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('user code'))
     is_default = models.BooleanField(default=False, verbose_name=gettext_lazy('is default'))
 
     class Meta(BaseUIModel.Meta):
@@ -392,7 +392,7 @@ class ContextMenuLayout(BaseUIModel, TimeStampedModel):
     member = models.ForeignKey(Member, related_name='context_menu_layouts', verbose_name=gettext_lazy('member'),
                                on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=gettext_lazy('name'))
-    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+    user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('user code'))
     type = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=gettext_lazy('type'))
 
     class Meta(BaseUIModel.Meta):
@@ -419,7 +419,7 @@ class ListLayout(BaseLayout, TimeStampedModel):
     member = models.ForeignKey(Member, related_name='template_list_layouts', verbose_name=gettext_lazy('member'),
                                on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=gettext_lazy('name'))
-    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+    user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('user code'))
     is_default = models.BooleanField(default=False, verbose_name=gettext_lazy('is default'))
     is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
     is_systemic = models.BooleanField(default=False, verbose_name=gettext_lazy('is systemic'))
@@ -460,7 +460,7 @@ class DashboardLayout(BaseUIModel, TimeStampedModel):
     member = models.ForeignKey(Member, related_name='dashboard_layouts', verbose_name=gettext_lazy('member'),
                                on_delete=models.CASCADE)
     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=gettext_lazy('name'))
-    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+    user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('user code'))
     is_default = models.BooleanField(default=False, verbose_name=gettext_lazy('is default'))
     is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
 
@@ -521,7 +521,7 @@ class EditLayout(BaseLayout, TimeStampedModel):
                                on_delete=models.CASCADE)
 
     name = models.CharField(max_length=255, db_index=True, verbose_name=gettext_lazy('name'))
-    user_code = models.CharField(max_length=255, verbose_name=gettext_lazy('user code'))
+    user_code = models.CharField(max_length=1024, verbose_name=gettext_lazy('user code'))
 
     is_default = models.BooleanField(default=False, verbose_name=gettext_lazy('is default'))
     is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
