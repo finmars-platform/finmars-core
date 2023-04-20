@@ -83,7 +83,7 @@ class DataProcedureProcess(object):
 
             try:
 
-                if self.procedure_instance:
+                if not self.procedure_instance:
                     self.procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
                                                                                               master_user=self.master_user,
                                                                                               status=RequestDataFileProcedureInstance.STATUS_PENDING,
