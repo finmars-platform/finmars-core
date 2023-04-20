@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import logging
 import time
+import traceback
 
 import django_filters
 from django.core.exceptions import ObjectDoesNotExist
@@ -2339,6 +2340,78 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
     @action(detail=True, methods=['get', 'put'], url_path='rebook', serializer_class=TransactionTypeProcessSerializer,
             permission_classes=[IsAuthenticated])
     def rebook(self, request, pk=None):
+
+        complex_transaction = self.get_object()
+
+        if request.method == 'GET':
+
+            instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
+                                              process_mode='rebook',
+                                              complex_transaction=complex_transaction,
+                                              clear_execution_log=False,
+                                              record_execution_log=False,
+                                              context=self.get_serializer_context(), member=request.user.member)
+
+            serializer = self.get_serializer(instance=instance)
+            return Response(serializer.data)
+        else:
+
+            with transaction.atomic():
+
+                savepoint = transaction.savepoint()
+
+                st = time.perf_counter()
+
+                _l.info('complex tt status %s' % request.data['complex_transaction_status'])
+
+                uniqueness_reaction = request.data.get('uniqueness_reaction', None)
+
+                # complex_transaction.execution_log = ''
+
+                instance = TransactionTypeProcess(transaction_type=complex_transaction.transaction_type,
+                                                  process_mode=request.data['process_mode'],
+                                                  complex_transaction=complex_transaction,
+                                                  complex_transaction_status=request.data['complex_transaction_status'],
+                                                  context=self.get_serializer_context(),
+                                                  uniqueness_reaction=uniqueness_reaction, member=request.user.member)
+
+                _l.info("==== INIT REBOOK ====")
+
+                try:
+
+                    if request.data['complex_transaction']:
+                        if not request.data['complex_transaction']['status']:
+                            request.data['complex_transaction']['status'] = ComplexTransaction.PRODUCTION
+
+                    serializer = self.get_serializer(instance=instance, data=request.data)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+
+                    if instance.has_errors:
+                        transaction.savepoint_rollback(savepoint)
+
+                        errors = [
+                            instance.general_errors,
+                            instance.transactions_errors,
+                            instance.complex_transaction_errors,
+                            instance.value_errors,
+                            instance.instruments_errors
+                        ]
+
+                        raise Exception("Rebook error %s" % errors)
+                    else:
+                        transaction.savepoint_commit(savepoint)
+
+                    return Response(serializer.data)
+
+                except Exception as e:
+
+                    _l.error('rebook error %s' % e)
+                    _l.error('rebook traceback %s' % traceback.format_exc())
+
+                    transaction.savepoint_rollback(savepoint)
+
+                    raise Exception(e)
 
         with transaction.atomic():
             complex_transaction = self.get_object()

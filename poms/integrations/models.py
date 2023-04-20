@@ -816,7 +816,7 @@ class ComplexTransactionImportScheme(NamedModel, DataTimeStampedModel):
 
     BOOK_UNIQUENESS_CHOICES = (
         (SKIP, gettext_lazy('Skip')),
-        (BOOK_WITHOUT_UNIQUE_CODE, gettext_lazy('Book without Unique Code ')),
+        (BOOK_WITHOUT_UNIQUE_CODE, gettext_lazy('Book without Unique Code')),
         (OVERWRITE, gettext_lazy('Overwrite')),
         (TREAT_AS_ERROR, gettext_lazy('Treat as error')),
         (USE_TRANSACTION_TYPE_SETTING, gettext_lazy('Use Transaction Type Setting')),

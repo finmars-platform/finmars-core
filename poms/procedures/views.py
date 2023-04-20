@@ -15,6 +15,7 @@ from poms.procedures.serializers import RequestDataFileProcedureSerializer, \
     PricingProcedureSerializer, RunProcedureSerializer, PricingParentProcedureInstanceSerializer, \
     RequestDataFileProcedureInstanceSerializer, ExpressionProcedureSerializer, RunExpressionProcedureSerializer, \
     PricingProcedureInstanceSerializer
+from poms.procedures.tasks import execute_data_procedure
 from poms.system_messages.handlers import send_system_message
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -137,25 +138,39 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         master_user = request.user.master_user
         member = request.user.member
 
-        instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member)
-        instance.process()
+        procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=procedure,
+                                                                             master_user=master_user,
+                                                                             member=member,
+                                                                             status=RequestDataFileProcedureInstance.STATUS_PENDING,
+                                                                             schedule_instance=None,
+                                                                             action='request_transaction_file',
+                                                                             provider='finmars',
+                                                                             action_verbose='Request file with Transactions',
+                                                                             provider_verbose='Finmars'
+                                                                             )
 
-        text = "Data File Procedure %s. Start processing" % procedure.name
+        execute_data_procedure.apply_async(
+            kwargs={'procedure_instance_id': procedure_instance.id
+                    })
 
-        send_system_message(master_user=master_user,
-                            performed_by='System',
-                            description=text)
-
-        serializer = self.get_serializer(instance=instance)
+        # instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member)
+        # instance.process()
+        #
+        # text = "Data File Procedure %s. Start processing" % procedure.name
+        #
+        # send_system_message(master_user=master_user,
+        #                     performed_by='System',
+        #                     description=text)
+        #
+        # serializer = self.get_serializer(instance=instance)
 
         return Response({
             'procedure_id': pk,
-            'procedure_instance_id': instance.procedure_instance.id
+            'procedure_instance_id': procedure_instance.id
         })
 
     @action(detail=False, methods=['post'], url_path='execute')
     def execute(self, request):
-
         _l.info("RequestDataFileProcedureViewSet.execute.data %s" % request.data)
 
         user_code = request.data['user_code']
@@ -165,26 +180,27 @@ class RequestDataFileProcedureViewSet(AbstractModelViewSet):
         master_user = request.user.master_user
         member = request.user.member
 
-        instance = DataProcedureProcess(procedure=procedure, master_user=master_user, member=member)
-        if  request.data.get('date_from', None):
-            instance.update_procedure_date_from(request.data['date_from'])
-        if request.data.get('date_to', None):
-            instance.update_procedure_date_to(request.data['date_to'])
+        procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=procedure,
+                                                                             master_user=master_user,
+                                                                             member=member,
+                                                                             status=RequestDataFileProcedureInstance.STATUS_PENDING,
+                                                                             schedule_instance=None,
+                                                                             action='request_transaction_file',
+                                                                             provider='finmars',
+                                                                             action_verbose='Request file with Transactions',
+                                                                             provider_verbose='Finmars'
+                                                                             )
 
-        instance.update_procedure_options(request.data['options'])
-        instance.process()
-
-        text = "Data File Procedure %s. Start processing" % procedure.name
-
-        send_system_message(master_user=master_user,
-                            performed_by='System',
-                            description=text)
-
-        serializer = self.get_serializer(instance=instance)
+        execute_data_procedure.apply_async(
+            kwargs={'procedure_instance_id': procedure_instance.id,
+                    'date_from': request.data.get('date_from', None),
+                    'date_to': request.data.get('date_to', None),
+                    'options': request.data.get('options', None),
+                    })
 
         return Response({
             'procedure_id': procedure.id,
-            'procedure_instance_id': instance.procedure_instance.id
+            'procedure_instance_id': procedure_instance.id
         })
 
 

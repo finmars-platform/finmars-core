@@ -779,6 +779,9 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
             options.add(user_text_3_q, Q.OR)
             options.add(user_text_4_q, Q.OR)
             options.add(user_text_5_q, Q.OR)
+            options.add(Q(transaction_unique_code__icontains=query), Q.OR)
+            options.add(Q(deleted_transaction_unique_code__icontains=query), Q.OR)
+            options.add(Q(code__icontains=query), Q.OR)
 
             qs = qs.filter(options)
 

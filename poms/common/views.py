@@ -133,6 +133,17 @@ class AbstractEvGroupViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelF
             if is_enabled == 'true':
                 filtered_qs = filtered_qs.filter(is_enabled=True)
 
+        try:
+            filtered_qs.model._meta.get_field('is_deleted')
+        except FieldDoesNotExist:
+            pass
+        else:
+            is_deleted = self.request.query_params.get('is_deleted', 'true')
+            if is_deleted == 'true':
+                filtered_qs = filtered_qs.filter(is_deleted=True)
+            else:
+                filtered_qs = filtered_qs.filter(is_deleted=False)
+
         filtered_qs = handle_groups(filtered_qs, request, self.get_queryset(), content_type)
 
         page = self.paginate_queryset(filtered_qs)
