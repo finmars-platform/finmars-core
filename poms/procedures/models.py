@@ -414,6 +414,15 @@ class RequestDataFileProcedureInstance(BaseProcedureInstance):
     def __str__(self):
         return '%s [%s] by %s' % (self.procedure, self.id, self.member)
 
+    def save(self, *args, **kwargs):
+
+        super(RequestDataFileProcedureInstance, self).save(*args, **kwargs)
+
+        count = RequestDataFileProcedureInstance.objects.all().count()
+
+        if count > 1000:
+            RequestDataFileProcedureInstance.objects.all().order_by('id')[0].delete()
+
 
 class ExpressionProcedure(BaseProcedure):
     code = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('code'))
