@@ -433,3 +433,5 @@ class BootstrapConfig(AppConfig):
 
         from poms.common.celery import cancel_existing_tasks
         cancel_existing_tasks(celery_app)
+        from poms.common.celery import cancel_existing_procedures
+        cancel_existing_procedures(celery_app)

@@ -34,12 +34,14 @@ class BaseProcedureInstance(DataTimeStampedModel):
     STATUS_PENDING = 'P'
     STATUS_DONE = 'D'
     STATUS_ERROR = 'E'
+    STATUS_CANCELED = 'C'
 
     STATUS_CHOICES = (
         (STATUS_INIT, gettext_lazy('Init')),
         (STATUS_PENDING, gettext_lazy('Pending')),
         (STATUS_DONE, gettext_lazy('Done')),
         (STATUS_ERROR, gettext_lazy('Error')),
+        (STATUS_CANCELED, gettext_lazy('Canceled')),
     )
 
     STARTED_BY_MEMBER = 'M'
