@@ -412,7 +412,7 @@ class TransactionReportBuilderSql:
                     INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
                     INNER JOIN instruments_instrument i on t.instrument_id = i.id
                     INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
-                    WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND NOT tc.is_deleted AND tc.status_id IN {statuses} {filter_sql_string}
+                    WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND NOT t.is_deleted AND tc.status_id IN {statuses} {filter_sql_string}
                     {user_filters}
                     
                 """
@@ -576,7 +576,7 @@ class TransactionReportBuilderSql:
                     INNER JOIN instruments_instrument i on t.instrument_id = i.id
                     INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
                     INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
-                    WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND NOT tc.is_deleted AND tc.status_id IN {statuses} {filter_sql_string}
+                    WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND NOT t.is_deleted AND tc.status_id IN {statuses} {filter_sql_string}
                     {user_filters}
                     
                     
