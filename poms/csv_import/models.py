@@ -42,7 +42,7 @@ class CsvImportScheme(NamedModel, DataTimeStampedModel, ConfigurationModel):
     content_type = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type'), on_delete=models.CASCADE)
     master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
-    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+    user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('user code'))
 
     filter_expr = models.CharField(max_length=1000, default='', blank=True, null=True,
                                    verbose_name=gettext_lazy('filter expression'))
