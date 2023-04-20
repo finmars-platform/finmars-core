@@ -83,18 +83,19 @@ class DataProcedureProcess(object):
 
             try:
 
-                self.procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
-                                                                                          master_user=self.master_user,
-                                                                                          status=RequestDataFileProcedureInstance.STATUS_PENDING,
-                                                                                          schedule_instance=self.schedule_instance,
-                                                                                          action='request_transaction_file',
-                                                                                          provider='universal',
-                                                                                          date_from=self.procedure.date_from,
-                                                                                          date_to=self.procedure.date_to,
-                                                                                          action_verbose='Request file with Transactions',
-                                                                                          provider_verbose='Universal'
+                if self.procedure_instance:
+                    self.procedure_instance = RequestDataFileProcedureInstance.objects.create(procedure=self.procedure,
+                                                                                              master_user=self.master_user,
+                                                                                              status=RequestDataFileProcedureInstance.STATUS_PENDING,
+                                                                                              schedule_instance=self.schedule_instance,
+                                                                                              action='request_transaction_file',
+                                                                                              provider='universal',
+                                                                                              date_from=self.procedure.date_from,
+                                                                                              date_to=self.procedure.date_to,
+                                                                                              action_verbose='Request file with Transactions',
+                                                                                              provider_verbose='Universal'
 
-                                                                                          )
+                                                                                              )
 
                 send_system_message(master_user=self.master_user,
                                     performed_by='System',

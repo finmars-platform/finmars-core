@@ -80,6 +80,8 @@ excluded_to_track_history_models = [
     'ui.listlayout',
     'ui.editlayout',
 
+    'users.fakesequence',
+
     'finmars_standardized_errors.errorrecord']
 
 
