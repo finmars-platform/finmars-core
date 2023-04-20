@@ -25,7 +25,7 @@ excluded_to_track_history_models = [
     'system_messages.systemmessage',
     'system_messages.systemmessagemember',
     'obj_attrs.genericattribute',
-    'pricing.instrumentpricingpolicy', 'pricing.currencypricingpolicy',
+
 
     'transactions.complextransactioninput',
     'migrations.migration',
@@ -40,6 +40,15 @@ excluded_to_track_history_models = [
 
     'pricing.instrumentpricingschemetype',
     'pricing.currencypricingschemetype',
+    'pricing.instrumentpricingpolicy',
+    'pricing.currencypricingpolicy',
+    'pricing.pricehistoryerror',
+    'pricing.currencyhistoryerror',
+    'pricing.pricingprocedurebloomberginstrumentresult',
+    'pricing.pricingprocedurebloombergforwardinstrumentresult',
+    'pricing.pricingprocedurebloombergcurrencyresult',
+
+
     'integrations.dataprovider',
     'integrations.accrualscheduledownloadmethod',
     'integrations.providerclass',
@@ -71,16 +80,20 @@ excluded_to_track_history_models = [
     'widgets.plreporthistoryitem',
     'widgets.balancereporthistoryitem',
 
-    'pricing.pricehistoryerror',
-    'pricing.pricingprocedurebloomberginstrumentresult',
-    'pricing.pricingprocedurebloombergforwardinstrumentresult',
-    'pricing.pricingprocedurebloombergcurrencyresult',
+
     'portfolios.portfolioregisterrecord',
 
     'ui.listlayout',
     'ui.editlayout',
 
     'users.fakesequence',
+
+    'widgets.plreporthistoryitem',
+    'widgets.balancereporthistoryitem',
+    'file_reports.filereport',
+
+
+
 
     'finmars_standardized_errors.errorrecord']
 
