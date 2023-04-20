@@ -40,6 +40,25 @@ def cancel_existing_tasks(celery_app):
 
     _l.info("Canceled %s tasks " % len(tasks))
 
+
+def cancel_existing_procedures(celery_app):
+    from poms.procedures.models import RequestDataFileProcedureInstance
+    procedures = RequestDataFileProcedureInstance.objects.filter(status__in=[RequestDataFileProcedureInstance.STATUS_PENDING, RequestDataFileProcedureInstance.STATUS_INIT])
+
+    for procedure in procedures:
+        procedure.status = RequestDataFileProcedureInstance.STATUS_CANCELED
+
+        # try:  # just in case if rabbitmq still holds a task
+        #     if task.celery_task_id:
+        #         celery_app.control.revoke(task.celery_task_id, terminate=True)
+        #
+        # except Exception as e:
+        #     _l.error("Something went wrong %s" % e)
+
+        procedure.save()
+
+    _l.info("Canceled %s procedures " % len(procedures))
+
 @task_prerun.connect
 def set_task_context(task_id, task, kwargs=None, **unused):
     _l.info('task %s' % task)

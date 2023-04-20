@@ -15,16 +15,57 @@ def get_storage():
     storage = None
 
     if settings.SFTP_STORAGE_HOST:
-        storage = SFTPStorage()
+
+        class SftpOverwriteStorage(SFTPStorage):
+            """
+            Custom file system storage: Overwrite get_available_name to make Django replace files instead of
+            creating new ones over and over again.
+            """
+            def get_available_name(self, name, max_length=None):
+                self.delete(name)
+                return super().get_available_name(name, max_length)
+
+        storage = SftpOverwriteStorage()
 
     if settings.AWS_S3_ACCESS_KEY_ID:
-        storage = S3Boto3Storage()
+
+        class S3BotoOverwriteStorage(S3Boto3Storage):
+            """
+            Custom file system storage: Overwrite get_available_name to make Django replace files instead of
+            creating new ones over and over again.
+            """
+            def get_available_name(self, name, max_length=None):
+                self.delete(name)
+                return super().get_available_name(name, max_length)
+
+        storage = S3BotoOverwriteStorage()
 
     if settings.AZURE_ACCOUNT_KEY:
-        storage = AzureStorage()
+
+        class AzureOverwriteStorage(AzureStorage):
+            """
+            Custom file system storage: Overwrite get_available_name to make Django replace files instead of
+            creating new ones over and over again.
+            """
+            def get_available_name(self, name, max_length=None):
+                self.delete(name)
+                return super().get_available_name(name, max_length)
+
+        storage = AzureOverwriteStorage()
 
     if settings.USE_FILESYSTEM_STORAGE:
-        storage = FileSystemStorage()
+
+        class FileSystemOverwriteStorage(FileSystemStorage):
+            """
+            Custom file system storage: Overwrite get_available_name to make Django replace files instead of
+            creating new ones over and over again.
+            """
+            def get_available_name(self, name, max_length=None):
+                self.delete(name)
+                return super().get_available_name(name, max_length)
+
+        storage = FileSystemOverwriteStorage()
+
 
     return storage
 

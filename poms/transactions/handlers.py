@@ -2173,16 +2173,13 @@ class TransactionTypeProcess(object):
 
         self.record_execution_progress('Calculating Unique Code')
 
-        ctrn = formula.value_prepare(self.complex_transaction)
-        trns = formula.value_prepare(self.complex_transaction.transactions.all())
-
         names = {
-            'complex_transaction': ctrn,
-            'transactions': trns,
+
         }
 
         for key, value in self.values.items():
             names[key] = value
+
 
         try:
 
@@ -2244,13 +2241,18 @@ class TransactionTypeProcess(object):
 
             if exist:
 
-                self.complex_transaction.transaction_unique_code = exist.transaction_unique_code
-                self.complex_transaction.code = exist.code
-
                 self.record_execution_progress(
                     'Unique Code is already in use, can create transaction. Previous Transaction is deleted (OVERWRITE)')
                 exist.fake_delete()
+
+                self.complex_transaction = ComplexTransaction(transaction_type=self.transaction_type, date=None,
+                                                              master_user=self.transaction_type.master_user)
+
+                self.complex_transaction.transaction_unique_code = exist.transaction_unique_code
+                self.complex_transaction.code = exist.code
+
                 self.uniqueness_status = 'overwrite'
+
             else:
                 self.uniqueness_status = 'create'
                 self.record_execution_progress('Unique Code is free, can create transaction (OVERWRITE)')
@@ -2437,6 +2439,15 @@ class TransactionTypeProcess(object):
         _l.debug('TransactionTypeProcess: book_create_event_actions done: %s',
                  "{:3.3f}".format(time.perf_counter() - create_event_st))
 
+
+        '''
+        Executing transaction_unique_code
+        '''
+        execute_uniqueness_expression_st = time.perf_counter()
+        self.execute_uniqueness_expression()
+        _l.info('TransactionTypeProcess: execute_uniqueness_expression done: %s',
+                "{:3.3f}".format(time.perf_counter() - execute_uniqueness_expression_st))
+
         '''
         Creating complex_transaction itself
         '''
@@ -2458,6 +2469,15 @@ class TransactionTypeProcess(object):
 
         if self.source:
             self.complex_transaction.source = self.source
+
+
+        if self.complex_transaction.transaction_unique_code:
+
+            count = ComplexTransaction.objects.filter(
+                transaction_unique_code=self.complex_transaction.transaction_unique_code).count()
+
+            if count > 0:
+                raise Exception("Transaction Unique Code must be unique")
 
         self.complex_transaction.save()  # save executed text and date expression
         self._context['complex_transaction'] = self.complex_transaction
@@ -2521,13 +2541,7 @@ class TransactionTypeProcess(object):
         _l.info('TransactionTypeProcess: execute_user_fields_expressions done: %s',
                 "{:3.3f}".format(time.perf_counter() - execute_user_fields_expressions_st))
 
-        '''
-        Executing transaction_unique_code
-        '''
-        execute_uniqueness_expression_st = time.perf_counter()
-        self.execute_uniqueness_expression()
-        _l.info('TransactionTypeProcess: execute_uniqueness_expression done: %s',
-                "{:3.3f}".format(time.perf_counter() - execute_uniqueness_expression_st))
+
 
         # _l.info("LOG %s" % self.complex_transaction.execution_log)
         # self.assign_permissions_to_complex_transaction()
@@ -2543,17 +2557,7 @@ class TransactionTypeProcess(object):
 
         self.record_execution_progress('Process time: %s' % "{:3.3f}".format(time.perf_counter() - process_st))
 
-        _l.info("TransactionTypeProcess: Before Final save has errors %s" % self.has_errors)
-
         if not self.has_errors:
-
-            if self.complex_transaction.transaction_unique_code:
-
-                count = ComplexTransaction.objects.filter(
-                    transaction_unique_code=self.complex_transaction.transaction_unique_code).count()
-
-                if count > 0:
-                    raise Exception("Transaction Unique Code must be unique")
 
             self.complex_transaction.save()  # save executed text and date expression
 
