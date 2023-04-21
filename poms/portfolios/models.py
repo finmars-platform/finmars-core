@@ -120,9 +120,6 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
 
     '''
 
-    AUTOMATIC = "Automatic"
-    MANUAL = "Manual"
-
     master_user = models.ForeignKey(MasterUser, related_name='portfolio_register_records',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
