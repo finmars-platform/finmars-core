@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("portfolios", "0004_alter_portfolioregisterrecord_cash_currency"),
+        ("portfolios", "0005_alter_portfolio_user_code_and_more"),
     ]
 
     operations = [
