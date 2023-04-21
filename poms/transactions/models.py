@@ -2448,7 +2448,7 @@ class ComplexTransaction(DataTimeStampedModel):
         verbose_name=gettext_lazy("visibility_status"),
     )
 
-    code = models.IntegerField(default=0, verbose_name=gettext_lazy("code"), db_index=True)
+    code = models.IntegerField(unique=True, verbose_name=gettext_lazy("code"), db_index=True)
 
     transaction_unique_code = models.CharField(
         max_length=255,
@@ -2765,9 +2765,7 @@ class ComplexTransaction(DataTimeStampedModel):
 
             fields_to_update = ["is_deleted", "modified"]
 
-            for transaction in self.transactions.all():
-                transaction.is_deleted = True
-                transaction.save()
+            self.transactions.all().delete()
 
             if hasattr(self, "transaction_unique_code"):
                 self.deleted_transaction_unique_code = self.transaction_unique_code
@@ -2978,7 +2976,7 @@ class Transaction(models.Model):
         default=0.0, verbose_name=gettext_lazy("complex transaction order")
     )
     transaction_code = models.IntegerField(
-        default=0, verbose_name=gettext_lazy("transaction code")
+        unique=True, verbose_name=gettext_lazy("transaction code")
     )
     transaction_class = models.ForeignKey(
         TransactionClass,

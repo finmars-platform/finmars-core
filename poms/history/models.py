@@ -26,7 +26,6 @@ excluded_to_track_history_models = [
     'system_messages.systemmessagemember',
     'obj_attrs.genericattribute',
 
-
     'transactions.complextransactioninput',
     'migrations.migration',
 
@@ -47,7 +46,6 @@ excluded_to_track_history_models = [
     'pricing.pricingprocedurebloomberginstrumentresult',
     'pricing.pricingprocedurebloombergforwardinstrumentresult',
     'pricing.pricingprocedurebloombergcurrencyresult',
-
 
     'integrations.dataprovider',
     'integrations.accrualscheduledownloadmethod',
@@ -80,7 +78,6 @@ excluded_to_track_history_models = [
     'widgets.plreporthistoryitem',
     'widgets.balancereporthistoryitem',
 
-
     'portfolios.portfolioregisterrecord',
 
     'ui.listlayout',
@@ -91,9 +88,6 @@ excluded_to_track_history_models = [
     'widgets.plreporthistoryitem',
     'widgets.balancereporthistoryitem',
     'file_reports.filereport',
-
-
-
 
     'finmars_standardized_errors.errorrecord']
 
@@ -171,9 +165,8 @@ class HistoricalRecord(models.Model):
 def get_user_code_from_instance(instance, content_type_key):
     user_code = None
 
-    if getattr(instance, 'transaction_unique_code', None):
-        user_code = instance.transaction_unique_code
-    elif getattr(instance, 'code', None) and content_type_key == 'transactions.transaction':
+    if getattr(instance, 'code', None) and (
+            content_type_key == 'transactions.transaction' or content_type_key == 'transactions.complextransaction'):
         user_code = instance.code
     elif getattr(instance, 'user_code', None):
         user_code = instance.user_code
