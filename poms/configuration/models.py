@@ -34,7 +34,7 @@ class ConfigurationModel(models.Model):
     def save(self, *args, **kwargs):
 
 
-        if self.configuration_code not in self.user_code:
+        if self.user_code and self.configuration_code not in self.user_code:
 
             self.user_code = replace_special_chars_and_spaces(self.user_code).lower()
 

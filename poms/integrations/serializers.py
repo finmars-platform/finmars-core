@@ -1149,7 +1149,7 @@ class ImportInstrumentSerializer(serializers.Serializer):
         return {}
 
 
-class ImportInstrumentCbondsSerializer(serializers.Serializer):
+class ImportInstrumentDatabaseSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
     instrument_code = serializers.CharField(required=True)
@@ -1162,11 +1162,8 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
 
     def create(self, validated_data):
 
-        if settings.FINMARS_DATABASE_URL:
+        if settings.FINMARS_DATABASE_URL:   # FINMARS_DATABASE Refactoring
 
-            # TODO FINMARS_DATABASE_REFACTOR
-
-            task_result_overrides = validated_data.get('task_result_overrides', None)
             instance = ImportInstrumentEntry(**validated_data)
 
             task = CeleryTask.objects.create(
@@ -1175,28 +1172,25 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
                 verbose_name="Download Instrument From Finmars Database",
                 type='download_instrument_from_finmars_database'
             )
-
-            options = {
+            task.options_object = {
                 'reference': instance.instrument_code,
                 'instrument_name': instance.instrument_name,
                 'instrument_type_user_code': instance.instrument_type_code
             }
-
-            task.options_object = options
-
             task.save()
 
-            instance.task_object = task
-
-            _l.info("ImportInstrumentCbondsSerializer create task id %s" % task.id)
+            _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
             download_instrument_finmars_database(task.id)
 
-            task = CeleryTask.objects.get(id=task.id)
+            task.refresh_from_db()
 
-            if task and task.result_object:
-                instance.result_id = task.result_object['instrument_id']
+            if task.result_object:
+                instance.result_id = task.result_object.get('instrument_id')
+            if task.error_message:
+                instance.errors = task.error_message
 
+            instance.task_object = task
             return instance
 
 

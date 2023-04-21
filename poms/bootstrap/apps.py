@@ -365,17 +365,18 @@ class BootstrapConfig(AppConfig):
             _l.info("load_init_configuration error %s" % e)
 
     def create_base_folders(self):
-        from poms_app import settings
-        from poms.users.models import Member
         from poms.common.storage import get_storage
         from tempfile import NamedTemporaryFile
+        from poms_app import settings
+        from poms.users.models import Member
 
-        storage = get_storage()
-        if not storage:
-            _l.error("create_base_folders: no storage defined!")
-            return
+        try:
 
-        _l.info("create base folders in storage, if not exists")
+            storage = get_storage()
+            if not storage:
+                return
+
+            _l.info("create base folders in storage, if not exists")
         try:
             if not storage.exists(settings.BASE_API_URL + '/.system/.init'):
                 path = settings.BASE_API_URL + '/.system/.init'

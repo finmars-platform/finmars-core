@@ -149,6 +149,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
             user=self.user,
             master_user=self.user.master_user,
             is_admin=True,
+            is_owner=True,
         )
         self.client.force_authenticate(self.user)
 

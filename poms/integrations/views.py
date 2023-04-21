@@ -5,11 +5,10 @@ import logging
 import django_filters
 from celery.result import AsyncResult
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Prefetch
 from django.http import HttpResponse
 from django_filters.rest_framework import FilterSet, DjangoFilterBackend
-from rest_framework.exceptions import MethodNotAllowed, ValidationError
+from rest_framework.exceptions import ValidationError
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -59,7 +58,7 @@ from poms.integrations.serializers import ImportConfigSerializer, ImportInstrume
     InstrumentClassifierMappingSerializer, AccountTypeMappingSerializer, TestCertificateSerializer, \
     ComplexTransactionImportSchemeLightSerializer, BloombergDataProviderCredentialSerializer, \
     PricingConditionMappingSerializer, TransactionFileResultSerializer, DataProviderSerializer, \
-    InstrumentDownloadSchemeLightSerializer, ImportInstrumentCbondsSerializer, ImportUnifiedDataProviderSerializer, \
+    InstrumentDownloadSchemeLightSerializer, ImportInstrumentDatabaseSerializer, ImportUnifiedDataProviderSerializer, \
     ImportCurrencyCbondsSerializer
 from poms.integrations.tasks import complex_transaction_csv_file_import_parallel, \
     complex_transaction_csv_file_import_validate_parallel
@@ -693,8 +692,8 @@ class ImportInstrumentViewSet(AbstractViewSet):
         return Response(serializer.data)
 
 
-class ImportInstrumentCbondsViewSet(AbstractViewSet):
-    serializer_class = ImportInstrumentCbondsSerializer
+class ImportInstrumentDatabaseViewSet(AbstractViewSet):
+    serializer_class = ImportInstrumentDatabaseSerializer
     permission_classes = AbstractViewSet.permission_classes + [
         PomsFunctionPermission
     ]
@@ -1322,15 +1321,15 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
         complex_transaction_csv_file_import_validate_parallel(task_id=celery_task.pk)
 
         # def oncommit():
-        # 
+        #
         #     res = complex_transaction_csv_file_import_validate_parallel.apply_async(kwargs={'task_id': celery_task.pk})
-        # 
+        #
         #     _l.info('ComplexTransactionCsvFileImportViewSet complex_transaction_csv_file_import_validate_parallel %' % res.id)
-        # 
+        #
         #     celery_task.celery_task_id = res.id
-        # 
+        #
         #     celery_task.save()
-        # 
+        #
         # transaction.on_commit(oncommit)
 
         _l.info('ComplexTransactionCsvFileImportValidateViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
