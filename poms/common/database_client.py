@@ -23,15 +23,17 @@ class DatabaseService:
     def __init__(self):
         self.http_client = HttpClient()
 
-    def get_info(self, service: str, request_options: dict) -> Monad:
-        _l.info(f"{log} started, service={service} request_options={request_options}")
+    def get_info(self, service_name: str, request_options: dict) -> Monad:
+        _l.info(
+            f"{log} started, service={service_name} request_options={request_options}"
+        )
 
-        if service not in SERVICE_URLS or not request_options:
+        if service_name not in SERVICE_URLS or not request_options:
             raise RuntimeError(f"{log} invalid args!")
 
         try:
             data = self.http_client.post(
-                url=SERVICE_URLS[service],
+                url=SERVICE_URLS[service_name],
                 data=json.dumps(request_options),
             )
         except HttpClientError as err:
