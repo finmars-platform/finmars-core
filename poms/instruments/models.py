@@ -1134,7 +1134,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                         price.save(update_fields=['accrued_price'])
 
     def get_accrual_size(self, price_date):
-        if price_date >= self.maturity_date:
+        if not self.maturity_date or (price_date >= self.maturity_date):
             return 0.0
 
         accrual = self.find_accrual(price_date)
@@ -1151,7 +1151,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
     def get_accrual_factor(self, price_date):
         from poms.common.formula_accruals import coupon_accrual_factor
 
-        if price_date >= self.maturity_date:
+        if not self.maturity_date or (price_date >= self.maturity_date):
             # return self.maturity_price
             return 0.0
 
