@@ -20,8 +20,8 @@ from poms.portfolios.models import (
     PortfolioBundle,
     PortfolioRegister,
     PortfolioRegisterRecord,
-    get_price_calculation_type,
 )
+from poms.portfolios.utils import get_price_calculation_type
 from poms.users.fields import MasterUserField
 from poms.users.models import EcosystemDefault
 

@@ -15,8 +15,8 @@ from poms.instruments.models import PricingPolicy
 from poms.portfolios.models import (
     PortfolioRegister,
     PortfolioRegisterRecord,
-    get_price_calculation_type,
 )
+from poms.portfolios.utils import get_price_calculation_type
 from poms.reports.common import Report
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.system_messages.handlers import send_system_message
