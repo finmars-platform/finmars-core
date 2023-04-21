@@ -72,12 +72,17 @@ class ConfigurationViewSet(AbstractModelViewSet):
 
             manifest_filepath = source_directory + '/manifest.json'
 
-            save_json_to_file(manifest_filepath, {
-                "name": configuration.name,
-                "configuration_code": configuration.configuration_code,
-                "version": configuration.version,
-                "date": str(date.today()),
-            })
+            manifest = configuration.manifest
+
+            if not manifest:
+                manifest = {
+                    "name": configuration.name,
+                    "configuration_code": configuration.configuration_code,
+                    "version": configuration.version,
+                    "date": str(date.today()),
+                }
+
+            save_json_to_file(manifest_filepath, manifest)
 
             if configuration.from_marketplace:
                 storage_directory = settings.BASE_API_URL + '/configurations/' + configuration.configuration_code + '/' + configuration.version + '/'

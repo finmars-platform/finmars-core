@@ -1,8 +1,10 @@
+import json
+
 from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.configuration.utils import replace_special_chars_and_spaces
-
+from django.core.serializers.json import DjangoJSONEncoder
 
 class ConfigurationModel(models.Model):
     '''
@@ -62,6 +64,22 @@ class Configuration(models.Model):
     version = models.CharField(max_length=255, verbose_name=gettext_lazy('version'))
 
     from_marketplace = models.BooleanField(default=False, verbose_name=gettext_lazy('from marketplace'))
+    is_package = models.BooleanField(default=False, verbose_name=gettext_lazy('is package'))
+
+    manifest_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('manifest_data'))
+
+    @property
+    def manifest(self):
+        if self.manifest_data is None:
+            return None
+        return json.loads(self.manifest_data)
+
+    @manifest.setter
+    def manifest(self, value):
+        if value is None:
+            self.manifest_data = None
+        else:
+            self.manifest_data = json.dumps(value, cls=DjangoJSONEncoder, sort_keys=True, indent=1)
 
     def __str__(self):
         return '%s (%s)' % (self.configuration_code, self.version)
