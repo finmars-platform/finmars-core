@@ -22,7 +22,7 @@ from poms_app import settings
 storage = get_storage()
 
 from poms.configuration.tasks import import_configuration, push_configuration_to_marketplace, \
-    install_configuration_from_marketplace
+    install_configuration_from_marketplace, install_package_from_marketplace
 
 _l = logging.getLogger('poms.configuration')
 
@@ -182,6 +182,7 @@ class ConfigurationViewSet(AbstractModelViewSet):
         options_object = {
             'configuration_code': request.data.get('configuration_code', None),
             'version': request.data.get('version', None),
+            'is_package': request.data.get('is_package', False),
             "access_token": get_access_token(request)
             # TODO check this later, important security thins, need to be destroyed inside task
         }
@@ -189,7 +190,10 @@ class ConfigurationViewSet(AbstractModelViewSet):
         celery_task.options_object = options_object
         celery_task.save()
 
-        install_configuration_from_marketplace.apply_async(kwargs={'task_id': celery_task.id})
+        if request.data.get('is_package', False):
+            install_package_from_marketplace.apply_async(kwargs={'task_id': celery_task.id})
+        else:
+            install_configuration_from_marketplace.apply_async(kwargs={'task_id': celery_task.id})
 
         _l.info('celery_task %s' % celery_task.id)
 
