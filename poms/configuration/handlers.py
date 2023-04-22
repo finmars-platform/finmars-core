@@ -1,12 +1,12 @@
+import logging
 import traceback
 
 from poms.configuration.utils import save_serialized_entity, save_serialized_attribute_type, save_serialized_layout
 
-import logging
 _l = logging.getLogger('poms.configuration')
 
-def export_configuration_to_folder(source_directory, configuration, user):
 
+def export_configuration_to_folder(source_directory, configuration, user):
     try:
 
         context = {
@@ -29,6 +29,11 @@ def export_configuration_to_folder(source_directory, configuration, user):
                                source_directory + '/account-types',
                                context)
 
+        save_serialized_entity('instruments.pricingpolicy',
+                               configuration.configuration_code,
+                               source_directory + '/pricing-policies',
+                               context)
+
         save_serialized_entity('csv_import.csvimportscheme',
                                configuration.configuration_code,
                                source_directory + '/simple-import-schemes',
@@ -37,6 +42,21 @@ def export_configuration_to_folder(source_directory, configuration, user):
         save_serialized_entity('integrations.complextransactionimportscheme',
                                configuration.configuration_code,
                                source_directory + '/complex-transaction-import-schemes',
+                               context)
+
+        save_serialized_entity('integrations.instrumentdownloadscheme',
+                               configuration.configuration_code,
+                               source_directory + '/instrument-download-schemes',
+                               context)
+
+        save_serialized_entity('pricing.instrumentpricingscheme',
+                               configuration.configuration_code,
+                               source_directory + '/instrument-pricing-schemes',
+                               context)
+
+        save_serialized_entity('pricing.currencypricingscheme',
+                               configuration.configuration_code,
+                               source_directory + '/currency-pricing-schemes',
                                context)
 
         save_serialized_entity('procedures.pricingprocedure',
