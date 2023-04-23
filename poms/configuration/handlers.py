@@ -6,48 +6,72 @@ from poms.configuration.utils import save_serialized_entity, save_serialized_att
 _l = logging.getLogger('poms.configuration')
 
 
-def export_configuration_to_folder(source_directory, configuration, user):
+def export_configuration_to_folder(source_directory, configuration, master_user, member):
     try:
 
         context = {
-            'master_user': user.master_user,
-            'member': user.member
+            'master_user': master_user,
+            'member': member
         }
+
+        _l.info("Going to export: transactions.transactiontype")
 
         save_serialized_entity('transactions.transactiontype',
                                configuration.configuration_code,
                                source_directory + '/transaction-types',
                                context)
 
+        _l.info("Exported: transactions.transactiontype")
+
+        _l.info("Going to export: instruments.instrumenttype")
+
         save_serialized_entity('instruments.instrumenttype',
                                configuration.configuration_code,
                                source_directory + '/instrument-types',
                                context)
+
+        _l.info("Exported: instruments.instrumenttype")
 
         save_serialized_entity('accounts.accounttype',
                                configuration.configuration_code,
                                source_directory + '/account-types',
                                context)
 
+        _l.info("Going to export: accounts.accounttype")
+
         save_serialized_entity('instruments.pricingpolicy',
                                configuration.configuration_code,
                                source_directory + '/pricing-policies',
                                context)
+
+        _l.info("Exported: accounts.accounttype")
+
+        _l.info("Going to export: csv_import.csvimportscheme")
 
         save_serialized_entity('csv_import.csvimportscheme',
                                configuration.configuration_code,
                                source_directory + '/simple-import-schemes',
                                context)
 
+        _l.info("Exported: csv_import.csvimportscheme")
+
+        _l.info("Going to export: integrations.complextransactionimportscheme")
+
         save_serialized_entity('integrations.complextransactionimportscheme',
                                configuration.configuration_code,
                                source_directory + '/complex-transaction-import-schemes',
                                context)
 
+        _l.info("Exported: integrations.complextransactionimportscheme")
+
+        _l.info("Going to export: integrations.instrumentdownloadscheme")
+
         save_serialized_entity('integrations.instrumentdownloadscheme',
                                configuration.configuration_code,
                                source_directory + '/instrument-download-schemes',
                                context)
+
+        _l.info("Exported: integrations.instrumentdownloadscheme")
 
         save_serialized_entity('pricing.instrumentpricingscheme',
                                configuration.configuration_code,

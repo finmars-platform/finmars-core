@@ -146,7 +146,9 @@ class InstrumentPricingSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaS
     class Meta:
         model = InstrumentPricingScheme
         fields = (
-            'id', 'name', 'user_code', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter',
+            'id', 'name',
+            'user_code', 'configuration_code',
+            'master_user', 'notes', 'notes_for_users', 'notes_for_parameter',
             'error_handler', 'type',
             'type_settings')
 
@@ -775,7 +777,10 @@ class CurrencyPricingSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaSer
     class Meta:
         model = CurrencyPricingScheme
         fields = (
-            'id', 'name', 'user_code', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter',
+            'id', 'name',
+            'user_code', 'configuration_code',
+
+            'master_user', 'notes', 'notes_for_users', 'notes_for_parameter',
             'error_handler', 'type',
             'type_settings')
 

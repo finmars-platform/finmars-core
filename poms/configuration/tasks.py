@@ -2,7 +2,7 @@ import json
 import logging
 import os
 import traceback
-
+from datetime import date
 import requests
 from celery import shared_task
 from django.utils.timezone import now
@@ -11,8 +11,10 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyRequest, ProxyUser
 from poms.common.storage import download_folder_as_zip, get_storage
 from poms.common.utils import get_serializer
+from poms.configuration.handlers import export_configuration_to_folder
 from poms.configuration.models import Configuration
-from poms.configuration.utils import unzip_to_directory, list_json_files, read_json_file
+from poms.configuration.utils import unzip_to_directory, list_json_files, read_json_file, zip_directory, \
+    save_directory_to_storage, save_json_to_file
 from poms.file_reports.models import FileReport
 from poms_app import settings
 
@@ -194,6 +196,75 @@ def import_configuration(self, task_id):
 
         _l.error('import_configuration error: %s' % str(e))
         _l.error('import_configuration traceback: %s' % traceback.format_exc())
+
+        task.status = CeleryTask.STATUS_ERROR
+        task.error_message = str(e)
+        task.save()
+
+
+@shared_task(name='configuration.export_configuration', bind=True)
+def export_configuration(self, task_id):
+    _l.info("export_configuration")
+
+    task = CeleryTask.objects.get(id=task_id)
+    task.celery_task_id = self.request.id
+    task.status = CeleryTask.STATUS_PENDING
+    task.save()
+
+    try:
+
+        configuration_code = task.options_object['configuration_code']
+
+        configuration = Configuration.objects.get(configuration_code=configuration_code)
+
+        _l.info('configuration %s' % configuration)
+
+        zip_filename = configuration.name + '.zip'
+        source_directory = os.path.join(settings.BASE_DIR,
+                                        'configurations/' + str(task.id) + '/source')
+        output_zipfile = os.path.join(settings.BASE_DIR,
+                                      'configurations/' + str(task.id) + '/' + zip_filename)
+
+        export_configuration_to_folder(source_directory, configuration, task.master_user, task.member)
+
+        manifest_filepath = source_directory + '/manifest.json'
+
+        manifest = configuration.manifest
+
+        if not manifest:
+            manifest = {
+                "name": configuration.name,
+                "configuration_code": configuration.configuration_code,
+                "version": configuration.version,
+                "date": str(date.today()),
+            }
+
+        save_json_to_file(manifest_filepath, manifest)
+
+        if configuration.from_marketplace:
+            storage_directory = settings.BASE_API_URL + '/configurations/' + configuration.configuration_code + '/' + configuration.version + '/'
+        else:
+            storage_directory = settings.BASE_API_URL + '/configurations/custom/' + configuration.configuration_code + '/' + configuration.version + '/'
+
+        save_directory_to_storage(source_directory, storage_directory)
+
+        # Create Configuration zip file
+        zip_directory(source_directory, output_zipfile)
+
+        # storage.save(output_zipfile, tmpf)
+
+        # response = DeleteFileAfterResponse(open(output_zipfile, 'rb'), content_type='application/zip',
+        #                                    path_to_delete=output_zipfile)
+        # response['Content-Disposition'] = u'attachment; filename="{filename}'.format(
+        #     filename=zip_filename)
+
+        task.status = CeleryTask.STATUS_DONE
+        task.save()
+
+    except Exception as e:
+
+        _l.error('export_configuration error: %s' % str(e))
+        _l.error('export_configuration traceback: %s' % traceback.format_exc())
 
         task.status = CeleryTask.STATUS_ERROR
         task.error_message = str(e)
@@ -444,11 +515,10 @@ def install_package_from_marketplace(self, task_id):
         configuration.save()
 
         for key, value in configuration.manifest['dependencies'].items():
-
             module_celery_task = CeleryTask.objects.create(master_user=task.master_user,
-                                                    member=task.member,
-                                                    verbose_name="Install Configuration From Marketplace",
-                                                    type='install_configuration_from_marketplace')
+                                                           member=task.member,
+                                                           verbose_name="Install Configuration From Marketplace",
+                                                           type='install_configuration_from_marketplace')
 
             options_object = {
                 'configuration_code': key,

@@ -186,7 +186,9 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
 
     class Meta:
         model = PricingPolicy
-        fields = ['id', 'master_user', 'user_code', 'name', 'short_name', 'notes', 'expr',
+        fields = ['id', 'master_user',
+                  'user_code', 'configuration_code',
+                  'name', 'short_name', 'notes', 'expr',
                   'default_instrument_pricing_scheme', 'default_currency_pricing_scheme']
 
     def __init__(self, *args, **kwargs):
