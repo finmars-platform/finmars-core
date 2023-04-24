@@ -257,7 +257,7 @@ def export_configuration(self, task_id):
 
         save_json_to_file(manifest_filepath, manifest)
 
-        if configuration.from_marketplace:
+        if configuration.is_from_marketplace:
             storage_directory = settings.BASE_API_URL + '/configurations/' + configuration.configuration_code + '/' + configuration.version + '/'
         else:
             storage_directory = settings.BASE_API_URL + '/configurations/custom/' + configuration.configuration_code + '/' + configuration.version + '/'
@@ -309,7 +309,7 @@ def push_configuration_to_marketplace(self, task_id):
 
         configuration = Configuration.objects.get(configuration_code=options_object['configuration_code'])
 
-        if configuration.from_marketplace:
+        if configuration.is_from_marketplace:
             path = settings.BASE_API_URL + '/configurations/' + configuration.configuration_code + '/' + configuration.version
         else:
             path = settings.BASE_API_URL + '/configurations/custom/' + configuration.configuration_code + '/' + configuration.version
@@ -442,7 +442,7 @@ def install_configuration_from_marketplace(self, task_id):
         configuration.version = remote_configuration_release['version']
         configuration.is_package = False
         configuration.manifest = remote_configuration_release['manifest']
-        configuration.from_marketplace = True
+        configuration.is_from_marketplace = True
 
         configuration.save()
 
@@ -552,7 +552,7 @@ def install_package_from_marketplace(self, task_id):
         configuration.version = remote_configuration_release['version']
         configuration.is_package = True
         configuration.manifest = remote_configuration_release['manifest']
-        configuration.from_marketplace = True
+        configuration.is_from_marketplace = True
 
         configuration.save()
 
