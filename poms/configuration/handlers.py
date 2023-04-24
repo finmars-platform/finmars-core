@@ -35,6 +35,11 @@ def export_configuration_to_directory(source_directory, configuration, master_us
 
         _l.info("Going to export: transactions.transactiontype")
 
+        save_serialized_entity('transactions.transactiontypegroup',
+                               configuration.configuration_code,
+                               source_directory + '/transaction-type-groups',
+                               context)
+
         save_serialized_entity('transactions.transactiontype',
                                configuration.configuration_code,
                                source_directory + '/transaction-types',
