@@ -1,11 +1,12 @@
 import os
+import shutil
 
 from rest_framework import serializers
 
 from poms.common.storage import get_storage
 from poms.configuration.models import Configuration
 from poms_app import settings
-import shutil
+
 storage = get_storage()
 
 import logging
@@ -14,9 +15,13 @@ _l = logging.getLogger('poms.configuration')
 
 
 class ConfigurationSerializer(serializers.ModelSerializer):
+    manifest = serializers.JSONField(allow_null=True, required=False)
+
     class Meta:
         model = Configuration
-        fields = ('id', 'configuration_code', 'name', 'short_name', 'description', 'version', 'from_marketplace')
+        fields = (
+            'id', 'configuration_code', 'name', 'short_name', 'description', 'version', 'is_from_marketplace',
+            'is_package', 'manifest')
 
 
 class ConfigurationImport:

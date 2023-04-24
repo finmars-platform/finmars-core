@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import PricingPolicy, PriceHistory
 from poms.pricing.models import InstrumentPricingScheme, InstrumentPricingSchemeType, CurrencyPricingSchemeType, \
@@ -104,14 +104,14 @@ class CurrencyPricingSchemeFixerParametersSerializer(serializers.ModelSerializer
     class Meta:
         model = CurrencyPricingSchemeFixerParameters
         fields = (
-        'id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'error_text_expr')
+            'id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'error_text_expr')
 
 
 class CurrencyPricingSchemeCbondsParametersSerializer(serializers.ModelSerializer):
     class Meta:
         model = CurrencyPricingSchemeCbondsParameters
         fields = (
-        'id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'error_text_expr')
+            'id', 'currency_pricing_scheme', 'expr', 'default_value', 'attribute_key', 'value_type', 'error_text_expr')
 
 
 class InstrumentForwardsPricingSchemeBloombergParametersSerializer(serializers.ModelSerializer):
@@ -133,7 +133,7 @@ class InstrumentPricingSchemeTypeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'notes', 'input_type')
 
 
-class InstrumentPricingSchemeSerializer(ModelWithTimeStampSerializer):
+class InstrumentPricingSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
 
     type_settings = serializers.SerializerMethodField()
@@ -146,7 +146,9 @@ class InstrumentPricingSchemeSerializer(ModelWithTimeStampSerializer):
     class Meta:
         model = InstrumentPricingScheme
         fields = (
-            'id', 'name', 'user_code', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter',
+            'id', 'name',
+            'user_code', 'configuration_code',
+            'master_user', 'notes', 'notes_for_users', 'notes_for_parameter',
             'error_handler', 'type',
             'type_settings')
 
@@ -762,7 +764,7 @@ class CurrencyPricingSchemeTypeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'notes', 'input_type')
 
 
-class CurrencyPricingSchemeSerializer(ModelWithTimeStampSerializer):
+class CurrencyPricingSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
 
     type_settings = serializers.SerializerMethodField()
@@ -775,7 +777,10 @@ class CurrencyPricingSchemeSerializer(ModelWithTimeStampSerializer):
     class Meta:
         model = CurrencyPricingScheme
         fields = (
-            'id', 'name', 'user_code', 'master_user', 'notes', 'notes_for_users', 'notes_for_parameter',
+            'id', 'name',
+            'user_code', 'configuration_code',
+
+            'master_user', 'notes', 'notes_for_users', 'notes_for_parameter',
             'error_handler', 'type',
             'type_settings')
 

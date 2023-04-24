@@ -163,7 +163,8 @@ class InstrumentDownloadSchemeAttributeSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class InstrumentDownloadSchemeSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+class InstrumentDownloadSchemeSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer,
+                                         ModelMetaSerializer):
     master_user = MasterUserField()
     provider_object = ProviderClassSerializer(source='provider', read_only=True)
 
@@ -202,7 +203,8 @@ class InstrumentDownloadSchemeSerializer(ModelWithUserCodeSerializer, ModelWithT
         fields = [
             'id', 'master_user',
             'mode',
-            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'user_code', 'configuration_code',
+            'name', 'short_name', 'public_name', 'notes',
 
             'provider', 'provider_object', 'inputs',
             'reference_for_pricing',
@@ -1162,7 +1164,7 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
 
     def create(self, validated_data):
 
-        if settings.FINMARS_DATABASE_URL:   # FINMARS_DATABASE Refactoring
+        if settings.FINMARS_DATABASE_URL:  # FINMARS_DATABASE Refactoring
 
             instance = ImportInstrumentEntry(**validated_data)
 

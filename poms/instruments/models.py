@@ -413,7 +413,7 @@ class Country(DataTimeStampedModel):
                                                 verbose_name=gettext_lazy('intermediate region code'))
 
 
-class PricingPolicy(NamedModel, DataTimeStampedModel):
+class PricingPolicy(NamedModel, DataTimeStampedModel, ConfigurationModel):
     # DISABLED = 0
     # BLOOMBERG = 1
     # TYPES = (

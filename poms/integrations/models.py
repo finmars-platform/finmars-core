@@ -198,7 +198,7 @@ class ImportConfig(models.Model):
         return (self.has_p12cert and self.has_password) or (self.has_cert and self.has_key)
 
 
-class InstrumentDownloadScheme(NamedModel, DataTimeStampedModel):
+class InstrumentDownloadScheme(NamedModel, DataTimeStampedModel, ConfigurationModel):
     MODE_CHOICES = [
         ['skip', 'Skip if exists'],
         ['overwrite_empty_values', 'Overwrite only empty values'],

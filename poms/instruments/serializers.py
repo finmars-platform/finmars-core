@@ -186,7 +186,9 @@ class PricingPolicySerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
 
     class Meta:
         model = PricingPolicy
-        fields = ['id', 'master_user', 'user_code', 'name', 'short_name', 'notes', 'expr',
+        fields = ['id', 'master_user',
+                  'user_code', 'configuration_code',
+                  'name', 'short_name', 'notes', 'expr',
                   'default_instrument_pricing_scheme', 'default_currency_pricing_scheme']
 
     def __init__(self, *args, **kwargs):
@@ -360,7 +362,7 @@ class InstrumentTypeEventSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'order', 'autogenerate', 'data']
 
 
-class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
+class InstrumentTypeSerializer(ModelWithUserCodeSerializer,
                                ModelWithAttributesSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)
