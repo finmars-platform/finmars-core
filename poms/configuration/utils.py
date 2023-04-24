@@ -6,6 +6,7 @@ import zipfile
 
 from django.apps import apps
 from django.http import FileResponse
+from django.core.files.base import ContentFile
 
 from poms.common.storage import get_storage
 from poms.common.utils import get_serializer, get_content_type_by_name
@@ -208,3 +209,14 @@ def copy_directory(src_dir, dst_dir):
             storage.makedirs(dst_subdir)
 
         copy_directory(src_subdir, dst_subdir)
+
+
+def upload_directory_to_storage(local_directory, storage_directory):
+    for root, dirs, files in os.walk(local_directory):
+        for file in files:
+            local_file_path = os.path.join(root, file)
+            storage_file_path = os.path.join(storage_directory, os.path.relpath(local_file_path, local_directory))
+
+            with open(local_file_path, 'rb') as local_file:
+                content = local_file.read()
+                storage.save(storage_file_path, ContentFile(content))

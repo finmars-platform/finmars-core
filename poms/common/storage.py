@@ -15,15 +15,14 @@ _l = logging.getLogger('poms.common')
 
 def download_local_folder_as_zip(folder_path):
 
-    temp_dir = tempfile.mkdtemp()
+    zip_file_path = f"{folder_path}.zip"
+    with ZipFile(zip_file_path, 'w') as zipf:
+        for root, _, files in os.walk(folder_path):
+            for file in files:
+                file_path = os.path.join(root, file)
+                zipf.write(file_path, os.path.relpath(file_path, folder_path))
 
-    for root, _, files in os.walk(folder_path):
-        for file in files:
-            src_path = os.path.join(root, file)
-            rel_path = os.path.relpath(src_path, folder_path)
-            dst_path = os.path.join(temp_dir, rel_path)
-            os.makedirs(os.path.dirname(dst_path), exist_ok=True)
-            shutil.copy2(src_path, dst_path)
+    return zip_file_path
 
 class FinmarsStorage(object):
 
@@ -155,6 +154,8 @@ class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
             self.bucket.download_file(obj.key, local_path)
 
     def download_directory_as_zip(self, directory_path):
+
+        _l.info("S3 download zip")
 
         temp_dir = tempfile.mkdtemp()
 

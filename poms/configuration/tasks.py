@@ -14,7 +14,7 @@ from poms.common.utils import get_serializer
 from poms.configuration.handlers import export_workflows_to_directory, export_configuration_to_directory
 from poms.configuration.models import Configuration
 from poms.configuration.utils import unzip_to_directory, list_json_files, read_json_file, zip_directory, \
-    save_directory_to_storage, save_json_to_file
+    save_directory_to_storage, save_json_to_file, upload_directory_to_storage
 from poms.file_reports.models import FileReport
 from poms_app import settings
 
@@ -80,6 +80,8 @@ def import_configuration(self, task_id):
         unzip_to_directory(file_path, output_directory)
 
         _l.info("import_configuration unzip_to_directory %s" % output_directory)
+
+        manifest = read_json_file(os.path.join(output_directory, 'manifest.json'))
 
         json_files = list_json_files(output_directory)
 
@@ -184,6 +186,21 @@ def import_configuration(self, task_id):
                 )
 
             index = index + 1
+
+
+        # Import Workflows
+
+        configuration_code_as_path = '/'.join(manifest["configuration_code"].split('.'))
+
+
+
+        dest_workflow_directory = settings.BASE_API_URL + '/workflows/' + configuration_code_as_path
+
+        _l.info('dest_workflow_directory %s' % dest_workflow_directory)
+
+        upload_directory_to_storage(output_directory + '/workflows', dest_workflow_directory)
+
+        _l.info('Workflows uploaded')
 
         file_report = generate_json_report(task, stats)
 
