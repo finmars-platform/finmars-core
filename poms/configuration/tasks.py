@@ -3,14 +3,15 @@ import logging
 import os
 import traceback
 from datetime import date
+
 import requests
 from celery import shared_task
 from django.utils.timezone import now
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyRequest, ProxyUser
-from poms.common.storage import  get_storage
-from poms.common.utils import get_serializer
+from poms.common.storage import get_storage
+from poms.common.utils import get_serializer, is_newer_version
 from poms.configuration.handlers import export_workflows_to_directory, export_configuration_to_directory
 from poms.configuration.models import Configuration
 from poms.configuration.utils import unzip_to_directory, list_json_files, read_json_file, zip_directory, \
@@ -187,12 +188,9 @@ def import_configuration(self, task_id):
 
             index = index + 1
 
-
         # Import Workflows
 
         configuration_code_as_path = '/'.join(manifest["configuration_code"].split('.'))
-
-
 
         dest_workflow_directory = settings.BASE_API_URL + '/workflows/' + configuration_code_as_path
 
@@ -385,18 +383,27 @@ def install_configuration_from_marketplace(self, task_id):
         task.options_object = options_object
         task.save()
 
-        data = {
-            'configuration_code': options_object['configuration_code'],
-            'version': options_object['version'],
-
-        }
         headers = {}
         headers['Authorization'] = 'Token ' + access_token
 
-        # _l.info('push_configuration_to_marketplace.headers %s' % headers)
+        if '^' in options_object['version']: # latest
 
-        response = requests.post(url='https://marketplace.finmars.com/api/v1/configuration/find-release/', data=data,
-                                 headers=headers)
+            data = {
+                'configuration_code': options_object['configuration_code']
+            }
+
+            response = requests.post(url='https://marketplace.finmars.com/api/v1/configuration/find-release-latest/', data=data,
+                                     headers=headers)
+        else:
+
+            data = {
+                'configuration_code': options_object['configuration_code'],
+                'version': options_object['version'],
+
+            }
+
+            response = requests.post(url='https://marketplace.finmars.com/api/v1/configuration/find-release/', data=data,
+                                     headers=headers)
 
         if response.status_code != 200:
             task.status = CeleryTask.STATUS_ERROR
@@ -413,6 +420,13 @@ def install_configuration_from_marketplace(self, task_id):
             configuration = Configuration.objects.get(configuration_code=remote_configuration['configuration_code'])
         except Exception as e:
             configuration = Configuration.objects.create(configuration_code=remote_configuration['configuration_code'])
+
+        if not is_newer_version(remote_configuration_release['version'], configuration['version']):
+            task.verbose_result = {"message": "Local Configuration has newer version %s then proposed %s" % (
+            configuration['version'], remote_configuration_release['version'])}
+            task.status = CeleryTask.STATUS_DONE
+            task.save()
+            return
 
         configuration.name = remote_configuration['name']
         configuration.description = remote_configuration['description']

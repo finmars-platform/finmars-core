@@ -591,3 +591,28 @@ def get_list_of_entity_attributes(content_type_key):
         })
 
     return result
+
+
+def compare_versions(version1, version2):
+    v1_parts = version1.split('.')
+    v2_parts = version2.split('.')
+
+    for v1_part, v2_part in zip(v1_parts, v2_parts):
+        v1_number = int(v1_part)
+        v2_number = int(v2_part)
+
+        if v1_number < v2_number:
+            return -1
+        elif v1_number > v2_number:
+            return 1
+
+    if len(v1_parts) < len(v2_parts):
+        return -1
+    elif len(v1_parts) > len(v2_parts):
+        return 1
+
+    return 0
+
+
+def is_newer_version(version1, version2):
+    return compare_versions(version1, version2) > 0
