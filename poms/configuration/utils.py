@@ -184,3 +184,27 @@ def save_directory_to_storage(local_directory, storage_directory):
 def save_file_to_storage(file_path, storage_path):
     with open(file_path, 'rb') as file_obj:
         storage.save(storage_path, file_obj)
+
+
+def copy_directory(src_dir, dst_dir):
+    directories, files = storage.listdir(src_dir)
+
+    # Copy files
+    for file_name in files:
+        src_file_path = os.path.join(src_dir, file_name)
+        dst_file_path = os.path.join(dst_dir, file_name)
+
+        with storage.open(src_file_path, 'rb') as src_file:
+            content = src_file.read()
+            with storage.open(dst_file_path, 'wb') as dst_file:
+                dst_file.write(content)
+
+    # Recursively copy subdirectories
+    for directory in directories:
+        src_subdir = os.path.join(src_dir, directory)
+        dst_subdir = os.path.join(dst_dir, directory)
+
+        if not storage.exists(dst_subdir):
+            storage.makedirs(dst_subdir)
+
+        copy_directory(src_subdir, dst_subdir)

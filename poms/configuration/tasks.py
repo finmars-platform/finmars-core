@@ -9,9 +9,9 @@ from django.utils.timezone import now
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyRequest, ProxyUser
-from poms.common.storage import download_folder_as_zip, get_storage
+from poms.common.storage import  get_storage
 from poms.common.utils import get_serializer
-from poms.configuration.handlers import export_configuration_to_folder
+from poms.configuration.handlers import export_workflows_to_directory, export_configuration_to_directory
 from poms.configuration.models import Configuration
 from poms.configuration.utils import unzip_to_directory, list_json_files, read_json_file, zip_directory, \
     save_directory_to_storage, save_json_to_file
@@ -225,7 +225,8 @@ def export_configuration(self, task_id):
         output_zipfile = os.path.join(settings.BASE_DIR,
                                       'configurations/' + str(task.id) + '/' + zip_filename)
 
-        export_configuration_to_folder(source_directory, configuration, task.master_user, task.member)
+        export_configuration_to_directory(source_directory, configuration, task.master_user, task.member)
+        export_workflows_to_directory(source_directory, configuration, task.master_user, task.member)
 
         manifest_filepath = source_directory + '/manifest.json'
 
@@ -298,7 +299,7 @@ def push_configuration_to_marketplace(self, task_id):
         else:
             path = settings.BASE_API_URL + '/configurations/custom/' + configuration.configuration_code + '/' + configuration.version
 
-        zip_file_path = download_folder_as_zip(path)
+        zip_file_path = storage.download_folder_as_zip(path)
 
         data = {
             'configuration_code': configuration.configuration_code,

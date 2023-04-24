@@ -18,7 +18,7 @@ from poms_app import settings
 
 _l = logging.getLogger('poms.explorer')
 
-from poms.common.storage import get_storage, delete_folder, download_folder_as_zip
+from poms.common.storage import get_storage
 
 storage = get_storage()
 
@@ -305,7 +305,7 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
         else:
             path = settings.BASE_API_URL + '/' + path
 
-        delete_folder(path)
+        storage.delete_directory(path)
 
         return Response({
             "status": 'ok'
@@ -326,7 +326,7 @@ class DownloadFolderAsZipViewSet(AbstractViewSet):
         else:
             path = settings.BASE_API_URL + '/' + path
 
-        zip_file_path = download_folder_as_zip(path)
+        zip_file_path = storage.download_directory_as_zip(path)
 
         # Serve the zip file as a response
         response = FileResponse(open(zip_file_path, 'rb'), content_type='application/zip')

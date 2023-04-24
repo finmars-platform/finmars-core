@@ -1,12 +1,30 @@
 import logging
 import traceback
 
-from poms.configuration.utils import save_serialized_entity, save_serialized_attribute_type, save_serialized_layout
+from poms.configuration.utils import save_serialized_entity, save_serialized_attribute_type, save_serialized_layout, \
+    copy_directory
+from poms_app import settings
 
 _l = logging.getLogger('poms.configuration')
 
+from poms.common.storage import get_storage
 
-def export_configuration_to_folder(source_directory, configuration, master_user, member):
+storage = get_storage()
+
+def export_workflows_to_directory(source_directory, configuration, master_user, member):
+
+    source_directory + '/workflows'
+
+    configuration_code_as_path = '/'.join(configuration.configuration_code.split('.'))
+
+    workflows_dir = settings.BASE_API_URL + '/workflows/' + configuration_code_as_path + '/'
+
+    _l.info("export_workflows_to_folder.Workflows source: %s" % workflows_dir)
+    _l.info("export_workflows_to_folder.Workflows destination: %s" % source_directory + '/workflows')
+
+    storage.download_directory(workflows_dir, source_directory + '/workflows')
+
+def export_configuration_to_directory(source_directory, configuration, master_user, member):
     try:
 
         context = {
@@ -73,35 +91,61 @@ def export_configuration_to_folder(source_directory, configuration, master_user,
 
         _l.info("Exported: integrations.instrumentdownloadscheme")
 
+        _l.info("Going to export: pricing.instrumentpricingscheme")
+
         save_serialized_entity('pricing.instrumentpricingscheme',
                                configuration.configuration_code,
                                source_directory + '/instrument-pricing-schemes',
                                context)
+
+        _l.info("Exported: pricing.instrumentpricingscheme")
+
+        _l.info("Going to export: pricing.currencypricingscheme")
 
         save_serialized_entity('pricing.currencypricingscheme',
                                configuration.configuration_code,
                                source_directory + '/currency-pricing-schemes',
                                context)
 
+        _l.info("Exported: pricing.currencypricingscheme")
+
+        _l.info("Going to export: procedures.pricingprocedure")
+
         save_serialized_entity('procedures.pricingprocedure',
                                configuration.configuration_code,
                                source_directory + '/pricing-procedures',
                                context)
+
+        _l.info("Exported: procedures.pricingprocedure")
+
+        _l.info("Going to export: procedures.expressionprocedure")
 
         save_serialized_entity('procedures.expressionprocedure',
                                configuration.configuration_code,
                                source_directory + '/expression-procedures',
                                context)
 
+        _l.info("Exported: procedures.expressionprocedure")
+
+        _l.info("Going to export: procedures.requestdatafileprocedure")
+
         save_serialized_entity('procedures.requestdatafileprocedure',
                                configuration.configuration_code,
                                source_directory + '/data-procedures',
                                context)
 
+        _l.info("Exported: procedures.requestdatafileprocedure")
+
+        _l.info("Going to export: schedules.schedule")
+
         save_serialized_entity('schedules.schedule',
                                configuration.configuration_code,
                                source_directory + '/schedules',
                                context)
+
+        _l.info("Exported: schedules.schedule")
+
+        _l.info("Going to export: obj_attrs.genericattributetype")
 
         save_serialized_attribute_type('obj_attrs.genericattributetype',
                                        configuration.configuration_code,
@@ -133,6 +177,8 @@ def export_configuration_to_folder(source_directory, configuration, master_user,
                                        source_directory + '/attribute-types/counterparty',
                                        context)
 
+        _l.info("Exported: obj_attrs.genericattributetype")
+
         save_serialized_attribute_type('obj_attrs.genericattributetype',
                                        configuration.configuration_code,
                                        'counterparties.responsible',
@@ -148,6 +194,7 @@ def export_configuration_to_folder(source_directory, configuration, master_user,
                                configuration.configuration_code,
                                source_directory + '/ui/layouts/context-menu',
                                context)
+
 
         # TODO Need to add user_code
         # save_serialized_entity('ui.complextransactionuserfieldmodel',
@@ -229,6 +276,8 @@ def export_configuration_to_folder(source_directory, configuration, master_user,
                                'currencies.currencyhistory',
                                source_directory + '/ui/layouts/currency-history',
                                context)
+
+
 
     except Exception as e:
         _l.error("Error exporting configuration e: %s" % e)
