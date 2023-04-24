@@ -362,7 +362,7 @@ class InstrumentTypeEventSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'order', 'autogenerate', 'data']
 
 
-class InstrumentTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
+class InstrumentTypeSerializer(ModelWithUserCodeSerializer,
                                ModelWithAttributesSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)

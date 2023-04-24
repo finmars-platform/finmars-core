@@ -11,13 +11,13 @@ from poms.portfolios.fields import PortfolioField
 from poms.users.fields import MasterUserField
 
 
-class AccountTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
+class AccountTypeSerializer(ModelWithUserCodeSerializer,
                             ModelWithAttributesSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     transaction_details_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                                allow_null=True, default='""')
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = AccountType
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',

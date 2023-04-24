@@ -105,6 +105,15 @@ def save_serialized_entity(content_type, configuration_code, source_directory, c
         serializer = SerializerClass(item, context=context)
         serialized_data = remove_id_key_recursively(serializer.data)
 
+        if 'is_deleted' in serialized_data:
+            serialized_data.pop('is_deleted')
+
+        if 'is_enabled' in serialized_data:
+            serialized_data.pop('is_enabled')
+
+        if 'deleted_user_code' in serialized_data:
+            serialized_data.pop('deleted_user_code')
+
         path = source_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
 
         save_json_to_file(path, serialized_data)
@@ -125,6 +134,11 @@ def save_serialized_attribute_type(content_type, configuration_code, content_typ
     for item in filtered_objects:
         serializer = SerializerClass(item, context=context)
         serialized_data = remove_id_key_recursively(serializer.data)
+
+        # TODO convert content_type_id to content_type_key
+
+        if 'deleted_user_code' in serialized_data:
+            serialized_data.pop('deleted_user_code')
 
         path = source_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
 

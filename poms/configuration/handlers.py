@@ -1,6 +1,7 @@
 import logging
 import traceback
 
+from poms.configuration.export_helpers import export_instrument_types, export_pricing_policies
 from poms.configuration.utils import save_serialized_entity, save_serialized_attribute_type, save_serialized_layout, \
     copy_directory
 from poms_app import settings
@@ -43,10 +44,14 @@ def export_configuration_to_directory(source_directory, configuration, master_us
 
         _l.info("Going to export: instruments.instrumenttype")
 
-        save_serialized_entity('instruments.instrumenttype',
-                               configuration.configuration_code,
-                               source_directory + '/instrument-types',
-                               context)
+        # save_serialized_entity('instruments.instrumenttype',
+        #                        configuration.configuration_code,
+        #                        source_directory + '/instrument-types',
+        #                        context)
+
+        export_instrument_types(configuration.configuration_code,
+                                                        source_directory + '/instrument-types',
+                                                        master_user, member)
 
         _l.info("Exported: instruments.instrumenttype")
 
@@ -57,10 +62,8 @@ def export_configuration_to_directory(source_directory, configuration, master_us
 
         _l.info("Going to export: accounts.accounttype")
 
-        save_serialized_entity('instruments.pricingpolicy',
-                               configuration.configuration_code,
-                               source_directory + '/pricing-policies',
-                               context)
+        export_pricing_policies(configuration.configuration_code, source_directory + '/pricing-policies', master_user, member)
+
 
         _l.info("Exported: accounts.accounttype")
 
