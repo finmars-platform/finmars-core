@@ -422,7 +422,7 @@ def install_configuration_from_marketplace(self, task_id):
         try:
             configuration = Configuration.objects.get(configuration_code=remote_configuration['configuration_code'])
         except Exception as e:
-            configuration = Configuration.objects.create(configuration_code=remote_configuration['configuration_code'])
+            configuration = Configuration.objects.create(configuration_code=remote_configuration['configuration_code'], version="0.0.0")
 
         if not is_newer_version(remote_configuration_release['version'], configuration.version):
 
