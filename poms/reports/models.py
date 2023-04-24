@@ -802,7 +802,7 @@ class ReportSummary():
 
         return total
 
-    def get_total_position_return_pl_ytd(self, portfolio_id):
+    def get_total_position_return_pl_ytd(self, portfolio_id=None):
         position_return = 0
 
         if portfolio_id:
@@ -840,7 +840,7 @@ class ReportSummary():
 
         return total
 
-    def get_total_position_return_pl_inception_to_date(self, portfolio_id):
+    def get_total_position_return_pl_inception_to_date(self, portfolio_id=None):
         position_return = 0
 
         if portfolio_id:
