@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.models import EXPRESSION_FIELD_LENGTH, NamedModel, DataTimeStampedModel
 from poms.common.utils import date_now
+from poms.configuration.models import ConfigurationModel
 from poms.procedures.models import PricingProcedureInstance
 
 _l = logging.getLogger('poms.pricing')
@@ -32,7 +33,7 @@ class InstrumentPricingSchemeType(models.Model):
         return self.name
 
 
-class InstrumentPricingScheme(NamedModel, DataTimeStampedModel):
+class InstrumentPricingScheme(NamedModel, DataTimeStampedModel, ConfigurationModel):
     ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END = 1
     ADD_TO_ERROR_TABLE_AND_NO_NOTIFICATION = 2
     ADD_TO_ERROR_TABLE_AND_NOTIFY_DIRECTLY = 3
@@ -187,7 +188,7 @@ class CurrencyPricingSchemeType(models.Model):
         return self.name
 
 
-class CurrencyPricingScheme(NamedModel, DataTimeStampedModel):
+class CurrencyPricingScheme(NamedModel, DataTimeStampedModel, ConfigurationModel):
     ADD_TO_ERROR_TABLE_AND_NOTIFY_IN_THE_END = 1
     ADD_TO_ERROR_TABLE_AND_NO_NOTIFICATION = 2
     ADD_TO_ERROR_TABLE_AND_NOTIFY_DIRECTLY = 3

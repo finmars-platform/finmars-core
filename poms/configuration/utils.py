@@ -6,6 +6,7 @@ import zipfile
 
 from django.apps import apps
 from django.http import FileResponse
+from django.core.files.base import ContentFile
 
 from poms.common.storage import get_storage
 from poms.common.utils import get_serializer, get_content_type_by_name
@@ -104,6 +105,15 @@ def save_serialized_entity(content_type, configuration_code, source_directory, c
         serializer = SerializerClass(item, context=context)
         serialized_data = remove_id_key_recursively(serializer.data)
 
+        if 'is_deleted' in serialized_data:
+            serialized_data.pop('is_deleted')
+
+        if 'is_enabled' in serialized_data:
+            serialized_data.pop('is_enabled')
+
+        if 'deleted_user_code' in serialized_data:
+            serialized_data.pop('deleted_user_code')
+
         path = source_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
 
         save_json_to_file(path, serialized_data)
@@ -124,6 +134,11 @@ def save_serialized_attribute_type(content_type, configuration_code, content_typ
     for item in filtered_objects:
         serializer = SerializerClass(item, context=context)
         serialized_data = remove_id_key_recursively(serializer.data)
+
+        # TODO convert content_type_id to content_type_key
+
+        if 'deleted_user_code' in serialized_data:
+            serialized_data.pop('deleted_user_code')
 
         path = source_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
 
@@ -184,3 +199,38 @@ def save_directory_to_storage(local_directory, storage_directory):
 def save_file_to_storage(file_path, storage_path):
     with open(file_path, 'rb') as file_obj:
         storage.save(storage_path, file_obj)
+
+
+def copy_directory(src_dir, dst_dir):
+    directories, files = storage.listdir(src_dir)
+
+    # Copy files
+    for file_name in files:
+        src_file_path = os.path.join(src_dir, file_name)
+        dst_file_path = os.path.join(dst_dir, file_name)
+
+        with storage.open(src_file_path, 'rb') as src_file:
+            content = src_file.read()
+            with storage.open(dst_file_path, 'wb') as dst_file:
+                dst_file.write(content)
+
+    # Recursively copy subdirectories
+    for directory in directories:
+        src_subdir = os.path.join(src_dir, directory)
+        dst_subdir = os.path.join(dst_dir, directory)
+
+        if not storage.exists(dst_subdir):
+            storage.makedirs(dst_subdir)
+
+        copy_directory(src_subdir, dst_subdir)
+
+
+def upload_directory_to_storage(local_directory, storage_directory):
+    for root, dirs, files in os.walk(local_directory):
+        for file in files:
+            local_file_path = os.path.join(root, file)
+            storage_file_path = os.path.join(storage_directory, os.path.relpath(local_file_path, local_directory))
+
+            with open(local_file_path, 'rb') as local_file:
+                content = local_file.read()
+                storage.save(storage_file_path, ContentFile(content))

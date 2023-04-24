@@ -495,7 +495,7 @@ def get_serializer(content_type_key):
     :return: serializer class
     '''
 
-    from poms.instruments.serializers import InstrumentSerializer, InstrumentTypeSerializer
+    from poms.instruments.serializers import InstrumentSerializer, InstrumentTypeSerializer, PricingPolicySerializer
 
     from poms.accounts.serializers import AccountSerializer
     from poms.accounts.serializers import AccountTypeSerializer
@@ -510,7 +510,8 @@ def get_serializer(content_type_key):
     from poms.transactions.serializers import TransactionTypeSerializer
     from poms.csv_import.serializers import CsvImportSchemeSerializer
 
-    from poms.integrations.serializers import ComplexTransactionImportSchemeSerializer
+    from poms.integrations.serializers import ComplexTransactionImportSchemeSerializer, \
+        InstrumentDownloadSchemeSerializer
     from poms.procedures.serializers import PricingProcedureSerializer
     from poms.procedures.serializers import ExpressionProcedureSerializer
     from poms.procedures.serializers import RequestDataFileProcedureSerializer
@@ -523,10 +524,16 @@ def get_serializer(content_type_key):
     from poms.ui.serializers import ComplexTransactionUserFieldSerializer
     from poms.ui.serializers import TransactionUserFieldSerializer
     from poms.ui.serializers import InstrumentUserFieldSerializer
+
+    from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer
+
     serializer_map = {
+
         'transactions.transactiontype': TransactionTypeSerializer,
         'instruments.instrument': InstrumentSerializer,
         'instruments.instrumenttype': InstrumentTypeSerializer,
+        'instruments.pricingpolicy': PricingPolicySerializer,
+
         'accounts.account': AccountSerializer,
         'accounts.accounttype': AccountTypeSerializer,
         'portfolios.portfolio': PortfolioSerializer,
@@ -540,6 +547,7 @@ def get_serializer(content_type_key):
 
         'csv_import.csvimportscheme': CsvImportSchemeSerializer,
         'integrations.complextransactionimportscheme': ComplexTransactionImportSchemeSerializer,
+        'integrations.instrumentdownloadscheme': InstrumentDownloadSchemeSerializer,
         'procedures.pricingprocedure': PricingProcedureSerializer,
         'procedures.expressionprocedure': ExpressionProcedureSerializer,
         'procedures.requestdatafileprocedure': RequestDataFileProcedureSerializer,
@@ -551,8 +559,10 @@ def get_serializer(content_type_key):
         'ui.contextmenulayout': ContextMenuLayoutSerializer,
         'ui.complextransactionuserfieldmodel': ComplexTransactionUserFieldSerializer,
         'ui.transactionuserfieldmodel': TransactionUserFieldSerializer,
-        'ui.instrumentuserfieldmodel': InstrumentUserFieldSerializer
+        'ui.instrumentuserfieldmodel': InstrumentUserFieldSerializer,
 
+        'pricing.instrumentpricingscheme': InstrumentPricingSchemeSerializer,
+        'pricing.currencypricingscheme': CurrencyPricingSchemeSerializer
 
     }
 
@@ -581,3 +591,28 @@ def get_list_of_entity_attributes(content_type_key):
         })
 
     return result
+
+
+def compare_versions(version1, version2):
+    v1_parts = version1.split('.')
+    v2_parts = version2.split('.')
+
+    for v1_part, v2_part in zip(v1_parts, v2_parts):
+        v1_number = int(v1_part)
+        v2_number = int(v2_part)
+
+        if v1_number < v2_number:
+            return -1
+        elif v1_number > v2_number:
+            return 1
+
+    if len(v1_parts) < len(v2_parts):
+        return -1
+    elif len(v1_parts) > len(v2_parts):
+        return 1
+
+    return 0
+
+
+def is_newer_version(version1, version2):
+    return compare_versions(version1, version2) > 0
