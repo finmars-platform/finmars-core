@@ -303,6 +303,7 @@ class BootstrapConfig(AppConfig):
         from poms.celery_tasks.models import CeleryTask
         from django.db import transaction
         from poms.configuration_import.tasks import configuration_import_as_json
+        from poms.configuration.tasks import install_package_from_marketplace
 
         try:
             _l.info("load_init_configuration processing")
@@ -311,13 +312,33 @@ class BootstrapConfig(AppConfig):
 
             try:
 
-                url = settings.AUTHORIZER_URL + '/backend-get-init-configuration/'
-
-                response = requests.get(url=url, headers=headers, verify=settings.VERIFY_SSL)
-                _l.info("load_init_configuration backend-sync-users response.status_code %s" % response.status_code)
-                # _l.info("sync_users_at_authorizer_service backend-sync-users response.text %s" % response.text)
-
-                response_data = response.json()
+                # url = settings.AUTHORIZER_URL + '/backend-get-init-configuration/'
+                #
+                # response = requests.get(url=url, headers=headers, verify=settings.VERIFY_SSL)
+                # _l.info("load_init_configuration backend-sync-users response.status_code %s" % response.status_code)
+                # # _l.info("sync_users_at_authorizer_service backend-sync-users response.text %s" % response.text)
+                #
+                # response_data = response.json()
+                #
+                # master_user = MasterUser.objects.filter()[0]
+                # # member = Member.objects.get(master_user=master_user, is_owner=True)
+                # member = Member.objects.get(username='finmars_bot')
+                #
+                # celery_task = CeleryTask.objects.create(master_user=master_user,
+                #                                         member=member,
+                #                                         verbose_name="Inital Finmars Configuration Import",
+                #                                         type='configuration_import')
+                #
+                # options_object = {
+                #     'data': response_data['data'],
+                #     'mode': 'skip'
+                # }
+                #
+                # celery_task.options_object = options_object
+                # celery_task.save()
+                #
+                # transaction.on_commit(
+                #     lambda: configuration_import_as_json.apply_async(kwargs={'task_id': celery_task.id}))
 
                 master_user = MasterUser.objects.filter()[0]
                 # member = Member.objects.get(master_user=master_user, is_owner=True)
@@ -325,20 +346,20 @@ class BootstrapConfig(AppConfig):
 
                 celery_task = CeleryTask.objects.create(master_user=master_user,
                                                         member=member,
-                                                        verbose_name="Inital Finmars Configuration Import",
-                                                        type='configuration_import')
+                                                        verbose_name="Install Configuration From Marketplace",
+                                                        type='install_configuration_from_marketplace')
 
                 options_object = {
-                    'data': response_data['data'],
-                    'mode': 'skip'
+                    'configuration_code': "com.finmars.initial",
+                    'version': "1.0.0",
+                    'is_package': True,
+                    # "access_token": get_access_token(request) TODO Implement when keycloak refactored
+                    # TODO check this later, important security thins, need to be destroyed inside task
                 }
-
                 celery_task.options_object = options_object
                 celery_task.save()
 
-                transaction.on_commit(
-                    lambda: configuration_import_as_json.apply_async(kwargs={'task_id': celery_task.id}))
-
+                install_package_from_marketplace.apply_async(kwargs={'task_id': celery_task.id})
 
 
             except Exception as e:

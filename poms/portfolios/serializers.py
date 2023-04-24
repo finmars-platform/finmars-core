@@ -112,7 +112,7 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
                     'user_code': instance.user_code,
                     'short_name': instance.short_name,
                     'public_name': instance.public_name,
-                    'instrument_type': 'finmars@portfolio'
+                    'instrument_type': 'com.finmars.initial-instrument-type:portfolio'
                 }
 
                 new_instrument = None

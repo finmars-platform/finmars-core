@@ -376,23 +376,25 @@ def install_configuration_from_marketplace(self, task_id):
 
         options_object = task.options_object
 
-        access_token = options_object['access_token']
-
-        del options_object['access_token']
+        # Implement when keycloak is refactored
+        # access_token = options_object['access_token']
+        #
+        # del options_object['access_token']
 
         task.options_object = options_object
         task.save()
 
         headers = {}
-        headers['Authorization'] = 'Token ' + access_token
+        # headers['Authorization'] = 'Token ' + access_token
 
-        if '^' in options_object['version']: # latest
+        if '^' in options_object['version']:  # latest
 
             data = {
                 'configuration_code': options_object['configuration_code']
             }
 
-            response = requests.post(url='https://marketplace.finmars.com/api/v1/configuration/find-release-latest/', data=data,
+            response = requests.post(url='https://marketplace.finmars.com/api/v1/configuration/find-release-latest/',
+                                     data=data,
                                      headers=headers)
         else:
 
@@ -402,7 +404,8 @@ def install_configuration_from_marketplace(self, task_id):
 
             }
 
-            response = requests.post(url='https://marketplace.finmars.com/api/v1/configuration/find-release/', data=data,
+            response = requests.post(url='https://marketplace.finmars.com/api/v1/configuration/find-release/',
+                                     data=data,
                                      headers=headers)
 
         if response.status_code != 200:
@@ -421,9 +424,15 @@ def install_configuration_from_marketplace(self, task_id):
         except Exception as e:
             configuration = Configuration.objects.create(configuration_code=remote_configuration['configuration_code'])
 
-        if not is_newer_version(remote_configuration_release['version'], configuration['version']):
-            task.verbose_result = {"message": "Local Configuration has newer version %s then proposed %s" % (
-            configuration['version'], remote_configuration_release['version'])}
+        if not is_newer_version(remote_configuration_release['version'], configuration.version):
+
+            if remote_configuration_release['version'] == configuration.version:
+                task.verbose_result = {"message": "Local Configuration has equal version %s to proposed %s" % (
+                    configuration.version, remote_configuration_release['version'])}
+            else:
+                task.verbose_result = {"message": "Local Configuration has newer version %s then proposed %s" % (
+                    configuration.version, remote_configuration_release['version'])}
+
             task.status = CeleryTask.STATUS_DONE
             task.save()
             return
@@ -501,9 +510,10 @@ def install_package_from_marketplace(self, task_id):
 
         options_object = task.options_object
 
-        access_token = options_object['access_token']
-
-        del options_object['access_token']
+        # TODO Implement when keycloak refactored
+        # access_token = options_object['access_token']
+        #
+        # del options_object['access_token']
 
         task.options_object = options_object
         task.save()
@@ -514,7 +524,7 @@ def install_package_from_marketplace(self, task_id):
 
         }
         headers = {}
-        headers['Authorization'] = 'Token ' + access_token
+        # headers['Authorization'] = 'Token ' + access_token
 
         # _l.info('push_configuration_to_marketplace.headers %s' % headers)
 
@@ -556,7 +566,7 @@ def install_package_from_marketplace(self, task_id):
                 'configuration_code': key,
                 'version': value,
                 'is_package': False,
-                "access_token": access_token
+                # "access_token": access_token
             }
 
             module_celery_task.options_object = options_object
