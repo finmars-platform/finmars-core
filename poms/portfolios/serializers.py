@@ -328,37 +328,34 @@ class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWi
                                                                                  read_only=True)
 
 
-PORTFOLIO_REGISTER_RECORD_FIELDS = [
-    "id",
-    "master_user",
-    "portfolio",
-    "instrument",
-    "transaction_class",
-    "transaction_code",
-    "transaction_date",
-    "cash_amount",
-    "cash_currency",
-    "fx_rate",
-    "cash_amount_valuation_currency",
-    "valuation_currency",
-    "nav_previous_day_valuation_currency",
-    "n_shares_previous_day",
-    "n_shares_added",
-    "dealing_price_valuation_currency",
-    "rolling_shares_of_the_day",
-    "transaction",
-    "complex_transaction",
-    "portfolio_register",
-    "share_price_calculation_type",
-]
-
-
 class PortfolioRegisterRecordSerializer(ModelWithObjectPermissionSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
     class Meta:
         model = PortfolioRegisterRecord
-        fields = PORTFOLIO_REGISTER_RECORD_FIELDS
+        fields = [
+            "id",
+            "master_user",
+            "portfolio",
+            "instrument",
+            "transaction_class",
+            "transaction_code",
+            "transaction_date",
+            "cash_amount",
+            "cash_currency",
+            "fx_rate",
+            "cash_amount_valuation_currency",
+            "valuation_currency",
+            "nav_previous_day_valuation_currency",
+            "n_shares_previous_day",
+            "n_shares_added",
+            "dealing_price_valuation_currency",
+            "rolling_shares_of_the_day",
+            "transaction",
+            "complex_transaction",
+            "portfolio_register",
+            "share_price_calculation_type",
+        ]
 
     def __init__(self, *args, **kwargs):
         super(PortfolioRegisterRecordSerializer, self).__init__(*args, **kwargs)
@@ -374,9 +371,10 @@ class PortfolioRegisterRecordSerializer(ModelWithObjectPermissionSerializer, Mod
 class PortfolioRegisterRecordEvSerializer(PortfolioRegisterRecordSerializer):
 
     def __init__(self, *args, **kwargs):
+        from poms.transactions.serializers import TransactionClassSerializer
+
         super(PortfolioRegisterRecordEvSerializer, self).__init__(*args, **kwargs)
 
-        from poms.transactions.serializers import TransactionClassSerializer
         self.fields['transaction_class_object'] = TransactionClassSerializer(
             source='transaction_class', read_only=True)
         self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
