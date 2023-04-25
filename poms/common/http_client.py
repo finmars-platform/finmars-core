@@ -35,7 +35,6 @@ class HttpClient:
         )
         self.session = requests.Session()
         self.session.mount("https://", HTTPAdapter(max_retries=self.retries))
-        # self.session.mount("http://", HTTPAdapter(max_retries=self.retries))
 
     def _fetch_response(self, method, url, **kwargs) -> dict:
         if not url:
