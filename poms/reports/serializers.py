@@ -172,6 +172,7 @@ class ReportSerializer(ReportSerializerWithLogs):
                                               required=False,
                                               help_text='Allocation consolidation')
 
+    only_numbers = serializers.BooleanField(default=False, initial=False)
     show_transaction_details = serializers.BooleanField(default=False, initial=False)
     show_balance_exposure_details = serializers.BooleanField(default=False, initial=False)
     approach_multiplier = serializers.FloatField(default=0.5, initial=0.5, min_value=0.0, max_value=1.0, required=False)
@@ -603,6 +604,17 @@ class BalanceReportSerializer(ReportSerializer):
 
         return data
 
+
+class SummarySerializer(serializers.Serializer):
+
+    date_from = serializers.DateField(required=False, allow_null=True, default=date_now,
+                                        help_text=gettext_lazy('Date from'))
+
+    date_to = serializers.DateField(required=False, allow_null=True, default=date_now,
+                                      help_text=gettext_lazy('Date from'))
+
+    currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
+    portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
 
 class PLReportSerializer(ReportSerializer):
     custom_fields = PLReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)

@@ -279,6 +279,7 @@ router.register(r'ui/color-palette', ui.ColorPaletteViewSet)
 router.register(r'ui/cross-entity-attribute-extension', ui.CrossEntityAttributeExtensionViewSet)
 router.register(r'ui/column-sort-data', ui.ColumnSortDataViewSet)
 
+router.register(r'reports/summary', reports.SummaryViewSet, 'indicators')
 router.register(r'reports/balance-report', reports.BalanceReportViewSet, "balance-report")
 router.register(r'reports/balance-report-sql', reports.BalanceReportViewSet, "balance-report-sync-sql")  # deprecated
 router.register(r'reports/balance-report/custom-field', reports.BalanceReportCustomFieldViewSet,
@@ -465,6 +466,7 @@ router.register(r'debug/logs', common.DebugLogViewSet, 'debug_log')  # Deprecate
 router.register(r'errors/error', ErrorRecordViewSet, 'error')
 
 router.register(r'history/historical-record', history.HistoricalRecordViewSet, 'historical-record')
+
 
 urlpatterns = [
     re_path(r'^v1/', include(router.urls)),

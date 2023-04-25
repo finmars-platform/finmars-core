@@ -9,12 +9,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from poms.common.filters import NoOpFilter, CharFilter
+from poms.common.utils import get_closest_bday_of_yesterday
 from poms.common.views import AbstractModelViewSet, AbstractViewSet
-from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField
+from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField, \
+    ReportSummary
 from poms.reports.performance_report import PerformanceReportBuilder
 from poms.reports.serializers import BalanceReportCustomFieldSerializer, PLReportCustomFieldSerializer, \
     TransactionReportCustomFieldSerializer, PerformanceReportSerializer, PriceHistoryCheckSerializer, \
-    BalanceReportSerializer, PLReportSerializer, TransactionReportSerializer
+    BalanceReportSerializer, PLReportSerializer, TransactionReportSerializer, SummarySerializer
 from poms.reports.sql_builders.balance import BalanceReportBuilderSql
 from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.reports.sql_builders.price_checkers import PriceHistoryCheckerSql
@@ -162,6 +164,125 @@ class BalanceReportViewSet(AbstractViewSet):
         #
         # return Response(cached_data, status=status.HTTP_200_OK)
 
+
+class SummaryViewSet(AbstractViewSet):
+
+    serializer_class = SummarySerializer
+
+    def list(self, request):
+
+        serializer = self.get_serializer(data=request.GET)
+        serializer.is_valid(raise_exception=True)
+
+        validated_data = serializer.validated_data
+
+        _l.info("Validated_data %s " % validated_data)
+
+        date_from = validated_data["date_from"]
+        date_to = validated_data["date_to"]
+        portfolios = validated_data["portfolios"]
+        currency = validated_data["currency"]
+
+        bundles = []
+
+        if not date_to:
+            date_to = get_closest_bday_of_yesterday()
+
+
+        context = self.get_serializer_context()
+
+        report_summary = ReportSummary(date_from, date_to, portfolios, bundles, currency, request.user.master_user,
+                                       request.user.member, context)
+
+        report_summary.build_balance()
+        report_summary.build_pl_daily()
+        report_summary.build_pl_mtd()
+        report_summary.build_pl_ytd()
+
+        result = {
+            "total": {
+                "nav": report_summary.get_nav(),
+                "pl_daily": report_summary.get_total_pl_daily(),
+                "pl_daily_percent": report_summary.get_total_position_return_pl_daily(),
+                "pl_mtd": report_summary.get_total_pl_mtd(),
+                "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(),
+                "pl_ytd": report_summary.get_total_pl_ytd(),
+                "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd()
+            }
+        }
+
+        return Response(result)
+
+    @action(detail=False, methods=['get'], url_path='portfolios')
+    def list_portfolios(self, request):
+
+        serializer = self.get_serializer(data=request.GET)
+        serializer.is_valid(raise_exception=True)
+
+        validated_data = serializer.validated_data
+
+        _l.info("Validated_data %s " % validated_data)
+
+        date_from = validated_data["date_from"]
+        date_to = validated_data["date_to"]
+        portfolios = validated_data["portfolios"]
+        currency = validated_data["currency"]
+
+        bundles = []
+
+        if not date_to:
+            date_to = get_closest_bday_of_yesterday()
+
+
+        context = self.get_serializer_context()
+
+        report_summary = ReportSummary(date_from, date_to, portfolios, bundles, currency, request.user.master_user,
+                                       request.user.member, context)
+
+        report_summary.build_balance()
+        report_summary.build_pl_daily()
+        report_summary.build_pl_mtd()
+        report_summary.build_pl_ytd()
+        report_summary.build_pl_inception_to_date()
+
+        results = []
+
+        for portfolio in portfolios:
+            result_object = {
+                "portfolio": portfolio.id,
+                "portfolio_object": {
+                    "id": portfolio.id,
+                    "name": portfolio.name,
+                    "user_code":  portfolio.user_code
+                },
+                "metrics": {
+                    "nav": report_summary.get_nav(portfolio.id),
+                    "pl_daily": report_summary.get_total_pl_daily(portfolio.id),
+                    "pl_daily_percent": report_summary.get_total_position_return_pl_daily(portfolio.id),
+
+                    "pl_mtd": report_summary.get_total_pl_mtd(portfolio.id),
+                    "pl_mtd_percent": report_summary.get_total_position_return_pl_mtd(portfolio.id),
+
+                    "pl_ytd": report_summary.get_total_pl_ytd(portfolio.id),
+                    "pl_ytd_percent": report_summary.get_total_position_return_pl_ytd(portfolio.id),
+
+                    "pl_inception_to_date": report_summary.get_total_pl_inception_to_date(portfolio.id),
+                    "pl_inception_to_date_percent": report_summary.get_total_position_return_pl_inception_to_date(portfolio.id),
+
+
+                }
+            }
+
+            results.append(result_object)
+
+
+
+
+        result = {
+            "results": results
+        }
+
+        return Response(result)
 
 class PLReportViewSet(AbstractViewSet):
     serializer_class = PLReportSerializer
