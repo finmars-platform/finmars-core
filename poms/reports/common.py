@@ -76,6 +76,7 @@ class Report(BaseReport):
                  custom_fields=None,
                  custom_fields_to_calculate=None,
                  calculate_pl=True,
+                 only_numbers=False,
                  items=None,
 
                  execution_time=None,
@@ -118,6 +119,7 @@ class Report(BaseReport):
         self.expression_iterations_count = expression_iterations_count
         self.allocation_detailing = allocation_detailing
         self.pl_include_zero = pl_include_zero
+        self.only_numbers = only_numbers # do not add relations items when process report
 
         self.instruments = instruments or []
         self.portfolios = portfolios or []
