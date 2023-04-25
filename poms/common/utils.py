@@ -256,6 +256,13 @@ def is_business_day(date):
 
 
 def get_last_business_day(date, to_string=False):
+    '''
+    Returns the previous business day of the given date.
+    :param date:
+    :param to_string:
+    :return:
+    '''
+
     format = '%Y-%m-%d'
 
     if not isinstance(date, datetime.date):
