@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import date
+
 
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
@@ -12,17 +12,13 @@ from poms.common.authentication import get_access_token
 from poms.common.filters import CharFilter
 from poms.common.storage import get_storage
 from poms.common.views import AbstractModelViewSet
-from poms.configuration.handlers import export_configuration_to_folder
 from poms.configuration.models import Configuration
 from poms.configuration.serializers import ConfigurationSerializer, ConfigurationImportSerializer
-from poms.configuration.utils import zip_directory, save_json_to_file, \
-    save_directory_to_storage
-from poms_app import settings
 
 storage = get_storage()
 
 from poms.configuration.tasks import import_configuration, push_configuration_to_marketplace, \
-    install_configuration_from_marketplace, install_package_from_marketplace
+    install_configuration_from_marketplace, install_package_from_marketplace, export_configuration
 
 _l = logging.getLogger('poms.configuration')
 
@@ -56,53 +52,18 @@ class ConfigurationViewSet(AbstractModelViewSet):
             type="export_configuration",
         )
 
+        configuration = self.get_object()
+
+        options_object = {
+            'configuration_code': configuration.configuration_code,
+        }
+
+        task.options_object = options_object
+        task.save()
+
         try:
 
-            configuration = self.get_object()
-
-            _l.info('configuration %s' % configuration)
-
-            zip_filename = configuration.name + '.zip'
-            source_directory = os.path.join(settings.BASE_DIR,
-                                            'configurations/' + str(task.id) + '/source')
-            output_zipfile = os.path.join(settings.BASE_DIR,
-                                          'configurations/' + str(task.id) + '/' + zip_filename)
-
-            export_configuration_to_folder(source_directory, configuration, request.user)
-
-            manifest_filepath = source_directory + '/manifest.json'
-
-            manifest = configuration.manifest
-
-            if not manifest:
-                manifest = {
-                    "name": configuration.name,
-                    "configuration_code": configuration.configuration_code,
-                    "version": configuration.version,
-                    "date": str(date.today()),
-                }
-
-            save_json_to_file(manifest_filepath, manifest)
-
-            if configuration.from_marketplace:
-                storage_directory = settings.BASE_API_URL + '/configurations/' + configuration.configuration_code + '/' + configuration.version + '/'
-            else:
-                storage_directory = settings.BASE_API_URL + '/configurations/custom/' + configuration.configuration_code + '/' + configuration.version + '/'
-
-            save_directory_to_storage(source_directory, storage_directory)
-
-            # Create Configuration zip file
-            zip_directory(source_directory, output_zipfile)
-
-            # storage.save(output_zipfile, tmpf)
-
-            # response = DeleteFileAfterResponse(open(output_zipfile, 'rb'), content_type='application/zip',
-            #                                    path_to_delete=output_zipfile)
-            # response['Content-Disposition'] = u'attachment; filename="{filename}'.format(
-            #     filename=zip_filename)
-
-            task.status = CeleryTask.STATUS_DONE
-            task.save()
+            export_configuration.apply_async(kwargs={'task_id': task.id})
 
             return Response({"status": "ok"})
 

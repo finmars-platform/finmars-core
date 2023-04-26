@@ -7,7 +7,7 @@ from rest_framework import serializers
 
 from poms.common.serializers import ModelWithTimeStampSerializer, ModelMetaSerializer
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
-from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
+from poms.ui.models import ListLayout, EditLayout, Bookmark, \
     ConfigurationExportLayout, ComplexTransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPaletteColor, ColorPalette, \
     CrossEntityAttributeExtension, ColumnSortData, TransactionUserFieldModel
@@ -342,10 +342,10 @@ class BookmarkSerializer(serializers.ModelSerializer):
             self.save_child(instance, c, o, processed)
 
 
-class ConfigurationSerializer(serializers.ModelSerializer):
-    master_user = MasterUserField()
-    data = serializers.JSONField(allow_null=False)
-
-    class Meta:
-        model = Configuration
-        fields = ['id', 'master_user', 'name', 'description', 'data']
+# class ConfigurationSerializer(serializers.ModelSerializer):
+#     master_user = MasterUserField()
+#     data = serializers.JSONField(allow_null=False)
+#
+#     class Meta:
+#         model = Configuration
+#         fields = ['id', 'master_user', 'name', 'description', 'data']

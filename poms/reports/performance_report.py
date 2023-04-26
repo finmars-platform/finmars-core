@@ -83,6 +83,9 @@ class PerformanceReportBuilder:
         if not self.instance.end_date:
             self.end_date = get_closest_bday_of_yesterday()
 
+        if not is_business_day(self.instance.end_date):
+            self.instance.end_date = get_last_business_day(self.instance.end_date)
+
         self.instance.first_transaction_date = self.get_first_transaction()
 
         begin_date = self.instance.begin_date

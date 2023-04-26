@@ -32,11 +32,41 @@ from poms.common.sorting import sort_by_dynamic_attrs
 from poms.history.mixins import HistoryMixin
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.utils import get_master_user_and_member
-
+from drf_yasg.utils import swagger_auto_schema
 _l = logging.getLogger('poms.common')
 
 from django.http import HttpResponse, Http404
 
+from drf_yasg.inspectors import SwaggerAutoSchema
+
+class CustomSwaggerAutoSchema(SwaggerAutoSchema):
+    def get_operation(self, operation_keys=None):
+        operation = super().get_operation(operation_keys)
+
+        splitted_dash_operation_keys = [word for item in operation_keys for word in item.split('-')]
+        splitted_underscore_operation_keys = [word for item in splitted_dash_operation_keys for word in item.split('_')]
+
+        capitalized_operation_keys = [word.capitalize() for word in splitted_underscore_operation_keys]
+
+        operation.operationId = ' '.join(capitalized_operation_keys)
+
+        # operation.operationId = f"{self.view.queryset.model._meta.verbose_name.capitalize()} {operation_keys[-1].capitalize()}"
+        return operation
+
+    def get_tags(self, operation_keys=None):
+        tags = super().get_tags(operation_keys)
+
+        splitted_tags = [word.split('-') for word in tags]
+
+        result = []
+
+        for splitted_tag in splitted_tags:
+
+            capitalized_tag = [word.capitalize() for word in splitted_tag]
+
+            result.append(' '.join(capitalized_tag))
+
+        return result
 
 class AbstractApiView(APIView):
 
@@ -60,6 +90,7 @@ class AbstractApiView(APIView):
 
         self.auth_time = float("{:3.3f}".format(time.perf_counter() - auth_st))
 
+    swagger_schema = CustomSwaggerAutoSchema
 
 class AbstractViewSet(AbstractApiView, ViewSet):
     serializer_class = None
@@ -70,7 +101,9 @@ class AbstractViewSet(AbstractApiView, ViewSet):
     def get_serializer(self, *args, **kwargs):
         serializer_class = self.get_serializer_class()
         kwargs['context'] = self.get_serializer_context()
-        return serializer_class(*args, **kwargs)
+        if serializer_class:
+            return serializer_class(*args, **kwargs)
+        return None
 
     def get_serializer_class(self):
         return self.serializer_class

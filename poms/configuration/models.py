@@ -63,7 +63,7 @@ class Configuration(models.Model):
     description = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
     version = models.CharField(max_length=255, verbose_name=gettext_lazy('version'))
 
-    from_marketplace = models.BooleanField(default=False, verbose_name=gettext_lazy('from marketplace'))
+    is_from_marketplace = models.BooleanField(default=False, verbose_name=gettext_lazy('is from marketplace'))
     is_package = models.BooleanField(default=False, verbose_name=gettext_lazy('is package'))
 
     manifest_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('manifest_data'))

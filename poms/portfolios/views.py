@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 from logging import getLogger
 
 import django_filters
@@ -550,7 +548,7 @@ class PortfolioBundleViewSet(AbstractWithObjectPermissionViewSet):
 
 
 class PortfolioBundleEvViewSet(AbstractWithObjectPermissionViewSet):
-    queryset = PortfolioRegisterRecord.objects.select_related(
+    queryset = PortfolioBundle.objects.select_related(
         'master_user',
     )
     serializer_class = PortfolioBundleEvSerializer

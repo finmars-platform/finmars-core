@@ -117,3 +117,4 @@ furo==2022.12.7
 deepdiff==6.2.3
 pyOpenSSL==23.0.0
 suds==1.1.2
+drf_yasg==1.21.5

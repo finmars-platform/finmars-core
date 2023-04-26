@@ -1,12 +1,17 @@
 from __future__ import unicode_literals
 
+import time
+from datetime import timedelta
+
 from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import NamedModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel
 from poms.instruments.models import PricingPolicy, CostMethod
-from poms.users.models import MasterUser, Member
+from poms.users.models import MasterUser, Member, EcosystemDefault
 
+import logging
+_l = logging.getLogger('poms.reports')
 
 class BalanceReportCustomField(models.Model):
     STRING = 10
@@ -923,3 +928,310 @@ class PerformanceReportInstanceItem(models.Model):
     class Meta:
         verbose_name = gettext_lazy('performance report instance item')
         verbose_name_plural = gettext_lazy('performance reports instance item')
+
+
+class ReportSummary():
+
+    def __init__(self, date_from, date_to, portfolios, bundles, currency, master_user, member, context):
+
+        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+
+        self.context = context
+        self.master_user = master_user
+        self.member = member
+
+        self.date_from = date_from
+        self.date_to = date_to
+
+        self.currency = currency
+        self.portfolios = portfolios
+        self.bundles = bundles
+
+        self.portfolio_ids = []
+
+        for portfolio in self.portfolios:
+            self.portfolio_ids.append(portfolio.id)
+
+    def build_balance(self):
+
+        st = time.perf_counter()
+
+        from poms.reports.serializers import BalanceReportSerializer
+
+        serializer = BalanceReportSerializer(data={
+            "report_date": self.date_to,
+            "pricing_policy": self.ecosystem_defaults.pricing_policy_id,
+            "report_currency": self.currency.id,
+            "portfolios": self.portfolio_ids,
+            "cost_method": CostMethod.AVCO,
+            "only_numbers": True
+        }, context=self.context)
+
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        from poms.reports.sql_builders.balance import BalanceReportBuilderSql
+        self.balance_report = BalanceReportBuilderSql(instance=instance).build_balance()
+
+        _l.info('ReportSummary.build_balance done: %s' % "{:3.3f}".format(time.perf_counter() - st))
+
+    def build_pl_daily(self):
+
+        st = time.perf_counter()
+
+        from poms.reports.serializers import PLReportSerializer
+
+        serializer = PLReportSerializer(data={
+            "pl_first_date": self.date_to - timedelta(days=1),
+            "report_date": self.date_to,
+            "pricing_policy": self.ecosystem_defaults.pricing_policy_id,
+            "report_currency": self.currency.id,
+            "portfolios": self.portfolio_ids,
+            "cost_method": CostMethod.AVCO
+        }, context=self.context)
+
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        from poms.reports.sql_builders.pl import PLReportBuilderSql
+        self.pl_report_daily = PLReportBuilderSql(instance=instance).build_report()
+
+        _l.info('ReportSummary.build_pl_daily done: %s' % "{:3.3f}".format(time.perf_counter() - st))
+
+    def build_pl_mtd(self):
+
+        st = time.perf_counter()
+
+        from poms.reports.serializers import PLReportSerializer
+
+        serializer = PLReportSerializer(data={
+            "pl_first_date": self.date_to - timedelta(days=30),
+            "report_date": self.date_to,
+            "pricing_policy": self.ecosystem_defaults.pricing_policy_id,
+            "report_currency": self.currency.id,
+            "portfolios": self.portfolio_ids,
+            "cost_method": CostMethod.AVCO
+        }, context=self.context)
+
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        from poms.reports.sql_builders.pl import PLReportBuilderSql
+        self.pl_report_mtd = PLReportBuilderSql(instance=instance).build_report()
+
+        _l.info('ReportSummary.build_pl_mtd done: %s' % "{:3.3f}".format(time.perf_counter() - st))
+
+    def build_pl_ytd(self):
+
+        st = time.perf_counter()
+
+        from poms.reports.serializers import PLReportSerializer
+
+        serializer = PLReportSerializer(data={
+            "pl_first_date": self.date_to - timedelta(days=365),
+            "report_date": self.date_to,
+            "pricing_policy": self.ecosystem_defaults.pricing_policy_id,
+            "report_currency": self.currency.id,
+            "portfolios": self.portfolio_ids,
+            "cost_method": CostMethod.AVCO
+        }, context=self.context)
+
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        from poms.reports.sql_builders.pl import PLReportBuilderSql
+        self.pl_report_ytd = PLReportBuilderSql(instance=instance).build_report()
+
+        _l.info('ReportSummary.build_pl_ytd done: %s' % "{:3.3f}".format(time.perf_counter() - st))
+
+    def build_pl_inception_to_date(self):
+
+        st = time.perf_counter()
+
+        from poms.reports.serializers import PLReportSerializer
+
+        serializer = PLReportSerializer(data={
+            "pl_first_date": self.date_to - timedelta(days=365000),
+            "report_date": self.date_to,
+            "pricing_policy": self.ecosystem_defaults.pricing_policy_id,
+            "report_currency": self.currency.id,
+            "portfolios": self.portfolio_ids,
+            "cost_method": CostMethod.AVCO
+        }, context=self.context)
+
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        from poms.reports.sql_builders.pl import PLReportBuilderSql
+        self.pl_report_inception_to_date = PLReportBuilderSql(instance=instance).build_report()
+
+        _l.info('ReportSummary.build_pl_inception_to_date done: %s' % "{:3.3f}".format(time.perf_counter() - st))
+
+    def get_nav(self, portfolio_id=None):
+
+        nav = 0
+
+        if portfolio_id:
+
+            for item in self.balance_report.items:
+                if item['portfolio_id'] == portfolio_id:
+                    if item['market_value']:
+                        nav = nav + item['market_value']
+
+        else:
+
+            for item in self.balance_report.items:
+                if item['market_value']:
+                    nav = nav + item['market_value']
+
+        return nav
+
+    def get_total_pl_daily(self, portfolio_id=None):
+
+        total = 0
+
+        if portfolio_id:
+
+            for item in self.pl_report_daily.items:
+                if item['portfolio_id'] == portfolio_id:
+                    if item['total']:
+                        total = total + item['total']
+
+        else:
+
+            for item in self.pl_report_daily.items:
+                if item['total']:
+                    total = total + item['total']
+
+        return total
+
+    def get_total_position_return_pl_daily(self, portfolio_id=None):
+        position_return = 0
+
+        if portfolio_id:
+
+            for item in self.pl_report_daily.items:
+                if item['portfolio_id'] == portfolio_id:
+                    if item['position_return']:
+                        position_return = position_return + item['position_return']
+
+        else:
+
+            for item in self.pl_report_daily.items:
+                if item['position_return']:
+                    position_return = position_return + item['position_return']
+
+        return position_return
+
+    def get_total_pl_mtd(self, portfolio_id=None):
+
+        total = 0
+
+        if portfolio_id:
+
+            for item in self.pl_report_mtd.items:
+                if item['portfolio_id'] == portfolio_id:
+                    if item['total']:
+                        total = total + item['total']
+
+        else:
+
+            for item in self.pl_report_mtd.items:
+                if item['total']:
+                    total = total + item['total']
+
+        return total
+
+    def get_total_position_return_pl_mtd(self, portfolio_id=None):
+        position_return = 0
+
+        if portfolio_id:
+
+            for item in self.pl_report_mtd.items:
+                if item['portfolio_id'] == portfolio_id:
+                    if item['position_return']:
+                        position_return = position_return + item['position_return']
+
+        else:
+
+            for item in self.pl_report_mtd.items:
+                if item['position_return']:
+                    position_return = position_return + item['position_return']
+
+        return position_return
+
+    def get_total_pl_ytd(self, portfolio_id=None):
+
+        total = 0
+
+        if portfolio_id:
+
+            for item in self.pl_report_ytd.items:
+
+                if item['portfolio_id'] == portfolio_id:
+                    if item['total']:
+                        total = total + item['total']
+
+        else:
+
+            for item in self.pl_report_ytd.items:
+                if item['total']:
+                    total = total + item['total']
+
+        return total
+
+    def get_total_position_return_pl_ytd(self, portfolio_id=None):
+        position_return = 0
+
+        if portfolio_id:
+
+            for item in self.pl_report_ytd.items:
+                if item['portfolio_id'] == portfolio_id:
+                    if item['position_return']:
+                        position_return = position_return + item['position_return']
+
+        else:
+
+            for item in self.pl_report_ytd.items:
+                if item['position_return']:
+                    position_return = position_return + item['position_return']
+
+        return position_return
+
+    def get_total_pl_inception_to_date(self, portfolio_id=None):
+
+        total = 0
+
+        if portfolio_id:
+
+            for item in self.pl_report_inception_to_date.items:
+
+                if item['portfolio_id'] == portfolio_id:
+                    if item['total']:
+                        total = total + item['total']
+
+        else:
+
+            for item in self.pl_report_inception_to_date.items:
+                if item['total']:
+                    total = total + item['total']
+
+        return total
+
+    def get_total_position_return_pl_inception_to_date(self, portfolio_id=None):
+        position_return = 0
+
+        if portfolio_id:
+
+            for item in self.pl_report_inception_to_date.items:
+                if item['portfolio_id'] == portfolio_id:
+                    if item['position_return']:
+                        position_return = position_return + item['position_return']
+
+        else:
+
+            for item in self.pl_report_inception_to_date.items:
+                if item['position_return']:
+                    position_return = position_return + item['position_return']
+
+        return position_return

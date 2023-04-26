@@ -73,7 +73,7 @@ class ComplexTransactionStatusSerializer(PomsClassSerializer):
         model = ComplexTransactionStatus
 
 
-class TransactionTypeGroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+class TransactionTypeGroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
 
     class Meta:
@@ -3527,7 +3527,7 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
     transactions = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
 
     date = serializers.DateField(required=False, allow_null=True)
-    code = serializers.IntegerField(default=0, initial=0, min_value=0, required=False)
+    code = serializers.IntegerField(default=0, initial=0, min_value=0, required=False, allow_null=True)
 
     visibility_status = serializers.ChoiceField(default=ComplexTransaction.SHOW_PARAMETERS,
                                                 initial=ComplexTransaction.SHOW_PARAMETERS,

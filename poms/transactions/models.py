@@ -1,5 +1,3 @@
-from __future__ import unicode_literals
-
 import json
 import logging
 import time
@@ -300,7 +298,7 @@ class PeriodicityGroup(AbstractClassModel):
         verbose_name_plural = gettext_lazy('periodicity group')
 
 
-class TransactionTypeGroup(NamedModel, FakeDeletableModel):
+class TransactionTypeGroup(NamedModel, FakeDeletableModel, ConfigurationModel):
     master_user = models.ForeignKey(MasterUser, related_name='transaction_type_groups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -1815,7 +1813,7 @@ class ComplexTransaction(DataTimeStampedModel):
     transaction_unique_code = models.CharField(max_length=255, null=True, blank=True,
                                                db_index=True,
                                                verbose_name=gettext_lazy('transaction unique code'))
-
+    # POSSIBLY DEPRECATED
     deleted_transaction_unique_code = models.CharField(max_length=255, null=True, blank=True,
                                                        verbose_name=gettext_lazy('deleted transaction unique code'))
 
@@ -1998,7 +1996,7 @@ class ComplexTransaction(DataTimeStampedModel):
             self.transactions.all().delete()
 
             if hasattr(self, 'transaction_unique_code'):
-                self.deleted_transaction_unique_code = self.transaction_unique_code
+                # self.deleted_transaction_unique_code = self.transaction_unique_code # TODO possibly do not remove
 
                 self.transaction_unique_code = None
 

@@ -2398,7 +2398,9 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                             instance.instruments_errors
                         ]
 
-                        raise Exception("Rebook error %s" % errors)
+                        return Response(errors) # TODO add 400 status code
+
+                        # raise Exception("Rebook error %s" % errors)
                     else:
                         transaction.savepoint_commit(savepoint)
 
@@ -2409,7 +2411,7 @@ class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
                     _l.error('rebook error %s' % e)
                     _l.error('rebook traceback %s' % traceback.format_exc())
 
-                    transaction.savepoint_rollback(savepoint)
+                    # transaction.savepoint_rollback(savepoint)
 
                     raise Exception(e)
 

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.models import User
 
-from poms.transactions.tests.common_base_test import BaseTestCase
+from poms.common.common_base_test import BaseTestCase
 
 
 class TransactionTypeViewSetTest(BaseTestCase):

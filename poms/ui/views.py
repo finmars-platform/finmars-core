@@ -8,7 +8,7 @@ from rest_framework.viewsets import ModelViewSet
 from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter
 from poms.common.mixins import DestroySystemicModelMixin
 from poms.common.views import AbstractModelViewSet, AbstractViewSet, AbstractReadOnlyModelViewSet
-from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
+from poms.ui.models import ListLayout, EditLayout, Bookmark,  \
     ConfigurationExportLayout, ComplexTransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, CrossEntityAttributeExtension, \
     ColumnSortData, TransactionUserFieldModel
@@ -21,7 +21,7 @@ from poms.reports.models import BalanceReport
 from poms.transactions.models import TransactionType, TransactionTypeGroup
 from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsible, ResponsibleGroup
 from poms.ui.serializers import ListLayoutSerializer, \
-    EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
+    EditLayoutSerializer, BookmarkSerializer,  ConfigurationExportLayoutSerializer, \
     ComplexTransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
     DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer, EntityTooltipSerializer, \
     ColorPaletteSerializer, ListLayoutLightSerializer, DashboardLayoutLightSerializer, \
@@ -465,26 +465,26 @@ class BookmarkViewSet(AbstractModelViewSet):
     ]
 
 
-class ConfigurationFilterSet(FilterSet):
-    id = NoOpFilter()
-
-    class Meta:
-        model = Configuration
-        fields = []
-
-
-class ConfigurationViewSet(AbstractModelViewSet):
-    queryset = Configuration.objects.prefetch_related(
-        'master_user',
-    )
-    serializer_class = ConfigurationSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-    ]
-    filter_class = ConfigurationFilterSet
-    ordering_fields = [
-        'name',
-    ]
+# class ConfigurationFilterSet(FilterSet):
+#     id = NoOpFilter()
+#
+#     class Meta:
+#         model = Configuration
+#         fields = []
+#
+#
+# class ConfigurationViewSet(AbstractModelViewSet):
+#     queryset = Configuration.objects.prefetch_related(
+#         'master_user',
+#     )
+#     serializer_class = ConfigurationSerializer
+#     filter_backends = AbstractModelViewSet.filter_backends + [
+#         OwnerByMasterUserFilter,
+#     ]
+#     filter_class = ConfigurationFilterSet
+#     ordering_fields = [
+#         'name',
+#     ]
 
 
 class SystemAttributesViewSet(AbstractViewSet):

@@ -53,7 +53,9 @@ class BalanceReportBuilderSql:
 
         relation_prefetch_st = time.perf_counter()
 
-        self.add_data_items()
+        if not self.instance.only_numbers:
+
+            self.add_data_items()
 
         self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
 

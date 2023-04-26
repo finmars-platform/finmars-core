@@ -245,6 +245,7 @@ pip install flower
 pip install deepdiff
 pip install pyopenssl
 pip install suds
+pip install drf_yasg
 
 ==== TODO ====
 Move generated documentation to another project
