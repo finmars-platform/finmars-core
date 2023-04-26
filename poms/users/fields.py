@@ -14,12 +14,12 @@ class CurrentMasterUserDefault(object):
 
     def set_context(self, serializer_field):
 
-        request = serializer_field.context['request']
-        master_user = None
         if 'master_user' in serializer_field.context:
             master_user = serializer_field.context['master_user']
         else:
+            request = serializer_field.context['request']
             master_user = request.user.master_user
+
         self._master_user = master_user
 
     def __call__(self, serializer_field):
