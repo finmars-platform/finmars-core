@@ -1372,9 +1372,13 @@ class PLReportBuilderSql:
                                 --SUM(carry_with_sign_invested * stlch.fx_rate * trnch.fx_rate )          as carry_with_sign_invested,
                                 --SUM(overheads_with_sign_invested * stlch.fx_rate * trnch.fx_rate )      as overheads_with_sign_invested,
                                 
-                                SUM(principal_with_sign_invested * stl_cur_fx * trn_cur_fx )      as principal_with_sign_invested,
-                                SUM(carry_with_sign_invested * stl_cur_fx * trn_cur_fx )          as carry_with_sign_invested,
-                                SUM(overheads_with_sign_invested * stl_cur_fx * trn_cur_fx )      as overheads_with_sign_invested,
+                                --SUM(principal_with_sign_invested * stl_cur_fx * trn_cur_fx )      as principal_with_sign_invested,
+                                --SUM(carry_with_sign_invested * stl_cur_fx * trn_cur_fx )          as carry_with_sign_invested,
+                                --SUM(overheads_with_sign_invested * stl_cur_fx * trn_cur_fx )      as overheads_with_sign_invested,
+
+                                SUM(principal_with_sign_invested * trn_cur_fx )      as principal_with_sign_invested, -- possibly missing pricing fx multiply 
+                                SUM(carry_with_sign_invested * trn_cur_fx )          as carry_with_sign_invested,
+                                SUM(overheads_with_sign_invested * trn_cur_fx )      as overheads_with_sign_invested,
                                 
                                 SUM(principal_fixed_opened)                                             as principal_fixed_opened,
                                 SUM(carry_fixed_opened)                                                 as carry_fixed_opened,
