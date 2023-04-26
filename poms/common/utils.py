@@ -514,7 +514,7 @@ def get_serializer(content_type_key):
     from poms.strategies.serializers import Strategy1Serializer
     from poms.strategies.serializers import Strategy2Serializer
 
-    from poms.transactions.serializers import TransactionTypeSerializer
+    from poms.transactions.serializers import TransactionTypeSerializer, TransactionTypeGroupSerializer
     from poms.csv_import.serializers import CsvImportSchemeSerializer
 
     from poms.integrations.serializers import ComplexTransactionImportSchemeSerializer, \
@@ -537,6 +537,7 @@ def get_serializer(content_type_key):
     serializer_map = {
 
         'transactions.transactiontype': TransactionTypeSerializer,
+        'transactions.transactiontypegroup': TransactionTypeGroupSerializer,
         'instruments.instrument': InstrumentSerializer,
         'instruments.instrumenttype': InstrumentTypeSerializer,
         'instruments.pricingpolicy': PricingPolicySerializer,

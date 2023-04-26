@@ -73,7 +73,7 @@ class ComplexTransactionStatusSerializer(PomsClassSerializer):
         model = ComplexTransactionStatus
 
 
-class TransactionTypeGroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+class TransactionTypeGroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
 
     class Meta:
