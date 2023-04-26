@@ -61,18 +61,18 @@ router.register(r'users/timezone', api.TimezoneViewSet, 'timezone')
 router.register(r'users/ecosystem-default', users.EcosystemDefaultViewSet, 'ecosystemdefault')
 router.register(r'users/usercode-prefix', users.UsercodePrefixViewSet, 'usercodeprefix')
 
-router.register(r'accounts/account-type-ev-group', accounts.AccountTypeEvGroupViewSet) # DEPRECATED
-router.register(r'accounts/account-type', accounts.AccountTypeViewSet)
-router.register(r'accounts/account-type-ev', accounts.AccountTypeEvViewSet) # DEPRECATED
-router.register(r'accounts/account-type-attribute-type', accounts.AccountTypeAttributeTypeViewSet,
-                'accounttypeattributetype')
-
-router.register(r'accounts/account-attribute-type', accounts.AccountAttributeTypeViewSet, 'accountattributetype')
-router.register(r'accounts/account-classifier', accounts.AccountClassifierViewSet, 'accountclassifier')
-router.register(r'accounts/account-ev-group', accounts.AccountEvGroupViewSet, 'accountevgroup') # DEPRECATED
-router.register(r'accounts/account-ev', accounts.AccountEvViewSet, 'accountev') # DEPRECATED
-router.register(r'accounts/account', accounts.AccountViewSet, 'account')
-router.register(r'accounts/account-light', accounts.AccountLightViewSet, 'accountlight')  # DEPRECATED
+# router.register(r'accounts/account-type-ev-group', accounts.AccountTypeEvGroupViewSet) # DEPRECATED
+# router.register(r'accounts/account-type', accounts.AccountTypeViewSet)
+# router.register(r'accounts/account-type-ev', accounts.AccountTypeEvViewSet) # DEPRECATED
+# router.register(r'accounts/account-type-attribute-type', accounts.AccountTypeAttributeTypeViewSet,
+#                 'accounttypeattributetype')
+#
+# router.register(r'accounts/account-attribute-type', accounts.AccountAttributeTypeViewSet, 'accountattributetype')
+# router.register(r'accounts/account-classifier', accounts.AccountClassifierViewSet, 'accountclassifier')
+# router.register(r'accounts/account-ev-group', accounts.AccountEvGroupViewSet, 'accountevgroup') # DEPRECATED
+# router.register(r'accounts/account-ev', accounts.AccountEvViewSet, 'accountev') # DEPRECATED
+# router.register(r'accounts/account', accounts.AccountViewSet, 'account')
+# router.register(r'accounts/account-light', accounts.AccountLightViewSet, 'accountlight')  # DEPRECATED
 
 router.register(r'counterparties/counterparty-attribute-type', counterparties.CounterpartyAttributeTypeViewSet,
                 'counterpartyattributetype')
@@ -268,7 +268,7 @@ router.register(r'ui/template-layout', ui.TemplateLayoutViewSet)
 router.register(r'ui/dashboard-layout', ui.DashboardLayoutViewSet)
 router.register(r'ui/edit-layout', ui.EditLayoutViewSet)
 router.register(r'ui/bookmark', ui.BookmarkViewSet)
-router.register(r'ui/configuration', ui.ConfigurationViewSet)
+# router.register(r'ui/configuration', ui.ConfigurationViewSet)
 router.register(r'ui/configuration-export-layout', ui.ConfigurationExportLayoutViewSet)
 router.register(r'ui/complex-transaction-user-field', ui.ComplexTransactionUserFieldViewSet)
 router.register(r'ui/transaction-user-field', ui.TransactionUserFieldViewSet)
@@ -468,7 +468,10 @@ router.register(r'errors/error', ErrorRecordViewSet, 'error')
 router.register(r'history/historical-record', history.HistoricalRecordViewSet, 'historical-record')
 
 
+import poms.accounts.urls as account_router
+
 urlpatterns = [
+    re_path(r'^v1/accounts/', include(account_router.router.urls)),
     re_path(r'^v1/', include(router.urls)),
 
     # external callbacks
@@ -503,10 +506,10 @@ urlpatterns = [
 
 ]
 
-if 'rest_framework_swagger' in settings.INSTALLED_APPS:
-    urlpatterns += [
-        re_path(r'^schema/', api.SchemaViewSet.as_view()),
-    ]
+# if 'rest_framework_swagger' in settings.INSTALLED_APPS:
+#     urlpatterns += [
+#         re_path(r'^schema/', api.SchemaViewSet.as_view()),
+#     ]
 
 if settings.SERVER_TYPE == 'local':
     import debug_toolbar

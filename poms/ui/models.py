@@ -585,15 +585,15 @@ class Dashboard(models.Model):
         verbose_name_plural = gettext_lazy('dashboard')
 
 # Deprecated
-class Configuration(BaseUIModel):
-    master_user = models.ForeignKey(MasterUser, related_name='configuration_files',
-                                    verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
-    name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=gettext_lazy('name'))
-    description = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('description'))
-
-    class Meta(BaseLayout.Meta):
-        unique_together = [
-            ['master_user', 'name'],
-        ]
-
-    ordering = ['name']
+# class Configuration(BaseUIModel):
+#     master_user = models.ForeignKey(MasterUser, related_name='configuration_files',
+#                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+#     name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=gettext_lazy('name'))
+#     description = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('description'))
+#
+#     class Meta(BaseLayout.Meta):
+#         unique_together = [
+#             ['master_user', 'name'],
+#         ]
+#
+#     ordering = ['name']

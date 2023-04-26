@@ -550,7 +550,7 @@ class PortfolioBundleViewSet(AbstractWithObjectPermissionViewSet):
 
 
 class PortfolioBundleEvViewSet(AbstractWithObjectPermissionViewSet):
-    queryset = PortfolioRegisterRecord.objects.select_related(
+    queryset = PortfolioBundle.objects.select_related(
         'master_user',
     )
     serializer_class = PortfolioBundleEvSerializer

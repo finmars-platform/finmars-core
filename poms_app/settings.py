@@ -55,6 +55,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
 
+    'drf_yasg',
+
     'django_filters',
 
     'mptt',
@@ -636,4 +638,10 @@ KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY', None)
 SIMPLE_JWT = {
     "SIGNING_KEY": os.getenv("SIGNING_KEY", SECRET_KEY),
     'USER_ID_FIELD': 'username'
+}
+
+
+REDOC_SETTINGS = {
+    'LAZY_RENDERING': True,
+    'NATIVE_SCROLLBARS': True,
 }

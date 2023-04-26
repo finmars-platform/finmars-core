@@ -212,7 +212,7 @@ class TransactionTypeProcess(object):
 
     @property
     def is_rebook(self):
-        return self.process_mode == self.MODE_REBOOK
+        return self.process_mode == self.MODE_REBOOK and self.complex_transaction.id
 
     @property
     def is_recalculate(self):
@@ -2180,7 +2180,6 @@ class TransactionTypeProcess(object):
         for key, value in self.values.items():
             names[key] = value
 
-
         try:
 
             # _l.debug('names %s' % names)
@@ -2198,75 +2197,121 @@ class TransactionTypeProcess(object):
 
             self.complex_transaction.transaction_unique_code = None
 
-        exist = None
+        if self.is_rebook:
 
-        try:
-            exist = ComplexTransaction.objects.exclude(transaction_unique_code=None).get(
-                master_user=self.transaction_type.master_user,
-                transaction_unique_code=self.complex_transaction.transaction_unique_code)
-        except Exception as e:
             exist = None
 
-        _l.info('execute_uniqueness_expression.uniqueness_reaction %s' % self.uniqueness_reaction)
+            try:
+                exist = ComplexTransaction.objects.exclude(code=self.complex_transaction.code).get(
+                    master_user=self.transaction_type.master_user,
+                    transaction_unique_code=self.complex_transaction.transaction_unique_code)
+            except Exception as e:
+                exist = None
 
-        if self.uniqueness_reaction == 1 and exist and self.complex_transaction.transaction_unique_code:
+            if self.uniqueness_reaction == TransactionType.SKIP and exist and self.complex_transaction.transaction_unique_code:
 
-            # self.complex_transaction.delete()
+                self.uniqueness_status = 'skip'
 
-            # Do not create new transaction if transcation with that code already exists
+                self.general_errors.append({
+                    "reason": 409,
+                    "message": "Skipped book. Transaction Unique code error"
+                })
 
-            self.uniqueness_status = 'skip'
+            elif self.uniqueness_reaction == TransactionType.SKIP and not exist and self.complex_transaction.transaction_unique_code:
 
-            self.general_errors.append({
-                "reason": 409,
-                "message": "Skipped book. Transaction Unique code error"
-            })
-
-        elif self.uniqueness_reaction == 1 and not exist and self.complex_transaction.transaction_unique_code:
-
-            # Just create complex transaction
-            self.uniqueness_status = 'create'
-
-            self.record_execution_progress('Unique code is free, can create transaction. (SKIP)')
-
-        elif self.uniqueness_reaction == 2:
-
-            self.uniqueness_status = 'booked_without_unique_code'
-
-            self.record_execution_progress('Book without Unique Code')
-
-            self.complex_transaction.transaction_unique_code = None
-
-        elif self.uniqueness_reaction == 3 and self.complex_transaction.transaction_unique_code:
-
-            if exist:
+                # Just create complex transaction
+                self.uniqueness_status = 'update'
 
                 self.record_execution_progress(
-                    'Unique Code is already in use, can create transaction. Previous Transaction is deleted (OVERWRITE)')
-                exist.fake_delete()
+                    'Unique code is owned by its transaction, can update transaction. (TransactionType.SKIP)')
 
-                self.complex_transaction = ComplexTransaction(transaction_type=self.transaction_type, date=None,
-                                                              master_user=self.transaction_type.master_user)
+            elif self.uniqueness_reaction == TransactionType.BOOK_WITHOUT_UNIQUE_CODE:
 
-                self.complex_transaction.transaction_unique_code = exist.transaction_unique_code
-                self.complex_transaction.code = exist.code
+                self.uniqueness_status = 'booked_without_unique_code'
+
+                self.record_execution_progress('Book without Unique Code')
+
+                self.complex_transaction.transaction_unique_code = None
+
+            elif self.uniqueness_reaction == TransactionType.OVERWRITE and self.complex_transaction.transaction_unique_code:
 
                 self.uniqueness_status = 'overwrite'
 
-            else:
+                if exist:
+
+                    exist.fake_delete()
+
+
+
+                    self.record_execution_progress('Unique Code is occupied, delete transaction %s (OVERWRITE)' % exist.code)
+                else:
+                    self.record_execution_progress('Unique Code is free, can create transaction (OVERWRITE)')
+
+        else:
+            exist = None
+
+            try:
+                exist = ComplexTransaction.objects.get(
+                    master_user=self.transaction_type.master_user,
+                    transaction_unique_code=self.complex_transaction.transaction_unique_code)
+            except Exception as e:
+                exist = None
+
+            _l.info('execute_uniqueness_expression.uniqueness_reaction %s' % self.uniqueness_reaction)
+
+            if self.uniqueness_reaction == 1 and exist and self.complex_transaction.transaction_unique_code:
+
+                # self.complex_transaction.delete()
+
+                # Do not create new transaction if transcation with that code already exists
+
+                self.uniqueness_status = 'skip'
+
+                self.general_errors.append({
+                    "reason": 409,
+                    "message": "Skipped book. Transaction Unique code error"
+                })
+
+            elif self.uniqueness_reaction == 1 and not exist and self.complex_transaction.transaction_unique_code:
+
+                # Just create complex transaction
                 self.uniqueness_status = 'create'
-                self.record_execution_progress('Unique Code is free, can create transaction (OVERWRITE)')
 
-        elif self.uniqueness_reaction == 4 and exist and self.complex_transaction.transaction_unique_code:
-            # TODO ask if behavior same as skip
-            self.uniqueness_status = 'error'
+                self.record_execution_progress('Unique code is free, can create transaction. (SKIP)')
 
-            self.complex_transaction.fake_delete()
+            elif self.uniqueness_reaction == 2:
 
-            self.general_errors.append({
-                "reason": 410,
-                "message": "Skipped book. Transaction Unique code error"
-            })
+                self.uniqueness_status = 'booked_without_unique_code'
+
+                self.record_execution_progress('Book without Unique Code')
+
+                self.complex_transaction.transaction_unique_code = None
+
+            elif self.uniqueness_reaction == 3 and self.complex_transaction.transaction_unique_code:
+
+                if exist:
+
+                    self.record_execution_progress(
+                        'Unique Code is already in use, can create transaction. Previous Transaction is deleted (OVERWRITE)')
+                    exist.fake_delete()
+
+                    self.uniqueness_status = 'overwrite'
+                    self.record_execution_progress('Unique Code is occupied, delete transaction %s ' % exist.code)
+
+                else:
+                    self.uniqueness_status = 'create'
+                    self.record_execution_progress('Unique Code is free, can create transaction (OVERWRITE)')
+
+            elif self.uniqueness_reaction == 4 and exist and self.complex_transaction.transaction_unique_code:
+                # TODO ask if behavior same as skip
+                self.uniqueness_status = 'error'
+
+                self.complex_transaction.fake_delete()
+
+                self.general_errors.append({
+                    "reason": 410,
+                    "message": "Skipped book. Transaction Unique code error"
+                })
 
         self.record_execution_progress('Unique Code: %s ' % self.complex_transaction.transaction_unique_code)
 
@@ -2439,7 +2484,6 @@ class TransactionTypeProcess(object):
         _l.debug('TransactionTypeProcess: book_create_event_actions done: %s',
                  "{:3.3f}".format(time.perf_counter() - create_event_st))
 
-
         '''
         Executing transaction_unique_code
         '''
@@ -2470,14 +2514,19 @@ class TransactionTypeProcess(object):
         if self.source:
             self.complex_transaction.source = self.source
 
-
         if self.complex_transaction.transaction_unique_code:
 
             count = ComplexTransaction.objects.filter(
-                transaction_unique_code=self.complex_transaction.transaction_unique_code).count()
+                transaction_unique_code=self.complex_transaction.transaction_unique_code).exclude(
+                code=self.complex_transaction.code).count()
 
             if count > 0:
                 raise Exception("Transaction Unique Code must be unique")
+
+        _l.info(
+            'self.complex_transaction.transaction_unique_code %s' % self.complex_transaction.transaction_unique_code)
+        _l.info('self.complex_transaction.id %s' % self.complex_transaction.id)
+        _l.info('self.complex_transaction.code %s' % self.complex_transaction.code)
 
         self.complex_transaction.save()  # save executed text and date expression
         self._context['complex_transaction'] = self.complex_transaction
@@ -2541,8 +2590,6 @@ class TransactionTypeProcess(object):
         _l.info('TransactionTypeProcess: execute_user_fields_expressions done: %s',
                 "{:3.3f}".format(time.perf_counter() - execute_user_fields_expressions_st))
 
-
-
         # _l.info("LOG %s" % self.complex_transaction.execution_log)
         # self.assign_permissions_to_complex_transaction()
 
@@ -2558,7 +2605,6 @@ class TransactionTypeProcess(object):
         self.record_execution_progress('Process time: %s' % "{:3.3f}".format(time.perf_counter() - process_st))
 
         if not self.has_errors:
-
             self.complex_transaction.save()  # save executed text and date expression
 
         _l.info('TransactionTypeProcess: process done: %s',

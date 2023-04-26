@@ -1166,7 +1166,7 @@ class CurrencyPricingSchemeLightSerializer(ModelWithTimeStampSerializer):
             'id', 'name', 'user_code', 'master_user', 'error_handler')
 
 
-class PricingPolicyViewSerializer(ModelWithUserCodeSerializer):
+class PricingPricingPolicyViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = PricingPolicy
         fields = ['id', 'user_code', 'name', 'short_name', 'notes', 'expr']
@@ -1179,7 +1179,7 @@ class CurrencyPricingPolicySerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(CurrencyPricingPolicySerializer, self).__init__(*args, **kwargs)
 
-        self.fields['pricing_policy_object'] = PricingPolicyViewSerializer(source='pricing_policy', read_only=True)
+        self.fields['pricing_policy_object'] = PricingPricingPolicyViewSerializer(source='pricing_policy', read_only=True)
         self.fields['pricing_scheme_object'] = CurrencyPricingSchemeSerializer(source='pricing_scheme', read_only=True)
 
     class Meta:
@@ -1195,7 +1195,7 @@ class InstrumentTypePricingPolicySerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(InstrumentTypePricingPolicySerializer, self).__init__(*args, **kwargs)
 
-        self.fields['pricing_policy_object'] = PricingPolicyViewSerializer(source='pricing_policy', read_only=True)
+        self.fields['pricing_policy_object'] = PricingPricingPolicyViewSerializer(source='pricing_policy', read_only=True)
         self.fields['pricing_scheme_object'] = InstrumentPricingSchemeSerializer(source='pricing_scheme',
                                                                                  read_only=True)
 
@@ -1213,7 +1213,7 @@ class InstrumentPricingPolicySerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(InstrumentPricingPolicySerializer, self).__init__(*args, **kwargs)
 
-        self.fields['pricing_policy_object'] = PricingPolicyViewSerializer(source='pricing_policy', read_only=True)
+        self.fields['pricing_policy_object'] = PricingPricingPolicyViewSerializer(source='pricing_policy', read_only=True)
 
         self.fields['pricing_scheme_object'] = InstrumentPricingSchemeSerializer(source='pricing_scheme',
                                                                                  read_only=True)

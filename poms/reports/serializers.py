@@ -242,9 +242,10 @@ class ReportSerializer(ReportSerializerWithLogs):
     item_strategies1 = ReportStrategy1Serializer(many=True, read_only=True)
     item_strategies2 = ReportStrategy2Serializer(many=True, read_only=True)
     item_strategies3 = ReportStrategy3Serializer(many=True, read_only=True)
-    item_currency_fx_rates = ReportCurrencyHistorySerializer(many=True, read_only=True)
-    item_instrument_pricings = ReportPriceHistorySerializer(many=True, read_only=True)
-    item_instrument_accruals = ReportAccrualCalculationScheduleSerializer(many=True, read_only=True)
+    # Deprecated
+    # item_currency_fx_rates = ReportCurrencyHistorySerializer(many=True, read_only=True)
+    # item_instrument_pricings = ReportPriceHistorySerializer(many=True, read_only=True)
+    # item_instrument_accruals = ReportAccrualCalculationScheduleSerializer(many=True, read_only=True)
 
     def __init__(self, *args, **kwargs):
         super(ReportSerializer, self).__init__(*args, **kwargs)
