@@ -2472,7 +2472,7 @@ class TransactionTypeProcess(object):
         if self.complex_transaction.transaction_unique_code:
 
             count = ComplexTransaction.objects.filter(
-                transaction_unique_code=self.complex_transaction.transaction_unique_code).count()
+                transaction_unique_code=self.complex_transaction.transaction_unique_code).exclude(code=self.complex_transaction.code).count()
 
             if count > 0:
                 raise Exception("Transaction Unique Code must be unique")
