@@ -85,6 +85,9 @@ class BootstrapConfig(AppConfig):
         from django.contrib.auth.models import User
         from poms.users.models import Member, MasterUser, Group, UserProfile
 
+        if not settings.AUTHORIZER_URL:
+            return
+
         try:
             _l.info("load_master_user_data processing")
 
@@ -200,6 +203,9 @@ class BootstrapConfig(AppConfig):
 
     def register_at_authorizer_service(self):
 
+        if not settings.AUTHORIZER_URL:
+            return
+
         try:
             _l.info("register_at_authorizer_service processing")
 
@@ -227,6 +233,9 @@ class BootstrapConfig(AppConfig):
         from django.contrib.auth.models import User
 
         from poms.users.models import Member, MasterUser
+
+        if not settings.AUTHORIZER_URL:
+            return
 
         try:
             _l.info("sync_users_at_authorizer_service processing")
@@ -305,6 +314,9 @@ class BootstrapConfig(AppConfig):
         from poms.configuration_import.tasks import configuration_import_as_json
         from poms.configuration.tasks import install_package_from_marketplace
 
+        if not settings.AUTHORIZER_URL:
+            return
+
         try:
             _l.info("load_init_configuration processing")
 
@@ -360,7 +372,6 @@ class BootstrapConfig(AppConfig):
                 celery_task.save()
 
                 install_package_from_marketplace.apply_async(kwargs={'task_id': celery_task.id})
-
 
             except Exception as e:
                 _l.error("Could not init configuration %s" % e)

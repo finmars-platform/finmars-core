@@ -1,19 +1,15 @@
-from __future__ import unicode_literals
-
 from logging import getLogger
 
 from rest_framework import serializers
 
-from poms.accounts.fields import AccountField
 from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
-from poms.counterparties.fields import ResponsibleField, CounterpartyField
 from poms.instruments.handlers import InstrumentTypeProcess
 from poms.instruments.models import InstrumentType, Instrument
 from poms.instruments.serializers import InstrumentViewSerializer, PricingPolicySerializer, InstrumentSerializer
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord, PortfolioBundle
-from poms.transactions.fields import TransactionTypeField
+from poms.portfolios.utils import get_price_calculation_type
 from poms.users.fields import MasterUserField
 from poms.users.models import EcosystemDefault
 
@@ -338,45 +334,47 @@ class PortfolioRegisterRecordSerializer(ModelWithObjectPermissionSerializer, Mod
     class Meta:
         model = PortfolioRegisterRecord
         fields = [
-            'id', 'master_user',
-
-            'portfolio', 'instrument', 'transaction_class', 'transaction_code', 'transaction_date', 'cash_amount',
-            'cash_currency',
-            'fx_rate', 'cash_amount_valuation_currency', 'valuation_currency', 'nav_previous_day_valuation_currency',
-
-            'n_shares_previous_day', 'n_shares_added',
-
-            'dealing_price_valuation_currency', 'rolling_shares_of_the_day',
-            'transaction', 'complex_transaction', 'portfolio_register'
-
+            "id",
+            "master_user",
+            "portfolio",
+            "instrument",
+            "transaction_class",
+            "transaction_code",
+            "transaction_date",
+            "cash_amount",
+            "cash_currency",
+            "fx_rate",
+            "cash_amount_valuation_currency",
+            "valuation_currency",
+            "nav_previous_day_valuation_currency",
+            "n_shares_previous_day",
+            "n_shares_added",
+            "dealing_price_valuation_currency",
+            "rolling_shares_of_the_day",
+            "transaction",
+            "complex_transaction",
+            "portfolio_register",
+            "share_price_calculation_type",
         ]
 
     def __init__(self, *args, **kwargs):
         super(PortfolioRegisterRecordSerializer, self).__init__(*args, **kwargs)
 
+    def create(self, valid_data: dict) -> PortfolioRegisterRecord:
+        valid_data["share_price_calculation_type"] = get_price_calculation_type(
+            transaction_class=valid_data["transaction_class"],
+            transaction=valid_data["transaction"],
+        )
+        return super().create(valid_data)
 
-class PortfolioRegisterRecordEvSerializer(ModelWithObjectPermissionSerializer, ModelWithTimeStampSerializer):
-    master_user = MasterUserField()
 
-    class Meta:
-        model = PortfolioRegisterRecord
-        fields = [
-            'id', 'master_user',
-
-            'portfolio', 'instrument', 'transaction_class', 'transaction_code', 'transaction_date', 'cash_amount',
-            'cash_currency',
-            'fx_rate', 'cash_amount_valuation_currency', 'valuation_currency', 'nav_previous_day_valuation_currency',
-
-            'n_shares_previous_day', 'n_shares_added',
-
-            'dealing_price_valuation_currency', 'rolling_shares_of_the_day',
-            'transaction', 'complex_transaction', 'portfolio_register'
-        ]
+class PortfolioRegisterRecordEvSerializer(PortfolioRegisterRecordSerializer):
 
     def __init__(self, *args, **kwargs):
+        from poms.transactions.serializers import TransactionClassSerializer
+
         super(PortfolioRegisterRecordEvSerializer, self).__init__(*args, **kwargs)
 
-        from poms.transactions.serializers import TransactionClassSerializer
         self.fields['transaction_class_object'] = TransactionClassSerializer(
             source='transaction_class', read_only=True)
         self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
@@ -437,4 +435,3 @@ class PortfolioEvalSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSer
         ]
 
         read_only_fields = fields
-
