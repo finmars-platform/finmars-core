@@ -307,9 +307,9 @@ class ReportSerializer(ReportSerializerWithLogs):
                 item_strategies1 = {o['id']: o for o in data['item_strategies1']}
                 item_strategies2 = {o['id']: o for o in data['item_strategies2']}
                 item_strategies3 = {o['id']: o for o in data['item_strategies3']}
-                item_currency_fx_rates = {o['id']: o for o in data['item_currency_fx_rates']}
-                item_instrument_pricings = {o['id']: o for o in data['item_instrument_pricings']}
-                item_instrument_accruals = {o['id']: o for o in data['item_instrument_accruals']}
+                # item_currency_fx_rates = {o['id']: o for o in data['item_currency_fx_rates']}
+                # item_instrument_pricings = {o['id']: o for o in data['item_instrument_pricings']}
+                # item_instrument_accruals = {o['id']: o for o in data['item_instrument_accruals']}
 
                 def _set_object(names, pk_attr, objs):
 
@@ -350,15 +350,15 @@ class ReportSerializer(ReportSerializerWithLogs):
                     _set_object(names, 'allocation', item_instruments)
                     _set_object(names, 'mismatch_portfolio', item_portfolios)
                     _set_object(names, 'mismatch_account', item_accounts)
-                    _set_object(names, 'report_currency_history', item_currency_fx_rates)
+                    # _set_object(names, 'report_currency_history', item_currency_fx_rates)
 
-                    _set_object(names, 'instrument_price_history', item_instrument_pricings)
-                    _set_object(names, 'instrument_pricing_currency_history', item_currency_fx_rates)
-                    _set_object(names, 'instrument_accrued_currency_history', item_currency_fx_rates)
+                    # _set_object(names, 'instrument_price_history', item_instrument_pricings)
+                    # _set_object(names, 'instrument_pricing_currency_history', item_currency_fx_rates)
+                    # _set_object(names, 'instrument_accrued_currency_history', item_currency_fx_rates)
 
-                    _set_object(names, 'currency_history', item_currency_fx_rates)
-                    _set_object(names, 'pricing_currency_history', item_currency_fx_rates)
-                    _set_object(names, 'instrument_accrual', item_instrument_accruals)
+                    # _set_object(names, 'currency_history', item_currency_fx_rates)
+                    # _set_object(names, 'pricing_currency_history', item_currency_fx_rates)
+                    # _set_object(names, 'instrument_accrual', item_instrument_accruals)
 
                     names = formula.value_prepare(names)
 
