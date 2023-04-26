@@ -7,11 +7,19 @@ from rest_framework.viewsets import ModelViewSet
 
 from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter
 from poms.common.mixins import DestroySystemicModelMixin
-from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
+from poms.common.views import AbstractModelViewSet, AbstractViewSet, AbstractReadOnlyModelViewSet
 from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
     ConfigurationExportLayout, ComplexTransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, CrossEntityAttributeExtension, \
     ColumnSortData, TransactionUserFieldModel
+from poms.instruments.models import Instrument, InstrumentType
+from poms.currencies.models import Currency
+from poms.accounts.models import Account, AccountType
+from poms.portfolios.models import Portfolio
+from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy2, Strategy2Subgroup, Strategy3, Strategy3Subgroup
+from poms.reports.models import BalanceReport
+from poms.transactions.models import TransactionType, TransactionTypeGroup
+from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsible, ResponsibleGroup
 from poms.ui.serializers import ListLayoutSerializer, \
     EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
     ComplexTransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
@@ -477,3 +485,33 @@ class ConfigurationViewSet(AbstractModelViewSet):
     ordering_fields = [
         'name',
     ]
+
+
+class SystemAttributesViewSet(AbstractViewSet):
+    @staticmethod
+    def list(request, *args, **kwargs):
+
+        props = {
+            'portfolios.portfolio': Portfolio.get_system_attrs(),
+            'accounts.account': Account.get_system_attrs(),
+            'accounts.accounttype': AccountType.get_system_attrs(),
+            'instruments.instrument': Instrument.get_system_attrs(),
+            'instruments.instrumenttype': InstrumentType.get_system_attrs(),
+            'currencies.currency': Currency.get_system_attrs(),
+            'counterparties.counterparty': Counterparty.get_system_attrs(),
+            'counterparties.counterpartygroup': CounterpartyGroup.get_system_attrs(),
+            'counterparties.responsible': Responsible.get_system_attrs(),
+            'counterparties.responsiblegroup': ResponsibleGroup.get_system_attrs(),
+            'transactions.transactiontype': TransactionType.get_system_attrs(),
+            'transactions.transactiontypegroup': TransactionTypeGroup.get_system_attrs(),
+            'strategies.strategy1': Strategy1.get_system_attrs(),
+            'strategies.strategy1subgroup': Strategy1Subgroup.get_system_attrs(),
+            'strategies.strategy2': Strategy2.get_system_attrs(),
+            'strategies.strategy2subgroup': Strategy2Subgroup.get_system_attrs(),
+            'strategies.strategy3': Strategy3.get_system_attrs(),
+            'strategies.strategy3subgroup': Strategy3Subgroup.get_system_attrs(),
+
+            'reports.balancereport': BalanceReport.get_system_attrs(),
+        }
+
+        return Response(props)

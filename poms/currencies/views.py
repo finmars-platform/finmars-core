@@ -131,7 +131,6 @@ class CurrencyViewSet(AbstractWithObjectPermissionViewSet):
                 "key": "pricing_condition",
                 "name": "Pricing Condition",
                 "value_content_type": "instruments.pricingcondition",
-                "value_entity": "pricing-condition",
                 "code": "user_code",
                 "value_type": "field"
             }
