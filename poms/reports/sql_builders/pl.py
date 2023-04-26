@@ -1463,9 +1463,9 @@ class PLReportBuilderSql:
                                     SUM(overheads_with_sign * (1 - multiplier))                 as overheads_opened,
                                     
                                     
-                                    SUM(principal_with_sign_invested * (1 - multiplier))        as principal_with_sign_invested,
-                                    SUM(carry_with_sign_invested * (1 - multiplier))            as carry_with_sign_invested,
-                                    SUM(overheads_with_sign_invested * (1 - multiplier))        as overheads_with_sign_invested,
+                                    SUM(principal_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as principal_with_sign_invested,
+                                    SUM(carry_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)            as carry_with_sign_invested,
+                                    SUM(overheads_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as overheads_with_sign_invested,
                                     
                                     SUM(principal_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as principal_fixed_opened,
                                     SUM(carry_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)            as carry_fixed_opened,
