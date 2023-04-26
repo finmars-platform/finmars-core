@@ -223,8 +223,3 @@ def get_storage():
         storage = FinmarsLocalFileSystemStorage()
 
     return storage
-
-
-
-
-

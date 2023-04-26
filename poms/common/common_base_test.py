@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.db import connection, models
 from django.test import TestCase
 from rest_framework.test import APIClient
 
@@ -43,6 +44,17 @@ def show_all_urls():
     django_resolver = get_resolver(None)
     print_urls(django_resolver)
     print("------------------------------------------------")
+
+
+def change_created_time(instance: models.Model, new_time: datetime):
+    if not isinstance(new_time, datetime):
+        raise ValueError(f"value {new_time} must be a datetime object!")
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            f"UPDATE {instance._meta.db_table} SET created='{new_time.isoformat()}' "
+            f"WHERE id={instance.id}",
+        )
 
 
 class MockResponse:
