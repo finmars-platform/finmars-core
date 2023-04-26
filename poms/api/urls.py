@@ -278,6 +278,7 @@ router.register(r'ui/context-menu-layout', ui.ContextMenuLayoutViewSet)
 router.register(r'ui/color-palette', ui.ColorPaletteViewSet)
 router.register(r'ui/cross-entity-attribute-extension', ui.CrossEntityAttributeExtensionViewSet)
 router.register(r'ui/column-sort-data', ui.ColumnSortDataViewSet)
+router.register(r'ui/system-attributes', ui.SystemAttributesViewSet, basename="System attributes")
 
 router.register(r'reports/summary', reports.SummaryViewSet, 'indicators')
 router.register(r'reports/balance-report', reports.BalanceReportViewSet, "balance-report")

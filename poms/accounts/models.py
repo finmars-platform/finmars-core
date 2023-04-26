@@ -40,6 +40,61 @@ class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel, Configur
             ('manage_accounttype', 'Can manage account type'),
         ]
 
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+                "allow_null": True
+
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+                "allow_null": True
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
+            {
+                "key": "configuration_code",
+                "name": "Configuration code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+                "allow_null": True
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+                "allow_null": True
+            },
+            {
+                "key": "show_transaction_details",
+                "name": "Show transaction details",
+                "value_type": 50,
+                "allow_null": True
+            },
+            {
+                "key": "transaction_details_expr",
+                "name": "Transaction details expr",
+                "value_type": 10,
+                "allow_null": True
+            },
+        ]
+
 class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     '''
     One of core entities - Account
@@ -61,6 +116,47 @@ class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
         permissions = [
             # ('view_account', 'Can view account'),
             ('manage_account', 'Can manage account'),
+        ]
+
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "type",
+                "name": "Type",
+                "value_type": "field",
+                "value_content_type": "accounts.accounttype",
+                "value_entity": "account-type",
+                "code": "user_code"
+            }
         ]
 
     @property

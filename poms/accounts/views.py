@@ -289,41 +289,7 @@ class AccountViewSet(AbstractWithObjectPermissionViewSet):
     @action(detail=False, methods=['get'], url_path='attributes')
     def list_attributes(self, request, *args, **kwargs):
 
-        items = [
-            {
-                "key": "name",
-                "name": "Name",
-                "value_type": 10
-            },
-            {
-                "key": "short_name",
-                "name": "Short name",
-                "value_type": 10
-            },
-            {
-                "key": "user_code",
-                "name": "User code",
-                "value_type": 10
-            },
-            {
-                "key": "public_name",
-                "name": "Public name",
-                "value_type": 10
-            },
-            {
-                "key": "notes",
-                "name": "Notes",
-                "value_type": 10
-            },
-            {
-                "key": "type",
-                "name": "Type",
-                "value_type": "field",
-                "value_content_type": "accounts.accounttype",
-                "value_entity": "account-type",
-                "code": "user_code"
-            }
-        ]
+        items = Account.system_attrs()
 
         items = items + get_list_of_entity_attributes('accounts.account')
 

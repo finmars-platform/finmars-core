@@ -25,6 +25,39 @@ class CounterpartyGroup(NamedModel, FakeDeletableModel):
             ('manage_counterpartygroup', 'Can manage counterparty group'),
         ]
 
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10
+            }
+        ]
+
     @property
     def is_default(self):
         return self.master_user.counterparty_group_id == self.id if self.master_user_id else False
@@ -56,6 +89,53 @@ class Counterparty(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMod
             ('manage_counterparty', 'Can manage counterparty'),
         ]
 
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+                "allow_null": True
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "group",
+                "name": "Group",
+                "value_type": "field",
+                "value_entity": "counterparty-group",
+                "value_content_type": "counterparties.counterpartygroup",
+                "code": "user_code"
+            },
+            {
+                "key": "portfolios",
+                "name": "Portfolios",
+                "value_type": "mc_field"
+            },
+        ]
+
     @property
     def is_default(self):
         return self.master_user.counterparty_id == self.id if self.master_user_id else False
@@ -73,6 +153,39 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
         permissions = [
             # ('view_responsiblegroup', 'Can view responsible group'),
             ('manage_responsiblegroup', 'Can manage responsible group'),
+        ]
+
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10
+            }
         ]
 
     @property
@@ -101,6 +214,56 @@ class Responsible(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMode
         permissions = [
             # ('view_responsible', 'Can view responsible'),
             ('manage_responsible', 'Can manage responsible'),
+        ]
+
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+                "allow_null": True
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "group",
+                "name": "Group",
+                "value_content_type": "counterparties.responsiblegroup",
+                "value_entity": "responsible-group",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "portfolios",
+                "name": "Portfolios",
+                "value_content_type": "portfolios.portfolio",
+                "value_entity": "portfolio",
+                "code": "user_code",
+                "value_type": "mc_field"
+            },
         ]
 
     @property
