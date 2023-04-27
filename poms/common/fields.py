@@ -1,12 +1,13 @@
 from __future__ import unicode_literals
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.utils import timezone
 from django.utils.translation import gettext_lazy
 from rest_framework import ISO_8601
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField, DateTimeField, FloatField, empty, RegexField
 from rest_framework.relations import PrimaryKeyRelatedField, SlugRelatedField, RelatedField
-from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
+from django.contrib.contenttypes.models import ContentType
 from poms.common import formula
 
 
@@ -64,6 +65,7 @@ class SlugRelatedFilteredField(SlugRelatedField):
                 queryset = backend().filter_queryset(request, queryset, None)
         return queryset
 
+
 # Thats cool
 class UserCodeOrPrimaryKeyRelatedField(RelatedField):
 
@@ -81,8 +83,6 @@ class UserCodeOrPrimaryKeyRelatedField(RelatedField):
 
     def to_representation(self, obj):
         return getattr(obj, 'id')
-
-
 
 
 class UserCodeField(CharField):
@@ -178,3 +178,26 @@ class ISINField(RegexField):
             #     if data is not None:
             #         return data.split(maxsplit=1)
             #     return None
+
+
+class ContentTypeOrPrimaryKeyRelatedField(RelatedField):
+
+    queryset = ContentType.objects
+
+    def to_internal_value(self, data):
+
+        try:
+            if isinstance(data, str):
+
+                pieces = data.split('.')
+
+                return self.queryset.get(app_label=pieces[0], model=pieces[1])
+            else:
+                return self.queryset.get(pk=data)
+        except ObjectDoesNotExist:
+            self.fail('does_not_exist', slug_name='user_code', value=str(data))
+        except (TypeError, ValueError):
+            self.fail('invalid')
+
+    def to_representation(self, obj):
+        return getattr(obj, 'id')

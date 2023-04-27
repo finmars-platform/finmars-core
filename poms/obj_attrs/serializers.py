@@ -14,7 +14,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty
 from rest_framework.serializers import ListSerializer
 
-from poms.common.fields import ExpressionField
+from poms.common.fields import ExpressionField, ContentTypeOrPrimaryKeyRelatedField
 from poms.common.formula import safe_eval, ExpressionEvalError
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithUserCodeSerializer, ModelMetaSerializer
@@ -343,6 +343,8 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
 
     expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, allow_null=True,
                            default='""')
+
+    content_type = ContentTypeOrPrimaryKeyRelatedField()
 
     class Meta:
         model = GenericAttributeType
