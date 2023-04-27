@@ -20,7 +20,8 @@ from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerial
 from poms.counterparties.fields import CounterpartyField, ResponsibleField
 from poms.currencies.fields import CurrencyField, CurrencyDefault
 from poms.currencies.models import CurrencyHistory
-from poms.instruments.fields import InstrumentTypeField, InstrumentTypeDefault, InstrumentField, PricingPolicyField
+from poms.instruments.fields import InstrumentTypeField, InstrumentTypeDefault, InstrumentField, PricingPolicyField, \
+    PricingConditionField
 from poms.instruments.models import PriceHistory, Instrument, AccrualCalculationModel, Periodicity, DailyPricingModel, \
     PaymentSizeDetail, PricingCondition
 from poms.integrations.fields import InstrumentDownloadSchemeField, PriceDownloadSchemeField, \
@@ -919,6 +920,8 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
     factor_schedules = serializers.SerializerMethodField()
     event_schedules = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
 
+    pricing_condition = PricingConditionField()
+
     # attributes = serializers.SerializerMethodField()
 
     class Meta:
@@ -931,10 +934,13 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
             'payment_size_detail', 'payment_size_detail_object', 'default_price', 'default_accrued',
             'user_text_1', 'user_text_2', 'user_text_3',
             'reference_for_pricing',
-            'maturity_date',
+            'maturity_date', 'pricing_condition',
             # 'manual_pricing_formulas',
             'accrual_calculation_schedules', 'factor_schedules', 'event_schedules',
             # 'attributes',
+
+            'co_directional_exposure_currency',
+            'counter_directional_exposure_currency'
 
         ]
 
