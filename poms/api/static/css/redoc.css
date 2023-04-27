@@ -9,6 +9,19 @@ body {
     padding: 0 24px;
 }
 
+.display-flex-row {
+    display: flex;
+    flex-direction: row;
+}
+
+.display-flex-column {
+    display: flex;
+    flex-direction: column;
+}
+.documentation-endpoint-block {
+    margin: 1rem;
+}
+
 .documentation-block {
     border: 1px solid #494949;
     padding: 2rem 1rem;

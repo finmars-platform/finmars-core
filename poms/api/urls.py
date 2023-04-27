@@ -61,18 +61,6 @@ router.register(r'users/timezone', api.TimezoneViewSet, 'timezone')
 router.register(r'users/ecosystem-default', users.EcosystemDefaultViewSet, 'ecosystemdefault')
 router.register(r'users/usercode-prefix', users.UsercodePrefixViewSet, 'usercodeprefix')
 
-# router.register(r'accounts/account-type-ev-group', accounts.AccountTypeEvGroupViewSet) # DEPRECATED
-# router.register(r'accounts/account-type', accounts.AccountTypeViewSet)
-# router.register(r'accounts/account-type-ev', accounts.AccountTypeEvViewSet) # DEPRECATED
-# router.register(r'accounts/account-type-attribute-type', accounts.AccountTypeAttributeTypeViewSet,
-#                 'accounttypeattributetype')
-#
-# router.register(r'accounts/account-attribute-type', accounts.AccountAttributeTypeViewSet, 'accountattributetype')
-# router.register(r'accounts/account-classifier', accounts.AccountClassifierViewSet, 'accountclassifier')
-# router.register(r'accounts/account-ev-group', accounts.AccountEvGroupViewSet, 'accountevgroup') # DEPRECATED
-# router.register(r'accounts/account-ev', accounts.AccountEvViewSet, 'accountev') # DEPRECATED
-# router.register(r'accounts/account', accounts.AccountViewSet, 'account')
-# router.register(r'accounts/account-light', accounts.AccountLightViewSet, 'accountlight')  # DEPRECATED
 
 router.register(r'counterparties/counterparty-attribute-type', counterparties.CounterpartyAttributeTypeViewSet,
                 'counterpartyattributetype')
@@ -146,46 +134,6 @@ router.register(r'reference-tables/reference-table', reference_table.ReferenceTa
 router.register(r'active_processes/active_processes', celery_tasks.CeleryTaskViewSet, 'celery_tasks')  # deprecated
 router.register(r'tasks/task', celery_tasks.CeleryTaskViewSet, 'celery_tasks')
 
-router.register(r'transactions/event-class', transactions.EventClassViewSet)
-router.register(r'transactions/notification-class', transactions.NotificationClassViewSet)
-router.register(r'transactions/transaction-class', transactions.TransactionClassViewSet)
-router.register(r'transactions/transaction-type-group-ev-group', transactions.TransactionTypeGroupEvGroupViewSet,
-                'transactiontypegroupevgroup') # DEPRECATED
-router.register(r'transactions/transaction-type-group', transactions.TransactionTypeGroupViewSet)
-router.register(r'transactions/transaction-type-ev-group', transactions.TransactionTypeEvGroupViewSet,
-                'transactiontypeevgroup') # DEPRECATED
-router.register(r'transactions/transaction-type-light-ev-group', transactions.TransactionTypeLightEvGroupViewSet,
-                'transactiontypelightevgroup')  # Deprecated why even needed?
-router.register(r'transactions/transaction-type', transactions.TransactionTypeViewSet, 'transactiontype')
-router.register(r'transactions/transaction-type-ev', transactions.TransactionTypeEvViewSet, 'transactiontypev') # DEPRECATED
-router.register(r'transactions/transaction-type-light', transactions.TransactionTypeLightViewSet,
-                'transactiontypelight')  # Deprecated
-router.register(r'transactions/transaction-type-light-with-inputs', transactions.TransactionTypeLightWithInputsViewSet,
-                'transactiontypelightwithinputs')  # Deprecated
-router.register(r'transactions/transaction-type-attribute-type', transactions.TransactionTypeAttributeTypeViewSet)
-router.register(r'transactions/transaction-attribute-type', transactions.TransactionAttributeTypeViewSet,
-                'transactionattributetype')
-router.register(r'transactions/transaction-classifier', transactions.TransactionClassifierViewSet,
-                'transactionclassifier')
-
-router.register(r'transactions/transaction-ev-group', transactions.TransactionEvGroupViewSet, 'transactionevgroup') # DEPRECATED
-router.register(r'transactions/transaction', transactions.TransactionViewSet, 'transaction')
-router.register(r'transactions/transaction-ev', transactions.TransactionEvViewSet, 'transaction-ev') # DEPRECATED
-router.register(r'transactions/complex-transaction-attribute-type', transactions.ComplexTransactionAttributeTypeViewSet,
-                'complextransactionattributetype')
-
-router.register(r'transactions/complex-transaction-ev-group', transactions.ComplexTransactionEvGroupViewSet,
-                'complextransactionevgroup') # DEPRECATED
-router.register(r'transactions/complex-transaction-light-ev-group', transactions.ComplexTransactionLightEvGroupViewSet,
-                'complextransactionlightevgroup')  # Deprecated, why even needed?
-router.register(r'transactions/complex-transaction', transactions.ComplexTransactionViewSet)
-router.register(r'transactions/complex-transaction-ev', transactions.ComplexTransactionEvViewSet) # DEPRECATED
-router.register(r'transactions/complex-transaction-light', transactions.ComplexTransactionLightViewSet,
-                'complextransactionlight')  # Deprecated
-router.register(r'transactions/recalculate-permission-transaction',
-                transactions.RecalculatePermissionTransactionViewSet, 'recalculatepermissiontranscation')
-router.register(r'transactions/recalculate-permission-complex-transaction',
-                transactions.RecalculatePermissionComplexTransactionViewSet, 'recalculatepermissioncomplextrasaction')
 
 router.register(r'configuration/configuration', configuration.ConfigurationViewSet)
 
@@ -406,12 +354,14 @@ import poms.accounts.urls as account_router
 import poms.portfolios.urls as portfolio_router
 import poms.currencies.urls as currency_router
 import poms.instruments.urls as instrument_router
+import poms.transactions.urls as transaction_router
 
 urlpatterns = [
     re_path(r'^v1/accounts/', include(account_router.router.urls)),
     re_path(r'^v1/portfolios/', include(portfolio_router.router.urls)),
     re_path(r'^v1/currencies/', include(currency_router.router.urls)),
     re_path(r'^v1/instruments/', include(instrument_router.router.urls)),
+    re_path(r'^v1/transactions/', include(transaction_router.router.urls)),
     re_path(r'^v1/', include(router.urls)),
 
     # external callbacks
