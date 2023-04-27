@@ -6,6 +6,9 @@ from django.utils.translation import gettext_lazy
 from poms.configuration.utils import replace_special_chars_and_spaces
 from django.core.serializers.json import DjangoJSONEncoder
 
+import logging
+_l = logging.getLogger('poms.configuration')
+
 class ConfigurationModel(models.Model):
     '''
     just a good remainder to find entity by configuration_code
@@ -35,8 +38,11 @@ class ConfigurationModel(models.Model):
 
     def save(self, *args, **kwargs):
 
+        _l.info('self.configuration_code %s' % self.configuration_code)
+        _l.info('self.user_code %s' % self.user_code)
 
-        if self.user_code and self.configuration_code not in self.user_code:
+        # TODO  ADD configuration_code to POST data
+        if self.configuration_code not in self.user_code:
 
             self.user_code = replace_special_chars_and_spaces(self.user_code).lower()
 

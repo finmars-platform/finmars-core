@@ -2,8 +2,7 @@ import logging
 import traceback
 
 from poms.configuration.export_helpers import export_instrument_types, export_pricing_policies
-from poms.configuration.utils import save_serialized_entity, save_serialized_attribute_type, save_serialized_layout, \
-    copy_directory
+from poms.configuration.utils import save_serialized_entity, save_serialized_attribute_type, save_serialized_layout
 from poms_app import settings
 
 _l = logging.getLogger('poms.configuration')
@@ -12,8 +11,8 @@ from poms.common.storage import get_storage
 
 storage = get_storage()
 
-def export_workflows_to_directory(source_directory, configuration, master_user, member):
 
+def export_workflows_to_directory(source_directory, configuration, master_user, member):
     source_directory + '/workflows'
 
     configuration_code_as_path = '/'.join(configuration.configuration_code.split('.'))
@@ -24,6 +23,7 @@ def export_workflows_to_directory(source_directory, configuration, master_user, 
     _l.info("export_workflows_to_folder.Workflows destination: %s" % source_directory + '/workflows')
 
     storage.download_directory(workflows_dir, source_directory + '/workflows')
+
 
 def export_configuration_to_directory(source_directory, configuration, master_user, member):
     try:
@@ -55,8 +55,8 @@ def export_configuration_to_directory(source_directory, configuration, master_us
         #                        context)
 
         export_instrument_types(configuration.configuration_code,
-                                                        source_directory + '/instrument-types',
-                                                        master_user, member)
+                                source_directory + '/instrument-types',
+                                master_user, member)
 
         _l.info("Exported: instruments.instrumenttype")
 
@@ -67,8 +67,8 @@ def export_configuration_to_directory(source_directory, configuration, master_us
 
         _l.info("Going to export: accounts.accounttype")
 
-        export_pricing_policies(configuration.configuration_code, source_directory + '/pricing-policies', master_user, member)
-
+        export_pricing_policies(configuration.configuration_code, source_directory + '/pricing-policies', master_user,
+                                member)
 
         _l.info("Exported: accounts.accounttype")
 
@@ -203,7 +203,6 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                source_directory + '/ui/layouts/context-menu',
                                context)
 
-
         # TODO Need to add user_code
         # save_serialized_entity('ui.complextransactionuserfieldmodel',
         #                                configuration.configuration_code,
@@ -284,6 +283,27 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                'currencies.currencyhistory',
                                source_directory + '/ui/layouts/currency-history',
                                context)
+
+        save_serialized_layout('ui.listlayout',
+                               configuration.configuration_code,
+                               'reports.balancereport',
+                               source_directory + '/ui/layouts/balance-report',
+                               context)
+
+        save_serialized_layout('ui.listlayout',
+                               configuration.configuration_code,
+                               'reports.plreport',
+                               source_directory + '/ui/layouts/pl-report',
+                               context)
+
+        save_serialized_layout('ui.listlayout',
+                               configuration.configuration_code,
+                               'reports.transactionreport',
+                               source_directory + '/ui/layouts/transaction-report',
+                               context)
+
+
+
 
 
 

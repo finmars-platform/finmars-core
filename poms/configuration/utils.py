@@ -153,7 +153,11 @@ def save_serialized_layout(content_type, configuration_code, content_type_key, s
 
     entity_content_type = get_content_type_by_name(content_type_key)
 
+    _l.info('save_serialized_layout.entity_content_type %s' % entity_content_type)
+
     filtered_objects = model.objects.filter(configuration_code=configuration_code, content_type=entity_content_type)
+
+    _l.info('filtered_objects %s' % filtered_objects)
 
     SerializerClass = get_serializer(content_type)
 

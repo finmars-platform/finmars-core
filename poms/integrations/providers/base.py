@@ -9,11 +9,13 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext_lazy
 
 from poms.common import formula
+from poms.common.models import ProxyRequest, ProxyUser
 from poms.currencies.models import CurrencyHistory, Currency
-from poms.instruments.models import Instrument, PriceHistory
+from poms.instruments.models import Instrument, PriceHistory, InstrumentType
 from poms.integrations.models import InstrumentDownloadScheme, ProviderClass, CurrencyMapping, InstrumentTypeMapping, \
     InstrumentAttributeValueMapping, AccrualCalculationModelMapping, PeriodicityMapping, BloombergDataProviderCredential
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
+from poms.users.models import Member
 
 _l = getLogger('poms.integrations')
 
@@ -169,6 +171,7 @@ class AbstractProvider(object):
 
             errors = {}
             master_user = instrument_download_scheme.master_user
+            member = Member.objects.get(username="finmars_bot")
             provider = instrument_download_scheme.provider
 
             values_converted = {}
@@ -196,10 +199,44 @@ class AbstractProvider(object):
                 instr = Instrument(master_user=master_user)
                 return instr, errors
 
+            from poms.instruments.handlers import InstrumentTypeProcess
+            from poms.instruments.serializers import InstrumentSerializer
+
+            instrument_type = None
+
             try:
-                instr = Instrument.objects.get(master_user=master_user, user_code=user_code)
-            except Instrument.DoesNotExist:
+                instrument_type_user_code = formula.safe_eval(instrument_download_scheme.instrument_type, names=values_converted)
+                instrument_type = InstrumentType.objects.get(user_code=instrument_type_user_code)
+            except formula.InvalidExpression:
+                _l.info('Invalid instrument attribute expression: id=%s, attr=%s, expr=%s, values=%s',
+                        instrument_download_scheme.id, 'instrument_user_code',
+                        instrument_download_scheme.instrument_user_code, values)
+                errors['instrument_type_user_code'] = [gettext_lazy('Invalid expression.')]
                 instr = Instrument(master_user=master_user)
+                return instr, errors
+
+
+            process = InstrumentTypeProcess(instrument_type=instrument_type)
+
+            default_instrument_object = process.instrument
+
+            default_instrument_object.update({'user_code': user_code, 'name': user_code})
+
+            proxy_user = ProxyUser(member, master_user)
+            proxy_request = ProxyRequest(proxy_user)
+
+            context = {"master_user": master_user, "request": proxy_request}
+
+            _l.info('default_instrument_object %s' % default_instrument_object)
+
+            serializer = InstrumentSerializer(data=default_instrument_object, context=context)
+            serializer.is_valid(raise_exception=True)
+            instr = serializer.save()
+
+            # try:
+            #     instr = Instrument.objects.get(master_user=master_user, user_code=user_code)
+            # except Instrument.DoesNotExist:
+            #     instr = Instrument(master_user=master_user)
 
             # instr.instrument_type = master_user.instrument_type
             # instr.pricing_currency = master_user.currency
@@ -466,7 +503,7 @@ def get_provider(master_user=None, provider=None, task=None):
     if master_user is None:
         master_user = task.master_user
     if provider is None:
-        provider = 1 # bloomberg
+        provider = 1  # bloomberg
     if isinstance(provider, ProviderClass):
         provider = provider.id
 

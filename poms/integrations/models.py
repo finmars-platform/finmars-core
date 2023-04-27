@@ -214,6 +214,7 @@ class InstrumentDownloadScheme(NamedModel, DataTimeStampedModel, ConfigurationMo
 
     mode = models.CharField(max_length=255, choices=MODE_CHOICES, default='skip')
 
+    # TODO FIX USER_CODE UNIQUE CONSTRAINT
     user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
 
     master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
