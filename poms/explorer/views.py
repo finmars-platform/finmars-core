@@ -192,14 +192,15 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
             _l.info('going to save %s' % filepath)
 
-            try:
-
-                storage.delete(filepath)
-
-                _l.info("File exist, going to delete")
-
-            except Exception as e:
-                _l.info("File is not exists, going to create")
+            # Possibly deprecated
+            # try:
+            #
+            #     storage.delete(filepath)
+            #
+            #     _l.info("File exist, going to delete")
+            #
+            # except Exception as e:
+            #     _l.info("File is not exists, going to create")
 
             storage.save(filepath, file)
 
@@ -251,6 +252,8 @@ class ExplorerDeleteViewSet(AbstractViewSet):
 
         if not path:
             raise ValidationError("Path is required")
+        elif path == '/':
+            raise ValidationError("Could not remove root folder")
         else:
             path = settings.BASE_API_URL + '/' + path
 
@@ -261,7 +264,7 @@ class ExplorerDeleteViewSet(AbstractViewSet):
             _l.info('going to delete %s' % path)
 
             if is_dir:
-                storage.delete(path + '/.init')
+                storage.delete_directory(path)
 
             storage.delete(path)
         except Exception as e:
