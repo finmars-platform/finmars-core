@@ -36,7 +36,8 @@ class AccountTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithUser
         model = AccountType
         fields = [
             'id', 'master_user',
-            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'user_code', 'configuration_code',
+            'name', 'short_name', 'public_name', 'notes',
             'is_deleted', 'is_enabled',
             'show_transaction_details', 'transaction_details_expr',
         ]

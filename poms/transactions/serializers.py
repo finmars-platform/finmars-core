@@ -1181,7 +1181,8 @@ class TransactionTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWith
         fields = [
             'id', 'master_user',
             'group', 'group_object',
-            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'user_code', 'configuration_code',
+            'name', 'short_name', 'public_name', 'notes',
             'date_expr', 'display_expr',
             'transaction_unique_code_expr',
             'transaction_unique_code_options',

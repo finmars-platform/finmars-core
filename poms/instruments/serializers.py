@@ -844,7 +844,8 @@ class InstrumentTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithA
         model = InstrumentType
         fields = [
             'id', 'master_user',
-            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'user_code', 'configuration_code',
+            'name', 'short_name', 'public_name', 'notes',
             'is_default', 'is_deleted', 'is_enabled',
 
             'one_off_event', 'one_off_event_object',
