@@ -314,7 +314,7 @@ def push_configuration_to_marketplace(self, task_id):
         else:
             path = settings.BASE_API_URL + '/configurations/custom/' + configuration.configuration_code + '/' + configuration.version
 
-        zip_file_path = storage.download_folder_as_zip(path)
+        zip_file_path = storage.download_directory_as_zip(path)
 
         data = {
             'configuration_code': configuration.configuration_code,

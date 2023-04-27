@@ -60,6 +60,7 @@ def export_instrument_types(configuration_code, output_directory, master_user, m
         serialized_data.pop("factor_down_object", None)
 
 
+        serialized_data['pricing_policies'] = []
 
         # TODO think how to implement
         # result_item['pricing_policies'] = self.get_instrument_type_pricing_policies(instrument_type["pk"])

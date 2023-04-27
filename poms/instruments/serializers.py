@@ -456,18 +456,18 @@ class InstrumentTypeSerializer(ModelWithUserCodeSerializer,
 
     def validate(self, attrs):
         instrument_class = attrs.get('instrument_class', None)
-        one_off_event = attrs.get('one_off_event', None)
-        regular_event = attrs.get('regular_event', None)
-
-        if instrument_class:
-            errors = {}
-            if instrument_class.has_one_off_event and one_off_event is None:
-                errors['one_off_event'] = self.fields['one_off_event'].error_messages['required']
-            if instrument_class.has_regular_event and regular_event is None:
-                errors['regular_event'] = self.fields['regular_event'].error_messages['required']
-
-            if errors:
-                raise ValidationError(errors)
+        # one_off_event = attrs.get('one_off_event', None)
+        # regular_event = attrs.get('regular_event', None)
+        #
+        # if instrument_class:
+        #     errors = {}
+        #     if instrument_class.has_one_off_event and one_off_event is None:
+        #         errors['one_off_event'] = self.fields['one_off_event'].error_messages['required']
+        #     if instrument_class.has_regular_event and regular_event is None:
+        #         errors['regular_event'] = self.fields['regular_event'].error_messages['required']
+        #
+        #     if errors:
+        #         raise ValidationError(errors)
 
         return attrs
 
