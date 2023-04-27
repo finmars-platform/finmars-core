@@ -1,10 +1,11 @@
 import json
 import logging
+import mimetypes
 import os
 from tempfile import NamedTemporaryFile
-from django.http import HttpResponse
 
 from django.http import FileResponse
+from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.exceptions import ValidationError, PermissionDenied
 from rest_framework.response import Response
@@ -65,18 +66,21 @@ class ExplorerViewSet(AbstractViewSet):
                 })
 
         for file in items[1]:
+            created = storage.get_created_time(path + '/' + file)
+            modified = storage.get_modified_time(path + '/' + file)
+
+            mime_type, encoding = mimetypes.guess_type(file)
 
             item = {
                 'type': 'file',
+                'mime_type': mime_type,
                 'name': file,
-                'file_path': path + file, # path already has / in end of str
+                'created': created,
+                'modified': modified,
+                'file_path': os.path.join(path, file),  # path already has / in end of str
                 'size': storage.size(path + '/' + file),
+                'size_pretty': storage.convert_size(storage.size(path + '/' + file))
             }
-
-            try:
-                item['last_modified']: storage.modified_time(path + '/' + file)
-            except Exception as e:
-                _l.error("Modfied date is not avaialbel")
 
             results.append(item)
 
@@ -333,6 +337,3 @@ class DownloadFolderAsZipViewSet(AbstractViewSet):
         response['Content-Disposition'] = f'attachment; filename="archive.zip"'
 
         return response
-
-
-

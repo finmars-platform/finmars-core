@@ -1,3 +1,4 @@
+import math
 import os
 import shutil
 import tempfile
@@ -32,6 +33,15 @@ class FinmarsStorage(object):
     def get_available_name(self, name, max_length=None):
         self.delete(name)
         return super().get_available_name(name, max_length)
+
+    def convert_size(self, size_bytes):
+        if size_bytes == 0:
+            return "0B"
+        size_name = ("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
+        i = int(math.floor(math.log(size_bytes, 1024)))
+        p = math.pow(1024, i)
+        s = round(size_bytes / p, 2)
+        return f"{s} {size_name[i]}"
 
 class FinmarsSFTPStorage(FinmarsStorage, SFTPStorage):
 
@@ -127,6 +137,9 @@ class FinmarsAzureStorage(FinmarsStorage, AzureStorage):
 
 
 class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
+
+    def get_created_time(self, path):
+        return self.get_modified_time(path)
 
     def delete_directory(self, directory_path):
 
