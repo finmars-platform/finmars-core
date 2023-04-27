@@ -62,41 +62,6 @@ router.register(r'users/ecosystem-default', users.EcosystemDefaultViewSet, 'ecos
 router.register(r'users/usercode-prefix', users.UsercodePrefixViewSet, 'usercodeprefix')
 
 
-router.register(r'counterparties/counterparty-attribute-type', counterparties.CounterpartyAttributeTypeViewSet,
-                'counterpartyattributetype')
-router.register(r'counterparties/counterparty-classifier', counterparties.CounterpartyClassifierViewSet,
-                'counterpartyclassifier')
-router.register(r'counterparties/counterparty-group-ev-group', counterparties.CounterpartyGroupEvGroupViewSet,
-                'counterpartygroupevgroup') # DEPRECATED
-router.register(r'counterparties/counterparty-group', counterparties.CounterpartyGroupViewSet)
-
-router.register(r'counterparties/counterparty-ev-group', counterparties.CounterpartyEvGroupViewSet,
-                'counterpartyevgroup') # DEPRECATED
-router.register(r'counterparties/counterparty', counterparties.CounterpartyViewSet, 'counterparty')
-router.register(r'counterparties/counterparty-ev', counterparties.CounterpartyEvViewSet, 'counterpartyev') # DEPRECATED
-router.register(r'counterparties/counterparty-light', counterparties.CounterpartyLightViewSet,
-                'counterpartylight')  # DEPRECATED
-
-router.register(r'counterparties/responsible-attribute-type', counterparties.ResponsibleAttributeTypeViewSet,
-                'responsibleattributetype')
-router.register(r'counterparties/responsible-classifier', counterparties.ResponsibleClassifierViewSet,
-                'responsibleclassifier')
-router.register(r'counterparties/responsible-group-ev-group', counterparties.ResponsibleGroupEvGroupViewSet,
-                'responsiblegroupev') # DEPRECATED
-router.register(r'counterparties/responsible-group', counterparties.ResponsibleGroupViewSet, 'responsiblegroup')
-
-router.register(r'counterparties/responsible-ev-group', counterparties.ResponsibleEvGroupViewSet, 'responsibleevgroup') # DEPRECATED
-router.register(r'counterparties/responsible', counterparties.ResponsibleViewSet, 'responsible')
-router.register(r'counterparties/responsible-ev', counterparties.ResponsibleEvViewSet, 'responsibleev') # DEPRECATED
-router.register(r'counterparties/responsible-light', counterparties.ResponsibleLightViewSet,
-                'responsiblelight')  # DEPRECATED
-
-
-
-
-
-
-
 router.register(r'strategies/1/group-ev-group', strategies.Strategy1GroupEvGroupViewSet, 'strategy1groupevgroup') # DEPRECATED
 router.register(r'strategies/1/group', strategies.Strategy1GroupViewSet)
 router.register(r'strategies/1/subgroup-ev-group', strategies.Strategy1SubgroupEvGroupViewSet,
@@ -355,6 +320,7 @@ import poms.portfolios.urls as portfolio_router
 import poms.currencies.urls as currency_router
 import poms.instruments.urls as instrument_router
 import poms.transactions.urls as transaction_router
+import poms.counterparties.urls as counterparty_router
 
 urlpatterns = [
     re_path(r'^v1/accounts/', include(account_router.router.urls)),
@@ -362,6 +328,7 @@ urlpatterns = [
     re_path(r'^v1/currencies/', include(currency_router.router.urls)),
     re_path(r'^v1/instruments/', include(instrument_router.router.urls)),
     re_path(r'^v1/transactions/', include(transaction_router.router.urls)),
+    re_path(r'^v1/counterparties/', include(counterparty_router.router.urls)),
     re_path(r'^v1/', include(router.urls)),
 
     # external callbacks

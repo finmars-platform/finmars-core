@@ -91,6 +91,18 @@ def get_transaction_documentation():
 
     return schema_view
 
+def get_counterparty_documentation():
+
+    import poms.counterparties.urls as counterparty_router
+
+    local_urlpatterns = [
+        re_path(r'^' + settings.BASE_API_URL + '/api/v1/counterparty/', include(counterparty_router.router.urls)),
+    ]
+
+    schema_view = generate_schema(local_urlpatterns)
+
+    return schema_view
+
 
 def render_main_page(request):
 
@@ -107,6 +119,7 @@ def get_redoc_urlpatterns():
     currency_schema_view = get_currency_documentation()
     instrument_schema_view = get_instrument_documentation()
     transaction_schema_view = get_transaction_documentation()
+    counterparty_schema_view = get_counterparty_documentation()
 
     urlpatterns = [
 
@@ -116,6 +129,7 @@ def get_redoc_urlpatterns():
         re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/currency', currency_schema_view.with_ui('redoc', cache_timeout=0), name='currency'),
         re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/instrument', instrument_schema_view.with_ui('redoc', cache_timeout=0), name='instrument'),
         re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/transaction', transaction_schema_view.with_ui('redoc', cache_timeout=0), name='transaction'),
+        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/counterparty', counterparty_schema_view.with_ui('redoc', cache_timeout=0), name='counterparty'),
 
 
     ]
