@@ -8,38 +8,69 @@
     <link rel="stylesheet" href="{% static 'css/redoc.css' %}">
 </head>
 <body>
-<h1 class="text-center" style="margin-top: 24px;">Finmars API Documentation</h1>
 
-<div class="documentation-block">
-
-    <h2 class="text-center">Data</h2>
-
-    <div>
-        <a href="/{{space_code}}/docs/api/v1/account">Account</a>
-        <div class="api-description">
-            The /accounts/ API endpoint provides access to information about user accounts in Finmars. This endpoint
-            allows users to create new accounts, retrieve information about existing accounts, and update account
-            details.
-        </div>
-    </div>
-    <div>
-        <a href="/{{space_code}}/docs/api/v1/portfolio">Portfolio</a>
-        <div class="api-description">
-            The portfolio entity represents a collection of financial assets held by a user in Finmars.
-            A portfolio is also linked to transactions, which represent the buying and selling of
-            financial assets within the portfolio.
-        </div>
-    </div>
-    <div>
-        <a href="/{{space_code}}/docs/api/v1/currency">Currency</a>
-        <div class="api-description">
-            The currency entity represents a unit of currency used in Finmars. Each currency is identified by a unique
-            code, and can have a corresponding name and symbol.
-        </div>
-    </div>
-
+<div class="logo">
+    <a href="https://finmars.com"><img src="{% static 'img/logo.png' %}" alt="Logo"></a>
 </div>
 
+<div class="content">
+
+    <div>
+        <h3>API Reference</h3>
+        <p><span class="color-orange">Finmars</span> API is organized around REST. Our API has predictable
+            resource-oriented URLs, accepts form-encoded request bodies, returns JSON-encoded responses, and uses
+            standard HTTP response codes, authentication, and verbs.</p>
+    </div>
+
+    <div class="documentation-block">
+
+        <h4 class="documentation-header">Data</h4>
+
+        <div>
+            <a href="/{{space_code}}/docs/api/v1/instrument">Instrument</a>
+            <div class="api-description">
+                <p>
+                    The instrument entity represents a financial asset that can be bought and sold in Finmars.
+                    Instruments can include stocks, bonds, mutual funds, and other types of securities.
+                </p>
+            </div>
+        </div>
+
+        <div>
+            <a href="/{{space_code}}/docs/api/v1/account">Account</a>
+            <div class="api-description">
+                <p>
+                    The /accounts/ API endpoint provides access to information about user accounts in Finmars. This
+                    endpoint
+                    allows users to create new accounts, retrieve information about existing accounts, and update
+                    account
+                    details.
+                </p>
+            </div>
+        </div>
+        <div>
+            <a href="/{{space_code}}/docs/api/v1/portfolio">Portfolio</a>
+            <div class="api-description">
+                <p>
+                    The portfolio entity represents a collection of financial assets held by a user in Finmars.
+                    A portfolio is also linked to transactions, which represent the buying and selling of
+                    financial assets within the portfolio.
+                </p>
+            </div>
+        </div>
+        <div>
+            <a href="/{{space_code}}/docs/api/v1/currency">Currency</a>
+            <div class="api-description">
+                <p>
+                    The currency entity represents a unit of currency used in Finmars. Each currency is identified by a
+                    unique
+                    code, and can have a corresponding name and symbol.
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
 
 </body>
 </html>

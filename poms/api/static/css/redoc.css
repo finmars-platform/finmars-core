@@ -2,26 +2,60 @@ body {
     background: #000;
     color: #fff;
     font-family: Arial;
+    font-size: 16px;
+}
+
+.content {
+    padding: 0 24px;
+}
+
+.documentation-block {
+    border: 1px solid #494949;
+    padding: 2rem 1rem;
+    position: relative;
+    margin: 2rem;
+}
+
+.documentation-header {
+    position: absolute;
+    top: -1rem;
+    margin: 0;
+    background: #000;
+    font-size: 1.4rem;
+    padding: 0 1.5rem;
 }
 
 a {
-    color: #fff;
+    color: #f05a22;
     text-decoration: none;
+    font-size: 1.2rem;
+}
+p {
+    max-width: 500px;
+    font-size: 0.9rem;
+}
+
+.color-orange {
+    color: #f05a22;
 }
 a:hover {
     opacity: .7;
+}
+
+.logo {
+    text-align: left;
+}
+.logo img {
+    width: 200px;
 }
 
 .text-center {
     text-align: center;
 }
 
-.documentation-block {
-    margin: 16px;
-}
 
 .api-description {
     padding: 8px;
     padding-left: 16px;
-    font-size: 14px;
+    font-size: 1.1rem;
 }

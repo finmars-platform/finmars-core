@@ -105,44 +105,7 @@ router.register(r'counterparties/responsible-light', counterparties.ResponsibleL
 
 
 
-router.register(r'instruments/instrument-class', instruments.InstrumentClassViewSet)
-router.register(r'instruments/daily-pricing-model', instruments.DailyPricingModelViewSet)
-router.register(r'instruments/accrual-calculation-model', instruments.AccrualCalculationModelClassViewSet)
-router.register(r'instruments/payment-size-detail', instruments.PaymentSizeDetailViewSet)
-router.register(r'instruments/pricing-condition', instruments.PricingConditionViewSet)
-router.register(r'instruments/country', instruments.CountryViewSet)
-router.register(r'instruments/exposure-calculation-model', instruments.ExposureCalculationModelViewSet)
-router.register(r'instruments/long-underlying-exposure', instruments.LongUnderlyingExposureViewSet)
-router.register(r'instruments/short-underlying-exposure', instruments.ShortUnderlyingExposureViewSet)
-router.register(r'instruments/periodicity', instruments.PeriodicityViewSet)
-router.register(r'instruments/cost-method', instruments.CostMethodViewSet)
-router.register(r'instruments/pricing-policy-ev-group', instruments.PricingPolicyEvGroupViewSet)
-router.register(r'instruments/pricing-policy', instruments.PricingPolicyViewSet)
-router.register(r'instruments/pricing-policy-light', instruments.PricingPolicyLightViewSet)  # Deprecated
-router.register(r'instruments/event-schedule-config', instruments.EventScheduleConfigViewSet)
-router.register(r'instruments/instrument-type-ev-group', instruments.InstrumentTypeEvGroupViewSet) # DEPRECATED
-router.register(r'instruments/instrument-type', instruments.InstrumentTypeViewSet)
-router.register(r'instruments/instrument-type-ev', instruments.InstrumentTypeEvViewSet) # DEPRECATED
-router.register(r'instruments/instrument-type-light', instruments.InstrumentTypeLightViewSet)  # Deprecated
-router.register(r'instruments/instrument-type-attribute-type', instruments.InstrumentTypeAttributeTypeViewSet)
 
-router.register(r'instruments/instrument-attribute-type', instruments.InstrumentAttributeTypeViewSet,
-                'instrumentattributetype')
-router.register(r'instruments/instrument-classifier', instruments.InstrumentClassifierViewSet, 'instrumentclassifier')
-
-router.register(r'instruments/instrument-ev-group', instruments.InstrumentEvGroupViewSet) # DEPRECATED
-router.register(r'instruments/instrument', instruments.InstrumentViewSet)
-router.register(r'instruments/instrument-ev', instruments.InstrumentEvViewSet) # DEPRECATED
-router.register(r'instruments/instrument-light', instruments.InstrumentLightViewSet)  # DEPRECATED
-router.register(r'instruments/instrument-for-select', instruments.InstrumentForSelectViewSet)
-
-router.register(r'instruments/price-history-ev-group', instruments.PriceHistoryEvGroupViewSet, 'instrumentevgroup')
-router.register(r'instruments/price-history-ev', instruments.PriceHistoryViewSet) # DEPRECATED
-router.register(r'instruments/price-history', instruments.PriceHistoryViewSet)
-
-router.register(r'instruments/generated-event-ev-group', instruments.GeneratedEventEvGroupViewSet) # DEPRECATED
-router.register(r'instruments/generated-event-ev', instruments.GeneratedEventEvViewSet) # DEPRECATED
-router.register(r'instruments/generated-event', instruments.GeneratedEventViewSet)
 
 
 
@@ -442,11 +405,13 @@ router.register(r'history/historical-record', history.HistoricalRecordViewSet, '
 import poms.accounts.urls as account_router
 import poms.portfolios.urls as portfolio_router
 import poms.currencies.urls as currency_router
+import poms.instruments.urls as instrument_router
 
 urlpatterns = [
     re_path(r'^v1/accounts/', include(account_router.router.urls)),
     re_path(r'^v1/portfolios/', include(portfolio_router.router.urls)),
     re_path(r'^v1/currencies/', include(currency_router.router.urls)),
+    re_path(r'^v1/instruments/', include(instrument_router.router.urls)),
     re_path(r'^v1/', include(router.urls)),
 
     # external callbacks
