@@ -145,94 +145,6 @@ class CurrencyViewSet(AbstractWithObjectPermissionViewSet):
 
         return Response(result)
 
-
-
-class CurrencyEvFilterSet(FilterSet):
-    id = NoOpFilter()
-    is_deleted = django_filters.BooleanFilter()
-    user_code = CharFilter()
-    name = CharFilter()
-    short_name = CharFilter()
-    public_name = CharFilter()
-    reference_for_pricing = CharFilter()
-
-    class Meta:
-        model = Currency
-        fields = []
-
-
-class CurrencyEvViewSet(AbstractWithObjectPermissionViewSet):
-    queryset = Currency.objects.select_related(
-        'master_user',
-    ).prefetch_related(
-        'attributes',
-        'attributes__classifier',
-        # get_attributes_prefetch(),
-        *get_permissions_prefetch_lookups(
-            (None, Currency),
-        )
-    )
-    serializer_class = CurrencyEvSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        AttributeFilter,
-        GroupsAttributeFilter
-    ]
-    filter_class = CurrencyEvFilterSet
-    ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name'
-    ]
-
-
-class CurrencyLightFilterSet(FilterSet):
-    id = NoOpFilter()
-    is_deleted = django_filters.BooleanFilter()
-    user_code = CharFilter()
-    name = CharFilter()
-    short_name = CharFilter()
-    public_name = CharFilter()
-
-    class Meta:
-        model = Currency
-        fields = []
-
-# DEPRECATED
-class CurrencyLightViewSet(AbstractWithObjectPermissionViewSet):
-    queryset = Currency.objects.select_related(
-        'master_user',
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            (None, Currency),
-        )
-    )
-    serializer_class = CurrencyLightSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        EntitySpecificFilter
-    ]
-    filter_class = CurrencyLightFilterSet
-    ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name'
-    ]
-
-
-class CurrencyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
-    queryset = Currency.objects.select_related(
-        'master_user',
-    ).prefetch_related(
-        get_attributes_prefetch()
-    )
-    serializer_class = CurrencySerializer
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = CurrencyFilterSet
-
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        AttributeFilter,
-        EntitySpecificFilter
-    ]
-
-
 class CurrencyHistoryFilterSet(FilterSet):
     id = NoOpFilter()
     date = django_filters.DateFromToRangeFilter()
@@ -315,23 +227,6 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
         }
 
         return Response(result)
-
-
-class CurrencyHistoryEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
-    queryset = CurrencyHistory.objects.select_related(
-        'currency',
-        'pricing_policy'
-    ).prefetch_related(
-
-    )
-    serializer_class = CurrencyHistorySerializer
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = CurrencyHistoryFilterSet
-
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByCurrencyFilter,
-        AttributeFilter
-    ]
 
 
 class CurrencyDatabaseSearchViewSet(APIView):

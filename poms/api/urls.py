@@ -103,14 +103,7 @@ router.register(r'counterparties/responsible-ev', counterparties.ResponsibleEvVi
 router.register(r'counterparties/responsible-light', counterparties.ResponsibleLightViewSet,
                 'responsiblelight')  # DEPRECATED
 
-router.register(r'currencies/currency-ev-group', currencies.CurrencyEvGroupViewSet, 'currencyevgroup')
-router.register(r'currencies/currency', currencies.CurrencyViewSet, 'currency')
-router.register(r'currencies/currency-ev', currencies.CurrencyEvViewSet, 'currencyev') # DEPRECATED
-router.register(r'currencies/currency-light', currencies.CurrencyLightViewSet, 'currencylight')  # DEPRECATED
-router.register(r'currencies/currency-history-ev-group', currencies.CurrencyHistoryEvGroupViewSet) # DEPRECATED
-router.register(r'currencies/currency-attribute-type', currencies.CurrencyAttributeTypeViewSet, 'currencyattributetype')
-router.register(r'currencies/currency-history-ev', currencies.CurrencyHistoryViewSet) # DEPRECATED
-router.register(r'currencies/currency-history', currencies.CurrencyHistoryViewSet)
+
 
 router.register(r'instruments/instrument-class', instruments.InstrumentClassViewSet)
 router.register(r'instruments/daily-pricing-model', instruments.DailyPricingModelViewSet)
@@ -151,30 +144,7 @@ router.register(r'instruments/generated-event-ev-group', instruments.GeneratedEv
 router.register(r'instruments/generated-event-ev', instruments.GeneratedEventEvViewSet) # DEPRECATED
 router.register(r'instruments/generated-event', instruments.GeneratedEventViewSet)
 
-router.register(r'portfolios/portfolio-attribute-type', portfolios.PortfolioAttributeTypeViewSet,
-                'portfolioattributetype')
-router.register(r'portfolios/portfolio-classifier', portfolios.PortfolioClassifierViewSet, 'portfolioclassifier')
-router.register(r'portfolios/portfolio-ev-group', portfolios.PortfolioEvGroupViewSet, 'portfolioevgroup') # DEPRECATED
-router.register(r'portfolios/portfolio-ev', portfolios.PortfolioEvViewSet, 'portfolio-ev') # DEPRECATED
-router.register(r'portfolios/portfolio', portfolios.PortfolioViewSet, 'portfolio')
-router.register(r'portfolios/portfolio-light', portfolios.PortfolioLightViewSet, 'portfoliolight')  # Deprecated
-router.register(r'portfolios/portfolio-register-attribute-type', portfolios.PortfolioRegisterAttributeTypeViewSet,
-                'portfolioregisterattributetype')
-router.register(r'portfolios/portfolio-register', portfolios.PortfolioRegisterViewSet, 'portfolioregister')
-router.register(r'portfolios/portfolio-register-ev', portfolios.PortfolioRegisterEvViewSet, 'portfolioregisterev') # DEPRECATED
-router.register(r'portfolios/portfolio-register-ev-group', portfolios.PortfolioRegisterEvGroupViewSet,
-                'portfolioregisterevgroup') # DEPRECATED
 
-router.register(r'portfolios/portfolio-register-record', portfolios.PortfolioRegisterRecordViewSet,
-                'portfolioregisterrecord')
-router.register(r'portfolios/portfolio-register-record-ev', portfolios.PortfolioRegisterRecordEvViewSet,
-                'portfolioregisterrecordev') # DEPRECATED
-router.register(r'portfolios/portfolio-register-record-ev-group', portfolios.PortfolioRegisterRecordEvGroupViewSet,
-                'portfolioregisterrecordgroup') # DEPRECATED
-router.register(r'portfolios/portfolio-bundle', portfolios.PortfolioBundleViewSet, 'portfoliobundle')
-router.register(r'portfolios/portfolio-bundle-ev', portfolios.PortfolioBundleEvViewSet, 'portfoliobundleev') # DEPRECATED
-router.register(r'portfolios/portfolio-bundle-ev-group', portfolios.PortfolioBundleEvGroupViewSet,
-                'portfoliobundlevgroup') # DEPRECATED
 
 router.register(r'strategies/1/group-ev-group', strategies.Strategy1GroupEvGroupViewSet, 'strategy1groupevgroup') # DEPRECATED
 router.register(r'strategies/1/group', strategies.Strategy1GroupViewSet)
@@ -470,9 +440,13 @@ router.register(r'history/historical-record', history.HistoricalRecordViewSet, '
 
 
 import poms.accounts.urls as account_router
+import poms.portfolios.urls as portfolio_router
+import poms.currencies.urls as currency_router
 
 urlpatterns = [
     re_path(r'^v1/accounts/', include(account_router.router.urls)),
+    re_path(r'^v1/portfolios/', include(portfolio_router.router.urls)),
+    re_path(r'^v1/currencies/', include(currency_router.router.urls)),
     re_path(r'^v1/', include(router.urls)),
 
     # external callbacks

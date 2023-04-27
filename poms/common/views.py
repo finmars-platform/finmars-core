@@ -297,73 +297,7 @@ class AbstractModelViewSet(AbstractApiView, HistoryMixin, UpdateModelMixinExt, D
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    # Deprecated
-    @action(detail=False, methods=['post', 'get'], url_path='filtered')
-    def filtered_list(self, request, *args, **kwargs):
-
-        start_time = time.perf_counter()
-
-        filter_settings = request.data.get('filter_settings', None)
-        global_table_search = request.data.get('global_table_search', '')
-        content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
-        master_user = request.user.master_user
-
-        filters_st = time.perf_counter()
-        queryset = self.filter_queryset(self.get_queryset())
-
-        if content_type.model not in ['currencyhistory', 'pricehistory', 'complextransaction', 'transaction',
-                                      'currencyhistoryerror', 'pricehistoryerror']:
-
-            is_enabled = request.data.get('is_enabled', 'true')
-
-            if is_enabled == 'true':
-                queryset = queryset.filter(is_enabled=True)
-
-        if content_type.model in ['complextransaction']:
-            queryset = queryset.filter(is_deleted=False)
-
-        queryset = handle_filters(queryset, filter_settings, master_user, content_type)
-
-        ordering = request.data.get('ordering', None)
-
-        _l.debug('ordering %s' % ordering)
-
-        if ordering:
-            sort_st = time.perf_counter()
-            queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)
-            # _l.debug('filtered_list sort done: %s', "{:3.3f}".format(time.perf_counter() - sort_st))
-
-        # _l.debug('filtered_list apply filters done: %s', "{:3.3f}".format(time.perf_counter() - filters_st))
-
-        page_st = time.perf_counter()
-
-        if global_table_search:
-            queryset = handle_global_table_search(queryset, global_table_search, self.serializer_class.Meta.model,
-                                                  content_type)
-
-        page = self.paginator.post_paginate_queryset(queryset, request)
-
-        # _l.debug('filtered_list get page done: %s', "{:3.3f}".format(time.perf_counter() - page_st))
-
-        serialize_st = time.perf_counter()
-
-        serializer = self.get_serializer(page, many=True)
-
-        result = self.get_paginated_response(serializer.data)
-
-        # _l.debug('filtered_list serialize done: %s', "{:3.3f}".format(time.perf_counter() - serialize_st))
-
-        # _l.debug('filtered_list done: %s', "{:3.3f}".format(time.perf_counter() - start_time))
-
-        return result
-
-        # serializer = self.get_serializer(queryset, many=True)
-        #
-        # print("Filtered List %s seconds " % (time.time() - start_time))
-        #
-        # return Response(serializer.data)
-
-    @action(detail=False, methods=['post', 'get'], url_path='ev-item')
+    @action(detail=False, methods=['post'], url_path='ev-item')
     def ev_item(self, request, *args, **kwargs):
 
         start_time = time.perf_counter()
@@ -428,7 +362,7 @@ class AbstractModelViewSet(AbstractApiView, HistoryMixin, UpdateModelMixinExt, D
         #
         # return Response(serializer.data)
 
-    @action(detail=False, methods=['post', 'get'], url_path='ev-group')
+    @action(detail=False, methods=['post'], url_path='ev-group')
     def ev_group(self, request, *args, **kwargs):
 
         start_time = time.time()

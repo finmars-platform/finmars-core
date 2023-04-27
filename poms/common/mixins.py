@@ -75,152 +75,154 @@ class UpdateModelMixinExt(UpdateModelMixin):
 
 
 class BulkCreateModelMixin(CreateModelMixin):
-    @action(detail=False, methods=['post'], url_path='bulk-create')
-    def bulk_create(self, request):
-        data = request.data
-        if not isinstance(data, list):
-            raise ValidationError(gettext_lazy('Required list'))
-
-        has_error = False
-        serializers = []
-        for adata in data:
-            serializer = self.get_serializer(data=adata)
-            if not serializer.is_valid(raise_exception=False):
-                has_error = True
-            serializers.append(serializer)
-
-        if has_error:
-            errors = []
-            for serializer in serializers:
-                errors.append(serializer.errors)
-            raise ValidationError(errors)
-        else:
-            instances = []
-            for serializer in serializers:
-                self.perform_create(serializer)
-                instances.append(serializer.instance)
-            ret_serializer = self.get_serializer(instance=instances, many=True)
-            return Response(list(ret_serializer.data), status=status.HTTP_201_CREATED)
+    pass
+    # Now BulkCreate is not supported
+    # @action(detail=False, methods=['post'], url_path='bulk-create')
+    # def bulk_create(self, request):
+    #     data = request.data
+    #     if not isinstance(data, list):
+    #         raise ValidationError(gettext_lazy('Required list'))
+    #
+    #     has_error = False
+    #     serializers = []
+    #     for adata in data:
+    #         serializer = self.get_serializer(data=adata)
+    #         if not serializer.is_valid(raise_exception=False):
+    #             has_error = True
+    #         serializers.append(serializer)
+    #
+    #     if has_error:
+    #         errors = []
+    #         for serializer in serializers:
+    #             errors.append(serializer.errors)
+    #         raise ValidationError(errors)
+    #     else:
+    #         instances = []
+    #         for serializer in serializers:
+    #             self.perform_create(serializer)
+    #             instances.append(serializer.instance)
+    #         ret_serializer = self.get_serializer(instance=instances, many=True)
+    #         return Response(list(ret_serializer.data), status=status.HTTP_201_CREATED)
 
 
 class BulkUpdateModelMixin(UpdateModelMixin):
-    @action(detail=False, methods=['put', 'patch'], url_path='bulk-update')
-    def bulk_update(self, request):
-        data = request.data
-        if not isinstance(data, list):
-            raise ValidationError(gettext_lazy('Required list'))
-
-        partial = request.method.lower() == 'patch'
-        # queryset = self.filter_queryset(self.get_queryset())
-        queryset = self.get_queryset()
-
-        has_error = False
-        serializers = []
-        for adata in data:
-            pk = adata['id']
-            try:
-                instance = queryset.get(pk=pk)
-            except ObjectDoesNotExist:
-                has_error = True
-                serializers.append(None)
-            else:
-                try:
-                    self.check_object_permissions(request, instance)
-                except PermissionDenied:
-                    raise
-
-                serializer = self.get_serializer(instance=instance, data=adata, partial=partial)
-                if not serializer.is_valid(raise_exception=False):
-                    has_error = True
-                serializers.append(serializer)
-
-        if has_error:
-            errors = []
-            for serializer in serializers:
-                if serializer:
-                    errors.append(serializer.errors)
-                else:
-                    errors.append({
-                        api_settings.NON_FIELD_ERRORS_KEY: gettext_lazy('Not Found')
-                    })
-            raise ValidationError(errors)
-        else:
-            instances = []
-            for serializer in serializers:
-                self.perform_update(serializer)
-                instances.append(serializer.instance)
-
-            ret_serializer = self.get_serializer(
-                instance=queryset.filter(pk__in=(i.id for i in instances)), many=True)
-            return Response(list(ret_serializer.data), status=status.HTTP_200_OK)
+    pass
+    # Now BulkUpdate is not supported
+    # @action(detail=False, methods=['put', 'patch'], url_path='bulk-update')
+    # def bulk_update(self, request):
+    #     data = request.data
+    #     if not isinstance(data, list):
+    #         raise ValidationError(gettext_lazy('Required list'))
+    #
+    #     partial = request.method.lower() == 'patch'
+    #     # queryset = self.filter_queryset(self.get_queryset())
+    #     queryset = self.get_queryset()
+    #
+    #     has_error = False
+    #     serializers = []
+    #     for adata in data:
+    #         pk = adata['id']
+    #         try:
+    #             instance = queryset.get(pk=pk)
+    #         except ObjectDoesNotExist:
+    #             has_error = True
+    #             serializers.append(None)
+    #         else:
+    #             try:
+    #                 self.check_object_permissions(request, instance)
+    #             except PermissionDenied:
+    #                 raise
+    #
+    #             serializer = self.get_serializer(instance=instance, data=adata, partial=partial)
+    #             if not serializer.is_valid(raise_exception=False):
+    #                 has_error = True
+    #             serializers.append(serializer)
+    #
+    #     if has_error:
+    #         errors = []
+    #         for serializer in serializers:
+    #             if serializer:
+    #                 errors.append(serializer.errors)
+    #             else:
+    #                 errors.append({
+    #                     api_settings.NON_FIELD_ERRORS_KEY: gettext_lazy('Not Found')
+    #                 })
+    #         raise ValidationError(errors)
+    #     else:
+    #         instances = []
+    #         for serializer in serializers:
+    #             self.perform_update(serializer)
+    #             instances.append(serializer.instance)
+    #
+    #         ret_serializer = self.get_serializer(
+    #             instance=queryset.filter(pk__in=(i.id for i in instances)), many=True)
+    #         return Response(list(ret_serializer.data), status=status.HTTP_200_OK)
 
 
 class BulkSaveModelMixin(CreateModelMixin, UpdateModelMixin):
-    @action(detail=False, methods=['post', 'put', 'patch'], url_path='bulk-save')
-    def bulk_save(self, request):
-        data = request.data
-        if not isinstance(data, list):
-            raise ValidationError(gettext_lazy('Required list'))
-
-        partial = request.method.lower() == 'patch'
-        queryset = self.filter_queryset(self.get_queryset())
-
-        has_error = False
-        serializers = []
-        for adata in data:
-            pk = adata.get('id', None)
-            if pk is None:
-                serializer = self.get_serializer(data=adata)
-                if not serializer.is_valid(raise_exception=False):
-                    has_error = True
-                serializers.append(serializer)
-            else:
-                try:
-                    instance = queryset.get(pk=pk)
-                except ObjectDoesNotExist:
-                    has_error = True
-                    serializers.append(None)
-                else:
-                    try:
-                        self.check_object_permissions(request, instance)
-                    except PermissionDenied:
-                        raise
-                    serializer = self.get_serializer(instance=instance, data=adata, partial=partial)
-                    if not serializer.is_valid(raise_exception=False):
-                        has_error = True
-                    serializers.append(serializer)
-
-        if has_error:
-            errors = []
-            for serializer in serializers:
-                if serializer:
-                    errors.append(serializer.errors)
-                else:
-                    errors.append({
-                        api_settings.NON_FIELD_ERRORS_KEY: gettext_lazy('Not Found')
-                    })
-            raise ValidationError(errors)
-        else:
-            instances = []
-            for serializer in serializers:
-                if serializer.instance is None:
-                    self.perform_create(serializer)
-                else:
-                    self.perform_update(serializer)
-                instances.append(serializer.instance)
-
-            ret_serializer = self.get_serializer(
-                instance=queryset.filter(pk__in=(i.id for i in instances)), many=True)
-            return Response(list(ret_serializer.data), status=status.HTTP_200_OK)
+    pass
+    # Now BulkSave is not supported
+    # @action(detail=False, methods=['post', 'put', 'patch'], url_path='bulk-save')
+    # def bulk_save(self, request):
+    #     data = request.data
+    #     if not isinstance(data, list):
+    #         raise ValidationError(gettext_lazy('Required list'))
+    #
+    #     partial = request.method.lower() == 'patch'
+    #     queryset = self.filter_queryset(self.get_queryset())
+    #
+    #     has_error = False
+    #     serializers = []
+    #     for adata in data:
+    #         pk = adata.get('id', None)
+    #         if pk is None:
+    #             serializer = self.get_serializer(data=adata)
+    #             if not serializer.is_valid(raise_exception=False):
+    #                 has_error = True
+    #             serializers.append(serializer)
+    #         else:
+    #             try:
+    #                 instance = queryset.get(pk=pk)
+    #             except ObjectDoesNotExist:
+    #                 has_error = True
+    #                 serializers.append(None)
+    #             else:
+    #                 try:
+    #                     self.check_object_permissions(request, instance)
+    #                 except PermissionDenied:
+    #                     raise
+    #                 serializer = self.get_serializer(instance=instance, data=adata, partial=partial)
+    #                 if not serializer.is_valid(raise_exception=False):
+    #                     has_error = True
+    #                 serializers.append(serializer)
+    #
+    #     if has_error:
+    #         errors = []
+    #         for serializer in serializers:
+    #             if serializer:
+    #                 errors.append(serializer.errors)
+    #             else:
+    #                 errors.append({
+    #                     api_settings.NON_FIELD_ERRORS_KEY: gettext_lazy('Not Found')
+    #                 })
+    #         raise ValidationError(errors)
+    #     else:
+    #         instances = []
+    #         for serializer in serializers:
+    #             if serializer.instance is None:
+    #                 self.perform_create(serializer)
+    #             else:
+    #                 self.perform_update(serializer)
+    #             instances.append(serializer.instance)
+    #
+    #         ret_serializer = self.get_serializer(
+    #             instance=queryset.filter(pk__in=(i.id for i in instances)), many=True)
+    #         return Response(list(ret_serializer.data), status=status.HTTP_200_OK)
 
 
 class BulkDestroyModelMixin(DestroyModelMixin):
-    @action(detail=False, methods=['get', 'post'], url_path='bulk-delete')
+    @action(detail=False, methods=['post'], url_path='bulk-delete')
     def bulk_delete(self, request):
-        # print('Bulk delelete here')
-
-        if request.method.lower() == 'get':
-            return self.list(request)
 
         data = request.data
 
@@ -299,18 +301,21 @@ class BulkDestroyModelMixin(DestroyModelMixin):
 
 # BulkSaveModelMixin have some problem with permissions
 class BulkModelMixin(BulkCreateModelMixin, BulkUpdateModelMixin, BulkDestroyModelMixin):
-    @action(detail=False, methods=['post', 'put', 'patch', 'delete'], url_path='bulk')
-    def bulk_dispatch(self, request):
-        method = request.method.lower()
+    pass
 
-        if method == 'post':
-            return self.bulk_create(request)
-        elif method in ['put', 'patch']:
-            return self.bulk_update(request)
-        elif method in ['delete']:
-            return self.bulk_delete(request)
-
-        raise MethodNotAllowed(request.method)
+    # Now BulkModelMixin is not used
+    # @action(detail=False, methods=['post', 'put', 'patch', 'delete'], url_path='bulk')
+    # def bulk_dispatch(self, request):
+    #     method = request.method.lower()
+    #
+    #     if method == 'post':
+    #         return self.bulk_create(request)
+    #     elif method in ['put', 'patch']:
+    #         return self.bulk_update(request)
+    #     elif method in ['delete']:
+    #         return self.bulk_delete(request)
+    #
+    #     raise MethodNotAllowed(request.method)
 
 
 class DestroySystemicModelMixin(DestroyModelMixinExt):
