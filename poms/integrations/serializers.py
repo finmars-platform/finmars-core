@@ -954,9 +954,9 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
 
         self.fields['attributes'] = serializers.SerializerMethodField()
 
-        # self.fields.pop('manual_pricing_formulas')
-        # self.fields.pop('accrual_calculation_schedules')
-        # self.fields.pop('factor_schedules')
+        self.fields.pop('manual_pricing_formulas')
+        self.fields.pop('accrual_calculation_schedules')
+        self.fields.pop('factor_schedules')
         self.fields.pop('event_schedules')
         # self.fields.pop('attributes')
 

@@ -229,14 +229,12 @@ class AbstractProvider(object):
 
             _l.info('default_instrument_object %s' % default_instrument_object)
 
-            serializer = InstrumentSerializer(data=default_instrument_object, context=context)
-            serializer.is_valid(raise_exception=True)
-            instr = serializer.save()
-
-            # try:
-            #     instr = Instrument.objects.get(master_user=master_user, user_code=user_code)
-            # except Instrument.DoesNotExist:
-            #     instr = Instrument(master_user=master_user)
+            try:
+                instr = Instrument.objects.get(master_user=master_user, user_code=user_code)
+            except Instrument.DoesNotExist:
+                serializer = InstrumentSerializer(data=default_instrument_object, context=context)
+                serializer.is_valid(raise_exception=True)
+                instr = serializer.save()
 
             # instr.instrument_type = master_user.instrument_type
             # instr.pricing_currency = master_user.currency
