@@ -14,7 +14,6 @@ import poms.configuration_export.views as configuration_export
 import poms.configuration_import.views as configuration_import
 import poms.configuration_sharing.views as configuration_sharing
 import poms.credentials.views as credentials
-import poms.csv_import.views as csv_import
 import poms.currencies.views as currencies
 import poms.file_reports.views as file_reports
 import poms.history.views as history
@@ -57,6 +56,7 @@ router.register(r'active_processes/active_processes', celery_tasks.CeleryTaskVie
 router.register(r'tasks/task', celery_tasks.CeleryTaskViewSet, 'celery_tasks')
 
 router.register(r'configuration/configuration', configuration.ConfigurationViewSet)
+router.register(r'configuration/new-member-setup-configuration', configuration.NewMemberSetupConfigurationViewSet)
 
 router.register(r'transactions/bank-file', integrations.TransactionFileResultViewSet)  # deprecated?
 
@@ -65,12 +65,6 @@ router.register(r'specific-data/values-for-select', common.ValuesForSelectViewSe
 router.register(r'notifications/notification', notifications.NotificationViewSet)
 
 router.register(r'data-provider/bloomberg/credential', integrations.BloombergDataProviderCredentialViewSet)
-
-
-
-
-
-
 
 router.register(r'utils/expression', api.ExpressionViewSet, 'expression')
 router.register(r'utils/stats', api.StatsViewSet, 'stats')
@@ -81,14 +75,12 @@ router.register(r'utils/tables-size', api.TablesSizeViewSet, 'tables-size')
 router.register(r'utils/recycle-bin', api.RecycleBinViewSet, 'recycle-bin')
 router.register(r'utils/universal-input', api.UniversalInputViewSet, 'universalInput')
 
-
-
-router.register(r'import/complex/scheme', complex_import.ComplexImportSchemeViewSet, 'import_complex_scheme')
-router.register(r'import/complex', complex_import.ComplexImportViewSet, 'import_complex')
+router.register(r'import/complex/scheme', complex_import.ComplexImportSchemeViewSet,
+                'import_complex_scheme')  # Probably deprecated
+router.register(r'import/complex', complex_import.ComplexImportViewSet, 'import_complex')  # Probably deprecated
 
 router.register(r'import/configuration-json', configuration_import.ConfigurationImportAsJsonViewSet,
                 'configuration_import')
-
 
 router.register(r'export/configuration', configuration_export.ConfigurationExportViewSet, 'configuration_export')
 router.register(r'export/mapping', configuration_export.MappingExportViewSet, 'mapping_export')
@@ -106,12 +98,13 @@ router.register(r'reconciliation/complex-transaction-field',
 router.register(r'file-reports/file-report', file_reports.FileReportViewSet, 'file_reports')
 
 router.register(r'configuration-sharing/shared-configuration-file',
-                configuration_sharing.SharedConfigurationFileViewSet, 'shared_configuration_file')
+                configuration_sharing.SharedConfigurationFileViewSet,
+                'shared_configuration_file')  # Probably deprecated
 router.register(r'configuration-sharing/invites', configuration_sharing.InviteToSharedConfigurationFileViewSet,
-                'invites_to_shared_configuration_file')
+                'invites_to_shared_configuration_file')  # Probably deprecated
 
 router.register(r'configuration-sharing/my-invites', configuration_sharing.MyInviteToSharedConfigurationFileViewSet,
-                'my_invites_to_shared_configuration_file')
+                'my_invites_to_shared_configuration_file')  # Probably deprecated
 
 router.register(r'pricing/instrument-pricing-scheme', pricing.InstrumentPricingSchemeViewSet,
                 'pricing_instrument_pricing_scheme')
@@ -135,8 +128,8 @@ router.register(r'schedules/schedule', schedules.ScheduleViewSet)
 
 router.register(r'system-messages/message', system_messages.MessageViewSet)
 
-router.register(r'credentials/credentials', credentials.CredentialsViewSet)
-router.register(r'integrations/data-provider', integrations.DataProviderViewSet)
+router.register(r'credentials/credentials', credentials.CredentialsViewSet)  # Probably deprecated
+router.register(r'integrations/data-provider', integrations.DataProviderViewSet)  # Probably deprecated
 
 router.register(r'widgets/history/nav', widgets.HistoryNavViewSet, 'widgets_history_nav')
 router.register(r'widgets/history/pl', widgets.HistoryPlViewSet, 'widgets_history_pl')
@@ -165,7 +158,6 @@ import poms.ui.urls as ui_router
 import poms.explorer.urls as explorer_router
 import poms.integrations.urls as integrations_router
 import poms.csv_import.urls as csv_import_router
-
 
 urlpatterns = [
     re_path(r'^v1/accounts/', include(account_router.router.urls)),

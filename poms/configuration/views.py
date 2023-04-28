@@ -1,6 +1,4 @@
 import logging
-import os
-
 
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
@@ -12,8 +10,9 @@ from poms.common.authentication import get_access_token
 from poms.common.filters import CharFilter
 from poms.common.storage import get_storage
 from poms.common.views import AbstractModelViewSet
-from poms.configuration.models import Configuration
-from poms.configuration.serializers import ConfigurationSerializer, ConfigurationImportSerializer
+from poms.configuration.models import Configuration, NewMemberSetupConfiguration
+from poms.configuration.serializers import ConfigurationSerializer, ConfigurationImportSerializer, \
+    NewMemberSetupConfigurationSerializer
 
 storage = get_storage()
 
@@ -159,3 +158,48 @@ class ConfigurationViewSet(AbstractModelViewSet):
         _l.info('celery_task %s' % celery_task.id)
 
         return Response({'task_id': celery_task.id}, status=status.HTTP_200_OK)
+
+
+class NewMemberSetupConfigurationFilterSet(FilterSet):
+    name = CharFilter()
+    user_code = CharFilter()
+    notes = CharFilter()
+    target_configuration_code = CharFilter()
+    target_configuration_version = CharFilter()
+
+    class Meta:
+        model = NewMemberSetupConfiguration
+        fields = []
+
+
+class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
+    queryset = NewMemberSetupConfiguration.objects
+    serializer_class = NewMemberSetupConfigurationSerializer
+    filter_class = NewMemberSetupConfigurationFilterSet
+    filter_backends = AbstractModelViewSet.filter_backends + [
+
+    ]
+    permission_classes = AbstractModelViewSet.permission_classes + [
+
+    ]
+
+    @action(detail=True, methods=['PUT'], url_path='install')
+    def install(self, request, pk=None):
+        new_member_setup_configuration = self.get_object()
+
+        # TODO implement install from local zip file
+        options_object = {
+            "configuration_code": new_member_setup_configuration.target_configuration_code,
+            "configuration_version": new_member_setup_configuration.target_configuration_version,
+        }
+
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            type="install_initial_configuration",
+            options_object=options_object
+        )
+
+        # push_configuration_to_marketplace.apply_async(kwargs={'task_id': celery_task.id})
+
+        return Response({"task_id": celery_task.id})

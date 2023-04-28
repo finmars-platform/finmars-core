@@ -1,13 +1,14 @@
 import json
+import logging
 
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
 
 from poms.configuration.utils import replace_special_chars_and_spaces
-from django.core.serializers.json import DjangoJSONEncoder
 
-import logging
 _l = logging.getLogger('poms.configuration')
+
 
 class ConfigurationModel(models.Model):
     '''
@@ -89,3 +90,26 @@ class Configuration(models.Model):
 
     def __str__(self):
         return '%s (%s)' % (self.configuration_code, self.version)
+
+
+class NewMemberSetupConfiguration(ConfigurationModel):
+
+    user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('user code'),
+                                 help_text=gettext_lazy(
+                                     'Unique Code for this object. Used in Configuration and Permissions Logic'))
+    name = models.CharField(max_length=255, verbose_name=gettext_lazy('name'),
+                            help_text="Human Readable Name of the object")
+    short_name = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('short name'),
+                                  help_text="Short Name of the object. Used in dropdown menus")
+    public_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('public name'),
+                                   help_text=gettext_lazy('Used if user does not have permissions to view object'))
+    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'),
+                             help_text="Notes, any useful information about the object")
+
+    '''
+    Either provide configuration_code with version or upload zip
+    '''
+    target_configuration_code = models.CharField(max_length=255, null=True, blank=True)
+    target_configuration_version = models.CharField(max_length=255, null=True, blank=True)
+    file_url = models.TextField(blank=True, default='', verbose_name=gettext_lazy('File URL'))
+    file_name = models.CharField(max_length=255, blank=True, default='')

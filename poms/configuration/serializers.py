@@ -4,7 +4,7 @@ import shutil
 from rest_framework import serializers
 
 from poms.common.storage import get_storage
-from poms.configuration.models import Configuration
+from poms.configuration.models import Configuration, NewMemberSetupConfiguration
 from poms_app import settings
 
 storage = get_storage()
@@ -49,3 +49,15 @@ class ConfigurationImportSerializer(serializers.Serializer):
         _l.info("Save file to %s" % file_path)
 
         return ConfigurationImport(file_path=file_path, file_name=file_name)
+
+
+class NewMemberSetupConfigurationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NewMemberSetupConfiguration
+        fields = (
+            'id',
+            'name', 'notes',
+            'user_code', 'configuration_code',
+            'target_configuration_code',
+            'target_configuration_version',
+        )
