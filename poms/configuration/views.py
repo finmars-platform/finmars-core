@@ -3,8 +3,9 @@ import logging
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.response import Response
+
 from poms.celery_tasks.models import CeleryTask
 from poms.common.authentication import get_access_token
 from poms.common.filters import CharFilter
@@ -173,7 +174,6 @@ class NewMemberSetupConfigurationFilterSet(FilterSet):
 
 
 class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
-
     parser_classes = (MultiPartParser, FormParser)
 
     queryset = NewMemberSetupConfiguration.objects
@@ -190,19 +190,46 @@ class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
     def install(self, request, pk=None):
         new_member_setup_configuration = self.get_object()
 
-        # TODO implement install from local zip file
-        options_object = {
-            "configuration_code": new_member_setup_configuration.target_configuration_code,
-            "configuration_version": new_member_setup_configuration.target_configuration_version,
-        }
+        celery_task = None
 
-        celery_task = CeleryTask.objects.create(
-            master_user=request.user.master_user,
-            member=request.user.member,
-            type="install_initial_configuration",
-            options_object=options_object
-        )
+        if new_member_setup_configuration.target_configuration_code:
 
-        # push_configuration_to_marketplace.apply_async(kwargs={'task_id': celery_task.id})
+            celery_task = CeleryTask.objects.create(
+                master_user=request.user.master_user,
+                member=request.user.member,
+                type="install_initial_configuration"
+            )
+
+            options_object = {
+                'configuration_code': new_member_setup_configuration.target_configuration_code,
+                'version': new_member_setup_configuration.target_configuration_version,
+                'is_package': new_member_setup_configuration.target_configuration_is_package,
+                "access_token": get_access_token(request)
+            }
+
+            celery_task.options_object = options_object
+            celery_task.save()
+
+            if request.data.get('is_package', False):
+                install_package_from_marketplace.apply_async(kwargs={'task_id': celery_task.id})
+            else:
+                install_configuration_from_marketplace.apply_async(kwargs={'task_id': celery_task.id})
+
+        elif new_member_setup_configuration.file_url:
+
+            celery_task = CeleryTask.objects.create(
+                master_user=request.user.master_user,
+                member=request.user.member,
+                type="install_initial_configuration"
+            )
+
+            options_object = {
+                'file_path': new_member_setup_configuration.file_url,
+            }
+
+            celery_task.options_object = options_object
+            celery_task.save()
+
+            import_configuration.apply_async(kwargs={'task_id': celery_task.id})
 
         return Response({"task_id": celery_task.id})

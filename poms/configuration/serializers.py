@@ -62,6 +62,7 @@ class NewMemberSetupConfigurationSerializer(serializers.ModelSerializer):
             'user_code', 'configuration_code',
             'target_configuration_code',
             'target_configuration_version',
+            'target_configuration_is_package',
 
             'file_url',
             'file_name',

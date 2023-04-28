@@ -93,7 +93,6 @@ class Configuration(models.Model):
 
 
 class NewMemberSetupConfiguration(ConfigurationModel):
-
     user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('user code'),
                                  help_text=gettext_lazy(
                                      'Unique Code for this object. Used in Configuration and Permissions Logic'))
@@ -111,5 +110,6 @@ class NewMemberSetupConfiguration(ConfigurationModel):
     '''
     target_configuration_code = models.CharField(max_length=255, null=True, blank=True)
     target_configuration_version = models.CharField(max_length=255, null=True, blank=True)
+    target_configuration_is_package = models.BooleanField(default=False)
     file_url = models.TextField(blank=True, default='', verbose_name=gettext_lazy('File URL'))
     file_name = models.CharField(max_length=255, blank=True, default='')
