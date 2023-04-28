@@ -414,6 +414,17 @@ class BootstrapConfig(AppConfig):
 
                     _l.info("create system log folder")
 
+            if not storage.exists(settings.BASE_API_URL + '/.system/new-member-setup-configurations/.init'):
+                path = settings.BASE_API_URL + '/.system/new-member-setup-configurations/.init'
+
+                with NamedTemporaryFile() as tmpf:
+                    tmpf.write(b'')
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
+                    _l.info("create system new-member-setup-configurations folder")
+
+
             if not storage.exists(settings.BASE_API_URL + '/public/.init'):
                 path = settings.BASE_API_URL + '/public/.init'
 

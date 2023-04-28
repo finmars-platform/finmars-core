@@ -4,7 +4,7 @@ from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
+from rest_framework.parsers import MultiPartParser, FormParser
 from poms.celery_tasks.models import CeleryTask
 from poms.common.authentication import get_access_token
 from poms.common.filters import CharFilter
@@ -173,6 +173,9 @@ class NewMemberSetupConfigurationFilterSet(FilterSet):
 
 
 class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
+
+    parser_classes = (MultiPartParser, FormParser)
+
     queryset = NewMemberSetupConfiguration.objects
     serializer_class = NewMemberSetupConfigurationSerializer
     filter_class = NewMemberSetupConfigurationFilterSet

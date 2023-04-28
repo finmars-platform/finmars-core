@@ -52,6 +52,8 @@ class ConfigurationImportSerializer(serializers.Serializer):
 
 
 class NewMemberSetupConfigurationSerializer(serializers.ModelSerializer):
+    file = serializers.FileField(required=False, allow_null=True)
+
     class Meta:
         model = NewMemberSetupConfiguration
         fields = (
@@ -60,4 +62,40 @@ class NewMemberSetupConfigurationSerializer(serializers.ModelSerializer):
             'user_code', 'configuration_code',
             'target_configuration_code',
             'target_configuration_version',
+
+            'file_url',
+            'file_name',
+
+            'file'
         )
+
+    def create(self, validated_data):
+
+        file = validated_data.pop('file', None)
+
+        if file:
+            file_path = settings.BASE_API_URL + '/.system/new-member-setup-configurations/%s' % file.name
+
+            storage.save(file_path, file)
+            validated_data['file_url'] = file_path
+            validated_data['file_name'] = file.name
+
+        return NewMemberSetupConfiguration.objects.create(**validated_data)
+
+    def update(self, instance, validated_data):
+
+        file = validated_data.pop('file', None)
+
+        if file:
+            file_path = settings.BASE_API_URL + '/.system/new-member-setup-configurations/%s' % file.name
+
+            storage.save(file_path, file)
+            validated_data['file_url'] = file_path
+            validated_data['file_name'] = file.name
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+
+        return instance
