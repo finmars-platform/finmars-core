@@ -15,6 +15,7 @@ COPY healthcheck/ /var/app/healthcheck/
 COPY finmars_standardized_errors/ /var/app/finmars_standardized_errors/
 COPY logstash/ /var/app/logstash/
 COPY poms_app/ /var/app/poms_app/
+COPY templates/ /var/app/templates/
 COPY manage.py /var/app/manage.py
 
 RUN mkdir -p /var/app/finmars_data
