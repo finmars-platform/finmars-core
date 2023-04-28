@@ -225,17 +225,7 @@ router.register(r'schedules/schedule', schedules.ScheduleViewSet)
 
 router.register(r'system-messages/message', system_messages.MessageViewSet)
 
-router.register(r'procedures/pricing-procedure', procedures.PricingProcedureViewSet, 'pricing_procedure')
-router.register(r'procedures/pricing-procedure-instance', procedures.PricingProcedureInstanceViewSet,
-                'pricing_procedure_instance')
-router.register(r'procedures/pricing-parent-procedure-instance', procedures.PricingParentProcedureInstanceViewSet,
-                'pricing_parent_procedure_instance')
 
-router.register(r'procedures/request-data-procedure', procedures.RequestDataFileProcedureViewSet)
-router.register(r'procedures/data-procedure', procedures.RequestDataFileProcedureViewSet)
-router.register(r'procedures/data-procedure-instance', procedures.RequestDataFileProcedureInstanceViewSet)
-
-router.register(r'procedures/expression-procedure', procedures.ExpressionProcedureViewSet)
 
 router.register(r'credentials/credentials', credentials.CredentialsViewSet)
 router.register(r'integrations/data-provider', integrations.DataProviderViewSet)
@@ -270,7 +260,8 @@ import poms.instruments.urls as instrument_router
 import poms.transactions.urls as transaction_router
 import poms.counterparties.urls as counterparty_router
 import poms.strategies.urls as strategy_router
-import poms.reports.urls as reports_router
+import poms.reports.urls as report_router
+import poms.procedures.urls as procedure_router
 
 urlpatterns = [
     re_path(r'^v1/accounts/', include(account_router.router.urls)),
@@ -280,7 +271,8 @@ urlpatterns = [
     re_path(r'^v1/transactions/', include(transaction_router.router.urls)),
     re_path(r'^v1/counterparties/', include(counterparty_router.router.urls)),
     re_path(r'^v1/strategies/', include(strategy_router.router.urls)),
-    re_path(r'^v1/reports/', include(reports_router.router.urls)),
+    re_path(r'^v1/reports/', include(report_router.router.urls)),
+    re_path(r'^v1/procedures/', include(procedure_router.router.urls)),
     re_path(r'^v1/', include(router.urls)),
 
     # external callbacks
