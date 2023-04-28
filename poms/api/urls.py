@@ -62,38 +62,6 @@ router.register(r'users/ecosystem-default', users.EcosystemDefaultViewSet, 'ecos
 router.register(r'users/usercode-prefix', users.UsercodePrefixViewSet, 'usercodeprefix')
 
 
-router.register(r'strategies/1/group-ev-group', strategies.Strategy1GroupEvGroupViewSet, 'strategy1groupevgroup') # DEPRECATED
-router.register(r'strategies/1/group', strategies.Strategy1GroupViewSet)
-router.register(r'strategies/1/subgroup-ev-group', strategies.Strategy1SubgroupEvGroupViewSet,
-                'strategy1subggroupevgroup') # DEPRECATED
-router.register(r'strategies/1/subgroup', strategies.Strategy1SubgroupViewSet)
-router.register(r'strategies/1/strategy-ev-group', strategies.Strategy1EvGroupViewSet, 'strategy1evgroup') # DEPRECATED
-router.register(r'strategies/1/strategy', strategies.Strategy1ViewSet, 'strategy1')
-router.register(r'strategies/1/strategy-ev', strategies.Strategy1EvViewSet, 'strategy1ev') # DEPRECATED
-router.register(r'strategies/1/strategy-light', strategies.Strategy1LightViewSet, 'strategy1light')  # Deprecated
-router.register(r'strategies/1/strategy-attribute-type', strategies.Strategy1AttributeTypeViewSet)
-
-router.register(r'strategies/2/group-ev-group', strategies.Strategy2GroupEvGroupViewSet, 'strategy2groupevgroup') # DEPRECATED
-router.register(r'strategies/2/group', strategies.Strategy2GroupViewSet)
-router.register(r'strategies/2/subgroup-ev-group', strategies.Strategy2SubgroupEvGroupViewSet,
-                'strategy2subggroupevgroup') # DEPRECATED
-router.register(r'strategies/2/subgroup', strategies.Strategy2SubgroupViewSet)
-router.register(r'strategies/2/strategy-ev-group', strategies.Strategy2EvGroupViewSet, 'strategy2evgroup') # DEPRECATED
-router.register(r'strategies/2/strategy', strategies.Strategy2ViewSet, 'strategy2')
-router.register(r'strategies/2/strategy-ev', strategies.Strategy2EvViewSet, 'strategy2ev') # DEPRECATED
-router.register(r'strategies/2/strategy-light', strategies.Strategy2LightViewSet, 'strategy2light')  # Deprecated
-router.register(r'strategies/2/strategy-attribute-type', strategies.Strategy2AttributeTypeViewSet)
-
-router.register(r'strategies/3/group-ev-group', strategies.Strategy3GroupEvGroupViewSet, 'strategy3groupevgroup') # DEPRECATED
-router.register(r'strategies/3/group', strategies.Strategy3GroupViewSet)
-router.register(r'strategies/3/subgroup-ev-group', strategies.Strategy3SubgroupEvGroupViewSet,
-                'strategy3subggroupevgroup') # DEPRECATED
-router.register(r'strategies/3/subgroup', strategies.Strategy3SubgroupViewSet)
-router.register(r'strategies/3/strategy-ev-group', strategies.Strategy3EvGroupViewSet, 'strategy3evgroup') # DEPRECATED
-router.register(r'strategies/3/strategy', strategies.Strategy3ViewSet, 'strategy3')
-router.register(r'strategies/3/strategy-ev', strategies.Strategy3EvViewSet, 'strategy3ev') # DEPRECATED
-router.register(r'strategies/3/strategy-light', strategies.Strategy3LightViewSet, 'strategy3light')  # Deprecated
-router.register(r'strategies/3/strategy-attribute-type', strategies.Strategy3AttributeTypeViewSet)
 
 router.register(r'reference-tables/reference-table', reference_table.ReferenceTableViewSet, 'reference_table')
 router.register(r'active_processes/active_processes', celery_tasks.CeleryTaskViewSet, 'celery_tasks')  # deprecated
@@ -321,6 +289,7 @@ import poms.currencies.urls as currency_router
 import poms.instruments.urls as instrument_router
 import poms.transactions.urls as transaction_router
 import poms.counterparties.urls as counterparty_router
+import poms.strategies.urls as strategy_router
 
 urlpatterns = [
     re_path(r'^v1/accounts/', include(account_router.router.urls)),
@@ -329,6 +298,7 @@ urlpatterns = [
     re_path(r'^v1/instruments/', include(instrument_router.router.urls)),
     re_path(r'^v1/transactions/', include(transaction_router.router.urls)),
     re_path(r'^v1/counterparties/', include(counterparty_router.router.urls)),
+    re_path(r'^v1/strategies/', include(strategy_router.router.urls)),
     re_path(r'^v1/', include(router.urls)),
 
     # external callbacks

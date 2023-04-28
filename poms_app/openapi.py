@@ -1,14 +1,12 @@
-from rest_framework import permissions
-from drf_yasg.views import get_schema_view
-from drf_yasg import openapi
 from django.conf import settings
-from django.urls import re_path, include
 from django.shortcuts import render
-
+from django.urls import re_path, include
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions
 
 
 def generate_schema(local_urlpatterns):
-
     schema_view = get_schema_view(
         openapi.Info(
             title="Finmars API",
@@ -32,7 +30,6 @@ def generate_schema(local_urlpatterns):
 
 
 def get_account_documentation():
-
     import poms.accounts.urls as account_router
 
     local_urlpatterns = [
@@ -43,60 +40,72 @@ def get_account_documentation():
 
     return schema_view
 
-def get_portfolio_documentation():
 
+def get_portfolio_documentation():
     import poms.portfolios.urls as portfolio_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/portfolio/', include(portfolio_router.router.urls)),
+        re_path(r'^' + settings.BASE_API_URL + '/api/v1/portfolios/', include(portfolio_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
 
     return schema_view
 
-def get_currency_documentation():
 
+def get_currency_documentation():
     import poms.currencies.urls as currency_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/currency/', include(currency_router.router.urls)),
+        re_path(r'^' + settings.BASE_API_URL + '/api/v1/currencies/', include(currency_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
 
     return schema_view
 
-def get_instrument_documentation():
 
+def get_instrument_documentation():
     import poms.instruments.urls as instrument_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/instrument/', include(instrument_router.router.urls)),
+        re_path(r'^' + settings.BASE_API_URL + '/api/v1/instruments/', include(instrument_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
 
     return schema_view
 
-def get_transaction_documentation():
 
+def get_transaction_documentation():
     import poms.transactions.urls as transaction_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/transaction/', include(transaction_router.router.urls)),
+        re_path(r'^' + settings.BASE_API_URL + '/api/v1/transactions/', include(transaction_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
 
     return schema_view
 
-def get_counterparty_documentation():
 
+def get_counterparty_documentation():
     import poms.counterparties.urls as counterparty_router
 
     local_urlpatterns = [
-        re_path(r'^' + settings.BASE_API_URL + '/api/v1/counterparty/', include(counterparty_router.router.urls)),
+        re_path(r'^' + settings.BASE_API_URL + '/api/v1/counterparties/', include(counterparty_router.router.urls)),
+    ]
+
+    schema_view = generate_schema(local_urlpatterns)
+
+    return schema_view
+
+
+def get_strategy_documentation():
+    import poms.strategies.urls as strategy_router
+
+    local_urlpatterns = [
+        re_path(r'^' + settings.BASE_API_URL + '/api/v1/strategies/', include(strategy_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -105,32 +114,39 @@ def get_counterparty_documentation():
 
 
 def render_main_page(request):
-
     context = {
         'space_code': settings.BASE_API_URL
     }
 
     return render(request, 'finmars_redoc.html', context)
 
-def get_redoc_urlpatterns():
 
+def get_redoc_urlpatterns():
     account_schema_view = get_account_documentation()
     portfolio_schema_view = get_portfolio_documentation()
     currency_schema_view = get_currency_documentation()
     instrument_schema_view = get_instrument_documentation()
     transaction_schema_view = get_transaction_documentation()
     counterparty_schema_view = get_counterparty_documentation()
+    strategy_schema_view = get_strategy_documentation()
 
     urlpatterns = [
 
         re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/$', render_main_page, name='main'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/account', account_schema_view.with_ui('redoc', cache_timeout=0), name='account'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/portfolio', portfolio_schema_view.with_ui('redoc', cache_timeout=0), name='portfolio'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/currency', currency_schema_view.with_ui('redoc', cache_timeout=0), name='currency'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/instrument', instrument_schema_view.with_ui('redoc', cache_timeout=0), name='instrument'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/transaction', transaction_schema_view.with_ui('redoc', cache_timeout=0), name='transaction'),
-        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/counterparty', counterparty_schema_view.with_ui('redoc', cache_timeout=0), name='counterparty'),
-
+        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/account',
+                account_schema_view.with_ui('redoc', cache_timeout=0), name='account'),
+        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/portfolio',
+                portfolio_schema_view.with_ui('redoc', cache_timeout=0), name='portfolio'),
+        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/currency',
+                currency_schema_view.with_ui('redoc', cache_timeout=0), name='currency'),
+        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/instrument',
+                instrument_schema_view.with_ui('redoc', cache_timeout=0), name='instrument'),
+        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/transaction',
+                transaction_schema_view.with_ui('redoc', cache_timeout=0), name='transaction'),
+        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/counterparty',
+                counterparty_schema_view.with_ui('redoc', cache_timeout=0), name='counterparty'),
+        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/strategy',
+                strategy_schema_view.with_ui('redoc', cache_timeout=0), name='strategy'),
 
     ]
 
