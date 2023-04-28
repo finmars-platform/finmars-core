@@ -137,6 +137,45 @@ def get_procedure_documentation():
     return schema_view
 
 
+def get_ui_documentation():
+    import poms.ui.urls as ui_router
+
+    local_urlpatterns = [
+        re_path(r'^' + settings.BASE_API_URL + '/api/v1/ui/', include(ui_router.router.urls)),
+    ]
+
+    schema_view = generate_schema(local_urlpatterns)
+
+    return schema_view
+
+
+def get_explorer_documentation():
+    import poms.explorer.urls as explorer_router
+
+    local_urlpatterns = [
+        re_path(r'^' + settings.BASE_API_URL + '/api/v1/explorer/', include(explorer_router.router.urls)),
+    ]
+
+    schema_view = generate_schema(local_urlpatterns)
+
+    return schema_view
+
+
+def get_import_documentation():
+    import poms.integrations.urls as integrations_router
+    import poms.csv_import.urls as csv_import_router
+
+
+    local_urlpatterns = [
+        re_path(r'^' + settings.BASE_API_URL + '/api/v1/import/', include(integrations_router.router.urls)),
+        re_path(r'^' + settings.BASE_API_URL + '/api/v1/import/', include(csv_import_router.router.urls)),
+    ]
+
+    schema_view = generate_schema(local_urlpatterns)
+
+    return schema_view
+
+
 def render_main_page(request):
     context = {
         'space_code': settings.BASE_API_URL
@@ -155,6 +194,9 @@ def get_redoc_urlpatterns():
     strategy_schema_view = get_strategy_documentation()
     report_schema_view = get_report_documentation()
     procedure_schema_view = get_procedure_documentation()
+    ui_schema_view = get_ui_documentation()
+    explorer_schema_view = get_explorer_documentation()
+    import_schema_view = get_import_documentation()
 
     urlpatterns = [
 
@@ -177,8 +219,12 @@ def get_redoc_urlpatterns():
                 report_schema_view.with_ui('redoc', cache_timeout=0), name='report'),
         re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/procedure',
                 procedure_schema_view.with_ui('redoc', cache_timeout=0), name='procedure'),
-
-
+        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/ui',
+                ui_schema_view.with_ui('redoc', cache_timeout=0), name='ui'),
+        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/explorer',
+                explorer_schema_view.with_ui('redoc', cache_timeout=0), name='explorer'),
+        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/import',
+                import_schema_view.with_ui('redoc', cache_timeout=0), name='import'),
 
     ]
 
