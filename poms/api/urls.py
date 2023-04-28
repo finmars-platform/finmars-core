@@ -94,27 +94,7 @@ router.register(r'ui/cross-entity-attribute-extension', ui.CrossEntityAttributeE
 router.register(r'ui/column-sort-data', ui.ColumnSortDataViewSet)
 router.register(r'ui/system-attributes', ui.SystemAttributesViewSet, basename="System attributes")
 
-router.register(r'reports/summary', reports.SummaryViewSet, 'indicators')
-router.register(r'reports/balance-report', reports.BalanceReportViewSet, "balance-report")
-router.register(r'reports/balance-report-sql', reports.BalanceReportViewSet, "balance-report-sync-sql")  # deprecated
-router.register(r'reports/balance-report/custom-field', reports.BalanceReportCustomFieldViewSet,
-                'balance-report-custom-field')
 
-router.register(r'reports/pl-report', reports.PLReportViewSet, "pl-report")
-router.register(r'reports/pl-report-sql', reports.PLReportViewSet, "pl-report-sync-sql")  # deprecated, delete soon
-router.register(r'reports/pl-report/custom-field', reports.PLReportCustomFieldViewSet, 'pl-report-custom-field')
-
-router.register(r'reports/transaction-report', reports.TransactionReportViewSet, "transaction-report")
-router.register(r'reports/transaction-report-sql', reports.TransactionReportViewSet, "transaction-report-sync-sql")
-
-router.register(r'reports/transaction-report/custom-field', reports.TransactionReportCustomFieldViewSet,
-                'transaction-report-custom-field')
-
-router.register(r'reports/performance-report', reports.PerformanceReportViewSet, "performance-report")
-
-router.register(r'reports/price-history-check-sql', reports.PriceHistoryCheckViewSet,
-                "price-history-check-sql")  # deprecated
-router.register(r'reports/price-history-check', reports.PriceHistoryCheckViewSet, "price-history-check")
 
 router.register(r'notifications/notification', notifications.NotificationViewSet)
 
@@ -290,6 +270,7 @@ import poms.instruments.urls as instrument_router
 import poms.transactions.urls as transaction_router
 import poms.counterparties.urls as counterparty_router
 import poms.strategies.urls as strategy_router
+import poms.reports.urls as reports_router
 
 urlpatterns = [
     re_path(r'^v1/accounts/', include(account_router.router.urls)),
@@ -299,6 +280,7 @@ urlpatterns = [
     re_path(r'^v1/transactions/', include(transaction_router.router.urls)),
     re_path(r'^v1/counterparties/', include(counterparty_router.router.urls)),
     re_path(r'^v1/strategies/', include(strategy_router.router.urls)),
+    re_path(r'^v1/reports/', include(reports_router.router.urls)),
     re_path(r'^v1/', include(router.urls)),
 
     # external callbacks

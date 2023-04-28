@@ -113,6 +113,18 @@ def get_strategy_documentation():
     return schema_view
 
 
+def get_report_documentation():
+    import poms.reports.urls as report_router
+
+    local_urlpatterns = [
+        re_path(r'^' + settings.BASE_API_URL + '/api/v1/reports/', include(report_router.router.urls)),
+    ]
+
+    schema_view = generate_schema(local_urlpatterns)
+
+    return schema_view
+
+
 def render_main_page(request):
     context = {
         'space_code': settings.BASE_API_URL
@@ -129,6 +141,7 @@ def get_redoc_urlpatterns():
     transaction_schema_view = get_transaction_documentation()
     counterparty_schema_view = get_counterparty_documentation()
     strategy_schema_view = get_strategy_documentation()
+    report_schema_view = get_report_documentation()
 
     urlpatterns = [
 
@@ -147,6 +160,8 @@ def get_redoc_urlpatterns():
                 counterparty_schema_view.with_ui('redoc', cache_timeout=0), name='counterparty'),
         re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/strategy',
                 strategy_schema_view.with_ui('redoc', cache_timeout=0), name='strategy'),
+        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/report',
+                report_schema_view.with_ui('redoc', cache_timeout=0), name='report'),
 
     ]
 
