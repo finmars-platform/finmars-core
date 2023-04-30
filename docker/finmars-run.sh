@@ -25,22 +25,22 @@ chmod 777 /var/log/finmars/backend/django.log
 
 ############################################
 
-timestamp=$(date +"[%Y-%m-%d %H:%M:%S]")
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "[${timestamp}] Migrating..."
 python /var/app/manage.py migrate
-timestamp=$(date +"[%Y-%m-%d %H:%M:%S]")
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "[${timestamp}] Migration Done 💚"
 
 
 #
 #/var/app-venv/bin/python /var/app/manage.py createcachetable
 
-timestamp=$(date +"[%Y-%m-%d %H:%M:%S]")
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "[${timestamp}] Clear sessions"
 
 python /var/app/manage.py clearsessions
 
-timestamp=$(date +"[%Y-%m-%d %H:%M:%S]")
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "[${timestamp}] Collect static"
 
 python /var/app/manage.py collectstatic -c --noinput
@@ -57,12 +57,12 @@ supervisord
 #supervisorctl start worker2
 #supervisorctl start celerybeat
 
-timestamp=$(date +"[%Y-%m-%d %H:%M:%S]")
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "[${timestamp}] Create admin user"
 
 python /var/app/manage.py generate_super_user
 
-timestamp=$(date +"[%Y-%m-%d %H:%M:%S]")
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "[${timestamp}] Run Gunicorn Web Server"
 
 python /var/app/poms_app/print_finmars.py
