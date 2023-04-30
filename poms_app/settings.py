@@ -180,8 +180,6 @@ if SERVER_TYPE == 'local' and USE_DEBUGGER:
 PROFILER = ENV_BOOL('PROFILER', False)
 
 if PROFILER:
-    print("Profiler enabled")
-
     MIDDLEWARE.append('django_cprofile_middleware.middleware.ProfilerMiddleware')
     DJANGO_CPROFILE_MIDDLEWARE_REQUIRE_STAFF = False
 
@@ -298,7 +296,7 @@ if SERVER_TYPE == "development":
 if SERVER_TYPE == "local":
     CORS_ORIGIN_ALLOW_ALL = True
     CORS_ALLOW_CREDENTIALS = True
-    print("LOCAL development. CORS disabled")
+
 
 STATIC_URL = f'/{BASE_API_URL}/api/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')  # creates when collectstatic
@@ -413,8 +411,6 @@ LOGGING = {
 }
 
 if SEND_LOGS_TO_FINMARS:
-
-    print("Logs will be sending to Finmars")
 
     LOGGING['handlers']['logstash'] = {
         'level': DJANGO_LOG_LEVEL,
@@ -594,7 +590,7 @@ BLOOMBERG_SANDBOX = True
 if os.environ.get('POMS_BLOOMBERG_SANDBOX') == 'False':
     BLOOMBERG_SANDBOX = False
 
-print(f'BLOOMBERG_SANDBOX {BLOOMBERG_SANDBOX} ')
+
 
 if BLOOMBERG_SANDBOX:
     BLOOMBERG_RETRY_DELAY = 0.1

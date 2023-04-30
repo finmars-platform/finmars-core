@@ -20,7 +20,21 @@ class BootstrapConfig(AppConfig):
     verbose_name = gettext_lazy('Bootstrap')
 
     def ready(self):
+        _l.info("Bootstrapping Finmars Application")
+
+        _l.info(f'BLOOMBERG_SANDBOX {settings.BLOOMBERG_SANDBOX} ')
+
+        if settings.PROFILER:
+            _l.info("Profiler enabled")
+
+        if settings.SERVER_TYPE == 'local':
+            _l.info("LOCAL development. CORS disabled")
+
+        if settings.SEND_LOGS_TO_FINMARS:
+            _l.info("Logs will be sending to Finmars")
+
         post_migrate.connect(self.bootstrap, sender=self)
+        _l.info("Finmars Application is running 💚")
 
     def bootstrap(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
         '''
@@ -34,7 +48,7 @@ class BootstrapConfig(AppConfig):
         :return:
         '''
 
-        _l.info("Bootstrapping Finmars Application")
+
 
         self.bootstrap_celery()
         self.add_view_and_manage_permissions()
@@ -45,6 +59,8 @@ class BootstrapConfig(AppConfig):
         self.create_base_folders()
         self.register_at_authorizer_service()
         self.create_local_configuration()
+
+
 
     def create_finmars_bot(self):
 
@@ -310,8 +326,6 @@ class BootstrapConfig(AppConfig):
     def load_init_configuration(self):
         from poms.users.models import Member, MasterUser
         from poms.celery_tasks.models import CeleryTask
-        from django.db import transaction
-        from poms.configuration_import.tasks import configuration_import_as_json
         from poms.configuration.tasks import install_package_from_marketplace
 
         if not settings.AUTHORIZER_URL:
@@ -424,7 +438,6 @@ class BootstrapConfig(AppConfig):
 
                     _l.info("create system new-member-setup-configurations folder")
 
-
             if not storage.exists(settings.BASE_API_URL + '/public/.init'):
                 path = settings.BASE_API_URL + '/public/.init'
 
@@ -511,6 +524,7 @@ class BootstrapConfig(AppConfig):
             configuration = Configuration.objects.get(configuration_code="com.finmars.local")
             _l.info("Local Configuration is already created")
         except Configuration.DoesNotExist:
-            Configuration.objects.create(configuration_code="com.finmars.local", name="Local Configuration", version="1.0.0", description="Local Configuration")
+            Configuration.objects.create(configuration_code="com.finmars.local", name="Local Configuration",
+                                         version="1.0.0", description="Local Configuration")
 
             _l.info("Local Configuration created")

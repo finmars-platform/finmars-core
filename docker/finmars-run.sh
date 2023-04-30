@@ -1,21 +1,22 @@
 #!/bin/sh
 
-timestamp=$(date +"[%Y-%m-%d %H:%M:%S]")
+timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "[${timestamp}] Finmars initialization"
 
-echo "set chmod 777 /var/log/finmars/"
+# TODO refactor settings permissions
+#echo "set chmod 777 /var/log/finmars/"
 
 chmod 777 /var/log/finmars/
 
-echo "set chmod 777 /var/log/finmars/backend"
+#echo "set chmod 777 /var/log/finmars/backend"
 
 chmod 777 /var/log/finmars/backend
 
-echo "Create django log file /var/log/finmars/backend/django.log"
+#echo "Create django log file /var/log/finmars/backend/django.log"
 
 touch /var/log/finmars/backend/django.log
 
-echo "set chmod 777 /var/log/finmars/backend/django.log"
+#echo "set chmod 777 /var/log/finmars/backend/django.log"
 
 chmod 777 /var/log/finmars/backend/django.log
 
@@ -25,10 +26,12 @@ chmod 777 /var/log/finmars/backend/django.log
 ############################################
 
 timestamp=$(date +"[%Y-%m-%d %H:%M:%S]")
-echo "[${timestamp}] Migrate"
+echo "[${timestamp}] Migrating..."
 python /var/app/manage.py migrate
+timestamp=$(date +"[%Y-%m-%d %H:%M:%S]")
+echo "[${timestamp}] Migration Done 💚"
 
-#echo "Create cache table"
+
 #
 #/var/app-venv/bin/python /var/app/manage.py createcachetable
 
