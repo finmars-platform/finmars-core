@@ -11,7 +11,10 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 import os
 from django.utils.translation import gettext_lazy
+
+from poms_app.log_formatter import GunicornWorkerIDLogFormatter
 from poms_app.utils import ENV_BOOL, ENV_STR, ENV_INT
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -346,8 +349,8 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            '()': 'colorlog.ColoredFormatter',
-            'format': '%(log_color)s [%(levelname)s] [%(asctime)s] [%(processName)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
+            '()': GunicornWorkerIDLogFormatter,
+            'format': '%(log_color)s [%(levelname)s] [%(asctime)s] [%(processName)s] [%(wid)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
             'log_colors': {
                 'DEBUG': 'cyan',
                 'WARNING': 'yellow',
