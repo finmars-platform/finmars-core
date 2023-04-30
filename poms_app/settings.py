@@ -350,7 +350,7 @@ LOGGING = {
     'formatters': {
         'verbose': {
             '()': GunicornWorkerIDLogFormatter,
-            'format': '%(log_color)s [%(levelname)s] [%(asctime)s] [%(processName)s] [%(wid)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
+            'format': '%(log_color)s [%(levelname)s] [%(asctime)s] [%(processName)s] [worker-%(pid)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
             'log_colors': {
                 'DEBUG': 'cyan',
                 'WARNING': 'yellow',

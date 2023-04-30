@@ -1,8 +1,9 @@
 import os
 
 from colorlog import ColoredFormatter
+import gunicorn.sock
 
 class GunicornWorkerIDLogFormatter(ColoredFormatter):
     def format(self, record):
-        record.wid = os.environ.get('GUNICORN_WORKER_ID', 'main')
+        record.pid = record.wid = os.getpid()
         return super().format(record)
