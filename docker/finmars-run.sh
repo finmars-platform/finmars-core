@@ -1,6 +1,7 @@
 #!/bin/sh
 
-echo "Finmars initialization"
+timestamp=$(date +"[%Y-%m-%d %H:%M:%S]")
+echo "[${timestamp}] Finmars initialization"
 
 echo "set chmod 777 /var/log/finmars/"
 
@@ -23,41 +24,45 @@ chmod 777 /var/log/finmars/backend/django.log
 
 ############################################
 
-echo "Migrating"
+timestamp=$(date +"[%Y-%m-%d %H:%M:%S]")
+echo "[${timestamp}] Migrate"
 python /var/app/manage.py migrate
 
 #echo "Create cache table"
 #
 #/var/app-venv/bin/python /var/app/manage.py createcachetable
 
-echo "Clear sessions"
+timestamp=$(date +"[%Y-%m-%d %H:%M:%S]")
+echo "[${timestamp}] Clear sessions"
 
 python /var/app/manage.py clearsessions
 
-echo "Collect static"
+timestamp=$(date +"[%Y-%m-%d %H:%M:%S]")
+echo "[${timestamp}] Collect static"
 
 python /var/app/manage.py collectstatic -c --noinput
 
-echo "Start celery"
+
 
 export DJANGO_SETTINGS_MODULE=poms_app.settings
 export C_FORCE_ROOT='true'
 
+echo "[${timestamp}] Start celery"
 supervisord
 
-supervisorctl start worker1
-supervisorctl start worker2
-supervisorctl start celerybeat
+#supervisorctl start worker1
+#supervisorctl start worker2
+#supervisorctl start celerybeat
 
-echo "Create admin user"
+timestamp=$(date +"[%Y-%m-%d %H:%M:%S]")
+echo "[${timestamp}] Create admin user"
 
 python /var/app/manage.py generate_super_user
 
-echo "Run gunicorn"
+timestamp=$(date +"[%Y-%m-%d %H:%M:%S]")
+echo "[${timestamp}] Run Gunicorn Web Server"
 
-python /var/app/poms_app/poms_app/print_finmars.py
+python /var/app/poms_app/print_finmars.py
 
 #uwsgi /etc/uwsgi/apps-enabled/finmars.ini
 gunicorn --config /var/app/poms_app/gunicorn-prod.py poms_app.wsgi
-
-echo "Initialized"

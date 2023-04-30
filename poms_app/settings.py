@@ -357,6 +357,10 @@ LOGGING = {
                 'ERROR': 'red',
                 'CRITICAL': 'bold_red',
             },
+        },
+        'provision-verbose': {
+            '()': GunicornWorkerIDLogFormatter,
+            'format': '[%(asctime)s] [worker-%(pid)s] [%(module)s:%(lineno)d] - %(message)s',
         }
     },
     'handlers': {
@@ -364,6 +368,11 @@ LOGGING = {
             'level': DJANGO_LOG_LEVEL,
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
+        },
+        'provision-console': {
+            'level': DJANGO_LOG_LEVEL,
+            'class': 'logging.StreamHandler',
+            'formatter': 'provision-verbose'
         },
         'file': {
             'level': DJANGO_LOG_LEVEL,
@@ -381,7 +390,7 @@ LOGGING = {
             "handlers": ["file"]
         },
         "provision": {
-            "handlers": ["console", "file"],
+            "handlers": ["provision-console", "file"],
             "level": "INFO",
             "propagate": True
         },
