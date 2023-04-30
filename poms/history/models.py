@@ -551,6 +551,9 @@ def add_history_listeners(sender, **kwargs):
 
 
 def record_history():
+
+    _l = logging.getLogger('provision')
+
     if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
         _l.info("History is not recording. Probably Test or Migration context")
     else:

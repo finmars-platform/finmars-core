@@ -26,6 +26,8 @@ def cancel_existing_tasks(celery_app):
     from poms.celery_tasks.models import CeleryTask
     tasks = CeleryTask.objects.filter(status__in=[CeleryTask.STATUS_PENDING, CeleryTask.STATUS_INIT])
 
+    _l = logging.getLogger('provision')
+
     for task in tasks:
         task.status = CeleryTask.STATUS_CANCELED
 
@@ -44,6 +46,8 @@ def cancel_existing_tasks(celery_app):
 def cancel_existing_procedures(celery_app):
     from poms.procedures.models import RequestDataFileProcedureInstance
     procedures = RequestDataFileProcedureInstance.objects.filter(status__in=[RequestDataFileProcedureInstance.STATUS_PENDING, RequestDataFileProcedureInstance.STATUS_INIT])
+
+    _l = logging.getLogger('provision')
 
     for procedure in procedures:
         procedure.status = RequestDataFileProcedureInstance.STATUS_CANCELED

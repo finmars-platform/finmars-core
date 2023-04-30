@@ -10,7 +10,7 @@ from django.utils.translation import gettext_lazy
 
 from poms_app import settings
 
-_l = logging.getLogger('poms.reports')
+_l = logging.getLogger('provision')
 
 
 class ReportsConfig(AppConfig):

@@ -11,9 +11,7 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 import os
 from django.utils.translation import gettext_lazy
-from poms_app.utils import ENV_BOOL, ENV_STR, ENV_INT, print_finmars
-
-print_finmars()
+from poms_app.utils import ENV_BOOL, ENV_STR, ENV_INT
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -377,7 +375,12 @@ LOGGING = {
     'loggers': {
         'django.request': {
             "level": "ERROR",
-            "handlers": ["console", "file"]
+            "handlers": ["file"]
+        },
+        "provision": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": True
         },
         "django": {
             "handlers": ["file"],
@@ -386,12 +389,12 @@ LOGGING = {
         },
         "poms": {
             "level": DJANGO_LOG_LEVEL,
-            "handlers": ["console", "file"],
+            "handlers": ["file"],
             "propagate": True
         },
         "finmars": {
             "level": DJANGO_LOG_LEVEL,
-            "handlers": ["console", "file"],
+            "handlers": ["file"],
             "propagate": True
         }
     }
@@ -415,6 +418,14 @@ if SEND_LOGS_TO_FINMARS:
     LOGGING['loggers']['django.request']['handlers'].append('logstash')
     LOGGING['loggers']['django']['handlers'].append('logstash')
     LOGGING['loggers']['poms']['handlers'].append('logstash')
+
+if SERVER_TYPE == "local":
+
+    LOGGING["loggers"]["django.request"]["handlers"].append('console')
+    LOGGING['loggers']['django']['handlers'].append('console')
+    LOGGING['loggers']['poms']['handlers'].append('console')
+    LOGGING['loggers']['finmars']['handlers'].append('console')
+
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',

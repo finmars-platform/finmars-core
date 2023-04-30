@@ -15,6 +15,8 @@ class StandardizedErrorsConfig(AppConfig):
 
     def delete_old_logs(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
 
+        _l = logging.getLogger('provision')
+
         from finmars_standardized_errors.models import ErrorRecord
 
         import datetime

@@ -55,6 +55,8 @@ python /var/app/manage.py generate_super_user
 
 echo "Run gunicorn"
 
+python poms_app/print_finmars.py
+
 #uwsgi /etc/uwsgi/apps-enabled/finmars.ini
 gunicorn --config /var/app/poms_app/gunicorn-prod.py poms_app.wsgi
 
