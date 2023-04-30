@@ -8,8 +8,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
-
 import os
+
 from django.utils.translation import gettext_lazy
 
 from poms_app.log_formatter import GunicornWorkerIDLogFormatter
@@ -28,8 +28,8 @@ SERVER_TYPE = ENV_STR('SERVER_TYPE', 'local')
 USE_DEBUGGER = ENV_STR('USE_DEBUGGER', False)
 BASE_API_URL = ENV_STR('BASE_API_URL', 'space00000')
 HOST_LOCATION = ENV_STR('HOST_LOCATION', 'AWS')  # azure, aws, or custom, only log purpose
-DOMAIN_NAME = ENV_STR('DOMAIN_NAME', 'finmars.com') # looks like HOST_URL, maybe refactor required
-HOST_URL = ENV_STR('HOST_URL', 'https://finmars.com') #
+DOMAIN_NAME = ENV_STR('DOMAIN_NAME', 'finmars.com')  # looks like HOST_URL, maybe refactor required
+HOST_URL = ENV_STR('HOST_URL', 'https://finmars.com')  #
 JWT_SECRET_KEY = ENV_STR('JWT_SECRET_KEY', None)
 VERIFY_SSL = ENV_BOOL('VERIFY_SSL', True)
 ENABLE_DEV_DOCUMENTATION = ENV_BOOL('ENABLE_DEV_DOCUMENTATION', False)
@@ -43,7 +43,7 @@ SUPERSET_URL = os.environ.get('SUPERSET_URL', None)
 UNIFIED_DATA_PROVIDER_URL = os.environ.get('UNIFIED_DATA_PROVIDER_URL', None)
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 ROUND_NDIGITS = ENV_INT('ROUND_NDIGITS', 6)
-FILE_UPLOAD_MAX_MEMORY_SIZE = 0 # Important, that all files write to temporary file no matter size
+FILE_UPLOAD_MAX_MEMORY_SIZE = 0  # Important, that all files write to temporary file no matter size
 ALLOWED_HOSTS = ['*']
 
 # Application definition
@@ -90,14 +90,14 @@ INSTALLED_APPS = [
     'poms.csv_import',
     'poms.transaction_import',
     'poms.complex_import',
-    'poms.configuration_export', # DEPRECATED
-    'poms.configuration_import', # DEPRECATED
+    'poms.configuration_export',  # DEPRECATED
+    'poms.configuration_import',  # DEPRECATED
     'poms.reference_tables',
     'poms.celery_tasks',
 
     'poms.reconciliation',
     'poms.file_reports',
-    'poms.configuration_sharing', # DEPRECATED
+    'poms.configuration_sharing',  # DEPRECATED
     'poms.pricing',
 
     'poms.schedules',
@@ -108,7 +108,6 @@ INSTALLED_APPS = [
 
     'poms.auth_tokens',
     'poms.widgets',
-
 
     'django.contrib.admin',
     'django.contrib.admindocs',
@@ -151,7 +150,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-    "whitenoise.middleware.WhiteNoiseMiddleware", # for static files
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # for static files
 
     # Possibly Deprecated
     # 'django.middleware.gzip.GZipMiddleware',
@@ -165,11 +164,10 @@ MIDDLEWARE = [
     # 'django.contrib.messages.middleware.MessageMiddleware',
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-
     'corsheaders.middleware.CorsMiddleware',
     'corsheaders.middleware.CorsPostCsrfMiddleware',
 
-    'poms.common.middleware.CommonMiddleware', # required for getting request object anywhere
+    'poms.common.middleware.CommonMiddleware',  # required for getting request object anywhere
     # 'poms.common.middleware.LogRequestsMiddleware',
     'finmars_standardized_errors.middleware.ExceptionMiddleware'
 
@@ -298,7 +296,6 @@ if SERVER_TYPE == "local":
     CORS_ORIGIN_ALLOW_ALL = True
     CORS_ALLOW_CREDENTIALS = True
 
-
 STATIC_URL = f'/{BASE_API_URL}/api/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')  # creates when collectstatic
 
@@ -348,7 +345,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            '()': GunicornWorkerIDLogFormatter,
+            '()': 'colorlog.ColoredFormatter',
             'format': '%(log_color)s [%(levelname)s] [%(asctime)s] [%(processName)s] [worker-%(pid)s] [%(name)s] [%(module)s:%(lineno)d] - %(message)s',
             'log_colors': {
                 'DEBUG': 'cyan',
@@ -412,7 +409,6 @@ LOGGING = {
 }
 
 if SEND_LOGS_TO_FINMARS:
-
     LOGGING['handlers']['logstash'] = {
         'level': DJANGO_LOG_LEVEL,
         'class': 'logstash.TCPLogstashHandler',
@@ -429,12 +425,10 @@ if SEND_LOGS_TO_FINMARS:
     LOGGING['loggers']['poms']['handlers'].append('logstash')
 
 if SERVER_TYPE == "local":
-
     LOGGING["loggers"]["django.request"]["handlers"].append('console')
     LOGGING['loggers']['django']['handlers'].append('console')
     LOGGING['loggers']['poms']['handlers'].append('console')
     LOGGING['loggers']['finmars']['handlers'].append('console')
-
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
@@ -521,7 +515,8 @@ CELERY_EAGER_PROPAGATES = True
 CELERY_ALWAYS_EAGER = True
 CELERY_ACKS_LATE = True
 
-CELERY_BROKER_URL = 'amqp://%s:%s@%s:%s/%s' % (RABBITMQ_USER, RABBITMQ_PASSWORD, RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_VHOST)
+CELERY_BROKER_URL = 'amqp://%s:%s@%s:%s/%s' % (
+    RABBITMQ_USER, RABBITMQ_PASSWORD, RABBITMQ_HOST, RABBITMQ_PORT, RABBITMQ_VHOST)
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ENABLE_UTC = True
 CELERY_TIMEZONE = 'UTC'
@@ -591,8 +586,6 @@ BLOOMBERG_SANDBOX = True
 if os.environ.get('POMS_BLOOMBERG_SANDBOX') == 'False':
     BLOOMBERG_SANDBOX = False
 
-
-
 if BLOOMBERG_SANDBOX:
     BLOOMBERG_RETRY_DELAY = 0.1
 BLOOMBERG_SANDBOX_SEND_EMPTY = False
@@ -654,12 +647,10 @@ KEYCLOAK_CLIENT_ID = os.environ.get('KEYCLOAK_CLIENT_ID', 'finmars')
 # not required anymore, api works in Bearer-only mod
 KEYCLOAK_CLIENT_SECRET_KEY = os.environ.get('KEYCLOAK_CLIENT_SECRET_KEY', None)
 
-
 SIMPLE_JWT = {
     "SIGNING_KEY": os.getenv("SIGNING_KEY", SECRET_KEY),
     'USER_ID_FIELD': 'username'
 }
-
 
 REDOC_SETTINGS = {
     'LAZY_RENDERING': True,

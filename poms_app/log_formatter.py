@@ -1,9 +1,7 @@
 import os
+import logging
 
-from colorlog import ColoredFormatter
-import gunicorn.sock
-
-class GunicornWorkerIDLogFormatter(ColoredFormatter):
+class GunicornWorkerIDLogFormatter(logging.Formatter):
     def format(self, record):
         record.pid = record.wid = os.getpid()
         return super().format(record)
