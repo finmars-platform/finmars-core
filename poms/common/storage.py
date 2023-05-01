@@ -1,3 +1,4 @@
+import logging
 import math
 import os
 import shutil
@@ -5,17 +6,16 @@ import tempfile
 from zipfile import ZipFile
 
 from django.core.files.storage import FileSystemStorage
-from poms_app import settings
-
 from storages.backends.azure_storage import AzureStorage
 from storages.backends.s3boto3 import S3Boto3Storage
 from storages.backends.sftpstorage import SFTPStorage
 
-import logging
+from poms_app import settings
+
 _l = logging.getLogger('poms.common')
 
-def download_local_folder_as_zip(folder_path):
 
+def download_local_folder_as_zip(folder_path):
     zip_file_path = f"{folder_path}.zip"
     with ZipFile(zip_file_path, 'w') as zipf:
         for root, _, files in os.walk(folder_path):
@@ -25,11 +25,12 @@ def download_local_folder_as_zip(folder_path):
 
     return zip_file_path
 
-class FinmarsStorage(object):
 
+class FinmarsStorage(object):
     '''
     To ensure that storage overwrite passed filepath insead of appending a number to it
     '''
+
     def get_available_name(self, name, max_length=None):
         self.delete(name)
         return super().get_available_name(name, max_length)
@@ -42,6 +43,20 @@ class FinmarsStorage(object):
         p = math.pow(1024, i)
         s = round(size_bytes / p, 2)
         return f"{s} {size_name[i]}"
+
+    def folder_exists_and_has_files(self, folder_path):
+        # Ensure the folder path ends with a '/'
+        if not folder_path.endswith('/'):
+            folder_path += '/'
+
+        if not self.listdir:
+            raise NotImplemented("Listdir method not implemented")
+        # Check if the folder exists by listing its contents
+        files, folders = self.listdir(folder_path)
+
+        # Return True if there are any files in the folder
+        return bool(files)
+
 
 class FinmarsSFTPStorage(FinmarsStorage, SFTPStorage):
 
@@ -62,13 +77,15 @@ class FinmarsSFTPStorage(FinmarsStorage, SFTPStorage):
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
                 self.sftp_client.get(remote_path, local_path)
 
+
 class FinmarsAzureStorage(FinmarsStorage, AzureStorage):
 
     def delete_directory(self, directory_path):
 
         from azure.storage.blob import ContainerClient
 
-        container_client = ContainerClient(account_url=self.account_url, container_name=self.azure_container, credential=self.account_key)
+        container_client = ContainerClient(account_url=self.account_url, container_name=self.azure_container,
+                                           credential=self.account_key)
 
         # List all files in the folder
         blob_list = container_client.list_blobs(name_starts_with=directory_path)
@@ -86,7 +103,8 @@ class FinmarsAzureStorage(FinmarsStorage, AzureStorage):
         from azure.storage.blob import ContainerClient
 
         # Download all files from the remote folder to the temporary local directory
-        container_client = ContainerClient(account_url=self.account_url, container_name=self.azure_container, credential=self.account_key)
+        container_client = ContainerClient(account_url=self.account_url, container_name=self.azure_container,
+                                           credential=self.account_key)
         blob_list = container_client.list_blobs(name_starts_with=directory_path)
 
         for blob in blob_list:
@@ -108,7 +126,8 @@ class FinmarsAzureStorage(FinmarsStorage, AzureStorage):
         from azure.storage.blob import ContainerClient
 
         # Download all files from the remote folder to the temporary local directory
-        container_client = ContainerClient(account_url=self.account_url, container_name=self.azure_container, credential=self.account_key)
+        container_client = ContainerClient(account_url=self.account_url, container_name=self.azure_container,
+                                           credential=self.account_key)
         blob_list = container_client.list_blobs(name_starts_with=directory_path)
 
         temp_dir = tempfile.mkdtemp()
@@ -213,26 +232,19 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
         return zip_file_path
 
 
-
 def get_storage():
     storage = None
 
     if settings.SFTP_STORAGE_HOST:
-
         storage = FinmarsSFTPStorage()
 
-
     if settings.AWS_S3_ACCESS_KEY_ID:
-
         storage = FinmarsS3Storage()
 
     if settings.AZURE_ACCOUNT_KEY:
-
         storage = FinmarsAzureStorage()
 
-
     if settings.USE_FILESYSTEM_STORAGE:
-
         storage = FinmarsLocalFileSystemStorage()
 
     return storage

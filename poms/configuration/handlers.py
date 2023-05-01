@@ -22,7 +22,10 @@ def export_workflows_to_directory(source_directory, configuration, master_user, 
     _l.info("export_workflows_to_folder.Workflows source: %s" % workflows_dir)
     _l.info("export_workflows_to_folder.Workflows destination: %s" % source_directory + '/workflows')
 
-    storage.download_directory(workflows_dir, source_directory + '/workflows')
+    if storage.folder_exists_and_has_files(workflows_dir):
+        storage.download_directory(workflows_dir, source_directory + '/workflows')
+    else:
+        _l.info("No workflows found for configuration: %s" % configuration.configuration_code)
 
 
 def export_configuration_to_directory(source_directory, configuration, master_user, member):

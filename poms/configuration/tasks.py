@@ -290,6 +290,8 @@ def export_configuration(self, task_id):
         # response['Content-Disposition'] = u'attachment; filename="{filename}'.format(
         #     filename=zip_filename)
 
+        _l.info("export_configuration. Done")
+
         task.status = CeleryTask.STATUS_DONE
         task.save()
 
