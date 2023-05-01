@@ -267,7 +267,13 @@ def export_configuration(self, task_id):
 
         _l.info("export_configuration.Workflows exporting...")
 
-        export_workflows_to_directory(source_directory, configuration, task.master_user, task.member)
+        try:
+            export_workflows_to_directory(source_directory, configuration, task.master_user, task.member)
+        except Exception as e:
+            if not task.notes:
+                task.notes = ''
+
+            task.notes = task.notes = "Workflow is not found ⚠️"
 
         manifest_filepath = source_directory + '/manifest.json'
 
