@@ -225,13 +225,9 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
 
     def download_directory_as_zip(self, folder_path):
 
-        zip_file_path = f"{folder_path}.zip"
-        with ZipFile(zip_file_path, 'w') as zipf:
-            for root, _, files in os.walk(folder_path):
-                for file in files:
-                    file_path = os.path.join(root, file)
-                    zipf.write(file_path, os.path.relpath(file_path, folder_path))
+        path = os.path.join(settings.MEDIA_ROOT, folder_path)
 
+        zip_file_path = download_local_folder_as_zip(path)
         return zip_file_path
 
 
