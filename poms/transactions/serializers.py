@@ -79,7 +79,8 @@ class TransactionTypeGroupSerializer(ModelWithObjectPermissionSerializer, ModelW
     class Meta:
         model = TransactionTypeGroup
         fields = [
-            'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_deleted',
+            'id', 'master_user', 'user_code', 'configuration_code',
+            'name', 'short_name', 'public_name', 'notes', 'is_deleted',
             'is_enabled'
         ]
 
