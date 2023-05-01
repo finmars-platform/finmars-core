@@ -1,4 +1,5 @@
 import logging
+import os
 import traceback
 
 from poms.configuration.export_helpers import export_instrument_types, export_pricing_policies
@@ -21,7 +22,13 @@ def export_workflows_to_directory(source_directory, configuration, master_user, 
     _l.info("export_workflows_to_folder.Workflows source: %s" % workflows_dir)
     _l.info("export_workflows_to_folder.Workflows destination: %s" % source_directory + '/workflows')
 
+
+
     if storage.folder_exists_and_has_files(workflows_dir):
+
+        if not os.path.exists(source_directory + '/workflows'):
+            os.makedirs(source_directory + '/workflows', exist_ok=True)
+
         _l.info("export_workflows_to_folder exists")
         storage.download_directory(workflows_dir, source_directory + '/workflows')
     else:
