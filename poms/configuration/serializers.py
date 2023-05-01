@@ -41,7 +41,7 @@ class ConfigurationImportSerializer(serializers.Serializer):
 
         # file_path = '%s/public/configurations/%s' % (settings.BASE_API_URL, file_name)
         file_path = os.path.join(settings.MEDIA_ROOT,
-                                 'configurations/%s' % file_name)
+                                 '.system/tmp/%s' % file_name)
 
         shutil.copyfile(file.temporary_file_path(), file_path)
         # storage.save(file_path, file)

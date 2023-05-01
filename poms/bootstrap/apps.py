@@ -48,8 +48,6 @@ class BootstrapConfig(AppConfig):
         :return:
         '''
 
-
-
         self.bootstrap_celery()
         self.add_view_and_manage_permissions()
         self.load_master_user_data()
@@ -59,8 +57,6 @@ class BootstrapConfig(AppConfig):
         self.create_base_folders()
         self.register_at_authorizer_service()
         self.create_local_configuration()
-
-
 
     def create_finmars_bot(self):
 
@@ -417,6 +413,16 @@ class BootstrapConfig(AppConfig):
                     storage.save(path, tmpf)
 
                     _l.info("create .system folder")
+
+            if not storage.exists(settings.BASE_API_URL + '/.system/tmp/.init'):
+                path = settings.BASE_API_URL + '/.system/tmp/.init'
+
+                with NamedTemporaryFile() as tmpf:
+                    tmpf.write(b'')
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
+                    _l.info("create .system/tmp folder")
 
             if not storage.exists(settings.BASE_API_URL + '/.system/log/.init'):
                 path = settings.BASE_API_URL + '/.system/log/.init'
