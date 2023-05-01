@@ -14,12 +14,11 @@ from poms_app.openapi import get_redoc_urlpatterns
 
 urlpatterns = []
 
-# if 'django.contrib.admin' in settings.INSTALLED_APPS:
-#     urlpatterns += [
-#         re_path(r'^' + settings.BASE_API_URL + '/admin/docs/', include('django.contrib.admindocs.urls')),
-#         re_path(r'^' + settings.BASE_API_URL + '/admin/', admin.site.urls),
-#
-#     ]
+if 'django.contrib.admin' in settings.INSTALLED_APPS:
+    urlpatterns += [
+        # re_path(r'^' + settings.BASE_API_URL + '/admin/docs/', include('django.contrib.admindocs.urls')),
+        re_path(r'^' + settings.BASE_API_URL + '/admin/', admin.site.urls),
+    ]
 
 urlpatterns += [
     re_path(r'^' + settings.BASE_API_URL + '/api/', include('poms.api.urls')),
