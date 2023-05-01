@@ -213,16 +213,16 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
 
     def delete_directory(self, directory_path):
 
-        shutil.rmtree(directory_path)
+        shutil.rmtree(os.path.join(settings.MEDIA_ROOT, directory_path))
 
-    def download_directory(self, directory_path, local_destination_path):
+    def download_directory(self, src, local_destination_path):
 
         if not os.path.exists(local_destination_path):
             os.makedirs(local_destination_path, exist_ok=True)
 
-        path = os.path.join(settings.MEDIA_ROOT, directory_path)
+        src_with_root = os.path.join(settings.MEDIA_ROOT, src)
 
-        shutil.copytree(path, local_destination_path)
+        shutil.copytree(src_with_root, local_destination_path, dirs_exist_ok=True)
 
     def download_directory_as_zip(self, folder_path):
 
