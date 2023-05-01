@@ -14,8 +14,8 @@ from poms.common.storage import get_storage
 from poms.common.utils import get_serializer, is_newer_version
 from poms.configuration.handlers import export_workflows_to_directory, export_configuration_to_directory
 from poms.configuration.models import Configuration
-from poms.configuration.utils import unzip_to_directory, list_json_files, read_json_file, zip_directory, \
-    save_directory_to_storage, save_json_to_file, upload_directory_to_storage
+from poms.configuration.utils import unzip_to_directory, list_json_files, read_json_file, save_directory_to_storage, \
+    save_json_to_file, upload_directory_to_storage
 from poms.file_reports.models import FileReport
 from poms_app import settings
 
@@ -250,11 +250,14 @@ def export_configuration(self, task_id):
 
         _l.info('configuration %s' % configuration)
 
-        zip_filename = configuration.name + '.zip'
+        # zip_filename = configuration.name + '.zip'
         source_directory = os.path.join(settings.BASE_DIR,
                                         'configurations/' + str(task.id) + '/source')
-        output_zipfile = os.path.join(settings.BASE_DIR,
-                                      'configurations/' + str(task.id) + '/' + zip_filename)
+        # output_zipfile = os.path.join(settings.BASE_DIR,
+        #                               'configurations/' + str(task.id) + '/' + zip_filename)
+
+        if not os.path.exists(source_directory):
+            os.makedirs(source_directory, exist_ok=True)
 
         export_configuration_to_directory(source_directory, configuration, task.master_user, task.member)
         export_workflows_to_directory(source_directory, configuration, task.master_user, task.member)
@@ -281,7 +284,7 @@ def export_configuration(self, task_id):
         save_directory_to_storage(source_directory, storage_directory)
 
         # Create Configuration zip file
-        zip_directory(source_directory, output_zipfile)
+        # zip_directory(source_directory, output_zipfile)
 
         # storage.save(output_zipfile, tmpf)
 
