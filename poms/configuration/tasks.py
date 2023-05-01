@@ -259,7 +259,14 @@ def export_configuration(self, task_id):
         if not os.path.exists(source_directory):
             os.makedirs(source_directory, exist_ok=True)
 
+        _l.info("export_configuration.Configuration exporting...")
+
         export_configuration_to_directory(source_directory, configuration, task.master_user, task.member)
+
+        _l.info("export_configuration.Configuration exported to directory")
+
+        _l.info("export_configuration.Workflows exporting...")
+
         export_workflows_to_directory(source_directory, configuration, task.master_user, task.member)
 
         manifest_filepath = source_directory + '/manifest.json'

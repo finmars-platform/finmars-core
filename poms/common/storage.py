@@ -49,13 +49,16 @@ class FinmarsStorage(object):
         if not folder_path.endswith('/'):
             folder_path += '/'
 
-        if not self.listdir:
-            raise NotImplemented("Listdir method not implemented")
-        # Check if the folder exists by listing its contents
-        files, folders = self.listdir(folder_path)
+        try:  # TODO maybe wrong implementation
+            if not self.listdir:
+                raise NotImplemented("Listdir method not implemented")
+            # Check if the folder exists by listing its contents
+            files, folders = self.listdir(folder_path)
 
-        # Return True if there are any files in the folder
-        return bool(files)
+            # Return True if there are any files in the folder
+            return bool(files)
+        except Exception as e:
+            return False
 
 
 class FinmarsSFTPStorage(FinmarsStorage, SFTPStorage):
