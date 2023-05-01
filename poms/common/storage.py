@@ -217,9 +217,8 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
 
     def download_directory(self, directory_path, local_destination_path):
 
-        folder = os.path.dirname(local_destination_path)
-        if folder:
-            os.makedirs(folder, exist_ok=True)
+        if not os.path.exists(local_destination_path):
+            os.makedirs(local_destination_path, exist_ok=True)
 
         path = os.path.join(settings.MEDIA_ROOT, directory_path)
 
