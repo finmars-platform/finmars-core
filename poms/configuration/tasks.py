@@ -78,8 +78,8 @@ def import_configuration(self, task_id):
         output_directory = os.path.join(settings.BASE_DIR,
                                         'configurations/' + str(task.id) + '/source')
 
-        if output_directory:
-            os.makedirs(output_directory, exist_ok=True)
+        if not os.path.exists(os.path.join(settings.BASE_DIR, 'configurations/' + str(task.id) + '/source')):
+            os.makedirs(file_path, exist_ok=True)
 
         unzip_to_directory(file_path, output_directory)
 
@@ -438,7 +438,8 @@ def install_configuration_from_marketplace(self, task_id):
         try:
             configuration = Configuration.objects.get(configuration_code=remote_configuration['configuration_code'])
         except Exception as e:
-            configuration = Configuration.objects.create(configuration_code=remote_configuration['configuration_code'], version="0.0.0")
+            configuration = Configuration.objects.create(configuration_code=remote_configuration['configuration_code'],
+                                                         version="0.0.0")
 
         if not is_newer_version(remote_configuration_release['version'], configuration.version):
 

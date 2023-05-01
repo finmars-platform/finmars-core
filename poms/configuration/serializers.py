@@ -43,7 +43,7 @@ class ConfigurationImportSerializer(serializers.Serializer):
         file_path = os.path.join(settings.BASE_DIR,
                                  'configurations/%s' % file_name)
 
-        if file_path:
+        if not os.path.exists(os.path.join(settings.BASE_DIR, 'configurations/')):
             os.makedirs(file_path, exist_ok=True)
 
         shutil.copyfile(file.temporary_file_path(), file_path)
