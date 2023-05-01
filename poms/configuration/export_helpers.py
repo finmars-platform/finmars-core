@@ -107,7 +107,7 @@ def export_transaction_types(configuration_code, output_directory, master_user, 
 
     filtered_objects = TransactionType.objects.filter(configuration_code=configuration_code, master_user=master_user, is_deleted=False).exclude(user_code='-')
 
-    SerializerClass = get_serializer('transactions.tramsactopnttype')
+    SerializerClass = get_serializer('transactions.transactiontype')
 
     for item in filtered_objects:
         serializer = SerializerClass(item, context=context)
