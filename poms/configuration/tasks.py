@@ -78,6 +78,9 @@ def import_configuration(self, task_id):
         output_directory = os.path.join(settings.BASE_DIR,
                                         'configurations/' + str(task.id) + '/source')
 
+        if output_directory:
+            os.makedirs(output_directory, exist_ok=True)
+
         unzip_to_directory(file_path, output_directory)
 
         _l.info("import_configuration unzip_to_directory %s" % output_directory)
