@@ -13,7 +13,6 @@ storage = get_storage()
 
 
 def export_workflows_to_directory(source_directory, configuration, master_user, member):
-    source_directory + '/workflows'
 
     configuration_code_as_path = '/'.join(configuration.configuration_code.split('.'))
 
