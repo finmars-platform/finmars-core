@@ -79,7 +79,7 @@ def import_configuration(self, task_id):
                                         'configurations/' + str(task.id) + '/source')
 
         if not os.path.exists(os.path.join(settings.BASE_DIR, 'configurations/' + str(task.id) + '/source')):
-            os.makedirs(file_path, exist_ok=True)
+            os.makedirs(output_directory, exist_ok=True)
 
         unzip_to_directory(file_path, output_directory)
 
