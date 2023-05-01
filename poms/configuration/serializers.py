@@ -40,8 +40,11 @@ class ConfigurationImportSerializer(serializers.Serializer):
         file_name = file.name
 
         # file_path = '%s/public/configurations/%s' % (settings.BASE_API_URL, file_name)
-        file_path = os.path.join(settings.MEDIA_ROOT,
-                                 '.system/tmp/%s' % file_name)
+        file_path = os.path.join(settings.BASE_DIR,
+                                 'configurations/%s' % file_name)
+
+        if file_path:
+            os.makedirs(file_path, exist_ok=True)
 
         shutil.copyfile(file.temporary_file_path(), file_path)
         # storage.save(file_path, file)
