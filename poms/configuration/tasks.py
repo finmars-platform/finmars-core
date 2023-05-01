@@ -82,7 +82,17 @@ def import_configuration(self, task_id):
 
         _l.info("import_configuration unzip_to_directory %s" % output_directory)
 
-        manifest = read_json_file(os.path.join(output_directory, 'manifest.json'))
+        try:
+            manifest = read_json_file(os.path.join(output_directory, 'manifest.json'))
+
+        except Exception as e:
+            _l.error("import_configuration read_json_file %s" % e)
+            manifest = None
+
+            if not task.notes:
+                task.notes = ''
+
+            task.notes = task.notes = "Manifest is not found ⚠️"
 
         json_files = list_json_files(output_directory)
 
@@ -190,13 +200,16 @@ def import_configuration(self, task_id):
 
         # Import Workflows
 
-        configuration_code_as_path = '/'.join(manifest["configuration_code"].split('.'))
+        if manifest:
+            # only if manifest is present
 
-        dest_workflow_directory = settings.BASE_API_URL + '/workflows/' + configuration_code_as_path
+            configuration_code_as_path = '/'.join(manifest["configuration_code"].split('.'))
 
-        _l.info('dest_workflow_directory %s' % dest_workflow_directory)
+            dest_workflow_directory = settings.BASE_API_URL + '/workflows/' + configuration_code_as_path
 
-        upload_directory_to_storage(output_directory + '/workflows', dest_workflow_directory)
+            _l.info('dest_workflow_directory %s' % dest_workflow_directory)
+
+            upload_directory_to_storage(output_directory + '/workflows', dest_workflow_directory)
 
         _l.info('Workflows uploaded')
 
