@@ -221,7 +221,9 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
         if folder:
             os.makedirs(folder, exist_ok=True)
 
-        shutil.copytree(directory_path, local_destination_path)
+        path = os.path.join(settings.MEDIA_ROOT, directory_path)
+
+        shutil.copytree(path, local_destination_path)
 
     def download_directory_as_zip(self, folder_path):
 
