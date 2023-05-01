@@ -273,7 +273,8 @@ def export_configuration(self, task_id):
             if not task.notes:
                 task.notes = ''
 
-            task.notes = task.notes = "Workflow is not found ⚠️"
+            task.notes = task.notes + "Workflow is not found ⚠️ \n"
+            task.notes = task.notes + str(e)
 
         manifest_filepath = source_directory + '/manifest.json'
 
