@@ -2,7 +2,7 @@ import logging
 import os
 import traceback
 
-from poms.configuration.export_helpers import export_instrument_types, export_pricing_policies
+from poms.configuration.export_helpers import export_instrument_types, export_pricing_policies, export_transaction_types
 from poms.configuration.utils import save_serialized_entity, save_serialized_attribute_type, save_serialized_layout
 from poms_app import settings
 
@@ -14,15 +14,12 @@ storage = get_storage()
 
 
 def export_workflows_to_directory(source_directory, configuration, master_user, member):
-
     configuration_code_as_path = '/'.join(configuration.configuration_code.split('.'))
 
     workflows_dir = settings.BASE_API_URL + '/workflows/' + configuration_code_as_path + '/'
 
     _l.info("export_workflows_to_folder.Workflows source: %s" % workflows_dir)
     _l.info("export_workflows_to_folder.Workflows destination: %s" % source_directory + '/workflows')
-
-
 
     if storage.folder_exists_and_has_files(workflows_dir):
 
@@ -50,10 +47,9 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                source_directory + '/transaction-type-groups',
                                context)
 
-        save_serialized_entity('transactions.transactiontype',
-                               configuration.configuration_code,
-                               source_directory + '/transaction-types',
-                               context)
+        export_transaction_types(configuration.configuration_code,
+                                 source_directory + '/transaction-types',
+                                 master_user, member)
 
         _l.info("Exported: transactions.transactiontype")
 

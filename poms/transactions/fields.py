@@ -6,7 +6,7 @@ from django.utils.encoding import force_str
 from rest_framework.fields import ReadOnlyField
 from rest_framework.relations import PrimaryKeyRelatedField, RelatedField
 
-from poms.common.fields import SlugRelatedFilteredField
+from poms.common.fields import SlugRelatedFilteredField, UserCodeOrPrimaryKeyRelatedField
 from poms.obj_perms.fields import PrimaryKeyRelatedFilteredWithObjectPermissionField
 from poms.obj_perms.utils import obj_perms_filter_objects_for_view
 from poms.transactions.filters import TransactionTypeInputContentTypeFilter
@@ -15,7 +15,7 @@ from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.utils import get_member_from_context, get_master_user_from_context
 
 
-class TransactionTypeGroupField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+class TransactionTypeGroupField(UserCodeOrPrimaryKeyRelatedField):
     queryset = TransactionTypeGroup.objects
     filter_backends = [
         OwnerByMasterUserFilter,

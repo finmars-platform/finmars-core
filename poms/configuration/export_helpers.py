@@ -1,7 +1,7 @@
 from poms.common.utils import get_serializer
 from poms.configuration.utils import remove_id_key_recursively, save_json_to_file, user_code_to_file_name
 from poms.instruments.models import InstrumentType, PricingPolicy
-from poms.transactions.models import TransactionType
+from poms.transactions.models import TransactionType, TransactionTypeGroup
 
 
 def export_instrument_types(configuration_code, output_directory, master_user, member):
@@ -96,3 +96,33 @@ def export_pricing_policies(configuration_code, output_directory, master_user, m
 
         save_json_to_file(path, serialized_data)
 
+
+
+def export_transaction_types(configuration_code, output_directory, master_user, member):
+
+    context = {
+        'master_user': master_user,
+        'member': member
+    }
+
+    filtered_objects = TransactionType.objects.filter(configuration_code=configuration_code, master_user=master_user, is_deleted=False).exclude(user_code='-')
+
+    SerializerClass = get_serializer('transactions.tramsactopnttype')
+
+    for item in filtered_objects:
+        serializer = SerializerClass(item, context=context)
+        serialized_data = remove_id_key_recursively(serializer.data)
+
+        serialized_data.pop("is_enabled", None)
+        serialized_data.pop("is_deleted", None)
+
+        serialized_data.pop("deleted_user_code", None)
+
+        try:
+            serialized_data['group'] = TransactionTypeGroup.objects.get(id=serialized_data['group']).user_code
+        except Exception as e:
+            serialized_data['group'] = None
+
+        path = output_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
+
+        save_json_to_file(path, serialized_data)
