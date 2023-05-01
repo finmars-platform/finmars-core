@@ -127,6 +127,7 @@ INSTALLED_APPS = [
     'django_celery_results',
     'django_celery_beat',
 
+    'finmars_iam',
     'finmars_standardized_errors',
 
     # ==================================
@@ -395,6 +396,11 @@ LOGGING = {
             "level": "ERROR",
             "propagate": True
         },
+        "finmars_iam": {
+            "level": DJANGO_LOG_LEVEL,
+            "handlers": ["file"],
+            "propagate": True
+        },
         "poms": {
             "level": DJANGO_LOG_LEVEL,
             "handlers": ["file"],
@@ -429,6 +435,7 @@ if SERVER_TYPE == "local":
     LOGGING['loggers']['django']['handlers'].append('console')
     LOGGING['loggers']['poms']['handlers'].append('console')
     LOGGING['loggers']['finmars']['handlers'].append('console')
+    LOGGING['loggers']['finmars_iam']['handlers'].append('console')
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',

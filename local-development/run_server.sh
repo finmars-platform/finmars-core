@@ -37,6 +37,6 @@ ADMIN_USERNAME=admin \
 ADMIN_PASSWORD=d798nf0rgpp6g8qp \
 BASE_API_URL=space00000 \
 BACKEND_ROLES="ALL" \
-gunicorn --config poms_app/gunicorn-dev.py poms_app.wsgi
+python manage.py runserver
 
-#python manage.py runserver
+#gunicorn --config poms_app/gunicorn-dev.py poms_app.wsgi

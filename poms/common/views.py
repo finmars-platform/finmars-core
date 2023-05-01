@@ -23,6 +23,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 
+from finmars_iam.views import AbstractFinmarsAccessPolicyViewSet
 from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend, OrderingPostFilter, \
     ByIsEnabledFilterBackend
@@ -251,11 +252,11 @@ class AbstractEvGroupViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelF
 
 
 class AbstractModelViewSet(AbstractApiView, HistoryMixin, UpdateModelMixinExt, DestroyModelFakeMixin,
-                           BulkModelMixin, ModelViewSet):
-    permission_classes = [
+                           BulkModelMixin, AbstractFinmarsAccessPolicyViewSet):
+    permission_classes = AbstractFinmarsAccessPolicyViewSet.permission_classes + [
         IsAuthenticated
     ]
-    filter_backends = [
+    filter_backends = AbstractFinmarsAccessPolicyViewSet.filter_backends + [
         ByIdFilterBackend,
         ByIsDeletedFilterBackend,
         ByIsEnabledFilterBackend,

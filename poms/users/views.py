@@ -520,7 +520,9 @@ class UserMemberViewSet(AbstractModelViewSet):
     serializer_class = MemberSerializer
     permission_classes = AbstractModelViewSet.permission_classes + [
     ]
-    filter_backends = [IsMemberFilterBackend]
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        IsMemberFilterBackend,
+    ]
 
 
 class MasterUserViewSet(AbstractModelViewSet):
