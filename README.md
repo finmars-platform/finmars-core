@@ -301,3 +301,13 @@ ROW_NUMBER() OVER( PARTITION BY id
 ORDER BY  id ) AS row_num
 FROM transactions_complextransaction ) t
 WHERE t.row_num > 1 );
+
+DELETE FROM transactions_transaction
+WHERE ctid IN
+(SELECT ctid
+FROM
+(SELECT id, ctid,
+ROW_NUMBER() OVER( PARTITION BY id
+ORDER BY  id ) AS row_num
+FROM transactions_transaction ) t
+WHERE t.row_num > 1 );

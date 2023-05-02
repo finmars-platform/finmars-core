@@ -1965,6 +1965,24 @@ class AccrualCalculationSchedule(models.Model):
 
     notes = models.TextField(blank=True, default='', verbose_name=gettext_lazy('notes'))
 
+    def save(self, *args, **kwargs):
+
+        from dateutil.parser import parse
+
+        if self.accrual_start_date:
+            try:
+                self.accrual_start_date = parse(self.accrual_start_date).strftime('%Y-%m-%d')
+            except Exception as e:
+                self.accrual_start_date = None
+
+        if self.first_payment_date:
+            try:
+                self.first_payment_date = parse(self.first_payment_date).strftime('%Y-%m-%d')
+            except Exception as e:
+                self.first_payment_date = None
+
+        super(AccrualCalculationSchedule, self).save(*args, **kwargs)
+
     class Meta:
         verbose_name = gettext_lazy('accrual calculation schedule')
         verbose_name_plural = gettext_lazy('accrual calculation schedules')
