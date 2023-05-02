@@ -943,9 +943,11 @@ class TransactionImportProcess(object):
                     if self.scheme.filter_expression:
 
                         # expr = Expression.parseString("a == 1 and b == 2")
-                        expr = Expression.parseString(self.scheme.filter_expression)
 
-                        if expr(item.inputs):
+                        result = bool(formula.safe_eval(self.scheme.filter_expression, names=item.inputs,
+                                                        context=self.context))
+
+                        if result:
                             # filter passed
                             pass
                         else:
@@ -998,7 +1000,7 @@ class TransactionImportProcess(object):
 
                                             try:
                                                 self.book(item, self.error_rule_scenario, error=e)
-                                            except Exception as e: # any exception will work on error scenario
+                                            except Exception as e:  # any exception will work on error scenario
                                                 _l.error("Could not book error scenario %s" % e)
                                                 _l.info("Error Handler Savepoint rollback for %s" % index)
                                                 transaction.savepoint_rollback(sid)
@@ -1019,7 +1021,7 @@ class TransactionImportProcess(object):
                                         found = True
 
                         if not found:
-                            
+
                             sid = transaction.savepoint()
                             _l.info("Create checkpoint for %s" % index)
 

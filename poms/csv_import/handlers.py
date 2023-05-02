@@ -8,7 +8,6 @@ from logging import getLogger
 from tempfile import NamedTemporaryFile
 
 from django.utils.timezone import now
-from filtration import Expression
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
 
@@ -1238,7 +1237,7 @@ class SimpleImportProcess(object):
                                         item.error_message = ''
 
                                     item.error_message = (item.error_message + '%s: %s, ') % (
-                                    entity_field.attribute_user_code, str(e))
+                                        entity_field.attribute_user_code, str(e))
 
                                     attribute['classifier'] = None
 
@@ -1286,7 +1285,7 @@ class SimpleImportProcess(object):
                                         item.error_message = ''
 
                                     item.error_message = (item.error_message + '%s: %s, ') % (
-                                    entity_field.attribute_user_code, str(e))
+                                        entity_field.attribute_user_code, str(e))
 
                                     attribute['classifier'] = None
 
@@ -1499,7 +1498,7 @@ class SimpleImportProcess(object):
 
                     if self.scheme.content_type.model not in ['pricehistory', 'currencyhistory']:
                         self.overwrite_item_attributes(result_item, item)
-                        
+
                     result_item = self.convert_relation_to_ids(item, result_item)
 
                     serializer = serializer_class(data=result_item,
@@ -1559,9 +1558,12 @@ class SimpleImportProcess(object):
                 if self.scheme.filter_expr:
 
                     # expr = Expression.parseString("a == 1 and b == 2")
-                    expr = Expression.parseString(self.scheme.filter_expr)
+                    # expr = Expression.parseString(self.scheme.filter_expr)
 
-                    if expr(item.inputs):
+                    result = bool(formula.safe_eval(self.scheme.filter_expr, names=item.inputs,
+                                                    context=self.context))
+
+                    if result:
                         # filter passed
                         pass
                     else:
