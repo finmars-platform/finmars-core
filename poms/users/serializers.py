@@ -310,6 +310,7 @@ class MasterUserSerializer(serializers.ModelSerializer):
             'timezone',
             'notification_business_days',
             'journal_status',
+            'journal_storage_policy',
             # 'system_currency',
             # 'currency',
             # 'account_type', 'account',
