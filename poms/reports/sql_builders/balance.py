@@ -452,6 +452,7 @@ class BalanceReportBuilderSql:
                     instrument_principal_price,
                     instrument_accrued_price,
                     instrument_factor,
+                    instrument_ytm,
                     daily_price_change,
                     
                     currency_id,
@@ -620,6 +621,7 @@ class BalanceReportBuilderSql:
                         (1) as instrument_principal_price,
                         (0) as instrument_accrued_price,
                         (1) as instrument_factor,
+                        (0) as instrument_ytm,
                         (0) as daily_price_change,
                         
                         (c.id) as co_directional_exposure_currency_id,
@@ -843,6 +845,7 @@ class BalanceReportBuilderSql:
                     instrument_principal_price,
                     instrument_accrued_price,
                     instrument_factor,
+                    instrument_ytm,
                     daily_price_change,
                     
                     currency_id,
@@ -987,6 +990,7 @@ class BalanceReportBuilderSql:
                         instrument_principal_price,
                         instrument_accrued_price,
                         instrument_factor,
+                        instrument_ytm,
                         daily_price_change,
                         
                         (-1) as currency_id,
@@ -1174,6 +1178,7 @@ class BalanceReportBuilderSql:
                         (principal_price) as instrument_principal_price,
                         (accrued_price) as instrument_accrued_price,
                         (factor) as instrument_factor,
+                        (ytm) as instrument_ytm,
                         
                         case when coalesce(yesterday_principal_price,0) = 0
                                 then 0
@@ -1391,6 +1396,15 @@ class BalanceReportBuilderSql:
                                 date = '{report_date}' and
                                 pricing_policy_id = {pricing_policy_id})
                             as factor,
+                            
+                            (select 
+                                ytm
+                            from instruments_pricehistory
+                            where 
+                                instrument_id=i.id and 
+                                date = '{report_date}' and
+                                pricing_policy_id = {pricing_policy_id})
+                            as ytm,
                             
                             (select 
                                 accrued_price
@@ -1671,6 +1685,7 @@ class BalanceReportBuilderSql:
                 result_item["instrument_principal_price"] = item["instrument_principal_price"]
                 result_item["instrument_accrued_price"] = item["instrument_accrued_price"]
                 result_item["instrument_factor"] = item["instrument_factor"]
+                result_item["instrument_ytm"] = item["instrument_ytm"]
                 result_item["daily_price_change"] = item["daily_price_change"]
 
                 result_item["fx_rate"] = item["fx_rate"]
@@ -1819,6 +1834,7 @@ class BalanceReportBuilderSql:
                                 "instrument_principal_price": None,
                                 "instrument_accrued_price": None,
                                 "instrument_factor": None,
+                                "instrument_ytm": None,
                                 "daily_price_change": None,
 
                                 "market_value": None,

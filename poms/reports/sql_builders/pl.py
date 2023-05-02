@@ -711,7 +711,8 @@ class PLReportBuilderSql:
             instrument_accrued_currency_fx_rate,    
             instrument_principal_price,
             instrument_accrued_price,
-            instrument_factor,    
+            instrument_factor, 
+            instrument_ytm,   
             daily_price_change,
           
             position_size,
@@ -832,6 +833,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price,   
             instrument_factor,
+            instrument_ytm,
             daily_price_change,
           
             position_size,
@@ -953,6 +955,7 @@ class PLReportBuilderSql:
                     instrument_principal_price,
                     instrument_accrued_price,  
                     instrument_factor,
+                    instrument_ytm,
                     daily_price_change, 
 
                     position_size,
@@ -1078,6 +1081,7 @@ class PLReportBuilderSql:
                         (cur_price) as instrument_principal_price,
                         (cur_accr_price) as instrument_accrued_price,
                         (cur_factor) as instrument_factor,
+                        (cur_ytm) as instrument_ytm,
                         case when coalesce(yesterday_price,0) = 0
                                 then 0
                                 else
@@ -1218,6 +1222,7 @@ class PLReportBuilderSql:
                             i.cur_price,
                             i.yesterday_price,
                             i.cur_factor,
+                            i.cur_ytm,
                             i.cur_accr_price,
                             i.prc_cur_fx,
                             i.accr_cur_fx,
@@ -1616,6 +1621,15 @@ class PLReportBuilderSql:
                                     and iph.instrument_id=ii.id
                                     and iph.pricing_policy_id = {pricing_policy_id}
                                    ) as cur_factor,
+                                (select
+                                    ytm
+                                from
+                                    instruments_pricehistory iph
+                                where
+                                    date = '{report_date}'
+                                    and iph.instrument_id=ii.id
+                                    and iph.pricing_policy_id = {pricing_policy_id}
+                                   ) as cur_ytm,
                                   -- add current accrued
                                 (select
                                     accrued_price
@@ -1663,6 +1677,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price, 
             instrument_factor,
+            instrument_ytm,
             daily_price_change,
           
             position_size,
@@ -1784,6 +1799,7 @@ class PLReportBuilderSql:
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
                 (1) as instrument_factor,
+                (0) as instrument_ytm,
                 (0) as daily_price_change,
 
                 position_size,
@@ -2015,6 +2031,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price, 
             instrument_factor,
+            instrument_ytm,
             daily_price_change,
           
             position_size,
@@ -2137,6 +2154,7 @@ class PLReportBuilderSql:
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
                 (1) as instrument_factor,
+                (0) as instrument_ytm,
                 (0) as daily_price_change,
               
                 position_size,
@@ -2327,6 +2345,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price, 
             instrument_factor,
+            instrument_ytm,
             daily_price_change,
 
             position_size,
@@ -2448,6 +2467,7 @@ class PLReportBuilderSql:
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
                 (1) as instrument_factor,
+                (0) as instrument_ytm,
                 (0) as daily_price_change,
               
                 position_size,
@@ -2635,6 +2655,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price, 
             instrument_factor,
+            instrument_ytm,
             daily_price_change,
           
             position_size,
@@ -2756,6 +2777,7 @@ class PLReportBuilderSql:
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
                 (1) as instrument_factor,
+                (0) as instrument_ytm,
                 (0) as daily_price_change,
               
                 position_opened as position_size,
@@ -3090,6 +3112,7 @@ class PLReportBuilderSql:
                             (q2.instrument_principal_price) as instrument_principal_price,
                             (q2.instrument_accrued_price) as instrument_accrued_price,
                             (q2.instrument_factor) as instrument_factor,
+                            (q2.instrument_ytm) as instrument_ytm,
                             (q2.daily_price_change) as daily_price_change,
                             
                             
@@ -3335,6 +3358,7 @@ class PLReportBuilderSql:
                 result_item_opened["instrument_principal_price"] = item["instrument_principal_price"]
                 result_item_opened["instrument_accrued_price"] = item["instrument_accrued_price"]
                 result_item_opened["instrument_factor"] = item["instrument_factor"]
+                result_item_opened["instrument_ytm"] = item["instrument_ytm"]
                 result_item_opened["daily_price_change"] = item["daily_price_change"]
 
                 result_item_opened["principal"] = item["principal_opened"]
@@ -3545,6 +3569,7 @@ class PLReportBuilderSql:
                     result_item_closed["instrument_principal_price"] = item["instrument_principal_price"]
                     result_item_closed["instrument_accrued_price"] = item["instrument_accrued_price"]
                     result_item_closed["instrument_factor"] = item["instrument_factor"]
+                    result_item_closed["instrument_ytm"] = item["instrument_ytm"]
                     result_item_closed["daily_price_change"] = item["daily_price_change"]
 
                     result_item_closed["position_size"] = 0
