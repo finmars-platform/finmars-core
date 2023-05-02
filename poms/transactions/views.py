@@ -22,7 +22,7 @@ from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoice
     NoOpFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter, ComplexTransactionStatusFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.utils import get_list_of_entity_attributes
-from poms.common.views import AbstractClassModelViewSet, AbstractAsyncViewSet
+from poms.common.views import AbstractClassModelViewSet, AbstractAsyncViewSet, AbstractModelViewSet
 from poms.counterparties.models import Responsible, Counterparty, ResponsibleGroup, CounterpartyGroup
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, InstrumentType, PricingPolicy
@@ -1923,11 +1923,11 @@ class ComplexTransactionFilterSet(FilterSet):
         fields = []
 
 
-class ComplexTransactionViewSet(AbstractWithObjectPermissionViewSet):
+class ComplexTransactionViewSet(AbstractModelViewSet):
     queryset = get_complex_transaction_queryset(select_related=False, transactions=True)
     serializer_class = ComplexTransactionSerializer
 
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         # ComplexTransactionPermissionFilter,
         OwnerByMasterUserFilter,
         AttributeFilter,

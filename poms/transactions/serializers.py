@@ -2755,7 +2755,7 @@ class ComplexTransactionInputSerializer(serializers.ModelSerializer):
         return None
 
 
-class ComplexTransactionSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+class ComplexTransactionSerializer(ModelWithAttributesSerializer,
                                    ModelWithTimeStampSerializer, ModelMetaSerializer):
     # text = serializers.SerializerMethodField()
     master_user = MasterUserField()

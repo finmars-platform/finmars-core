@@ -165,10 +165,21 @@ def get_import_documentation():
     import poms.integrations.urls as integrations_router
     import poms.csv_import.urls as csv_import_router
 
-
     local_urlpatterns = [
         re_path(r'^' + settings.BASE_API_URL + '/api/v1/import/', include(integrations_router.router.urls)),
         re_path(r'^' + settings.BASE_API_URL + '/api/v1/import/', include(csv_import_router.router.urls)),
+    ]
+
+    schema_view = generate_schema(local_urlpatterns)
+
+    return schema_view
+
+
+def get_iam_documentation():
+    import finmars_iam.urls as iam_router
+
+    local_urlpatterns = [
+        re_path(r'^' + settings.BASE_API_URL + '/api/v1/iam/', include(iam_router.router.urls)),
     ]
 
     schema_view = generate_schema(local_urlpatterns)
@@ -197,6 +208,7 @@ def get_redoc_urlpatterns():
     ui_schema_view = get_ui_documentation()
     explorer_schema_view = get_explorer_documentation()
     import_schema_view = get_import_documentation()
+    iam_schema_view = get_iam_documentation()
 
     urlpatterns = [
 
@@ -225,6 +237,8 @@ def get_redoc_urlpatterns():
                 explorer_schema_view.with_ui('redoc', cache_timeout=0), name='explorer'),
         re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/import',
                 import_schema_view.with_ui('redoc', cache_timeout=0), name='import'),
+        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/iam',
+                iam_schema_view.with_ui('redoc', cache_timeout=0), name='iam'),
 
     ]
 

@@ -3,18 +3,14 @@ from __future__ import unicode_literals
 import json
 import logging
 import time
-from collections import OrderedDict
 from os.path import getsize
 
 from celery.result import AsyncResult
-from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
 from django.core.signing import TimestampSigner
-from django.db import transaction
-from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions, status
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
@@ -33,12 +29,13 @@ from poms.common.sorting import sort_by_dynamic_attrs
 from poms.history.mixins import HistoryMixin
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.utils import get_master_user_and_member
-from drf_yasg.utils import swagger_auto_schema
+
 _l = logging.getLogger('poms.common')
 
 from django.http import HttpResponse, Http404
 
 from drf_yasg.inspectors import SwaggerAutoSchema
+
 
 class CustomSwaggerAutoSchema(SwaggerAutoSchema):
     def get_operation(self, operation_keys=None):
@@ -62,12 +59,12 @@ class CustomSwaggerAutoSchema(SwaggerAutoSchema):
         result = []
 
         for splitted_tag in splitted_tags:
-
             capitalized_tag = [word.capitalize() for word in splitted_tag]
 
             result.append(' '.join(capitalized_tag))
 
         return result
+
 
 class AbstractApiView(APIView):
 
@@ -93,6 +90,7 @@ class AbstractApiView(APIView):
 
     swagger_schema = CustomSwaggerAutoSchema
 
+
 class AbstractViewSet(AbstractApiView, ViewSet):
     serializer_class = None
     permission_classes = [
@@ -115,6 +113,7 @@ class AbstractViewSet(AbstractApiView, ViewSet):
             'format': self.format_kwarg,
             'view': self
         }
+
 
 # DEPRECATED
 class AbstractEvGroupViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelFakeMixin,
@@ -260,7 +259,7 @@ class AbstractModelViewSet(AbstractApiView, HistoryMixin, UpdateModelMixinExt, D
         ByIdFilterBackend,
         ByIsDeletedFilterBackend,
         ByIsEnabledFilterBackend,
-        DjangoFilterBackend,
+        # DjangoFilterBackend, # Create duplicate error, possibly inheriths from AbstractFinmarsAccessPolicyViewSet
         OrderingFilter,
         OrderingPostFilter,
     ]

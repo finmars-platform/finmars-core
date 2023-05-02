@@ -1,7 +1,4 @@
-import json
-
 from django.conf import settings
-from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
 
@@ -22,11 +19,12 @@ class Role(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
 
-    user_code = models.CharField(max_length=1024, null=True, blank=True,
+    user_code = models.CharField(max_length=1024, unique=True,
                                  verbose_name=gettext_lazy('User Code'))
     configuration_code = models.CharField(max_length=255,
                                           default='com.finmars.local',
-                                          verbose_name=gettext_lazy('Configuration Code'))
+                                          verbose_name=gettext_lazy('Configuration Code'),
+                                          help_text="Indicates that entity is part of Configuration and can be imported/exported.")
 
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='iam_roles', blank=True)
 
@@ -38,33 +36,17 @@ class RoleAccessPolicy(TimeStampedModel):
     '''
     Do not part of configuration, can not be exported
     '''
-    role = models.ForeignKey(Role, related_name="policies",
+    role = models.ForeignKey(Role, related_name="access_policies",
                              on_delete=models.CASCADE, verbose_name="Role")
 
     name = models.CharField(max_length=255, null=True, blank=True,
                             verbose_name=gettext_lazy('Name'))
 
-    user_code = models.CharField(max_length=1024, null=True, blank=True,
+    user_code = models.CharField(max_length=1024, unique=True,
                                  verbose_name=gettext_lazy('User Code'))
 
-    policy_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('Policy Data'))
-
-    @property
-    def policy(self):
-        if self.policy_data:
-            try:
-                return json.loads(self.policy_data)
-            except (ValueError, TypeError):
-                return None
-        else:
-            return None
-
-    @policy.setter
-    def policy(self, val):
-        if val:
-            self.policy_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
-        else:
-            self.policy_data = None
+    policy = models.JSONField(null=True, blank=True, verbose_name=gettext_lazy('Policy'),
+                              help_text="Access Policy JSON")
 
     class Meta:
         verbose_name = gettext_lazy("User Access Policy")
@@ -80,11 +62,12 @@ class Group(models.Model):
     '''
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
-    user_code = models.CharField(max_length=1024, null=True, blank=True,
+    user_code = models.CharField(max_length=1024, unique=True,
                                  verbose_name=gettext_lazy('User Code'))
     configuration_code = models.CharField(max_length=255,
                                           default='com.finmars.local',
-                                          verbose_name=gettext_lazy('Configuration Code'))
+                                          verbose_name=gettext_lazy('Configuration Code'),
+                                          help_text="Indicates that entity is part of Configuration and can be imported/exported.")
 
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='iam_groups', blank=True)
     roles = models.ManyToManyField(Role, related_name='iam_groups')
@@ -97,33 +80,17 @@ class GroupAccessPolicy(TimeStampedModel):
     '''
     Do not part of configuration, can not be exported
     '''
-    group = models.ForeignKey(Group, related_name="policies",
+    group = models.ForeignKey(Group, related_name="access_policies",
                               on_delete=models.CASCADE, verbose_name="Role")
 
     name = models.CharField(max_length=255, null=True, blank=True,
                             verbose_name=gettext_lazy('Name'))
 
-    user_code = models.CharField(max_length=1024, null=True, blank=True,
+    user_code = models.CharField(max_length=1024, unique=True,
                                  verbose_name=gettext_lazy('User Code'))
 
-    policy_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('Policy Data'))
-
-    @property
-    def policy(self):
-        if self.policy_data:
-            try:
-                return json.loads(self.policy_data)
-            except (ValueError, TypeError):
-                return None
-        else:
-            return None
-
-    @policy.setter
-    def policy(self, val):
-        if val:
-            self.policy_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
-        else:
-            self.policy_data = None
+    policy = models.JSONField(null=True, blank=True, verbose_name=gettext_lazy('Policy'),
+                              help_text="Access Policy JSON")
 
     class Meta:
         verbose_name = gettext_lazy("User Access Policy")
@@ -147,27 +114,11 @@ class UserAccessPolicy(TimeStampedModel):
     name = models.CharField(max_length=255, null=True, blank=True,
                             verbose_name=gettext_lazy('Name'))
 
-    user_code = models.CharField(max_length=1024, null=True, blank=True,
+    user_code = models.CharField(max_length=1024, unique=True,
                                  verbose_name=gettext_lazy('User Code'))
 
-    policy_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('Policy Data'))
-
-    @property
-    def policy(self):
-        if self.policy_data:
-            try:
-                return json.loads(self.policy_data)
-            except (ValueError, TypeError):
-                return None
-        else:
-            return None
-
-    @policy.setter
-    def policy(self, val):
-        if val:
-            self.policy_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
-        else:
-            self.policy_data = None
+    policy = models.JSONField(null=True, blank=True, verbose_name=gettext_lazy('Policy'),
+                              help_text="Access Policy JSON")
 
     class Meta:
         verbose_name = gettext_lazy("User Access Policy")
@@ -181,31 +132,15 @@ class AccessPolicyTemplate(models.Model):
     name = models.CharField(max_length=255, null=True, blank=True,
                             verbose_name=gettext_lazy('Name'))
 
-    user_code = models.CharField(max_length=1024, null=True, blank=True,
+    user_code = models.CharField(max_length=1024, unique=True,
                                  verbose_name=gettext_lazy('User Code'))
 
-    policy_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('Policy Data'))
+    policy = models.JSONField(null=True, blank=True, verbose_name=gettext_lazy('Policy'),
+                              help_text="Access Policy JSON")
 
     configuration_code = models.CharField(max_length=255,
                                           default='com.finmars.local',
                                           verbose_name=gettext_lazy('Configuration Code'))
-
-    @property
-    def policy(self):
-        if self.policy_data:
-            try:
-                return json.loads(self.policy_data)
-            except (ValueError, TypeError):
-                return None
-        else:
-            return None
-
-    @policy.setter
-    def policy(self, val):
-        if val:
-            self.policy_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
-        else:
-            self.policy_data = None
 
     class Meta:
         verbose_name = gettext_lazy("Access Policy Template")
