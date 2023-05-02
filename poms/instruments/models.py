@@ -573,114 +573,114 @@ class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedM
         """
         return [
             {
-               "key": "name",
-               "name": "Name",
-               "value_type": 10,
-               "allow_null": False
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+                "allow_null": False
             },
             {
-               "key": "short_name",
-               "name": "Short name",
-               "value_type": 10,
-               "allow_null": True
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+                "allow_null": True
             },
             {
-               "key": "user_code",
-               "name": "User code",
-               "value_type": 10
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
             },
             {
-               "key": "configuration_code",
-               "name": "Configuration code",
-               "value_type": 10
+                "key": "configuration_code",
+                "name": "Configuration code",
+                "value_type": 10
             },
             {
-               "key": "public_name",
-               "name": "Public name",
-               "value_type": 10,
-               "allow_null": True
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+                "allow_null": True
             },
             {
-               "key": "notes",
-               "name": "Notes",
-               "value_type": 10,
-               "allow_null": True
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+                "allow_null": True
             },
             {
-               "key": "is_active",
-               "name": "Is active",
-               "value_type": 50,
-               "allow_null": True
+                "key": "is_active",
+                "name": "Is active",
+                "value_type": 50,
+                "allow_null": True
             },
             {
-               "key": "instrument_class",
-               "name": "Instrument class",
-               "value_type": "field",
-               "value_content_type": "instruments.instrumentclass",
-               "value_entity": "instrument-class",
-               "code": "user_code",
-               "allow_null": False
+                "key": "instrument_class",
+                "name": "Instrument class",
+                "value_type": "field",
+                "value_content_type": "instruments.instrumentclass",
+                "value_entity": "instrument-class",
+                "code": "user_code",
+                "allow_null": False
             },
             {
-               "key": "one_off_event",
-               "name": "One off event",
-               "value_type": "field",
-               "value_entity": "transaction-type",
-               "value_content_type": "transactions.transactiontype",
-               "code": "user_code",
-               "allow_null": False
+                "key": "one_off_event",
+                "name": "One off event",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "value_content_type": "transactions.transactiontype",
+                "code": "user_code",
+                "allow_null": False
             },
             {
-               "key": "regular_event",
-               "name": "Regular event",
-               "value_type": "field",
-               "value_entity": "transaction-type",
-               "value_content_type": "transactions.transactiontype",
-               "code": "user_code",
-               "allow_null": False
+                "key": "regular_event",
+                "name": "Regular event",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "value_content_type": "transactions.transactiontype",
+                "code": "user_code",
+                "allow_null": False
             },
             {
-               "key": "factor_same",
-               "name": "Factor same",
-               "value_type": "field",
-               "value_entity": "transaction-type",
-               "value_content_type": "transactions.transactiontype",
-               "code": "user_code",
-               "allow_null": False
+                "key": "factor_same",
+                "name": "Factor same",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "value_content_type": "transactions.transactiontype",
+                "code": "user_code",
+                "allow_null": False
             },
             {
-               "key": "factor_up",
-               "name": "Factor up",
-               "value_type": "field",
-               "value_entity": "transaction-type",
-               "value_content_type": "transactions.transactiontype",
-               "code": "user_code",
-               "allow_null": False
+                "key": "factor_up",
+                "name": "Factor up",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "value_content_type": "transactions.transactiontype",
+                "code": "user_code",
+                "allow_null": False
             },
             {
-               "key": "factor_down",
-               "name": "Factor down",
-               "value_type": "field",
-               "value_entity": "transaction-type",
-               "value_content_type": "transactions.transactiontype",
-               "code": "user_code",
-               "allow_null": False
+                "key": "factor_down",
+                "name": "Factor down",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "value_content_type": "transactions.transactiontype",
+                "code": "user_code",
+                "allow_null": False
             },
             {
-               "key": "has_second_exposure_currency",
-               "name": "Has second exposure currency",
-               "value_type": 50
+                "key": "has_second_exposure_currency",
+                "name": "Has second exposure currency",
+                "value_type": 50
             },
             {
-               "key": "object_permissions",
-               "name": "Object permissions",
-               "value_type": "mc_field"
+                "key": "object_permissions",
+                "name": "Object permissions",
+                "value_type": "mc_field"
             },
             # region Exposure
             {
-               "key": "underlying_long_multiplier",
-               "name": "Underlying long multiplier",
-               "value_type": 20
+                "key": "underlying_long_multiplier",
+                "name": "Underlying long multiplier",
+                "value_type": 20
             },
             {
                 "key": "underlying_short_multiplier",
@@ -1210,7 +1210,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 "name": "User text 3",
                 "value_type": 10
             },
-
 
             {
                 "key": "underlying_long_multiplier",
@@ -2199,8 +2198,15 @@ class PriceHistory(DataTimeStampedModel):
 
         except Exception as error:
 
-            _l.debug('Price History save error %s' % error)
+            _l.debug('Price History save ytm error %s' % error)
             _l.debug(traceback.print_exc())
+
+        if not self.factor:
+            try:
+                self.factor = self.instrument.get_factor(self.date)
+            except Exception as e:
+                _l.debug('Price History save factor error %s' % e)
+                _l.debug(traceback.print_exc())
 
         super(PriceHistory, self).save(*args, **kwargs)
 
