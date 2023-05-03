@@ -577,6 +577,7 @@ class MasterUserViewSet(AbstractModelViewSet):
                 master_user.description = request.data['description']
                 master_user.status = request.data['status']
                 master_user.journal_status = request.data['journal_status']
+                master_user.journal_storage_policy = request.data['journal_storage_policy']
                 master_user.save()
             else:
                 raise PermissionDenied()
@@ -603,6 +604,7 @@ class MasterUserViewSet(AbstractModelViewSet):
                 master_user.description = request.data['description']
                 master_user.status = request.data['status']
                 master_user.journal_status = request.data['journal_status']
+                master_user.journal_storage_policy = request.data['journal_storage_policy']
                 master_user.save()
             else:
                 raise PermissionDenied()
