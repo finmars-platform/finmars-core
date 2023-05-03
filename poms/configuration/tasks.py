@@ -145,7 +145,7 @@ def import_configuration(self, task_id):
                 if user_code is not None:
                     # Check if the instance already exists
 
-                    try:
+                    try: # if member specific entity
                         Model.objects.model._meta.get_field('member')
                         instance = Model.objects.filter(user_code=user_code, member=task.member).first()
                     except FieldDoesNotExist:
