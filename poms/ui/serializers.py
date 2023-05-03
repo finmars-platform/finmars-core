@@ -38,7 +38,6 @@ class TransactionUserFieldSerializer(ModelMetaSerializer):
         fields = ['id', 'master_user', 'key', 'name', 'is_active']
 
 
-
 class ColorPaletteColorSerializer(serializers.ModelSerializer):
     class Meta:
         model = ColorPaletteColor
@@ -154,7 +153,9 @@ class ContextMenuLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSeriali
 
     class Meta:
         model = ContextMenuLayout
-        fields = ['id', 'member', 'type', 'name', 'user_code', 'data', 'origin_for_global_layout',
+        fields = ['id', 'member', 'type', 'name',
+                  'user_code', 'configuration_code',
+                  'data', 'origin_for_global_layout',
                   'sourced_from_global_layout']
 
 
@@ -165,11 +166,12 @@ class ListLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
 
     class Meta:
         model = ListLayout
-        fields = ['id', 'member', 'content_type', 'name', 'user_code', 'is_default', 'is_active', 'is_systemic', 'data',
+        fields = ['id', 'member', 'content_type', 'name',
+                  'user_code', 'configuration_code',
+                  'is_default', 'is_active', 'is_systemic', 'data',
                   'origin_for_global_layout', 'sourced_from_global_layout']
 
     def to_representation(self, instance):
-
         return super(ListLayoutSerializer, self).to_representation(instance)
 
         # if instance.is_fixed:
@@ -207,7 +209,8 @@ class ListLayoutLightSerializer(ModelWithTimeStampSerializer):
 
     class Meta:
         model = ListLayout
-        fields = ['id', 'member', 'content_type', 'name', 'user_code', 'is_default', 'is_active', 'is_systemic',
+        fields = ['id', 'member', 'content_type', 'name', 'user_code', 'configuration_code',
+                  'is_default', 'is_active', 'is_systemic',
                   'origin_for_global_layout', 'sourced_from_global_layout']
 
 
@@ -217,7 +220,9 @@ class DashboardLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerialize
 
     class Meta:
         model = DashboardLayout
-        fields = ['id', 'member', 'name', 'user_code', 'is_default', 'is_active', 'data', 'origin_for_global_layout',
+        fields = ['id', 'member', 'name',
+                  'user_code', 'configuration_code',
+                  'is_default', 'is_active', 'data', 'origin_for_global_layout',
                   'sourced_from_global_layout']
 
 
@@ -226,7 +231,9 @@ class DashboardLayoutLightSerializer(ModelWithTimeStampSerializer):
 
     class Meta:
         model = DashboardLayout
-        fields = ['id', 'member', 'name', 'user_code', 'is_default', 'is_active', 'origin_for_global_layout',
+        fields = ['id', 'member', 'name',
+                  'user_code', 'configuration_code',
+                  'is_default', 'is_active', 'origin_for_global_layout',
                   'sourced_from_global_layout']
 
 
@@ -247,7 +254,8 @@ class EditLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
     class Meta:
         model = EditLayout
         fields = ['id', 'member', 'content_type',
-                  'name', 'user_code',
+                  'name',
+                  'user_code', 'configuration_code',
                   'is_default', 'is_active',
                   'data', 'origin_for_global_layout', 'sourced_from_global_layout']
 
@@ -340,7 +348,6 @@ class BookmarkSerializer(serializers.ModelSerializer):
 
         for c in children:
             self.save_child(instance, c, o, processed)
-
 
 # class ConfigurationSerializer(serializers.ModelSerializer):
 #     master_user = MasterUserField()
