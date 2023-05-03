@@ -6,6 +6,7 @@ from datetime import date
 
 import requests
 from celery import shared_task
+from django.core.exceptions import FieldDoesNotExist
 from django.utils.timezone import now
 
 from poms.celery_tasks.models import CeleryTask
@@ -143,7 +144,14 @@ def import_configuration(self, task_id):
 
                 if user_code is not None:
                     # Check if the instance already exists
-                    instance = Model.objects.filter(user_code=user_code).first()
+
+                    try:
+                        Model.objects.model._meta.get_field('member')
+                        instance = Model.objects.filter(user_code=user_code, member=task.member).first()
+                    except FieldDoesNotExist:
+                        instance = Model.objects.filter(user_code=user_code).first()
+                        pass
+
                 else:
                     instance = None
 
