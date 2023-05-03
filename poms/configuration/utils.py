@@ -155,7 +155,9 @@ def save_serialized_layout(content_type, configuration_code, content_type_key, s
 
     _l.info('save_serialized_layout.entity_content_type %s' % entity_content_type)
 
-    filtered_objects = model.objects.filter(configuration_code=configuration_code, content_type=entity_content_type)
+    filtered_objects = model.objects.filter(configuration_code=configuration_code,
+                                            content_type=entity_content_type,
+                                            member=context['member'])
 
     _l.info('filtered_objects %s' % filtered_objects)
 
