@@ -1,8 +1,10 @@
 import logging
+import os
 
 from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.parsers import JSONParser
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 
@@ -14,6 +16,7 @@ from poms.common.views import AbstractModelViewSet
 from poms.configuration.models import Configuration, NewMemberSetupConfiguration
 from poms.configuration.serializers import ConfigurationSerializer, ConfigurationImportSerializer, \
     NewMemberSetupConfigurationSerializer
+from poms_app import settings
 
 storage = get_storage()
 
@@ -174,7 +177,7 @@ class NewMemberSetupConfigurationFilterSet(FilterSet):
 
 
 class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
 
     queryset = NewMemberSetupConfiguration.objects
     serializer_class = NewMemberSetupConfigurationSerializer
@@ -186,13 +189,14 @@ class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
 
     ]
 
-    @action(detail=True, methods=['PUT'], url_path='install')
+    @action(detail=True, methods=['PUT'], url_path='install', serializer_class=None)
     def install(self, request, pk=None):
         new_member_setup_configuration = self.get_object()
 
         celery_task = None
 
-        if new_member_setup_configuration.target_configuration_code:
+        # TODO refactor
+        if new_member_setup_configuration.target_configuration_code and new_member_setup_configuration.target_configuration_code != "null":
 
             celery_task = CeleryTask.objects.create(
                 master_user=request.user.master_user,
@@ -223,8 +227,17 @@ class NewMemberSetupConfigurationViewSet(AbstractModelViewSet):
                 type="install_initial_configuration"
             )
 
+            output_directory = os.path.join(settings.BASE_DIR,
+                                            'tmp/task_' + str(celery_task.id) + '/')
+
+            if not os.path.exists(output_directory):
+                os.makedirs(output_directory, exist_ok=True)
+
+            local_file_path = storage.download_file_and_save_locally(new_member_setup_configuration.file_url,
+                                                                     output_directory + '/file.zip')
+
             options_object = {
-                'file_path': new_member_setup_configuration.file_url,
+                'file_path': local_file_path,
             }
 
             celery_task.options_object = options_object

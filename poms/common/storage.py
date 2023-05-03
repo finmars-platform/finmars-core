@@ -60,6 +60,17 @@ class FinmarsStorage(object):
         except Exception as e:
             return False
 
+    def download_file_and_save_locally(self, storage_file_path, local_file_path):
+
+        with self.open(storage_file_path, 'rb') as remote_file:
+            # Read the file content
+            file_content = remote_file.read()
+
+        # Write the file content to the local file
+        with open(local_file_path, 'wb') as local_file:
+            local_file.write(file_content)
+
+        return local_file_path
 
 class FinmarsSFTPStorage(FinmarsStorage, SFTPStorage):
 
