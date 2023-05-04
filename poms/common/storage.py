@@ -93,9 +93,17 @@ class FinmarsStorage(object):
         for path in paths:
             local_filename = temp_dir_path + '/' + path
             if path.endswith('/'):  # Assuming the path is a directory
-                self.download_directory(settings.BASE_API_URL + path, local_filename)
+
+                if path[0] == '/':
+                    self.download_directory(settings.BASE_API_URL + path, local_filename)
+                else:
+                    self.download_directory(settings.BASE_API_URL + '/' + path, local_filename)
+
             else:
-                self.download_file_and_save_locally(settings.BASE_API_URL + path, local_filename)
+                if path[0] == '/':
+                    self.download_file_and_save_locally(settings.BASE_API_URL + path, local_filename)
+                else:
+                    self.download_file_and_save_locally(settings.BASE_API_URL + '/' + path, local_filename)
 
         self.zip_directory(temp_dir_path, zip_filename)
 
