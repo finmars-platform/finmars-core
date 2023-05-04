@@ -3,7 +3,7 @@ import math
 import os
 import shutil
 import tempfile
-from zipfile import ZipFile
+from zipfile import ZipFile, ZIP_DEFLATED
 
 from django.core.files.storage import FileSystemStorage
 from storages.backends.azure_storage import AzureStorage
@@ -66,11 +66,43 @@ class FinmarsStorage(object):
             # Read the file content
             file_content = remote_file.read()
 
+        # Create directories in the local path if they do not exist
+        os.makedirs(os.path.dirname(local_file_path), exist_ok=True)
+
         # Write the file content to the local file
         with open(local_file_path, 'wb') as local_file:
             local_file.write(file_content)
 
         return local_file_path
+
+    def zip_directory(self, directory_path, zip_file_path):
+        with ZipFile(zip_file_path, 'w', ZIP_DEFLATED) as zip_file:
+            for root, _, files in os.walk(directory_path):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    archive_path = os.path.relpath(file_path, directory_path)
+                    zip_file.write(file_path, archive_path)
+
+    def download_paths_as_zip(self, paths):
+
+        zip_filename = 'archive.zip'
+
+        temp_dir_path = os.path.join(os.path.dirname(zip_filename), 'tmp/temp_download')
+        os.makedirs(temp_dir_path, exist_ok=True)
+
+        for path in paths:
+            local_filename = temp_dir_path + '/' + path
+            if path.endswith('/'):  # Assuming the path is a directory
+                self.download_directory(settings.BASE_API_URL + path, local_filename)
+            else:
+                self.download_file_and_save_locally(settings.BASE_API_URL + path, local_filename)
+
+        self.zip_directory(temp_dir_path, zip_filename)
+
+        # shutil.rmtree(temp_dir_path)
+
+        return zip_filename
+
 
 class FinmarsSFTPStorage(FinmarsStorage, SFTPStorage):
 
@@ -190,6 +222,8 @@ class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
 
     def download_directory(self, directory_path, local_destination_path):
 
+        _l.info('directory_path %s' % directory_path)
+
         folder = os.path.dirname(local_destination_path)
         if folder:
             os.makedirs(folder, exist_ok=True)
@@ -223,11 +257,9 @@ class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
 class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
 
     def delete_directory(self, directory_path):
-
         shutil.rmtree(os.path.join(settings.MEDIA_ROOT, directory_path))
 
     def download_directory(self, src, local_destination_path):
-
         # if not os.path.exists(local_destination_path):
         #     os.makedirs(local_destination_path, exist_ok=True)
 
@@ -237,7 +269,6 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
         shutil.copytree(src_with_root, local_destination_path)
 
     def download_directory_as_zip(self, folder_path):
-
         path = os.path.join(settings.MEDIA_ROOT, folder_path)
 
         zip_file_path = download_local_folder_as_zip(path)

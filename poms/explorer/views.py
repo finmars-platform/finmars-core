@@ -310,7 +310,13 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
         if not path:
             raise ValidationError("Path is required")
         else:
-            path = settings.BASE_API_URL + '/' + path
+            if path[0] == '/':
+                path = settings.BASE_API_URL + path
+            else:
+                path = settings.BASE_API_URL + '/' + path
+
+
+        _l.info("Delete directory %s" % path)
 
         storage.delete_directory(path)
 
@@ -319,21 +325,19 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
         })
 
 
-class DownloadFolderAsZipViewSet(AbstractViewSet):
+class DownloadAsZipViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
     def create(self, request):
 
-        path = request.data.get('path')
+        paths = request.data.get('paths')
 
         # TODO validate path that eiher public/import/system or user home folder
 
-        if not path:
-            raise ValidationError("Path is required")
-        else:
-            path = settings.BASE_API_URL + '/' + path
+        if not paths:
+            raise ValidationError("paths is required")
 
-        zip_file_path = storage.download_directory_as_zip(path)
+        zip_file_path = storage.download_paths_as_zip(paths)
 
         # Serve the zip file as a response
         response = FileResponse(open(zip_file_path, 'rb'), content_type='application/zip')
