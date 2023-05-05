@@ -859,7 +859,6 @@ class MemberViewSet(AbstractModelViewSet):
     def update(self, request, *args, **kwargs):
 
         owner = Member.objects.get(master_user=request.user.master_user, is_owner=True)
-        admin_group = Group.objects.get(master_user=request.user.master_user, role=Group.ADMIN)
 
         if not request.data and not request.data['id']:
             raise PermissionDenied()
@@ -868,12 +867,6 @@ class MemberViewSet(AbstractModelViewSet):
 
             if not request.data['groups']:
                 raise PermissionDenied()
-
-            if admin_group.id not in request.data['groups']:
-                raise PermissionDenied()
-
-        if admin_group.id in request.data['groups']:
-            request.data['is_admin'] = True
 
         return super(MemberViewSet, self).update(request, *args, **kwargs)
 

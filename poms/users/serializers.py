@@ -669,6 +669,9 @@ class MemberSerializer(serializers.ModelSerializer):
     roles = RoleField(source='iam_roles', many=True, required=False)
     roles_object = serializers.PrimaryKeyRelatedField(source='iam_roles', read_only=True, many=True)
 
+    access_policies = RoleField(source='iam_access_policies', many=True, required=False)
+    access_policies_object = serializers.PrimaryKeyRelatedField(source='iam_access_policies', read_only=True, many=True)
+
     data = serializers.JSONField(allow_null=True)
 
     class Meta:
@@ -680,6 +683,7 @@ class MemberSerializer(serializers.ModelSerializer):
 
             'groups', 'groups_object',
             'roles', 'roles_object',
+            'access_policies', 'access_policies_object',
             'data'
         ]
         read_only_fields = [
@@ -689,10 +693,11 @@ class MemberSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super(MemberSerializer, self).__init__(*args, **kwargs)
-        from poms.iam.serializers import RoleSerializer, GroupSerializer
-        self.fields['groups_object'] = GroupSerializer(source='iam_groups', many=True, read_only=True)
+        from poms.iam.serializers import IamRoleSerializer, IamGroupSerializer, IamAccessPolicySerializer
+        self.fields['groups_object'] = IamGroupSerializer(source='iam_groups', many=True, read_only=True)
+        self.fields['access_policies_object'] = IamAccessPolicySerializer(source='iam_access_policies', many=True, read_only=True)
+        self.fields['roles_object'] = IamRoleSerializer(source='iam_roles', many=True, read_only=True)
 
-        self.fields['roles_object'] = RoleSerializer(source='iam_roles', many=True, read_only=True)
         if self.instance:
             self.fields['username'].read_only = True
         else:

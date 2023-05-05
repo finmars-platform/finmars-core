@@ -75,7 +75,7 @@ def parse_resource_attribute(resources):
 def get_statements(member):
 
     '''Getting UserAccessPolicies attached to User'''
-    member_access_policies = MemberAccessPolicy.objects.filter(user=member)
+    member_access_policies = MemberAccessPolicy.objects.filter(member=member)
 
     member_roles = member.iam_roles.all()
     '''Getting AccessPolicies directly attached to Role that Member assigned to'''

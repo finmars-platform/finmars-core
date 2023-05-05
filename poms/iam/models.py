@@ -104,7 +104,7 @@ class MemberAccessPolicy(TimeStampedModel):
     # Hate that it should be Member instead of User
     member = models.ForeignKey(
         Member,
-        related_name="iam_member_policies",
+        related_name="iam_access_policies",
         on_delete=models.CASCADE,
         verbose_name="Member",
     )
@@ -114,6 +114,10 @@ class MemberAccessPolicy(TimeStampedModel):
 
     user_code = models.CharField(max_length=1024, unique=True,
                                  verbose_name=gettext_lazy('User Code'))
+
+    configuration_code = models.CharField(max_length=255,
+                                          default='com.finmars.local',
+                                          verbose_name=gettext_lazy('Configuration Code'))
 
     policy = models.JSONField(null=True, blank=True, verbose_name=gettext_lazy('Policy'),
                               help_text="Access Policy JSON")

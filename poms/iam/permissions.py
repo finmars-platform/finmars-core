@@ -10,7 +10,7 @@ class FinmarsAccessPolicy(AccessPolicy):
 
     def get_policy_statements(self, request, view=None):
 
-        return get_statements(user=request.user)
+        return get_statements(member=request.user.member)
 
 
 

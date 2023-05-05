@@ -19,9 +19,12 @@ from poms.configuration.utils import unzip_to_directory, list_json_files, read_j
     save_json_to_file, upload_directory_to_storage
 from poms.file_reports.models import FileReport
 from poms_app import settings
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 _l = logging.getLogger('poms.configuration')
-
+from django.contrib.auth import get_user_model
+User = get_user_model()
 storage = get_storage()
 
 
@@ -343,9 +346,9 @@ def push_configuration_to_marketplace(self, task_id):
 
         options_object = task.options_object
 
-        access_token = options_object['access_token']
-
-        del options_object['access_token']
+        # access_token = options_object['access_token']
+        #
+        # del options_object['access_token']
 
         task.options_object = options_object
         task.save()
@@ -376,12 +379,22 @@ def push_configuration_to_marketplace(self, task_id):
             'file': open(zip_file_path, 'rb')
         }
 
-        headers = {}
-        headers['Authorization'] = 'Token ' + access_token
+        # headers = {}
+        # headers['Authorization'] = 'Token ' + access_token
+
+        bot = User.objects.get(username="finmars_bot")
+
+        refresh = RefreshToken.for_user(bot)
+
+        # _l.info('refresh %s' % refresh.access_token)
+
+        headers = {'Content-type': 'application/json', 'Accept': 'application/json',
+                   'Authorization': 'Bearer %s' % refresh.access_token}
 
         # _l.info('push_configuration_to_marketplace.headers %s' % headers)
 
-        response = requests.post(url='https://marketplace.finmars.com/api/v1/configuration/push/', data=data,
+        response = requests.post(url='https://marketplace.finmars.com/api/v1/configuration/push/',
+                                 data=data,
                                  files=files,
                                  headers=headers)
 

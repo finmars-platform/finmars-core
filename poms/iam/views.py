@@ -52,7 +52,7 @@ class RoleViewSet(ModelViewSet):
 
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
-    permission_classes = [
+    permission_classes = ModelViewSet.permission_classes + [
         IsAuthenticated
     ]
 
