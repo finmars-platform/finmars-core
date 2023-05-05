@@ -55,8 +55,7 @@ from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
-from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
-    ObjectPermissionPermissionFilter
+from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionPermissionFilter
 from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
@@ -192,7 +191,7 @@ class InstrumentTypeFilterSet(FilterSet):
     factor_up = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType)
     factor_down = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType)
     member = ObjectPermissionMemberFilter(object_permission_model=InstrumentType)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=InstrumentType)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=InstrumentType)
     permission = ObjectPermissionPermissionFilter(object_permission_model=InstrumentType)
 
     class Meta:
@@ -549,7 +548,7 @@ class InstrumentFilterSet(FilterSet):
     # price_download_scheme = ModelExtMultipleChoiceFilter(model=PriceDownloadScheme, field_name='scheme_name')
     maturity_date = django_filters.DateFromToRangeFilter()
     member = ObjectPermissionMemberFilter(object_permission_model=Instrument)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Instrument)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=Instrument)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Instrument)
 
     class Meta:

@@ -16,8 +16,7 @@ from poms.counterparties.serializers import CounterpartySerializer, ResponsibleS
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
-from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
-    ObjectPermissionPermissionFilter
+from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionPermissionFilter
 from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
@@ -46,7 +45,7 @@ class CounterpartyGroupFilterSet(FilterSet):
     short_name = CharFilter()
     public_name = CharFilter()
     member = ObjectPermissionMemberFilter(object_permission_model=CounterpartyGroup)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=CounterpartyGroup)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=CounterpartyGroup)
     permission = ObjectPermissionPermissionFilter(object_permission_model=CounterpartyGroup)
 
     class Meta:
@@ -90,7 +89,7 @@ class CounterpartyFilterSet(FilterSet):
     group = ModelExtWithPermissionMultipleChoiceFilter(model=CounterpartyGroup)
     portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio, field_name='portfolios')
     member = ObjectPermissionMemberFilter(object_permission_model=Counterparty)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Counterparty)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=Counterparty)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Counterparty)
 
     class Meta:
@@ -212,7 +211,7 @@ class ResponsibleGroupFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     member = ObjectPermissionMemberFilter(object_permission_model=ResponsibleGroup)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=ResponsibleGroup)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=ResponsibleGroup)
     permission = ObjectPermissionPermissionFilter(object_permission_model=ResponsibleGroup)
 
     class Meta:
@@ -257,7 +256,7 @@ class ResponsibleFilterSet(FilterSet):
     group = ModelExtWithPermissionMultipleChoiceFilter(model=CounterpartyGroup)
     portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio, field_name='portfolios')
     member = ObjectPermissionMemberFilter(object_permission_model=Responsible)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Responsible)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=Responsible)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Responsible)
 
     class Meta:

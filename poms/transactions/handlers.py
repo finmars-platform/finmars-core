@@ -27,7 +27,7 @@ from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import ComplexTransaction, TransactionTypeInput, Transaction, EventClass, \
     NotificationClass, RebookReactionChoice, ComplexTransactionInput, TransactionType
-from poms.users.models import EcosystemDefault, Group
+from poms.users.models import EcosystemDefault
 
 _l = logging.getLogger('poms.transactions')
 
@@ -1486,136 +1486,136 @@ class TransactionTypeProcess(object):
 
         return result
 
-    def assign_permissions_to_transaction(self, transaction):
-
-        perms = []
-
-        groups = Group.objects.filter(master_user=self.transaction_type.master_user)
-
-        account_codename = 'view_account'
-        portfolio_codename = 'view_portfolio'
-
-        account_permissions = GenericObjectPermission.objects.filter(group__in=groups,
-                                                                     permission__codename=account_codename)
-        portfolio_permissions = GenericObjectPermission.objects.filter(group__in=groups,
-                                                                       permission__codename=portfolio_codename)
-
-        for group in groups:
-
-            has_access = self.transaction_access_check(transaction, group, account_permissions,
-                                                       portfolio_permissions)
-
-            if has_access:
-                perms.append({'group': group, 'permission': 'view_transaction'})
-
-        # _l.debug("perms %s" % perms)
-
-        assign_perms3(transaction, perms)
-
-    def assign_permissions_to_complex_transaction(self):
-
-        # _l.debug("assign_permissions_to_complex_transaction: mode %s" % self.process_mode)
-
-        groups = Group.objects.filter(master_user=self.transaction_type.master_user)
-
-        perms = []
-
-        transactions = self.complex_transaction.transactions.all()
-
-        ttype_permissions = self.transaction_type.object_permissions.all()
-
-        permissions_total = len(transactions)
-
-        for group in groups:
-
-            codename = None
-
-            ttype_access = False
-
-            inputs_access = self.get_access_to_inputs(group)
-
-            permissions_count = 0
-
-            for transaction in transactions:
-
-                for perm in transaction.object_permissions.all():
-
-                    if perm.group.id == group.id:
-                        permissions_count = permissions_count + 1
-
-            # _l.debug('groupid %s permissions_count %s' % (group.name, permissions_count))
-
-            if permissions_count == permissions_total:
-                codename = 'view_complextransaction'
-
-            if permissions_count < permissions_total and permissions_count != 0:
-
-                if self.complex_transaction.visibility_status == ComplexTransaction.SHOW_PARAMETERS:
-                    codename = 'view_complextransaction_show_parameters'
-
-                if self.complex_transaction.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
-                    codename = 'view_complextransaction_hide_parameters'
-
-            if permissions_count == 0:
-                codename = None
-
-            for perm in ttype_permissions:
-
-                if perm.group:
-                    if perm.group.id == group.id and perm.permission.codename == 'view_transactiontype':
-                        ttype_access = True
-
-            if not ttype_access and codename is not None:
-                codename = 'view_complextransaction_hide_parameters'
-
-            # _l.debug('assign_permissions_to_complex_transaction: inputs_access %s' % inputs_access)
-            # _l.debug('assign_permissions_to_complex_transaction: ttype_access %s' % ttype_access)
-
-            if inputs_access == 'partial_view' and permissions_count != 0:
-
-                if self.complex_transaction.visibility_status == ComplexTransaction.SHOW_PARAMETERS:
-                    codename = 'view_complextransaction_show_parameters'
-
-                if self.complex_transaction.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
-                    codename = 'view_complextransaction_hide_parameters'
-
-            if codename:
-                perms.append({'group': group, 'permission': codename})
-
-        # _l.debug("complex transactions perms %s" % perms)
-
-        assign_perms3(self.complex_transaction, perms)
-
-    def assign_permissions_to_pending_complex_transaction(self):
-
-        groups = Group.objects.filter(master_user=self.transaction_type.master_user)
-
-        perms = []
-
-        for group in groups:
-
-            codename = None
-
-            inputs_access = self.get_access_to_inputs(group)
-
-            if inputs_access == 'full_view':
-
-                codename = 'view_complextransaction'
-
-            elif inputs_access == 'partial_view':
-
-                if self.complex_transaction.visibility_status == ComplexTransaction.SHOW_PARAMETERS:
-                    codename = 'view_complextransaction_show_parameters'
-
-                if self.complex_transaction.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
-                    codename = 'view_complextransaction_hide_parameters'
-
-            if codename:
-                perms.append({'group': group, 'permission': codename})
-
-        # _l.debug("complex transactions pending perms %s" % perms)
-
-        assign_perms3(self.complex_transaction, perms)
+    # def assign_permissions_to_transaction(self, transaction):
+    #
+    #     perms = []
+    #
+    #     groups = Group.objects.filter(master_user=self.transaction_type.master_user)
+    #
+    #     account_codename = 'view_account'
+    #     portfolio_codename = 'view_portfolio'
+    #
+    #     account_permissions = GenericObjectPermission.objects.filter(group__in=groups,
+    #                                                                  permission__codename=account_codename)
+    #     portfolio_permissions = GenericObjectPermission.objects.filter(group__in=groups,
+    #                                                                    permission__codename=portfolio_codename)
+    #
+    #     for group in groups:
+    #
+    #         has_access = self.transaction_access_check(transaction, group, account_permissions,
+    #                                                    portfolio_permissions)
+    #
+    #         if has_access:
+    #             perms.append({'group': group, 'permission': 'view_transaction'})
+    #
+    #     # _l.debug("perms %s" % perms)
+    #
+    #     assign_perms3(transaction, perms)
+    #
+    # def assign_permissions_to_complex_transaction(self):
+    #
+    #     # _l.debug("assign_permissions_to_complex_transaction: mode %s" % self.process_mode)
+    #
+    #     groups = Group.objects.filter(master_user=self.transaction_type.master_user)
+    #
+    #     perms = []
+    #
+    #     transactions = self.complex_transaction.transactions.all()
+    #
+    #     ttype_permissions = self.transaction_type.object_permissions.all()
+    #
+    #     permissions_total = len(transactions)
+    #
+    #     for group in groups:
+    #
+    #         codename = None
+    #
+    #         ttype_access = False
+    #
+    #         inputs_access = self.get_access_to_inputs(group)
+    #
+    #         permissions_count = 0
+    #
+    #         for transaction in transactions:
+    #
+    #             for perm in transaction.object_permissions.all():
+    #
+    #                 if perm.group.id == group.id:
+    #                     permissions_count = permissions_count + 1
+    #
+    #         # _l.debug('groupid %s permissions_count %s' % (group.name, permissions_count))
+    #
+    #         if permissions_count == permissions_total:
+    #             codename = 'view_complextransaction'
+    #
+    #         if permissions_count < permissions_total and permissions_count != 0:
+    #
+    #             if self.complex_transaction.visibility_status == ComplexTransaction.SHOW_PARAMETERS:
+    #                 codename = 'view_complextransaction_show_parameters'
+    #
+    #             if self.complex_transaction.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
+    #                 codename = 'view_complextransaction_hide_parameters'
+    #
+    #         if permissions_count == 0:
+    #             codename = None
+    #
+    #         for perm in ttype_permissions:
+    #
+    #             if perm.group:
+    #                 if perm.group.id == group.id and perm.permission.codename == 'view_transactiontype':
+    #                     ttype_access = True
+    #
+    #         if not ttype_access and codename is not None:
+    #             codename = 'view_complextransaction_hide_parameters'
+    #
+    #         # _l.debug('assign_permissions_to_complex_transaction: inputs_access %s' % inputs_access)
+    #         # _l.debug('assign_permissions_to_complex_transaction: ttype_access %s' % ttype_access)
+    #
+    #         if inputs_access == 'partial_view' and permissions_count != 0:
+    #
+    #             if self.complex_transaction.visibility_status == ComplexTransaction.SHOW_PARAMETERS:
+    #                 codename = 'view_complextransaction_show_parameters'
+    #
+    #             if self.complex_transaction.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
+    #                 codename = 'view_complextransaction_hide_parameters'
+    #
+    #         if codename:
+    #             perms.append({'group': group, 'permission': codename})
+    #
+    #     # _l.debug("complex transactions perms %s" % perms)
+    #
+    #     assign_perms3(self.complex_transaction, perms)
+    #
+    # def assign_permissions_to_pending_complex_transaction(self):
+    #
+    #     groups = Group.objects.filter(master_user=self.transaction_type.master_user)
+    #
+    #     perms = []
+    #
+    #     for group in groups:
+    #
+    #         codename = None
+    #
+    #         inputs_access = self.get_access_to_inputs(group)
+    #
+    #         if inputs_access == 'full_view':
+    #
+    #             codename = 'view_complextransaction'
+    #
+    #         elif inputs_access == 'partial_view':
+    #
+    #             if self.complex_transaction.visibility_status == ComplexTransaction.SHOW_PARAMETERS:
+    #                 codename = 'view_complextransaction_show_parameters'
+    #
+    #             if self.complex_transaction.visibility_status == ComplexTransaction.HIDE_PARAMETERS:
+    #                 codename = 'view_complextransaction_hide_parameters'
+    #
+    #         if codename:
+    #             perms.append({'group': group, 'permission': codename})
+    #
+    #     # _l.debug("complex transactions pending perms %s" % perms)
+    #
+    #     assign_perms3(self.complex_transaction, perms)
 
     def book_create_transactions(self, actions, master_user, instrument_map):
 

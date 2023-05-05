@@ -4,7 +4,7 @@ from typing import Type
 
 from rest_framework.response import Response
 
-from finmars_iam.access_policy import AccessPolicy
+from poms.iam.access_policy import AccessPolicy
 
 
 class AccessViewSetMixin(object):

@@ -19,7 +19,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 
-from finmars_iam.views import AbstractFinmarsAccessPolicyViewSet
+from poms.iam.views import AbstractFinmarsAccessPolicyViewSet
 from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend, OrderingPostFilter, \
     ByIsEnabledFilterBackend

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from finmars_iam.models import UserAccessPolicy, Role, Group, AccessPolicyTemplate, RoleAccessPolicy, GroupAccessPolicy
+from poms.iam.models import MemberAccessPolicy, Role, Group, AccessPolicyTemplate, RoleAccessPolicy, GroupAccessPolicy
 
 
 class RoleAccessPolicyInline(admin.TabularInline):
@@ -11,7 +11,7 @@ class RoleAdmin(admin.ModelAdmin):
     model = Role
     list_display = ['id', 'name', 'user_code', 'configuration_code']
     search_fields = ['id', 'name', 'user_code', 'configuration_code']
-    filter_horizontal = ("users",)
+    filter_horizontal = ("members",)
     inlines = [RoleAccessPolicyInline]
 
     actions_on_bottom = True
@@ -29,7 +29,7 @@ class GroupAdmin(admin.ModelAdmin):
     model = Group
     list_display = ['id', 'name', 'user_code', 'configuration_code']
     search_fields = ['id', 'name', 'user_code', 'configuration_code']
-    filter_horizontal = ("users", "roles")
+    filter_horizontal = ("members", "roles")
     inlines = [GroupAccessPolicyInline]
 
     actions_on_bottom = True
@@ -38,15 +38,15 @@ class GroupAdmin(admin.ModelAdmin):
 admin.site.register(Group, GroupAdmin)
 
 
-class UserAccessPolicyAdmin(admin.ModelAdmin):
-    model = UserAccessPolicy
-    list_display = ['id', 'user', 'name', 'user_code', 'created']
-    search_fields = ['id', 'user', 'name', 'user_code', 'created']
+class MemberAccessPolicyAdmin(admin.ModelAdmin):
+    model = MemberAccessPolicy
+    list_display = ['id', 'member', 'name', 'user_code', 'created']
+    search_fields = ['id', 'member', 'name', 'user_code', 'created']
 
     actions_on_bottom = True
 
 
-admin.site.register(UserAccessPolicy, UserAccessPolicyAdmin)
+admin.site.register(MemberAccessPolicy, MemberAccessPolicyAdmin)
 
 
 class AccessPolicyTemplateAdmin(admin.ModelAdmin):

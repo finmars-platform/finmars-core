@@ -49,6 +49,7 @@ class BootstrapConfig(AppConfig):
         '''
 
         self.bootstrap_celery()
+        self.create_iam_roles_and_groups()
         self.add_view_and_manage_permissions()
         self.load_master_user_data()
         self.create_finmars_bot()
@@ -88,6 +89,25 @@ class BootstrapConfig(AppConfig):
 
         _l.info("Finmars bot created")
 
+    def create_iam_roles_and_groups(self):
+        # Maybe not needed
+        pass
+
+        # from poms.iam.models import Group
+        #
+        # try:
+        #
+        #     group = Group.objects.get(user_code='com.finmars.local:administrators')
+        #
+        # except Exception as e:
+        #
+        #     group = Group.objects.create(
+        #         name='Administrators',
+        #         user_code='com.finmars.local:administrators')
+
+
+
+    # Probably deprecated
     def add_view_and_manage_permissions(self):
         from poms.common.utils import add_view_and_manage_permissions
         add_view_and_manage_permissions()
@@ -95,7 +115,7 @@ class BootstrapConfig(AppConfig):
     def load_master_user_data(self):
 
         from django.contrib.auth.models import User
-        from poms.users.models import Member, MasterUser, Group, UserProfile
+        from poms.users.models import Member, MasterUser, UserProfile
 
         if not settings.AUTHORIZER_URL:
             return
@@ -191,9 +211,9 @@ class BootstrapConfig(AppConfig):
 
                 _l.info("Owner Member created")
 
-                admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
-                admin_group.members.add(member.id)
-                admin_group.save()
+                # admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
+                # admin_group.members.add(member.id)
+                # admin_group.save()
 
                 _l.info("Admin Group Created")
 

@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from finmars_iam.models import Role, Group, AccessPolicyTemplate, RoleAccessPolicy, GroupAccessPolicy
+from poms.iam.models import Role, Group, AccessPolicyTemplate, RoleAccessPolicy, GroupAccessPolicy
 
 User = get_user_model()
 

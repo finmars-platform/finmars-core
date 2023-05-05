@@ -176,7 +176,7 @@ def get_import_documentation():
 
 
 def get_iam_documentation():
-    import finmars_iam.urls as iam_router
+    import poms.iam.urls as iam_router
 
     local_urlpatterns = [
         re_path(r'^' + settings.BASE_API_URL + '/api/v1/iam/', include(iam_router.router.urls)),

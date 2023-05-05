@@ -14,8 +14,7 @@ from poms.common.utils import get_list_of_entity_attributes
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
-from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
-    ObjectPermissionPermissionFilter
+from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionPermissionFilter
 from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
@@ -41,7 +40,7 @@ class AccountTypeFilterSet(FilterSet):
     public_name = CharFilter()
     show_transaction_details = django_filters.BooleanFilter()
     member = ObjectPermissionMemberFilter(object_permission_model=AccountType)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=AccountType)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=AccountType)
     permission = ObjectPermissionPermissionFilter(object_permission_model=AccountType)
 
     class Meta:
@@ -155,7 +154,7 @@ class AccountTypeEvFilterSet(FilterSet):
     public_name = CharFilter()
     show_transaction_details = django_filters.BooleanFilter()
     member = ObjectPermissionMemberFilter(object_permission_model=AccountType)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=AccountType)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=AccountType)
     permission = ObjectPermissionPermissionFilter(object_permission_model=AccountType)
 
     class Meta:
@@ -186,7 +185,7 @@ class AccountFilterSet(FilterSet):
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
     type = ModelExtWithPermissionMultipleChoiceFilter(model=AccountType)
     member = ObjectPermissionMemberFilter(object_permission_model=Account)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Account)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=Account)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Account)
     attribute_types = GroupsAttributeFilter()
     attribute_values = GroupsAttributeFilter()

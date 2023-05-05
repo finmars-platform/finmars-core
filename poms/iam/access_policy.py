@@ -14,7 +14,7 @@ import logging
 
 from .utils import action_statement_into_object
 
-_l = logging.getLogger('finmars_iam')
+_l = logging.getLogger('poms.iam')
 
 class AnonymousUser(object):
     def __init__(self):

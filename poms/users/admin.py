@@ -16,8 +16,8 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.admin import AbstractModelAdmin
 from poms.instruments.models import EventScheduleConfig
-from poms.users.models import MasterUser, UserProfile, Member, Group, TIMEZONE_CHOICES, FakeSequence, \
-    InviteToMasterUser, EcosystemDefault, OtpToken
+from poms.users.models import MasterUser, UserProfile, Member, TIMEZONE_CHOICES, FakeSequence, \
+     EcosystemDefault, OtpToken
 
 
 # from django.contrib.sessions.models import Session
@@ -30,7 +30,7 @@ from poms.users.models import MasterUser, UserProfile, Member, Group, TIMEZONE_C
 class MemberInline(admin.TabularInline):
     model = Member
     extra = 0
-    raw_id_fields = ['user', 'groups', ]
+    raw_id_fields = ['user']
 
 
 class EventScheduleConfigInline(admin.StackedInline):
@@ -94,7 +94,7 @@ class MemberAdmin(AbstractModelAdmin):
     list_display = ['id', 'master_user', 'username', 'user', 'is_deleted', 'is_owner', 'is_admin']
     list_select_related = ['master_user', 'user']
     list_filter = ['is_deleted', 'is_owner', 'is_admin']
-    raw_id_fields = ['master_user', 'user', 'groups']
+    raw_id_fields = ['master_user', 'user', ]
 
     # def formfield_for_manytomany(self, db_field, request=None, **kwargs):
     #     if db_field.name == 'permissions':
@@ -182,23 +182,6 @@ class ContentTypeAdmin(admin.ModelAdmin):
 admin.site.register(ContentType, ContentTypeAdmin)
 
 
-class GroupAdmin(AbstractModelAdmin):
-    model = Group
-    master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'name', ]
-    list_select_related = ['master_user']
-    raw_id_fields = ['master_user']
-
-    # def formfield_for_manytomany(self, db_field, request=None, **kwargs):
-    #     if db_field.name == 'permissions':
-    #         qs = kwargs.get('queryset', db_field.remote_field.model.objects)
-    #         kwargs['queryset'] = qs.select_related('content_type')
-    #     return super(GroupAdmin, self).formfield_for_manytomany(db_field, request=request, **kwargs)
-
-
-admin.site.register(Group, GroupAdmin)
-
-
 class OtpTokenAdmin(AbstractModelAdmin):
     model = OtpToken
     list_display = ['id', 'user', 'name', ]
@@ -226,12 +209,3 @@ class FakeSequenceAdmin(AbstractModelAdmin):
 admin.site.register(FakeSequence, FakeSequenceAdmin)
 
 
-class InviteToMasterUserAdmin(AbstractModelAdmin):
-    model = InviteToMasterUser
-    list_display = ['id', 'user', 'from_member', 'status', 'master_user']
-    list_select_related = ['user', 'from_member', 'master_user']
-    list_filter = ['status', ]
-    raw_id_fields = ['user', ]
-
-
-admin.site.register(InviteToMasterUser, InviteToMasterUserAdmin)

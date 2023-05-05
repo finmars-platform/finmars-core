@@ -15,8 +15,7 @@ from poms.obj_attrs.models import GenericAttributeType, GenericClassifier, Gener
 from poms.obj_attrs.serializers import GenericAttributeTypeSerializer, GenericClassifierNodeSerializer, \
     RecalculateAttributesSerializer
 from poms.obj_attrs.tasks import recalculate_attributes
-from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
-    ObjectPermissionPermissionFilter
+from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionPermissionFilter
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet
 from poms.users.filters import OwnerByMasterUserFilter
@@ -109,7 +108,7 @@ class GenericAttributeTypeFilterSet(FilterSet):
     public_name = CharFilter()
     value_type = AttributeTypeValueTypeFilter()
     member = ObjectPermissionMemberFilter(object_permission_model=GenericAttributeType)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=GenericAttributeType)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=GenericAttributeType)
     permission = ObjectPermissionPermissionFilter(object_permission_model=GenericAttributeType)
 
     class Meta:

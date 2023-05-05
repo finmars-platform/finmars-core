@@ -2,6 +2,9 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy
 
+from poms.configuration.models import ConfigurationModel
+from poms.users.models import Member
+
 
 class TimeStampedModel(models.Model):
     created = models.DateTimeField(auto_now_add=True, editable=False, db_index=True,
@@ -15,18 +18,15 @@ class TimeStampedModel(models.Model):
         ordering = ['created', ]
 
 
-class Role(models.Model):
+class Role(ConfigurationModel):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
 
     user_code = models.CharField(max_length=1024, unique=True,
                                  verbose_name=gettext_lazy('User Code'))
-    configuration_code = models.CharField(max_length=255,
-                                          default='com.finmars.local',
-                                          verbose_name=gettext_lazy('Configuration Code'),
-                                          help_text="Indicates that entity is part of Configuration and can be imported/exported.")
 
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='iam_roles', blank=True)
+    # Hate that it should be Member instead of User
+    members = models.ManyToManyField(Member, related_name='iam_roles', blank=True)
 
     def __str__(self):
         return self.name
@@ -56,7 +56,7 @@ class RoleAccessPolicy(TimeStampedModel):
         return 'Access Policy for %s' % self.role
 
 
-class Group(models.Model):
+class Group(ConfigurationModel):
     '''
     Part of configuration and thus has configuration_code
     '''
@@ -64,12 +64,9 @@ class Group(models.Model):
     description = models.TextField(blank=True)
     user_code = models.CharField(max_length=1024, unique=True,
                                  verbose_name=gettext_lazy('User Code'))
-    configuration_code = models.CharField(max_length=255,
-                                          default='com.finmars.local',
-                                          verbose_name=gettext_lazy('Configuration Code'),
-                                          help_text="Indicates that entity is part of Configuration and can be imported/exported.")
 
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='iam_groups', blank=True)
+    # Hate that it should be Member instead of User
+    members = models.ManyToManyField(Member, related_name='iam_groups', blank=True)
     roles = models.ManyToManyField(Role, related_name='iam_groups')
 
     def __str__(self):
@@ -100,15 +97,16 @@ class GroupAccessPolicy(TimeStampedModel):
         return 'Access Policy for %s' % self.group
 
 
-class UserAccessPolicy(TimeStampedModel):
+class MemberAccessPolicy(TimeStampedModel):
     '''
     Do not part of configuration, can not be exported
     '''
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        related_name="iam_user_policies",
+    # Hate that it should be Member instead of User
+    member = models.ForeignKey(
+        Member,
+        related_name="iam_member_policies",
         on_delete=models.CASCADE,
-        verbose_name="User",
+        verbose_name="Member",
     )
 
     name = models.CharField(max_length=255, null=True, blank=True,

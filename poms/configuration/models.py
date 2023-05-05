@@ -17,7 +17,7 @@ class ConfigurationModel(models.Model):
     configuration_code = models.CharField(max_length=255,
                                           default='com.finmars.local',
                                           verbose_name=gettext_lazy('Configuration Code'))
-
+    # TODO someday make it  unique=True,
     user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('User Code'))
 
     class Meta:

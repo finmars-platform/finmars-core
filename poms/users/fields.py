@@ -4,9 +4,10 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
 
+from poms.iam.models import Group, Role
 from poms.common.fields import PrimaryKeyRelatedFilteredField
 from poms.users.filters import OwnerByMasterUserFilter
-from poms.users.models import Member, Group
+from poms.users.models import Member
 
 
 class CurrentMasterUserDefault(object):
@@ -105,7 +106,8 @@ class MemberField(PrimaryKeyRelatedFilteredField):
 class UserField(PrimaryKeyRelatedFilteredField):
     queryset = User.objects.all()
 
-
 class GroupField(PrimaryKeyRelatedFilteredField):
     queryset = Group.objects.all()
-    filter_backends = [OwnerByMasterUserFilter]
+
+class RoleField(PrimaryKeyRelatedFilteredField):
+    queryset = Role.objects.all()

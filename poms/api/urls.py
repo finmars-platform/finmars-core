@@ -28,6 +28,7 @@ import poms.system.views as system
 import poms.system_messages.views as system_messages
 import poms.users.views as users
 import poms.widgets.views as widgets
+import poms.iam.views as iam
 from finmars_standardized_errors.views import ErrorRecordViewSet
 from poms.auth_tokens.views import ObtainAuthToken, SetAuthToken, CreateUser, CreateMasterUser, CreateMember, \
     DeleteMember, RenameMasterUser, MasterUserChangeOwner
@@ -45,7 +46,8 @@ router.register(r'users/master-user-light', users.MasterUserLightViewSet,
 router.register(r'users/get-current-master-user', users.GetCurrentMasterUserViewSet, 'getcurrentmasteruser')
 
 router.register(r'users/member', users.MemberViewSet)
-router.register(r'users/group', users.GroupViewSet)
+# router.register(r'users/group', users.GroupViewSet)
+router.register(r'users/group', iam.GroupViewSet)
 router.register(r'users/language', api.LanguageViewSet, 'language')
 router.register(r'users/timezone', api.TimezoneViewSet, 'timezone')
 router.register(r'users/ecosystem-default', users.EcosystemDefaultViewSet, 'ecosystemdefault')
@@ -158,7 +160,7 @@ import poms.ui.urls as ui_router
 import poms.explorer.urls as explorer_router
 import poms.integrations.urls as integrations_router
 import poms.csv_import.urls as csv_import_router
-import finmars_iam.urls as iam_router
+import poms.iam.urls as iam_router
 
 urlpatterns = [
     re_path(r'^v1/accounts/', include(account_router.router.urls)),

@@ -29,16 +29,14 @@ from poms.instruments.models import Instrument, InstrumentType, PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
-from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
-    ObjectPermissionPermissionFilter
+from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionPermissionFilter
 from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3, Strategy1Subgroup, Strategy1Group, \
     Strategy2Subgroup, Strategy2Group, Strategy3Subgroup, Strategy3Group
-from poms.transactions.filters import TransactionObjectPermissionMemberFilter, TransactionObjectPermissionGroupFilter, \
-    TransactionObjectPermissionPermissionFilter, ComplexTransactionSpecificFilter
+from poms.transactions.filters import TransactionObjectPermissionMemberFilter, ComplexTransactionSpecificFilter
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionClass, Transaction, TransactionType, TransactionTypeGroup, \
     ComplexTransaction, EventClass, NotificationClass
@@ -80,7 +78,7 @@ class TransactionTypeGroupFilterSet(FilterSet):
     short_name = CharFilter()
     public_name = CharFilter()
     member = ObjectPermissionMemberFilter(object_permission_model=TransactionTypeGroup)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=TransactionTypeGroup)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=TransactionTypeGroup)
     permission = ObjectPermissionPermissionFilter(object_permission_model=TransactionTypeGroup)
 
     class Meta:
@@ -197,7 +195,7 @@ class TransactionTypeFilterSet(FilterSet):
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
     is_valid_for_all_instruments = django_filters.BooleanFilter()
     member = ObjectPermissionMemberFilter(object_permission_model=TransactionType)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=TransactionType)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=TransactionType)
     permission = ObjectPermissionPermissionFilter(object_permission_model=TransactionType)
 
     class Meta:
@@ -224,7 +222,7 @@ class TransactionTypeEvFilterSet(FilterSet):
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
     is_valid_for_all_instruments = django_filters.BooleanFilter()
     member = ObjectPermissionMemberFilter(object_permission_model=TransactionType)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=TransactionType)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=TransactionType)
     permission = ObjectPermissionPermissionFilter(object_permission_model=TransactionType)
 
     class Meta:
@@ -1187,11 +1185,11 @@ class TransactionFilterSet(FilterSet):
     allocation_pl = ModelExtWithPermissionMultipleChoiceFilter(model=Instrument)
 
     account_member = TransactionObjectPermissionMemberFilter(object_permission_model=Account)
-    account_member_group = TransactionObjectPermissionGroupFilter(object_permission_model=Account)
-    account_permission = TransactionObjectPermissionPermissionFilter(object_permission_model=Account)
+    # account_member_group = TransactionObjectPermissionGroupFilter(object_permission_model=Account)
+    # account_permission = TransactionObjectPermissionPermissionFilter(object_permission_model=Account)
     portfolio_member = TransactionObjectPermissionMemberFilter(object_permission_model=Portfolio)
-    portfolio_member_group = TransactionObjectPermissionGroupFilter(object_permission_model=Portfolio)
-    portfolio_permission = TransactionObjectPermissionPermissionFilter(object_permission_model=Portfolio)
+    # portfolio_member_group = TransactionObjectPermissionGroupFilter(object_permission_model=Portfolio)
+    # portfolio_permission = TransactionObjectPermissionPermissionFilter(object_permission_model=Portfolio)
 
     class Meta:
         model = Transaction

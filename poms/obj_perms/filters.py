@@ -7,7 +7,7 @@ from rest_framework.filters import BaseFilterBackend
 from poms.common.filters import ModelExtMultipleChoiceFilter
 from poms.obj_perms.models import GenericObjectPermission
 from poms.obj_perms.utils import obj_perms_filter_objects, get_all_perms
-from poms.users.models import Member, Group
+from poms.users.models import Member
 
 
 class AllFakeFilter(django_filters.Filter):
@@ -91,49 +91,49 @@ class ObjectPermissionMemberFilter(ModelExtMultipleChoiceFilter):
         )
 
 
-class ObjectPermissionGroupFilter(ModelExtMultipleChoiceFilter):
-    model = Group
-    field_name = 'name'
-    master_user_path = 'master_user'
-
-    def __init__(self, *args, **kwargs):
-        self.object_permission_model = kwargs.pop('object_permission_model')
-        super(ObjectPermissionGroupFilter, self).__init__(*args, **kwargs)
-
-    def filter(self, qs, value):
-        value = value or ()
-        if self.is_noop(qs, value):
-            return qs
-        if not value:
-            return qs
-        value = set(value)
-
-        # qs = qs.filter(self.get_user_filter_q(value) | self.get_group_filter_q(value))
-        qs = qs.filter(self.get_permission_filter(value))
-
-        if self.distinct:
-            return qs.distinct()
-        return qs
-
-    # def get_user_filter_q(self, value):
-    #     user_lookup_name, user_obj_perms_model = get_user_obj_perms_model(self.object_permission_model)
-    #     return Q(pk__in=user_obj_perms_model.objects.filter(member__groups__in=value).values_list(
-    #         'content_object__id', flat=True))
-    #
-    # def get_group_filter_q(self, value):
-    #     group_lookup_name, group_obj_perms_model = get_group_obj_perms_model(self.object_permission_model)
-    #     return Q(pk__in=group_obj_perms_model.objects.filter(group__in=value).values_list(
-    #         'content_object__id', flat=True))
-
-    def get_permission_filter(self, value):
-        ctype = ContentType.objects.get_for_model(self.object_permission_model)
-        return Q(
-            pk__in=GenericObjectPermission.objects.filter(
-                content_type=ctype, permission__content_type=ctype,
-            ).filter(
-                Q(member__groups__in=value) | Q(group__in=value)
-            ).values_list('object_id', flat=True)
-        )
+# class ObjectPermissionGroupFilter(ModelExtMultipleChoiceFilter):
+#     model = Group
+#     field_name = 'name'
+#     master_user_path = 'master_user'
+#
+#     def __init__(self, *args, **kwargs):
+#         self.object_permission_model = kwargs.pop('object_permission_model')
+#         super(ObjectPermissionGroupFilter, self).__init__(*args, **kwargs)
+#
+#     def filter(self, qs, value):
+#         value = value or ()
+#         if self.is_noop(qs, value):
+#             return qs
+#         if not value:
+#             return qs
+#         value = set(value)
+#
+#         # qs = qs.filter(self.get_user_filter_q(value) | self.get_group_filter_q(value))
+#         qs = qs.filter(self.get_permission_filter(value))
+#
+#         if self.distinct:
+#             return qs.distinct()
+#         return qs
+#
+#     # def get_user_filter_q(self, value):
+#     #     user_lookup_name, user_obj_perms_model = get_user_obj_perms_model(self.object_permission_model)
+#     #     return Q(pk__in=user_obj_perms_model.objects.filter(member__groups__in=value).values_list(
+#     #         'content_object__id', flat=True))
+#     #
+#     # def get_group_filter_q(self, value):
+#     #     group_lookup_name, group_obj_perms_model = get_group_obj_perms_model(self.object_permission_model)
+#     #     return Q(pk__in=group_obj_perms_model.objects.filter(group__in=value).values_list(
+#     #         'content_object__id', flat=True))
+#
+#     def get_permission_filter(self, value):
+#         ctype = ContentType.objects.get_for_model(self.object_permission_model)
+#         return Q(
+#             pk__in=GenericObjectPermission.objects.filter(
+#                 content_type=ctype, permission__content_type=ctype,
+#             ).filter(
+#                 Q(member__groups__in=value) | Q(group__in=value)
+#             ).values_list('object_id', flat=True)
+#         )
 
 
 class ObjectPermissionPermissionFilter(django_filters.MultipleChoiceFilter):

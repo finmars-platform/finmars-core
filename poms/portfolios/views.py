@@ -16,8 +16,7 @@ from poms.counterparties.models import Responsible, Counterparty
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
-from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
-    ObjectPermissionPermissionFilter
+from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionPermissionFilter
 from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
@@ -58,7 +57,7 @@ class PortfolioFilterSet(FilterSet):
     # counterparty = ModelExtWithPermissionMultipleChoiceFilter(model=Counterparty, field_name='counterparties')
     # transaction_type = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType, field_name='transaction_types')
     member = ObjectPermissionMemberFilter(object_permission_model=Portfolio)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Portfolio)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=Portfolio)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Portfolio)
     attribute_types = GroupsAttributeFilter()
     attribute_values = GroupsAttributeFilter()

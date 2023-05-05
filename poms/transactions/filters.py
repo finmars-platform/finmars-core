@@ -9,8 +9,7 @@ from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentType, Instrument, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
     Periodicity, AccrualCalculationModel
 from poms.integrations.models import PriceDownloadScheme
-from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
-    ObjectPermissionPermissionFilter
+from poms.obj_perms.filters import ObjectPermissionMemberFilter
 from poms.obj_perms.models import GenericObjectPermission
 from poms.obj_perms.utils import obj_perms_filter_objects_for_view, obj_perms_filter_objects
 from poms.portfolios.models import Portfolio
@@ -122,85 +121,85 @@ class TransactionObjectPermissionMemberFilter(ObjectPermissionMemberFilter):
             raise ValueError('Invalid object_permission_model')
 
 
-class TransactionObjectPermissionGroupFilter(ObjectPermissionGroupFilter):
-    # def get_user_filter_q(self, value):
-    #     user_lookup_name, user_obj_perms_model = get_user_obj_perms_model(self.object_permission_model)
-    #     pk_q = user_obj_perms_model.objects.filter(member__groups__in=value).values_list(
-    #         'content_object__id', flat=True)
-    #
-    #     if issubclass(self.object_permission_model, Account):
-    #         return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
-    #     elif issubclass(self.object_permission_model, Portfolio):
-    #         return Q(portfolio__in=pk_q)
-    #     else:
-    #         raise ValueError('Invalid object_permission_model')
-    #
-    # def get_group_filter_q(self, value):
-    #     group_lookup_name, group_obj_perms_model = get_group_obj_perms_model(self.object_permission_model)
-    #     pk_q = group_obj_perms_model.objects.filter(group__in=value).values_list(
-    #         'content_object__id', flat=True)
-    #     if issubclass(self.object_permission_model, Account):
-    #         return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
-    #     elif issubclass(self.object_permission_model, Portfolio):
-    #         return Q(portfolio__in=pk_q)
-    #     else:
-    #         raise ValueError('Invalid object_permission_model')
-
-    def get_permission_filter(self, value):
-        ctype = ContentType.objects.get_for_model(self.object_permission_model)
-        pk_q = Q(
-            pk__in=GenericObjectPermission.objects.filter(
-                content_type=ctype, permission__content_type=ctype,
-            ).filter(
-                Q(member__groups__in=value) | Q(group__in=value)
-            ).values_list('object_id', flat=True)
-        )
-        if issubclass(self.object_permission_model, Account):
-            return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
-        elif issubclass(self.object_permission_model, Portfolio):
-            return Q(portfolio__in=pk_q)
-        else:
-            raise ValueError('Invalid object_permission_model')
-
-
-class TransactionObjectPermissionPermissionFilter(ObjectPermissionPermissionFilter):
-    # def get_user_filter_q(self, value):
-    #     user_lookup_name, user_obj_perms_model = get_user_obj_perms_model(self.object_permission_model)
-    #     pk_q = user_obj_perms_model.objects.filter(permission__codename__in=value).values_list(
-    #         'content_object__id', flat=True)
-    #
-    #     if issubclass(self.object_permission_model, Account):
-    #         return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
-    #     elif issubclass(self.object_permission_model, Portfolio):
-    #         return Q(portfolio__in=pk_q)
-    #     else:
-    #         raise ValueError('Invalid object_permission_model')
-    #
-    # def get_group_filter_q(self, value):
-    #     group_lookup_name, group_obj_perms_model = get_group_obj_perms_model(self.object_permission_model)
-    #     pk_q = group_obj_perms_model.objects.filter(permission__codename__in=value).values_list(
-    #         'content_object__id', flat=True)
-    #     if issubclass(self.object_permission_model, Account):
-    #         return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
-    #     elif issubclass(self.object_permission_model, Portfolio):
-    #         return Q(portfolio__in=pk_q)
-    #     else:
-    #         raise ValueError('Invalid object_permission_model')
-
-    def get_permission_filter(self, value):
-        ctype = ContentType.objects.get_for_model(self.object_permission_model)
-        pk_q = Q(
-            pk__in=GenericObjectPermission.objects.filter(
-                content_type=ctype, permission__content_type=ctype,
-                permission__codename__in=value
-            ).values_list('object_id', flat=True)
-        )
-        if issubclass(self.object_permission_model, Account):
-            return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
-        elif issubclass(self.object_permission_model, Portfolio):
-            return Q(portfolio__in=pk_q)
-        else:
-            raise ValueError('Invalid object_permission_model')
+# class TransactionObjectPermissionGroupFilter(ObjectPermissionGroupFilter):
+#     # def get_user_filter_q(self, value):
+#     #     user_lookup_name, user_obj_perms_model = get_user_obj_perms_model(self.object_permission_model)
+#     #     pk_q = user_obj_perms_model.objects.filter(member__groups__in=value).values_list(
+#     #         'content_object__id', flat=True)
+#     #
+#     #     if issubclass(self.object_permission_model, Account):
+#     #         return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
+#     #     elif issubclass(self.object_permission_model, Portfolio):
+#     #         return Q(portfolio__in=pk_q)
+#     #     else:
+#     #         raise ValueError('Invalid object_permission_model')
+#     #
+#     # def get_group_filter_q(self, value):
+#     #     group_lookup_name, group_obj_perms_model = get_group_obj_perms_model(self.object_permission_model)
+#     #     pk_q = group_obj_perms_model.objects.filter(group__in=value).values_list(
+#     #         'content_object__id', flat=True)
+#     #     if issubclass(self.object_permission_model, Account):
+#     #         return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
+#     #     elif issubclass(self.object_permission_model, Portfolio):
+#     #         return Q(portfolio__in=pk_q)
+#     #     else:
+#     #         raise ValueError('Invalid object_permission_model')
+#
+#     def get_permission_filter(self, value):
+#         ctype = ContentType.objects.get_for_model(self.object_permission_model)
+#         pk_q = Q(
+#             pk__in=GenericObjectPermission.objects.filter(
+#                 content_type=ctype, permission__content_type=ctype,
+#             ).filter(
+#                 Q(member__groups__in=value) | Q(group__in=value)
+#             ).values_list('object_id', flat=True)
+#         )
+#         if issubclass(self.object_permission_model, Account):
+#             return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
+#         elif issubclass(self.object_permission_model, Portfolio):
+#             return Q(portfolio__in=pk_q)
+#         else:
+#             raise ValueError('Invalid object_permission_model')
+#
+#
+# class TransactionObjectPermissionPermissionFilter(ObjectPermissionPermissionFilter):
+#     # def get_user_filter_q(self, value):
+#     #     user_lookup_name, user_obj_perms_model = get_user_obj_perms_model(self.object_permission_model)
+#     #     pk_q = user_obj_perms_model.objects.filter(permission__codename__in=value).values_list(
+#     #         'content_object__id', flat=True)
+#     #
+#     #     if issubclass(self.object_permission_model, Account):
+#     #         return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
+#     #     elif issubclass(self.object_permission_model, Portfolio):
+#     #         return Q(portfolio__in=pk_q)
+#     #     else:
+#     #         raise ValueError('Invalid object_permission_model')
+#     #
+#     # def get_group_filter_q(self, value):
+#     #     group_lookup_name, group_obj_perms_model = get_group_obj_perms_model(self.object_permission_model)
+#     #     pk_q = group_obj_perms_model.objects.filter(permission__codename__in=value).values_list(
+#     #         'content_object__id', flat=True)
+#     #     if issubclass(self.object_permission_model, Account):
+#     #         return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
+#     #     elif issubclass(self.object_permission_model, Portfolio):
+#     #         return Q(portfolio__in=pk_q)
+#     #     else:
+#     #         raise ValueError('Invalid object_permission_model')
+#
+#     def get_permission_filter(self, value):
+#         ctype = ContentType.objects.get_for_model(self.object_permission_model)
+#         pk_q = Q(
+#             pk__in=GenericObjectPermission.objects.filter(
+#                 content_type=ctype, permission__content_type=ctype,
+#                 permission__codename__in=value
+#             ).values_list('object_id', flat=True)
+#         )
+#         if issubclass(self.object_permission_model, Account):
+#             return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
+#         elif issubclass(self.object_permission_model, Portfolio):
+#             return Q(portfolio__in=pk_q)
+#         else:
+#             raise ValueError('Invalid object_permission_model')
 
 
 class ComplexTransactionSpecificFilter(BaseFilterBackend):

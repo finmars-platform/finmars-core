@@ -6,7 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.users.models import Member, Group
+from poms.users.models import Member
 
 
 # class AbstractObjectPermission(models.Model):
@@ -58,8 +58,8 @@ class GenericObjectPermission(models.Model):
         Check permissions for all nested objects dramatically increases response time
 
     '''
-    group = models.ForeignKey(Group, null=True, blank=True, verbose_name=gettext_lazy('group'),
-                              on_delete=models.CASCADE)
+    # group = models.ForeignKey(Group, null=True, blank=True, verbose_name=gettext_lazy('group'),
+    #                           on_delete=models.CASCADE)
     member = models.ForeignKey(Member, null=True, blank=True, verbose_name=gettext_lazy('member'),
                                on_delete=models.CASCADE)
 
@@ -73,8 +73,7 @@ class GenericObjectPermission(models.Model):
         verbose_name = gettext_lazy('object permission')
         verbose_name_plural = gettext_lazy('object permissions')
         index_together = [
-            ['content_type', 'object_id'],
-            ['content_type', 'group']
+            ['content_type', 'object_id']
         ]
 
     def __str__(self):

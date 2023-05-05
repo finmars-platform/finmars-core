@@ -12,8 +12,7 @@ from poms.common.pagination import CustomPaginationMixin
 from poms.common.utils import get_list_of_entity_attributes
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet
-from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
-    ObjectPermissionPermissionFilter
+from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionPermissionFilter
 from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
@@ -34,7 +33,7 @@ class Strategy1GroupFilterSet(FilterSet):
     short_name = CharFilter()
     public_name = CharFilter()
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy1Group)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy1Group)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy1Group)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy1Group)
 
     class Meta:
@@ -89,7 +88,7 @@ class Strategy1SubgroupFilterSet(FilterSet):
     public_name = CharFilter()
     group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy1Group)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy1Subgroup)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy1Subgroup)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy1Subgroup)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy1Subgroup)
 
     class Meta:
@@ -132,7 +131,7 @@ class Strategy1FilterSet(FilterSet):
     subgroup__group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy1Group)
     subgroup = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy1Subgroup)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy1)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy1)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy1)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy1)
 
     class Meta:
@@ -242,7 +241,7 @@ class Strategy1ViewSet(AbstractWithObjectPermissionViewSet):
 # 2
 class Strategy2GroupFilterSet(Strategy1GroupFilterSet):
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy2Group)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy2Group)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy2Group)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy2Group)
 
     class Meta(Strategy1GroupFilterSet.Meta):
@@ -269,7 +268,7 @@ class Strategy2GroupViewSet(Strategy1GroupViewSet):
 class Strategy2SubgroupFilterSet(Strategy1SubgroupFilterSet):
     group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy2Group)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy2Subgroup)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy2Subgroup)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy2Subgroup)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy2Subgroup)
 
     class Meta(Strategy1SubgroupFilterSet.Meta):
@@ -307,7 +306,7 @@ class Strategy2FilterSet(Strategy1FilterSet):
     subgroup__group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy2Group)
     subgroup = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy2Subgroup)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy2)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy2)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy2)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy2)
 
     class Meta:
@@ -400,7 +399,7 @@ class Strategy2ViewSet(Strategy1ViewSet):
 
 class Strategy3GroupFilterSet(Strategy1GroupFilterSet):
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy3Group)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy3Group)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy3Group)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy3Group)
 
     class Meta(Strategy1GroupFilterSet.Meta):
@@ -425,7 +424,7 @@ class Strategy3GroupViewSet(Strategy1GroupViewSet):
 class Strategy3SubgroupFilterSet(Strategy1SubgroupFilterSet):
     group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy3Group)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy3Subgroup)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy3Subgroup)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy3Subgroup)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy3Subgroup)
 
     class Meta(Strategy1SubgroupFilterSet.Meta):
@@ -464,7 +463,7 @@ class Strategy3FilterSet(Strategy1FilterSet):
     subgroup__group = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy3Group)
     subgroup = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy3Subgroup)
     member = ObjectPermissionMemberFilter(object_permission_model=Strategy3)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy3)
+    # member_group = ObjectPermissionGroupFilter(object_permission_model=Strategy3)
     permission = ObjectPermissionPermissionFilter(object_permission_model=Strategy3)
 
     class Meta:

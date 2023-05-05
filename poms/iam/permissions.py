@@ -1,10 +1,10 @@
 
 import logging
 
-from finmars_iam.access_policy import AccessPolicy
-from finmars_iam.utils import get_statements
+from poms.iam.access_policy import AccessPolicy
+from poms.iam.utils import get_statements
 
-_l = logging.getLogger('finmars_iam')
+_l = logging.getLogger('poms.iam')
 
 class FinmarsAccessPolicy(AccessPolicy):
 

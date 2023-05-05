@@ -2,9 +2,9 @@ import logging
 
 from rest_framework.filters import BaseFilterBackend
 
-from finmars_iam.utils import filter_queryset_with_access_policies
+from poms.iam.utils import filter_queryset_with_access_policies
 
-_l = logging.getLogger('finmars_iam')
+_l = logging.getLogger('poms.iam')
 
 
 class ObjectPermissionBackend(BaseFilterBackend):

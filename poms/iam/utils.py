@@ -1,6 +1,6 @@
 import logging
 
-_l = logging.getLogger('finmars_iam')
+_l = logging.getLogger('poms.iam')
 from rest_framework.exceptions import PermissionDenied
 from django.db.models import Q
 
@@ -18,7 +18,7 @@ from django.db.models import Q
         }
 
     '''
-from finmars_iam.models import UserAccessPolicy, RoleAccessPolicy, GroupAccessPolicy
+from poms.iam.models import MemberAccessPolicy, RoleAccessPolicy, GroupAccessPolicy
 
 
 def parse_resource_into_object(resource):
@@ -72,23 +72,21 @@ def parse_resource_attribute(resources):
     return result
 
 
-def get_statements(user):
-    if user.is_anonymous:
-        raise PermissionDenied("Anonymous user detected")
+def get_statements(member):
 
     '''Getting UserAccessPolicies attached to User'''
-    user_access_policies = UserAccessPolicy.objects.filter(user=user)
+    member_access_policies = MemberAccessPolicy.objects.filter(user=member)
 
-    user_roles = user.iam_roles.all()
-    '''Getting AccessPolicies directly attached to Role that User assigned to'''
-    direct_roles_access_policies = RoleAccessPolicy.objects.filter(role__in=user_roles)
+    member_roles = member.iam_roles.all()
+    '''Getting AccessPolicies directly attached to Role that Member assigned to'''
+    direct_roles_access_policies = RoleAccessPolicy.objects.filter(role__in=member_roles)
 
-    '''Getting AccessPolicies attached to Groups that User is member of'''
-    groups_access_policies = GroupAccessPolicy.objects.filter(group__in=user.iam_groups.all())
+    '''Getting AccessPolicies attached to Groups that Member is member of'''
+    groups_access_policies = GroupAccessPolicy.objects.filter(group__in=member.iam_groups.all())
 
     '''Getting AccessPolicies attached to Groups that Role is member of'''
     role_in_groups = []
-    for role in user_roles:
+    for role in member_roles:
         role_in_groups = role_in_groups + role.iam_groups.all()
 
     role_in_group_access_policies = GroupAccessPolicy.objects.filter(group__in=role_in_groups)
@@ -98,7 +96,7 @@ def get_statements(user):
 
     statements = []
 
-    for item in user_access_policies:
+    for item in member_access_policies:
 
         # _l.info('item.policy %s' % item.policy)
 

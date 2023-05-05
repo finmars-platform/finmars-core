@@ -72,7 +72,7 @@ INSTALLED_APPS = [
     # 'poms.cache_machine',
 
     'poms.users',
-
+    'poms.iam',
     'poms.notifications',
     'poms.obj_attrs',
     'poms.obj_perms',
@@ -127,7 +127,7 @@ INSTALLED_APPS = [
     'django_celery_results',
     'django_celery_beat',
 
-    'finmars_iam',
+
     'finmars_standardized_errors',
 
     # ==================================

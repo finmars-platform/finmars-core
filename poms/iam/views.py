@@ -1,13 +1,13 @@
 from rest_framework.viewsets import ModelViewSet
 
-from finmars_iam.filters import ObjectPermissionBackend
-from finmars_iam.mixins import AccessViewSetMixin
-from finmars_iam.models import Role, Group, AccessPolicyTemplate
-from finmars_iam.permissions import FinmarsAccessPolicy
+from poms.iam.filters import ObjectPermissionBackend
+from poms.iam.mixins import AccessViewSetMixin
+from poms.iam.models import Role, Group, AccessPolicyTemplate
+from poms.iam.permissions import FinmarsAccessPolicy
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg.inspectors import SwaggerAutoSchema
 
-from finmars_iam.serializers import RoleSerializer, GroupSerializer, AccessPolicyTemplateSerializer
+from poms.iam.serializers import RoleSerializer, GroupSerializer, AccessPolicyTemplateSerializer
 
 
 class AbstractFinmarsAccessPolicyViewSet(AccessViewSetMixin, ModelViewSet):

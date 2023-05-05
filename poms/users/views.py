@@ -51,13 +51,13 @@ from poms.transactions.models import TransactionType, TransactionTypeInput, Tran
     Transaction, ComplexTransaction
 from poms.users.filters import OwnerByMasterUserFilter, MasterUserFilter, OwnerByUserFilter, IsMemberFilterBackend, \
     MasterUserBackupsForOwnerOnlyFilter
-from poms.users.models import MasterUser, Member, Group, ResetPasswordToken, InviteToMasterUser, EcosystemDefault, \
+from poms.users.models import MasterUser, Member,  ResetPasswordToken,  EcosystemDefault, \
     OtpToken, UsercodePrefix
 from poms.users.permissions import SuperUserOrReadOnly, IsCurrentMasterUser, IsCurrentUser
-from poms.users.serializers import GroupSerializer, UserSerializer, MasterUserSerializer, MemberSerializer, \
+from poms.users.serializers import  UserSerializer, MasterUserSerializer, MemberSerializer, \
     PingSerializer, UserSetPasswordSerializer, UserUnsubscribeSerializer, \
     UserRegisterSerializer, MasterUserCreateSerializer, EmailSerializer, PasswordTokenSerializer, \
-    InviteToMasterUserSerializer, InviteCreateSerializer, EcosystemDefaultSerializer, MasterUserLightSerializer, \
+    EcosystemDefaultSerializer, MasterUserLightSerializer, \
     OtpTokenSerializer, MasterUserCopySerializer, UsercodePrefixSerializer
 from poms.users.tasks import clone_master_user
 
@@ -819,7 +819,6 @@ class MemberFilterSet(FilterSet):
     first_name = CharFilter()
     last_name = CharFilter()
     email = CharFilter()
-    group = ModelExtMultipleChoiceFilter(model=Group, field_name='groups')
 
     class Meta:
         model = Member
@@ -830,7 +829,7 @@ class MemberViewSet(AbstractModelViewSet):
     queryset = Member.objects.select_related(
         'user'
     ).prefetch_related(
-        'groups'
+
     )
     serializer_class = MemberSerializer
     permission_classes = AbstractModelViewSet.permission_classes + [
@@ -908,125 +907,6 @@ class UsercodePrefixViewSet(AbstractModelViewSet):
         'value',
     ]
     pagination_class = BigPagination
-
-
-class GroupFilterSet(FilterSet):
-    id = NoOpFilter()
-    name = CharFilter()
-    member = ModelExtMultipleChoiceFilter(model=Member, field_name='username')
-
-    # member = ModelExtMultipleChoiceFilter(model=Member, field_name='username', name='members')
-
-    class Meta:
-        model = Group
-        fields = []
-
-
-class GroupViewSet(AbstractModelViewSet):
-    queryset = Group.objects.select_related(
-        'master_user'
-    ).prefetch_related(
-        'members'
-    )
-    serializer_class = GroupSerializer
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        SuperUserOrReadOnly,
-    ]
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-    ]
-    filter_class = GroupFilterSet
-    ordering_fields = [
-        'name',
-    ]
-    pagination_class = BigPagination
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
-
-        if request.data.get('is_public', None):
-            instance.grant_all_permissions_to_public_group(instance, request.user.master_user)
-
-        return Response(serializer.data)
-
-    def update(self, request, *args, **kwargs):
-
-        owner = Member.objects.get(master_user=request.user.master_user, is_owner=True)
-
-        admin_group = Group.objects.get(master_user=request.user.master_user, role=Group.ADMIN)
-
-        if request.data['id'] == admin_group.id:
-            if owner.id not in request.data['members']:
-                raise PermissionDenied()
-
-            members = Member.objects.filter(id__in=request.data['members'])
-            for item in members:
-                item.is_admin = True
-                item.save()
-
-        return super(GroupViewSet, self).update(request, *args, **kwargs)
-
-    def perform_destroy(self, instance):
-
-        # TODO important to know: Deletion of the group leads to GenericObjectPermission deletion
-
-        if instance.role == Group.ADMIN:
-            raise PermissionDenied()
-
-        GenericObjectPermission.objects.filter(group=instance).delete()
-        instance.delete()
-
-
-class InviteToMasterUserFilterSet(FilterSet):
-    id = NoOpFilter()
-    # to_user = ModelExtMultipleChoiceFilter(model=User, field_name='to_user',)
-    # from_member = ModelExtMultipleChoiceFilter(model=Member, field_name='from_member',)
-    status = CharFilter()
-
-    class Meta:
-        model = InviteToMasterUser
-        fields = []
-
-
-class InviteFromMasterUserViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelFakeMixin, ModelViewSet):
-    queryset = InviteToMasterUser.objects.select_related(
-        'from_member',
-    )
-    serializer_class = InviteToMasterUserSerializer
-    permission_classes = AbstractModelViewSet.permission_classes + []
-    filter_backends = [
-        DjangoFilterBackend,
-        OwnerByUserFilter,
-    ]
-    filter_class = InviteToMasterUserFilterSet
-    ordering_fields = [
-    ]
-    pagination_class = BigPagination
-
-
-class InviteToUserViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelFakeMixin, ModelViewSet):
-    queryset = InviteToMasterUser.objects.select_related(
-        'from_member',
-    )
-    serializer_class = InviteToMasterUserSerializer
-    permission_classes = AbstractModelViewSet.permission_classes + []
-    filter_backends = [
-        DjangoFilterBackend,
-        OwnerByMasterUserFilter,
-    ]
-    filter_class = InviteToMasterUserFilterSet
-    ordering_fields = [
-    ]
-    pagination_class = BigPagination
-
-
-class CreateInviteViewSet(AbstractApiView, ModelViewSet):
-    serializer_class = InviteCreateSerializer
-    permission_classes = [
-        IsAuthenticated
-    ]
 
 
 class LeaveMasterUserViewSet(AbstractApiView, ViewSet):
