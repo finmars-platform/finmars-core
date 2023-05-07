@@ -89,6 +89,13 @@ def zip_directory(source_dir, output_zipfile):
                 archive.write(file_path, arcname=arcname)
 
 
+def remove_object_keys(d: dict) -> dict:
+    filtered_dict = {}
+    for key, value in d.items():
+        if '_object' not in key:
+            filtered_dict[key] = value
+    return filtered_dict
+
 def save_serialized_entity(content_type, configuration_code, source_directory, context):
     try:
         model = apps.get_model(content_type)
@@ -113,6 +120,11 @@ def save_serialized_entity(content_type, configuration_code, source_directory, c
 
         if 'deleted_user_code' in serialized_data:
             serialized_data.pop('deleted_user_code')
+
+        if 'members' in serialized_data:
+            serialized_data.pop('members')
+
+        serialized_data = remove_object_keys(serialized_data)
 
         path = source_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
 

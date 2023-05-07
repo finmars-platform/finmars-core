@@ -1,5 +1,4 @@
 import logging
-import os
 import traceback
 
 from poms.configuration.export_helpers import export_instrument_types, export_pricing_policies, export_transaction_types
@@ -304,10 +303,19 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                source_directory + '/ui/layouts/transaction-report',
                                context)
 
-
-
-
-
+        #     IAM
+        save_serialized_entity('iam.group',
+                               configuration.configuration_code,
+                               source_directory + '/iam/groups',
+                               context)
+        save_serialized_entity('iam.role',
+                               configuration.configuration_code,
+                               source_directory + '/iam/roles',
+                               context)
+        save_serialized_entity('iam.accesspolicy',
+                               configuration.configuration_code,
+                               source_directory + '/iam/access-policies',
+                               context)
 
     except Exception as e:
         _l.error("Error exporting configuration e: %s" % e)

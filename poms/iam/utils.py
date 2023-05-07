@@ -1,4 +1,5 @@
 import logging
+from dataclasses import asdict
 
 from poms_app import settings
 
@@ -25,7 +26,25 @@ from itertools import chain
         }
 
     '''
-from poms.iam.models import AccessPolicy
+from poms.iam.models import AccessPolicy, Role
+
+
+def lowercase_keys_and_values(dictionary):
+    new_dict = {}
+    for key, value in dictionary.items():
+        new_key = key.lower() if isinstance(key, str) else key
+        if isinstance(value, dict):
+            new_value = lowercase_keys_and_values(value)
+        elif isinstance(value, str):
+            new_value = value.lower()
+        elif isinstance(value, list):
+            new_value = [lowercase_keys_and_values(item) if isinstance(item, dict) else item for item in value]
+        else:
+            new_value = value
+
+        new_dict[new_key] = new_value
+
+    return new_dict
 
 
 def parse_resource_into_object(resource):
@@ -78,13 +97,13 @@ def parse_resource_attribute(resources):
 
 def get_statements(member):
     # AccessPolicies directly assigned to the member
-    member_policies = member.access_policies.all()
+    member_policies = member.iam_access_policies.all()
 
     # AccessPolicies assigned to the member through roles
-    role_policies = AccessPolicy.objects.filter(roles__members=member).distinct()
+    role_policies = AccessPolicy.objects.filter(iam_roles__members=member).distinct()
 
     # AccessPolicies assigned to the member through groups
-    group_policies = AccessPolicy.objects.filter(groups__members=member).distinct()
+    group_policies = AccessPolicy.objects.filter(iam_groups__members=member).distinct()
 
     # Combine all AccessPolicies
     all_policies = set(chain(member_policies, role_policies, group_policies))
@@ -95,26 +114,22 @@ def get_statements(member):
 
         # _l.info('item.policy %s' % item.policy)
 
-        if isinstance(item.policy, dict):
-            statements.append(item.policy)
-        else:
-            statements = statements + item.policy
+        policy = lowercase_keys_and_values(item.policy)
 
-    _l.info('get_policy_statements.statements %s' % statements)
+        for statement in policy['statement']:
+            statements.append(lowercase_keys_and_values(statement))
+
+    # _l.debug('get_policy_statements.statements %s' % statements)
 
     return statements
 
 
-def filter_queryset_with_access_policies(user, queryset):
-    if user.is_superuser:
+def filter_queryset_with_access_policies(member, queryset, view):
+
+    if member.is_admin:
         return queryset
 
-    # _l.info("filter_queryset_with_access_policies here")
-
-    if user.member.is_admin:
-        return queryset
-
-    statements = get_statements(user)
+    statements = get_statements(member)
 
     # _l.info('ObjectPermissionBackend.filter_queryset.statements %s' % statements)
 
@@ -123,7 +138,9 @@ def filter_queryset_with_access_policies(user, queryset):
     We will not grant access to objects if Access Policy is not configured
     '''
     if not len(statements):
-        return []
+        return queryset.none()
+
+    _l.debug('filter_queryset_with_access_policies.statements %s' % len(statements))
 
     app_label = queryset.model._meta.app_label
     model_name = queryset.model._meta.model_name
@@ -135,47 +152,47 @@ def filter_queryset_with_access_policies(user, queryset):
 
     q = Q()
 
-    '''
-    TODO improve logic to handle statements
-    for now I only parse {"effect": "allow"}
-    and go through the resources and do basic icontains lookup
-    
-    Its enough for Space Backup Permissions, but in future this method requires updates
-    
-    '''
     for statement in statements:
 
         if statement['effect'] == 'allow':
 
             if statement['resource']:
 
-                resources = parse_resource_attribute(statement['resource'])
+                if statement['resource'] == '*':
 
-                # _l.info('resources %s' % resources)
+                    no_filter_q = Q(id__isnull=False)
 
-                for resource in resources:
+                    q = q | no_filter_q
 
-                    if content_type_key == resource['content_type']:
+                else:
 
-                        val = resource['user_code']
+                    resources = parse_resource_attribute(statement['resource'])
 
-                        '''
-                        * means that we have pattern e.g.
-                        
-                        "frn:finmars:portfolios.portfolio:portfolio*"
-                        
-                        it would find following objects
-                        
-                        "portfolio_1"
-                        "portfolio_2"
-                        
-                        '''
-                        if '*' in val:
-                            val = val.split('*')[0]
+                    # _l.info('resources %s' % resources)
 
-                        q = q | Q(**{'user_code__icontains': val})
+                    for resource in resources:
 
-    # _l.info('q %s' % q)
+                        if content_type_key == resource['content_type']:
+
+                            val = resource['user_code']
+
+                            '''
+                            * means that we have pattern e.g.
+                            
+                            "frn:finmars:portfolios.portfolio:portfolio*"
+                            
+                            it would find following objects
+                            
+                            "portfolio_1"
+                            "portfolio_2"
+                            
+                            '''
+                            if '*' in val:
+                                val = val.split('*')[0]
+
+                            q = q | Q(**{'user_code__icontains': val})
+
+    _l.debug('filter_queryset_with_access_policies.q %s' % len(q))
 
     '''
     Another Important clause
@@ -183,9 +200,9 @@ def filter_queryset_with_access_policies(user, queryset):
     We also will not grant access to objects
     '''
     if not len(q):
-        return []
+        return queryset.none()
 
-    # _l.info('ObjectPermissionBackend.filter_queryset before access filter: %s' % queryset.count())
+    _l.debug('ObjectPermissionBackend.filter_queryset before access filter: %s' % queryset.count())
 
     result = queryset.filter(q)
 
@@ -272,6 +289,7 @@ def generate_full_access_policies_for_viewsets(viewset_classes):
                 "Statement": [
                     {
                         "Effect": "Allow",
+                        "Principal": "*",
                         "Action": actions,
                         "Resource": "*"
                     }
@@ -323,6 +341,7 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes):
                 "Statement": [
                     {
                         "Effect": "Allow",
+                        "Principal": "*",
                         "Action": actions,
                         "Resource": "*"
                     }
@@ -331,11 +350,24 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes):
 
             access_policy.policy = access_policy_json
             access_policy.save()
+            access_policies.append(access_policy)
         else:
             access_policy.delete()
 
+
     return access_policies
 
+def generate_viewer_role(readonly_access_policies):
+    try:
+        role = Role.objects.get(user_code='com.finmars.local:viewer')
+    except Exception as e:
+        role = Role.objects.create(user_code='com.finmars.local:viewer', configuration_code='com.finmars.local')
+
+    _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
+
+    role.name = 'Viewer'
+    role.access_policies.set(readonly_access_policies)
+    role.save()
 
 def get_viewsets_from_app(app_name):
     app_config = apps.get_app_config(app_name)
@@ -381,4 +413,6 @@ def create_base_iam_access_policies_templates():
     _l.info('viewsets %s' % len(viewsets))
 
     generate_full_access_policies_for_viewsets(viewsets)
-    generate_readonly_access_policies_for_viewsets(viewsets)
+    readonly_access_policies = generate_readonly_access_policies_for_viewsets(viewsets)
+
+    generate_viewer_role(readonly_access_policies)

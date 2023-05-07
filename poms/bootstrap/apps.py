@@ -49,8 +49,6 @@ class BootstrapConfig(AppConfig):
         '''
 
         self.bootstrap_celery()
-        self.create_iam_roles_and_groups()
-        self.create_iam_access_policies_templates()
         self.add_view_and_manage_permissions()
         self.load_master_user_data()
         self.create_finmars_bot()
@@ -59,6 +57,8 @@ class BootstrapConfig(AppConfig):
         self.create_base_folders()
         self.register_at_authorizer_service()
         self.create_local_configuration()
+        self.create_iam_roles_and_groups()
+        self.create_iam_access_policies_templates()
 
     def create_finmars_bot(self):
 

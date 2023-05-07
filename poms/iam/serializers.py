@@ -3,9 +3,25 @@ from rest_framework import serializers
 
 from poms.iam.models import Role, Group, AccessPolicy
 from poms.users.models import Member
+from poms_app import settings
 
 User = get_user_model()
 
+
+class IamModelMetaSerializer(serializers.ModelSerializer):
+
+    def to_representation(self, instance):
+
+        representation = super().to_representation(instance)
+
+        representation['meta'] = {
+            'content_type': self.Meta.model._meta.app_label + '.' + self.Meta.model._meta.model_name,
+            'app_label': self.Meta.model._meta.app_label,
+            'model_name': self.Meta.model._meta.model_name,
+            'space_code': settings.BASE_API_URL
+        }
+
+        return representation
 
 class IamRoleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -61,7 +77,7 @@ class AccessPolicyUserCodeField(serializers.RelatedField):
             raise serializers.ValidationError('AccessPolicy with user_code {} does not exist.'.format(data))
 
 
-class RoleSerializer(serializers.ModelSerializer):
+class RoleSerializer(IamModelMetaSerializer):
 
     members = serializers.PrimaryKeyRelatedField(queryset=Member.objects.all(), many=True, required=False)
     members_object = IamMemberSerializer(source="members", many=True, read_only=True)
@@ -114,7 +130,7 @@ class RoleSerializer(serializers.ModelSerializer):
 
 
 
-class GroupSerializer(serializers.ModelSerializer):
+class GroupSerializer(IamModelMetaSerializer):
 
     members = serializers.PrimaryKeyRelatedField(queryset=Member.objects.all(), many=True, required=False)
     members_object = IamMemberSerializer(source="members", many=True, read_only=True)
@@ -174,7 +190,7 @@ class GroupSerializer(serializers.ModelSerializer):
         return instance
 
 
-class AccessPolicySerializer(serializers.ModelSerializer):
+class AccessPolicySerializer(IamModelMetaSerializer):
     class Meta:
         model = AccessPolicy
         fields = ['id', 'name', 'user_code', 'configuration_code', 'policy', 'description']

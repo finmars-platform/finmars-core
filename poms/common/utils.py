@@ -534,6 +534,10 @@ def get_serializer(content_type_key):
 
     from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer
 
+    from poms.iam.serializers import GroupSerializer
+    from poms.iam.serializers import RoleSerializer
+    from poms.iam.serializers import AccessPolicySerializer
+
     serializer_map = {
 
         'transactions.transactiontype': TransactionTypeSerializer,
@@ -570,7 +574,11 @@ def get_serializer(content_type_key):
         'ui.instrumentuserfieldmodel': InstrumentUserFieldSerializer,
 
         'pricing.instrumentpricingscheme': InstrumentPricingSchemeSerializer,
-        'pricing.currencypricingscheme': CurrencyPricingSchemeSerializer
+        'pricing.currencypricingscheme': CurrencyPricingSchemeSerializer,
+
+        'iam.group': GroupSerializer,
+        'iam.role': RoleSerializer,
+        'iam.accesspolicy': AccessPolicySerializer,
 
     }
 

@@ -605,7 +605,7 @@ class GenericAttributeListSerializer(serializers.ListSerializer):
             return instance.attributes
         master_user = get_master_user_from_context(self.context)
         attribute_type_qs = GenericAttributeType.objects.filter(master_user=master_user)
-        attribute_type_qs = obj_perms_filter_objects_for_view(member, attribute_type_qs)
+        # attribute_type_qs = obj_perms_filter_objects_for_view(member, attribute_type_qs)
         # return instance.attributes.filter(attribute_type__in=attribute_type_qs)
 
         # Probably deprecated 2023-03-10

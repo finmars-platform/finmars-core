@@ -122,6 +122,7 @@ class AccessPolicy(permissions.BasePermission):
             self, statements: List[Union[dict, Statement]], request, view, action: str
     ) -> bool:
         statements = self._normalize_statements(statements)
+
         matched = self._get_statements_matching_principal(request, statements)
         matched = self._get_statements_matching_action(request, view, action, matched)
 
@@ -133,7 +134,10 @@ class AccessPolicy(permissions.BasePermission):
             request, view, action=action, statements=matched, is_expression=True
         )
 
-        denied = [_ for _ in matched if _["effect"] != "allow"]
+        denied = [_ for _ in matched if _["effect"].lower() != "allow"]
+
+        _l.debug('len(matched) %s' % len(matched))
+        _l.debug('len(denied) %s' % len(denied))
 
         if len(matched) == 0 or len(denied) > 0:
             return False
@@ -148,6 +152,8 @@ class AccessPolicy(permissions.BasePermission):
         for statement in statements:
             if isinstance(statement, Statement):
                 statement = asdict(statement)
+
+            _l.debug('_normalize_statements.statement %s ' % statement)
 
             if isinstance(statement["principal"], str):
                 statement["principal"] = [statement["principal"]]
@@ -218,7 +224,8 @@ class AccessPolicy(permissions.BasePermission):
         SAFE_METHODS = ("GET", "HEAD", "OPTIONS")
         http_method = f"<method:{request.method.lower()}>"
 
-        _l.info('_get_statements_matching_action.action %s' % action)
+        _l.debug('_get_statements_matching_action.action %s' % action)
+        _l.debug('_get_statements_matching_action.view name %s' % view.basename.lower() )
         # _l.info('_get_statements_matching_action.view %s' % view.__dict__)
         # _l.info('_get_statements_matching_action.self %s' % self)
         # _l.info('_get_statements_matching_action.request %s' % request)
@@ -228,7 +235,7 @@ class AccessPolicy(permissions.BasePermission):
             for action_statement in statement["action"]:
 
                 action_object = action_statement_into_object(action_statement)
-                # _l.info('_get_statements_matching_action.action_object %s' % action_object)
+                _l.debug('_get_statements_matching_action.action_object %s' % action_object)
 
                 if settings.SERVICE_NAME in action_object['service']:
 
@@ -244,7 +251,7 @@ class AccessPolicy(permissions.BasePermission):
                         ):
                             matched.append(statement)
 
-        # _l.info('_get_statements_matching_action.matched %s' % matched)
+        _l.debug('_get_statements_matching_action.matched %s' % matched)
 
         return matched
 
