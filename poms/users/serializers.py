@@ -26,7 +26,8 @@ from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Fiel
     Strategy1GroupField, Strategy2GroupField, Strategy2SubgroupField, Strategy3GroupField, Strategy3SubgroupField
 from poms.transactions.fields import TransactionTypeField
 from poms.ui.models import ListLayout, EditLayout
-from poms.users.fields import MasterUserField, MemberField, GroupField, HiddenMemberField, RoleField
+from poms.users.fields import MasterUserField, MemberField, GroupField, HiddenMemberField, RoleField, \
+    AccessPolicyField
 from poms.users.models import MasterUser, UserProfile,  Member, TIMEZONE_CHOICES,  \
     EcosystemDefault, OtpToken, UsercodePrefix
 from poms.users.utils import get_user_from_context, get_master_user_from_context, get_member_from_context
@@ -669,7 +670,7 @@ class MemberSerializer(serializers.ModelSerializer):
     roles = RoleField(source='iam_roles', many=True, required=False)
     roles_object = serializers.PrimaryKeyRelatedField(source='iam_roles', read_only=True, many=True)
 
-    access_policies = RoleField(source='iam_access_policies', many=True, required=False)
+    access_policies = AccessPolicyField(source='iam_access_policies', many=True, required=False)
     access_policies_object = serializers.PrimaryKeyRelatedField(source='iam_access_policies', read_only=True, many=True)
 
     data = serializers.JSONField(allow_null=True)

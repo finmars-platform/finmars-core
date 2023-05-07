@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
 
-from poms.iam.models import Group, Role
+from poms.iam.models import Group, Role, AccessPolicy
 from poms.common.fields import PrimaryKeyRelatedFilteredField
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import Member
@@ -111,3 +111,6 @@ class GroupField(PrimaryKeyRelatedFilteredField):
 
 class RoleField(PrimaryKeyRelatedFilteredField):
     queryset = Role.objects.all()
+
+class AccessPolicyField(PrimaryKeyRelatedFilteredField):
+    queryset = AccessPolicy.objects.all()

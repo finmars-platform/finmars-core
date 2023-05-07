@@ -16,6 +16,7 @@ from poms_app.log_formatter import GunicornWorkerIDLogFormatter
 from poms_app.utils import ENV_BOOL, ENV_STR, ENV_INT
 
 DEFAULT_CHARSET = 'utf-8'
+SERVICE_NAME = 'finmars' # needs for Finmars Access Policy
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

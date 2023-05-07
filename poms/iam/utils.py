@@ -1,8 +1,15 @@
 import logging
 
+from poms_app import settings
+
 _l = logging.getLogger('poms.iam')
-from rest_framework.exceptions import PermissionDenied
 from django.db.models import Q
+from rest_framework import viewsets
+from rest_framework.mixins import CreateModelMixin, UpdateModelMixin, DestroyModelMixin, ListModelMixin, \
+    RetrieveModelMixin
+import inspect
+from django.apps import apps
+from itertools import chain
 
 '''
     parse_resource_into_object
@@ -18,21 +25,18 @@ from django.db.models import Q
         }
 
     '''
-from poms.iam.models import MemberAccessPolicy, RoleAccessPolicy, GroupAccessPolicy
+from poms.iam.models import AccessPolicy
 
 
 def parse_resource_into_object(resource):
     result = {}
 
-    pieces = resource.split(':')
+    pieces = resource.split(':', 3)
 
     result['type'] = pieces[0].lower()
-    result['partition'] = pieces[1].lower()
-    result['service'] = pieces[2].lower()
-    result['region'] = pieces[3].lower()
-    result['client_code'] = pieces[4].lower()
-    result['content_type'] = pieces[5].lower()
-    result['user_code'] = pieces[6]  # TODO user_code also to lower?
+    result['service'] = pieces[1].lower()
+    result['content_type'] = pieces[2].lower()
+    result['user_code'] = pieces[3].lower()
 
     return result
 
@@ -42,8 +46,8 @@ parse_resource_attribute
 
     converts list of
     
-    "frn:finmars:authorizer:eu-central:client00004:authorizer.spacebackup:space00000",
-    "frn:finmars:authorizer:eu-central:client00004:authorizer.spacebackup:space00000"
+    "frn:finmars:authorizer:authorizer.spacebackup:space00000",
+    "frn:finmars:authorizer:authorizer.spacebackup:space00000"
     
     list of objects
     
@@ -73,57 +77,21 @@ def parse_resource_attribute(resources):
 
 
 def get_statements(member):
+    # AccessPolicies directly assigned to the member
+    member_policies = member.access_policies.all()
 
-    '''Getting UserAccessPolicies attached to User'''
-    member_access_policies = MemberAccessPolicy.objects.filter(member=member)
+    # AccessPolicies assigned to the member through roles
+    role_policies = AccessPolicy.objects.filter(roles__members=member).distinct()
 
-    member_roles = member.iam_roles.all()
-    '''Getting AccessPolicies directly attached to Role that Member assigned to'''
-    direct_roles_access_policies = RoleAccessPolicy.objects.filter(role__in=member_roles)
+    # AccessPolicies assigned to the member through groups
+    group_policies = AccessPolicy.objects.filter(groups__members=member).distinct()
 
-    '''Getting AccessPolicies attached to Groups that Member is member of'''
-    groups_access_policies = GroupAccessPolicy.objects.filter(group__in=member.iam_groups.all())
-
-    '''Getting AccessPolicies attached to Groups that Role is member of'''
-    role_in_groups = []
-    for role in member_roles:
-        role_in_groups = role_in_groups + role.iam_groups.all()
-
-    role_in_group_access_policies = GroupAccessPolicy.objects.filter(group__in=role_in_groups)
-
-    # _l.info('get_policy_statements.user %s' % user)
-    # _l.info('get_policy_statements.items %s' % items)
+    # Combine all AccessPolicies
+    all_policies = set(chain(member_policies, role_policies, group_policies))
 
     statements = []
 
-    for item in member_access_policies:
-
-        # _l.info('item.policy %s' % item.policy)
-
-        if isinstance(item.policy, dict):
-            statements.append(item.policy)
-        else:
-            statements = statements + item.policy
-
-    for item in direct_roles_access_policies:
-
-        # _l.info('item.policy %s' % item.policy)
-
-        if isinstance(item.policy, dict):
-            statements.append(item.policy)
-        else:
-            statements = statements + item.policy
-
-    for item in groups_access_policies:
-
-        # _l.info('item.policy %s' % item.policy)
-
-        if isinstance(item.policy, dict):
-            statements.append(item.policy)
-        else:
-            statements = statements + item.policy
-
-    for item in role_in_group_access_policies:
+    for item in all_policies:
 
         # _l.info('item.policy %s' % item.policy)
 
@@ -194,13 +162,12 @@ def filter_queryset_with_access_policies(user, queryset):
                         '''
                         * means that we have pattern e.g.
                         
-                        "frn:finmars:authorizer:::authorizer.spacebackup:space00000*"
+                        "frn:finmars:portfolios.portfolio:portfolio*"
                         
-                        it would find
+                        it would find following objects
                         
-                        "frn:finmars:authorizer:::authorizer.spacebackup:space00000_1"
-                        "frn:finmars:authorizer:::authorizer.spacebackup:space00000_2"
-                        etc
+                        "portfolio_1"
+                        "portfolio_2"
                         
                         '''
                         if '*' in val:
@@ -230,13 +197,13 @@ def filter_queryset_with_access_policies(user, queryset):
 
     converts action
     
-    "authorizer:SpaceBackup:list"
+    "finmars:portfolio:list"
    
     to object
     
     {
-            "service": "authorizer",
-            "viewset": "SpaceBackup",
+            "service": "finmars",
+            "viewset": "portfolio",
             "action": "list"
         },
 
@@ -253,3 +220,165 @@ def action_statement_into_object(action):
     }
 
     return result
+
+def capitalize_first_letter(string):
+    if len(string) > 0:
+        return string[0].upper() + string[1:]
+    else:
+        return string
+
+def generate_full_access_policies_for_viewsets(viewset_classes):
+    access_policies = []
+
+    for viewset_class in viewset_classes:
+        viewset_name = viewset_class.__name__.replace('ViewSet', '')
+        actions = []
+
+        # _l.info('viewset_class %s' % viewset_class)
+
+        service_name = settings.SERVICE_NAME
+
+        user_code = 'com.finmars.local:' + service_name + '-' + viewset_name + '-full'
+        configuration_code = 'com.finmars.local'
+
+        name = capitalize_first_letter(viewset_name) + ' Full Access'
+
+        try:
+            access_policy = AccessPolicy.objects.get(user_code=user_code)
+        except Exception as e:
+            access_policy = AccessPolicy.objects.create(user_code=user_code,
+                                                        configuration_code=configuration_code)
+
+        access_policy.name = name
+
+        if issubclass(viewset_class, CreateModelMixin):
+            actions.append(f"{service_name}:{viewset_name}:create")
+
+        if issubclass(viewset_class, RetrieveModelMixin):
+            actions.append(f"{service_name}:{viewset_name}:retrieve")
+
+        if issubclass(viewset_class, UpdateModelMixin):
+            actions.append(f"{service_name}:{viewset_name}:update")
+
+        if issubclass(viewset_class, DestroyModelMixin):
+            actions.append(f"{service_name}:{viewset_name}:destroy")
+
+        if issubclass(viewset_class, ListModelMixin):
+            actions.append(f"{service_name}:{viewset_name}:list")
+
+        if len(actions):
+            access_policy_json = {
+                "Version": "2023-01-01",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": actions,
+                        "Resource": "*"
+                    }
+                ]
+            }
+
+            access_policy.policy = access_policy_json
+            access_policy.save()
+        else:
+            access_policy.delete()
+
+    return access_policies
+
+
+def generate_readonly_access_policies_for_viewsets(viewset_classes):
+    access_policies = []
+
+    for viewset_class in viewset_classes:
+        viewset_name = viewset_class.__name__.replace('ViewSet', '')
+        actions = []
+
+        # _l.info('viewset_class %s' % viewset_class)
+
+        service_name = settings.SERVICE_NAME
+
+        user_code = 'com.finmars.local:' + service_name + ':' + viewset_name + '-readonly'
+        configuration_code = 'com.finmars.local'
+
+        name = capitalize_first_letter(viewset_name) + ' Readonly Access'
+        service_name = settings.SERVICE_NAME
+
+        try:
+            access_policy = AccessPolicy.objects.get(user_code=user_code)
+        except Exception as e:
+            access_policy = AccessPolicy.objects.create(user_code=user_code,
+                                                        configuration_code=configuration_code)
+
+        access_policy.name = name
+
+        if issubclass(viewset_class, ListModelMixin):
+            actions.append(f"{service_name}:{viewset_name}:list")
+
+        if issubclass(viewset_class, RetrieveModelMixin):
+            actions.append(f"{service_name}:{viewset_name}:retrieve")
+
+        if actions:
+            access_policy_json = {
+                "Version": "2023-01-01",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": actions,
+                        "Resource": "*"
+                    }
+                ]
+            }
+
+            access_policy.policy = access_policy_json
+            access_policy.save()
+        else:
+            access_policy.delete()
+
+    return access_policies
+
+
+def get_viewsets_from_app(app_name):
+    app_config = apps.get_app_config(app_name)
+    viewset_classes = []
+
+    for model_name, model_class in app_config.models.items():
+
+        # _l.info('get_viewsets_from_app.model_name %s' % model_name)
+        # _l.info('get_viewsets_from_app.app_config.name %s' % app_config.name)
+
+        module_path = f'{app_config.name}.views'
+
+        try:
+            viewsets_module = __import__(module_path, fromlist=[model_name])
+        except ImportError:
+            continue
+
+        for name, obj in inspect.getmembers(viewsets_module):
+            if inspect.isclass(obj) and issubclass(obj, viewsets.ViewSetMixin) and obj != viewsets.ViewSetMixin:
+                if "abstract" not in name.lower():
+                    viewset_classes.append(obj)
+
+    return viewset_classes
+
+
+def get_viewsets_from_all_apps():
+    all_viewsets = []
+
+    for app_config in apps.get_app_configs():
+        if not app_config.name.startswith('poms'):
+            continue  # Skip Django's built-in apps
+
+        app_viewsets = get_viewsets_from_app(app_config.label)
+        all_viewsets.extend(app_viewsets)
+
+    return all_viewsets
+
+
+def create_base_iam_access_policies_templates():
+    viewsets = get_viewsets_from_all_apps()
+
+    # _l.info('viewsets %s' % viewsets)
+    _l.info('viewsets %s' % len(viewsets))
+
+    generate_full_access_policies_for_viewsets(viewsets)
+    generate_readonly_access_policies_for_viewsets(viewsets)

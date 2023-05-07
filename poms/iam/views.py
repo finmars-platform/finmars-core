@@ -2,12 +2,12 @@ from rest_framework.viewsets import ModelViewSet
 
 from poms.iam.filters import ObjectPermissionBackend
 from poms.iam.mixins import AccessViewSetMixin
-from poms.iam.models import Role, Group, AccessPolicyTemplate
+from poms.iam.models import Role, Group, AccessPolicy
 from poms.iam.permissions import FinmarsAccessPolicy
 from rest_framework.permissions import IsAuthenticated
 from drf_yasg.inspectors import SwaggerAutoSchema
 
-from poms.iam.serializers import RoleSerializer, GroupSerializer, AccessPolicyTemplateSerializer
+from poms.iam.serializers import RoleSerializer, GroupSerializer, AccessPolicySerializer
 
 
 class AbstractFinmarsAccessPolicyViewSet(AccessViewSetMixin, ModelViewSet):
@@ -69,10 +69,10 @@ class GroupViewSet(ModelViewSet):
 
     swagger_schema = CustomSwaggerAutoSchema
 
-class AccessPolicyTemplateViewSet(ModelViewSet):
+class AccessPolicyViewSet(ModelViewSet):
 
-    queryset = AccessPolicyTemplate.objects.all()
-    serializer_class = AccessPolicyTemplateSerializer
+    queryset = AccessPolicy.objects.all()
+    serializer_class = AccessPolicySerializer
     permission_classes = [
         IsAuthenticated
     ]

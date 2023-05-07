@@ -50,6 +50,7 @@ class BootstrapConfig(AppConfig):
 
         self.bootstrap_celery()
         self.create_iam_roles_and_groups()
+        self.create_iam_access_policies_templates()
         self.add_view_and_manage_permissions()
         self.load_master_user_data()
         self.create_finmars_bot()
@@ -74,6 +75,7 @@ class BootstrapConfig(AppConfig):
         try:
             from poms.users.models import Member
             member = Member.objects.get(user__username='finmars_bot')
+            _l.info("finmars_bot already exists")
         except Exception as e:
 
             try:
@@ -84,10 +86,13 @@ class BootstrapConfig(AppConfig):
 
                 member = Member.objects.create(user=user, username="finmars_bot", master_user=master_user,
                                                is_admin=True)
+
+                _l.info("finmars_bot created")
+
             except Exception as e:
                 _l.error("Warning. Could not creat finmars_bot")
 
-        _l.info("Finmars bot created")
+
 
     def create_iam_roles_and_groups(self):
         # Maybe not needed
@@ -105,6 +110,9 @@ class BootstrapConfig(AppConfig):
         #         name='Administrators',
         #         user_code='com.finmars.local:administrators')
 
+    def create_iam_access_policies_templates(self):
+        from poms.iam.utils import create_base_iam_access_policies_templates
+        create_base_iam_access_policies_templates()
 
 
     # Probably deprecated

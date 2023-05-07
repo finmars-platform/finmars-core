@@ -311,3 +311,10 @@ ROW_NUMBER() OVER( PARTITION BY id
 ORDER BY  id ) AS row_num
 FROM transactions_transaction ) t
 WHERE t.row_num > 1 );
+
+
+
+# Access policy
+
+frn:[service]:[content_type]:[user_code]
+frn:finmars:portfolios.portfolio:portfolio_1

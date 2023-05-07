@@ -18,6 +18,31 @@ class TimeStampedModel(models.Model):
         ordering = ['created', ]
 
 
+class AccessPolicy(models.Model):
+    name = models.CharField(max_length=255, null=True, blank=True,
+                            verbose_name=gettext_lazy('Name'))
+
+    user_code = models.CharField(max_length=1024, unique=True,
+                                 verbose_name=gettext_lazy('User Code'))
+    description = models.TextField(blank=True)
+
+    policy = models.JSONField(null=True, blank=True, verbose_name=gettext_lazy('Policy'),
+                              help_text="Access Policy JSON")
+
+    configuration_code = models.CharField(max_length=255,
+                                          default='com.finmars.local',
+                                          verbose_name=gettext_lazy('Configuration Code'))
+
+    members = models.ManyToManyField(Member, related_name='iam_access_policies', blank=True, null=True)
+
+    class Meta:
+        verbose_name = gettext_lazy("Access Policy Template")
+        verbose_name_plural = gettext_lazy("Access Policy Templates")
+
+    def __str__(self):
+        return self.name
+
+
 class Role(ConfigurationModel):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True)
@@ -28,32 +53,11 @@ class Role(ConfigurationModel):
     # Hate that it should be Member instead of User
     members = models.ManyToManyField(Member, related_name='iam_roles', blank=True)
 
+    access_policies = models.ManyToManyField(AccessPolicy, related_name='iam_roles', blank=True)
+
     def __str__(self):
         return self.name
 
-
-class RoleAccessPolicy(TimeStampedModel):
-    '''
-    Do not part of configuration, can not be exported
-    '''
-    role = models.ForeignKey(Role, related_name="access_policies",
-                             on_delete=models.CASCADE, verbose_name="Role")
-
-    name = models.CharField(max_length=255, null=True, blank=True,
-                            verbose_name=gettext_lazy('Name'))
-
-    user_code = models.CharField(max_length=1024, unique=True,
-                                 verbose_name=gettext_lazy('User Code'))
-
-    policy = models.JSONField(null=True, blank=True, verbose_name=gettext_lazy('Policy'),
-                              help_text="Access Policy JSON")
-
-    class Meta:
-        verbose_name = gettext_lazy("User Access Policy")
-        verbose_name_plural = gettext_lazy("User Access Policies")
-
-    def __str__(self):
-        return 'Access Policy for %s' % self.role
 
 
 class Group(ConfigurationModel):
@@ -68,85 +72,10 @@ class Group(ConfigurationModel):
     # Hate that it should be Member instead of User
     members = models.ManyToManyField(Member, related_name='iam_groups', blank=True)
     roles = models.ManyToManyField(Role, related_name='iam_groups')
+    access_policies = models.ManyToManyField(AccessPolicy, related_name='iam_groups', blank=True)
 
     def __str__(self):
         return self.name
 
 
-class GroupAccessPolicy(TimeStampedModel):
-    '''
-    Do not part of configuration, can not be exported
-    '''
-    group = models.ForeignKey(Group, related_name="access_policies",
-                              on_delete=models.CASCADE, verbose_name="Role")
 
-    name = models.CharField(max_length=255, null=True, blank=True,
-                            verbose_name=gettext_lazy('Name'))
-
-    user_code = models.CharField(max_length=1024, unique=True,
-                                 verbose_name=gettext_lazy('User Code'))
-
-    policy = models.JSONField(null=True, blank=True, verbose_name=gettext_lazy('Policy'),
-                              help_text="Access Policy JSON")
-
-    class Meta:
-        verbose_name = gettext_lazy("User Access Policy")
-        verbose_name_plural = gettext_lazy("User Access Policies")
-
-    def __str__(self):
-        return 'Access Policy for %s' % self.group
-
-
-class MemberAccessPolicy(TimeStampedModel):
-    '''
-    Do not part of configuration, can not be exported
-    '''
-    # Hate that it should be Member instead of User
-    member = models.ForeignKey(
-        Member,
-        related_name="iam_access_policies",
-        on_delete=models.CASCADE,
-        verbose_name="Member",
-    )
-
-    name = models.CharField(max_length=255, null=True, blank=True,
-                            verbose_name=gettext_lazy('Name'))
-
-    user_code = models.CharField(max_length=1024, unique=True,
-                                 verbose_name=gettext_lazy('User Code'))
-
-    configuration_code = models.CharField(max_length=255,
-                                          default='com.finmars.local',
-                                          verbose_name=gettext_lazy('Configuration Code'))
-
-    policy = models.JSONField(null=True, blank=True, verbose_name=gettext_lazy('Policy'),
-                              help_text="Access Policy JSON")
-
-    class Meta:
-        verbose_name = gettext_lazy("User Access Policy")
-        verbose_name_plural = gettext_lazy("User Access Policies")
-
-    def __str__(self):
-        return 'Access Policy for %s' % self.user
-
-
-class AccessPolicyTemplate(models.Model):
-    name = models.CharField(max_length=255, null=True, blank=True,
-                            verbose_name=gettext_lazy('Name'))
-
-    user_code = models.CharField(max_length=1024, unique=True,
-                                 verbose_name=gettext_lazy('User Code'))
-
-    policy = models.JSONField(null=True, blank=True, verbose_name=gettext_lazy('Policy'),
-                              help_text="Access Policy JSON")
-
-    configuration_code = models.CharField(max_length=255,
-                                          default='com.finmars.local',
-                                          verbose_name=gettext_lazy('Configuration Code'))
-
-    class Meta:
-        verbose_name = gettext_lazy("Access Policy Template")
-        verbose_name_plural = gettext_lazy("Access Policy Templates")
-
-    def __str__(self):
-        return self.name
