@@ -238,7 +238,7 @@ def generate_full_access_policies_for_viewsets(viewset_classes):
 
         service_name = settings.SERVICE_NAME
 
-        user_code = 'com.finmars.local:' + service_name + '-' + viewset_name + '-full'
+        user_code = 'com.finmars.local:' + service_name + '-' + viewset_name.lower() + '-full'
         configuration_code = 'com.finmars.local'
 
         name = capitalize_first_letter(viewset_name) + ' Full Access'
@@ -297,7 +297,7 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes):
 
         service_name = settings.SERVICE_NAME
 
-        user_code = 'com.finmars.local:' + service_name + ':' + viewset_name + '-readonly'
+        user_code = 'com.finmars.local:' + service_name + ':' + viewset_name.lower() + '-readonly'
         configuration_code = 'com.finmars.local'
 
         name = capitalize_first_letter(viewset_name) + ' Readonly Access'
