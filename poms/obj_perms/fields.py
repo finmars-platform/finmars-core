@@ -47,15 +47,17 @@ class GrantedPermissionField(serializers.ReadOnlyField):
 #             return list(perms) if perms else []
 #         return []
 
-
+# Deprecated
 class ManyRelatedWithObjectPermissionField(serializers.ManyRelatedField):
     def to_representation(self, iterable):
         member = get_member_from_context(self.context)
-        iterable = obj_perms_filter_object_list_for_view(member, iterable)
+        # iterable = obj_perms_filter_object_list_for_view(member, iterable)
         return super(ManyRelatedWithObjectPermissionField, self).to_representation(iterable)
 
     def to_internal_value(self, data):
         res = super(ManyRelatedWithObjectPermissionField, self).to_internal_value(data)
+        return res
+        # Deprecated
         if data is None:
             return res
         data = set(data)

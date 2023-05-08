@@ -386,15 +386,15 @@ def generate_viewer_role(readonly_access_policies):
     role.save()
 
 
-def generate_data_manager_role():
+def generate_full_data_manager_role():
     try:
-        role = Role.objects.get(user_code='com.finmars.local:data-manager')
+        role = Role.objects.get(user_code='com.finmars.local:full-data-manager')
     except Exception as e:
-        role = Role.objects.create(user_code='com.finmars.local:data-manager', configuration_code='com.finmars.local')
+        role = Role.objects.create(user_code='com.finmars.local:full-data-manager', configuration_code='com.finmars.local')
 
     # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
 
-    role.name = 'Data Manager'
+    role.name = 'Full Data Manager'
     role.description = 'Full Access to Data. Can book Transactions, create, edit and delete  Instruments, Portfolios,  Accounts etc.'
 
     access_policy_user_codes = [
@@ -423,6 +423,81 @@ def generate_data_manager_role():
         'com.finmars.local:finmars-instrumentattributetype-readonly',
         'com.finmars.local:finmars-instrumenttype-readonly',
         'com.finmars.local:finmars-instrumenttypeattributetype-readonly',
+
+        'com.finmars.local:finmars-pricingpolicy-full',
+
+        'com.finmars.local:finmars-pricehistory-full',
+        'com.finmars.local:finmars-currencyhistory-full',
+
+        'com.finmars.local:finmars-counterparty-full',
+        'com.finmars.local:finmars-counterpartyattributetype-readonly',
+        'com.finmars.local:finmars-responsible-full',
+        'com.finmars.local:finmars-responsibleattributetype-readonly',
+
+        'com.finmars.local:finmars-strategy1-full',
+        'com.finmars.local:finmars-strategy1attributetype-readonly',
+        'com.finmars.local:finmars-strategy2-full',
+        'com.finmars.local:finmars-strategy2attributetype-readonly',
+        'com.finmars.local:finmars-strategy3-full',
+        'com.finmars.local:finmars-strategy3attributetype-readonly',
+
+        'com.finmars.local:finmars-referencetable-full', # ?? maybe should go to member role
+
+        'com.finmars.local:finmars-balancereport',
+        'com.finmars.local:finmars-balancereportcustomfield-full',
+
+        'com.finmars.local:finmars-plreport',
+        'com.finmars.local:finmars-plreportcustomfield-full',
+
+        'com.finmars.local:finmars-transactionreport',
+        'com.finmars.local:finmars-transactionreportcustomfield-full',
+
+    ]
+
+    access_policies = AccessPolicy.objects.filter(user_code__in=access_policy_user_codes)
+
+    role.access_policies.set(access_policies)
+    role.save()
+
+def generate_base_data_manager_role():
+    try:
+        role = Role.objects.get(user_code='com.finmars.local:base-data-manager')
+    except Exception as e:
+        role = Role.objects.create(user_code='com.finmars.local:base-data-manager', configuration_code='com.finmars.local')
+
+    # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
+
+    role.name = 'Base Data Manager'
+    role.description = 'Only access to essentials. Can book Transactions, View Reports, View Prices.'
+
+    access_policy_user_codes = [
+
+        'com.finmars.local:finmars-complextransaction-view',
+        'com.finmars.local:finmars-complextransaction-book',
+        'com.finmars.local:finmars-complextransaction-rebook',
+
+        'com.finmars.local:finmars-transactiontype-full',
+        'com.finmars.local:finmars-transactiontypeattributetype-readonly',
+
+        'com.finmars.local:finmars-transaction-full',
+        'com.finmars.local:finmars-complextransaction-full',
+        'com.finmars.local:finmars-complextransactionattributetype-readonly',
+
+        # 'com.finmars.local:finmars-portfolio-full', # not for base manager. see full-data-manager
+        'com.finmars.local:finmars-portfolioattributetype-readonly',
+        # 'com.finmars.local:finmars-account-full', # not for base manager. see full-data-manager
+        'com.finmars.local:finmars-accountattributetype-readonly',
+
+        'com.finmars.local:finmars-accounttype-readonly'
+        'com.finmars.local:finmars-accounttypeattributetype-readonly',
+
+
+        # 'com.finmars.local:finmars-instrument-full', # not for base manager. see full-data-manager
+        'com.finmars.local:finmars-instrumentattributetype-readonly',
+        'com.finmars.local:finmars-instrumenttype-readonly',
+        'com.finmars.local:finmars-instrumenttypeattributetype-readonly',
+
+        'com.finmars.local:finmars-pricingpolicy-full',
 
         'com.finmars.local:finmars-pricehistory-full',
         'com.finmars.local:finmars-currencyhistory-full',
@@ -590,6 +665,7 @@ def create_base_iam_access_policies_templates():
     patch_generated_policies()
 
     generate_viewer_role(readonly_access_policies)
-    generate_data_manager_role()
+    generate_full_data_manager_role()
+    generate_base_data_manager_role()
     generate_configuration_manager_role()
     generate_member_role()
