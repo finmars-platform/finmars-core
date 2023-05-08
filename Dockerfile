@@ -13,7 +13,6 @@ COPY data/ /var/app/data/
 COPY poms/ /var/app/poms/
 COPY healthcheck/ /var/app/healthcheck/
 COPY finmars_standardized_errors/ /var/app/finmars_standardized_errors/
-COPY finmars_iam/ /var/app/finmars_iam/
 COPY logstash/ /var/app/logstash/
 COPY poms_app/ /var/app/poms_app/
 COPY templates/ /var/app/templates/
