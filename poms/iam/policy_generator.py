@@ -8,7 +8,7 @@ from rest_framework.mixins import CreateModelMixin, UpdateModelMixin, DestroyMod
 
 from poms.common.mixins import ListLightModelMixin, ListEvModelMixin
 from poms.iam.models import AccessPolicy, Role
-from poms.iam.utils import capitalize_first_letter
+from poms.iam.utils import capitalize_first_letter, add_to_list_if_not_exists
 from poms_app import settings
 
 _l = logging.getLogger('poms.iam')
@@ -246,18 +246,120 @@ def generate_transaction_report_access_policy():
     return access_policy
 
 
+def generate_transaction_view_access_policy():
+    service_name = settings.SERVICE_NAME
+
+    user_code = 'com.finmars.local:' + service_name + '-complextransaction-view'
+    configuration_code = 'com.finmars.local'
+
+    name = 'Complex Transaction View'
+
+    try:
+        access_policy = AccessPolicy.objects.get(user_code=user_code)
+    except Exception as e:
+        access_policy = AccessPolicy.objects.create(user_code=user_code,
+                                                    configuration_code=configuration_code)
+
+    access_policy.name = name
+    access_policy_json = {
+        "Version": "2023-01-01",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": [
+                    "finmars:ComplexTransaction:view",
+                ],
+                "Resource": "*"
+            }
+        ]
+    }
+
+    access_policy.policy = access_policy_json
+    access_policy.save()
+
+    return access_policy
+
+
+def generate_transaction_book_access_policy():
+    service_name = settings.SERVICE_NAME
+
+    user_code = 'com.finmars.local:' + service_name + '-complextransaction-book'
+    configuration_code = 'com.finmars.local'
+
+    name = 'Complex Transaction Book'
+
+    try:
+        access_policy = AccessPolicy.objects.get(user_code=user_code)
+    except Exception as e:
+        access_policy = AccessPolicy.objects.create(user_code=user_code,
+                                                    configuration_code=configuration_code)
+
+    access_policy.name = name
+    access_policy_json = {
+        "Version": "2023-01-01",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": [
+                    "finmars:TransactionType:book",
+                ],
+                "Resource": "*"
+            }
+        ]
+    }
+
+    access_policy.policy = access_policy_json
+    access_policy.save()
+
+    return access_policy
+
+
+def generate_transaction_rebook_access_policy():
+    service_name = settings.SERVICE_NAME
+
+    user_code = 'com.finmars.local:' + service_name + '-complextransaction-rebook'
+    configuration_code = 'com.finmars.local'
+
+    name = 'Complex Transaction Rebook'
+
+    try:
+        access_policy = AccessPolicy.objects.get(user_code=user_code)
+    except Exception as e:
+        access_policy = AccessPolicy.objects.create(user_code=user_code,
+                                                    configuration_code=configuration_code)
+
+    access_policy.name = name
+    access_policy_json = {
+        "Version": "2023-01-01",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": [
+                    "finmars:ComplexTransaction:rebook",
+                ],
+                "Resource": "*"
+            }
+        ]
+    }
+
+    access_policy.policy = access_policy_json
+    access_policy.save()
+
+    return access_policy
+
+
+
 def generate_speicifc_policies_for_viewsets():
-    access_policies = []
 
-    balance_report_access_policy = generate_balance_report_access_policy()
-    pl_report_access_policy = generate_pl_report_access_policy()
-    transaction_report_access_policy = generate_transaction_report_access_policy()
-
-    access_policies.append(balance_report_access_policy)
-    access_policies.append(pl_report_access_policy)
-    access_policies.append(transaction_report_access_policy)
-
-    return access_policies
+    generate_balance_report_access_policy()
+    generate_pl_report_access_policy()
+    generate_transaction_report_access_policy()
+    generate_transaction_view_access_policy()
+    generate_transaction_book_access_policy()
+    generate_transaction_rebook_access_policy()
 
 
 def generate_viewer_role(readonly_access_policies):
@@ -297,19 +399,56 @@ def generate_data_manager_role():
 
     access_policy_user_codes = [
 
+        'com.finmars.local:finmars-complextransaction-view',
+        'com.finmars.local:finmars-complextransaction-book',
+        'com.finmars.local:finmars-complextransaction-rebook',
+
+        'com.finmars.local:finmars-transactiontype-full',
+        'com.finmars.local:finmars-transactiontypeattributetype-readonly',
+
         'com.finmars.local:finmars-transaction-full',
         'com.finmars.local:finmars-complextransaction-full',
+        'com.finmars.local:finmars-complextransactionattributetype-readonly',
 
         'com.finmars.local:finmars-portfolio-full',
+        'com.finmars.local:finmars-portfolioattributetype-readonly',
         'com.finmars.local:finmars-account-full',
+        'com.finmars.local:finmars-accountattributetype-readonly',
+
+        'com.finmars.local:finmars-accounttype-readonly'
+        'com.finmars.local:finmars-accounttypeattributetype-readonly',
+
+
         'com.finmars.local:finmars-instrument-full',
+        'com.finmars.local:finmars-instrumentattributetype-readonly',
+        'com.finmars.local:finmars-instrumenttype-readonly',
+        'com.finmars.local:finmars-instrumenttypeattributetype-readonly',
 
         'com.finmars.local:finmars-pricehistory-full',
         'com.finmars.local:finmars-currencyhistory-full',
 
+        'com.finmars.local:finmars-counterparty-full',
+        'com.finmars.local:finmars-counterpartyattributetype-readonly',
+        'com.finmars.local:finmars-responsible-full',
+        'com.finmars.local:finmars-responsibleattributetype-readonly',
+
+        'com.finmars.local:finmars-strategy1-full',
+        'com.finmars.local:finmars-strategy1attributetype-readonly',
+        'com.finmars.local:finmars-strategy2-full',
+        'com.finmars.local:finmars-strategy2attributetype-readonly',
+        'com.finmars.local:finmars-strategy3-full',
+        'com.finmars.local:finmars-strategy3attributetype-readonly',
+
+        'com.finmars.local:finmars-referencetable-full', # ?? maybe should go to member role
+
         'com.finmars.local:finmars-balancereport',
+        'com.finmars.local:finmars-balancereportcustomfield-full',
+
         'com.finmars.local:finmars-plreport',
+        'com.finmars.local:finmars-plreportcustomfield-full',
+
         'com.finmars.local:finmars-transactionreport',
+        'com.finmars.local:finmars-transactionreportcustomfield-full',
 
     ]
 
@@ -343,7 +482,12 @@ def generate_member_role():
         'com.finmars.local:finmars-entitytooltip-full',
         'com.finmars.local:finmars-templatelayout-full',
 
-        'com.finmars.local:finmars-ecosystemdefault-readonly'
+        'com.finmars.local:finmars-ecosystemdefault-readonly',
+        'com.finmars.local:finmars-complextransactionuserfield-readonly',
+        'com.finmars.local:finmars-transactionuserfield-readonly',
+        'com.finmars.local:finmars-instrumentuserfield-readonly',
+
+        'com.finmars.local:finmars-configuration-readonly'
 
     ]
 
@@ -419,6 +563,15 @@ def get_viewsets_from_all_apps():
 
     return all_viewsets
 
+def patch_generated_policies():
+
+    item = AccessPolicy.objects.get(user_code='com.finmars.local:finmars-listlayout-readonly')
+    add_to_list_if_not_exists('finmars:ListLayout:ping', item.policy['Statement'][0]["Action"])
+    item.save()
+
+    item = AccessPolicy.objects.get(user_code='com.finmars.local:finmars-listlayout-full')
+    add_to_list_if_not_exists('finmars:ListLayout:ping', item.policy['Statement'][0]["Action"])
+    item.save()
 
 def create_base_iam_access_policies_templates():
     viewsets = get_viewsets_from_all_apps()
@@ -432,6 +585,9 @@ def create_base_iam_access_policies_templates():
     _l.info('readonly_access_policies %s' % len(readonly_access_policies))
 
     generate_speicifc_policies_for_viewsets()
+
+
+    patch_generated_policies()
 
     generate_viewer_role(readonly_access_policies)
     generate_data_manager_role()

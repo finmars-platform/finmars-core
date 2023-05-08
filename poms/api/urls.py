@@ -53,9 +53,9 @@ router.register(r'users/timezone', api.TimezoneViewSet, 'timezone')
 router.register(r'users/ecosystem-default', users.EcosystemDefaultViewSet, 'ecosystemdefault')
 router.register(r'users/usercode-prefix', users.UsercodePrefixViewSet, 'usercodeprefix')
 
-router.register(r'reference-tables/reference-table', reference_table.ReferenceTableViewSet, 'reference_table')
-router.register(r'active_processes/active_processes', celery_tasks.CeleryTaskViewSet, 'celery_tasks')  # deprecated
-router.register(r'tasks/task', celery_tasks.CeleryTaskViewSet, 'celery_tasks')
+router.register(r'reference-tables/reference-table', reference_table.ReferenceTableViewSet, 'ReferenceTable')
+router.register(r'active_processes/active_processes', celery_tasks.CeleryTaskViewSet, 'CeleryTask')  # deprecated
+router.register(r'tasks/task', celery_tasks.CeleryTaskViewSet, 'CeleryTask')
 
 router.register(r'configuration/configuration', configuration.ConfigurationViewSet)
 router.register(r'configuration/new-member-setup-configuration', configuration.NewMemberSetupConfigurationViewSet)

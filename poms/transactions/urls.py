@@ -15,9 +15,9 @@ router.register(r'transaction-type', transactions.TransactionTypeViewSet, 'trans
 
 router.register(r'transaction-type-light-with-inputs', transactions.TransactionTypeLightWithInputsViewSet,
                 'transactiontypelightwithinputs')  # Deprecated
-router.register(r'transaction-type-attribute-type', transactions.TransactionTypeAttributeTypeViewSet)
+router.register(r'transaction-type-attribute-type', transactions.TransactionTypeAttributeTypeViewSet, 'TransactionTypeAttributeType')
 router.register(r'transaction-attribute-type', transactions.TransactionAttributeTypeViewSet,
-                'transactionattributetype')
+                'TransactionAttributeType')
 router.register(r'transaction-classifier', transactions.TransactionClassifierViewSet,
                 'transactionclassifier')
 

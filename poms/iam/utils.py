@@ -22,6 +22,9 @@ from itertools import chain
     '''
 from poms.iam.models import AccessPolicy, Role
 
+def add_to_list_if_not_exists(string, my_list):
+    if string not in my_list:
+        my_list.append(string)
 
 def lowercase_keys_and_values(dictionary):
     new_dict = {}

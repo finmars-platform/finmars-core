@@ -26,7 +26,6 @@ from poms.common.grouping_handlers import handle_groups, count_groups
 from poms.common.mixins import BulkModelMixin, DestroyModelFakeMixin, UpdateModelMixinExt, ListLightModelMixin, \
     ListEvModelMixin
 from poms.common.sorting import sort_by_dynamic_attrs
-from poms.history.mixins import HistoryMixin
 from poms.iam.views import AbstractFinmarsAccessPolicyViewSet
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.utils import get_master_user_and_member
@@ -252,7 +251,6 @@ class AbstractEvGroupViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelF
 
 
 class AbstractModelViewSet(AbstractApiView,
-                           HistoryMixin,
                            ListLightModelMixin,
                            ListEvModelMixin,
                            UpdateModelMixinExt,

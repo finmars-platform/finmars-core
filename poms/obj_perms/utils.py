@@ -48,6 +48,10 @@ def obj_perms_filter_objects(member, perms, queryset, model_cls=None, prefetch=T
     if member.is_superuser:
         return queryset
 
+    return queryset
+
+    # Deprecated
+
     model = model_cls or queryset.model
 
     # user_lookup_name, user_obj_perms_model = get_user_obj_perms_model(model)
