@@ -235,7 +235,7 @@ class AccessPolicy(permissions.BasePermission):
             for action_statement in statement["action"]:
 
                 action_object = action_statement_into_object(action_statement)
-                _l.debug('_get_statements_matching_action.action_object %s' % action_object)
+                # _l.debug('_get_statements_matching_action.action_object %s' % action_object)
 
                 if settings.SERVICE_NAME in action_object['service']:
 
@@ -251,7 +251,7 @@ class AccessPolicy(permissions.BasePermission):
                         ):
                             matched.append(statement)
 
-        _l.debug('_get_statements_matching_action.matched %s' % matched)
+        # _l.debug('_get_statements_matching_action.matched %s' % matched)
 
         return matched
 

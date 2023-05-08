@@ -1,19 +1,18 @@
-from poms.iam.models import AccessPolicy, Role
-from poms.iam.utils import capitalize_first_letter
-from poms_app import settings
-from dataclasses import asdict
+import inspect
+import logging
 
-from poms.common.mixins import ListLightModelMixin, ListEvModelMixin
-from poms_app import settings
-
+from django.apps import apps
 from rest_framework import viewsets
 from rest_framework.mixins import CreateModelMixin, UpdateModelMixin, DestroyModelMixin, ListModelMixin, \
     RetrieveModelMixin
-import inspect
-from django.apps import apps
 
-import logging
+from poms.common.mixins import ListLightModelMixin, ListEvModelMixin
+from poms.iam.models import AccessPolicy, Role
+from poms.iam.utils import capitalize_first_letter
+from poms_app import settings
+
 _l = logging.getLogger('poms.iam')
+
 
 def generate_full_access_policies_for_viewsets(viewset_classes):
     access_policies = []
@@ -93,7 +92,7 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes):
 
         service_name = settings.SERVICE_NAME
 
-        user_code = 'com.finmars.local:' + service_name + ':' + viewset_name.lower() + '-readonly'
+        user_code = 'com.finmars.local:' + service_name + '-' + viewset_name.lower() + '-readonly'
         configuration_code = 'com.finmars.local'
 
         name = capitalize_first_letter(viewset_name) + ' Readonly Access'
@@ -120,7 +119,6 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes):
             actions.append(f"{service_name}:{viewset_name}:list_ev_item")
             actions.append(f"{service_name}:{viewset_name}:list_ev_group")
 
-
         if actions:
             access_policy_json = {
                 "Version": "2023-01-01",
@@ -140,16 +138,13 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes):
         else:
             access_policy.delete()
 
-
     return access_policies
 
 
-
 def generate_balance_report_access_policy():
-
     service_name = settings.SERVICE_NAME
 
-    user_code = 'com.finmars.local:' + service_name + ':balancereport'
+    user_code = 'com.finmars.local:' + service_name + '-balancereport'
     configuration_code = 'com.finmars.local'
 
     name = 'BalanceReport Access'
@@ -168,7 +163,7 @@ def generate_balance_report_access_policy():
                 "Effect": "Allow",
                 "Principal": "*",
                 "Action": [
-                    "com.finmars.local:balancereport:create",
+                    "finmars:BalanceReport:create",
                 ],
                 "Resource": "*"
             }
@@ -182,10 +177,9 @@ def generate_balance_report_access_policy():
 
 
 def generate_pl_report_access_policy():
-
     service_name = settings.SERVICE_NAME
 
-    user_code = 'com.finmars.local:' + service_name + ':plreport'
+    user_code = 'com.finmars.local:' + service_name + '-plreport'
     configuration_code = 'com.finmars.local'
 
     name = 'PLReport Access'
@@ -204,7 +198,7 @@ def generate_pl_report_access_policy():
                 "Effect": "Allow",
                 "Principal": "*",
                 "Action": [
-                    "com.finmars.local:plreport:create",
+                    "finmars:PlReport:create",
                 ],
                 "Resource": "*"
             }
@@ -216,11 +210,11 @@ def generate_pl_report_access_policy():
 
     return access_policy
 
-def generate_transaction_report_access_policy():
 
+def generate_transaction_report_access_policy():
     service_name = settings.SERVICE_NAME
 
-    user_code = 'com.finmars.local:' + service_name + ':transactionreport'
+    user_code = 'com.finmars.local:' + service_name + '-transactionreport'
     configuration_code = 'com.finmars.local'
 
     name = 'TransactionReport Access'
@@ -239,7 +233,7 @@ def generate_transaction_report_access_policy():
                 "Effect": "Allow",
                 "Principal": "*",
                 "Action": [
-                    "com.finmars.local:transactionreport:create",
+                    "finmars:TransactionReport:create",
                 ],
                 "Resource": "*"
             }
@@ -253,13 +247,11 @@ def generate_transaction_report_access_policy():
 
 
 def generate_speicifc_policies_for_viewsets():
-
     access_policies = []
 
     balance_report_access_policy = generate_balance_report_access_policy()
     pl_report_access_policy = generate_pl_report_access_policy()
     transaction_report_access_policy = generate_transaction_report_access_policy()
-
 
     access_policies.append(balance_report_access_policy)
     access_policies.append(pl_report_access_policy)
@@ -276,8 +268,93 @@ def generate_viewer_role(readonly_access_policies):
 
     # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
 
+    extra_policies_user_codes = [
+        'com.finmars.local:finmars-balancereport',
+        'com.finmars.local:finmars-plreport',
+        'com.finmars.local:finmars-transactionreport',
+
+        'com.finmars.local:finmars-listlayout-full',
+        'com.finmars.local:finmars-editlayout-full',
+        'com.finmars.local:finmars-dashboardlayout-full',
+        'com.finmars.local:finmars-contextmenulayout-full', ]
+
+    extra_policies = list(AccessPolicy.objects.all().filter(user_code__in=extra_policies_user_codes))
+
     role.name = 'Viewer'
+    role.description = 'Read Only Access to Data. Can view Reports, Transactions, Instruments, Portfolios etc.'
+
+    readonly_access_policies.extend(extra_policies) # add more policies
     role.access_policies.set(readonly_access_policies)
+    role.save()
+
+
+def generate_data_manager_role():
+    try:
+        role = Role.objects.get(user_code='com.finmars.local:data-manager')
+    except Exception as e:
+        role = Role.objects.create(user_code='com.finmars.local:data-manager', configuration_code='com.finmars.local')
+
+    # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
+
+    role.name = 'Data Manager'
+    role.description = 'Full Access to Data. Can book Transactions, create, edit and delete  Instruments, Portfolios,  Accounts etc.'
+
+    access_policy_user_codes = [
+
+        'com.finmars.local:finmars-transaction-full',
+        'com.finmars.local:finmars-complextransaction-full',
+
+        'com.finmars.local:finmars-portfolio-full',
+        'com.finmars.local:finmars-account-full',
+        'com.finmars.local:finmars-instrument-full',
+
+        'com.finmars.local:finmars-pricehistory-full',
+        'com.finmars.local:finmars-currencyhistory-full',
+
+        'com.finmars.local:finmars-balancereport',
+        'com.finmars.local:finmars-plreport',
+        'com.finmars.local:finmars-transactionreport',
+
+        'com.finmars.local:finmars-listlayout-full',
+        'com.finmars.local:finmars-editlayout-full',
+        'com.finmars.local:finmars-dashboardlayout-full',
+        'com.finmars.local:finmars-contextmenulayout-full',
+
+    ]
+
+    access_policies = AccessPolicy.objects.filter(user_code__in=access_policy_user_codes)
+
+    role.access_policies.set(access_policies)
+    role.save()
+
+
+def generate_configuration_manager_role():
+    try:
+        role = Role.objects.get(user_code='com.finmars.local:configuration-manager')
+    except Exception as e:
+        role = Role.objects.create(user_code='com.finmars.local:configuration-manager',
+                                   configuration_code='com.finmars.local')
+
+    # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
+
+    role.name = 'Configuration Manager'
+    role.description = 'Full Access to Space Settings. Can create, edit and delete Transaction Types, Instrument Types, Transaction Import Schemes, Procedures etc.'
+
+    '''
+    Exclude IAM and Members Access Policies from Configuration Manager Role
+    '''
+    exclude_policies = ['com.finmars.local:finmars-group-full',
+                        'com.finmars.local:finmars-role-full',
+                        'com.finmars.local:finmars-accesspolicy-full',
+                        'com.finmars.local:finmars-usermember-full',
+                        'com.finmars.local:finmars-member-full'
+                        ]
+
+    access_policies = AccessPolicy.objects.all().filter(user_code__icontains='-full').exclude(
+        user_code__in=exclude_policies)
+
+    role.access_policies.set(access_policies)
+
     role.save()
 
 
@@ -327,6 +404,10 @@ def create_base_iam_access_policies_templates():
     generate_full_access_policies_for_viewsets(viewsets)
     readonly_access_policies = generate_readonly_access_policies_for_viewsets(viewsets)
 
+    _l.info('readonly_access_policies %s' % len(readonly_access_policies))
+
     generate_speicifc_policies_for_viewsets()
 
     generate_viewer_role(readonly_access_policies)
+    generate_data_manager_role()
+    generate_configuration_manager_role()

@@ -146,7 +146,26 @@ def filter_queryset_with_access_policies(member, queryset, view):
 
     q = Q()
 
+    view_related_statements = []
+
     for statement in statements:
+
+        related = False
+
+        for action_statement in statement["action"]:
+
+            action_object = action_statement_into_object(action_statement)
+
+            if view.basename.lower() == action_object['viewset']:
+                related = True
+
+        if related:
+            view_related_statements.append(statement)
+
+    _l.debug('filter_queryset_with_access_policies.statements %s' % len(statements))
+    _l.debug('filter_queryset_with_access_policies.view_related_statements %s' % len(view_related_statements))
+
+    for statement in view_related_statements:
 
         if statement['effect'] == 'allow':
 
@@ -162,7 +181,7 @@ def filter_queryset_with_access_policies(member, queryset, view):
 
                     resources = parse_resource_attribute(statement['resource'])
 
-                    # _l.info('resources %s' % resources)
+                    _l.info('filter_queryset_with_access_policies.resources %s' % resources)
 
                     for resource in resources:
 
@@ -184,7 +203,9 @@ def filter_queryset_with_access_policies(member, queryset, view):
                             if '*' in val:
                                 val = val.split('*')[0]
 
-                            q = q | Q(**{'user_code__icontains': val})
+                                q = q | Q(**{'user_code__icontains': val})
+                            else:
+                                q = q | Q(**{'user_code': val})
 
     _l.debug('filter_queryset_with_access_policies.q %s' % len(q))
 
@@ -197,6 +218,8 @@ def filter_queryset_with_access_policies(member, queryset, view):
         return queryset.none()
 
     _l.debug('ObjectPermissionBackend.filter_queryset before access filter: %s' % queryset.count())
+
+    _l.info('ObjectPermissionBackend.filter_queryset q %s' % q)
 
     result = queryset.filter(q)
 
