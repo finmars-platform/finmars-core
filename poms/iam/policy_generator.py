@@ -272,11 +272,7 @@ def generate_viewer_role(readonly_access_policies):
         'com.finmars.local:finmars-balancereport',
         'com.finmars.local:finmars-plreport',
         'com.finmars.local:finmars-transactionreport',
-
-        'com.finmars.local:finmars-listlayout-full',
-        'com.finmars.local:finmars-editlayout-full',
-        'com.finmars.local:finmars-dashboardlayout-full',
-        'com.finmars.local:finmars-contextmenulayout-full', ]
+    ]
 
     extra_policies = list(AccessPolicy.objects.all().filter(user_code__in=extra_policies_user_codes))
 
@@ -315,10 +311,39 @@ def generate_data_manager_role():
         'com.finmars.local:finmars-plreport',
         'com.finmars.local:finmars-transactionreport',
 
+    ]
+
+    access_policies = AccessPolicy.objects.filter(user_code__in=access_policy_user_codes)
+
+    role.access_policies.set(access_policies)
+    role.save()
+
+
+def generate_member_role():
+
+    try:
+        role = Role.objects.get(user_code='com.finmars.local:member')
+    except Exception as e:
+        role = Role.objects.create(user_code='com.finmars.local:member', configuration_code='com.finmars.local')
+
+    # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
+
+    role.name = 'Member'
+    role.description = 'Full Access to own Report/Data Layouts, Input Form Layouts, Dashboard Layouts, Color Pallets etc.'
+
+    access_policy_user_codes = [
+
+
         'com.finmars.local:finmars-listlayout-full',
         'com.finmars.local:finmars-editlayout-full',
         'com.finmars.local:finmars-dashboardlayout-full',
         'com.finmars.local:finmars-contextmenulayout-full',
+
+        'com.finmars.local:finmars-colorpalette-full',
+        'com.finmars.local:finmars-entitytooltip-full',
+        'com.finmars.local:finmars-templatelayout-full',
+
+        'com.finmars.local:finmars-ecosystemdefault-readonly'
 
     ]
 
@@ -411,3 +436,4 @@ def create_base_iam_access_policies_templates():
     generate_viewer_role(readonly_access_policies)
     generate_data_manager_role()
     generate_configuration_manager_role()
+    generate_member_role()
