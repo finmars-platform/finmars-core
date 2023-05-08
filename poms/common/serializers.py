@@ -5,6 +5,7 @@ from rest_framework.serializers import ListSerializer
 
 from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeField
 from poms.common.filters import ClassifierRootFilter
+from poms.iam.serializers import IamAbstractSerializer
 from poms.system_messages.handlers import send_system_message
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.utils import get_member_from_context, get_master_user_from_context
@@ -50,7 +51,7 @@ class ModelWithTimeStampSerializer(serializers.ModelSerializer):
         return data
 
 
-class ModelWithUserCodeSerializer(ModelMetaSerializer):
+class ModelWithUserCodeSerializer(ModelMetaSerializer, IamAbstractSerializer):
     def __init__(self, *args, **kwargs):
         super(ModelWithUserCodeSerializer, self).__init__(*args, **kwargs)
         self.fields['user_code'] = UserCodeField()

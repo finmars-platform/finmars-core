@@ -5,13 +5,57 @@ from poms.iam.models import Role, Group, AccessPolicy
 from poms.users.models import Member
 from poms_app import settings
 
+
+import logging
+_l = logging.getLogger('poms.iam')
 User = get_user_model()
+
+
+class IamAbstractSerializer(serializers.ModelSerializer):
+    class Meta:
+        abstract = True
+
+    def to_representation(self, instance):
+
+        member = self.context['request'].user.member
+
+        if member.is_admin:
+            return super().to_representation(instance)
+        """
+        Overriding to_representation to check if the user has access to view the protected field.
+        If not, hide the field.
+        """
+
+        queryset = self.Meta.model.objects.filter(pk=instance.pk)
+
+        from poms.iam.utils import get_allowed_resources
+        allowed_resources = get_allowed_resources(member, self.Meta.model, queryset)
+
+        has_permission = False
+        for resource in allowed_resources:
+
+            # _l.debug('to_representation.resource %s' % resource)
+
+            prefix, app, content_type, user_code = resource.split(':', 3)
+            model_content_type = self.Meta.model._meta.app_label + '.' + self.Meta.model.__name__.lower()
+            if model_content_type == content_type and user_code == instance.user_code:
+                has_permission = True
+                break
+
+        if has_permission:
+            return super().to_representation(instance)
+        else:
+            return {
+                'id': instance.id,
+                'name': instance.public_name,
+                'short_name': instance.public_name,
+                'user_code': instance.user_code
+            }
 
 
 class IamModelMetaSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
-
         representation = super().to_representation(instance)
 
         representation['meta'] = {
@@ -23,20 +67,24 @@ class IamModelMetaSerializer(serializers.ModelSerializer):
 
         return representation
 
+
 class IamRoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Role
         fields = ['id', 'name', 'user_code', 'configuration_code']
+
 
 class IamGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = Group
         fields = ['id', 'name', 'user_code', 'configuration_code']
 
+
 class IamAccessPolicySerializer(serializers.ModelSerializer):
     class Meta:
         model = AccessPolicy
         fields = ['id', 'name', 'user_code', 'configuration_code']
+
 
 class IamMemberSerializer(serializers.ModelSerializer):
     class Meta:
@@ -78,7 +126,6 @@ class AccessPolicyUserCodeField(serializers.RelatedField):
 
 
 class RoleSerializer(IamModelMetaSerializer):
-
     members = serializers.PrimaryKeyRelatedField(queryset=Member.objects.all(), many=True, required=False)
     members_object = IamMemberSerializer(source="members", many=True, read_only=True)
 
@@ -87,7 +134,6 @@ class RoleSerializer(IamModelMetaSerializer):
 
     access_policies = AccessPolicyUserCodeField(queryset=AccessPolicy.objects.all(), many=True, required=False)
     access_policies_object = IamAccessPolicySerializer(source="access_policies", many=True, read_only=True)
-
 
     class Meta:
         model = Role
@@ -108,12 +154,9 @@ class RoleSerializer(IamModelMetaSerializer):
         # Update members
         instance.access_policies.set(access_policies_data)
 
-
-
         return instance
 
     def update(self, instance, validated_data):
-
         access_policies_data = validated_data.pop('access_policies', [])
         members_data = validated_data.pop('members', [])
         instance.name = validated_data.get('name', instance.name)
@@ -129,9 +172,7 @@ class RoleSerializer(IamModelMetaSerializer):
         return instance
 
 
-
 class GroupSerializer(IamModelMetaSerializer):
-
     members = serializers.PrimaryKeyRelatedField(queryset=Member.objects.all(), many=True, required=False)
     members_object = IamMemberSerializer(source="members", many=True, read_only=True)
 

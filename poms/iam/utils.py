@@ -266,5 +266,62 @@ def capitalize_first_letter(string):
 
 
 
+def get_allowed_resources(member,  model, queryset):
+    """
+    Returns a list of allowed resources for a user based on their access policies for the given action and model.
 
+    Args:
+        member (Member): The user whose access policies are being checked.
+        action (str): The action being performed (e.g. "retrieve", "list", "create", etc.)
+        model (Model): The Django model being accessed.
+        queryset (QuerySet): The queryset of objects being accessed.
+
+    Returns:
+        list: A list of allowed resource strings.
+    """
+
+    # Get all AccessPolicy objects for the user
+    access_policies = AccessPolicy.objects.filter(
+        Q(members=member) |
+        Q(iam_roles__members=member) |
+        Q(iam_groups__members=member)
+    ).distinct()
+
+    allowed_resources = []
+
+    related_access_policies = []
+
+    for access_policy in access_policies:
+
+        policy = lowercase_keys_and_values(access_policy.policy)
+
+        is_related = False
+
+        for statement in policy["statement"]:
+
+            for action in statement.get('action', []):
+
+                action_object = action_statement_into_object(action)
+
+                if model.__name__.lower() in action_object['viewset']:
+                    is_related = True
+
+        if is_related:
+            related_access_policies.append(policy)
+
+    for policy in related_access_policies:
+
+        for statement in policy.get("statement", []):
+
+            if statement.get("effect") == "allow":
+                resources = statement.get("resource", [])
+                for resource in resources:
+                    # If a wildcard is used, return all resources in the queryset
+                    if resource == "*":
+                        for obj in queryset:
+                            allowed_resources.append(f"frn:finmars:{model._meta.app_label.lower()}.{model.__name__.lower()}:{obj.user_code}")
+                    else:
+                        allowed_resources.append(resource)
+
+    return allowed_resources
 
