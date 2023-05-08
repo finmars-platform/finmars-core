@@ -111,7 +111,8 @@ class BootstrapConfig(AppConfig):
         #         user_code='com.finmars.local:administrators')
 
     def create_iam_access_policies_templates(self):
-        from poms.iam.utils import create_base_iam_access_policies_templates
+
+        from poms.iam.policy_generator import create_base_iam_access_policies_templates
         create_base_iam_access_policies_templates()
 
 

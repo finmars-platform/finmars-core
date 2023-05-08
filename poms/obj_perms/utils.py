@@ -40,7 +40,7 @@ from poms.obj_perms.models import GenericObjectPermission
 #     from poms.obj_perms.models import AbstractGroupObjectPermission
 #     return get_obj_perms_model(obj, AbstractGroupObjectPermission)
 
-
+# Deprecated
 def obj_perms_filter_objects(member, perms, queryset, model_cls=None, prefetch=True):
     if member is None:
         return queryset

@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, ValidationError, PermissionDenied
-from rest_framework.mixins import UpdateModelMixin, DestroyModelMixin, CreateModelMixin
+from rest_framework.mixins import UpdateModelMixin, DestroyModelMixin, CreateModelMixin, ListModelMixin
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 
@@ -17,6 +17,19 @@ _l = logging.getLogger('poms.common.mixins')
 
 
 # TODO: Permissions for method and per-object must be verified!!!!
+
+
+class ListLightModelMixin(ListModelMixin):
+    '''
+    Needs for when creating default IAM policies
+    '''
+    pass
+
+class ListEvModelMixin(ListModelMixin):
+    '''
+    Needs for when creating default IAM policies
+    '''
+    pass
 
 class DestroyModelMixinExt(DestroyModelMixin):
     def destroy(self, request, *args, **kwargs):

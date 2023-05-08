@@ -3,9 +3,9 @@ from django.contrib import admin
 from poms.common.admin import AbstractModelAdmin
 from poms.ui.filters import LayoutContentTypeFilter
 from poms.ui.models import ListLayout, EditLayout, Bookmark, \
-    ComplexTransactionUserFieldModel, PortalInterfaceAccessModel, DashboardLayout, ContextMenuLayout, TemplateLayout, \
-    EntityTooltip, ColorPalette, ColorPaletteColor, CrossEntityAttributeExtension, TransactionUserFieldModel, \
-    InstrumentUserFieldModel
+    ComplexTransactionUserField, PortalInterfaceAccessModel, DashboardLayout, ContextMenuLayout, TemplateLayout, \
+    EntityTooltip, ColorPalette, ColorPaletteColor, CrossEntityAttributeExtension, TransactionUserField, \
+    InstrumentUserField
 
 
 class PortalInterfaceAccessModelAdmin(AbstractModelAdmin):
@@ -81,7 +81,7 @@ admin.site.register(CrossEntityAttributeExtension, CrossEntityAttributeExtension
 
 
 class TransactionUserFieldModelAdmin(BaseLayoutAdmin):
-    model = TransactionUserFieldModel
+    model = TransactionUserField
     master_user_path = 'master_user'
     list_display = ['id', 'master_user', 'name', 'key']
     list_select_related = ['master_user']
@@ -89,11 +89,11 @@ class TransactionUserFieldModelAdmin(BaseLayoutAdmin):
     raw_id_fields = ['master_user']
 
 
-admin.site.register(TransactionUserFieldModel, TransactionUserFieldModelAdmin)
+admin.site.register(TransactionUserField, TransactionUserFieldModelAdmin)
 
 
 class InstrumentUserFieldModelAdmin(BaseLayoutAdmin):
-    model = InstrumentUserFieldModel
+    model = InstrumentUserField
     master_user_path = 'master_user'
     list_display = ['id', 'master_user', 'name', 'key']
     list_select_related = ['master_user']
@@ -101,11 +101,11 @@ class InstrumentUserFieldModelAdmin(BaseLayoutAdmin):
     raw_id_fields = ['master_user']
 
 
-admin.site.register(InstrumentUserFieldModel, InstrumentUserFieldModelAdmin)
+admin.site.register(InstrumentUserField, InstrumentUserFieldModelAdmin)
 
 
 class ComplexTransactionUserFieldModelAdmin(BaseLayoutAdmin):
-    model = ComplexTransactionUserFieldModel
+    model = ComplexTransactionUserField
     master_user_path = 'master_user'
     list_display = ['id', 'master_user', 'name', 'key']
     list_select_related = ['master_user']
@@ -113,7 +113,7 @@ class ComplexTransactionUserFieldModelAdmin(BaseLayoutAdmin):
     raw_id_fields = ['master_user']
 
 
-admin.site.register(ComplexTransactionUserFieldModel, ComplexTransactionUserFieldModelAdmin)
+admin.site.register(ComplexTransactionUserField, ComplexTransactionUserFieldModelAdmin)
 
 
 class ListLayoutAdmin(BaseLayoutAdmin):

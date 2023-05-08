@@ -8,9 +8,9 @@ from rest_framework import serializers
 from poms.common.serializers import ModelWithTimeStampSerializer, ModelMetaSerializer
 from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import ListLayout, EditLayout, Bookmark, \
-    ConfigurationExportLayout, ComplexTransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
+    ConfigurationExportLayout, ComplexTransactionUserField, InstrumentUserField, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPaletteColor, ColorPalette, \
-    CrossEntityAttributeExtension, ColumnSortData, TransactionUserFieldModel
+    CrossEntityAttributeExtension, ColumnSortData, TransactionUserField
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 
@@ -26,7 +26,7 @@ class ComplexTransactionUserFieldSerializer(ModelMetaSerializer):
     master_user = MasterUserField()
 
     class Meta:
-        model = ComplexTransactionUserFieldModel
+        model = ComplexTransactionUserField
         fields = ['id', 'master_user', 'key', 'name', 'is_active']
 
 
@@ -34,7 +34,7 @@ class TransactionUserFieldSerializer(ModelMetaSerializer):
     master_user = MasterUserField()
 
     class Meta:
-        model = TransactionUserFieldModel
+        model = TransactionUserField
         fields = ['id', 'master_user', 'key', 'name', 'is_active']
 
 
@@ -134,7 +134,7 @@ class InstrumentUserFieldSerializer(ModelMetaSerializer):
     master_user = MasterUserField()
 
     class Meta:
-        model = InstrumentUserFieldModel
+        model = InstrumentUserField
         fields = ['id', 'master_user', 'key', 'name']
 
 

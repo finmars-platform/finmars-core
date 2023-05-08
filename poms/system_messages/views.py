@@ -29,7 +29,7 @@ class SystemMessageFilterSet(FilterSet):
         fields = []
 
 
-class MessageViewSet(AbstractModelViewSet):
+class SystemMessageViewSet(AbstractModelViewSet):
     queryset = SystemMessage.objects
     serializer_class = SystemMessageSerializer
     filter_class = SystemMessageFilterSet

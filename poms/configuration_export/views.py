@@ -49,9 +49,9 @@ from poms.transactions.models import TransactionType, TransactionTypeInput, Tran
     TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
     TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionInstrumentFactorSchedule, \
     TransactionTypeActionInstrumentManualPricingFormula, NotificationClass, EventClass, TransactionClass
-from poms.ui.models import EditLayout, ListLayout, Bookmark, ComplexTransactionUserFieldModel, InstrumentUserFieldModel, \
+from poms.ui.models import EditLayout, ListLayout, Bookmark, ComplexTransactionUserField, InstrumentUserField, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, ColorPaletteColor, ColumnSortData, \
-    CrossEntityAttributeExtension, TransactionUserFieldModel
+    CrossEntityAttributeExtension, TransactionUserField
 from poms.ui.serializers import BookmarkSerializer
 from poms_app import settings
 
@@ -184,7 +184,6 @@ def get_access_table(member):
 
 
 class ConfigurationExportViewSet(AbstractModelViewSet):
-
     serializer_class = EmptySerializer
 
     def list(self, request):
@@ -1387,7 +1386,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
     def get_complex_transaction_user_fields(self):
 
         user_fields = to_json_objects(
-            ComplexTransactionUserFieldModel.objects.filter(master_user=self._master_user))
+            ComplexTransactionUserField.objects.filter(master_user=self._master_user))
 
         results = []
 
@@ -1402,7 +1401,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'pk')
 
         result = {
-            "entity": "ui.complextransactionuserfieldmodel",
+            "entity": "ui.complextransactionuserfield",
             "count": len(results),
             "content": results
         }
@@ -1412,7 +1411,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
     def get_transaction_user_fields(self):
 
         user_fields = to_json_objects(
-            TransactionUserFieldModel.objects.filter(master_user=self._master_user))
+            TransactionUserField.objects.filter(master_user=self._master_user))
 
         results = []
 
@@ -1427,7 +1426,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'pk')
 
         result = {
-            "entity": "ui.transactionuserfieldmodel",
+            "entity": "ui.transactionuserfield",
             "count": len(results),
             "content": results
         }
@@ -1437,7 +1436,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
     def get_instrument_user_fields(self):
 
         user_fields = to_json_objects(
-            InstrumentUserFieldModel.objects.filter(master_user=self._master_user))
+            InstrumentUserField.objects.filter(master_user=self._master_user))
 
         results = []
 
@@ -1452,7 +1451,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'pk')
 
         result = {
-            "entity": "ui.instrumentuserfieldmodel",
+            "entity": "ui.instrumentuserfield",
             "count": len(results),
             "content": results
         }

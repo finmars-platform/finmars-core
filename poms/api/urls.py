@@ -128,7 +128,7 @@ router.register(r'pricing/currency-history-error', pricing.CurrencyHistoryErrorV
 
 router.register(r'schedules/schedule', schedules.ScheduleViewSet)
 
-router.register(r'system-messages/message', system_messages.MessageViewSet)
+router.register(r'system-messages/message', system_messages.SystemMessageViewSet)
 
 router.register(r'credentials/credentials', credentials.CredentialsViewSet)  # Probably deprecated
 router.register(r'integrations/data-provider', integrations.DataProviderViewSet)  # Probably deprecated

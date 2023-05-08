@@ -19,14 +19,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet, ViewSet
 
-from poms.iam.views import AbstractFinmarsAccessPolicyViewSet
 from poms.common.filtering_handlers import handle_filters, handle_global_table_search
 from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend, OrderingPostFilter, \
     ByIsEnabledFilterBackend
 from poms.common.grouping_handlers import handle_groups, count_groups
-from poms.common.mixins import BulkModelMixin, DestroyModelFakeMixin, UpdateModelMixinExt
+from poms.common.mixins import BulkModelMixin, DestroyModelFakeMixin, UpdateModelMixinExt, ListLightModelMixin, \
+    ListEvModelMixin
 from poms.common.sorting import sort_by_dynamic_attrs
 from poms.history.mixins import HistoryMixin
+from poms.iam.views import AbstractFinmarsAccessPolicyViewSet
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.utils import get_master_user_and_member
 
@@ -250,7 +251,12 @@ class AbstractEvGroupViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelF
         return Response(filtered_qs)
 
 
-class AbstractModelViewSet(AbstractApiView, HistoryMixin, UpdateModelMixinExt, DestroyModelFakeMixin,
+class AbstractModelViewSet(AbstractApiView,
+                           HistoryMixin,
+                           ListLightModelMixin,
+                           ListEvModelMixin,
+                           UpdateModelMixinExt,
+                           DestroyModelFakeMixin,
                            BulkModelMixin, AbstractFinmarsAccessPolicyViewSet):
     permission_classes = AbstractFinmarsAccessPolicyViewSet.permission_classes + [
         IsAuthenticated
@@ -298,7 +304,7 @@ class AbstractModelViewSet(AbstractApiView, HistoryMixin, UpdateModelMixinExt, D
         return Response(serializer.data)
 
     @action(detail=False, methods=['post'], url_path='ev-item')
-    def ev_item(self, request, *args, **kwargs):
+    def list_ev_item(self, request, *args, **kwargs):
 
         start_time = time.perf_counter()
 
@@ -363,7 +369,7 @@ class AbstractModelViewSet(AbstractApiView, HistoryMixin, UpdateModelMixinExt, D
         # return Response(serializer.data)
 
     @action(detail=False, methods=['post'], url_path='ev-group')
-    def ev_group(self, request, *args, **kwargs):
+    def list_ev_group(self, request, *args, **kwargs):
 
         start_time = time.time()
 

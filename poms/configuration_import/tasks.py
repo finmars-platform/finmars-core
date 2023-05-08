@@ -6,7 +6,6 @@ from logging import getLogger
 
 from celery import shared_task
 from django.contrib.contenttypes.models import ContentType
-from django.db import transaction
 from django.utils.timezone import now
 from rest_framework.exceptions import ValidationError
 
@@ -57,10 +56,10 @@ from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.system_messages.handlers import send_system_message
 from poms.transactions.models import TransactionClass, TransactionTypeGroup, TransactionType, TransactionTypeInput
 from poms.transactions.serializers import TransactionTypeGroupSerializer, TransactionTypeSerializer
-from poms.ui.models import ListLayout, InstrumentUserFieldModel, ComplexTransactionUserFieldModel, DashboardLayout, \
+from poms.ui.models import ListLayout, InstrumentUserField, ComplexTransactionUserField, DashboardLayout, \
     EditLayout, \
     ContextMenuLayout, TemplateLayout, EntityTooltip, ColorPalette, ColumnSortData, CrossEntityAttributeExtension, \
-    TransactionUserFieldModel
+    TransactionUserField
 from poms.ui.serializers import EditLayoutSerializer, ListLayoutSerializer, DashboardLayoutSerializer, \
     InstrumentUserFieldSerializer, ContextMenuLayoutSerializer, \
     TemplateLayoutSerializer, EntityTooltipSerializer, ColorPaletteSerializer, ColumnSortDataSerializer, \
@@ -87,7 +86,6 @@ def check_configuration_section(configuration_access_table):
 
 
 def get_data_access_table(member):
-
     # Deprecated
 
     result = {
@@ -127,7 +125,7 @@ def get_data_access_table(member):
 
 
 def get_configuration_access_table(member):
-    #Deprecated
+    # Deprecated
     result = {
         'obj_attrs.attributetype': False,
         'reference_tables.referencetable': False,
@@ -172,7 +170,6 @@ def get_configuration_access_table(member):
 
 
 class ConfigurationImportManager(object):
-
     '''ConfigurationImportManager
     Import is moved as background process which is good
     Now just loads .fcfg file and tries to import all data as it is
@@ -1701,12 +1698,11 @@ class ConfigurationImportManager(object):
 
                                     stats['status'] = 'error'
                                     stats['error']['message'] = 'Column Sort Data Layout %s already exists' % \
-                                                                    content_object['user_code']
+                                                                content_object['user_code']
                         except Exception as e:
 
                             stats['status'] = 'error'
                             stats['error']['message'] = str(e)
-
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
@@ -2494,8 +2490,8 @@ class ConfigurationImportManager(object):
 
                                 try:
 
-                                    instance = InstrumentUserFieldModel.objects.get(master_user=self.master_user,
-                                                                                    key=content_object['key'])
+                                    instance = InstrumentUserField.objects.get(master_user=self.master_user,
+                                                                               key=content_object['key'])
 
                                     serializer = InstrumentUserFieldSerializer(data=content_object,
                                                                                instance=instance,
@@ -2547,28 +2543,30 @@ class ConfigurationImportManager(object):
                         try:
 
                             try:
-                                instance = ComplexTransactionUserFieldModel.objects.get(
+                                instance = ComplexTransactionUserField.objects.get(
                                     master_user=self.master_user, key=content_object['key'])
                                 instance.name = content_object['name']
                                 instance.is_active = content_object['is_active']
                                 instance.save()
 
-                            except ComplexTransactionUserFieldModel.DoesNotExist:
-                                ComplexTransactionUserFieldModel.objects.create(
+                            except ComplexTransactionUserField.DoesNotExist:
+                                ComplexTransactionUserField.objects.create(
                                     is_active=content_object['is_active'], name=content_object['name'],
                                     master_user=self.master_user, key=content_object['key'])
 
 
                         except Exception as error:
                             stats['status'] = 'error'
-                            stats['error']['message'] = 'Complex Transaction User Field %s already exists' % content_object[
-                                'name']
+                            stats['error']['message'] = 'Complex Transaction User Field %s already exists' % \
+                                                        content_object[
+                                                            'name']
 
                         self.instance.stats['configuration'][item['entity']].append(stats)
 
                         self.update_progress(message='Import Transaction Labels')
 
-        _l.info('Import Configuration Complex Transaction User Fields done %s' % "{:3.3f}".format(time.perf_counter() - st))
+        _l.info(
+            'Import Configuration Complex Transaction User Fields done %s' % "{:3.3f}".format(time.perf_counter() - st))
 
     def import_transaction_user_fields(self, configuration_section):
 
@@ -2597,14 +2595,14 @@ class ConfigurationImportManager(object):
                         try:
 
                             try:
-                                instance = TransactionUserFieldModel.objects.get(
+                                instance = TransactionUserField.objects.get(
                                     master_user=self.master_user, key=content_object['key'])
                                 instance.name = content_object['name']
                                 instance.is_active = content_object['is_active']
                                 instance.save()
 
-                            except TransactionUserFieldModel.DoesNotExist:
-                                TransactionUserFieldModel.objects.create(
+                            except TransactionUserField.DoesNotExist:
+                                TransactionUserField.objects.create(
                                     is_active=content_object['is_active'], name=content_object['name'],
                                     master_user=self.master_user, key=content_object['key'])
 
@@ -2619,7 +2617,6 @@ class ConfigurationImportManager(object):
                         self.update_progress(message='Import Transaction Labels')
 
         _l.info('Import Configuration Transaction User Fields done %s' % "{:3.3f}".format(time.perf_counter() - st))
-
 
     def import_instrument_pricing_schemes(self, configuration_section):
 
@@ -3287,7 +3284,6 @@ class ConfigurationImportManager(object):
 
 @shared_task(name='configuration_import.configuration_import_as_json', bind=True)
 def configuration_import_as_json(self, task_id):
-
     _l.info("Start configuration_import_as_json task_id %s" % task_id)
 
     task = CeleryTask.objects.get(id=task_id)

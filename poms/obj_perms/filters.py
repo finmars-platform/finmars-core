@@ -23,7 +23,7 @@ class AllFakeFilter(django_filters.Filter):
     def filter(self, qs, value):
         return qs
 
-
+# Deprecated
 class ObjectPermissionBackend(BaseFilterBackend):
     codename_set = ['view_%(model_name)s', 'change_%(model_name)s', 'manage_%(model_name)s',
                     'view_%(model_name)s_show_parameters', 'view_%(model_name)s_hide_parameters']
@@ -36,6 +36,10 @@ class ObjectPermissionBackend(BaseFilterBackend):
         return {perm % kwargs for perm in self.codename_set}
 
     def filter_queryset(self, request, queryset, view):
+
+        return queryset
+
+        # Deprecated
         if view and view.action == 'retrieve':
             # any object can'be loaded even if not permission
             # result must be filtered in the serializer

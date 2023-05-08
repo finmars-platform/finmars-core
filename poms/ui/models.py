@@ -261,7 +261,7 @@ class ColorPaletteColor(models.Model):
         ordering = ['order']
 
 
-class ComplexTransactionUserFieldModel(ConfigurationModel):
+class ComplexTransactionUserField(ConfigurationModel):
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -271,7 +271,7 @@ class ComplexTransactionUserFieldModel(ConfigurationModel):
     is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
 
 
-class TransactionUserFieldModel(ConfigurationModel):
+class TransactionUserField(ConfigurationModel):
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -281,7 +281,7 @@ class TransactionUserFieldModel(ConfigurationModel):
     is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
 
 
-class InstrumentUserFieldModel(ConfigurationModel):
+class InstrumentUserField(ConfigurationModel):
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 

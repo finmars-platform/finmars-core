@@ -9,9 +9,9 @@ from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter
 from poms.common.mixins import DestroySystemicModelMixin
 from poms.common.views import AbstractModelViewSet, AbstractViewSet, AbstractReadOnlyModelViewSet
 from poms.ui.models import ListLayout, EditLayout, Bookmark,  \
-    ConfigurationExportLayout, ComplexTransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
+    ConfigurationExportLayout, ComplexTransactionUserField, InstrumentUserField, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, CrossEntityAttributeExtension, \
-    ColumnSortData, TransactionUserFieldModel
+    ColumnSortData, TransactionUserField
 from poms.instruments.models import Instrument, InstrumentType
 from poms.currencies.models import Currency
 from poms.accounts.models import Account, AccountType
@@ -60,7 +60,7 @@ class PortalInterfaceAccessViewSet(AbstractReadOnlyModelViewSet):
 
 
 class ComplexTransactionUserFieldViewSet(AbstractModelViewSet):
-    queryset = ComplexTransactionUserFieldModel.objects.select_related(
+    queryset = ComplexTransactionUserField.objects.select_related(
         'master_user',
     )
     serializer_class = ComplexTransactionUserFieldSerializer
@@ -69,7 +69,7 @@ class ComplexTransactionUserFieldViewSet(AbstractModelViewSet):
     ]
 
 class TransactionUserFieldViewSet(AbstractModelViewSet):
-    queryset = TransactionUserFieldModel.objects.select_related(
+    queryset = TransactionUserField.objects.select_related(
         'master_user',
     )
     serializer_class = TransactionUserFieldSerializer
@@ -177,7 +177,7 @@ class ColumnSortDataViewSet(AbstractModelViewSet):
 
 
 class InstrumentUserFieldViewSet(AbstractModelViewSet):
-    queryset = InstrumentUserFieldModel.objects.select_related(
+    queryset = InstrumentUserField.objects.select_related(
         'master_user',
     )
     serializer_class = InstrumentUserFieldSerializer
