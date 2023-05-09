@@ -15,7 +15,7 @@ code below just clears the cache when access policy is updated
 '''
 def clear_member_access_policies_cache(member):
     cache_key = f'member_access_policies_{member.id}'
-    _l.info("clear_member_access_policies_cache.going to clear cache for %s" % member)
+    _l.debug("clear_member_access_policies_cache.going to clear cache for %s" % member)
     cache.delete(cache_key)
 
 @receiver(post_save, sender=AccessPolicy)
@@ -24,10 +24,12 @@ def clear_access_policy_cache(sender, instance, **kwargs):
     # Clear cache for all related users
     for member in instance.members.all():
         clear_member_access_policies_cache(member)
-    for member in instance.iam_roles.all().values_list('members', flat=True):
-        clear_member_access_policies_cache(member)
-    for member in instance.iam_groups.all().values_list('members', flat=True):
-        clear_member_access_policies_cache(member)
+    for role in instance.iam_roles.all():
+        for member in role.members.all():
+            clear_member_access_policies_cache(member)
+    for group in instance.iam_groups.all():
+        for member in group.members.all():
+            clear_member_access_policies_cache(member)
 
 @receiver(post_save, sender=Role)
 @receiver(post_delete, sender=Role)

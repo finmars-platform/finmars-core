@@ -11,6 +11,7 @@ from django.contrib.contenttypes.models import ContentType
 from poms.common import formula
 from poms.iam.fields import IamProtectedRelatedField
 
+from django.utils.translation import gettext_lazy as _
 
 class PrimaryKeyRelatedFilteredField(PrimaryKeyRelatedField):
     filter_backends = None
@@ -70,6 +71,11 @@ class SlugRelatedFilteredField(SlugRelatedField):
 # Thats cool
 class UserCodeOrPrimaryKeyRelatedField(IamProtectedRelatedField):
 
+    default_error_messages = {
+        'does_not_exist': _('Object with user_code or id that equals {value} does not exist.'),
+        'invalid': _('Invalid value.'),
+    }
+
     def to_internal_value(self, data):
         queryset = self.get_queryset()
         try:
@@ -78,7 +84,7 @@ class UserCodeOrPrimaryKeyRelatedField(IamProtectedRelatedField):
             else:
                 return queryset.get(pk=data)
         except ObjectDoesNotExist:
-            self.fail('does_not_exist', slug_name='user_code', value=str(data))
+            self.fail('does_not_exist', value=str(data))
         except (TypeError, ValueError):
             self.fail('invalid')
 

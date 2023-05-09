@@ -424,6 +424,11 @@ def generate_full_data_manager_role():
         'com.finmars.local:finmars-instrumenttype-readonly',
         'com.finmars.local:finmars-instrumenttypeattributetype-readonly',
 
+
+        'com.finmars.local:finmars-currency-full',
+        'com.finmars.local:finmars-currencyattributetype-readonly',
+
+
         'com.finmars.local:finmars-pricingpolicy-full',
 
         'com.finmars.local:finmars-pricehistory-full',
@@ -496,6 +501,9 @@ def generate_base_data_manager_role():
         'com.finmars.local:finmars-instrumentattributetype-readonly',
         'com.finmars.local:finmars-instrumenttype-readonly',
         'com.finmars.local:finmars-instrumenttypeattributetype-readonly',
+
+        'com.finmars.local:finmars-currency-full',
+        'com.finmars.local:finmars-currencyattributetype-readonly',
 
         'com.finmars.local:finmars-pricingpolicy-full',
 

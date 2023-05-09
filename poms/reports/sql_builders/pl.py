@@ -9,6 +9,7 @@ from django.db import connection
 from poms.accounts.models import Account, AccountType
 from poms.common.utils import get_closest_bday_of_yesterday, get_last_business_day
 from poms.currencies.models import Currency
+from poms.iam.utils import get_allowed_queryset
 from poms.instruments.models import Instrument, CostMethod, InstrumentType
 from poms.portfolios.models import Portfolio
 from poms.reports.common import Report
@@ -35,6 +36,22 @@ class PLReportBuilderSql:
 
         _l.debug('self.instance master_user %s' % self.instance.master_user)
         _l.debug('self.instance report_date %s' % self.instance.report_date)
+
+        '''TODO need to check, if user somehow passes id of object he has no access to we should throw error'''
+
+        '''Important security methods'''
+        self.transform_to_allowed_portfolios()
+        self.transform_to_allowed_accounts()
+
+    def transform_to_allowed_portfolios(self):
+
+        if not len(self.instance.portfolios):
+            self.instance.portfolios = get_allowed_queryset(self.instance.member, Portfolio.objects.all())
+
+    def transform_to_allowed_accounts(self):
+
+        if not len(self.instance.accounts):
+            self.instance.accounts = get_allowed_queryset(self.instance.member, Account.objects.all())
 
     def get_first_transaction(self):
 

@@ -858,6 +858,7 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
     item_currencies = ReportCurrencySerializer(many=True, read_only=True)
     item_portfolios = ReportPortfolioSerializer(many=True, read_only=True)
     item_accounts = ReportAccountSerializer(many=True, read_only=True)
+    item_account_types = ReportAccountTypeSerializer(many=True, read_only=True)
     item_strategies1 = ReportStrategy1Serializer(many=True, read_only=True)
     item_strategies2 = ReportStrategy2Serializer(many=True, read_only=True)
     item_strategies3 = ReportStrategy3Serializer(many=True, read_only=True)
