@@ -23,8 +23,20 @@ class TransactionObjectPermissionFilter(BaseFilterBackend):
 
     @classmethod
     def filter_qs(self, queryset, master_user, member):
-        if member.is_superuser:
+        if member.is_admin:
             return queryset
+
+        from poms.iam.utils import get_allowed_queryset
+
+        '''TODO IAM_SECURITY_VERIFY check if appoach is good for business requirements '''
+        allowed_portfolios = get_allowed_queryset(member, Portfolio.objects.all())
+        allowed_accounts = get_allowed_queryset(member, Account.objects.all())
+
+        queryset = queryset.filter(portfolio__in=allowed_portfolios)
+
+        queryset = queryset.filter(
+            Q(account_position__in=allowed_accounts) | Q(account_cash__in=allowed_accounts) | Q(
+                account_interim__in=allowed_accounts))
 
         return queryset
 
@@ -40,7 +52,30 @@ class TransactionTypeInputContentTypeFilter(BaseFilterBackend):
 
 class ComplexTransactionPermissionFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        return queryset.filter(master_user=request.user.master_user)
+        master_user = request.user.master_user
+        member = request.user.member
+
+        return self.filter_qs(queryset, master_user, member)
+
+    @classmethod
+    def filter_qs(self, queryset, master_user, member):
+        if member.is_admin:
+            return queryset
+
+        from poms.iam.utils import get_allowed_queryset
+
+        '''TODO IAM_SECURITY_VERIFY check if appoach is good for business requirements '''
+        allowed_portfolios = get_allowed_queryset(member, Portfolio.objects.all())
+        allowed_accounts = get_allowed_queryset(member, Account.objects.all())
+
+        queryset = queryset.filter(transactions__portfolio__in=allowed_portfolios)
+
+        '''TODO check maybe performance issue'''
+        queryset = queryset.filter(
+            Q(transactions__account_position__in=allowed_accounts) | Q(transactions__account_cash__in=allowed_accounts) | Q(
+                transactions__account_interim__in=allowed_accounts))
+
+        return queryset
 
 
 class ComplexTransactionSpecificFilter(BaseFilterBackend):

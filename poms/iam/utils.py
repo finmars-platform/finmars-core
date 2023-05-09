@@ -326,6 +326,7 @@ def get_allowed_resources(member, model, queryset):
                 action_object = action_statement_into_object(action)
 
                 '''
+                TODO IAM_SECURITY_VERIFY
                 Important, there is a possible issue, in this appoach I limit myself that
                 modelName should be equal viewsetName, in most cases it should work great
                 

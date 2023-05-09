@@ -136,6 +136,8 @@ class AccessPolicy(permissions.BasePermission):
 
         denied = [_ for _ in matched if _["effect"].lower() != "allow"]
 
+
+        '''TODO IAM_SECURITY_VERIFY check approach if one deny cancels all access'''
         _l.debug('len(matched) %s' % len(matched))
         _l.debug('len(denied) %s' % len(denied))
 
@@ -239,6 +241,12 @@ class AccessPolicy(permissions.BasePermission):
 
                 if settings.SERVICE_NAME in action_object['service']:
 
+                    '''
+                        TODO IAM_SECURITY_VERIFY here is good place, it would work as intended because we have access to view
+                        but in Field filter we do not have access to view so we compare with model.name
+                        maybe its a problem, see  utils.py#get_allowed_resources
+                    
+                    '''
                     if view.basename.lower() in action_object['viewset']:
 
                         if action in action_object['action'] or "*" in action_object['action']:

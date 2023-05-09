@@ -32,7 +32,8 @@ from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3, Strategy1Subgroup, Strategy1Group, \
     Strategy2Subgroup, Strategy2Group, Strategy3Subgroup, Strategy3Group
-from poms.transactions.filters import  ComplexTransactionSpecificFilter
+from poms.transactions.filters import ComplexTransactionSpecificFilter, TransactionObjectPermissionFilter, \
+    ComplexTransactionPermissionFilter
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionClass, Transaction, TransactionType, TransactionTypeGroup, \
     ComplexTransaction, EventClass, NotificationClass
@@ -1088,7 +1089,7 @@ class TransactionViewSet(AbstractModelViewSet):
     serializer_class = TransactionSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
-        # TransactionObjectPermissionFilter,
+        TransactionObjectPermissionFilter,
         AttributeFilter,
         GroupsAttributeFilter,
     ]
@@ -1460,7 +1461,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
     serializer_class = ComplexTransactionSerializer
 
     filter_backends = AbstractModelViewSet.filter_backends + [
-        # ComplexTransactionPermissionFilter,
+        ComplexTransactionPermissionFilter,
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
