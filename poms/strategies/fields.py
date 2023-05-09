@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from poms.common.fields import PrimaryKeyRelatedFilteredField
+from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeOrPrimaryKeyRelatedField
 from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, Strategy2Subgroup, \
     Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
 from poms.users.filters import OwnerByMasterUserFilter
@@ -20,11 +20,12 @@ class Strategy1SubgroupField(PrimaryKeyRelatedFilteredField):
     ]
 
 
-class Strategy1Field(PrimaryKeyRelatedFilteredField):
+class Strategy1Field(UserCodeOrPrimaryKeyRelatedField):
     queryset = Strategy1.objects
-    filter_backends = [
-        OwnerByMasterUserFilter,
-    ]
+    # Possibly Deprecated
+    # filter_backends = UserCodeOrPrimaryKeyRelatedField.filter_backends + [
+    #     OwnerByMasterUserFilter,
+    # ]
 
 
 class Strategy1GroupDefault(object):

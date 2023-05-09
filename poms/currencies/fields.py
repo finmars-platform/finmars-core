@@ -37,6 +37,7 @@ class SystemCurrencyDefault(object):
 
 class CurrencyField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Currency.objects
-    filter_backends = (
-        OwnerByMasterUserFilter,
-    )
+    # Possibly Deprecated
+    # filter_backends = UserCodeOrPrimaryKeyRelatedField.filter_backends + [
+    #     OwnerByMasterUserFilter,
+    # ]

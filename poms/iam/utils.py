@@ -265,11 +265,29 @@ def capitalize_first_letter(string):
         return string
 
 
+def get_allowed_queryset(member, queryset):
+    # Retrieve the user's Access Policies and apply the filtering logic
+    # You might need to adjust the logic based on your Access Policies implementation
+    # TODO maybe has performance issues
+    allowed_resources = get_allowed_resources(member, queryset.model, queryset)
+    allowed_user_codes = []
+
+    _l.info('get_allowed_queryset.allowed_resources %s' % allowed_resources)
+
+    for resource in allowed_resources:
+
+        prefix, app, content_type, user_code = resource.split(':', 3)
+
+        allowed_user_codes.append(user_code)
+
+    return queryset.filter(user_code__in=allowed_user_codes)
+
 
 def get_allowed_resources(member,  model, queryset):
     """
     Returns a list of allowed resources for a user based on their access policies for the given action and model.
 
+    in most cases queryset consists of one item
     Args:
         member (Member): The user whose access policies are being checked.
         action (str): The action being performed (e.g. "retrieve", "list", "create", etc.)
@@ -303,11 +321,21 @@ def get_allowed_resources(member,  model, queryset):
 
                 action_object = action_statement_into_object(action)
 
-                if model.__name__.lower() in action_object['viewset']:
+                '''
+                Important, there is a possible issue, in this appoach I limit myself that
+                modelName should be equal viewsetName, in most cases it should work great
+                
+                but for example we have viewset PortfolioAttributeType, but our model is GenericAttributeType
+                It means that permission engine would not able create resource access policy for this model
+                
+                '''
+                if model.__name__.lower() == action_object['viewset']:
                     is_related = True
 
         if is_related:
             related_access_policies.append(policy)
+
+    # _l.info('related_access_policies %s' % related_access_policies)
 
     for policy in related_access_policies:
 

@@ -99,9 +99,10 @@ class BundleField(PrimaryKeyRelatedFilteredField):
 
 class PricingPolicyField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PricingPolicy.objects
-    filter_backends = [
-        OwnerByMasterUserFilter,
-    ]
+    # Possibly Deprecated
+    # filter_backends = UserCodeOrPrimaryKeyRelatedField.filter_backends + [
+    #     OwnerByMasterUserFilter,
+    # ]
 
 
 class CostMethodField(PrimaryKeyRelatedFilteredField):

@@ -35,8 +35,9 @@ class AccountDefault(object):
         return self._master_user.account
 
 
-class AccountField(PrimaryKeyRelatedFilteredField):
+class AccountField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Account.objects
-    filter_backends = [
-        OwnerByMasterUserFilter,
-    ]
+    # Possibly Deprecated
+    # filter_backends = UserCodeOrPrimaryKeyRelatedField.filter_backends + [
+    #     OwnerByMasterUserFilter,
+    # ]

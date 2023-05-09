@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from poms.common.fields import PrimaryKeyRelatedFilteredField
+from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeOrPrimaryKeyRelatedField
 from poms.portfolios.models import Portfolio
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -29,8 +29,9 @@ class PortfolioDefault(object):
         return self._master_user.portfolio
 
 
-class PortfolioField(PrimaryKeyRelatedFilteredField):
+class PortfolioField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Portfolio.objects
-    filter_backends = [
-        OwnerByMasterUserFilter,
-    ]
+    # Possibly Deprecated
+    # filter_backends = UserCodeOrPrimaryKeyRelatedField.filter_backends + [
+    #     OwnerByMasterUserFilter,
+    # ]

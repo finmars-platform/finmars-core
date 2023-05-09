@@ -11,7 +11,12 @@ _l = logging.getLogger('poms.iam')
 User = get_user_model()
 
 
-class IamAbstractSerializer(serializers.ModelSerializer):
+class IamProtectedSerializer(serializers.ModelSerializer):
+
+    '''
+    Abstract serializer for models with User Code.
+    '''
+
     class Meta:
         abstract = True
 

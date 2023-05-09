@@ -9,6 +9,7 @@ from rest_framework.fields import CharField, DateTimeField, FloatField, empty, R
 from rest_framework.relations import PrimaryKeyRelatedField, SlugRelatedField, RelatedField
 from django.contrib.contenttypes.models import ContentType
 from poms.common import formula
+from poms.iam.fields import IamProtectedRelatedField
 
 
 class PrimaryKeyRelatedFilteredField(PrimaryKeyRelatedField):
@@ -67,7 +68,7 @@ class SlugRelatedFilteredField(SlugRelatedField):
 
 
 # Thats cool
-class UserCodeOrPrimaryKeyRelatedField(RelatedField):
+class UserCodeOrPrimaryKeyRelatedField(IamProtectedRelatedField):
 
     def to_internal_value(self, data):
         queryset = self.get_queryset()

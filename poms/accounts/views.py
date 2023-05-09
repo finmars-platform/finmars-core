@@ -5,8 +5,7 @@ from django_filters.rest_framework import FilterSet
 from rest_framework.settings import api_settings
 from rest_framework.decorators import action
 from poms.accounts.models import Account, AccountType
-from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer, AccountLightSerializer, \
-    AccountEvSerializer, AccountTypeEvSerializer
+from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer, AccountLightSerializer
 from poms.common.filters import CharFilter, NoOpFilter, \
     GroupsAttributeFilter, AttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
