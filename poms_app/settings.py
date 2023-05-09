@@ -76,7 +76,6 @@ INSTALLED_APPS = [
     'poms.iam',
     'poms.notifications',
     'poms.obj_attrs',
-    'poms.obj_perms',
     'poms.ui',
     'poms.accounts',
     'poms.counterparties',
@@ -490,7 +489,6 @@ REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] += (
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
-    # 'poms.obj_perms.backends.PomsPermissionBackend',
 )
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880  # 5mb

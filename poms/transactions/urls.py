@@ -8,13 +8,7 @@ router.register(r'notification-class', transactions.NotificationClassViewSet)
 router.register(r'transaction-class', transactions.TransactionClassViewSet)
 
 router.register(r'transaction-type-group', transactions.TransactionTypeGroupViewSet)
-
-router.register(r'transaction-type-light-ev-group', transactions.TransactionTypeLightEvGroupViewSet,
-                'transactiontypelightevgroup')  # Deprecated why even needed?
 router.register(r'transaction-type', transactions.TransactionTypeViewSet, 'transactiontype')
-
-router.register(r'transaction-type-light-with-inputs', transactions.TransactionTypeLightWithInputsViewSet,
-                'transactiontypelightwithinputs')  # Deprecated
 router.register(r'transaction-type-attribute-type', transactions.TransactionTypeAttributeTypeViewSet, 'TransactionTypeAttributeType')
 router.register(r'transaction-attribute-type', transactions.TransactionAttributeTypeViewSet,
                 'TransactionAttributeType')

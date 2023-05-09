@@ -17,7 +17,7 @@ from rest_framework.viewsets import ModelViewSet
 
 from poms.accounts.models import Account, AccountType
 from poms.celery_tasks.models import CeleryTask
-from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
+from poms.common.filters import CharFilter,  NoOpFilter, \
     ModelExtMultipleChoiceFilter, ByIdFilterBackend
 from poms.common.mixins import UpdateModelMixinExt, DestroyModelFakeMixin, BulkModelMixin
 from poms.common.utils import datetime_now
@@ -63,8 +63,6 @@ from poms.integrations.serializers import ImportConfigSerializer, ImportInstrume
 from poms.integrations.tasks import complex_transaction_csv_file_import_parallel, \
     complex_transaction_csv_file_import_validate_parallel
 from poms.obj_attrs.models import GenericAttributeType
-from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
-from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.portfolios.models import Portfolio
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
@@ -156,14 +154,11 @@ class InstrumentDownloadSchemeViewSet(AbstractModelViewSet):
         Prefetch(
             'attributes',
             queryset=InstrumentDownloadSchemeAttribute.objects.select_related('attribute_type')
-        ),
-        *get_permissions_prefetch_lookups(
-            ('attributes__attribute_type', GenericAttributeType),
         )
     )
     serializer_class = InstrumentDownloadSchemeSerializer
     permission_classes = AbstractModelViewSet.permission_classes + [
-        PomsConfigurationPermission
+
     ]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -192,7 +187,7 @@ class InstrumentDownloadSchemeLightViewSet(AbstractModelViewSet):
     )
     serializer_class = InstrumentDownloadSchemeLightSerializer
     permission_classes = AbstractModelViewSet.permission_classes + [
-        PomsConfigurationPermission
+
     ]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -231,7 +226,7 @@ class PriceDownloadSchemeViewSet(AbstractModelViewSet):
         'provider', 'provider__name',
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
-        PomsConfigurationPermission
+
     ]
 
 
@@ -248,8 +243,7 @@ class AbstractMappingViewSet(AbstractModelViewSet):
     queryset = None
     serializer_class = None
     permission_classes = AbstractModelViewSet.permission_classes + [
-        SuperUserOrReadOnly,
-        PomsConfigurationPermission
+        SuperUserOrReadOnly
     ]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -299,7 +293,6 @@ class PricingPolicyMappingViewSet(AbstractMappingViewSet):
 
 
 class AccountTypeMappingFilterSet(AbstractMappingFilterSet):
-    content_object = ModelExtWithPermissionMultipleChoiceFilter(model=AccountType)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = AccountTypeMapping
@@ -317,7 +310,6 @@ class AccountTypeMappingViewSet(AbstractMappingViewSet):
 
 
 class InstrumentTypeMappingFilterSet(AbstractMappingFilterSet):
-    content_object = ModelExtWithPermissionMultipleChoiceFilter(model=InstrumentType)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = InstrumentTypeMapping
@@ -335,7 +327,6 @@ class InstrumentTypeMappingViewSet(AbstractMappingViewSet):
 
 
 class InstrumentAttributeValueMappingFilterSet(AbstractMappingFilterSet):
-    content_object = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = InstrumentAttributeValueMapping
@@ -383,14 +374,12 @@ class PeriodicityMappingViewSet(AbstractMappingViewSet):
 
 
 class AccountMappingFilterSet(AbstractMappingFilterSet):
-    content_object = ModelExtWithPermissionMultipleChoiceFilter(model=Account)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = AccountMapping
 
 
 class AccountClassifierMappingFilterSet(AbstractMappingFilterSet):
-    attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = AccountClassifierMapping
@@ -419,7 +408,6 @@ class AccountClassifierMappingViewSet(AbstractMappingViewSet):
 
 
 class InstrumentMappingFilterSet(AbstractMappingFilterSet):
-    content_object = ModelExtWithPermissionMultipleChoiceFilter(model=Instrument)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = InstrumentMapping
@@ -437,7 +425,6 @@ class InstrumentMappingViewSet(AbstractMappingViewSet):
 
 
 class InstrumentClassifierMappingFilterSet(AbstractMappingFilterSet):
-    attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = InstrumentClassifierMapping
@@ -455,14 +442,12 @@ class InstrumentClassifierMappingViewSet(AbstractMappingViewSet):
 
 
 class CounterpartyMappingFilterSet(AbstractMappingFilterSet):
-    content_object = ModelExtWithPermissionMultipleChoiceFilter(model=Counterparty)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = CounterpartyMapping
 
 
 class CounterpartyClassifierMappingFilterSet(AbstractMappingFilterSet):
-    attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = CounterpartyClassifierMapping
@@ -491,14 +476,12 @@ class CounterpartyClassifierMappingViewSet(AbstractMappingViewSet):
 
 
 class ResponsibleMappingFilterSet(AbstractMappingFilterSet):
-    content_object = ModelExtWithPermissionMultipleChoiceFilter(model=Responsible)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = ResponsibleMapping
 
 
 class ResponsibleClassifierMappingFilterSet(AbstractMappingFilterSet):
-    attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = ResponsibleClassifierMapping
@@ -527,14 +510,12 @@ class ResponsibleClassifierMappingViewSet(AbstractMappingViewSet):
 
 
 class PortfolioMappingFilterSet(AbstractMappingFilterSet):
-    content_object = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = PortfolioMapping
 
 
 class PortfolioClassifierMappingFilterSet(AbstractMappingFilterSet):
-    attribute_type = ModelExtWithPermissionMultipleChoiceFilter(model=GenericAttributeType)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = PortfolioClassifierMapping
@@ -563,7 +544,6 @@ class PortfolioClassifierMappingViewSet(AbstractMappingViewSet):
 
 
 class Strategy1MappingFilterSet(AbstractMappingFilterSet):
-    content_object = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy1)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = Strategy1Mapping
@@ -581,7 +561,6 @@ class Strategy1MappingViewSet(AbstractMappingViewSet):
 
 
 class Strategy2MappingFilterSet(AbstractMappingFilterSet):
-    content_object = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy2)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = Strategy2Mapping
@@ -599,7 +578,6 @@ class Strategy2MappingViewSet(AbstractMappingViewSet):
 
 
 class Strategy3MappingFilterSet(AbstractMappingFilterSet):
-    content_object = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy3)
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = Strategy3Mapping
@@ -682,7 +660,7 @@ class PriceDownloadSchemeMappingViewSet(AbstractMappingViewSet):
 class ImportInstrumentViewSet(AbstractViewSet):
     serializer_class = ImportInstrumentSerializer
     permission_classes = AbstractViewSet.permission_classes + [
-        PomsFunctionPermission
+
     ]
 
     def create(self, request, *args, **kwargs):
@@ -695,7 +673,7 @@ class ImportInstrumentViewSet(AbstractViewSet):
 class ImportInstrumentDatabaseViewSet(AbstractViewSet):
     serializer_class = ImportInstrumentDatabaseSerializer
     permission_classes = AbstractViewSet.permission_classes + [
-        PomsFunctionPermission
+
     ]
 
     def create(self, request, *args, **kwargs):
@@ -708,7 +686,7 @@ class ImportInstrumentDatabaseViewSet(AbstractViewSet):
 class ImportCurrencyCbondsViewSet(AbstractViewSet):
     serializer_class = ImportCurrencyCbondsSerializer
     permission_classes = AbstractViewSet.permission_classes + [
-        PomsFunctionPermission
+
     ]
 
     def create(self, request, *args, **kwargs):
@@ -721,7 +699,7 @@ class ImportCurrencyCbondsViewSet(AbstractViewSet):
 class ImportUnifiedDataProviderViewSet(AbstractViewSet):
     serializer_class = ImportUnifiedDataProviderSerializer
     permission_classes = AbstractViewSet.permission_classes + [
-        PomsFunctionPermission
+
     ]
 
     def create(self, request, *args, **kwargs):
@@ -755,8 +733,7 @@ class ComplexTransactionImportSchemeFilterSet(FilterSet):
 
 class ComplexTransactionImportSchemeViewSet(AbstractApiView, UpdateModelMixinExt, ModelViewSet):
     permission_classes = [
-        IsAuthenticated,
-        PomsConfigurationPermission
+        IsAuthenticated
     ]
     filter_backends = [
         ByIdFilterBackend,
@@ -1017,7 +994,7 @@ class ComplexTransactionImportSchemeLightViewSet(AbstractModelViewSet):
         'scheme_name',
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
-        PomsConfigurationPermission
+
     ]
 
 
@@ -1025,7 +1002,7 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
 
     permission_classes = AbstractModelViewSet.permission_classes + [
-        PomsFunctionPermission
+
     ]
 
     def get_serializer_context(self):
@@ -1072,7 +1049,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
 
     permission_classes = AbstractModelViewSet.permission_classes + [
-        PomsFunctionPermission
+
     ]
 
     def get_serializer_context(self):
@@ -1202,7 +1179,7 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
 
     permission_classes = AbstractModelViewSet.permission_classes + [
-        PomsFunctionPermission
+
     ]
 
     def get_serializer_context(self):

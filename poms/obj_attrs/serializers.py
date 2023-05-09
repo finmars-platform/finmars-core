@@ -22,8 +22,6 @@ from poms.integrations.models import PortfolioClassifierMapping, ProviderClass, 
     CounterpartyClassifierMapping, ResponsibleClassifierMapping, InstrumentClassifierMapping
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier, GenericAttribute
-from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
-from poms.obj_perms.utils import has_view_perms, obj_perms_filter_objects_for_view
 from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.utils import get_member_from_context, get_master_user_from_context
 
@@ -588,7 +586,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
         GenericAttribute.objects.bulk_create(attrs)
 
 
-class GenericAttributeTypeViewSerializer(ModelWithObjectPermissionSerializer):
+class GenericAttributeTypeViewSerializer(serializers.ModelSerializer):
     is_hidden = GenericAttributeTypeOptionIsHiddenField()
 
     class Meta:
@@ -605,7 +603,6 @@ class GenericAttributeListSerializer(serializers.ListSerializer):
             return instance.attributes
         master_user = get_master_user_from_context(self.context)
         attribute_type_qs = GenericAttributeType.objects.filter(master_user=master_user)
-        # attribute_type_qs = obj_perms_filter_objects_for_view(member, attribute_type_qs)
         # return instance.attributes.filter(attribute_type__in=attribute_type_qs)
 
         # Probably deprecated 2023-03-10
@@ -630,9 +627,7 @@ class GenericAttributeViewListSerializer(serializers.ListSerializer):
         objects = super(GenericAttributeViewListSerializer, self).get_attribute(instance)
         objects = objects.all() if isinstance(objects, models.Manager) else objects
         member = get_member_from_context(self.context)
-        return [
-            o for o in objects if has_view_perms(member, o.attribute)
-        ]
+        return objects
 
 
 class GenericAttributeSerializer(serializers.ModelSerializer):

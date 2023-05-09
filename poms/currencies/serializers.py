@@ -11,7 +11,6 @@ from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.fields import PricingPolicyField
 from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, ModelWithAttributesOnlySerializer
-from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.pricing.models import CurrencyPricingPolicy, CurrencyHistoryError
 
 from poms.system_messages.handlers import send_system_message
@@ -35,13 +34,13 @@ def set_currency_pricing_scheme_parameters(pricing_policy, parameters):
             pricing_policy.attribute_key = parameters.attribute_key
 
 
-class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
+class CurrencySerializer(ModelWithUserCodeSerializer,
                          ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
 
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = Currency
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'notes',
@@ -178,13 +177,13 @@ class CurrencySerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeS
             CurrencyPricingPolicy.objects.filter(currency=instance).exclude(id__in=ids).delete()
 
 
-class CurrencyEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesOnlySerializer,
+class CurrencyEvSerializer(ModelWithAttributesOnlySerializer,
                            ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     pricing_condition_object = serializers.SerializerMethodField()
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = Currency
         fields = [
             'id', 'master_user',
@@ -206,10 +205,10 @@ class CurrencyEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribu
         return None
 
 
-class CurrencyLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+class CurrencyLightSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = Currency
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name',
@@ -348,7 +347,7 @@ class CurrencyEvalSerializer(ModelWithUserCodeSerializer,
                           ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = Currency
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'notes',

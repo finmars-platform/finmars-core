@@ -2046,7 +2046,6 @@ def _safe_get_accrual_calculation_model(evaluator, accrual_calculation_model):
 def _safe_get_instrument(evaluator, instrument):
     from poms.users.utils import get_master_user_from_context, get_member_from_context
     from poms.instruments.models import Instrument
-    from poms.obj_perms.utils import obj_perms_filter_objects, get_view_perms
 
     if isinstance(instrument, Instrument):
         return instrument
@@ -2085,7 +2084,6 @@ def _safe_get_instrument(evaluator, instrument):
             raise ExpressionEvalError('master user in context does not find')
 
         instrument_qs = Instrument.objects.filter(master_user=master_user)
-        instrument_qs = obj_perms_filter_objects(member, get_view_perms(Instrument), instrument_qs)
 
         try:
             if pk is not None:
@@ -4404,11 +4402,8 @@ def value_prepare(orig):
         from poms.obj_attrs.models import GenericAttributeType
 
         for k, v in data.items():
-            if k in ['user_object_permissions', 'group_object_permissions', 'object_permissions',
-                     'granted_permissions']:
-                continue
 
-            elif k == 'attributes':
+            if k == 'attributes':
 
                 if 'attributes' not in ret:
                     ret[k] = {}

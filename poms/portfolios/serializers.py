@@ -7,7 +7,6 @@ from poms.instruments.handlers import InstrumentTypeProcess
 from poms.instruments.models import InstrumentType, Instrument
 from poms.instruments.serializers import InstrumentViewSerializer, PricingPolicySerializer, InstrumentSerializer
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
-from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord, PortfolioBundle
 from poms.portfolios.utils import get_price_calculation_type
 from poms.users.fields import MasterUserField
@@ -47,7 +46,7 @@ class PortfolioPortfolioRegisterSerializer(ModelWithAttributesSerializer,
                                                                                  read_only=True)
 
 
-class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+class PortfolioSerializer(ModelWithAttributesSerializer,
                           ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     # accounts = AccountField(many=True, allow_null=True, required=False)
@@ -174,7 +173,7 @@ class PortfolioSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
         return instance
 
 
-class PortfolioEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+class PortfolioEvSerializer(ModelWithAttributesSerializer,
                             ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
@@ -184,12 +183,12 @@ class PortfolioEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttrib
             'id', 'master_user',
             'user_code', 'name', 'short_name', 'public_name', 'notes',
             'is_default', 'is_deleted', 'is_enabled',
-            'attributes', 'object_permissions'
+            'attributes'
         ]
         read_only_fields = fields
 
 
-class PortfolioLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+class PortfolioLightSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     class Meta:
@@ -200,8 +199,8 @@ class PortfolioLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
         ]
 
 
-class PortfolioViewSerializer(ModelWithObjectPermissionSerializer):
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+class PortfolioViewSerializer(ModelWithUserCodeSerializer):
+    class Meta:
         model = Portfolio
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name',
@@ -212,7 +211,7 @@ class PortfolioGroupSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=256)
 
 
-class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+class PortfolioRegisterSerializer(ModelWithAttributesSerializer,
                                   ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
@@ -292,7 +291,7 @@ class PortfolioRegisterSerializer(ModelWithObjectPermissionSerializer, ModelWith
         return instance
 
 
-class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+class PortfolioRegisterEvSerializer(ModelWithAttributesSerializer,
                                     ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
@@ -328,7 +327,7 @@ class PortfolioRegisterEvSerializer(ModelWithObjectPermissionSerializer, ModelWi
                                                                                  read_only=True)
 
 
-class PortfolioRegisterRecordSerializer(ModelWithObjectPermissionSerializer, ModelWithTimeStampSerializer):
+class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
     class Meta:
@@ -407,7 +406,7 @@ class PortfolioBundleSerializer(ModelWithTimeStampSerializer):
         super(PortfolioBundleSerializer, self).__init__(*args, **kwargs)
 
 
-class PortfolioBundleEvSerializer(ModelWithObjectPermissionSerializer, ModelWithTimeStampSerializer):
+class PortfolioBundleEvSerializer(ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
     class Meta:

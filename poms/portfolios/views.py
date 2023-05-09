@@ -8,18 +8,15 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 
 from poms.accounts.models import Account
-from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
+from poms.common.filters import CharFilter, NoOpFilter, \
     GroupsAttributeFilter, AttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.utils import get_list_of_entity_attributes
+from poms.common.views import AbstractModelViewSet
 from poms.counterparties.models import Responsible, Counterparty
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
-from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionPermissionFilter
-from poms.obj_perms.permissions import PomsConfigurationPermission
-from poms.obj_perms.utils import get_permissions_prefetch_lookups
-from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord, PortfolioBundle
 from poms.portfolios.serializers import PortfolioSerializer, PortfolioLightSerializer, PortfolioEvSerializer, \
     PortfolioRegisterSerializer, PortfolioRegisterEvSerializer, PortfolioRegisterRecordSerializer, \
@@ -37,7 +34,7 @@ class PortfolioAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model_serializer = PortfolioSerializer
 
     permission_classes = GenericAttributeTypeViewSet.permission_classes + [
-        PomsConfigurationPermission
+
     ]
 
 
@@ -56,9 +53,6 @@ class PortfolioFilterSet(FilterSet):
     # responsible = ModelExtWithPermissionMultipleChoiceFilter(model=Responsible, field_name='responsibles')
     # counterparty = ModelExtWithPermissionMultipleChoiceFilter(model=Counterparty, field_name='counterparties')
     # transaction_type = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType, field_name='transaction_types')
-    member = ObjectPermissionMemberFilter(object_permission_model=Portfolio)
-    # member_group = ObjectPermissionGroupFilter(object_permission_model=Portfolio)
-    permission = ObjectPermissionPermissionFilter(object_permission_model=Portfolio)
     attribute_types = GroupsAttributeFilter()
     attribute_values = GroupsAttributeFilter()
 
@@ -67,29 +61,14 @@ class PortfolioFilterSet(FilterSet):
         fields = []
 
 
-class PortfolioViewSet(AbstractWithObjectPermissionViewSet):
+class PortfolioViewSet(AbstractModelViewSet):
     queryset = Portfolio.objects.select_related(
         'master_user',
     ).prefetch_related(
-        # Prefetch('accounts', queryset=Account.objects.select_related('type')),
-        # Prefetch('responsibles', queryset=Responsible.objects.select_related('group')),
-        # Prefetch('counterparties', queryset=Counterparty.objects.select_related('group')),
-        # Prefetch('transaction_types', queryset=TransactionType.objects.select_related('group')),
         get_attributes_prefetch(),
-        # *get_permissions_prefetch_lookups(
-        #     (None, Portfolio),
-        #     ('accounts', Account),
-        #     ('accounts__type', AccountType),
-        #     ('counterparties', Counterparty),
-        #     ('counterparties__group', CounterpartyGroup),
-        #     ('responsibles', Responsible),
-        #     ('responsibles__group', ResponsibleGroup),
-        #     ('transaction_types', TransactionType),
-        #     ('transaction_types__group', TransactionTypeGroup),
-        # )
     )
     serializer_class = PortfolioSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
@@ -227,7 +206,6 @@ class PortfolioRegisterAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model_serializer = PortfolioRegisterSerializer
 
     permission_classes = GenericAttributeTypeViewSet.permission_classes + [
-        PomsConfigurationPermission
     ]
 
 
@@ -244,14 +222,14 @@ class PortfolioRegisterFilterSet(FilterSet):
         fields = []
 
 
-class PortfolioRegisterViewSet(AbstractWithObjectPermissionViewSet):
+class PortfolioRegisterViewSet(AbstractModelViewSet):
     queryset = PortfolioRegister.objects.select_related(
         'master_user',
     ).prefetch_related(
         get_attributes_prefetch(),
     )
     serializer_class = PortfolioRegisterSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
@@ -323,12 +301,12 @@ class PortfolioRegisterRecordFilterSet(FilterSet):
         fields = []
 
 
-class PortfolioRegisterRecordViewSet(AbstractWithObjectPermissionViewSet):
+class PortfolioRegisterRecordViewSet(AbstractModelViewSet):
     queryset = PortfolioRegisterRecord.objects.select_related(
         'master_user',
     )
     serializer_class = PortfolioRegisterRecordSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter
     ]
     filter_class = PortfolioRegisterRecordFilterSet
@@ -343,12 +321,12 @@ class PortfolioBundleFilterSet(FilterSet):
         fields = []
 
 
-class PortfolioBundleViewSet(AbstractWithObjectPermissionViewSet):
+class PortfolioBundleViewSet(AbstractModelViewSet):
     queryset = PortfolioBundle.objects.select_related(
         'master_user',
     )
     serializer_class = PortfolioBundleSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter
     ]
     filter_class = PortfolioBundleFilterSet

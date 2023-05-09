@@ -17,7 +17,6 @@
 # from poms.currencies.models import Currency
 # from poms.instruments.models import InstrumentClass, InstrumentType, Instrument
 # from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
-# from poms.obj_perms.utils import assign_perms3, get_all_perms, get_perms_codename, get_change_perms
 # from poms.portfolios.models import Portfolio
 # from poms.strategies.models import Strategy3Group, Strategy2Group, Strategy1Group, Strategy1Subgroup, Strategy2Subgroup, \
 #     Strategy3Subgroup, Strategy1, Strategy2, Strategy3

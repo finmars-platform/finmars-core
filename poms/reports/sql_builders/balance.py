@@ -1944,7 +1944,7 @@ class BalanceReportBuilderSql:
 
         self.instance.item_portfolios = Portfolio.objects.prefetch_related(
             'attributes'
-        ).defer('object_permissions', 'responsibles', 'counterparties', 'transaction_types', 'accounts') \
+        ).defer('responsibles', 'counterparties', 'transaction_types', 'accounts') \
             .filter(master_user=self.instance.master_user) \
             .filter(
             id__in=ids)
@@ -1955,7 +1955,7 @@ class BalanceReportBuilderSql:
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_account_types(self, accounts):
 
@@ -1984,21 +1984,21 @@ class BalanceReportBuilderSql:
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies2(self, ids):
         self.instance.item_strategies2 = Strategy2.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies3(self, ids):
         self.instance.item_strategies3 = Strategy3.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items(self):
 

@@ -10,7 +10,6 @@ from poms.common.filters import NoOpFilter, GroupsAttributeFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.views import AbstractModelViewSet, AbstractEvGroupViewSet
 from poms.instruments.models import Instrument
-from poms.obj_perms.utils import get_permissions_prefetch_lookups
 from poms.pricing.handlers import FillPricesBrokerBloombergProcess, \
     FillPricesBrokerWtradeProcess, FillPricesBrokerFixerProcess, FillPricesBrokerAlphavProcess, \
     FillPricesBrokerBloombergForwardsProcess, FillPricesBrokerCbondsProcess, FillPricesBrokerFxCbondsProcess
@@ -427,10 +426,6 @@ class PriceHistoryErrorViewSet(AbstractModelViewSet):
         'pricing_scheme',
         'procedure_instance',
         'procedure_instance__procedure'
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            ('instrument', Instrument)
-        )
     )
     serializer_class = PriceHistoryErrorSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
@@ -450,10 +445,6 @@ class PriceHistoryErrorEvViewSet(AbstractModelViewSet):
         'pricing_scheme',
         'procedure_instance',
         'procedure_instance__procedure'
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            ('instrument', Instrument)
-        )
     )
     serializer_class = PriceHistoryErrorSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
@@ -474,12 +465,7 @@ class PriceHistoryErrorEvGroupViewSet(AbstractEvGroupViewSet, CustomPaginationMi
         'pricing_scheme',
         'procedure_instance',
         'procedure_instance__procedure'
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            ('instrument', Instrument)
-        )
     )
-
     serializer_class = PriceHistoryErrorSerializer
     pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
     filter_class = PriceHistoryErrorFilterSet

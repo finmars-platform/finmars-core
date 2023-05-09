@@ -6,7 +6,6 @@ from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
-from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField
 from poms.users.fields import MasterUserField
 
@@ -26,13 +25,13 @@ class AccountTypeSerializer(ModelWithUserCodeSerializer,
         ]
 
 
-class AccountTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
+class AccountTypeEvSerializer(ModelWithUserCodeSerializer,
                               ModelWithAttributesSerializer):
     master_user = MasterUserField()
     transaction_details_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
                                                allow_null=True, default='""')
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = AccountType
         fields = [
             'id', 'master_user',
@@ -43,15 +42,15 @@ class AccountTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithUser
         ]
 
 
-class AccountTypeViewSerializer(ModelWithObjectPermissionSerializer):
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+class AccountTypeViewSerializer(ModelWithUserCodeSerializer):
+    class Meta:
         model = AccountType
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name',
         ]
 
 
-class AccountSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+class AccountSerializer(ModelWithAttributesSerializer,
                         ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     type = AccountTypeField()
@@ -62,7 +61,7 @@ class AccountSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributes
 
     # attributes = AccountAttributeSerializer(many=True, required=False, allow_null=True)
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = Account
         fields = [
             'id', 'master_user', 'type', 'user_code', 'name', 'short_name', 'public_name',
@@ -80,13 +79,13 @@ class AccountSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributes
         self.fields['portfolios_object'] = PortfolioViewSerializer(source='portfolios', many=True, read_only=True)
 
 
-class AccountEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+class AccountEvSerializer(ModelWithAttributesSerializer,
                           ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     type_object = AccountTypeViewSerializer(source='type', read_only=True)
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = Account
         fields = [
             'id', 'master_user',
@@ -96,10 +95,10 @@ class AccountEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttribut
         ]
 
 
-class AccountLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+class AccountLightSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = Account
         fields = [
             'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name',
@@ -108,11 +107,11 @@ class AccountLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserC
         ]
 
 
-class AccountViewSerializer(ModelWithObjectPermissionSerializer):
+class AccountViewSerializer(ModelWithUserCodeSerializer):
     type = AccountTypeField()
     type_object = AccountTypeViewSerializer(source='type', read_only=True)
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = Account
         fields = [
             'id', 'type', 'type_object', 'user_code', 'name', 'short_name', 'public_name',
@@ -122,7 +121,7 @@ class AccountViewSerializer(ModelWithObjectPermissionSerializer):
 class AccountEvalSerializer(ModelWithUserCodeSerializer):
     type = AccountTypeField()
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = Account
         fields = [
             'id', 'type', 'user_code', 'name', 'short_name', 'public_name',

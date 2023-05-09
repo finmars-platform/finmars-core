@@ -15,7 +15,6 @@ from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedMo
 from poms.common.utils import date_now
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
-from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser
 
 # Probably Deprecated
@@ -54,8 +53,6 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
     default_fx_rate = models.FloatField(default=1, verbose_name=gettext_lazy('default fx rate'))
-
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('currency')

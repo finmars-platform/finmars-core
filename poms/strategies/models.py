@@ -7,7 +7,6 @@ from django.utils.translation import gettext_lazy
 from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedModel
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
-from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser
 
 
@@ -97,8 +96,6 @@ class Strategy1Group(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategy1_groups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy1 group')
         verbose_name_plural = gettext_lazy('strategy1 groups')
@@ -120,8 +117,6 @@ class Strategy1Subgroup(NamedModel, FakeDeletableModel, _SubgroupSystemAttrsMixi
     master_user = models.ForeignKey(MasterUser, related_name='strategy1_subgroups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(Strategy1Group, null=True, blank=True, on_delete=models.PROTECT, related_name='subgroups')
-
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy1 subgroup')
@@ -152,8 +147,6 @@ class Strategy1(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
                                     on_delete=models.CASCADE)
     subgroup = models.ForeignKey(Strategy1Subgroup, null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='strategies')
-
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
@@ -188,8 +181,6 @@ class Strategy2Group(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategy2_groups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy2 group')
         verbose_name_plural = gettext_lazy('strategy2 groups')
@@ -211,8 +202,6 @@ class Strategy2Subgroup(NamedModel, FakeDeletableModel, _SubgroupSystemAttrsMixi
     master_user = models.ForeignKey(MasterUser, related_name='strategy2_subgroups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(Strategy2Group, null=True, blank=True, on_delete=models.PROTECT, related_name='subgroups')
-
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy2 subgroup')
@@ -236,8 +225,6 @@ class Strategy2(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
                                     on_delete=models.CASCADE)
     subgroup = models.ForeignKey(Strategy2Subgroup, null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='strategies')
-
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
@@ -272,8 +259,6 @@ class Strategy3Group(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategy3_groups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy3 group')
         verbose_name_plural = gettext_lazy('strategy3 groups')
@@ -295,8 +280,6 @@ class Strategy3Subgroup(NamedModel, FakeDeletableModel, _SubgroupSystemAttrsMixi
     master_user = models.ForeignKey(MasterUser, related_name='strategy3_subgroups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(Strategy3Group, null=True, blank=True, on_delete=models.PROTECT, related_name='subgroups')
-
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy3 subgroup')
@@ -320,8 +303,6 @@ class Strategy3(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
                                     on_delete=models.CASCADE)
     subgroup = models.ForeignKey(Strategy3Subgroup, null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='strategies')
-
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 

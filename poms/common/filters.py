@@ -16,7 +16,6 @@ from six import string_types
 
 from poms.common.middleware import get_request
 from poms.obj_attrs.models import GenericAttributeType
-from poms.obj_perms.utils import obj_perms_filter_objects_for_view
 
 _l = logging.getLogger('poms.common')
 
@@ -79,14 +78,6 @@ def _model_choices(model, field_name, master_user_path):
         yield t.id, getattr(t, field_name)
 
 
-def _model_with_perms_choices(model, field_name, master_user_path):
-    master_user = get_request().user.master_user
-    member = get_request().user.member
-    qs = model.objects.filter(**{master_user_path: master_user}).order_by(field_name)
-    for t in obj_perms_filter_objects_for_view(member, qs, prefetch=False):
-        yield t.id, getattr(t, field_name)
-
-
 class ModelExtMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
     model = None
     field_name = 'name'
@@ -99,20 +90,6 @@ class ModelExtMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
         kwargs['choices'] = partial(_model_choices, model=self.model, field_name=self.field_name,
                                     master_user_path=self.master_user_path)
         super(ModelExtMultipleChoiceFilter, self).__init__(*args, **kwargs)
-
-
-class ModelExtWithPermissionMultipleChoiceFilter(django_filters.MultipleChoiceFilter):
-    model = None
-    field_name = 'name'
-    master_user_path = 'master_user'
-
-    def __init__(self, *args, **kwargs):
-        self.model = kwargs.pop('model', self.model)
-        self.field_name = kwargs.pop('field_name', self.field_name)
-        self.master_user_path = kwargs.pop('master_user_path', self.master_user_path)
-        kwargs['choices'] = partial(_model_with_perms_choices, model=self.model, field_name=self.field_name,
-                                    master_user_path=self.master_user_path)
-        super(ModelExtWithPermissionMultipleChoiceFilter, self).__init__(*args, **kwargs)
 
 
 class AbstractRelatedFilterBackend(BaseFilterBackend):

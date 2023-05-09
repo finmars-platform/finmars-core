@@ -1,7 +1,7 @@
 from __future__ import unicode_literals
 
+from poms.common.fields import PrimaryKeyRelatedFilteredField
 from poms.counterparties.models import Counterparty, Responsible, CounterpartyGroup, ResponsibleGroup
-from poms.obj_perms.fields import PrimaryKeyRelatedFilteredWithObjectPermissionField
 from poms.users.filters import OwnerByMasterUserFilter
 
 
@@ -29,7 +29,7 @@ class CounterpartyGroupDefault(object):
         return self._master_user.counterparty_group
 
 
-class CounterpartyGroupField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+class CounterpartyGroupField(PrimaryKeyRelatedFilteredField):
     queryset = CounterpartyGroup.objects
     filter_backends = [
         OwnerByMasterUserFilter,
@@ -48,7 +48,7 @@ class CounterpartyDefault(object):
         return self._master_user.counterparty
 
 
-class CounterpartyField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+class CounterpartyField(PrimaryKeyRelatedFilteredField):
     queryset = Counterparty.objects
     filter_backends = [
         OwnerByMasterUserFilter,
@@ -79,7 +79,7 @@ class ResponsibleGroupDefault(object):
         return self._master_user.responsible_group
 
 
-class ResponsibleGroupField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+class ResponsibleGroupField(PrimaryKeyRelatedFilteredField):
     queryset = ResponsibleGroup.objects
     filter_backends = [
         OwnerByMasterUserFilter,
@@ -98,7 +98,7 @@ class ResponsibleDefault(object):
         return self._master_user.responsible
 
 
-class ResponsibleField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+class ResponsibleField(PrimaryKeyRelatedFilteredField):
     queryset = Responsible.objects
     filter_backends = [
         OwnerByMasterUserFilter,

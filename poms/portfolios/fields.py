@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from poms.obj_perms.fields import PrimaryKeyRelatedFilteredWithObjectPermissionField
+from poms.common.fields import PrimaryKeyRelatedFilteredField
 from poms.portfolios.models import Portfolio
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -29,7 +29,7 @@ class PortfolioDefault(object):
         return self._master_user.portfolio
 
 
-class PortfolioField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+class PortfolioField(PrimaryKeyRelatedFilteredField):
     queryset = Portfolio.objects
     filter_backends = [
         OwnerByMasterUserFilter,

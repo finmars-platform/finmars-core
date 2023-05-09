@@ -27,7 +27,6 @@ from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import CurrencyHistory
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
-from poms.obj_perms.models import GenericObjectPermission
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentPricingPolicy
 from poms.users.models import MasterUser, EcosystemDefault
 
@@ -479,7 +478,6 @@ class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedM
     has_second_exposure_currency = models.BooleanField(default=False,
                                                        verbose_name=gettext_lazy('has second exposure currency'))
 
-    object_permissions = GenericRelation(GenericObjectPermission)
 
     instrument_form_layouts = models.TextField(null=True, blank=True,
                                                verbose_name=gettext_lazy('instrument form layouts'))
@@ -670,11 +668,6 @@ class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedM
                 "key": "has_second_exposure_currency",
                 "name": "Has second exposure currency",
                 "value_type": 50
-            },
-            {
-                "key": "object_permissions",
-                "name": "Object permissions",
-                "value_type": "mc_field"
             },
             # region Exposure
             {
@@ -1036,7 +1029,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
     maturity_price = models.FloatField(default=0.0, verbose_name=gettext_lazy('maturity price'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     co_directional_exposure_currency = models.ForeignKey('currencies.Currency',
                                                          related_name='co_directional_exposure_currency',

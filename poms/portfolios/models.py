@@ -13,7 +13,6 @@ from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, PricingPolicy
 from poms.obj_attrs.models import GenericAttribute
-from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser
 
 _l = getLogger("poms.portfolios")
@@ -57,9 +56,6 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
 
     attributes = GenericRelation(
         GenericAttribute, verbose_name=gettext_lazy("attributes")
-    )
-    object_permissions = GenericRelation(
-        GenericObjectPermission, verbose_name=gettext_lazy("object permissions")
     )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
@@ -193,10 +189,6 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     attributes = GenericRelation(
         GenericAttribute,
         verbose_name=gettext_lazy("attributes"),
-    )
-    object_permissions = GenericRelation(
-        GenericObjectPermission,
-        verbose_name=gettext_lazy("object permissions"),
     )
     default_price = models.FloatField(
         default=1.0,
@@ -352,10 +344,6 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
         PortfolioRegister,
         on_delete=models.CASCADE,
         verbose_name=gettext_lazy("portfolio register"),
-    )
-    object_permissions = GenericRelation(
-        GenericObjectPermission,
-        verbose_name=gettext_lazy("object permissions"),
     )
     share_price_calculation_type = models.CharField(
         max_length=255,

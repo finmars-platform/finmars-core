@@ -7,7 +7,6 @@ from mptt.models import MPTTModel
 
 from poms.common.models import NamedModel, EXPRESSION_FIELD_LENGTH
 from poms.configuration.models import ConfigurationModel
-from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser, Member
 
 
@@ -77,7 +76,6 @@ class GenericAttributeType(NamedModel, ConfigurationModel):
 
     order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta):
         verbose_name = gettext_lazy('attribute type')

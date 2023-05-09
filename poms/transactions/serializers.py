@@ -28,7 +28,6 @@ from poms.instruments.models import Instrument, InstrumentType, DailyPricingMode
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
-from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer, GenericObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField, PortfolioDefault
 from poms.portfolios.models import Portfolio
 from poms.reconciliation.models import TransactionTypeReconField
@@ -73,7 +72,7 @@ class ComplexTransactionStatusSerializer(PomsClassSerializer):
         model = ComplexTransactionStatus
 
 
-class TransactionTypeGroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
+class TransactionTypeGroupSerializer(ModelWithUserCodeSerializer,
                                      ModelMetaSerializer):
     master_user = MasterUserField()
 
@@ -86,8 +85,8 @@ class TransactionTypeGroupSerializer(ModelWithObjectPermissionSerializer, ModelW
         ]
 
 
-class TransactionTypeGroupViewSerializer(ModelWithObjectPermissionSerializer):
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+class TransactionTypeGroupViewSerializer(ModelWithUserCodeSerializer):
+    class Meta:
         model = TransactionTypeGroup
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_deleted',
@@ -1035,7 +1034,7 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class TransactionTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
+class TransactionTypeEvSerializer(ModelWithUserCodeSerializer,
                                   ModelWithAttributesSerializer):
     master_user = MasterUserField()
     group = TransactionTypeGroupField(required=False, allow_null=False)
@@ -1213,7 +1212,7 @@ class TransactionTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWith
         ]
 
 
-class TransactionTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+class TransactionTypeLightSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
     group = TransactionTypeGroupField(required=False, allow_null=False)
     date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
@@ -1430,7 +1429,7 @@ class TransactionTypeLightSerializerWithInputs(TransactionTypeLightSerializer):
         ]
 
 
-class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
+class TransactionTypeSerializer(ModelWithUserCodeSerializer,
                                 ModelWithAttributesSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     group = TransactionTypeGroupField(required=False, allow_null=False)
@@ -2181,11 +2180,11 @@ class TransactionTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUs
         return actions
 
 
-class TransactionTypeViewSerializer(ModelWithObjectPermissionSerializer):
+class TransactionTypeViewSerializer(ModelWithUserCodeSerializer):
     group = TransactionTypeGroupField(required=False, allow_null=False)
     group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = TransactionType
         fields = [
             'id', 'group', 'user_code', 'name', 'short_name', 'public_name', 'notes',
@@ -2214,10 +2213,10 @@ class TransactionTypeViewSerializer(ModelWithObjectPermissionSerializer):
         ]
 
 
-class TransactionTypeViewOnlySerializer(ModelWithObjectPermissionSerializer):
+class TransactionTypeViewOnlySerializer(ModelWithUserCodeSerializer):
     inputs = TransactionTypeInputViewOnlySerializer(required=False, many=True)
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = TransactionType
         fields = [
             'id', 'master_user', 'group',
@@ -2228,7 +2227,7 @@ class TransactionTypeViewOnlySerializer(ModelWithObjectPermissionSerializer):
         ]
 
 
-class TransactionSimpleSerializer(ModelWithObjectPermissionSerializer):
+class TransactionSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = [
@@ -2236,7 +2235,7 @@ class TransactionSimpleSerializer(ModelWithObjectPermissionSerializer):
         ]
 
 
-class TransactionSerializer(ModelWithObjectPermissionSerializer):
+class TransactionSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
     complex_transaction = serializers.PrimaryKeyRelatedField(read_only=True)
     complex_transaction_order = serializers.IntegerField(read_only=True)
@@ -2279,7 +2278,7 @@ class TransactionSerializer(ModelWithObjectPermissionSerializer):
 
     # attributes = TransactionAttributeSerializer(many=True, required=False, allow_null=True)
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = Transaction
         fields = [
             'id',
@@ -2454,8 +2453,8 @@ class TransactionViewOnlySerializer(serializers.ModelSerializer):
         self.fields['account_position_object'] = AccountViewSerializer(source='account_position', read_only=True)
 
 
-class InstrumentSimpleViewSerializer(ModelWithObjectPermissionSerializer):
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+class InstrumentSimpleViewSerializer(serializers.ModelSerializer):
+    class Meta:
         model = Instrument
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name'
@@ -2465,55 +2464,55 @@ class InstrumentSimpleViewSerializer(ModelWithObjectPermissionSerializer):
         super(InstrumentSimpleViewSerializer, self).__init__(*args, **kwargs)
 
 
-class AccountSimpleViewSerializer(ModelWithObjectPermissionSerializer):
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+class AccountSimpleViewSerializer(ModelWithUserCodeSerializer):
+    class Meta:
         model = Account
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name',
         ]
 
 
-class ResponsibleSimpleViewSerializer(ModelWithObjectPermissionSerializer):
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+class ResponsibleSimpleViewSerializer(ModelWithUserCodeSerializer):
+    class Meta:
         model = Responsible
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name',
         ]
 
 
-class CounterpartySimpleViewSerializer(ModelWithObjectPermissionSerializer):
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+class CounterpartySimpleViewSerializer(ModelWithUserCodeSerializer):
+    class Meta:
         model = Counterparty
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name',
         ]
 
 
-class Strategy1SimpleViewSerializer(ModelWithObjectPermissionSerializer):
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+class Strategy1SimpleViewSerializer(ModelWithUserCodeSerializer):
+    class Meta:
         model = Strategy1
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name', 'is_deleted',
         ]
 
 
-class Strategy2SimpleViewSerializer(ModelWithObjectPermissionSerializer):
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+class Strategy2SimpleViewSerializer(ModelWithUserCodeSerializer):
+    class Meta:
         model = Strategy2
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name', 'is_deleted',
         ]
 
 
-class Strategy3SimpleViewSerializer(ModelWithObjectPermissionSerializer):
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+class Strategy3SimpleViewSerializer(ModelWithUserCodeSerializer):
+    class Meta:
         model = Strategy3
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name', 'is_deleted',
         ]
 
 
-class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
+class TransactionEvSerializer(serializers.ModelSerializer):
     master_user = MasterUserField()
 
     instrument_object = InstrumentSimpleViewSerializer(source='instrument', read_only=True)
@@ -2537,7 +2536,7 @@ class TransactionEvSerializer(ModelWithObjectPermissionSerializer):
     responsible_object = ResponsibleSimpleViewSerializer(source='responsible', read_only=True)
     counterparty_object = CounterpartySimpleViewSerializer(source='counterparty', read_only=True)
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = Transaction
         fields = [
             'id', 'master_user',
@@ -2776,7 +2775,7 @@ class ComplexTransactionSerializer(ModelWithAttributesSerializer,
         self.fields['transactions_object'] = TransactionSerializer(
             source='transactions', many=True, read_only=True)
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = ComplexTransaction
         fields = [
             'id', 'date', 'status', 'code', 'text', 'transaction_type', 'transactions', 'master_user',
@@ -2820,14 +2819,6 @@ class ComplexTransactionSerializer(ModelWithAttributesSerializer,
 
         member = get_member_from_context(self.context)
 
-        if 'object_permissions' in data:
-
-            for perm in data['object_permissions']:
-
-                if perm['permission'] == 'view_complextransaction_hide_parameters':
-
-                    if perm['group'] in member.groups.all():
-                        hide_parameters = True
 
         if member.is_admin or member.is_owner:
             hide_parameters = False
@@ -2947,7 +2938,7 @@ class ComplexTransactionSerializer(ModelWithAttributesSerializer,
     #     return instance
 
 
-class ComplexTransactionSimpleSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer):
+class ComplexTransactionSimpleSerializer(ModelWithAttributesSerializer):
     class Meta:
         model = ComplexTransaction
         fields = [
@@ -3076,7 +3067,7 @@ class ComplexTransactionViewSerializer(ComplexTransactionMixin, serializers.Mode
         return data
 
 
-class ComplexTransactionEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer):
+class ComplexTransactionEvSerializer(ModelWithAttributesSerializer):
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
     transaction_type_object = TransactionTypeViewSerializer(source='transaction_type', read_only=True)
@@ -3134,14 +3125,6 @@ class ComplexTransactionEvSerializer(ModelWithObjectPermissionSerializer, ModelW
 
         groups = member.groups.all()
 
-        if 'object_permissions' in data:
-
-            for perm in data['object_permissions']:
-
-                if perm['permission'] == 'view_complextransaction_hide_parameters':
-
-                    if perm['group'] in groups:
-                        hide_parameters = True
 
         if member.is_admin or member.is_owner:
             hide_parameters = False
@@ -3210,7 +3193,7 @@ class ComplexTransactionEvSerializer(ModelWithObjectPermissionSerializer, ModelW
         return data
 
 
-class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer):
+class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
     # text = serializers.SerializerMethodField()
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
@@ -3259,14 +3242,6 @@ class ComplexTransactionLightSerializer(ModelWithObjectPermissionSerializer, Mod
 
         member = get_member_from_context(self.context)
 
-        if 'object_permissions' in data:
-
-            for perm in data['object_permissions']:
-
-                if perm['permission'] == 'view_complextransaction_hide_parameters':
-
-                    if perm['group'] in member.groups.all():
-                        hide_parameters = True
 
         if member.is_admin or member.is_owner:
             hide_parameters = False
@@ -3549,8 +3524,7 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
         self.fields['transactions_object'] = TransactionSerializer(
             source='transactions', many=True, read_only=True)
 
-        self.fields['object_permissions'] = GenericObjectPermissionSerializer(many=True, required=False,
-                                                                              allow_null=True, read_only=True)
+
 
     class Meta:
         model = ComplexTransaction
@@ -3576,7 +3550,6 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
             'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
 
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
-            'object_permissions',
 
             'recon_fields',
 
@@ -3595,15 +3568,6 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
         hide_parameters = False
 
         member = get_member_from_context(self.context)
-
-        if 'object_permissions' in data:
-
-            for perm in data['object_permissions']:
-
-                if perm['permission'] == 'view_complextransaction_hide_parameters':
-
-                    if perm['group'] in member.groups.all():
-                        hide_parameters = True
 
         if member.is_admin or member.is_owner:
             hide_parameters = False
@@ -3687,8 +3651,6 @@ class ComplexTransactionViewOnlyComplexTransactionSerializer(serializers.ModelSe
         self.fields['transactions_object'] = TransactionViewOnlySerializer(
             source='transactions', many=True, read_only=True)
 
-        self.fields['object_permissions'] = GenericObjectPermissionSerializer(many=True, required=False,
-                                                                              allow_null=True, read_only=True)
 
     class Meta:
         model = ComplexTransaction
@@ -3713,7 +3675,6 @@ class ComplexTransactionViewOnlyComplexTransactionSerializer(serializers.ModelSe
             'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
 
             'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
-            'object_permissions',
 
             'execution_log', 'source'
 

@@ -1,26 +1,26 @@
 from __future__ import unicode_literals
 
-from poms.obj_perms.fields import PrimaryKeyRelatedFilteredWithObjectPermissionField
+from poms.common.fields import PrimaryKeyRelatedFilteredField
 from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1, Strategy2Group, Strategy2Subgroup, \
     Strategy2, Strategy3Group, Strategy3Subgroup, Strategy3
 from poms.users.filters import OwnerByMasterUserFilter
 
 
-class Strategy1GroupField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+class Strategy1GroupField(PrimaryKeyRelatedFilteredField):
     queryset = Strategy1Group.objects
     filter_backends = [
         OwnerByMasterUserFilter,
     ]
 
 
-class Strategy1SubgroupField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+class Strategy1SubgroupField(PrimaryKeyRelatedFilteredField):
     queryset = Strategy1Subgroup.objects
     filter_backends = [
         OwnerByMasterUserFilter,
     ]
 
 
-class Strategy1Field(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+class Strategy1Field(PrimaryKeyRelatedFilteredField):
     queryset = Strategy1.objects
     filter_backends = [
         OwnerByMasterUserFilter,

@@ -2,13 +2,12 @@ from __future__ import unicode_literals
 
 from rest_framework import serializers
 
-from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.reference_tables.models import ReferenceTableRow, ReferenceTable
 from poms.users.fields import MasterUserField
 
 
 class ReferenceTableRowSerializer(serializers.ModelSerializer):
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = ReferenceTableRow
         fields = [
             'id', 'key', 'value', 'order'
@@ -20,7 +19,7 @@ class ReferenceTableSerializer(serializers.ModelSerializer):
 
     rows = ReferenceTableRowSerializer(many=True)
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = ReferenceTable
         fields = [
             'id', 'master_user', 'name', 'rows'

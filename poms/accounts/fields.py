@@ -1,6 +1,5 @@
 from poms.accounts.models import Account, AccountType
-from poms.common.fields import UserCodeOrPrimaryKeyRelatedField
-from poms.obj_perms.fields import PrimaryKeyRelatedFilteredWithObjectPermissionField
+from poms.common.fields import UserCodeOrPrimaryKeyRelatedField, PrimaryKeyRelatedFilteredField
 from poms.users.filters import OwnerByMasterUserFilter
 
 
@@ -36,7 +35,7 @@ class AccountDefault(object):
         return self._master_user.account
 
 
-class AccountField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+class AccountField(PrimaryKeyRelatedFilteredField):
     queryset = Account.objects
     filter_backends = [
         OwnerByMasterUserFilter,

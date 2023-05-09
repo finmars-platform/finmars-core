@@ -211,17 +211,17 @@ class MasterUser(models.Model):
         return self.name
 
     def create_user_fields(self):
-        from poms.ui.models import InstrumentUserFieldModel, TransactionUserFieldModel
+        from poms.ui.models import InstrumentUserField, ComplexTransactionUserField
 
         for i in range(20):
             num = str(i + 1)
-            TransactionUserFieldModel.objects.create(
+            ComplexTransactionUserField.objects.create(
                 master_user=self, key=f"user_text_{num}", name=f"User Text {num}"
             )
 
         for i in range(20):
             num = str(i + 1)
-            TransactionUserFieldModel.objects.create(
+            ComplexTransactionUserField.objects.create(
                 master_user=self,
                 key=f"user_number_{num}",
                 name=f"User Number {num}",
@@ -229,13 +229,13 @@ class MasterUser(models.Model):
 
         for i in range(5):
             num = str(i + 1)
-            TransactionUserFieldModel.objects.create(
+            ComplexTransactionUserField.objects.create(
                 master_user=self, key=f"user_date_{num}", name=f"User Date {num}"
             )
 
         for i in range(3):
             num = str(i + 1)
-            InstrumentUserFieldModel.objects.create(
+            InstrumentUserField.objects.create(
                 master_user=self, key=f"user_text_{num}", name=f"User Text {num}"
             )
 
@@ -514,7 +514,6 @@ class MasterUser(models.Model):
             PricingPolicy,
         )
         from poms.integrations.models import ProviderClass
-        from poms.obj_perms.utils import assign_perms3, get_change_perms
         from poms.portfolios.models import Portfolio
         from poms.pricing.models import CurrencyPricingScheme, InstrumentPricingScheme
         from poms.strategies.models import (
@@ -752,42 +751,8 @@ class MasterUser(models.Model):
         self.create_entity_tooltips()
         self.create_color_palettes()
 
-        group = Group.objects.create(
-            master_user=self,
-            name=f'{gettext_lazy("Administrators")}',
-            role=Group.ADMIN,
-        )
-        group.grant_all_permissions_to_public_group(group, master_user=self)
-
-        group = Group.objects.create(
-            master_user=self, name=f'{gettext_lazy("Guests")}', role=Group.USER
-        )
 
         self.save()
-
-        for c in [
-            account_type,
-            account,
-            counterparty_group,
-            counterparty,
-            responsible_group,
-            responsible,
-            portfolio,
-            instrument_type,
-            instrument,
-            strategy1_group,
-            strategy1_subgroup,
-            strategy1,
-            strategy2_group,
-            strategy2_subgroup,
-            strategy2,
-            strategy3_group,
-            strategy3_subgroup,
-            strategy3,
-            transaction_type_group,
-        ]:
-            for p in get_change_perms(c):
-                assign_perms3(c, perms=[{"group": group, "permission": p}])
 
         FakeSequence.objects.get_or_create(master_user=self, name="complex_transaction")
         FakeSequence.objects.get_or_create(master_user=self, name="transaction")

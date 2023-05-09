@@ -7,17 +7,14 @@ from rest_framework.decorators import action
 from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer, AccountLightSerializer, \
     AccountEvSerializer, AccountTypeEvSerializer
-from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, \
+from poms.common.filters import CharFilter, NoOpFilter, \
     GroupsAttributeFilter, AttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.utils import get_list_of_entity_attributes
+from poms.common.views import AbstractModelViewSet
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
-from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionPermissionFilter
-from poms.obj_perms.permissions import PomsConfigurationPermission
-from poms.obj_perms.utils import get_permissions_prefetch_lookups
-from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
 from poms.users.filters import OwnerByMasterUserFilter
 from rest_framework.response import Response
@@ -27,7 +24,7 @@ class AccountTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = AccountType
 
     permission_classes = GenericAttributeTypeViewSet.permission_classes + [
-        PomsConfigurationPermission
+
     ]
 
 
@@ -39,27 +36,21 @@ class AccountTypeFilterSet(FilterSet):
     short_name = CharFilter()
     public_name = CharFilter()
     show_transaction_details = django_filters.BooleanFilter()
-    member = ObjectPermissionMemberFilter(object_permission_model=AccountType)
-    # member_group = ObjectPermissionGroupFilter(object_permission_model=AccountType)
-    permission = ObjectPermissionPermissionFilter(object_permission_model=AccountType)
 
     class Meta:
         model = AccountType
         fields = []
 
 
-class AccountTypeViewSet(AbstractWithObjectPermissionViewSet):
+class AccountTypeViewSet(AbstractModelViewSet):
 
     queryset = AccountType.objects.select_related(
         'master_user'
     ).prefetch_related(
         get_attributes_prefetch(),
-        *get_permissions_prefetch_lookups(
-            (None, AccountType),
-        )
     )
     serializer_class = AccountTypeSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
@@ -153,9 +144,6 @@ class AccountTypeEvFilterSet(FilterSet):
     short_name = CharFilter()
     public_name = CharFilter()
     show_transaction_details = django_filters.BooleanFilter()
-    member = ObjectPermissionMemberFilter(object_permission_model=AccountType)
-    # member_group = ObjectPermissionGroupFilter(object_permission_model=AccountType)
-    permission = ObjectPermissionPermissionFilter(object_permission_model=AccountType)
 
     class Meta:
         model = AccountType
@@ -167,7 +155,7 @@ class AccountAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model_serializer = AccountSerializer
 
     permission_classes = GenericAttributeTypeViewSet.permission_classes + [
-        PomsConfigurationPermission
+
     ]
 
 
@@ -183,10 +171,6 @@ class AccountFilterSet(FilterSet):
     short_name = CharFilter()
     public_name = CharFilter()
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
-    type = ModelExtWithPermissionMultipleChoiceFilter(model=AccountType)
-    member = ObjectPermissionMemberFilter(object_permission_model=Account)
-    # member_group = ObjectPermissionGroupFilter(object_permission_model=Account)
-    permission = ObjectPermissionPermissionFilter(object_permission_model=Account)
     attribute_types = GroupsAttributeFilter()
     attribute_values = GroupsAttributeFilter()
 
@@ -195,7 +179,7 @@ class AccountFilterSet(FilterSet):
         fields = []
 
 
-class AccountViewSet(AbstractWithObjectPermissionViewSet):
+class AccountViewSet(AbstractModelViewSet):
     queryset = Account.objects.select_related(
         'master_user',
         'type',
@@ -207,12 +191,6 @@ class AccountViewSet(AbstractWithObjectPermissionViewSet):
         #     'attribute_type__options'
         # )),
         get_attributes_prefetch(),
-        *get_permissions_prefetch_lookups(
-            (None, Account),
-            ('type', AccountType),
-            ('portfolios', Portfolio),
-            # ('attributes__attribute_type', AccountAttributeType),
-        )
     )
     # prefetch_permissions_for = (
     #     ('type', AccountType),
@@ -220,7 +198,7 @@ class AccountViewSet(AbstractWithObjectPermissionViewSet):
     #     ('attributes__attribute_type', AccountAttributeType),
     # )
     serializer_class = AccountSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         GroupsAttributeFilter,
         AttributeFilter

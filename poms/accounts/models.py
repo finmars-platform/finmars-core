@@ -8,7 +8,6 @@ from poms.common.models import NamedModel, FakeDeletableModel, EXPRESSION_FIELD_
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.configuration.models import ConfigurationModel
 from poms.obj_attrs.models import GenericAttribute
-from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser
 
 
@@ -29,8 +28,6 @@ class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel, Configur
                                                 verbose_name=gettext_lazy('transaction details expr'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
-
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('account type')
@@ -108,7 +105,6 @@ class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
                                                       verbose_name=gettext_lazy('is valid for all portfolios'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('account')

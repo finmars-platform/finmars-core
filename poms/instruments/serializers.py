@@ -29,7 +29,6 @@ from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, D
     InstrumentTypeEvent, InstrumentTypeInstrumentAttribute, InstrumentTypeInstrumentFactorSchedule, \
     ExposureCalculationModel, LongUnderlyingExposure, ShortUnderlyingExposure, Country
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, ModelWithAttributesOnlySerializer
-from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.pricing.models import InstrumentPricingPolicy, InstrumentTypePricingPolicy, PriceHistoryError
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
     InstrumentTypePricingPolicySerializer, InstrumentPricingPolicySerializer
@@ -819,8 +818,8 @@ class InstrumentTypeSerializer(ModelWithUserCodeSerializer,
             InstrumentTypePricingPolicy.objects.filter(instrument_type=instance).exclude(id__in=ids).delete()
 
 
-class TransactionTypeSimpleViewSerializer(ModelWithObjectPermissionSerializer):
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+class TransactionTypeSimpleViewSerializer(ModelWithUserCodeSerializer):
+    class Meta:
         model = TransactionType
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name',
@@ -828,7 +827,7 @@ class TransactionTypeSimpleViewSerializer(ModelWithObjectPermissionSerializer):
         ]
 
 
-class InstrumentTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
+class InstrumentTypeEvSerializer(ModelWithAttributesSerializer,
                                  ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
@@ -858,7 +857,7 @@ class InstrumentTypeEvSerializer(ModelWithObjectPermissionSerializer, ModelWithA
         ]
 
 
-class InstrumentTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+class InstrumentTypeLightSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     class Meta:
@@ -870,7 +869,7 @@ class InstrumentTypeLightSerializer(ModelWithObjectPermissionSerializer, ModelWi
         ]
 
 
-class InstrumentTypeViewSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+class InstrumentTypeViewSerializer(ModelWithUserCodeSerializer):
     instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)
 
     class Meta:
@@ -881,7 +880,7 @@ class InstrumentTypeViewSerializer(ModelWithObjectPermissionSerializer, ModelWit
         ]
 
 
-class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermissionSerializer,
+class InstrumentSerializer(ModelWithAttributesSerializer,
                            ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
 
@@ -1271,7 +1270,7 @@ class InstrumentSerializer(ModelWithAttributesSerializer, ModelWithObjectPermiss
 #         super(InstrumentExternalApiSerializer, self).__init__(*args, **kwargs)
 
 
-class InstrumentLightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+class InstrumentLightSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     class Meta:
@@ -1311,7 +1310,7 @@ class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
         # self.fields['pricing_currency'] = CurrencyEvalSerializer(read_only=True)
 
 
-class InstrumentForSelectSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+class InstrumentForSelectSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     instrument_type_object = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
@@ -1334,7 +1333,7 @@ class InstrumentForSelectSerializer(ModelWithObjectPermissionSerializer, ModelWi
         return result
 
 
-class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesOnlySerializer,
+class InstrumentEvSerializer(ModelWithAttributesOnlySerializer,
                              ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
@@ -1388,13 +1387,13 @@ class InstrumentEvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttri
         return result
 
 
-class InstrumentViewSerializer(ModelWithObjectPermissionSerializer):
+class InstrumentViewSerializer(ModelWithUserCodeSerializer):
     instrument_type_object = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
 
     # pricing_currency_object = serializers.PrimaryKeyRelatedField(source='pricing_currency', read_only=True)
     # accrued_currency_object = serializers.PrimaryKeyRelatedField(source='accrued_currency', read_only=True)
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = Instrument
         fields = [
             'id', 'instrument_type', 'instrument_type_object', 'user_code', 'name', 'short_name',

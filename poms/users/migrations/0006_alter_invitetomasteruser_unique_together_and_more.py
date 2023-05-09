@@ -6,7 +6,6 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('obj_perms', '0002_alter_genericobjectpermission_index_together_and_more'),
         ('users', '0005_alter_member_deleted_user_code_and_more'),
     ]
 

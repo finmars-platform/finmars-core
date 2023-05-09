@@ -22,9 +22,6 @@ from poms.currencies.serializers import CurrencySerializer, CurrencyHistorySeria
 from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet
-from poms.obj_perms.permissions import PomsConfigurationPermission
-from poms.obj_perms.utils import get_permissions_prefetch_lookups
-from poms.obj_perms.views import AbstractEvGroupWithObjectPermissionViewSet, AbstractWithObjectPermissionViewSet
 from poms.users.filters import OwnerByMasterUserFilter
 
 _l = logging.getLogger('poms.currencies')
@@ -37,7 +34,7 @@ class CurrencyAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model_serializer = CurrencySerializer
 
     permission_classes = GenericAttributeTypeViewSet.permission_classes + [
-        PomsConfigurationPermission
+
     ]
 
 
@@ -55,7 +52,7 @@ class CurrencyFilterSet(FilterSet):
         fields = []
 
 
-class CurrencyViewSet(AbstractWithObjectPermissionViewSet):
+class CurrencyViewSet(AbstractModelViewSet):
     queryset = Currency.objects.select_related(
         'master_user',
     ).prefetch_related(
@@ -65,7 +62,7 @@ class CurrencyViewSet(AbstractWithObjectPermissionViewSet):
     # permission_classes = AbstractModelViewSet.permission_classes + [
     #     # SuperUserOrReadOnly,
     # ]
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,

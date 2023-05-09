@@ -45,7 +45,6 @@ from poms.integrations.tasks import download_instrument, test_certificate, downl
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericAttributeTypeSerializer, \
     GenericClassifierSerializer
-from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.transactions.fields import TransactionTypeField, TransactionTypeInputField
@@ -906,7 +905,7 @@ class PriceDownloadSchemeMappingSerializer(AbstractMappingSerializer):
 
 # ----
 
-class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObjectPermissionSerializer,
+class ImportInstrumentViewSerializer(ModelWithAttributesSerializer,
                                      ModelWithUserCodeSerializer):
     instrument_type = InstrumentTypeField(default=InstrumentTypeDefault())
     instrument_type_object = serializers.PrimaryKeyRelatedField(source='instrument_type', read_only=True)

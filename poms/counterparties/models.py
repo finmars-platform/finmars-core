@@ -7,7 +7,6 @@ from django.utils.translation import gettext_lazy
 from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedModel
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
-from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser
 
 
@@ -15,7 +14,6 @@ class CounterpartyGroup(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='counterparty_groups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('counterparty group')
@@ -78,7 +76,6 @@ class Counterparty(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMod
                                                       verbose_name=gettext_lazy('is valid for all portfolios'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('counterparty')
@@ -145,8 +142,6 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='responsible_groups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('responsible group')
         verbose_name_plural = gettext_lazy('responsible groups')
@@ -205,7 +200,6 @@ class Responsible(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMode
                                                       verbose_name=gettext_lazy('is valid for all portfolios'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('responsible')
