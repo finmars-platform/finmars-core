@@ -177,34 +177,6 @@ class CurrencySerializer(ModelWithUserCodeSerializer,
             CurrencyPricingPolicy.objects.filter(currency=instance).exclude(id__in=ids).delete()
 
 
-class CurrencyEvSerializer(ModelWithAttributesOnlySerializer,
-                           ModelWithUserCodeSerializer):
-    master_user = MasterUserField()
-
-    pricing_condition_object = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Currency
-        fields = [
-            'id', 'master_user',
-            'user_code', 'name', 'short_name', 'notes',
-            'is_deleted', 'is_enabled',
-
-            'reference_for_pricing', 'default_fx_rate',
-            'pricing_condition', 'pricing_condition_object'
-        ]
-
-    def get_pricing_condition_object(self, instance):
-
-        if instance.pricing_condition:
-            return {
-                'id': instance.pricing_condition.id,
-                'user_code': instance.pricing_condition.user_code,
-                'name': instance.pricing_condition.name
-            }
-        return None
-
-
 class CurrencyLightSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 

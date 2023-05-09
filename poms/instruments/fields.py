@@ -53,36 +53,32 @@ class InstrumentDefault(object):
 
 class InstrumentField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Instrument.objects
-    filter_backends = [
-        OwnerByMasterUserFilter,
-    ]
+    # Probably Deprecated
+    # filter_backends = [
+    #     OwnerByMasterUserFilter,
+    # ]
 
 
 class CountryField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Country.objects
-    filter_backends = [
-    ]
+
 
 
 class PricingConditionField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PricingCondition.objects
-    filter_backends = [
-    ]
+
 
 
 class PaymentSizeDetailField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PaymentSizeDetail.objects
-    filter_backends = [
-    ]
+
 
 
 class DailyPricingModelField(UserCodeOrPrimaryKeyRelatedField):
     queryset = DailyPricingModel.objects
-    filter_backends = [
-    ]
 
 
-class RegisterField(PrimaryKeyRelatedFilteredField):
+class RegisterField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Instrument.objects
     filter_backends = [
         OwnerByMasterUserFilter,
@@ -90,11 +86,12 @@ class RegisterField(PrimaryKeyRelatedFilteredField):
     ]
 
 
-class BundleField(PrimaryKeyRelatedFilteredField):
+class BundleField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PortfolioBundle.objects
-    filter_backends = [
-        OwnerByMasterUserFilter
-    ]
+    # Probably Deprecated
+    # filter_backends = [
+    #     OwnerByMasterUserFilter
+    # ]
 
 
 class PricingPolicyField(UserCodeOrPrimaryKeyRelatedField):

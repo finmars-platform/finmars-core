@@ -12,8 +12,7 @@ from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import AbstractModelViewSet
 from poms.counterparties.models import Counterparty, Responsible, CounterpartyGroup, ResponsibleGroup
 from poms.counterparties.serializers import CounterpartySerializer, ResponsibleSerializer, CounterpartyGroupSerializer, \
-    ResponsibleGroupSerializer, ResponsibleLightSerializer, CounterpartyLightSerializer, CounterpartyEvSerializer, \
-    ResponsibleEvSerializer
+    ResponsibleGroupSerializer, ResponsibleLightSerializer, CounterpartyLightSerializer
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet

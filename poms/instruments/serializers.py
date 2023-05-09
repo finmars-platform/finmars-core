@@ -827,36 +827,6 @@ class TransactionTypeSimpleViewSerializer(ModelWithUserCodeSerializer):
         ]
 
 
-class InstrumentTypeEvSerializer(ModelWithAttributesSerializer,
-                                 ModelWithUserCodeSerializer):
-    master_user = MasterUserField()
-
-    instrument_class_object = InstrumentClassSerializer(source='instrument_class', read_only=True)
-
-    one_off_event_object = TransactionTypeSimpleViewSerializer(source='one_off_event', read_only=True)
-    regular_event_object = TransactionTypeSimpleViewSerializer(source='regular_event', read_only=True)
-    factor_same_object = TransactionTypeSimpleViewSerializer(source='factor_same', read_only=True)
-    factor_up_object = TransactionTypeSimpleViewSerializer(source='factor_up', read_only=True)
-    factor_down_object = TransactionTypeSimpleViewSerializer(source='factor_down', read_only=True)
-
-    class Meta:
-        model = InstrumentType
-        fields = [
-            'id', 'master_user',
-            'user_code', 'configuration_code',
-            'name', 'short_name', 'public_name', 'notes',
-            'is_default', 'is_deleted', 'is_enabled',
-
-            'one_off_event', 'one_off_event_object',
-            'regular_event', 'regular_event_object',
-            'factor_same', 'factor_same_object',
-            'factor_up', 'factor_up_object',
-            'factor_down', 'factor_down_object',
-
-            'instrument_class', 'instrument_class_object'
-        ]
-
-
 class InstrumentTypeLightSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
@@ -1329,60 +1299,6 @@ class InstrumentForSelectSerializer(ModelWithUserCodeSerializer):
         result = super(InstrumentForSelectSerializer, self).to_representation(instance)
 
         # _l.debug('InstrumentLightSerializer done: %s', "{:3.3f}".format(time.perf_counter() - st))
-
-        return result
-
-
-class InstrumentEvSerializer(ModelWithAttributesOnlySerializer,
-                             ModelWithUserCodeSerializer):
-    master_user = MasterUserField()
-
-    instrument_type_object = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
-
-    pricing_currency_object = CurrencyViewSerializer(source='pricing_currency', read_only=True)
-    accrued_currency_object = CurrencyViewSerializer(source='accrued_currency', read_only=True)
-
-    pricing_condition_object = PricingConditionSerializer(source='pricing_condition', read_only=True)
-    payment_size_detail_object = PaymentSizeDetailSerializer(source='payment_size_detail', read_only=True)
-    country_object = CountrySerializer(source='country', read_only=True)
-
-    class Meta:
-        model = Instrument
-
-        fields = [
-            'id', 'master_user',
-
-            'user_code', 'name', 'short_name', 'public_name', 'notes',
-
-            'is_active', 'is_deleted', 'is_enabled', 'has_linked_with_portfolio',
-
-            'instrument_type', 'instrument_type_object',
-
-            'pricing_currency', 'pricing_currency_object',
-            'accrued_currency', 'accrued_currency_object',
-
-            'pricing_condition', 'pricing_condition_object',
-            'payment_size_detail', 'payment_size_detail_object',
-
-            'user_text_1', 'user_text_2', 'user_text_3',
-
-            'reference_for_pricing',
-            'maturity_date', 'maturity_price',
-            'price_multiplier', 'accrued_multiplier',
-            'default_price', 'default_accrued',
-
-            'country', 'country_object'
-
-        ]
-
-        read_only_fields = fields
-
-    def to_representation(self, instance):
-        st = time.perf_counter()
-
-        result = super(InstrumentEvSerializer, self).to_representation(instance)
-
-        # _l.debug('InstrumentEvSerializer done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
         return result
 

@@ -18,10 +18,9 @@ from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
 from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord, PortfolioBundle
-from poms.portfolios.serializers import PortfolioSerializer, PortfolioLightSerializer, PortfolioEvSerializer, \
-    PortfolioRegisterSerializer, PortfolioRegisterEvSerializer, PortfolioRegisterRecordSerializer, \
-    PortfolioRegisterRecordEvSerializer, PortfolioBundleSerializer, \
-    PortfolioBundleEvSerializer
+from poms.portfolios.serializers import PortfolioSerializer, PortfolioLightSerializer, \
+    PortfolioRegisterSerializer,  PortfolioRegisterRecordSerializer, \
+     PortfolioBundleSerializer
 from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_price_history
 from poms.transactions.models import TransactionType
 from poms.users.filters import OwnerByMasterUserFilter

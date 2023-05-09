@@ -18,7 +18,7 @@ from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1,
 from poms.strategies.serializers import Strategy1GroupSerializer, Strategy1Serializer, Strategy2GroupSerializer, \
     Strategy2SubgroupSerializer, Strategy2Serializer, Strategy1SubgroupSerializer, Strategy3GroupSerializer, \
     Strategy3SubgroupSerializer, Strategy3Serializer, Strategy1LightSerializer, Strategy2LightSerializer, \
-    Strategy3LightSerializer, Strategy1EvSerializer, Strategy2EvSerializer, Strategy3EvSerializer
+    Strategy3LightSerializer
 from poms.users.filters import OwnerByMasterUserFilter
 
 

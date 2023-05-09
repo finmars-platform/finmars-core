@@ -41,8 +41,8 @@ from poms.transactions.serializers import TransactionClassSerializer, Transactio
     EventClassSerializer, NotificationClassSerializer, TransactionTypeLightSerializer, \
     ComplexTransactionLightSerializer, ComplexTransactionSimpleSerializer, \
     RecalculatePermissionTransactionSerializer, RecalculatePermissionComplexTransactionSerializer, \
-    TransactionTypeLightSerializerWithInputs, TransactionTypeEvSerializer, ComplexTransactionEvSerializer, \
-    TransactionEvSerializer, TransactionTypeRecalculateSerializer, RecalculateUserFieldsSerializer, \
+    TransactionTypeLightSerializerWithInputs, \
+    TransactionTypeRecalculateSerializer, RecalculateUserFieldsSerializer, \
     ComplexTransactionViewOnlySerializer, ComplexTransactionViewOnly
 from poms.transactions.tasks import recalculate_permissions_transaction, recalculate_permissions_complex_transaction, \
     recalculate_user_fields

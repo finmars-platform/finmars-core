@@ -17,8 +17,7 @@ from poms.common.pagination import CustomPaginationMixin
 from poms.common.views import AbstractModelViewSet
 from poms.currencies.filters import OwnerByCurrencyFilter
 from poms.currencies.models import Currency, CurrencyHistory
-from poms.currencies.serializers import CurrencySerializer, CurrencyHistorySerializer, CurrencyLightSerializer, \
-    CurrencyEvSerializer
+from poms.currencies.serializers import CurrencySerializer, CurrencyHistorySerializer, CurrencyLightSerializer
 from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet

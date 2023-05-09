@@ -25,23 +25,6 @@ class AccountTypeSerializer(ModelWithUserCodeSerializer, ModelWithAttributesSeri
         ]
 
 
-class AccountTypeEvSerializer(ModelWithUserCodeSerializer,
-                              ModelWithAttributesSerializer):
-    master_user = MasterUserField()
-    transaction_details_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                               allow_null=True, default='""')
-
-    class Meta:
-        model = AccountType
-        fields = [
-            'id', 'master_user',
-            'user_code', 'configuration_code',
-            'name', 'short_name', 'public_name', 'notes',
-            'is_deleted', 'is_enabled',
-            'show_transaction_details', 'transaction_details_expr',
-        ]
-
-
 class AccountTypeViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = AccountType

@@ -44,7 +44,7 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
     PaymentSizeDetailSerializer, PeriodicitySerializer, CostMethodSerializer, InstrumentTypeSerializer, \
     PricingPolicySerializer, EventScheduleConfigSerializer, InstrumentCalculatePricesAccruedPriceSerializer, \
     GeneratedEventSerializer, InstrumentTypeLightSerializer, InstrumentLightSerializer, \
-    PricingPolicyLightSerializer, PricingConditionSerializer, InstrumentEvSerializer, InstrumentTypeEvSerializer, \
+    PricingPolicyLightSerializer, PricingConditionSerializer, \
     ExposureCalculationModelSerializer, LongUnderlyingExposureSerializer, ShortUnderlyingExposureSerializer, \
     InstrumentForSelectSerializer, InstrumentTypeProcessSerializer, CountrySerializer
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \

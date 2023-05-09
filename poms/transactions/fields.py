@@ -50,17 +50,6 @@ class TransactionTypeInputField(RelatedField):
     def to_representation(self, obj):
         return getattr(obj, 'id')
 
-# class TransactionClassifierField(AttributeClassifierBaseField):
-#     queryset = TransactionClassifier.objects
-#
-#
-# class TransactionAttributeTypeField(PrimaryKeyRelatedFilteredField):
-#     queryset = TransactionAttributeType.objects
-#     filter_backends = [
-#         OwnerByMasterUserFilter,
-#         ObjectPermissionBackend,
-#     ]
-
 
 class TransactionTypeInputContentTypeField(SlugRelatedFilteredField):
     queryset = ContentType.objects
