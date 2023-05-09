@@ -78,4 +78,5 @@ class Group(ConfigurationModel):
         return self.name
 
 
-
+# Important, needs for cache clearance after Policy Updated
+from . import signals

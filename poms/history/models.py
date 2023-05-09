@@ -356,8 +356,13 @@ def get_record_context():
     result = {"master_user": None, "member": None, "context_url": "Unknown"}
 
     if request := get_request():
-        result["master_user"] = request.user.master_user
-        result["member"] = request.user.member
+
+        _l.info('request.user %s' % request.user)
+
+        # result["master_user"] = request.user.master_user
+        result["master_user"] = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        # result["master_user"] = request.user.member
+        result["member"] = Member.objects.get(user=request.user)
         result["context_url"] = request.path
 
     else:

@@ -1,10 +1,8 @@
 import logging
-
+from django.core.cache import cache
 
 _l = logging.getLogger('poms.iam')
 from django.db.models import Q
-
-from itertools import chain
 
 '''
     parse_resource_into_object
@@ -20,11 +18,13 @@ from itertools import chain
         }
 
     '''
-from poms.iam.models import AccessPolicy, Role
+from poms.iam.models import AccessPolicy
+
 
 def add_to_list_if_not_exists(string, my_list):
     if string not in my_list:
         my_list.append(string)
+
 
 def lowercase_keys_and_values(dictionary):
     new_dict = {}
@@ -92,22 +92,31 @@ def parse_resource_attribute(resources):
     return result
 
 
+def get_member_access_policies(member):
+
+    cache_key = f'member_access_policies_{member.id}'
+    access_policies = cache.get(cache_key)
+
+    if access_policies is None:
+        access_policies = AccessPolicy.objects.filter(
+            Q(members=member) |
+            Q(iam_roles__members=member) |
+            Q(iam_groups__members=member)
+        ).distinct()
+
+        # Cache the result for a specific duration (e.g., 5 minutes)
+        cache.set(cache_key, access_policies, 300)
+
+    return access_policies
+
+
 def get_statements(member):
-    # AccessPolicies directly assigned to the member
-    member_policies = member.iam_access_policies.all()
-
-    # AccessPolicies assigned to the member through roles
-    role_policies = AccessPolicy.objects.filter(iam_roles__members=member).distinct()
-
-    # AccessPolicies assigned to the member through groups
-    group_policies = AccessPolicy.objects.filter(iam_groups__members=member).distinct()
-
-    # Combine all AccessPolicies
-    all_policies = set(chain(member_policies, role_policies, group_policies))
+    # Get all AccessPolicy objects for the user
+    access_policies = get_member_access_policies(member)
 
     statements = []
 
-    for item in all_policies:
+    for item in access_policies:
 
         # _l.info('item.policy %s' % item.policy)
 
@@ -122,7 +131,6 @@ def get_statements(member):
 
 
 def filter_queryset_with_access_policies(member, queryset, view):
-
     if member.is_admin:
         return queryset
 
@@ -258,6 +266,7 @@ def action_statement_into_object(action):
 
     return result
 
+
 def capitalize_first_letter(string):
     if len(string) > 0:
         return string[0].upper() + string[1:]
@@ -272,10 +281,9 @@ def get_allowed_queryset(member, queryset):
     allowed_resources = get_allowed_resources(member, queryset.model, queryset)
     allowed_user_codes = []
 
-    _l.info('get_allowed_queryset.allowed_resources %s' % allowed_resources)
+    _l.debug('get_allowed_queryset.allowed_resources %s' % allowed_resources)
 
     for resource in allowed_resources:
-
         prefix, app, content_type, user_code = resource.split(':', 3)
 
         allowed_user_codes.append(user_code)
@@ -283,7 +291,7 @@ def get_allowed_queryset(member, queryset):
     return queryset.filter(user_code__in=allowed_user_codes)
 
 
-def get_allowed_resources(member,  model, queryset):
+def get_allowed_resources(member, model, queryset):
     """
     Returns a list of allowed resources for a user based on their access policies for the given action and model.
 
@@ -299,11 +307,7 @@ def get_allowed_resources(member,  model, queryset):
     """
 
     # Get all AccessPolicy objects for the user
-    access_policies = AccessPolicy.objects.filter(
-        Q(members=member) |
-        Q(iam_roles__members=member) |
-        Q(iam_groups__members=member)
-    ).distinct()
+    access_policies = get_member_access_policies(member)
 
     allowed_resources = []
 
@@ -347,9 +351,9 @@ def get_allowed_resources(member,  model, queryset):
                     # If a wildcard is used, return all resources in the queryset
                     if resource == "*":
                         for obj in queryset:
-                            allowed_resources.append(f"frn:finmars:{model._meta.app_label.lower()}.{model.__name__.lower()}:{obj.user_code}")
+                            allowed_resources.append(
+                                f"frn:finmars:{model._meta.app_label.lower()}.{model.__name__.lower()}:{obj.user_code}")
                     else:
                         allowed_resources.append(resource)
 
     return allowed_resources
-

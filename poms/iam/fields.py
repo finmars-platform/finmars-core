@@ -18,7 +18,7 @@ class IamProtectedRelatedField(RelatedField):
         if member.is_admin:
             return queryset
 
-        _l.info('IamProtectedRelatedField %s' % member)
+        _l.debug('IamProtectedRelatedField %s' % member)
 
         queryset = get_allowed_queryset(member, queryset)
 
