@@ -8,7 +8,7 @@ from django.views.generic.dates import timezone_today
 from poms.accounts.models import Account
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
-from poms.instruments.models import Instrument
+from poms.instruments.models import Instrument, InstrumentType
 from poms.portfolios.models import Portfolio
 from poms.reports.models import TransactionReportCustomField
 from poms.reports.sql_builders.helpers import dictfetchall, \
@@ -1129,6 +1129,20 @@ class TransactionReportBuilderSql:
         ).filter(master_user=self.instance.master_user) \
             .filter(id__in=ids)
 
+    def add_data_items_instrument_types(self, instruments):
+
+        ids = []
+
+        for instrument in instruments:
+            ids.append(instrument.instrument_type_id)
+
+        self.instance.item_instrument_types = InstrumentType.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).filter(master_user=self.instance.master_user) \
+            .filter(id__in=ids)
+
     def add_data_items_portfolios(self, ids):
 
         self.instance.item_portfolios = Portfolio.objects.prefetch_related(
@@ -1289,6 +1303,8 @@ class TransactionReportBuilderSql:
         self.add_data_items_transaction_classes()
         self.add_data_items_complex_transaction_status()
         # self.add_data_items_complex_transactions(complex_transactions_ids)  # too slow
+
+        self.add_data_items_instrument_types(self.instance.item_instruments)
 
         if self.instance.depth_level == 'entry':
 

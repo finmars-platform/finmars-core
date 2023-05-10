@@ -841,6 +841,7 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
     # item_complex_transactions = ComplexTransactionSerializer(many=True, read_only=True)
     # item_transaction_types = TransactionTypeViewSerializer(source='transaction_types', many=True, read_only=True)
     item_instruments = ReportInstrumentSerializer(many=True, read_only=True)
+    item_instrument_types = ReportInstrumentTypeSerializer(many=True, read_only=True)
     item_currencies = ReportCurrencySerializer(many=True, read_only=True)
     item_portfolios = ReportPortfolioSerializer(many=True, read_only=True)
     item_accounts = ReportAccountSerializer(many=True, read_only=True)
