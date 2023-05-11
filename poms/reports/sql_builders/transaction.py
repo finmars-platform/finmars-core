@@ -165,11 +165,13 @@ class TransactionReportBuilderSql:
                                 if value == instrument['user_code']:
                                     instrument_ids.append(str(instrument['id']))
 
+                        _l.info('instrument_ids %s' % instrument_ids)
+
                         if instrument_ids:
                             res = "'" + "\',\'".join(instrument_ids)
                             res = res + "'"
 
-                            result = result + 'or t.instrument_id IN (%s)' % res
+                            result = result + 'and t.instrument_id IN (%s)' % res
 
                         currencies_ids = []
 
@@ -180,13 +182,15 @@ class TransactionReportBuilderSql:
                                 if value == currency['user_code']:
                                     currencies_ids.append(str(currency['id']))
 
-                        # _l.info('currencies_ids %s' % currencies_ids)
+                        _l.info('currencies_ids %s' % currencies_ids)
 
                         if currencies_ids:
                             res = "'" + "\',\'".join(currencies_ids)
                             res = res + "'"
 
-                            result = result + 'or t.settlement_currency_id IN (%s)' % res
+                            result = result + 'and t.settlement_currency_id IN (%s)' % res
+
+                        _l.info('result %s' % result)
 
         except Exception as e:
 
