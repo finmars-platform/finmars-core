@@ -1,5 +1,6 @@
 import logging
 import time
+import traceback
 from datetime import timedelta
 
 from django.db import connection
@@ -153,7 +154,7 @@ class TransactionReportBuilderSql:
 
                     if filter['key'] in ['entry_item_user_code']:
 
-                        field_key = filter['key'].split('.')[1]
+                        # field_key = filter['key'].split('.')[1]
 
                         instrument_ids = []
 
@@ -179,6 +180,8 @@ class TransactionReportBuilderSql:
                                 if value == currency['user_code']:
                                     currencies_ids.append(str(currency['id']))
 
+                        # _l.info('currencies_ids %s' % currencies_ids)
+
                         if currencies_ids:
                             res = "'" + "\',\'".join(currencies_ids)
                             res = res + "'"
@@ -187,7 +190,8 @@ class TransactionReportBuilderSql:
 
         except Exception as e:
 
-            _l.error("User filters layou error %s" % e)
+            _l.error("User filters layout error %s" % e)
+            _l.error("User filters layout traceback %s" % traceback.format_exc())
 
         # accounts = Account.objects.all.values_list('id', 'user_code', 'short_name', 'name', 'public_name', flat=True)
         #
