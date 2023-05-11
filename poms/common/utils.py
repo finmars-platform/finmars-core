@@ -380,14 +380,14 @@ def check_if_last_day_of_month(to_date):
     return False
 
 
-def get_first_transaction(portfolio_id):
+def get_first_transaction(portfolio_instance):
     '''
     Get first transaction of portfolio
     :param portfolio_id:
     :return: Transaction
     '''
     from poms.transactions.models import Transaction
-    transaction = Transaction.objects.filter(portfolio_id=portfolio_id).order_by('accounting_date')[0]
+    transaction = Transaction.objects.filter(portfolio=portfolio_instance).order_by('accounting_date')[0]
     return transaction
 
 
