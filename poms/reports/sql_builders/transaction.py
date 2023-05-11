@@ -161,7 +161,7 @@ class TransactionReportBuilderSql:
 
                             for value in filter['options']['filter_values']:
 
-                                if value == instrument[field_key]:
+                                if value == instrument['user_code']:
                                     instrument_ids.append(str(instrument['id']))
 
                         if instrument_ids:
@@ -176,7 +176,7 @@ class TransactionReportBuilderSql:
 
                             for value in filter['options']['filter_values']:
 
-                                if value == currency[field_key]:
+                                if value == currency['user_code']:
                                     currencies_ids.append(str(currency['id']))
 
                         if currencies_ids:
