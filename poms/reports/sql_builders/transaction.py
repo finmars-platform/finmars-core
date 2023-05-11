@@ -101,6 +101,7 @@ class TransactionReportBuilderSql:
 
         portfolios = list(Portfolio.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
         instruments = list(Instrument.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
+        currencies = list(Currency.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
 
         _l.info("add_user_filters.instruments %s" % len(instruments))
 
@@ -149,6 +150,40 @@ class TransactionReportBuilderSql:
                             res = res + "'"
 
                             result = result + 'and t.instrument_id IN (%s)' % res
+
+                    if filter['key'] in ['entry_item_user_code']:
+
+                        field_key = filter['key'].split('.')[1]
+
+                        instrument_ids = []
+
+                        for instrument in instruments:
+
+                            for value in filter['options']['filter_values']:
+
+                                if value == instrument[field_key]:
+                                    instrument_ids.append(str(instrument['id']))
+
+                        if instrument_ids:
+                            res = "'" + "\',\'".join(instrument_ids)
+                            res = res + "'"
+
+                            result = result + 'or t.instrument_id IN (%s)' % res
+
+                        currencies_ids = []
+
+                        for currency in currencies:
+
+                            for value in filter['options']['filter_values']:
+
+                                if value == currency[field_key]:
+                                    currencies_ids.append(str(currency['id']))
+
+                        if currencies_ids:
+                            res = "'" + "\',\'".join(currencies_ids)
+                            res = res + "'"
+
+                            result = result + 'or t.settlement_currency_id IN (%s)' % res
 
         except Exception as e:
 
