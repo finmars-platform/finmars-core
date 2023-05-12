@@ -1500,16 +1500,21 @@ class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer)
         ret = super(ComplexTransactionImportSchemeFieldSerializer, self).to_representation(instance)
 
         if instance.transaction_type_input:
-            from poms.transactions.serializers import TransactionTypeInputViewSerializer
-            from poms.transactions.models import TransactionTypeInput
 
-            instance = TransactionTypeInput.objects.get(
-                transaction_type__user_code=instance.rule_scenario.transaction_type,
-                name=instance.transaction_type_input)
+            try:
+                from poms.transactions.serializers import TransactionTypeInputViewSerializer
+                from poms.transactions.models import TransactionTypeInput
 
-            s = TransactionTypeInputViewSerializer(instance=instance, read_only=True,
-                                                   context=self.context)
-            ret['transaction_type_input_object'] = s.data
+                instance = TransactionTypeInput.objects.get(
+                    transaction_type__user_code=instance.rule_scenario.transaction_type,
+                    name=instance.transaction_type_input)
+
+                s = TransactionTypeInputViewSerializer(instance=instance, read_only=True,
+                                                       context=self.context)
+                ret['transaction_type_input_object'] = s.data
+
+            except Exception as e:
+                ret['transaction_type_input_object'] = None
 
         return ret
 
