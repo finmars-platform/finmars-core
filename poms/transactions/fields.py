@@ -13,6 +13,7 @@ from poms.transactions.models import TransactionType, TransactionTypeGroup, Tran
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.utils import get_member_from_context, get_master_user_from_context
 
+from django.utils.translation import gettext_lazy as _
 
 class TransactionTypeGroupField(UserCodeOrPrimaryKeyRelatedField):
     queryset = TransactionTypeGroup.objects
@@ -29,6 +30,12 @@ class TransactionTypeField(PrimaryKeyRelatedFilteredField):
 
 
 class TransactionTypeInputField(RelatedField):
+
+    default_error_messages = {
+        'does_not_exist': _('Object with user_code or id that equals {value} does not exist.'),
+        'invalid': _('Invalid value.'),
+    }
+
     queryset = TransactionTypeInput.objects
 
     def get_queryset(self):
