@@ -29,9 +29,9 @@ def forwards_func(apps, schema_editor):
 
         field = ComplexTransactionImportSchemeField.objects.get(id=item['id'])
 
-        if item.get('transaction_type_input_old', None):
+        if item.get('transaction_type_input_old_id', None):
 
-            input = TransactionTypeInput.objects.get(id=item['transaction_type_input_old'])
+            input = TransactionTypeInput.objects.get(id=item['transaction_type_input_old_id'])
 
             field.transaction_type_input = input.name
             index = index + 1
