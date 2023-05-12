@@ -430,7 +430,7 @@ class TransactionImportProcess(object):
                 else:
                     item.status = 'error'
                     item.error_message = item.error_message + ' Can\'t find relation of ' + \
-                                         '[' + field.transaction_type_input.name + ']' + '(value:' + \
+                                         '[' + field.transaction_type_input + ']' + '(value:' + \
                                          value + ')'
 
             return v
