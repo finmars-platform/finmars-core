@@ -1512,8 +1512,11 @@ class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer)
                 s = TransactionTypeInputViewSerializer(instance=instance, read_only=True,
                                                        context=self.context)
                 ret['transaction_type_input_object'] = s.data
-
             except Exception as e:
+                _l.error('Error in to_representation instance.rule_scenario.transaction_type: %s' % instance.rule_scenario.transaction_type)
+                _l.error('Error in to_representation instance.transaction_type_input: %s' % instance.transaction_type_input)
+                _l.error('Error in to_representation: %s' % e)
+
                 ret['transaction_type_input_object'] = None
 
         return ret
