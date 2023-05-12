@@ -1,6 +1,7 @@
 import logging
 import traceback
 
+from poms.common.models import ProxyUser, ProxyRequest
 from poms.configuration.export_helpers import export_instrument_types, export_pricing_policies, export_transaction_types
 from poms.configuration.utils import save_serialized_entity, save_serialized_attribute_type, save_serialized_layout
 from poms_app import settings
@@ -30,7 +31,11 @@ def export_workflows_to_directory(source_directory, configuration, master_user, 
 def export_configuration_to_directory(source_directory, configuration, master_user, member):
     try:
 
+        proxy_user = ProxyUser(member, master_user)
+        proxy_request = ProxyRequest(proxy_user)
+
         context = {
+            'request': proxy_request,
             'master_user': master_user,
             'member': member
         }
