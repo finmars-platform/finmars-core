@@ -419,7 +419,7 @@ class TransactionImportProcess(object):
 
             except Exception:
 
-                _l.error("User code %s not found for %s " % (value, field.transaction_type_input.name))
+                _l.error("User code %s not found for %s " % (value, field.transaction_type_input))
 
             if not v:
 
