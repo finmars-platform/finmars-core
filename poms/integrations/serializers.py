@@ -1,6 +1,7 @@
 from __future__ import unicode_literals, print_function
 
 import json
+import traceback
 from logging import getLogger
 
 from django.contrib.contenttypes.models import ContentType
@@ -1553,25 +1554,34 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 
         inputs = []
 
-        from poms.transactions.models import TransactionType
-        transaction_type = TransactionType.objects.get(user_code=instance.transaction_type)
+        try:
+            from poms.transactions.models import TransactionType
+            transaction_type = TransactionType.objects.get(user_code=instance.transaction_type)
 
-        for input in transaction_type.inputs.all():
-            result = {
-                'id': input.id,
-                'name': input.name,
-                'verbose_name': input.verbose_name,
-                'value_type': input.value_type
+            for input in transaction_type.inputs.all():
+                result = {
+                    'id': input.id,
+                    'name': input.name,
+                    'verbose_name': input.verbose_name,
+                    'value_type': input.value_type
+                }
+
+                inputs.append(result)
+
+            ret['transaction_type_object'] = {
+                'id': transaction_type.id,
+                'name': transaction_type.name,
+                'user_code': transaction_type.user_code,
+                'inputs': inputs
             }
 
-            inputs.append(result)
+        except Exception as e:
 
-        ret['transaction_type_object'] = {
-            'id': transaction_type.id,
-            'name': transaction_type.name,
-            'user_code': transaction_type.user_code,
-            'inputs': inputs
-        }
+            _l.error('ComplexTransactionImportSchemeRuleScenarioSerializer.instance.transaction_type %s' % instance.transaction_type)
+            _l.error('ComplexTransactionImportSchemeRuleScenarioSerializer.e %s' % e)
+            _l.error('ComplexTransactionImportSchemeRuleScenarioSerializer.traceback %s' % traceback.format_exc())
+
+            ret['transaction_type_object'] = None
 
         return ret
 

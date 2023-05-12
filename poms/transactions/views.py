@@ -18,8 +18,9 @@ from rest_framework.response import Response
 from rest_framework.settings import api_settings
 
 from poms.accounts.models import Account, AccountType
-from poms.common.filters import CharFilter,  ModelExtMultipleChoiceFilter, \
-    NoOpFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter, ComplexTransactionStatusFilter
+from poms.common.filters import CharFilter, ModelExtMultipleChoiceFilter, \
+    NoOpFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter, ComplexTransactionStatusFilter, \
+    CharExactFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import AbstractClassModelViewSet, AbstractAsyncViewSet, AbstractModelViewSet
@@ -153,7 +154,7 @@ class ModelExtWithAllWithMultipleChoiceFilter(ModelExtMultipleChoiceFilter):
 
 class TransactionTypeFilterSet(FilterSet):
     id = NoOpFilter()
-    user_code = CharFilter()
+    user_code = CharExactFilter()
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
