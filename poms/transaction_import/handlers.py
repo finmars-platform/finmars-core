@@ -479,7 +479,7 @@ class TransactionImportProcess(object):
 
             transaction_type_process_instance = TransactionTypeProcess(
                 linked_import_task=self.task,
-                transaction_type=TransactionType.object.get(user_code=rule_scenario.transaction_type),
+                transaction_type=TransactionType.objects.get(user_code=rule_scenario.transaction_type),
                 default_values=fields,
                 context=self.context,
                 uniqueness_reaction=uniqueness_reaction,
