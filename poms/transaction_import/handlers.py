@@ -377,6 +377,7 @@ class TransactionImportProcess(object):
 
     def convert_value(self, item, rule_scenario, field, value):
 
+        # TODO PERFORMANCE_ISSUE Maybe performance issue
         i = TransactionTypeInput.objects.get(transaction_type__user_code=rule_scenario.transaction_type,
                                              name=field.transaction_type_input)
 
