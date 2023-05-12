@@ -1,3 +1,4 @@
+from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import get_serializer
 from poms.configuration.utils import remove_id_key_recursively, save_json_to_file, user_code_to_file_name
 from poms.instruments.models import InstrumentType, PricingPolicy
@@ -6,9 +7,13 @@ from poms.transactions.models import TransactionType, TransactionTypeGroup
 
 def export_instrument_types(configuration_code, output_directory, master_user, member):
 
+    proxy_user = ProxyUser(member, master_user)
+    proxy_request = ProxyRequest(proxy_user)
+
     context = {
         'master_user': master_user,
-        'member': member
+        'member': member,
+        'request': proxy_request
     }
 
     filtered_objects = InstrumentType.objects.filter(configuration_code=configuration_code, master_user=master_user, is_deleted=False).exclude(user_code='-')
@@ -73,9 +78,13 @@ def export_instrument_types(configuration_code, output_directory, master_user, m
 
 def export_pricing_policies(configuration_code, output_directory, master_user, member):
 
+    proxy_user = ProxyUser(member, master_user)
+    proxy_request = ProxyRequest(proxy_user)
+
     context = {
         'master_user': master_user,
-        'member': member
+        'member': member,
+        'request': proxy_request
     }
 
     filtered_objects = PricingPolicy.objects.filter(configuration_code=configuration_code, master_user=master_user)
@@ -100,9 +109,13 @@ def export_pricing_policies(configuration_code, output_directory, master_user, m
 
 def export_transaction_types(configuration_code, output_directory, master_user, member):
 
+    proxy_user = ProxyUser(member, master_user)
+    proxy_request = ProxyRequest(proxy_user)
+
     context = {
         'master_user': master_user,
-        'member': member
+        'member': member,
+        'request': proxy_request
     }
 
     filtered_objects = TransactionType.objects.filter(configuration_code=configuration_code, master_user=master_user, is_deleted=False).exclude(user_code='-')
