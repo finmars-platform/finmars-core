@@ -10,7 +10,6 @@ from tempfile import NamedTemporaryFile
 
 from django.db import transaction
 from django.utils.timezone import now
-from filtration import Expression
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
 
@@ -376,8 +375,10 @@ class TransactionImportProcess(object):
 
             return None
 
-    def convert_value(self, item, field, value):
-        i = field.transaction_type_input
+    def convert_value(self, item, rule_scenario, field, value):
+
+        i = TransactionTypeInput.objects.get(transaction_type__user_code=rule_scenario.transaction_type,
+                                             name=field.transaction_type_input)
 
         if i.value_type == TransactionTypeInput.STRING:
             return str(value)
@@ -441,7 +442,7 @@ class TransactionImportProcess(object):
             try:
                 field_value = formula.safe_eval(field.value_expr, names=item.inputs,
                                                 context=self.context)
-                field_value = self.convert_value(item, field, field_value)
+                field_value = self.convert_value(item, rule_scenario, field, field_value)
                 fields[field.transaction_type_input] = field_value
 
             except Exception as e:
@@ -475,7 +476,6 @@ class TransactionImportProcess(object):
                 uniqueness_reaction = None
             else:
                 uniqueness_reaction = self.scheme.book_uniqueness_settings
-
 
             transaction_type_process_instance = TransactionTypeProcess(
                 linked_import_task=self.task,

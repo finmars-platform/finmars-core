@@ -468,7 +468,7 @@ class TransactionTypeProcess(object):
 
     def book_create_instruments(self, actions, master_user, instrument_map, pass_download=False):
 
-        object_permissions = self.transaction_type.object_permissions.select_related('permission').all()
+        # object_permissions = self.transaction_type.object_permissions.select_related('permission').all()
         daily_pricing_model = DailyPricingModel.objects.get(pk=DailyPricingModel.SKIP)
 
         for order, action in enumerate(actions):
