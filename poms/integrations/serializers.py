@@ -47,7 +47,6 @@ from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericAtt
     GenericClassifierSerializer
 from poms.portfolios.fields import PortfolioField
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
-from poms.transactions.fields import TransactionTypeField, TransactionTypeInputField
 from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.models import EcosystemDefault
 from poms_app import settings
@@ -1481,7 +1480,8 @@ class ComplexTransactionImportSchemeReconScenarioSerializer(serializers.ModelSer
 
 class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
-    transaction_type_input = TransactionTypeInputField()
+
+    # transaction_type_input = TransactionTypeInputField()
 
     class Meta:
         model = ComplexTransactionImportSchemeField
@@ -1501,7 +1501,13 @@ class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer)
 
         if instance.transaction_type_input:
             from poms.transactions.serializers import TransactionTypeInputViewSerializer
-            s = TransactionTypeInputViewSerializer(instance=instance.transaction_type_input, read_only=True,
+            from poms.transactions.models import TransactionTypeInput
+
+            instance = TransactionTypeInput.objects.get(
+                transaction_type__user_code=instance.rule_scenario.transaction_type,
+                name=instance.transaction_type_input)
+
+            s = TransactionTypeInputViewSerializer(instance=instance, read_only=True,
                                                    context=self.context)
             ret['transaction_type_input_object'] = s.data
 
@@ -1510,7 +1516,6 @@ class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer)
 
 class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
-    transaction_type = TransactionTypeField()
     fields = ComplexTransactionImportSchemeFieldSerializer(many=True, read_only=False)
 
     # selector_values = serializers.SerializerMethodField()
@@ -1540,7 +1545,10 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 
         inputs = []
 
-        for input in instance.transaction_type.inputs.all():
+        from poms.transactions.models import TransactionType
+        transaction_type = TransactionType.objects.get(user_code=instance.transaction_type)
+
+        for input in transaction_type.inputs.all():
             result = {
                 'id': input.id,
                 'name': input.name,
@@ -1551,9 +1559,9 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
             inputs.append(result)
 
         ret['transaction_type_object'] = {
-            'id': instance.transaction_type.id,
-            'name': instance.transaction_type.name,
-            'user_code': instance.transaction_type.user_code,
+            'id': transaction_type.id,
+            'name': transaction_type.name,
+            'user_code': transaction_type.user_code,
             'inputs': inputs
         }
 
