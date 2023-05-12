@@ -22,7 +22,7 @@ class TransactionTypeGroupField(UserCodeOrPrimaryKeyRelatedField):
     ]
 
 
-class TransactionTypeField(PrimaryKeyRelatedFilteredField):
+class TransactionTypeField(UserCodeOrPrimaryKeyRelatedField):
     queryset = TransactionType.objects
     filter_backends = [
         OwnerByMasterUserFilter,

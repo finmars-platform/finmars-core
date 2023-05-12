@@ -36,7 +36,7 @@ from poms.transaction_import.models import ProcessType, TransactionImportResult,
     TransactionImportConversionItem
 from poms.transaction_import.serializers import TransactionImportResultSerializer
 from poms.transactions.handlers import TransactionTypeProcess
-from poms.transactions.models import TransactionTypeInput
+from poms.transactions.models import TransactionTypeInput, TransactionType
 from poms.users.models import EcosystemDefault
 
 storage = get_storage()
@@ -346,8 +346,7 @@ class TransactionImportProcess(object):
 
     def find_default_rule_scenario(self):
 
-        rule_scenarios = self.scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
-                                                                     'fields__transaction_type_input').all()
+        rule_scenarios = self.scheme.rule_scenarios.prefetch_related('fields').all()
 
         self.default_rule_scenario = None
 
@@ -357,8 +356,7 @@ class TransactionImportProcess(object):
 
     def find_error_rule_scenario(self):
 
-        rule_scenarios = self.scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
-                                                                     'fields__transaction_type_input').all()
+        rule_scenarios = self.scheme.rule_scenarios.prefetch_related('fields').all()
 
         self.error_rule_scenario = None
 
@@ -444,7 +442,7 @@ class TransactionImportProcess(object):
                 field_value = formula.safe_eval(field.value_expr, names=item.inputs,
                                                 context=self.context)
                 field_value = self.convert_value(item, field, field_value)
-                fields[field.transaction_type_input.name] = field_value
+                fields[field.transaction_type_input] = field_value
 
             except Exception as e:
 
@@ -478,9 +476,10 @@ class TransactionImportProcess(object):
             else:
                 uniqueness_reaction = self.scheme.book_uniqueness_settings
 
+
             transaction_type_process_instance = TransactionTypeProcess(
                 linked_import_task=self.task,
-                transaction_type=rule_scenario.transaction_type,
+                transaction_type=TransactionType.object.get(user_code=rule_scenario.transaction_type),
                 default_values=fields,
                 context=self.context,
                 uniqueness_reaction=uniqueness_reaction,
@@ -500,7 +499,7 @@ class TransactionImportProcess(object):
             if error:
                 fields_dict['error_message'] = str(error)
 
-            item.transaction_inputs[rule_scenario.transaction_type.user_code] = fields_dict
+            item.transaction_inputs[rule_scenario.transaction_type] = fields_dict
 
             transaction_type_process_instance.process()
 
@@ -540,7 +539,7 @@ class TransactionImportProcess(object):
                             'current': self.result.processed_rows,
                             'total': len(self.items),
                             'percent': round(self.result.processed_rows / (len(self.items) / 100)),
-                            'description': 'Going to book %s' % (rule_scenario.transaction_type.user_code)
+                            'description': 'Going to book %s' % (rule_scenario.transaction_type)
                         }
                     )
 
@@ -582,7 +581,7 @@ class TransactionImportProcess(object):
                         'current': self.result.processed_rows,
                         'total': len(self.items),
                         'percent': round(self.result.processed_rows / (len(self.items) / 100)),
-                        'description': 'Going to book %s' % (rule_scenario.transaction_type.user_code)
+                        'description': 'Going to book %s' % (rule_scenario.transaction_type)
                     }
                 )
 

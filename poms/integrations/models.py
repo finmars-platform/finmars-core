@@ -2,21 +2,16 @@ from __future__ import unicode_literals, print_function
 
 import json
 import uuid
-from datetime import date, datetime, timedelta
+from datetime import date
 from logging import getLogger
 
-from croniter import croniter
-from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
-from django.utils import timezone
 from django.utils.translation import gettext_lazy
 
 from poms.common.models import TimeStampedModel, AbstractClassModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel, \
     NamedModel
 from poms.configuration.models import ConfigurationModel
-from poms.integrations.storage import import_config_storage
 from poms.obj_attrs.models import GenericClassifier, GenericAttributeType
 
 _l = getLogger('poms.integrations')
@@ -784,6 +779,7 @@ class PricingConditionMapping(AbstractMapping):
     def __str__(self):
         return '%s / %s -> %s' % (self.provider, self.value, self.content_object)
 
+
 # ----------------------------------------
 
 
@@ -852,7 +848,7 @@ class ComplexTransactionImportScheme(NamedModel, DataTimeStampedModel, Configura
     data_preprocess_expression = models.CharField(null=True, max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                                   verbose_name=gettext_lazy('data preprocess expression'))
 
-    expression_iterations_count = models.SmallIntegerField(default=1) # min 1
+    expression_iterations_count = models.SmallIntegerField(default=1)  # min 1
 
     @property
     def recon_layout(self):
@@ -928,7 +924,6 @@ class ComplexTransactionImportSchemeSelectorValue(models.Model):
 
 
 class ComplexTransactionImportSchemeRuleScenario(models.Model):
-
     MODE_CHOICES = [
         ['active', 'active'],
         ['skip', 'skip'],
@@ -946,8 +941,8 @@ class ComplexTransactionImportSchemeRuleScenario(models.Model):
     status = models.CharField(max_length=255, choices=MODE_CHOICES, default='active')
 
     # value = models.CharField(max_length=255, blank=True, default='', verbose_name=gettext_lazy('mapping value'))
-    transaction_type = models.ForeignKey('transactions.TransactionType', on_delete=models.CASCADE,
-                                         verbose_name=gettext_lazy('transaction type'))
+
+    transaction_type = models.CharField(max_length=1024, verbose_name=gettext_lazy('name'))
 
     selector_values = models.ManyToManyField('ComplexTransactionImportSchemeSelectorValue', blank=True,
                                              related_name='rule_selector_values',
@@ -973,8 +968,10 @@ class ComplexTransactionImportSchemeField(models.Model):
                                       verbose_name=gettext_lazy('rule scenario'), on_delete=models.CASCADE)
     # order = models.SmallIntegerField(default=0)
     # name = models.CharField(max_length=255, verbose_name=gettext_lazy('name'))
-    transaction_type_input = models.ForeignKey('transactions.TransactionTypeInput', on_delete=models.CASCADE,
-                                               verbose_name=gettext_lazy('transaction type input'))
+
+    transaction_type_input = models.CharField(max_length=255, verbose_name=gettext_lazy('transaction type input'), null=True,
+                                              blank=True,)
+
     value_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, verbose_name=gettext_lazy('value expression'))
 
     class Meta:
