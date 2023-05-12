@@ -388,8 +388,10 @@ def push_configuration_to_marketplace(self, task_id):
 
         # _l.info('refresh %s' % refresh.access_token)
 
-        headers = {'Content-type': 'application/json', 'Accept': 'application/json',
-                   'Authorization': 'Bearer %s' % refresh.access_token}
+        # headers = {'Content-type': 'application/json', 'Accept': 'application/json',
+        #            'Authorization': 'Bearer %s' % refresh.access_token}
+
+        headers = {'Authorization': 'Bearer %s' % refresh.access_token}
 
         # _l.info('push_configuration_to_marketplace.headers %s' % headers)
 
