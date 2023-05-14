@@ -33,13 +33,18 @@ def forwards_func(apps, schema_editor):
 
         scenario = ComplexTransactionImportSchemeRuleScenario.objects.get(id=item['id'])
 
-        if item.get('transaction_type_old_id', None):
-            transaction_type = TransactionType.objects.get(id=item['transaction_type_old_id'])
+        try:
+            if item.get('transaction_type_old_id', None):
+                transaction_type_user_code = \
+                TransactionType.objects.filter(id=item['transaction_type_old_id']).values_list('user_code', flat=True)[0]
 
-            scenario.transaction_type = transaction_type.user_code
-            index = index + 1
+                scenario.transaction_type = transaction_type_user_code
+                index = index + 1
 
-            scenario.save()
+                scenario.save()
+
+        except Exception as e:
+            print("Error: %s" % e)
 
     print('items updated %s' % index)
 
