@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 from rest_framework import serializers
 
+from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer
 from poms.reference_tables.models import ReferenceTableRow, ReferenceTable
 from poms.users.fields import MasterUserField
 
@@ -14,7 +15,7 @@ class ReferenceTableRowSerializer(serializers.ModelSerializer):
         ]
 
 
-class ReferenceTableSerializer(serializers.ModelSerializer):
+class ReferenceTableSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
 
     rows = ReferenceTableRowSerializer(many=True)
@@ -22,7 +23,10 @@ class ReferenceTableSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReferenceTable
         fields = [
-            'id', 'master_user', 'name', 'rows'
+            'id', 'master_user',
+            'name', 'user_code', 'configuration_code',
+
+            'rows'
         ]
 
     def set_rows(self, instance, rows):
