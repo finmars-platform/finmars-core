@@ -10,9 +10,6 @@ from requests.exceptions import RequestException
 _l = logging.getLogger("default")
 log = Path(__file__).stem
 
-MAX_RETRIES = 1
-MAX_TIMEOUT = 3  # secs
-MAX_SLEEP = 1  # secs
 GET = "get"
 POST = "post"
 HEADERS = {"Accept": "application/json", "Content-type": "application/json"}
@@ -27,11 +24,15 @@ class HttpClient:
     Simple HTTP client
     """
 
-    def __init__(self, max_timeout=MAX_TIMEOUT, max_retries=MAX_RETRIES):
+    def __init__(
+        self,
+        max_timeout=settings.FINMARS_DATABASE_TIMEOUT,
+        max_retries=settings.FINMARS_DATABASE_RETRIES,
+    ):
         self.max_timeout = max_timeout
         self.retries = Retry(
             total=max_retries,
-            backoff_factor=MAX_SLEEP,
+            backoff_factor=settings.FINMARS_DATABASE_SLEEP,
         )
         self.session = requests.Session()
         self.session.mount("https://", HTTPAdapter(max_retries=self.retries))

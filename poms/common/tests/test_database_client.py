@@ -7,7 +7,7 @@ from poms.common.http_client import HttpClientError
 from poms.common.monad import Monad, MonadStatus
 
 
-class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
+class DatabaseClientGetTaskTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.service = DatabaseService()
@@ -20,7 +20,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
     def test__task_id(self, data, mock_post):
         mock_post.return_value = data
 
-        monad : Monad = self.service.get_info("instrument", data)
+        monad : Monad = self.service.get_task("instrument", data)
 
         self.assertEqual(monad.status, MonadStatus.TASK_READY)
         self.assertEqual(monad.task_id, data["task_id"])
@@ -33,7 +33,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
     def test__data(self, data, mock_post):
         mock_post.return_value = data
 
-        monad : Monad = self.service.get_info("instrument", data)
+        monad : Monad = self.service.get_task("instrument", data)
 
         self.assertEqual(monad.status, MonadStatus.DATA_READY)
         self.assertEqual(monad.task_id, 0)
@@ -44,7 +44,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         data = {"items": []}
         mock_post.side_effect = HttpClientError("test")
 
-        monad : Monad = self.service.get_info("instrument", data)
+        monad : Monad = self.service.get_task("instrument", data)
 
         self.assertEqual(monad.status, MonadStatus.ERROR)
         self.assertEqual(monad.task_id, 0)
@@ -60,7 +60,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         data = {"items": []}
 
         with self.assertRaises(RuntimeError):
-            self.service.get_info(service, data)
+            self.service.get_task(service, data)
 
     @BaseTestCase.cases(
         ("none_data",  None),
@@ -68,4 +68,42 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
     )
     def test__no_data(self, data):
         with self.assertRaises(RuntimeError):
-            self.service.get_info("instrument", data)
+            self.service.get_task("instrument", data)
+
+
+class DatabaseClientGetResultsTest(BaseTestCase):
+    def setUp(self):
+        super().setUp()
+        self.service = DatabaseService()
+
+    @BaseTestCase.cases(
+        ("results_1",  {"results": [1, 2]}),
+        ("results_2",  {"results": [3, 4]}),
+    )
+    @mock.patch("poms.common.http_client.HttpClient.get")
+    def test__results(self, data, mock_get):
+        mock_get.return_value = data
+
+        monad : Monad = self.service.get_results("instrument-narrow", data)
+
+        self.assertEqual(monad.status, MonadStatus.DATA_READY)
+        self.assertEqual(monad.data, data)
+
+    @mock.patch("poms.common.http_client.HttpClient.get")
+    def test__http_error(self, mock_get):
+        data = {"items": []}
+        mock_get.side_effect = HttpClientError("test")
+
+        monad : Monad = self.service.get_results("instrument-narrow", data)
+
+        self.assertEqual(monad.status, MonadStatus.ERROR)
+        self.assertIsNone(monad.data)
+        self.assertEqual(monad.message, repr(HttpClientError("test")))
+
+    @BaseTestCase.cases(
+        ("none_data",  None),
+        ("empty_data",  {}),
+    )
+    def test__no_data(self, data):
+        with self.assertRaises(RuntimeError):
+            self.service.get_results("instrument-narrow", data)

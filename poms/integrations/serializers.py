@@ -42,7 +42,7 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     BloombergDataProviderCredential, PricingConditionMapping, TransactionFileResult, DataProvider
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.tasks import download_instrument, test_certificate, download_unified_data, \
-    download_currency_cbond, download_instrument_finmars_database
+    download_currency_cbond, export_instrument_finmars_database
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericAttributeTypeSerializer, \
     GenericClassifierSerializer
@@ -1169,36 +1169,34 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
 
     def create(self, validated_data):
 
-        if settings.FINMARS_DATABASE_URL:  # FINMARS_DATABASE Refactoring
+        instance = ImportInstrumentEntry(**validated_data)
 
-            instance = ImportInstrumentEntry(**validated_data)
+        task = CeleryTask.objects.create(
+            master_user=instance.master_user,
+            member=instance.member,
+            verbose_name="Download Instrument From Finmars Database",
+            type='download_instrument_from_finmars_database'
+        )
+        task.options_object = {
+            'reference': instance.instrument_code,
+            'instrument_name': instance.instrument_name,
+            'instrument_type_user_code': instance.instrument_type_code
+        }
+        task.save()
 
-            task = CeleryTask.objects.create(
-                master_user=instance.master_user,
-                member=instance.member,
-                verbose_name="Download Instrument From Finmars Database",
-                type='download_instrument_from_finmars_database'
-            )
-            task.options_object = {
-                'reference': instance.instrument_code,
-                'instrument_name': instance.instrument_name,
-                'instrument_type_user_code': instance.instrument_type_code
-            }
-            task.save()
+        _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
-            _l.info(f"{self.__class__.__name__} created task.id={task.id}")
+        export_instrument_finmars_database(task.id)
 
-            download_instrument_finmars_database(task.id)
+        task.refresh_from_db()
 
-            task.refresh_from_db()
+        if task.result_object:
+            instance.result_id = task.result_object.get('instrument_id')
+        if task.error_message:
+            instance.errors = task.error_message
 
-            if task.result_object:
-                instance.result_id = task.result_object.get('instrument_id')
-            if task.error_message:
-                instance.errors = task.error_message
-
-            instance.task_object = task
-            return instance
+        instance.task_object = task
+        return instance
 
 
 class ImportCurrencyCbondsSerializer(serializers.Serializer):
