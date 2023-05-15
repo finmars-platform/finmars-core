@@ -112,8 +112,12 @@ class BootstrapConfig(AppConfig):
 
     def create_iam_access_policies_templates(self):
 
+        _l.info("create_iam_access_policies_templates")
+
         from poms.iam.policy_generator import create_base_iam_access_policies_templates
         create_base_iam_access_policies_templates()
+
+        _l.info("create_iam_access_policies_templates done")
 
 
     # Probably deprecated

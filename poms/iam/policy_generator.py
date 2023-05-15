@@ -657,23 +657,36 @@ def patch_generated_policies():
     item.save()
 
 def create_base_iam_access_policies_templates():
+
+    _l = logging.getLogger('provision')
+
     viewsets = get_viewsets_from_all_apps()
 
     # _l.info('viewsets %s' % viewsets)
-    _l.info('viewsets %s' % len(viewsets))
+    _l.info('create_base_iam_access_policies_templates.viewsets %s' % len(viewsets))
 
     generate_full_access_policies_for_viewsets(viewsets)
+
+    _l.info('create_base_iam_access_policies_templates.generate_full_access_policies_for_viewsets done')
     readonly_access_policies = generate_readonly_access_policies_for_viewsets(viewsets)
 
-    _l.info('readonly_access_policies %s' % len(readonly_access_policies))
+    _l.info('create_base_iam_access_policies_templates.generate_readonly_access_policies_for_viewsets done')
+
+    _l.info('create_base_iam_access_policies_templates.readonly_access_policies %s' % len(readonly_access_policies))
 
     generate_speicifc_policies_for_viewsets()
 
+    _l.info('create_base_iam_access_policies_templates.generate_speicifc_policies_for_viewsets done')
 
     patch_generated_policies()
 
+    _l.info('create_base_iam_access_policies_templates.patch_generated_policies done')
+
+    _l.info('create_base_iam_access_policies_templates.going to generate roles')
     generate_viewer_role(readonly_access_policies)
     generate_full_data_manager_role()
     generate_base_data_manager_role()
     generate_configuration_manager_role()
     generate_member_role()
+
+    _l.info('create_base_iam_access_policies_templates.generating roles done')
