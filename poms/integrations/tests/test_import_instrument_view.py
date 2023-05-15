@@ -14,7 +14,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.url = (
-            f"/{settings.BASE_API_URL}/api/v1" f"/import/finmars-database/instrument/"
+            f"/{settings.BASE_API_URL}/api/v1/import/finmars-database/instrument/"
         )
 
     def test__400(self):
@@ -27,9 +27,9 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         ("stocks_333", "stocks", 333),
         ("stocks_999", "stocks", 999),
     )
-    @mock.patch("poms.common.database_client.DatabaseService.get_info")
-    def test__task_ready(self, type_code, task_id, mock_get_info):
-        mock_get_info.return_value = Monad(
+    @mock.patch("poms.common.database_client.DatabaseService.get_task")
+    def test__task_ready(self, type_code, task_id, mock_get_task):
+        mock_get_task.return_value = Monad(
             status=MonadStatus.TASK_READY,
             task_id=task_id,
         )
@@ -66,10 +66,10 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         ("bonds", "bonds"),
         ("stocks", "stocks"),
     )
-    @mock.patch("poms.common.database_client.DatabaseService.get_info")
+    @mock.patch("poms.common.database_client.DatabaseService.get_task")
     @mock.patch("poms.integrations.tasks.update_task_with_database_data")
-    def test__data_ready(self, type_code, mock_update_data, mock_get_info):
-        mock_get_info.return_value = Monad(
+    def test__data_ready(self, type_code, mock_update_data, mock_get_task):
+        mock_get_task.return_value = Monad(
             status=MonadStatus.DATA_READY,
             data={},
         )
@@ -88,10 +88,10 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         data = response.json()
         self.assertEqual(data["instrument_type_code"], type_code)
 
-    @mock.patch("poms.common.database_client.DatabaseService.get_info")
-    def test__error(self, mock_get_info):
+    @mock.patch("poms.common.database_client.DatabaseService.get_task")
+    def test__error(self, mock_get_task):
         message = self.random_string()
-        mock_get_info.return_value = Monad(
+        mock_get_task.return_value = Monad(
             status=MonadStatus.ERROR,
             message=message,
         )

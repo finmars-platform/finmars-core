@@ -1,40 +1,46 @@
-from __future__ import unicode_literals
-
 import logging
 
 import django_filters
-import requests
 from django_filters.rest_framework import FilterSet
-from rest_framework.response import Response
-from rest_framework.settings import api_settings
-from rest_framework.views import APIView
-from rest_framework.decorators import action
 
-from poms.common.filters import CharFilter, ModelExtMultipleChoiceFilter, NoOpFilter, AttributeFilter, \
-    GroupsAttributeFilter, EntitySpecificFilter
-from poms.common.jwt import encode_with_jwt
-from poms.common.pagination import CustomPaginationMixin
+# from drf_yasg.utils import swagger_auto_schema
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from poms.common.database_client import DatabaseService
+from poms.common.filters import (
+    AttributeFilter,
+    CharFilter,
+    EntitySpecificFilter,
+    GroupsAttributeFilter,
+    ModelExtMultipleChoiceFilter,
+    NoOpFilter,
+)
+from poms.common.monad import Monad, MonadStatus
 from poms.common.views import AbstractModelViewSet
 from poms.currencies.filters import OwnerByCurrencyFilter
 from poms.currencies.models import Currency, CurrencyHistory
-from poms.currencies.serializers import CurrencySerializer, CurrencyHistorySerializer, CurrencyLightSerializer
+from poms.currencies.serializers import (
+    CurrencyHistorySerializer,
+    CurrencyLightSerializer,
+    CurrencySerializer,
+    CurrencyDatabaseSearchRequestSerializer,
+    CurrencyDatabaseSearchResponseSerializer,
+)
 from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet
 from poms.users.filters import OwnerByMasterUserFilter
 
-_l = logging.getLogger('poms.currencies')
-
-from poms_app import settings
+_l = logging.getLogger("poms.currencies")
 
 
 class CurrencyAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Currency
     target_model_serializer = CurrencySerializer
 
-    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
-
-    ]
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + []
 
 
 class CurrencyFilterSet(FilterSet):
@@ -53,10 +59,8 @@ class CurrencyFilterSet(FilterSet):
 
 class CurrencyViewSet(AbstractModelViewSet):
     queryset = Currency.objects.select_related(
-        'master_user',
-    ).prefetch_related(
-        get_attributes_prefetch()
-    )
+        "master_user",
+    ).prefetch_related(get_attributes_prefetch())
     serializer_class = CurrencySerializer
     # permission_classes = AbstractModelViewSet.permission_classes + [
     #     # SuperUserOrReadOnly,
@@ -65,81 +69,68 @@ class CurrencyViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
-        EntitySpecificFilter
+        EntitySpecificFilter,
     ]
     filter_class = CurrencyFilterSet
     ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name', 'reference_for_pricing',
-        'price_download_scheme', 'price_download_scheme__scheme_name',
+        "user_code",
+        "name",
+        "short_name",
+        "public_name",
+        "reference_for_pricing",
+        "price_download_scheme",
+        "price_download_scheme__scheme_name",
     ]
 
-    @action(detail=False, methods=['get'], url_path='light', serializer_class=CurrencyLightSerializer)
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="light",
+        serializer_class=CurrencyLightSerializer,
+    )
     def list_light(self, request, *args, **kwargs):
-
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
 
-        result = self.get_paginated_response(serializer.data)
+        return self.get_paginated_response(serializer.data)
 
-        return result
-
-    @action(detail=False, methods=['get'], url_path='attributes')
+    @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
-
         items = [
-            {
-                "key": "name",
-                "name": "Name",
-                "value_type": 10
-            },
-            {
-                "key": "short_name",
-                "name": "Short name",
-                "value_type": 10
-            },
-            {
-                "key": "user_code",
-                "name": "User code",
-                "value_type": 10
-            },
-            {
-                "key": "public_name",
-                "name": "Public name",
-                "value_type": 10
-            },
-            {
-                "key": "notes",
-                "name": "Notes",
-                "value_type": 10
-            },
+            {"key": "name", "name": "Name", "value_type": 10},
+            {"key": "short_name", "name": "Short name", "value_type": 10},
+            {"key": "user_code", "name": "User code", "value_type": 10},
+            {"key": "public_name", "name": "Public name", "value_type": 10},
+            {"key": "notes", "name": "Notes", "value_type": 10},
             {
                 "key": "reference_for_pricing",
                 "name": "Reference for pricing",
-                "value_type": 10
+                "value_type": 10,
             },
             {
                 "key": "default_fx_rate",
                 "name": "Default FX rate",
-                "value_type": 20
+                "value_type": 20,
             },
             {
                 "key": "pricing_condition",
                 "name": "Pricing Condition",
                 "value_content_type": "instruments.pricingcondition",
                 "code": "user_code",
-                "value_type": "field"
-            }
+                "value_type": "field",
+            },
         ]
 
         result = {
             "count": len(items),
             "next": None,
             "previous": None,
-            "results": items
+            "results": items,
         }
 
         return Response(result)
+
 
 class CurrencyHistoryFilterSet(FilterSet):
     id = NoOpFilter()
@@ -155,11 +146,8 @@ class CurrencyHistoryFilterSet(FilterSet):
 
 class CurrencyHistoryViewSet(AbstractModelViewSet):
     queryset = CurrencyHistory.objects.select_related(
-        'currency',
-        'pricing_policy'
-    ).prefetch_related(
-
-    )
+        "currency", "pricing_policy"
+    ).prefetch_related()
     serializer_class = CurrencyHistorySerializer
     permission_classes = AbstractModelViewSet.permission_classes + [
         # SuperUserOrReadOnly,
@@ -167,19 +155,26 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByCurrencyFilter,
         AttributeFilter,
-        GroupsAttributeFilter
+        GroupsAttributeFilter,
     ]
     filter_class = CurrencyHistoryFilterSet
     ordering_fields = [
-        'date', 'fx_rate',
-        'currency', 'currency__user_code', 'currency__name', 'currency__short_name', 'currency__public_name',
-        'pricing_policy', 'pricing_policy__user_code', 'pricing_policy__name', 'pricing_policy__short_name',
-        'pricing_policy__public_name',
+        "date",
+        "fx_rate",
+        "currency",
+        "currency__user_code",
+        "currency__name",
+        "currency__short_name",
+        "currency__public_name",
+        "pricing_policy",
+        "pricing_policy__user_code",
+        "pricing_policy__name",
+        "pricing_policy__short_name",
+        "pricing_policy__public_name",
     ]
 
-    @action(detail=False, methods=['get'], url_path='attributes')
+    @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
-
         items = [
             {
                 "key": "currency",
@@ -187,17 +182,17 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
                 "value_type": "field",
                 "value_entity": "currency",
                 "value_content_type": "",
-                "code": "currencies.currency"
+                "code": "currencies.currency",
             },
             {
                 "key": "date",
                 "name": "Date",
-                "value_type": 40
+                "value_type": 40,
             },
             {
                 "key": "fx_rate",
                 "name": "Fx rate",
-                "value_type": 20
+                "value_type": 20,
             },
             {
                 "key": "pricing_policy",
@@ -205,69 +200,67 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
                 "value_type": "field",
                 "value_entity": "pricing_policy",
                 "value_content_type": "instruments.pricingpolicy",
-                "code": "user_code"
+                "code": "user_code",
             },
-
             {
                 "key": "procedure_modified_datetime",
                 "name": "Modified Date And Time",
-                "value_type": 40
-            }
+                "value_type": 40,
+            },
         ]
 
         result = {
             "count": len(items),
             "next": None,
             "previous": None,
-            "results": items
+            "results": items,
         }
 
         return Response(result)
 
 
 class CurrencyDatabaseSearchViewSet(APIView):
+    """
+    Provides Currency info from Finmars-Database API based on CBOND's data
+    """
+
     permission_classes = []
 
+    # @swagger_auto_schema(
+    #     tags=["Currencies"],
+    #     operation_description="Provides Currency info based on CBOND's data",
+    #     request_body=CurrencyDatabaseSearchRequestSerializer,
+    #     responses={200: CurrencyDatabaseSearchResponseSerializer()},
+    # )
+
+    def _empty_response(self) -> Response:
+        return Response(
+            {
+                "results": [],
+                "next": None,
+                "previous": None,
+                "count": 0,
+            }
+        )
+
     def get(self, request):
+        log = f"{self.__class__.__name__}"
 
-        headers = {'Content-type': 'application/json'}
+        serializer = CurrencyDatabaseSearchRequestSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        params = dict(serializer.validated_data)
 
-        payload_jwt = {
-            "sub": settings.BASE_API_URL,  # "user_id_or_name",
-            "role": 0  # 0 -- ordinary user, 1 -- admin (access to /loadfi and /loadeq)
-        }
+        _l.info(f"{log} request params={params}")
 
-        token = encode_with_jwt(payload_jwt)
+        if not serializer.params_has_name(params):
+            return self._empty_response()
 
-        name = request.query_params.get('name', '')
-        page = request.query_params.get('page', 1)
+        monad: Monad = DatabaseService().get_results("currency", params)
 
-        headers['Authorization'] = 'Bearer %s' % token
+        _l.info(f"{log} monad.status={monad.status} monad.data={monad.data}")
 
-        result = {}
+        if monad.status != MonadStatus.DATA_READY:
+            _l.error(f"{log} error, monad.message={monad.message}")
+            return self._empty_response()
 
-        _l.info('headers %s' % headers)
-
-        url = str(settings.CBONDS_BROKER_URL) + 'instr/find/currency/%s?page=%s' % (name, page)
-
-        _l.info("Requesting URL %s" % url)
-
-        response = None
-
-        try:
-            response = requests.get(url=url, headers=headers, verify=settings.VERIFY_SSL)
-        except Exception as e:
-            _l.info("Request error %s" % e)
-            result = {}
-
-        # _l.info("response.text %s" % response.text)
-
-        try:
-            result = response.json()
-        except Exception as e:
-            if response:
-                _l.info('response %s' % response.text)
-                _l.info("Response parse error %s" % e)
-            result = {}
-
-        return Response(result)
+        return Response(CurrencyDatabaseSearchResponseSerializer(monad.data).data)

@@ -1,4 +1,3 @@
-import json
 import logging
 from pathlib import Path
 
@@ -10,8 +9,11 @@ from poms.common.monad import Monad, MonadStatus
 _l = logging.getLogger("default")
 log = Path(__file__).stem
 
+V1 = "api/v1/"
 SERVICE_URLS = {
-    "instrument": f"{settings.FINMARS_DATABASE_URL}api/v1/export/instrument",
+    "instrument": f"{settings.FINMARS_DATABASE_URL}{V1}export/instrument",
+    "instrument-narrow": f"{settings.FINMARS_DATABASE_URL}{V1}instrument-narrow",
+    "currency": f"{settings.FINMARS_DATABASE_URL}{V1}currency",
 }
 
 
@@ -23,18 +25,16 @@ class DatabaseService:
     def __init__(self):
         self.http_client = HttpClient()
 
-    def get_info(self, service_name: str, request_options: dict) -> Monad:
-        _l.info(
-            f"{log} started, service={service_name} request_options={request_options}"
-        )
+    def get_task(self, service_name: str, request_options: dict) -> Monad:
+        _l.info(f"{log} get_monad, service={service_name} options={request_options}")
 
-        if service_name not in SERVICE_URLS or not request_options:
+        if (service_name not in SERVICE_URLS) or not request_options:
             raise RuntimeError(f"{log} invalid args!")
 
         try:
             data = self.http_client.post(
                 url=SERVICE_URLS[service_name],
-                data=json.dumps(request_options),
+                data=request_options,
             )
         except HttpClientError as err:
             monad = Monad(status=MonadStatus.ERROR, message=repr(err))
@@ -43,5 +43,27 @@ class DatabaseService:
                 monad = Monad(status=MonadStatus.TASK_READY, task_id=data["task_id"])
             else:
                 monad = Monad(status=MonadStatus.DATA_READY, data=data)
+
+        return monad
+
+    def get_results(self, service_name: str, request_params: dict) -> Monad:
+        _l.info(f"{log} get_result, service={service_name} options={request_params}")
+
+        if (service_name not in SERVICE_URLS) or not request_params:
+            raise RuntimeError(f"{log} invalid args!")
+
+        try:
+            data = self.http_client.get(
+                url=SERVICE_URLS[service_name],
+                params=request_params,
+            )
+        except HttpClientError as err:
+            monad = Monad(status=MonadStatus.ERROR, message=repr(err))
+        else:
+            if "results" in data:
+                monad = Monad(status=MonadStatus.DATA_READY, data=data)
+            else:
+                err_msg = f"no 'results' in response.data={data}"
+                monad = Monad(status=MonadStatus.ERROR, message=err_msg)
 
         return monad
