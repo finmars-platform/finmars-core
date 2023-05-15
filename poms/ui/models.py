@@ -271,7 +271,7 @@ class ComplexTransactionUserField(ConfigurationModel):
     is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
 
 
-class TransactionUserField(ConfigurationModel):
+class TransactionUserField(ConfigurationModel, TimeStampedModel):
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
@@ -281,7 +281,7 @@ class TransactionUserField(ConfigurationModel):
     is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
 
 
-class InstrumentUserField(ConfigurationModel):
+class InstrumentUserField(ConfigurationModel, TimeStampedModel):
     master_user = models.ForeignKey(MasterUser,
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 

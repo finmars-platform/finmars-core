@@ -27,7 +27,7 @@ class ComplexTransactionUserFieldSerializer(ModelMetaSerializer):
 
     class Meta:
         model = ComplexTransactionUserField
-        fields = ['id', 'master_user', 'key', 'name', 'is_active']
+        fields = ['id', 'master_user', 'key', 'name', 'is_active', 'user_code', 'configuration_code']
 
 
 class TransactionUserFieldSerializer(ModelMetaSerializer):
@@ -35,7 +35,7 @@ class TransactionUserFieldSerializer(ModelMetaSerializer):
 
     class Meta:
         model = TransactionUserField
-        fields = ['id', 'master_user', 'key', 'name', 'is_active']
+        fields = ['id', 'master_user', 'key', 'name', 'is_active', 'user_code', 'configuration_code']
 
 
 class ColorPaletteColorSerializer(serializers.ModelSerializer):
@@ -135,7 +135,7 @@ class InstrumentUserFieldSerializer(ModelMetaSerializer):
 
     class Meta:
         model = InstrumentUserField
-        fields = ['id', 'master_user', 'key', 'name']
+        fields = ['id', 'master_user', 'key', 'name', 'user_code', 'configuration_code']
 
 
 class TemplateLayoutSerializer(serializers.ModelSerializer):

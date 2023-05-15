@@ -308,6 +308,23 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                source_directory + '/ui/layouts/transaction-report',
                                context)
 
+        # Aliases
+
+        save_serialized_entity('ui.instrumentuserfield',
+                               configuration.configuration_code,
+                               source_directory + '/ui/instrument-user-fields',
+                               context)
+
+        save_serialized_entity('ui.transactionuserfield',
+                               configuration.configuration_code,
+                               source_directory + '/ui/transaction-user-fields',
+                               context)
+
+        save_serialized_entity('ui.complextransactionuserfield',
+                               configuration.configuration_code,
+                               source_directory + '/ui/complex-transaction-user-fields',
+                               context)
+
         #     IAM
         save_serialized_entity('iam.group',
                                configuration.configuration_code,
@@ -328,6 +345,8 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                configuration.configuration_code,
                                source_directory + '/reference-tables',
                                context)
+
+
 
     except Exception as e:
         _l.error("Error exporting configuration e: %s" % e)
