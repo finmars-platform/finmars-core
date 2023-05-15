@@ -538,6 +538,7 @@ def get_serializer(content_type_key):
     from poms.iam.serializers import RoleSerializer
     from poms.iam.serializers import AccessPolicySerializer
 
+    from poms.reference_tables.serializers import ReferenceTableSerializer
     serializer_map = {
 
         'transactions.transactiontype': TransactionTypeSerializer,
@@ -579,6 +580,8 @@ def get_serializer(content_type_key):
         'iam.group': GroupSerializer,
         'iam.role': RoleSerializer,
         'iam.accesspolicy': AccessPolicySerializer,
+
+        'reference_tables.referencetable': ReferenceTableSerializer,
 
     }
 

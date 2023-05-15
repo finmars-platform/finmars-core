@@ -322,6 +322,13 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                source_directory + '/iam/access-policies',
                                context)
 
+        # Reference Table
+
+        save_serialized_entity('reference_tables.referencetable',
+                               configuration.configuration_code,
+                               source_directory + '/reference-tables',
+                               context)
+
     except Exception as e:
         _l.error("Error exporting configuration e: %s" % e)
         _l.error("Error exporting configuration traceback: %s" % traceback.format_exc())
