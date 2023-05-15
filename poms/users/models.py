@@ -751,7 +751,6 @@ class MasterUser(models.Model):
         self.create_entity_tooltips()
         self.create_color_palettes()
 
-
         self.save()
 
         FakeSequence.objects.get_or_create(master_user=self, name="complex_transaction")

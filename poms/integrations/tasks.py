@@ -961,31 +961,28 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
 
 
 def create_simple_instrument(task) -> Instrument:
-    options = task.options_object
-    _l.info(
-        f"create_simple_instrument: instrument_type_user_code= "
-        f"{options['instrument_type_user_code']} "
-        f"instrument_name={options['instrument_name']}"
-    )
+    options_data = task.options_object["data"]
+    _l.info(f"create_simple_instrument: options_data={options_data}")
 
+    reference = options_data["reference"]
     i_type = None
-    if options["instrument_type_user_code"]:
+    if options_data.get("instrument_type_user_code"):
         try:
             i_type = InstrumentType.objects.get(
                 master_user=task.master_user,
-                user_code=options["reference"],
+                user_code=reference,
             )
         except Exception:
             i_type = None
 
-    instrument_name = options["instrument_name"] or options["reference"]
+    instrument_name = options_data.get("instrument_name") or reference
     ecosystem_defaults = EcosystemDefault.objects.get(master_user=task.master_user)
 
     instrument = Instrument.objects.create(
         master_user=task.master_user,
-        user_code=options["reference"],
+        user_code=reference,
         name=instrument_name,
-        short_name=f"{instrument_name} ({options['reference']})",
+        short_name=f"{instrument_name} ({reference})",
         instrument_type=ecosystem_defaults.instrument_type,
         accrued_currency=ecosystem_defaults.currency,
         pricing_currency=ecosystem_defaults.currency,
@@ -996,8 +993,8 @@ def create_simple_instrument(task) -> Instrument:
     if i_type:
         instrument.instrument_type = i_type
         small_item = {
-            "user_code": options["reference"],
-            "instrument_type": options["instrument_type_user_code"],
+            "user_code": reference,
+            "instrument_type": options_data["instrument_type_user_code"],
         }
 
         create_instrument_cbond(small_item, task.master_user, task.member)
@@ -1067,8 +1064,8 @@ def update_task_with_simple_instrument(
     task.save()
 
 
-def download_instrument_finmars_database(task_id: int):
-    func = "download_instrument_finmars_database:"
+def export_instrument_finmars_database(task_id: int):
+    func = "export_instrument_finmars_database:"
     _l.info(f"{func} started, task_id={task_id}")
 
     try:
@@ -1077,23 +1074,29 @@ def download_instrument_finmars_database(task_id: int):
         _l.error(f"{func} no task with id={task_id}!")
         return
 
+    if not task.options_object:
+        err_msg = f"{func} task id={task_id} has no options with instrument data"
+        _l.error(err_msg)
+        update_task_with_error(task, err_msg)
+        return
+
     callback_url = (
         f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
         f"/api/instruments/fdb-create-from-callback/"
     )
-    options = task.options_object or {}
-    options["request_id"] = task.pk
-    options["base_api_url"] = settings.BASE_API_URL
-    options["callback_url"] = callback_url
-    options["data"] = {}
-
+    options = {
+        "data": task.options_object,
+        "request_id": task.pk,
+        "base_api_url": settings.BASE_API_URL,
+        "callback_url": callback_url,
+    }
     task.options_object = options
     task.save()
 
     _l.info(f"{func} request_options={options}")
 
     try:
-        monad: Monad = DatabaseService().get_info("instrument", options)
+        monad: Monad = DatabaseService().get_task("instrument", options)
 
         if monad.status == MonadStatus.DATA_READY:
             _l.info(f"{func} received data={monad.data}")
@@ -1128,7 +1131,7 @@ def download_instrument_finmars_database(task_id: int):
 def download_instrument_finmars_database_async(self, task_id):
     _l.info(f"download_instrument_finmars_database_async {task_id}")
 
-    download_instrument_finmars_database(task_id)
+    export_instrument_finmars_database(task_id)
 
 
 @shared_task(

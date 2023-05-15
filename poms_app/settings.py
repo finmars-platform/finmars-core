@@ -397,11 +397,6 @@ LOGGING = {
             "level": "ERROR",
             "propagate": True
         },
-        "finmars_iam": {
-            "level": DJANGO_LOG_LEVEL,
-            "handlers": ["file"],
-            "propagate": True
-        },
         "poms": {
             "level": DJANGO_LOG_LEVEL,
             "handlers": ["file"],
@@ -436,7 +431,6 @@ if SERVER_TYPE == "local":
     LOGGING['loggers']['django']['handlers'].append('console')
     LOGGING['loggers']['poms']['handlers'].append('console')
     LOGGING['loggers']['finmars']['handlers'].append('console')
-    LOGGING['loggers']['finmars_iam']['handlers'].append('console')
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
@@ -601,11 +595,12 @@ BLOOMBERG_SANDBOX_WAIT_FAIL = False
 
 # PRICING SECTION
 
-MEDIATOR_URL = os.environ.get('MEDIATOR_URL', None)
-DATA_FILE_SERVICE_URL = os.environ.get('DATA_FILE_SERVICE_URL', None)
-FINMARS_DATABASE_URL = os.environ.get('FINMARS_DATABASE_URL', 'https://database.finmars.com/')
-# FINMARS_DATABASE_USER = os.environ.get('FINMARS_DATABASE_USER', None) # DEPRECATED
-# FINMARS_DATABASE_PASSWORD = os.environ.get('FINMARS_DATABASE_PASSWORD', None) # DEPRECATED
+MEDIATOR_URL = ENV_STR('MEDIATOR_URL', '')
+DATA_FILE_SERVICE_URL = ENV_STR('DATA_FILE_SERVICE_URL', '')
+FINMARS_DATABASE_URL = ENV_STR('FINMARS_DATABASE_URL', 'https://database.finmars.com/')
+FINMARS_DATABASE_RETRIES = ENV_INT('FINMARS_DATABASE_RETRIES', 2)
+FINMARS_DATABASE_TIMEOUT = ENV_INT('FINMARS_DATABASE_TIMEOUT', 60)
+FINMARS_DATABASE_SLEEP = ENV_INT('FINMARS_DATABASE_SLEEP', 1)
 
 INSTRUMENT_EVENTS_REGULAR_MAX_INTERVALS = 1000
 

@@ -43,7 +43,7 @@ class ConfigurationModel(models.Model):
         _l.info('self.user_code %s' % self.user_code)
 
         # TODO  ADD configuration_code to POST data
-        if self.configuration_code not in self.user_code:
+        if self.user_code and self.configuration_code not in self.user_code:
 
             self.user_code = replace_special_chars_and_spaces(self.user_code).lower()
 
