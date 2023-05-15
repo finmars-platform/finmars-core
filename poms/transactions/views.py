@@ -227,6 +227,10 @@ class TransactionTypeViewSet(AbstractModelViewSet):
 
         return result
 
+    @action(detail=False, methods=['post'], url_path='ev-item', serializer_class=TransactionTypeLightSerializer)
+    def list_ev_item(self, request, *args, **kwargs):
+        return super().list_ev_item(request, *args, **kwargs)
+
     @action(detail=False, methods=['get'], url_path='light-with-inputs',
             serializer_class=TransactionTypeLightSerializerWithInputs)
     def list_light_with_inputs(self, request, *args, **kwargs):
