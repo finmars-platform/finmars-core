@@ -103,6 +103,8 @@ class PerformanceReportBuilder:
         if not is_business_day(begin_date):
             begin_date = get_last_business_day(begin_date)
 
+        self.instance.begin_date = begin_date
+
         # if begin_date < first_transaction_date:
         #     begin_date = first_transaction_date
 
