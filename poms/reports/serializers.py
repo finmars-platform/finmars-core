@@ -172,6 +172,7 @@ class ReportSerializer(ReportSerializerWithLogs):
                                               required=False,
                                               help_text='Allocation consolidation')
 
+    only_numbers = serializers.BooleanField(default=False, initial=False)
     show_transaction_details = serializers.BooleanField(default=False, initial=False)
     show_balance_exposure_details = serializers.BooleanField(default=False, initial=False)
     approach_multiplier = serializers.FloatField(default=0.5, initial=0.5, min_value=0.0, max_value=1.0, required=False)
@@ -241,9 +242,10 @@ class ReportSerializer(ReportSerializerWithLogs):
     item_strategies1 = ReportStrategy1Serializer(many=True, read_only=True)
     item_strategies2 = ReportStrategy2Serializer(many=True, read_only=True)
     item_strategies3 = ReportStrategy3Serializer(many=True, read_only=True)
-    item_currency_fx_rates = ReportCurrencyHistorySerializer(many=True, read_only=True)
-    item_instrument_pricings = ReportPriceHistorySerializer(many=True, read_only=True)
-    item_instrument_accruals = ReportAccrualCalculationScheduleSerializer(many=True, read_only=True)
+    # Deprecated
+    # item_currency_fx_rates = ReportCurrencyHistorySerializer(many=True, read_only=True)
+    # item_instrument_pricings = ReportPriceHistorySerializer(many=True, read_only=True)
+    # item_instrument_accruals = ReportAccrualCalculationScheduleSerializer(many=True, read_only=True)
 
     def __init__(self, *args, **kwargs):
         super(ReportSerializer, self).__init__(*args, **kwargs)
@@ -305,9 +307,9 @@ class ReportSerializer(ReportSerializerWithLogs):
                 item_strategies1 = {o['id']: o for o in data['item_strategies1']}
                 item_strategies2 = {o['id']: o for o in data['item_strategies2']}
                 item_strategies3 = {o['id']: o for o in data['item_strategies3']}
-                item_currency_fx_rates = {o['id']: o for o in data['item_currency_fx_rates']}
-                item_instrument_pricings = {o['id']: o for o in data['item_instrument_pricings']}
-                item_instrument_accruals = {o['id']: o for o in data['item_instrument_accruals']}
+                # item_currency_fx_rates = {o['id']: o for o in data['item_currency_fx_rates']}
+                # item_instrument_pricings = {o['id']: o for o in data['item_instrument_pricings']}
+                # item_instrument_accruals = {o['id']: o for o in data['item_instrument_accruals']}
 
                 def _set_object(names, pk_attr, objs):
 
@@ -348,15 +350,15 @@ class ReportSerializer(ReportSerializerWithLogs):
                     _set_object(names, 'allocation', item_instruments)
                     _set_object(names, 'mismatch_portfolio', item_portfolios)
                     _set_object(names, 'mismatch_account', item_accounts)
-                    _set_object(names, 'report_currency_history', item_currency_fx_rates)
+                    # _set_object(names, 'report_currency_history', item_currency_fx_rates)
 
-                    _set_object(names, 'instrument_price_history', item_instrument_pricings)
-                    _set_object(names, 'instrument_pricing_currency_history', item_currency_fx_rates)
-                    _set_object(names, 'instrument_accrued_currency_history', item_currency_fx_rates)
+                    # _set_object(names, 'instrument_price_history', item_instrument_pricings)
+                    # _set_object(names, 'instrument_pricing_currency_history', item_currency_fx_rates)
+                    # _set_object(names, 'instrument_accrued_currency_history', item_currency_fx_rates)
 
-                    _set_object(names, 'currency_history', item_currency_fx_rates)
-                    _set_object(names, 'pricing_currency_history', item_currency_fx_rates)
-                    _set_object(names, 'instrument_accrual', item_instrument_accruals)
+                    # _set_object(names, 'currency_history', item_currency_fx_rates)
+                    # _set_object(names, 'pricing_currency_history', item_currency_fx_rates)
+                    # _set_object(names, 'instrument_accrual', item_instrument_accruals)
 
                     names = formula.value_prepare(names)
 
@@ -604,6 +606,17 @@ class BalanceReportSerializer(ReportSerializer):
         return data
 
 
+class SummarySerializer(serializers.Serializer):
+
+    date_from = serializers.DateField(required=False, allow_null=True, default=date_now,
+                                        help_text=gettext_lazy('Date from'))
+
+    date_to = serializers.DateField(required=False, allow_null=True, default=date_now,
+                                      help_text=gettext_lazy('Date from'))
+
+    currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
+    portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
+
 class PLReportSerializer(ReportSerializer):
     custom_fields = PLReportCustomFieldField(many=True, allow_empty=True, allow_null=True, required=False)
 
@@ -845,6 +858,7 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
     item_currencies = ReportCurrencySerializer(many=True, read_only=True)
     item_portfolios = ReportPortfolioSerializer(many=True, read_only=True)
     item_accounts = ReportAccountSerializer(many=True, read_only=True)
+    item_account_types = ReportAccountTypeSerializer(many=True, read_only=True)
     item_strategies1 = ReportStrategy1Serializer(many=True, read_only=True)
     item_strategies2 = ReportStrategy2Serializer(many=True, read_only=True)
     item_strategies3 = ReportStrategy3Serializer(many=True, read_only=True)

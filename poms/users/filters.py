@@ -1,6 +1,6 @@
 from rest_framework.filters import BaseFilterBackend
 
-from poms.users.models import InviteToMasterUser, MasterUser
+from poms.users.models import MasterUser
 
 
 class OwnerByUserFilter(BaseFilterBackend):
@@ -73,11 +73,6 @@ class MasterUserBackupsForOwnerOnlyFilter(BaseFilterBackend):
                 ids.append(item.id)
 
         return queryset.filter(id__in=ids)
-
-
-class InviteToMasterUserFilter(BaseFilterBackend):
-    def filter_queryset(self, request, queryset, view):
-        return queryset.filter(status=InviteToMasterUser.SENT)
 
 
 class IsMemberFilterBackend(BaseFilterBackend):

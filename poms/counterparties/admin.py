@@ -5,7 +5,6 @@ from django.contrib import admin
 from poms.common.admin import AbstractModelAdmin
 from poms.counterparties.models import Counterparty, Responsible, CounterpartyGroup, ResponsibleGroup
 from poms.obj_attrs.admin import GenericAttributeInline
-from poms.obj_perms.admin import GenericObjectPermissionInline
 
 
 class CounterpartyGroupAdmin(AbstractModelAdmin):
@@ -17,7 +16,6 @@ class CounterpartyGroupAdmin(AbstractModelAdmin):
     search_fields = ['id', 'user_code', 'name']
     raw_id_fields = ['master_user']
     inlines = [
-        GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline,
     ]
@@ -37,7 +35,6 @@ class CounterpartyAdmin(AbstractModelAdmin):
     inlines = [
         # AbstractAttributeInline,
         GenericAttributeInline,
-        GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline,
     ]
@@ -74,7 +71,6 @@ class ResponsibleGroupAdmin(AbstractModelAdmin):
     list_filter = ['is_deleted', ]
     raw_id_fields = ['master_user']
     inlines = [
-        GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline,
     ]
@@ -94,7 +90,6 @@ class ResponsibleAdmin(AbstractModelAdmin):
     inlines = [
         # AbstractAttributeInline,
         GenericAttributeInline,
-        GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline,
     ]

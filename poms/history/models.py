@@ -1,151 +1,173 @@
+import contextlib
 import json
 import logging
+import sys
 import traceback
+from datetime import datetime, timedelta
 
-from deepdiff import DeepDiff
 from django.contrib.contenttypes.models import ContentType
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.forms.models import model_to_dict
 from django.utils.translation import gettext_lazy
 
-from poms.common.celery import get_active_celery_task, get_active_celery_task_id
-from poms.common.middleware import get_request
+from deepdiff import DeepDiff
 from poms_app import settings
 
-_l = logging.getLogger('poms.history')
+from poms.common.celery import get_active_celery_task, get_active_celery_task_id
+from poms.common.middleware import get_request
+
+_l = logging.getLogger("poms.history")
+
+DATETIME_FORMAT = "%Y-%m-%d, %H:%M:%S"
 
 # TODO important to keep this list up to date
 # Just not to log history for too meta models
 excluded_to_track_history_models = [
-
-    'celery_tasks.celerytask',
-    'celery_tasks.celerytaskattachment',
-
-    'system_messages.systemmessage',
-    'system_messages.systemmessagemember',
-    'obj_attrs.genericattribute',
-
-
-    'transactions.complextransactioninput',
-    'migrations.migration',
-
-    'django_celery_results.taskresult',
-    'django_celery_beat.periodictask',
-    'django_celery_beat.periodictasks',
-    'django_celery_beat.crontabschedule',
-
-    'csv_import.csvfield',
-    'csv_import.entityfield',
-
-    'pricing.instrumentpricingschemetype',
-    'pricing.currencypricingschemetype',
-    'pricing.instrumentpricingpolicy',
-    'pricing.currencypricingpolicy',
-    'pricing.pricehistoryerror',
-    'pricing.currencyhistoryerror',
-    'pricing.pricingprocedurebloomberginstrumentresult',
-    'pricing.pricingprocedurebloombergforwardinstrumentresult',
-    'pricing.pricingprocedurebloombergcurrencyresult',
-
-
-    'integrations.dataprovider',
-    'integrations.accrualscheduledownloadmethod',
-    'integrations.providerclass',
-    'transactions.periodicitygroup',
-    'transactions.eventclass',
-    'transactions.notificationclass',
-    'transactions.actionclass',
-    'transactions.complextransactionstatus',
-    'transactions.transactionclass',
-    'instruments.country',
-    'instruments.shortunderlyingexposure',
-    'instruments.longunderlyingexposure',
-    'instruments.pricingcondition',
-    'instruments.paymentsizedetail',
-    'instruments.costmethod',
-    'instruments.periodicity',
-    'integrations.factorscheduledownloadmethod',
-    'instruments.exposurecalculationmodel',
-    'instruments.dailypricingmodel',
-    'instruments.instrumentclass',
-    'ui.portalinterfaceaccessmodel',
-    'instruments.accrualcalculationmodel',
-    'instruments.pricehistory',
-    'currencies.currencyhistory',
-
-    'widgets.collect_stats',
-    'widgets.collect_pl_report_history',
-    'widgets.collect_balance_report_history',
-    'widgets.plreporthistoryitem',
-    'widgets.balancereporthistoryitem',
-
-
-    'portfolios.portfolioregisterrecord',
-
-    'ui.listlayout',
-    'ui.editlayout',
-
-    'users.fakesequence',
-
-    'widgets.plreporthistoryitem',
-    'widgets.balancereporthistoryitem',
-    'file_reports.filereport',
-
-
-
-
-    'finmars_standardized_errors.errorrecord']
+    "celery_tasks.celerytask",
+    "celery_tasks.celerytaskattachment",
+    "system_messages.systemmessage",
+    "system_messages.systemmessagemember",
+    "obj_attrs.genericattribute",
+    "transactions.complextransactioninput",
+    "migrations.migration",
+    "django_celery_results.taskresult",
+    "django_celery_beat.periodictask",
+    "django_celery_beat.periodictasks",
+    "django_celery_beat.crontabschedule",
+    "csv_import.csvfield",
+    "csv_import.entityfield",
+    "pricing.instrumentpricingschemetype",
+    "pricing.currencypricingschemetype",
+    "pricing.instrumentpricingpolicy",
+    "pricing.currencypricingpolicy",
+    "pricing.pricehistoryerror",
+    "pricing.currencyhistoryerror",
+    "pricing.pricingprocedurebloomberginstrumentresult",
+    "pricing.pricingprocedurebloombergforwardinstrumentresult",
+    "pricing.pricingprocedurebloombergcurrencyresult",
+    "integrations.dataprovider",
+    "integrations.accrualscheduledownloadmethod",
+    "integrations.providerclass",
+    "transactions.periodicitygroup",
+    "transactions.eventclass",
+    "transactions.notificationclass",
+    "transactions.actionclass",
+    "transactions.complextransactionstatus",
+    "transactions.transactionclass",
+    "instruments.country",
+    "instruments.shortunderlyingexposure",
+    "instruments.longunderlyingexposure",
+    "instruments.pricingcondition",
+    "instruments.paymentsizedetail",
+    "instruments.costmethod",
+    "instruments.periodicity",
+    "integrations.factorscheduledownloadmethod",
+    "instruments.exposurecalculationmodel",
+    "instruments.dailypricingmodel",
+    "instruments.instrumentclass",
+    "ui.portalinterfaceaccessmodel",
+    "instruments.accrualcalculationmodel",
+    "instruments.pricehistory",
+    "currencies.currencyhistory",
+    "widgets.collect_stats",
+    "widgets.collect_pl_report_history",
+    "widgets.collect_balance_report_history",
+    "widgets.plreporthistoryitem",
+    "widgets.balancereporthistoryitem",
+    "portfolios.portfolioregisterrecord",
+    "ui.listlayout",
+    "ui.editlayout",
+    "users.fakesequence",
+    "widgets.plreporthistoryitem",
+    "widgets.balancereporthistoryitem",
+    "file_reports.filereport",
+    "finmars_standardized_errors.errorrecord",
+]
 
 
 class HistoricalRecord(models.Model):
-    ACTION_CREATE = 'create'
-    ACTION_CHANGE = 'change'
-    ACTION_DELETE = 'delete'
-    ACTION_DANGER = 'danger'
-    ACTION_RECYCLE_BIN = 'recycle_bin'
+    ACTION_CREATE = "create"
+    ACTION_CHANGE = "change"
+    ACTION_DELETE = "delete"
+    ACTION_DANGER = "danger"
+    ACTION_RECYCLE_BIN = "recycle_bin"
 
     ACTION_CHOICES = (
-        (ACTION_CREATE, gettext_lazy('Create')),
-        (ACTION_CHANGE, gettext_lazy('Change')),
-        (ACTION_DELETE, gettext_lazy('Delete')),
-        (ACTION_DANGER, gettext_lazy('Danger')),
-        (ACTION_RECYCLE_BIN, gettext_lazy('Recycle Bin')),
+        (ACTION_CREATE, gettext_lazy("Create")),
+        (ACTION_CHANGE, gettext_lazy("Change")),
+        (ACTION_DELETE, gettext_lazy("Delete")),
+        (ACTION_DANGER, gettext_lazy("Danger")),
+        (ACTION_RECYCLE_BIN, gettext_lazy("Recycle Bin")),
     )
 
-    '''
+    """
     2023.01 Feature
     It listen changes of models and store JSON output after save
-    In Finmars Web interface users can check history of changes for specific entity e.g. Instrument, Complex Transaction
+    In Finmars Web interface users can check history of changes for specific entity e.g.
+     Instrument, Complex Transaction
     TODO: probably need to store only diff with change, not the whole JSON output
-    '''
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
-                                    on_delete=models.CASCADE)
-    member = models.ForeignKey('users.Member', null=True, blank=True, verbose_name=gettext_lazy('member'),
-                               on_delete=models.SET_NULL)
-
-    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
-    action = models.CharField(max_length=25, default=ACTION_CHANGE, choices=ACTION_CHOICES,
-                              verbose_name='action')
-    content_type = models.ForeignKey(ContentType, verbose_name=gettext_lazy('content type'), on_delete=models.CASCADE)
-
-    context_url = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('context_url'))
-
-    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
-
-    created = models.DateTimeField(auto_now_add=True, editable=False, null=True, db_index=True,
-                                   verbose_name=gettext_lazy('created'))
-
-    json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
+    """
+    master_user = models.ForeignKey(
+        "users.MasterUser",
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
+    )
+    member = models.ForeignKey(
+        "users.Member",
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("member"),
+        on_delete=models.SET_NULL,
+    )
+    user_code = models.CharField(
+        max_length=1024,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("user code"),
+    )
+    action = models.CharField(
+        max_length=25,
+        default=ACTION_CHANGE,
+        choices=ACTION_CHOICES,
+        verbose_name="action",
+    )
+    content_type = models.ForeignKey(
+        ContentType,
+        verbose_name=gettext_lazy("content type"),
+        on_delete=models.CASCADE,
+    )
+    context_url = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("context_url"),
+    )
+    notes = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("notes"),
+    )
+    created = models.DateTimeField(
+        auto_now_add=True,
+        editable=False,
+        null=True,
+        db_index=True,
+        verbose_name=gettext_lazy("created"),
+    )
+    json_data = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("json data"),
+    )
 
     @property
     def data(self):
-        if self.json_data:
-            try:
-                return json.loads(self.json_data)
-            except (ValueError, TypeError):
-                return None
-        else:
+        if not self.json_data:
+            return None
+
+        try:
+            return json.loads(self.json_data)
+        except (ValueError, TypeError):
             return None
 
     @data.setter
@@ -156,28 +178,43 @@ class HistoricalRecord(models.Model):
             self.json_data = None
 
     def __str__(self):
-        return self.member.username + ' changed ' + self.user_code + ' (' + str(self.content_type) + ') at ' + str(
-            self.created.strftime("%Y-%m-%d, %H:%M:%S"))
+        return (
+            f"{self.member.username} changed {self.user_code} ({self.content_type}) "
+            f"at {self.created.strftime(DATETIME_FORMAT)}"
+        )
+
+    @property
+    def as_dict(self) -> dict:
+        return {
+            "master_user": str(self.master_user),
+            "member": str(self.member),
+            "user_code": self.user_code,
+            "action": self.action,
+            "content_type": str(self.content_type),
+            "context_url": self.context_url,
+            "notes": self.notes,
+            "created": self.created.strftime(DATETIME_FORMAT),
+            "json_data": self.json_data,
+        }
 
     class Meta:
-        verbose_name = gettext_lazy('history record')
-        verbose_name_plural = gettext_lazy('history records')
-        index_together = [
-            ['user_code', 'content_type']
-        ]
-        ordering = ['-created']
+        verbose_name = gettext_lazy("history record")
+        verbose_name_plural = gettext_lazy("history records")
+        index_together = [["user_code", "content_type"]]
+        ordering = ["-created"]
 
 
-def get_user_code_from_instance(instance):
+def get_user_code_from_instance(instance, content_type_key):
     user_code = None
 
-    if getattr(instance, 'transaction_unique_code', None):
-        user_code = instance.transaction_unique_code
-    elif getattr(instance, 'code', None):
+    if getattr(instance, "code", None) and content_type_key in [
+        "transactions.transaction",
+        "transactions.complextransaction",
+    ]:
         user_code = instance.code
-    elif getattr(instance, 'user_code', None):
+    elif getattr(instance, "user_code", None):
         user_code = instance.user_code
-    elif getattr(instance, 'name', None):
+    elif getattr(instance, "name", None):
         user_code = instance.name
 
     if not user_code:
@@ -188,96 +225,93 @@ def get_user_code_from_instance(instance):
 
 def get_model_content_type_as_text(sender):
     content_type = ContentType.objects.get_for_model(sender)
-    return content_type.app_label + '.' + content_type.model
+    return f"{content_type.app_label}.{content_type.model}"
 
 
 def get_serialized_data(sender, instance):
-    content_type_key = get_model_content_type_as_text(sender)
+    from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer
+    from poms.counterparties.serializers import (
+        CounterpartySerializer,
+        ResponsibleSerializer,
+    )
+    from poms.csv_import.serializers import CsvImportSchemeSerializer
+    from poms.currencies.serializers import (
+        CurrencyHistorySerializer,
+        CurrencySerializer,
+    )
+    from poms.instruments.serializers import (
+        GeneratedEventSerializer,
+        InstrumentSerializer,
+        InstrumentTypeSerializer,
+        PriceHistorySerializer,
+        PricingPolicySerializer,
+    )
+    from poms.integrations.serializers import (
+        ComplexTransactionImportSchemeSerializer,
+        InstrumentDownloadSchemeSerializer,
+    )
+    from poms.portfolios.serializers import (
+        PortfolioRegisterRecordSerializer,
+        PortfolioRegisterSerializer,
+        PortfolioSerializer,
+    )
+    from poms.procedures.serializers import (
+        ExpressionProcedureSerializer,
+        PricingProcedureSerializer,
+        RequestDataFileProcedureSerializer,
+    )
+    from poms.schedules.serializers import ScheduleSerializer
+    from poms.transactions.serializers import (
+        ComplexTransactionSerializer,
+        TransactionSerializer,
+        TransactionTypeSerializer,
+    )
+    from poms.users.serializers import MasterUserSerializer, MemberSerializer
+
+    model_serializer_map = {
+        "users.masteruser": MasterUserSerializer,
+        "users.member": MemberSerializer,
+        "accounts.account": AccountSerializer,
+        "accounts.accounttype": AccountTypeSerializer,
+        "counterparties.counterparty": CounterpartySerializer,
+        "counterparties.responsible": ResponsibleSerializer,
+        "portfolios.portfolio": PortfolioSerializer,
+        "portfolios.portfolioregister": PortfolioRegisterSerializer,
+        "portfolios.portfolioregisterrecord": PortfolioRegisterRecordSerializer,
+        "currencies.currency": CurrencySerializer,
+        "currencies.currencyhistory": CurrencyHistorySerializer,
+        "instruments.instrument": InstrumentSerializer,
+        "instruments.instrumenttype": InstrumentTypeSerializer,
+        "instruments.pricehistory": PriceHistorySerializer,
+        "instruments.pricingpolicy": PricingPolicySerializer,
+        "instruments.generatedevent": GeneratedEventSerializer,
+        "integrations.instrumentdownloadscheme": InstrumentDownloadSchemeSerializer,
+        "integrations.complextransactionimportscheme": ComplexTransactionImportSchemeSerializer,
+        "csv_import.csvimportscheme": CsvImportSchemeSerializer,
+        "transactions.complextransaction": ComplexTransactionSerializer,
+        "transactions.transaction": TransactionSerializer,
+        "transactions.transactiontype": TransactionTypeSerializer,
+        "procedures.pricingprocedure": PricingProcedureSerializer,
+        "procedures.requestdatafileprocedure": RequestDataFileProcedureSerializer,
+        "procedures.expressionprocedure": ExpressionProcedureSerializer,
+        "schedules.schedule": ScheduleSerializer,
+    }
 
     record_context = get_record_context()
-
     context = {
-        'master_user': record_context['master_user'],
-        'member': record_context['member']
+        "master_user": record_context["master_user"],
+        "member": record_context["member"],
     }
-
-    from poms.accounts.serializers import AccountSerializer
-    from poms.accounts.serializers import AccountTypeSerializer
-
-    from poms.instruments.serializers import InstrumentSerializer
-    from poms.currencies.serializers import CurrencySerializer
-    from poms.currencies.serializers import CurrencyHistorySerializer
-
-    from poms.portfolios.serializers import PortfolioSerializer
-    from poms.counterparties.serializers import CounterpartySerializer
-    from poms.counterparties.serializers import ResponsibleSerializer
-
-    from poms.instruments.serializers import InstrumentTypeSerializer
-    from poms.instruments.serializers import PriceHistorySerializer
-    from poms.instruments.serializers import PricingPolicySerializer
-    from poms.instruments.serializers import GeneratedEventSerializer
-    from poms.integrations.serializers import InstrumentDownloadSchemeSerializer
-    from poms.integrations.serializers import ComplexTransactionImportSchemeSerializer
-    from poms.portfolios.serializers import PortfolioRegisterSerializer
-    from poms.transactions.serializers import ComplexTransactionSerializer
-    from poms.transactions.serializers import TransactionTypeSerializer
-    from poms.csv_import.serializers import CsvImportSchemeSerializer
-    from poms.procedures.serializers import PricingProcedureSerializer
-    from poms.procedures.serializers import RequestDataFileProcedureSerializer
-    from poms.procedures.serializers import ExpressionProcedureSerializer
-    from poms.schedules.serializers import ScheduleSerializer
-    from poms.transactions.serializers import TransactionSerializer
-    from poms.portfolios.serializers import PortfolioRegisterRecordSerializer
-    from poms.users.serializers import MasterUserSerializer
-    from poms.users.serializers import MemberSerializer
-    model_serializer_map = {
-
-        'users.masteruser': MasterUserSerializer,
-        'users.member': MemberSerializer,
-
-        'accounts.account': AccountSerializer,
-        'accounts.accounttype': AccountTypeSerializer,
-
-        'counterparties.counterparty': CounterpartySerializer,
-        'counterparties.responsible': ResponsibleSerializer,
-        'portfolios.portfolio': PortfolioSerializer,
-        'portfolios.portfolioregister': PortfolioRegisterSerializer,
-        'portfolios.portfolioregisterrecord': PortfolioRegisterRecordSerializer,
-
-        'currencies.currency': CurrencySerializer,
-        'currencies.currencyhistory': CurrencyHistorySerializer,
-
-        'instruments.instrument': InstrumentSerializer,
-        'instruments.instrumenttype': InstrumentTypeSerializer,
-        'instruments.pricehistory': PriceHistorySerializer,
-        'instruments.pricingpolicy': PricingPolicySerializer,
-        'instruments.generatedevent': GeneratedEventSerializer,
-
-        'integrations.instrumentdownloadscheme': InstrumentDownloadSchemeSerializer,
-        'integrations.complextransactionimportscheme': ComplexTransactionImportSchemeSerializer,
-
-        'csv_import.csvimportscheme': CsvImportSchemeSerializer,
-
-        'transactions.complextransaction': ComplexTransactionSerializer,
-        'transactions.transaction': TransactionSerializer,
-        'transactions.transactiontype': TransactionTypeSerializer,
-
-        'procedures.pricingprocedure': PricingProcedureSerializer,
-        'procedures.requestdatafileprocedure': RequestDataFileProcedureSerializer,
-        'procedures.expressionprocedure': ExpressionProcedureSerializer,
-
-        'schedules.schedule': ScheduleSerializer
-
-    }
-
-    result = None
-
     try:
-        result = model_serializer_map[content_type_key](instance=instance, context=context).data
-    except Exception as e:
+        content_type_key = get_model_content_type_as_text(sender)
+        result = model_serializer_map[content_type_key](
+            instance=instance,
+            context=context,
+        ).data
+    except Exception:
         try:
             result = json.dumps(model_to_dict(instance), default=str)
-        except Exception as e:
+        except Exception:
             result = None
 
     return result
@@ -285,106 +319,92 @@ def get_serialized_data(sender, instance):
 
 def get_notes_for_history_record(user_code, content_type, serialized_data):
     notes = None
-
-    try:
-
-        last_record = \
-            HistoricalRecord.objects.filter(user_code=user_code, content_type=content_type,
-                                            action__in=[HistoricalRecord.ACTION_CREATE, HistoricalRecord.ACTION_CHANGE,
-                                                        HistoricalRecord.ACTION_DELETE, HistoricalRecord.ACTION_DANGER]).order_by('-created')[0]
+    with contextlib.suppress(Exception):
+        last_record = HistoricalRecord.objects.filter(
+            user_code=user_code,
+            content_type=content_type,
+            action__in=[
+                HistoricalRecord.ACTION_CREATE,
+                HistoricalRecord.ACTION_CHANGE,
+                HistoricalRecord.ACTION_DELETE,
+                HistoricalRecord.ACTION_DANGER,
+            ],
+        ).order_by("-created")[0]
 
         everything_is_dict = json.loads(
-            json.dumps(serialized_data))  # because deep diff counts different Dict and Ordered dict
+            json.dumps(serialized_data)
+        )  # because deep diff counts different Dict and Ordered dict
 
-        result = DeepDiff(last_record.data, everything_is_dict,
-                          ignore_string_type_changes=True,
-                          ignore_order=True,
-                          ignore_type_subclasses=True)
+        result = DeepDiff(
+            last_record.data,
+            everything_is_dict,
+            ignore_string_type_changes=True,
+            ignore_order=True,
+            ignore_type_subclasses=True,
+        )
 
         # _l.info('result %s' % result)
 
         notes = result.to_json()
 
-    except Exception as e:
-        # _l.error('get_notes_for_history_record e %s' % e)
-        # _l.error('get_notes_for_history_record traceback %s' % traceback.format_exc())
-        pass
-
     return notes
 
 
 def get_record_context():
-    result = {
-        'master_user': None,
-        'member': None,
-        'context_url': "Unknown"
-    }
+    from poms.users.models import MasterUser, Member
 
-    request = get_request()
+    result = {"master_user": None, "member": None, "context_url": "Unknown"}
 
-    # if we have request (normal way)
-    from poms.users.models import Member
-    from poms.users.models import MasterUser
+    if request := get_request():
 
-    if request:
-        context_url = request.path
+        # _l.info('request.user %s' % request.user)
 
-        result['master_user'] = request.user.master_user
-        result['member'] = request.user.member
-        result['context_url'] = context_url
+        # result["master_user"] = request.user.master_user
+        result["master_user"] = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        # result["master_user"] = request.user.member
+        result["member"] = Member.objects.get(user=request.user)
+        result["context_url"] = request.path
 
-    else:  # in case if we have celery context
-
+    else:
         try:
-
             celery_task_id = get_active_celery_task_id()
             lib_celery_task = get_active_celery_task()
 
             # _l.info('celery_task_id %s' % celery_task_id)
 
             try:
+                update_result_with_celery_task_data(celery_task_id, result)
 
-                if not celery_task_id:
-                    raise Exception("Celery task id is not set")
+            except Exception:
+                finmars_bot = Member.objects.get(username="finmars_bot")
+                master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
-                from poms.celery_tasks.models import CeleryTask
-                celery_task = CeleryTask.objects.get(celery_task_id=celery_task_id)
-
-                result['member'] = celery_task.member
-                result['master_user'] = celery_task.master_user
-                result['context_url'] = celery_task.type + ' [' + str(celery_task.id) + ']'
-
-            except Exception as e:
-
-                try:
-
-                    # _l.error('get_record_context.celery celery_task_id lookup error e %s' % e)
-
-                    finmars_bot = Member.objects.get(username='finmars_bot')
-
-                    master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
-
-                    result['master_user'] = master_user
-                    result['member'] = finmars_bot
-
-                    # _l.info('lib_celery_task.name %s' % lib_celery_task.name)
-
-                    result['context_url'] = lib_celery_task.name
-                except Exception as e:
-
-                    finmars_bot = Member.objects.get(username='finmars_bot')
-                    master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
-
-                    result['master_user'] = master_user
-                    result['member'] = finmars_bot
-
-                    result['context_url'] = 'Shell'
+                result["member"] = finmars_bot
+                result["master_user"] = master_user
+                result["context_url"] = (
+                    lib_celery_task.name if lib_celery_task else "Shell"
+                )
 
         except Exception as e:
-            _l.error("Error getting context for celery exception %s" % e)
-            _l.error("Error getting context for celery traceback %s" % traceback.format_exc())
+            _l.error(
+                f"Error getting context for celery exception {e} "
+                f"traceback {traceback.format_exc()}"
+            )
 
     return result
+
+
+def update_result_with_celery_task_data(celery_task_id, result):
+    from poms.celery_tasks.models import CeleryTask
+
+    if not celery_task_id:
+        raise RuntimeError("Celery task id is not set")
+
+    celery_task = CeleryTask.objects.get(celery_task_id=celery_task_id)
+
+    result["member"] = celery_task.member
+    result["master_user"] = celery_task.master_user
+    result["context_url"] = f"{celery_task.type} [{str(celery_task.id)}]"
 
 
 def post_save(sender, instance, created, using=None, update_fields=None, **kwargs):
@@ -392,58 +412,53 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
     # _l.info('post_save.update_fields %s' % update_fields)
 
     from poms.users.models import MasterUser
+
     master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
-    if sender == MasterUser:
-        if instance.journal_status == 'disabled':
-            record_context = get_record_context()
-            content_type = ContentType.objects.get_for_model(sender)
+    if sender == MasterUser and instance.journal_status == "disabled":
+        record_context = get_record_context()
+        content_type = ContentType.objects.get_for_model(sender)
 
-            already_disabled = False
+        already_disabled = False
 
-            try:
+        with contextlib.suppress(Exception):
+            last_record = HistoricalRecord.objects.filter(
+                user_code=master_user.name,
+                content_type=content_type,
+            ).order_by("-created")[0]
 
-                last_record = \
-                    HistoricalRecord.objects.filter(user_code=master_user.name, content_type=content_type,
-                                                    ).order_by('-created')[0]
+            _l.info(f"last_record {last_record.data}")
 
-                _l.info('last_record %s' % last_record.data)
+            if last_record.data["journal_status"] == "disabled":
+                already_disabled = True
 
-                if last_record.data['journal_status'] == 'disabled':
-                    already_disabled = True
+        if not already_disabled:
+            data = get_serialized_data(sender, instance)
 
-            except Exception as e:
-                pass
-
-            if not already_disabled:
-
-                data = get_serialized_data(sender, instance)
-
-                HistoricalRecord.objects.create(
-                    master_user=record_context['master_user'],
-                    member=record_context['member'],
-                    action=HistoricalRecord.ACTION_DANGER,
-                    user_code=master_user.name,
-                    data=data,
-                    notes="JOURNAL IS DISABLED. OBJECTS ARE NOT TRACKED",
-                    content_type=content_type
-                )
+            HistoricalRecord.objects.create(
+                master_user=record_context["master_user"],
+                member=record_context["member"],
+                action=HistoricalRecord.ACTION_DANGER,
+                user_code=master_user.name,
+                data=data,
+                notes="JOURNAL IS DISABLED. OBJECTS ARE NOT TRACKED",
+                content_type=content_type,
+            )
 
     if master_user.journal_status != MasterUser.JOURNAL_STATUS_DISABLED:
+        user_code = None
 
         try:
-
             record_context = get_record_context()
-
             content_type = ContentType.objects.get_for_model(sender)
             content_type_key = get_model_content_type_as_text(sender)
-            user_code = get_user_code_from_instance(instance)
+            user_code = get_user_code_from_instance(instance, content_type_key)
 
-            exist = False
-
-            if HistoricalRecord.objects.filter(user_code=user_code, content_type=content_type).count():
-                exist = True
-
+            exist = bool(
+                HistoricalRecord.objects.filter(
+                    user_code=user_code, content_type=content_type
+                ).count()
+            )
             if exist:
                 action = HistoricalRecord.ACTION_CHANGE
             else:
@@ -452,12 +467,11 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
             # _l.info('created %s' % created)
             # _l.info('update_fields %s' % update_fields)
 
-            if update_fields:
-                if 'is_deleted' in update_fields:
-                    if instance.is_deleted:
-                        action = HistoricalRecord.ACTION_RECYCLE_BIN
-                    else:
-                        action = HistoricalRecord.ACTION_CHANGE
+            if update_fields and "is_deleted" in update_fields:
+                if instance.is_deleted:
+                    action = HistoricalRecord.ACTION_RECYCLE_BIN
+                else:
+                    action = HistoricalRecord.ACTION_CHANGE
 
             # TODO think about better performance
             # if HistoricalRecord.ACTION_RECYCLE_BIN:
@@ -473,52 +487,59 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
                 notes = {"message": "User moved object to Recycle Bin"}
 
             HistoricalRecord.objects.create(
-                master_user=record_context['master_user'],
-                member=record_context['member'],
+                master_user=record_context["master_user"],
+                member=record_context["member"],
                 action=action,
-                context_url=record_context['context_url'],
+                context_url=record_context["context_url"],
                 data=data,
                 notes=notes,
                 user_code=user_code,
-                content_type=content_type
+                content_type=content_type,
             )
 
         except Exception as e:
-            _l.error("Could not save history exception %s" % e)
-            _l.error("Could not save history traceback %s" % traceback.format_exc())
+            _l.error(
+                f"Could not save history user_code {user_code} exception {e} "
+                f"traceback {traceback.format_exc()}"
+            )
 
 
 def post_delete(sender, instance, using=None, **kwargs):
     from poms.users.models import MasterUser
+
     master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
     if master_user.journal_status != MasterUser.JOURNAL_STATUS_DISABLED:
-
         try:
-
-            record_context = get_record_context()
-
-            action = HistoricalRecord.ACTION_DELETE
-
-            content_type = ContentType.objects.get_for_model(sender)
-
-            user_code = get_user_code_from_instance(instance)
-
-            data = get_serialized_data(sender, instance)
-
-            HistoricalRecord.objects.create(
-                master_user=record_context['master_user'],
-                member=record_context['member'],
-                context_url=record_context['context_url'],
-                action=action,
-                data=data,
-                user_code=user_code,
-                content_type=content_type
+            post_delete_action(sender, instance)
+        except Exception as e:
+            _l.error(
+                f"Could not save history record exception {e} "
+                f"traceback {traceback.format_exc()} "
             )
 
-        except Exception as e:
-            _l.error("Could not save history record exception %s" % e)
-            _l.error("Could not save history record tracback %s " % traceback.format_exc())
+
+def post_delete_action(sender, instance):
+    record_context = get_record_context()
+
+    action = HistoricalRecord.ACTION_DELETE
+
+    content_type = ContentType.objects.get_for_model(sender)
+    content_type_key = get_model_content_type_as_text(sender)
+
+    user_code = get_user_code_from_instance(instance, content_type_key)
+
+    data = get_serialized_data(sender, instance)
+
+    HistoricalRecord.objects.create(
+        master_user=record_context["master_user"],
+        member=record_context["member"],
+        context_url=record_context["context_url"],
+        action=action,
+        data=data,
+        user_code=user_code,
+        content_type=content_type,
+    )
 
 
 def add_history_listeners(sender, **kwargs):
@@ -534,12 +555,15 @@ def add_history_listeners(sender, **kwargs):
         models.signals.post_delete.connect(post_delete, sender=sender, weak=False)
 
 
-import sys
 def record_history():
-    if ('makemigrations' in sys.argv or 'migrate' in sys.argv):
-        _l.info("History is not recording. Probably Migration context")
+
+    _l = logging.getLogger('provision')
+
+    if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
+        _l.info("History is not recording. Probably Test or Migration context")
     else:
         _l.info("History is recording")
         models.signals.class_prepared.connect(add_history_listeners, weak=False)
+
 
 record_history()

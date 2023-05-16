@@ -245,6 +245,7 @@ pip install flower
 pip install deepdiff
 pip install pyopenssl
 pip install suds
+pip install drf_yasg
 
 ==== TODO ====
 Move generated documentation to another project
@@ -274,11 +275,12 @@ from django.db.models import Count
 from poms.transactions.models import ComplexTransaction
 ComplexTransaction.objects.values("id").annotate(did=Count("id")).filter(did__gt=1)
 
+
+from django.db.models import Count
+from poms.transactions.models import Transaction
+Transaction.objects.values("id").annotate(did=Count("id")).filter(did__gt=1)
+
 ## Show Duplicates
-
-
-
-## Delete duplicated ids
 
 (SELECT ctid
 FROM
@@ -287,3 +289,32 @@ ROW_NUMBER() OVER( PARTITION BY id
 ORDER BY  id ) AS row_num
 FROM transactions_complextransaction ) t
 WHERE t.row_num > 1 );
+
+## Delete duplicated ids
+
+DELETE FROM transactions_complextransaction
+WHERE ctid IN
+(SELECT ctid
+FROM
+(SELECT id, ctid,
+ROW_NUMBER() OVER( PARTITION BY id
+ORDER BY  id ) AS row_num
+FROM transactions_complextransaction ) t
+WHERE t.row_num > 1 );
+
+DELETE FROM transactions_transaction
+WHERE ctid IN
+(SELECT ctid
+FROM
+(SELECT id, ctid,
+ROW_NUMBER() OVER( PARTITION BY id
+ORDER BY  id ) AS row_num
+FROM transactions_transaction ) t
+WHERE t.row_num > 1 );
+
+
+
+# Access policy
+
+frn:[service]:[content_type]:[user_code]
+frn:finmars:portfolios.portfolio:portfolio_1

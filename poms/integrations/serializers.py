@@ -1,6 +1,7 @@
 from __future__ import unicode_literals, print_function
 
 import json
+import traceback
 from logging import getLogger
 
 from django.contrib.contenttypes.models import ContentType
@@ -15,11 +16,13 @@ from poms.celery_tasks.models import CeleryTask
 from poms.celery_tasks.serializers import CeleryTaskSerializer
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
+from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, \
+    ModelMetaSerializer
 from poms.counterparties.fields import CounterpartyField, ResponsibleField
 from poms.currencies.fields import CurrencyField, CurrencyDefault
 from poms.currencies.models import CurrencyHistory
-from poms.instruments.fields import InstrumentTypeField, InstrumentTypeDefault, InstrumentField, PricingPolicyField
+from poms.instruments.fields import InstrumentTypeField, InstrumentTypeDefault, InstrumentField, PricingPolicyField, \
+    PricingConditionField
 from poms.instruments.models import PriceHistory, Instrument, AccrualCalculationModel, Periodicity, DailyPricingModel, \
     PaymentSizeDetail, PricingCondition
 from poms.integrations.fields import InstrumentDownloadSchemeField, PriceDownloadSchemeField, \
@@ -39,14 +42,12 @@ from poms.integrations.models import InstrumentDownloadSchemeInput, InstrumentDo
     BloombergDataProviderCredential, PricingConditionMapping, TransactionFileResult, DataProvider
 from poms.integrations.providers.base import get_provider, ProviderException
 from poms.integrations.tasks import download_instrument, test_certificate, download_unified_data, \
-    download_currency_cbond, download_instrument_finmars_database
+    download_currency_cbond, export_instrument_finmars_database
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer, GenericAttributeTypeSerializer, \
     GenericClassifierSerializer
-from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.portfolios.fields import PortfolioField
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
-from poms.transactions.fields import TransactionTypeField, TransactionTypeInputField
 from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.models import EcosystemDefault
 from poms_app import settings
@@ -162,7 +163,8 @@ class InstrumentDownloadSchemeAttributeSerializer(serializers.ModelSerializer):
         return attrs
 
 
-class InstrumentDownloadSchemeSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer):
+class InstrumentDownloadSchemeSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSerializer,
+                                         ModelMetaSerializer):
     master_user = MasterUserField()
     provider_object = ProviderClassSerializer(source='provider', read_only=True)
 
@@ -201,7 +203,8 @@ class InstrumentDownloadSchemeSerializer(ModelWithUserCodeSerializer, ModelWithT
         fields = [
             'id', 'master_user',
             'mode',
-            'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'user_code', 'configuration_code',
+            'name', 'short_name', 'public_name', 'notes',
 
             'provider', 'provider_object', 'inputs',
             'reference_for_pricing',
@@ -902,7 +905,7 @@ class PriceDownloadSchemeMappingSerializer(AbstractMappingSerializer):
 
 # ----
 
-class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObjectPermissionSerializer,
+class ImportInstrumentViewSerializer(ModelWithAttributesSerializer,
                                      ModelWithUserCodeSerializer):
     instrument_type = InstrumentTypeField(default=InstrumentTypeDefault())
     instrument_type_object = serializers.PrimaryKeyRelatedField(source='instrument_type', read_only=True)
@@ -916,6 +919,8 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
     factor_schedules = serializers.SerializerMethodField()
     event_schedules = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
 
+    pricing_condition = PricingConditionField()
+
     # attributes = serializers.SerializerMethodField()
 
     class Meta:
@@ -928,10 +933,13 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
             'payment_size_detail', 'payment_size_detail_object', 'default_price', 'default_accrued',
             'user_text_1', 'user_text_2', 'user_text_3',
             'reference_for_pricing',
-            'maturity_date',
+            'maturity_date', 'pricing_condition',
             # 'manual_pricing_formulas',
             'accrual_calculation_schedules', 'factor_schedules', 'event_schedules',
             # 'attributes',
+
+            'co_directional_exposure_currency',
+            'counter_directional_exposure_currency'
 
         ]
 
@@ -954,7 +962,7 @@ class ImportInstrumentViewSerializer(ModelWithAttributesSerializer, ModelWithObj
         # self.fields.pop('manual_pricing_formulas')
         # self.fields.pop('accrual_calculation_schedules')
         # self.fields.pop('factor_schedules')
-        self.fields.pop('event_schedules')
+        # self.fields.pop('event_schedules')
         # self.fields.pop('attributes')
 
     def get_accrual_calculation_schedules(self, obj):
@@ -1148,7 +1156,7 @@ class ImportInstrumentSerializer(serializers.Serializer):
         return {}
 
 
-class ImportInstrumentCbondsSerializer(serializers.Serializer):
+class ImportInstrumentDatabaseSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
     instrument_code = serializers.CharField(required=True)
@@ -1161,42 +1169,34 @@ class ImportInstrumentCbondsSerializer(serializers.Serializer):
 
     def create(self, validated_data):
 
-        if settings.FINMARS_DATABASE_URL:
+        instance = ImportInstrumentEntry(**validated_data)
 
-            # TODO FINMARS_DATABASE_REFACTOR
+        task = CeleryTask.objects.create(
+            master_user=instance.master_user,
+            member=instance.member,
+            verbose_name="Download Instrument From Finmars Database",
+            type='download_instrument_from_finmars_database'
+        )
+        task.options_object = {
+            'reference': instance.instrument_code,
+            'instrument_name': instance.instrument_name,
+            'instrument_type_user_code': instance.instrument_type_code
+        }
+        task.save()
 
-            task_result_overrides = validated_data.get('task_result_overrides', None)
-            instance = ImportInstrumentEntry(**validated_data)
+        _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
-            task = CeleryTask.objects.create(
-                master_user=instance.master_user,
-                member=instance.member,
-                verbose_name="Download Instrument From Finmars Database",
-                type='download_instrument_from_finmars_database'
-            )
+        export_instrument_finmars_database(task.id)
 
-            options = {
-                'reference': instance.instrument_code,
-                'instrument_name': instance.instrument_name,
-                'instrument_type_user_code': instance.instrument_type_code
-            }
+        task.refresh_from_db()
 
-            task.options_object = options
+        if task.result_object:
+            instance.result_id = task.result_object.get('instrument_id')
+        if task.error_message:
+            instance.errors = task.error_message
 
-            task.save()
-
-            instance.task_object = task
-
-            _l.info("ImportInstrumentCbondsSerializer create task id %s" % task.id)
-
-            download_instrument_finmars_database(task.id)
-
-            task = CeleryTask.objects.get(id=task.id)
-
-            if task and task.result_object:
-                instance.result_id = task.result_object['instrument_id']
-
-            return instance
+        instance.task_object = task
+        return instance
 
 
 class ImportCurrencyCbondsSerializer(serializers.Serializer):
@@ -1479,7 +1479,8 @@ class ComplexTransactionImportSchemeReconScenarioSerializer(serializers.ModelSer
 
 class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
-    transaction_type_input = TransactionTypeInputField()
+
+    # transaction_type_input = TransactionTypeInputField()
 
     class Meta:
         model = ComplexTransactionImportSchemeField
@@ -1498,17 +1499,30 @@ class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer)
         ret = super(ComplexTransactionImportSchemeFieldSerializer, self).to_representation(instance)
 
         if instance.transaction_type_input:
-            from poms.transactions.serializers import TransactionTypeInputViewSerializer
-            s = TransactionTypeInputViewSerializer(instance=instance.transaction_type_input, read_only=True,
-                                                   context=self.context)
-            ret['transaction_type_input_object'] = s.data
+
+            try:
+                from poms.transactions.serializers import TransactionTypeInputViewSerializer
+                from poms.transactions.models import TransactionTypeInput
+
+                instance = TransactionTypeInput.objects.get(
+                    transaction_type__user_code=instance.rule_scenario.transaction_type,
+                    name=instance.transaction_type_input)
+
+                s = TransactionTypeInputViewSerializer(instance=instance, read_only=True,
+                                                       context=self.context)
+                ret['transaction_type_input_object'] = s.data
+            except Exception as e:
+                _l.error('Error in to_representation instance.rule_scenario.transaction_type: %s' % instance.rule_scenario.transaction_type)
+                _l.error('Error in to_representation instance.transaction_type_input: %s' % instance.transaction_type_input)
+                _l.error('Error in to_representation: %s' % e)
+
+                ret['transaction_type_input_object'] = None
 
         return ret
 
 
 class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
-    transaction_type = TransactionTypeField()
     fields = ComplexTransactionImportSchemeFieldSerializer(many=True, read_only=False)
 
     # selector_values = serializers.SerializerMethodField()
@@ -1538,22 +1552,34 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 
         inputs = []
 
-        for input in instance.transaction_type.inputs.all():
-            result = {
-                'id': input.id,
-                'name': input.name,
-                'verbose_name': input.verbose_name,
-                'value_type': input.value_type
+        try:
+            from poms.transactions.models import TransactionType
+            transaction_type = TransactionType.objects.get(user_code=instance.transaction_type)
+
+            for input in transaction_type.inputs.all():
+                result = {
+                    'id': input.id,
+                    'name': input.name,
+                    'verbose_name': input.verbose_name,
+                    'value_type': input.value_type
+                }
+
+                inputs.append(result)
+
+            ret['transaction_type_object'] = {
+                'id': transaction_type.id,
+                'name': transaction_type.name,
+                'user_code': transaction_type.user_code,
+                'inputs': inputs
             }
 
-            inputs.append(result)
+        except Exception as e:
 
-        ret['transaction_type_object'] = {
-            'id': instance.transaction_type.id,
-            'name': instance.transaction_type.name,
-            'user_code': instance.transaction_type.user_code,
-            'inputs': inputs
-        }
+            _l.error('ComplexTransactionImportSchemeRuleScenarioSerializer.instance.transaction_type %s' % instance.transaction_type)
+            _l.error('ComplexTransactionImportSchemeRuleScenarioSerializer.e %s' % e)
+            _l.error('ComplexTransactionImportSchemeRuleScenarioSerializer.traceback %s' % traceback.format_exc())
+
+            ret['transaction_type_object'] = None
 
         return ret
 
@@ -1570,7 +1596,7 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
         return ret
 
 
-class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
+class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     rule_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH)
     data_preprocess_expression = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default='',
@@ -1592,7 +1618,10 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
     class Meta:
         model = ComplexTransactionImportScheme
         fields = ['id', 'master_user',
-                  'user_code', 'name', 'short_name', 'public_name', 'notes',
+
+                  'user_code', 'configuration_code',
+
+                  'name', 'short_name', 'public_name', 'notes',
                   'rule_expr', 'spreadsheet_start_cell', 'spreadsheet_active_tab_name',
                   'book_uniqueness_settings', 'expression_iterations_count',
 
@@ -1602,7 +1631,7 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer):
                   'delimiter', 'error_handler', 'missing_data_handler', 'column_matcher',
                   'filter_expression', 'has_header_row',
 
-                  'data_preprocess_expression'
+                  'data_preprocess_expression',
 
                   ]
 

@@ -12,7 +12,6 @@ from poms.common.filters import CharFilter
 from poms.common.utils import datetime_now
 from poms.common.views import AbstractModelViewSet, AbstractAsyncViewSet
 from poms.csv_import.tasks import simple_import
-from poms.obj_perms.permissions import PomsFunctionPermission, PomsConfigurationPermission
 from poms.users.filters import OwnerByMasterUserFilter
 from .filters import SchemeContentTypeFilter
 from .models import CsvImportScheme
@@ -45,7 +44,7 @@ class SchemeViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
-        PomsConfigurationPermission
+
     ]
 
     @action(detail=False, methods=['get'], url_path='light', serializer_class=CsvImportSchemeLightSerializer)
@@ -68,7 +67,7 @@ class SchemeLightViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
-        PomsConfigurationPermission
+
     ]
 
 

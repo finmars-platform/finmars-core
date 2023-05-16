@@ -22,7 +22,7 @@ from rest_framework.views import APIView
 from poms.accounts.models import Account
 from poms.accounts.models import AccountType
 from poms.common.authentication import get_access_token
-from poms.common.filters import CharFilter, ModelExtWithPermissionMultipleChoiceFilter, NoOpFilter, \
+from poms.common.filters import CharFilter,  NoOpFilter, \
     ModelExtMultipleChoiceFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter
 from poms.common.jwt import encode_with_jwt
 from poms.common.mixins import UpdateModelMixinExt
@@ -44,7 +44,7 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
     PaymentSizeDetailSerializer, PeriodicitySerializer, CostMethodSerializer, InstrumentTypeSerializer, \
     PricingPolicySerializer, EventScheduleConfigSerializer, InstrumentCalculatePricesAccruedPriceSerializer, \
     GeneratedEventSerializer, InstrumentTypeLightSerializer, InstrumentLightSerializer, \
-    PricingPolicyLightSerializer, PricingConditionSerializer, InstrumentEvSerializer, InstrumentTypeEvSerializer, \
+    PricingPolicyLightSerializer, PricingConditionSerializer, \
     ExposureCalculationModelSerializer, LongUnderlyingExposureSerializer, ShortUnderlyingExposureSerializer, \
     InstrumentForSelectSerializer, InstrumentTypeProcessSerializer, CountrySerializer
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
@@ -55,11 +55,6 @@ from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
-from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
-    ObjectPermissionPermissionFilter
-from poms.obj_perms.permissions import PomsConfigurationPermission
-from poms.obj_perms.utils import get_permissions_prefetch_lookups
-from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2, Strategy2Subgroup, \
     Strategy2Group, Strategy3, Strategy3Subgroup, Strategy3Group
@@ -169,40 +164,12 @@ class PricingPolicyViewSet(AbstractModelViewSet):
         return result
 
 
-# DEPRECATED
-class PricingPolicyLightViewSet(AbstractModelViewSet):
-    queryset = PricingPolicy.objects
-    serializer_class = PricingPolicyLightSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-    ]
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        SuperUserOrReadOnly,
-    ]
-    ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name'
-    ]
-    filter_class = PricingPolicyFilterSet
-
-
-class PricingPolicyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
-    queryset = PricingPolicy.objects
-    serializer_class = PricingPolicySerializer
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        AttributeFilter,
-        GroupsAttributeFilter
-    ]
-
-
 class InstrumentTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = InstrumentType
     target_model_serializer = InstrumentTypeSerializer
 
     permission_classes = GenericAttributeTypeViewSet.permission_classes + [
-        PomsConfigurationPermission
+
     ]
 
 
@@ -214,21 +181,13 @@ class InstrumentTypeFilterSet(FilterSet):
     short_name = CharFilter()
     public_name = CharFilter()
     instrument_class = django_filters.ModelMultipleChoiceFilter(queryset=InstrumentClass.objects)
-    one_off_event = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType)
-    regular_event = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType)
-    factor_same = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType)
-    factor_up = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType)
-    factor_down = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType)
-    member = ObjectPermissionMemberFilter(object_permission_model=InstrumentType)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=InstrumentType)
-    permission = ObjectPermissionPermissionFilter(object_permission_model=InstrumentType)
 
     class Meta:
         model = InstrumentType
         fields = []
 
 
-class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
+class InstrumentTypeViewSet(AbstractModelViewSet):
     queryset = InstrumentType.objects.select_related(
         'master_user',
         'instrument_class',
@@ -243,23 +202,10 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
         'factor_down',
         'factor_down__group',
     ).prefetch_related(
-        get_attributes_prefetch(),
-        *get_permissions_prefetch_lookups(
-            (None, InstrumentType),
-            ('one_off_event', TransactionType),
-            ('one_off_event__group', TransactionTypeGroup),
-            ('regular_event', TransactionType),
-            ('regular_event__group', TransactionTypeGroup),
-            ('factor_same', TransactionType),
-            ('factor_same__group', TransactionTypeGroup),
-            ('factor_up', TransactionType),
-            ('factor_up__group', TransactionTypeGroup),
-            ('factor_down', TransactionType),
-            ('factor_down__group', TransactionTypeGroup),
-        )
+        get_attributes_prefetch()
     )
     serializer_class = InstrumentTypeSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
@@ -540,159 +486,11 @@ class InstrumentTypeViewSet(AbstractWithObjectPermissionViewSet):
         return Response({"status": "ok"})
 
 
-class InstrumentTypeEvFilterSet(FilterSet):
-    id = NoOpFilter()
-    is_deleted = django_filters.BooleanFilter()
-    user_code = CharFilter()
-    name = CharFilter()
-    short_name = CharFilter()
-    public_name = CharFilter()
-    instrument_class = django_filters.ModelMultipleChoiceFilter(queryset=InstrumentClass.objects)
-
-    class Meta:
-        model = InstrumentType
-        fields = []
-
-
-class InstrumentTypeEvViewSet(AbstractWithObjectPermissionViewSet):
-    queryset = InstrumentType.objects.select_related(
-        'master_user',
-        'instrument_class',
-        'one_off_event',
-        'regular_event',
-        'factor_same',
-        'factor_up',
-        'factor_down',
-    ).prefetch_related(
-        'attributes',
-        'attributes__classifier',
-        # get_attributes_prefetch(),
-        *get_permissions_prefetch_lookups(
-            (None, InstrumentType),
-            ('one_off_event', TransactionType),
-            ('regular_event', TransactionType),
-            ('factor_same', TransactionType),
-            ('factor_up', TransactionType),
-            ('factor_down', TransactionType),
-        )
-    )
-    serializer_class = InstrumentTypeEvSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        AttributeFilter,
-        GroupsAttributeFilter,
-        EntitySpecificFilter
-    ]
-    filter_class = InstrumentTypeEvFilterSet
-    ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name',
-    ]
-
-
-class InstrumentTypeEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
-    queryset = InstrumentType.objects.select_related(
-        'master_user',
-        'instrument_class',
-        'one_off_event',
-        'one_off_event__group',
-        'regular_event',
-        'regular_event__group',
-        'factor_same',
-        'factor_same__group',
-        'factor_up',
-        'factor_up__group',
-        'factor_down',
-        'factor_down__group',
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            (None, InstrumentType),
-            ('one_off_event', TransactionType),
-            ('one_off_event__group', TransactionTypeGroup),
-            ('regular_event', TransactionType),
-            ('regular_event__group', TransactionTypeGroup),
-            ('factor_same', TransactionType),
-            ('factor_same__group', TransactionTypeGroup),
-            ('factor_up', TransactionType),
-            ('factor_up__group', TransactionTypeGroup),
-            ('factor_down', TransactionType),
-            ('factor_down__group', TransactionTypeGroup),
-        )
-    )
-    serializer_class = InstrumentTypeSerializer
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = InstrumentTypeFilterSet
-
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        AttributeFilter,
-        GroupsAttributeFilter,
-        EntitySpecificFilter
-    ]
-
-
-# DEPRECATED
-class InstrumentTypeLightViewSet(AbstractWithObjectPermissionViewSet):
-    queryset = InstrumentType.objects.select_related(
-        'master_user',
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            (None, InstrumentType),
-        )
-    )
-    serializer_class = InstrumentTypeLightSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        EntitySpecificFilter
-    ]
-    filter_class = InstrumentTypeFilterSet
-    ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name',
-    ]
-
-    @action(detail=True, methods=['get', 'put'], url_path='update-pricing', permission_classes=[IsAuthenticated])
-    def update_pricing(self, request, pk=None):
-        instrument_type = self.get_object()
-
-        print('detail_route: /update-pricing: process update_pricing')
-
-        instruments = Instrument.objects.filter(instrument_type=instrument_type, master_user=request.user.master_user)
-
-        print("request.data %s " % request.data)
-        print("instruments affected %s" % len(instruments))
-
-        from poms.pricing.models import InstrumentPricingPolicy
-
-        for instrument in instruments:
-
-            try:
-                policy = InstrumentPricingPolicy.objects.get(instrument=instrument,
-                                                             pricing_policy=request.data['pricing_policy'])
-
-                if request.data['overwrite_default_parameters']:
-
-                    policy.pricing_scheme_id = request.data['pricing_scheme']
-                    policy.default_value = request.data['default_value']
-                    policy.data = request.data['data']
-                    policy.attribute_key = request.data['attribute_key']
-                    policy.save()
-
-                    print("Policy %s updated" % policy)
-
-                else:
-                    print("Nothing changed for %s" % policy)
-            except InstrumentPricingPolicy.DoesNotExist:
-                print("Policy %s is not found for instrument %s" % (
-                    request.data['pricing_policy_object']['name'], instrument))
-
-        return Response({"status": "ok"})
-
-
 class InstrumentAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Instrument
     target_model_serializer = InstrumentSerializer
 
     permission_classes = GenericAttributeTypeViewSet.permission_classes + [
-        PomsConfigurationPermission
     ]
 
 
@@ -707,7 +505,6 @@ class InstrumentFilterSet(FilterSet):
     name = CharFilter()
     public_name = CharFilter()
     short_name = CharFilter()
-    instrument_type = ModelExtWithPermissionMultipleChoiceFilter(model=InstrumentType)
     instrument_type__instrument_class = django_filters.ModelMultipleChoiceFilter(queryset=InstrumentClass.objects)
     pricing_currency = ModelExtMultipleChoiceFilter(model=Currency)
     price_multiplier = django_filters.RangeFilter()
@@ -723,16 +520,13 @@ class InstrumentFilterSet(FilterSet):
     daily_pricing_model = django_filters.ModelMultipleChoiceFilter(queryset=DailyPricingModel.objects)
     # price_download_scheme = ModelExtMultipleChoiceFilter(model=PriceDownloadScheme, field_name='scheme_name')
     maturity_date = django_filters.DateFromToRangeFilter()
-    member = ObjectPermissionMemberFilter(object_permission_model=Instrument)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Instrument)
-    permission = ObjectPermissionPermissionFilter(object_permission_model=Instrument)
 
     class Meta:
         model = Instrument
         fields = []
 
 
-class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
+class InstrumentViewSet(AbstractModelViewSet):
     queryset = Instrument.objects.select_related(
         'instrument_type',
         'instrument_type__instrument_class',
@@ -766,14 +560,9 @@ class InstrumentViewSet(AbstractWithObjectPermissionViewSet):
                 ),
             )),
         get_attributes_prefetch(),
-        *get_permissions_prefetch_lookups(
-            (None, Instrument),
-            ('instrument_type', InstrumentType),
-            # ('attributes__attribute_type', InstrumentAttributeType),
-        )
     )
     serializer_class = InstrumentSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
@@ -1310,39 +1099,6 @@ class InstrumentFDBCreateFromCallbackViewSet(APIView):
             return Response({'status': 'error'})
 
 
-class InstrumentLightFilterSet(FilterSet):
-    id = NoOpFilter()
-    is_deleted = django_filters.BooleanFilter()
-    user_code = CharFilter()
-    name = CharFilter()
-    public_name = CharFilter()
-    short_name = CharFilter()
-
-    class Meta:
-        model = Instrument
-        fields = []
-
-
-# DEPRECATED
-class InstrumentLightViewSet(AbstractWithObjectPermissionViewSet):
-    queryset = Instrument.objects.select_related(
-        'master_user'
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            (None, Instrument)
-        )
-    )
-    serializer_class = InstrumentLightSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        EntitySpecificFilter
-    ]
-    filter_class = InstrumentLightFilterSet
-    ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name',
-    ]
-
-
 class InstrumentForSelectFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
@@ -1356,18 +1112,14 @@ class InstrumentForSelectFilterSet(FilterSet):
         fields = []
 
 
-class InstrumentForSelectViewSet(AbstractWithObjectPermissionViewSet):
+class InstrumentForSelectViewSet(AbstractModelViewSet):
     queryset = Instrument.objects.select_related(
         'master_user',
         'instrument_type',
         'instrument_type__instrument_class',
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            (None, Instrument)
-        )
     )
     serializer_class = InstrumentForSelectSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         InstrumentSelectSpecialQueryFilter
 
@@ -1517,114 +1269,8 @@ class InstrumentDatabaseSearchViewSet(APIView):
         return Response(result)
 
 
-class InstrumentEvFilterSet(FilterSet):
-    id = NoOpFilter()
-    is_deleted = django_filters.BooleanFilter()
-    user_code = CharFilter()
-    name = CharFilter()
-    public_name = CharFilter()
-    short_name = CharFilter()
-
-    class Meta:
-        model = Instrument
-        fields = []
-
-
-# List method for Entity Viewer
-class InstrumentEvViewSet(AbstractWithObjectPermissionViewSet):
-    queryset = Instrument.objects.select_related(
-        'instrument_type',
-        'instrument_type__instrument_class',
-        'accrued_currency',
-        'pricing_currency',
-        'pricing_condition',
-        'payment_size_detail'
-    ).prefetch_related(
-        'attributes',
-        'attributes__classifier',
-        # get_attributes_prefetch(), # TODO Refactor this method
-        *get_permissions_prefetch_lookups(
-            (None, Instrument),
-            ('instrument_type', InstrumentType)
-        )
-    )
-    serializer_class = InstrumentEvSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        AttributeFilter,
-        GroupsAttributeFilter,
-        EntitySpecificFilter
-    ]
-    filter_class = InstrumentEvFilterSet
-    ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name',
-    ]
-
-
-class InstrumentEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
-    queryset = Instrument.objects.select_related(
-        'instrument_type',
-        'instrument_type__instrument_class',
-        'pricing_currency',
-        'accrued_currency',
-        'payment_size_detail',
-        'daily_pricing_model',
-        # 'price_download_scheme',
-        # 'price_download_scheme__provider',
-    ).prefetch_related(
-        # Prefetch(
-        #     'attributes',
-        #     queryset=InstrumentAttribute.objects.select_related('attribute_type', 'classifier')
-        # ),
-        Prefetch(
-            'manual_pricing_formulas',
-            queryset=ManualPricingFormula.objects.select_related('pricing_policy')
-        ),
-        Prefetch(
-            'accrual_calculation_schedules',
-            queryset=AccrualCalculationSchedule.objects.select_related('accrual_calculation_model', 'periodicity')
-        ),
-        'factor_schedules',
-        Prefetch(
-            'event_schedules',
-            queryset=EventSchedule.objects.select_related(
-                'event_class', 'notification_class', 'periodicity'
-            ).prefetch_related(
-                Prefetch(
-                    'actions',
-                    queryset=EventScheduleAction.objects.select_related(
-                        'transaction_type',
-                        'transaction_type__group'
-                    ).prefetch_related(
-                        *get_permissions_prefetch_lookups(
-                            ('transaction_type', TransactionType),
-                            ('transaction_type__group', TransactionTypeGroup)
-                        )
-                    )
-                ),
-            )),
-        get_attributes_prefetch(),
-        *get_permissions_prefetch_lookups(
-            (None, Instrument),
-            ('instrument_type', InstrumentType),
-            # ('attributes__attribute_type', InstrumentAttributeType),
-        )
-    )
-    serializer_class = InstrumentSerializer
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = InstrumentFilterSet
-
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        AttributeFilter,
-        GroupsAttributeFilter,
-        EntitySpecificFilter
-    ]
-
-
 class PriceHistoryFilterSet(FilterSet):
     id = NoOpFilter()
-    instrument = ModelExtWithPermissionMultipleChoiceFilter(model=Instrument)
     pricing_policy = ModelExtMultipleChoiceFilter(model=PricingPolicy)
     date = django_filters.DateFromToRangeFilter()
     principal_price = django_filters.RangeFilter()
@@ -1641,11 +1287,6 @@ class PriceHistoryViewSet(AbstractModelViewSet):
         'instrument__instrument_type',
         'instrument__instrument_type__instrument_class',
         'pricing_policy'
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            ('instrument', Instrument),
-            ('instrument__instrument_type', InstrumentType),
-        )
     )
     serializer_class = PriceHistorySerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
@@ -1743,43 +1384,12 @@ class PriceHistoryViewSet(AbstractModelViewSet):
 
         return Response(result)
 
-
-class PriceHistoryEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
-    queryset = PriceHistory.objects.select_related(
-        'instrument',
-        'instrument__instrument_type',
-        'instrument__instrument_type__instrument_class',
-        'pricing_policy'
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            ('instrument', Instrument),
-            ('instrument__instrument_type', InstrumentType),
-        )
-    )
-    serializer_class = PriceHistorySerializer
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = PriceHistoryFilterSet
-
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByInstrumentFilter,
-        PriceHistoryObjectPermissionFilter,
-        AttributeFilter,
-        GroupsAttributeFilter
-    ]
-
-
 class GeneratedEventFilterSet(FilterSet):
     id = NoOpFilter()
     # is_need_reaction = django_filters.MethodFilter(action='filter_is_need_reaction')
     is_need_reaction = django_filters.BooleanFilter()
     status = django_filters.MultipleChoiceFilter(choices=GeneratedEvent.STATUS_CHOICES)
     status_date = django_filters.DateFromToRangeFilter()
-    instrument = ModelExtWithPermissionMultipleChoiceFilter(model=Instrument)
-    portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio)
-    account = ModelExtWithPermissionMultipleChoiceFilter(model=Account)
-    strategy1 = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy1)
-    strategy2 = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy2)
-    strategy3 = ModelExtWithPermissionMultipleChoiceFilter(model=Strategy3)
     member = ModelExtMultipleChoiceFilter(model=Strategy3)
 
     effective_date = django_filters.DateFromToRangeFilter()
@@ -1831,24 +1441,6 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
         'transaction_type',
         'transaction_type__group',
         'member'
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            ('instrument', Instrument),
-            ('instrument__instrument_type', InstrumentType),
-            ('portfolio', Portfolio),
-            ('account', Account),
-            ('account__type', AccountType),
-            ('strategy1', Strategy1),
-            ('strategy1__subgroup', Strategy1Subgroup),
-            ('strategy1__subgroup__group', Strategy1Group),
-            ('strategy2', Strategy2),
-            ('strategy2__subgroup', Strategy2Subgroup),
-            ('strategy2__subgroup__group', Strategy2Group),
-            ('strategy3', Strategy3),
-            ('strategy3__subgroup', Strategy3Subgroup),
-            ('strategy3__subgroup__group', Strategy3Group),
-            ('transaction_type', TransactionType),
-        )
     )
     serializer_class = GeneratedEventSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
@@ -2017,122 +1609,6 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
 
         serializer = self.get_serializer(instance=generated_event)
         return Response(serializer.data)
-
-
-class GeneratedEventEvViewSet(AbstractModelViewSet):
-    queryset = GeneratedEvent.objects.select_related(
-        'master_user',
-        'event_schedule',
-        'event_schedule__event_class',
-        'event_schedule__notification_class',
-        'event_schedule__periodicity',
-        'instrument',
-        'instrument__instrument_type',
-        'instrument__instrument_type__instrument_class',
-        'portfolio',
-        'account',
-        'strategy1',
-        'strategy1__subgroup',
-        'strategy1__subgroup__group',
-        'strategy2',
-        'strategy2__subgroup',
-        'strategy2__subgroup__group',
-        'strategy3',
-        'strategy3__subgroup',
-        'strategy3__subgroup__group',
-        'action',
-        'transaction_type',
-        'transaction_type__group',
-        'member'
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            ('instrument', Instrument),
-            ('instrument__instrument_type', InstrumentType),
-            ('portfolio', Portfolio),
-            ('account', Account),
-            ('account__type', AccountType),
-            ('strategy1', Strategy1),
-            ('strategy1__subgroup', Strategy1Subgroup),
-            ('strategy1__subgroup__group', Strategy1Group),
-            ('strategy2', Strategy2),
-            ('strategy2__subgroup', Strategy2Subgroup),
-            ('strategy2__subgroup__group', Strategy2Group),
-            ('strategy3', Strategy3),
-            ('strategy3__subgroup', Strategy3Subgroup),
-            ('strategy3__subgroup__group', Strategy3Group),
-            ('transaction_type', TransactionType),
-        )
-    )
-    serializer_class = GeneratedEventSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByInstrumentFilter,
-        PriceHistoryObjectPermissionFilter,
-        AttributeFilter,
-        GroupsAttributeFilter,
-    ]
-    filter_class = GeneratedEventFilterSet
-    ordering_fields = [
-        'instrument', 'instrument__user_code', 'instrument__name', 'instrument__short_name', 'instrument__public_name',
-        'pricing_policy', 'pricing_policy__user_code', 'pricing_policy__name', 'pricing_policy__short_name',
-        'pricing_policy__public_name',
-        'date', 'principal_price', 'accrued_price',
-    ]
-
-
-class GeneratedEventEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
-    queryset = GeneratedEvent.objects.select_related(
-        'master_user',
-        'event_schedule',
-        'event_schedule__event_class',
-        'event_schedule__notification_class',
-        'event_schedule__periodicity',
-        'instrument',
-        'instrument__instrument_type',
-        'instrument__instrument_type__instrument_class',
-        'portfolio',
-        'account',
-        'strategy1',
-        'strategy1__subgroup',
-        'strategy1__subgroup__group',
-        'strategy2',
-        'strategy2__subgroup',
-        'strategy2__subgroup__group',
-        'strategy3',
-        'strategy3__subgroup',
-        'strategy3__subgroup__group',
-        'action',
-        'transaction_type',
-        'transaction_type__group',
-        'member'
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            ('instrument', Instrument),
-            ('instrument__instrument_type', InstrumentType),
-            ('portfolio', Portfolio),
-            ('account', Account),
-            ('account__type', AccountType),
-            ('strategy1', Strategy1),
-            ('strategy1__subgroup', Strategy1Subgroup),
-            ('strategy1__subgroup__group', Strategy1Group),
-            ('strategy2', Strategy2),
-            ('strategy2__subgroup', Strategy2Subgroup),
-            ('strategy2__subgroup__group', Strategy2Group),
-            ('strategy3', Strategy3),
-            ('strategy3__subgroup', Strategy3Subgroup),
-            ('strategy3__subgroup__group', Strategy3Group),
-            ('transaction_type', TransactionType),
-        )
-    )
-    serializer_class = GeneratedEventSerializer
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = GeneratedEventFilterSet
-
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByInstrumentFilter,
-        PriceHistoryObjectPermissionFilter,
-        AttributeFilter,
-        GroupsAttributeFilter
-    ]
 
 
 class EventScheduleConfigViewSet(AbstractModelViewSet):

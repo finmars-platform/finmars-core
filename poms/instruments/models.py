@@ -24,9 +24,9 @@ from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableMode
     DataTimeStampedModel
 from poms.common.utils import date_now, isclose
 from poms.common.wrapper_models import NamedModelAutoMapping
+from poms.configuration.models import ConfigurationModel
 from poms.currencies.models import CurrencyHistory
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
-from poms.obj_perms.models import GenericObjectPermission
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentPricingPolicy
 from poms.users.models import MasterUser, EcosystemDefault
 
@@ -412,7 +412,7 @@ class Country(DataTimeStampedModel):
                                                 verbose_name=gettext_lazy('intermediate region code'))
 
 
-class PricingPolicy(NamedModel, DataTimeStampedModel):
+class PricingPolicy(NamedModel, DataTimeStampedModel, ConfigurationModel):
     # DISABLED = 0
     # BLOOMBERG = 1
     # TYPES = (
@@ -455,7 +455,7 @@ class PricingPolicy(NamedModel, DataTimeStampedModel):
     #     super(PricingPolicy, self).delete(*args, **kwargs)
 
 
-class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel, ConfigurationModel):
     master_user = models.ForeignKey(MasterUser, related_name='instrument_types',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     instrument_class = models.ForeignKey(InstrumentClass, related_name='instrument_types', on_delete=models.PROTECT,
@@ -478,7 +478,6 @@ class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedM
     has_second_exposure_currency = models.BooleanField(default=False,
                                                        verbose_name=gettext_lazy('has second exposure currency'))
 
-    object_permissions = GenericRelation(GenericObjectPermission)
 
     instrument_form_layouts = models.TextField(null=True, blank=True,
                                                verbose_name=gettext_lazy('instrument form layouts'))
@@ -564,6 +563,220 @@ class InstrumentType(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedM
 
     reference_for_pricing = models.CharField(max_length=100, blank=True, default='',
                                              verbose_name=gettext_lazy('reference for pricing'))
+
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+                "allow_null": False
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+                "allow_null": True
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "configuration_code",
+                "name": "Configuration code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+                "allow_null": True
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+                "allow_null": True
+            },
+            {
+                "key": "is_active",
+                "name": "Is active",
+                "value_type": 50,
+                "allow_null": True
+            },
+            {
+                "key": "instrument_class",
+                "name": "Instrument class",
+                "value_type": "field",
+                "value_content_type": "instruments.instrumentclass",
+                "value_entity": "instrument-class",
+                "code": "user_code",
+                "allow_null": False
+            },
+            {
+                "key": "one_off_event",
+                "name": "One off event",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "value_content_type": "transactions.transactiontype",
+                "code": "user_code",
+                "allow_null": False
+            },
+            {
+                "key": "regular_event",
+                "name": "Regular event",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "value_content_type": "transactions.transactiontype",
+                "code": "user_code",
+                "allow_null": False
+            },
+            {
+                "key": "factor_same",
+                "name": "Factor same",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "value_content_type": "transactions.transactiontype",
+                "code": "user_code",
+                "allow_null": False
+            },
+            {
+                "key": "factor_up",
+                "name": "Factor up",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "value_content_type": "transactions.transactiontype",
+                "code": "user_code",
+                "allow_null": False
+            },
+            {
+                "key": "factor_down",
+                "name": "Factor down",
+                "value_type": "field",
+                "value_entity": "transaction-type",
+                "value_content_type": "transactions.transactiontype",
+                "code": "user_code",
+                "allow_null": False
+            },
+            {
+                "key": "has_second_exposure_currency",
+                "name": "Has second exposure currency",
+                "value_type": 50
+            },
+            # region Exposure
+            {
+                "key": "underlying_long_multiplier",
+                "name": "Underlying long multiplier",
+                "value_type": 20
+            },
+            {
+                "key": "underlying_short_multiplier",
+                "name": "Underlying short multiplier",
+                "value_type": 20
+            },
+
+            {
+                "key": "co_directional_exposure_currency",
+                "name": "Exposure Co-Directional Currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "counter_directional_exposure_currency",
+                "name": "Exposure Counter-Directional Currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "long_underlying_exposure",
+                "name": "Long Underlying Exposure",
+                "value_content_type": "instruments.longunderlyingexposure",
+                "value_entity": "long-underlying-exposure",
+                "value_type": "field"
+            },
+            {
+                "key": "short_underlying_exposure",
+                "name": "Short Underlying Exposure",
+                "value_content_type": "instruments.shortunderlyingexposure",
+                "value_entity": "short-underlying-exposure",
+                "value_type": "field"
+            },
+            {
+                "key": "exposure_calculation_model",
+                "name": "Exposure Calculation Model",
+                "value_content_type": "instruments.exposurecalculationmodel",
+                "value_entity": "exposure-calculation-model",
+                "value_type": "field"
+            },
+
+            {
+                "key": "long_underlying_instrument",
+                "name": "Long Underlying Instrument",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "value_type": "field"
+            },
+            {
+                "key": "short_underlying_instrument",
+                "name": "Short Underlying Instrument",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "value_type": "field"
+            },
+            # endregion Exposure
+            {
+                "key": "accrued_currency",
+                "name": "Accrued currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "accrued_multiplier",
+                "name": "Accrued multiplier",
+                "value_type": 20
+            },
+            {
+                "key": "payment_size_detail",
+                "name": "Payment size detail",
+                "value_content_type": "instruments.paymentsizedetail",
+                "value_entity": "payment-size-detail",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "default_accrued",
+                "name": "Default accrued",
+                "value_type": 20
+            },
+
+            {
+                "key": "default_price",
+                "name": "Default price",
+                "value_type": 20
+            },
+            {
+                "key": "maturity_date",
+                "name": "Maturity date",
+                "value_type": 40
+            },
+            {
+                "key": "maturity_price",
+                "name": "Maturity price",
+                "value_type": 20
+            }
+        ]
 
     @property
     def instrument_factor_schedule_data(self):
@@ -816,7 +1029,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
     maturity_price = models.FloatField(default=0.0, verbose_name=gettext_lazy('maturity price'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     co_directional_exposure_currency = models.ForeignKey('currencies.Currency',
                                                          related_name='co_directional_exposure_currency',
@@ -854,6 +1066,215 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             ('manage_instrument', 'Can manage instrument'),
         ]
         ordering = ['user_code']
+
+    @staticmethod
+    def get_system_attrs():
+        return [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "instrument_type",
+                "name": "Instrument type",
+                "value_type": "field",
+                "value_content_type": "instruments.instrumenttype",
+                "value_entity": "instrument-type",
+                "code": "user_code"
+            },
+            {
+                "key": "is_active",
+                "name": "Is active",
+                "value_type": 50
+            },
+            {
+                "key": "has_linked_with_portfolio",
+                "name": "Has linked with portfolio",
+                "value_type": 50
+            },
+            {
+                "key": "reference_for_pricing",
+                "name": "Reference for pricing",
+                "value_type": 10
+            },
+            {
+                "key": "pricing_currency",
+                "name": "Pricing currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "price_multiplier",
+                "name": "Price multiplier",
+                "value_type": 20
+            },
+            {
+                "key": "position_reporting",
+                "name": "Position reporting",
+                "value_content_type": "instruments.positionreporting",
+                "value_entity": "position-reporting",
+                "value_type": "field",
+            },
+            {
+                "key": "accrued_currency",
+                "name": "Accrued currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "maturity_date",
+                "name": "Maturity date",
+                "value_type": 40
+            },
+            {
+                "key": "maturity_price",
+                "name": "Maturity price",
+                "value_type": 20
+            },
+            {
+                "key": "accrued_multiplier",
+                "name": "Accrued multiplier",
+                "value_type": 20
+            },
+            {
+                "key": "pricing_condition",
+                "name": "Pricing Condition",
+                "value_content_type": "instruments.pricingcondition",
+                "value_entity": "pricing-condition",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "payment_size_detail",
+                "name": "Accrual Size Clarification",
+                "value_content_type": "instruments.paymentsizedetail",
+                "value_entity": "payment-size-detail",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "default_price",
+                "name": "Default price",
+                "value_type": 20
+            },
+            {
+                "key": "default_accrued",
+                "name": "Default accrued",
+                "value_type": 20
+            },
+            {
+                "key": "user_text_1",
+                "name": "User text 1",
+                "value_type": 10
+            },
+            {
+                "key": "user_text_2",
+                "name": "User text 2",
+                "value_type": 10
+            },
+            {
+                "key": "user_text_3",
+                "name": "User text 3",
+                "value_type": 10
+            },
+
+            {
+                "key": "underlying_long_multiplier",
+                "name": "Underlying long multiplier",
+                "value_type": 20
+            },
+            {
+                "key": "underlying_short_multiplier",
+                "name": "Underlying short multiplier",
+                "value_type": 20
+            },
+
+            {
+                "key": "co_directional_exposure_currency",
+                "name": "Exposure Co-Directional Currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "counter_directional_exposure_currency",
+                "name": "Exposure Counter-Directional Currency",
+                "value_content_type": "currencies.currency",
+                "value_entity": "currency",
+                "code": "user_code",
+                "value_type": "field"
+            },
+            {
+                "key": "long_underlying_exposure",
+                "name": "Long Underlying Exposure",
+                "value_content_type": "instruments.longunderlyingexposure",
+                "value_entity": "long-underlying-exposure",
+                "value_type": "field"
+            },
+            {
+                "key": "short_underlying_exposure",
+                "name": "Short Underlying Exposure",
+                "value_content_type": "instruments.shortunderlyingexposure",
+                "value_entity": "short-underlying-exposure",
+                "value_type": "field"
+            },
+            {
+                "key": "exposure_calculation_model",
+                "name": "Exposure Calculation Model",
+                "value_content_type": "instruments.exposurecalculationmodel",
+                "value_entity": "exposure-calculation-model",
+                "value_type": "field"
+            },
+
+            {
+                "key": "long_underlying_instrument",
+                "name": "Long Underlying Instrument",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "value_type": "field"
+            },
+            {
+                "key": "short_underlying_instrument",
+                "name": "Short Underlying Instrument",
+                "value_content_type": "instruments.instrument",
+                "value_entity": "instrument",
+                "value_type": "field"
+            },
+            {
+                "key": "country",
+                "name": "Country",
+                "value_content_type": "instruments.country",
+                "value_entity": "country",
+                "code": "user_code",
+                "value_type": "field"
+            }
+        ]
 
     @property
     def is_default(self):
@@ -1133,7 +1554,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                         price.save(update_fields=['accrued_price'])
 
     def get_accrual_size(self, price_date):
-        if price_date >= self.maturity_date:
+        if not self.maturity_date or (price_date >= self.maturity_date):
             return 0.0
 
         accrual = self.find_accrual(price_date)
@@ -1150,7 +1571,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
     def get_accrual_factor(self, price_date):
         from poms.common.formula_accruals import coupon_accrual_factor
 
-        if price_date >= self.maturity_date:
+        if not self.maturity_date or (price_date >= self.maturity_date):
             # return self.maturity_price
             return 0.0
 
@@ -1535,6 +1956,24 @@ class AccrualCalculationSchedule(models.Model):
 
     notes = models.TextField(blank=True, default='', verbose_name=gettext_lazy('notes'))
 
+    def save(self, *args, **kwargs):
+
+        from dateutil.parser import parse
+
+        if self.accrual_start_date:
+            try:
+                self.accrual_start_date = parse(self.accrual_start_date).strftime('%Y-%m-%d')
+            except Exception as e:
+                self.accrual_start_date = None
+
+        if self.first_payment_date:
+            try:
+                self.first_payment_date = parse(self.first_payment_date).strftime('%Y-%m-%d')
+            except Exception as e:
+                self.first_payment_date = None
+
+        super(AccrualCalculationSchedule, self).save(*args, **kwargs)
+
     class Meta:
         verbose_name = gettext_lazy('accrual calculation schedule')
         verbose_name_plural = gettext_lazy('accrual calculation schedules')
@@ -1751,8 +2190,15 @@ class PriceHistory(DataTimeStampedModel):
 
         except Exception as error:
 
-            _l.debug('Price History save error %s' % error)
+            _l.debug('Price History save ytm error %s' % error)
             _l.debug(traceback.print_exc())
+
+        if not self.factor:
+            try:
+                self.factor = self.instrument.get_factor(self.date)
+            except Exception as e:
+                _l.debug('Price History save factor error %s' % e)
+                _l.debug(traceback.print_exc())
 
         super(PriceHistory, self).save(*args, **kwargs)
 

@@ -83,6 +83,9 @@ class PerformanceReportBuilder:
         if not self.instance.end_date:
             self.end_date = get_closest_bday_of_yesterday()
 
+        if not is_business_day(self.instance.end_date):
+            self.instance.end_date = get_last_business_day(self.instance.end_date)
+
         self.instance.first_transaction_date = self.get_first_transaction()
 
         begin_date = self.instance.begin_date
@@ -96,6 +99,11 @@ class PerformanceReportBuilder:
             self.instance.error_message = "Could not find begin date. Please, check if portfolio has transactions"
 
             return self.instance
+
+        if not is_business_day(begin_date):
+            begin_date = get_last_business_day(begin_date)
+
+        self.instance.begin_date = begin_date
 
         # if begin_date < first_transaction_date:
         #     begin_date = first_transaction_date
@@ -1152,7 +1160,7 @@ class PerformanceReportBuilder:
 
         self.instance.item_portfolios = Portfolio.objects.prefetch_related(
             'attributes'
-        ).defer('object_permissions', 'responsibles', 'counterparties', 'transaction_types', 'accounts') \
+        ).defer('responsibles', 'counterparties', 'transaction_types', 'accounts') \
             .filter(master_user=self.instance.master_user) \
             .filter(
             id__in=ids)
@@ -1163,7 +1171,7 @@ class PerformanceReportBuilder:
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_account_types(self, accounts):
 
@@ -1192,21 +1200,21 @@ class PerformanceReportBuilder:
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies2(self, ids):
         self.instance.item_strategies2 = Strategy2.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies3(self, ids):
         self.instance.item_strategies3 = Strategy3.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items(self):
 

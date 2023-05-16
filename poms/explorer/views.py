@@ -1,9 +1,11 @@
 import json
 import logging
+import mimetypes
+import os
 from tempfile import NamedTemporaryFile
-from django.http import HttpResponse
 
 from django.http import FileResponse
+from django.http import HttpResponse
 from rest_framework import status
 from rest_framework.exceptions import ValidationError, PermissionDenied
 from rest_framework.response import Response
@@ -64,18 +66,21 @@ class ExplorerViewSet(AbstractViewSet):
                 })
 
         for file in items[1]:
+            created = storage.get_created_time(path + '/' + file)
+            modified = storage.get_modified_time(path + '/' + file)
+
+            mime_type, encoding = mimetypes.guess_type(file)
 
             item = {
                 'type': 'file',
+                'mime_type': mime_type,
                 'name': file,
-                'file_path': path + file, # path already has / in end of str
+                'created': created,
+                'modified': modified,
+                'file_path': os.path.join(path, file),  # path already has / in end of str
                 'size': storage.size(path + '/' + file),
+                'size_pretty': storage.convert_size(storage.size(path + '/' + file))
             }
-
-            try:
-                item['last_modified']: storage.modified_time(path + '/' + file)
-            except Exception as e:
-                _l.error("Modfied date is not avaialbel")
 
             results.append(item)
 
@@ -187,14 +192,15 @@ class ExplorerUploadViewSet(AbstractViewSet):
 
             _l.info('going to save %s' % filepath)
 
-            try:
-
-                storage.delete(filepath)
-
-                _l.info("File exist, going to delete")
-
-            except Exception as e:
-                _l.info("File is not exists, going to create")
+            # Possibly deprecated
+            # try:
+            #
+            #     storage.delete(filepath)
+            #
+            #     _l.info("File exist, going to delete")
+            #
+            # except Exception as e:
+            #     _l.info("File is not exists, going to create")
 
             storage.save(filepath, file)
 
@@ -246,6 +252,8 @@ class ExplorerDeleteViewSet(AbstractViewSet):
 
         if not path:
             raise ValidationError("Path is required")
+        elif path == '/':
+            raise ValidationError("Could not remove root folder")
         else:
             path = settings.BASE_API_URL + '/' + path
 
@@ -256,7 +264,7 @@ class ExplorerDeleteViewSet(AbstractViewSet):
             _l.info('going to delete %s' % path)
 
             if is_dir:
-                storage.delete(path + '/.init')
+                storage.delete_directory(path)
 
             storage.delete(path)
         except Exception as e:
@@ -288,3 +296,51 @@ class ExplorerCreateFolderViewSet(AbstractViewSet):
         return Response({
             "path": path
         })
+
+
+class ExplorerDeleteFolderViewSet(AbstractViewSet):
+    serializer_class = ExplorerSerializer
+
+    def create(self, request):
+
+        path = request.data.get('path')
+
+        # TODO validate path that eiher public/import/system or user home folder
+
+        if not path:
+            raise ValidationError("Path is required")
+        else:
+            if path[0] == '/':
+                path = settings.BASE_API_URL + path
+            else:
+                path = settings.BASE_API_URL + '/' + path
+
+
+        _l.info("Delete directory %s" % path)
+
+        storage.delete_directory(path)
+
+        return Response({
+            "status": 'ok'
+        })
+
+
+class DownloadAsZipViewSet(AbstractViewSet):
+    serializer_class = ExplorerSerializer
+
+    def create(self, request):
+
+        paths = request.data.get('paths')
+
+        # TODO validate path that eiher public/import/system or user home folder
+
+        if not paths:
+            raise ValidationError("paths is required")
+
+        zip_file_path = storage.download_paths_as_zip(paths)
+
+        # Serve the zip file as a response
+        response = FileResponse(open(zip_file_path, 'rb'), content_type='application/zip')
+        response['Content-Disposition'] = f'attachment; filename="archive.zip"'
+
+        return response

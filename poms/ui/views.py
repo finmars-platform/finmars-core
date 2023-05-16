@@ -7,13 +7,21 @@ from rest_framework.viewsets import ModelViewSet
 
 from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter
 from poms.common.mixins import DestroySystemicModelMixin
-from poms.common.views import AbstractModelViewSet, AbstractReadOnlyModelViewSet
-from poms.ui.models import ListLayout, EditLayout, Bookmark, Configuration, \
-    ConfigurationExportLayout, ComplexTransactionUserFieldModel, InstrumentUserFieldModel, PortalInterfaceAccessModel, \
+from poms.common.views import AbstractModelViewSet, AbstractViewSet, AbstractReadOnlyModelViewSet
+from poms.ui.models import ListLayout, EditLayout, Bookmark,  \
+    ConfigurationExportLayout, ComplexTransactionUserField, InstrumentUserField, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, CrossEntityAttributeExtension, \
-    ColumnSortData, TransactionUserFieldModel
+    ColumnSortData, TransactionUserField
+from poms.instruments.models import Instrument, InstrumentType
+from poms.currencies.models import Currency
+from poms.accounts.models import Account, AccountType
+from poms.portfolios.models import Portfolio
+from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy2, Strategy2Subgroup, Strategy3, Strategy3Subgroup
+from poms.reports.models import BalanceReport
+from poms.transactions.models import TransactionType, TransactionTypeGroup
+from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsible, ResponsibleGroup
 from poms.ui.serializers import ListLayoutSerializer, \
-    EditLayoutSerializer, BookmarkSerializer, ConfigurationSerializer, ConfigurationExportLayoutSerializer, \
+    EditLayoutSerializer, BookmarkSerializer,  ConfigurationExportLayoutSerializer, \
     ComplexTransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
     DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer, EntityTooltipSerializer, \
     ColorPaletteSerializer, ListLayoutLightSerializer, DashboardLayoutLightSerializer, \
@@ -52,7 +60,7 @@ class PortalInterfaceAccessViewSet(AbstractReadOnlyModelViewSet):
 
 
 class ComplexTransactionUserFieldViewSet(AbstractModelViewSet):
-    queryset = ComplexTransactionUserFieldModel.objects.select_related(
+    queryset = ComplexTransactionUserField.objects.select_related(
         'master_user',
     )
     serializer_class = ComplexTransactionUserFieldSerializer
@@ -61,7 +69,7 @@ class ComplexTransactionUserFieldViewSet(AbstractModelViewSet):
     ]
 
 class TransactionUserFieldViewSet(AbstractModelViewSet):
-    queryset = TransactionUserFieldModel.objects.select_related(
+    queryset = TransactionUserField.objects.select_related(
         'master_user',
     )
     serializer_class = TransactionUserFieldSerializer
@@ -169,7 +177,7 @@ class ColumnSortDataViewSet(AbstractModelViewSet):
 
 
 class InstrumentUserFieldViewSet(AbstractModelViewSet):
-    queryset = InstrumentUserFieldModel.objects.select_related(
+    queryset = InstrumentUserField.objects.select_related(
         'master_user',
     )
     serializer_class = InstrumentUserFieldSerializer
@@ -457,23 +465,53 @@ class BookmarkViewSet(AbstractModelViewSet):
     ]
 
 
-class ConfigurationFilterSet(FilterSet):
-    id = NoOpFilter()
+# class ConfigurationFilterSet(FilterSet):
+#     id = NoOpFilter()
+#
+#     class Meta:
+#         model = Configuration
+#         fields = []
+#
+#
+# class ConfigurationViewSet(AbstractModelViewSet):
+#     queryset = Configuration.objects.prefetch_related(
+#         'master_user',
+#     )
+#     serializer_class = ConfigurationSerializer
+#     filter_backends = AbstractModelViewSet.filter_backends + [
+#         OwnerByMasterUserFilter,
+#     ]
+#     filter_class = ConfigurationFilterSet
+#     ordering_fields = [
+#         'name',
+#     ]
 
-    class Meta:
-        model = Configuration
-        fields = []
 
+class SystemAttributesViewSet(AbstractViewSet):
+    @staticmethod
+    def list(request, *args, **kwargs):
 
-class ConfigurationViewSet(AbstractModelViewSet):
-    queryset = Configuration.objects.prefetch_related(
-        'master_user',
-    )
-    serializer_class = ConfigurationSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-    ]
-    filter_class = ConfigurationFilterSet
-    ordering_fields = [
-        'name',
-    ]
+        props = {
+            'portfolios.portfolio': Portfolio.get_system_attrs(),
+            'accounts.account': Account.get_system_attrs(),
+            'accounts.accounttype': AccountType.get_system_attrs(),
+            'instruments.instrument': Instrument.get_system_attrs(),
+            'instruments.instrumenttype': InstrumentType.get_system_attrs(),
+            'currencies.currency': Currency.get_system_attrs(),
+            'counterparties.counterparty': Counterparty.get_system_attrs(),
+            'counterparties.counterpartygroup': CounterpartyGroup.get_system_attrs(),
+            'counterparties.responsible': Responsible.get_system_attrs(),
+            'counterparties.responsiblegroup': ResponsibleGroup.get_system_attrs(),
+            'transactions.transactiontype': TransactionType.get_system_attrs(),
+            'transactions.transactiontypegroup': TransactionTypeGroup.get_system_attrs(),
+            'strategies.strategy1': Strategy1.get_system_attrs(),
+            'strategies.strategy1subgroup': Strategy1Subgroup.get_system_attrs(),
+            'strategies.strategy2': Strategy2.get_system_attrs(),
+            'strategies.strategy2subgroup': Strategy2Subgroup.get_system_attrs(),
+            'strategies.strategy3': Strategy3.get_system_attrs(),
+            'strategies.strategy3subgroup': Strategy3Subgroup.get_system_attrs(),
+
+            'reports.balancereport': BalanceReport.get_system_attrs(),
+        }
+
+        return Response(props)

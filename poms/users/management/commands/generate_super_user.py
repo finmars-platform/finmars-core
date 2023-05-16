@@ -10,6 +10,9 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
 
+        import logging
+        _l = logging.getLogger('provision')
+
         from django.contrib.auth.models import User
 
         username = os.environ.get('ADMIN_USERNAME', None)
@@ -22,7 +25,7 @@ class Command(BaseCommand):
 
                 superuser = User.objects.get(username=username)
 
-                self.stdout.write("Skip. Super user '%s' already exists." % superuser.username)
+                _l.info("Skip. Super user '%s' already exists." % superuser.username)
 
             except User.DoesNotExist:
 
@@ -32,7 +35,7 @@ class Command(BaseCommand):
                     password=password)
 
                 superuser.save()
-                self.stdout.write("Super user '%s' created." % superuser.username)
+                _l.info("Super user '%s' created." % superuser.username)
 
         else:
-            self.stdout.write("Skip. Super user username and password are not provided.")
+            _l.info("Skip. Super user username and password are not provided.")

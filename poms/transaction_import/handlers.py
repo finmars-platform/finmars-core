@@ -10,7 +10,6 @@ from tempfile import NamedTemporaryFile
 
 from django.db import transaction
 from django.utils.timezone import now
-from filtration import Expression
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
 
@@ -36,7 +35,7 @@ from poms.transaction_import.models import ProcessType, TransactionImportResult,
     TransactionImportConversionItem
 from poms.transaction_import.serializers import TransactionImportResultSerializer
 from poms.transactions.handlers import TransactionTypeProcess
-from poms.transactions.models import TransactionTypeInput
+from poms.transactions.models import TransactionTypeInput, TransactionType
 from poms.users.models import EcosystemDefault
 
 storage = get_storage()
@@ -346,8 +345,7 @@ class TransactionImportProcess(object):
 
     def find_default_rule_scenario(self):
 
-        rule_scenarios = self.scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
-                                                                     'fields__transaction_type_input').all()
+        rule_scenarios = self.scheme.rule_scenarios.prefetch_related('fields').all()
 
         self.default_rule_scenario = None
 
@@ -357,8 +355,7 @@ class TransactionImportProcess(object):
 
     def find_error_rule_scenario(self):
 
-        rule_scenarios = self.scheme.rule_scenarios.prefetch_related('transaction_type', 'fields',
-                                                                     'fields__transaction_type_input').all()
+        rule_scenarios = self.scheme.rule_scenarios.prefetch_related('fields').all()
 
         self.error_rule_scenario = None
 
@@ -378,8 +375,11 @@ class TransactionImportProcess(object):
 
             return None
 
-    def convert_value(self, item, field, value):
-        i = field.transaction_type_input
+    def convert_value(self, item, rule_scenario, field, value):
+
+        # TODO PERFORMANCE_ISSUE Maybe performance issue
+        i = TransactionTypeInput.objects.get(transaction_type__user_code=rule_scenario.transaction_type,
+                                             name=field.transaction_type_input)
 
         if i.value_type == TransactionTypeInput.STRING:
             return str(value)
@@ -419,7 +419,7 @@ class TransactionImportProcess(object):
 
             except Exception:
 
-                _l.error("User code %s not found for %s " % (value, field.transaction_type_input.name))
+                _l.error("User code %s not found for %s " % (value, field.transaction_type_input))
 
             if not v:
 
@@ -430,7 +430,7 @@ class TransactionImportProcess(object):
                 else:
                     item.status = 'error'
                     item.error_message = item.error_message + ' Can\'t find relation of ' + \
-                                         '[' + field.transaction_type_input.name + ']' + '(value:' + \
+                                         '[' + field.transaction_type_input + ']' + '(value:' + \
                                          value + ')'
 
             return v
@@ -443,8 +443,8 @@ class TransactionImportProcess(object):
             try:
                 field_value = formula.safe_eval(field.value_expr, names=item.inputs,
                                                 context=self.context)
-                field_value = self.convert_value(item, field, field_value)
-                fields[field.transaction_type_input.name] = field_value
+                field_value = self.convert_value(item, rule_scenario, field, field_value)
+                fields[field.transaction_type_input] = field_value
 
             except Exception as e:
 
@@ -480,7 +480,7 @@ class TransactionImportProcess(object):
 
             transaction_type_process_instance = TransactionTypeProcess(
                 linked_import_task=self.task,
-                transaction_type=rule_scenario.transaction_type,
+                transaction_type=TransactionType.objects.get(user_code=rule_scenario.transaction_type),
                 default_values=fields,
                 context=self.context,
                 uniqueness_reaction=uniqueness_reaction,
@@ -500,7 +500,7 @@ class TransactionImportProcess(object):
             if error:
                 fields_dict['error_message'] = str(error)
 
-            item.transaction_inputs[rule_scenario.transaction_type.user_code] = fields_dict
+            item.transaction_inputs[rule_scenario.transaction_type] = fields_dict
 
             transaction_type_process_instance.process()
 
@@ -540,7 +540,7 @@ class TransactionImportProcess(object):
                             'current': self.result.processed_rows,
                             'total': len(self.items),
                             'percent': round(self.result.processed_rows / (len(self.items) / 100)),
-                            'description': 'Going to book %s' % (rule_scenario.transaction_type.user_code)
+                            'description': 'Going to book %s' % (rule_scenario.transaction_type)
                         }
                     )
 
@@ -582,7 +582,7 @@ class TransactionImportProcess(object):
                         'current': self.result.processed_rows,
                         'total': len(self.items),
                         'percent': round(self.result.processed_rows / (len(self.items) / 100)),
-                        'description': 'Going to book %s' % (rule_scenario.transaction_type.user_code)
+                        'description': 'Going to book %s' % (rule_scenario.transaction_type)
                     }
                 )
 
@@ -943,9 +943,11 @@ class TransactionImportProcess(object):
                     if self.scheme.filter_expression:
 
                         # expr = Expression.parseString("a == 1 and b == 2")
-                        expr = Expression.parseString(self.scheme.filter_expression)
 
-                        if expr(item.inputs):
+                        result = bool(formula.safe_eval(self.scheme.filter_expression, names=item.inputs,
+                                                        context=self.context))
+
+                        if result:
                             # filter passed
                             pass
                         else:
@@ -998,7 +1000,7 @@ class TransactionImportProcess(object):
 
                                             try:
                                                 self.book(item, self.error_rule_scenario, error=e)
-                                            except Exception as e: # any exception will work on error scenario
+                                            except Exception as e:  # any exception will work on error scenario
                                                 _l.error("Could not book error scenario %s" % e)
                                                 _l.info("Error Handler Savepoint rollback for %s" % index)
                                                 transaction.savepoint_rollback(sid)
@@ -1019,7 +1021,7 @@ class TransactionImportProcess(object):
                                         found = True
 
                         if not found:
-                            
+
                             sid = transaction.savepoint()
                             _l.info("Create checkpoint for %s" % index)
 

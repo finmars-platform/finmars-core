@@ -256,6 +256,13 @@ def is_business_day(date):
 
 
 def get_last_business_day(date, to_string=False):
+    '''
+    Returns the previous business day of the given date.
+    :param date:
+    :param to_string:
+    :return:
+    '''
+
     format = '%Y-%m-%d'
 
     if not isinstance(date, datetime.date):
@@ -373,15 +380,14 @@ def check_if_last_day_of_month(to_date):
     return False
 
 
-def get_first_transaction(portfolio_id):
-
+def get_first_transaction(portfolio_instance):
     '''
     Get first transaction of portfolio
     :param portfolio_id:
     :return: Transaction
     '''
     from poms.transactions.models import Transaction
-    transaction = Transaction.objects.filter(portfolio_id=portfolio_id).order_by('accounting_date')[0]
+    transaction = Transaction.objects.filter(portfolio=portfolio_instance).order_by('accounting_date')[0]
     return transaction
 
 
@@ -437,7 +443,6 @@ def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=Fal
 
 
 def str_to_date(d):
-
     '''
     Convert string to date
     :param d:
@@ -491,14 +496,13 @@ def finmars_exception_handler(exc, context):
 
 
 def get_serializer(content_type_key):
-
     '''
     Returns serializer for given content type key.
     :param content_type_key:
     :return: serializer class
     '''
 
-    from poms.instruments.serializers import InstrumentSerializer
+    from poms.instruments.serializers import InstrumentSerializer, InstrumentTypeSerializer, PricingPolicySerializer
 
     from poms.accounts.serializers import AccountSerializer
     from poms.accounts.serializers import AccountTypeSerializer
@@ -510,8 +514,39 @@ def get_serializer(content_type_key):
     from poms.strategies.serializers import Strategy1Serializer
     from poms.strategies.serializers import Strategy2Serializer
 
+    from poms.transactions.serializers import TransactionTypeSerializer, TransactionTypeGroupSerializer
+    from poms.csv_import.serializers import CsvImportSchemeSerializer
+
+    from poms.integrations.serializers import ComplexTransactionImportSchemeSerializer, \
+        InstrumentDownloadSchemeSerializer
+    from poms.procedures.serializers import PricingProcedureSerializer
+    from poms.procedures.serializers import ExpressionProcedureSerializer
+    from poms.procedures.serializers import RequestDataFileProcedureSerializer
+    from poms.schedules.serializers import ScheduleSerializer
+
+    from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
+    from poms.ui.serializers import DashboardLayoutSerializer
+    from poms.ui.serializers import ListLayoutSerializer
+    from poms.ui.serializers import ContextMenuLayoutSerializer
+    from poms.ui.serializers import ComplexTransactionUserFieldSerializer
+    from poms.ui.serializers import TransactionUserFieldSerializer
+    from poms.ui.serializers import InstrumentUserFieldSerializer
+
+    from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer
+
+    from poms.iam.serializers import GroupSerializer
+    from poms.iam.serializers import RoleSerializer
+    from poms.iam.serializers import AccessPolicySerializer
+
+    from poms.reference_tables.serializers import ReferenceTableSerializer
     serializer_map = {
+
+        'transactions.transactiontype': TransactionTypeSerializer,
+        'transactions.transactiontypegroup': TransactionTypeGroupSerializer,
         'instruments.instrument': InstrumentSerializer,
+        'instruments.instrumenttype': InstrumentTypeSerializer,
+        'instruments.pricingpolicy': PricingPolicySerializer,
+
         'accounts.account': AccountSerializer,
         'accounts.accounttype': AccountTypeSerializer,
         'portfolios.portfolio': PortfolioSerializer,
@@ -522,6 +557,32 @@ def get_serializer(content_type_key):
         'strategies.strategy1': Strategy1Serializer,
         'strategies.strategy2': Strategy2Serializer,
         'strategies.strategy3': Strategy2Serializer,
+
+        'csv_import.csvimportscheme': CsvImportSchemeSerializer,
+        'integrations.complextransactionimportscheme': ComplexTransactionImportSchemeSerializer,
+        'integrations.instrumentdownloadscheme': InstrumentDownloadSchemeSerializer,
+        'procedures.pricingprocedure': PricingProcedureSerializer,
+        'procedures.expressionprocedure': ExpressionProcedureSerializer,
+        'procedures.requestdatafileprocedure': RequestDataFileProcedureSerializer,
+        'schedules.schedule': ScheduleSerializer,
+        'obj_attrs.genericattributetype': GenericAttributeTypeSerializer,
+
+        'ui.dashboardlayout': DashboardLayoutSerializer,
+        'ui.listlayout': ListLayoutSerializer,
+        'ui.contextmenulayout': ContextMenuLayoutSerializer,
+        'ui.complextransactionuserfieldmodel': ComplexTransactionUserFieldSerializer,
+        'ui.transactionuserfieldmodel': TransactionUserFieldSerializer,
+        'ui.instrumentuserfieldmodel': InstrumentUserFieldSerializer,
+
+        'pricing.instrumentpricingscheme': InstrumentPricingSchemeSerializer,
+        'pricing.currencypricingscheme': CurrencyPricingSchemeSerializer,
+
+        'iam.group': GroupSerializer,
+        'iam.role': RoleSerializer,
+        'iam.accesspolicy': AccessPolicySerializer,
+
+        'reference_tables.referencetable': ReferenceTableSerializer,
+
     }
 
     return serializer_map[content_type_key]
@@ -549,3 +610,28 @@ def get_list_of_entity_attributes(content_type_key):
         })
 
     return result
+
+
+def compare_versions(version1, version2):
+    v1_parts = version1.split('.')
+    v2_parts = version2.split('.')
+
+    for v1_part, v2_part in zip(v1_parts, v2_parts):
+        v1_number = int(v1_part)
+        v2_number = int(v2_part)
+
+        if v1_number < v2_number:
+            return -1
+        elif v1_number > v2_number:
+            return 1
+
+    if len(v1_parts) < len(v2_parts):
+        return -1
+    elif len(v1_parts) > len(v2_parts):
+        return 1
+
+    return 0
+
+
+def is_newer_version(version1, version2):
+    return compare_versions(version1, version2) > 0

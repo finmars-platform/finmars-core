@@ -12,7 +12,7 @@ from django.utils.translation import gettext_lazy
 
 from poms_app import settings
 
-_l = logging.getLogger('poms.bootstrap')
+_l = logging.getLogger('provision')
 
 
 class BootstrapConfig(AppConfig):
@@ -20,7 +20,21 @@ class BootstrapConfig(AppConfig):
     verbose_name = gettext_lazy('Bootstrap')
 
     def ready(self):
+        _l.info("Bootstrapping Finmars Application")
+
+        _l.info(f'BLOOMBERG_SANDBOX {settings.BLOOMBERG_SANDBOX} ')
+
+        if settings.PROFILER:
+            _l.info("Profiler enabled")
+
+        if settings.SERVER_TYPE == 'local':
+            _l.info("LOCAL development. CORS disabled")
+
+        if settings.SEND_LOGS_TO_FINMARS:
+            _l.info("Logs will be sending to Finmars")
+
         post_migrate.connect(self.bootstrap, sender=self)
+        _l.info("Finmars Application is running 💚")
 
     def bootstrap(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
         '''
@@ -34,8 +48,6 @@ class BootstrapConfig(AppConfig):
         :return:
         '''
 
-        _l.info("Bootstrapping Finmars Application")
-
         self.bootstrap_celery()
         self.add_view_and_manage_permissions()
         self.load_master_user_data()
@@ -44,6 +56,9 @@ class BootstrapConfig(AppConfig):
         self.load_init_configuration()
         self.create_base_folders()
         self.register_at_authorizer_service()
+        self.create_local_configuration()
+        self.create_iam_roles_and_groups()
+        self.create_iam_access_policies_templates()
 
     def create_finmars_bot(self):
 
@@ -60,6 +75,7 @@ class BootstrapConfig(AppConfig):
         try:
             from poms.users.models import Member
             member = Member.objects.get(user__username='finmars_bot')
+            _l.info("finmars_bot already exists")
         except Exception as e:
 
             try:
@@ -68,12 +84,43 @@ class BootstrapConfig(AppConfig):
                 from poms.users.models import MasterUser
                 master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
-                member = Member.objects.create(user=user, username="finmars_bot", master_user=master_user, is_admin=True)
+                member = Member.objects.create(user=user, username="finmars_bot", master_user=master_user,
+                                               is_admin=True)
+
+                _l.info("finmars_bot created")
+
             except Exception as e:
                 _l.error("Warning. Could not creat finmars_bot")
 
-        _l.info("Finmars bot created")
 
+
+    def create_iam_roles_and_groups(self):
+        # Maybe not needed
+        pass
+
+        # from poms.iam.models import Group
+        #
+        # try:
+        #
+        #     group = Group.objects.get(user_code='com.finmars.local:administrators')
+        #
+        # except Exception as e:
+        #
+        #     group = Group.objects.create(
+        #         name='Administrators',
+        #         user_code='com.finmars.local:administrators')
+
+    def create_iam_access_policies_templates(self):
+
+        _l.info("create_iam_access_policies_templates")
+
+        from poms.iam.policy_generator import create_base_iam_access_policies_templates
+        create_base_iam_access_policies_templates()
+
+        _l.info("create_iam_access_policies_templates done")
+
+
+    # Probably deprecated
     def add_view_and_manage_permissions(self):
         from poms.common.utils import add_view_and_manage_permissions
         add_view_and_manage_permissions()
@@ -81,7 +128,10 @@ class BootstrapConfig(AppConfig):
     def load_master_user_data(self):
 
         from django.contrib.auth.models import User
-        from poms.users.models import Member, MasterUser, Group, UserProfile
+        from poms.users.models import Member, MasterUser, UserProfile
+
+        if not settings.AUTHORIZER_URL:
+            return
 
         try:
             _l.info("load_master_user_data processing")
@@ -148,7 +198,7 @@ class BootstrapConfig(AppConfig):
                     master_user.save()
 
                     _l.info("Master User From Backup Renamed to new Name %s and Base API URL %s" % (
-                    master_user.name, master_user.base_api_url))
+                        master_user.name, master_user.base_api_url))
                     # Member.objects.filter(is_owner=False).delete()
 
             except Exception as e:
@@ -166,7 +216,7 @@ class BootstrapConfig(AppConfig):
                 master_user.save()
 
                 _l.info("Master user with name %s and base_api_url %s created" % (
-                master_user.name, master_user.base_api_url))
+                    master_user.name, master_user.base_api_url))
 
                 member = Member.objects.create(user=user, username=user.username, master_user=master_user,
                                                is_owner=True, is_admin=True)
@@ -174,9 +224,9 @@ class BootstrapConfig(AppConfig):
 
                 _l.info("Owner Member created")
 
-                admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
-                admin_group.members.add(member.id)
-                admin_group.save()
+                # admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
+                # admin_group.members.add(member.id)
+                # admin_group.save()
 
                 _l.info("Admin Group Created")
 
@@ -197,6 +247,9 @@ class BootstrapConfig(AppConfig):
             _l.error("load_master_user_data traceback %s" % traceback.format_exc())
 
     def register_at_authorizer_service(self):
+
+        if not settings.AUTHORIZER_URL:
+            return
 
         try:
             _l.info("register_at_authorizer_service processing")
@@ -225,6 +278,9 @@ class BootstrapConfig(AppConfig):
         from django.contrib.auth.models import User
 
         from poms.users.models import Member, MasterUser
+
+        if not settings.AUTHORIZER_URL:
+            return
 
         try:
             _l.info("sync_users_at_authorizer_service processing")
@@ -299,8 +355,10 @@ class BootstrapConfig(AppConfig):
     def load_init_configuration(self):
         from poms.users.models import Member, MasterUser
         from poms.celery_tasks.models import CeleryTask
-        from django.db import transaction
-        from poms.configuration_import.tasks import configuration_import_as_json
+        from poms.configuration.tasks import install_package_from_marketplace
+
+        if not settings.AUTHORIZER_URL:
+            return
 
         try:
             _l.info("load_init_configuration processing")
@@ -309,13 +367,33 @@ class BootstrapConfig(AppConfig):
 
             try:
 
-                url = settings.AUTHORIZER_URL + '/backend-get-init-configuration/'
-
-                response = requests.get(url=url, headers=headers, verify=settings.VERIFY_SSL)
-                _l.info("load_init_configuration backend-sync-users response.status_code %s" % response.status_code)
-                # _l.info("sync_users_at_authorizer_service backend-sync-users response.text %s" % response.text)
-
-                response_data = response.json()
+                # url = settings.AUTHORIZER_URL + '/backend-get-init-configuration/'
+                #
+                # response = requests.get(url=url, headers=headers, verify=settings.VERIFY_SSL)
+                # _l.info("load_init_configuration backend-sync-users response.status_code %s" % response.status_code)
+                # # _l.info("sync_users_at_authorizer_service backend-sync-users response.text %s" % response.text)
+                #
+                # response_data = response.json()
+                #
+                # master_user = MasterUser.objects.filter()[0]
+                # # member = Member.objects.get(master_user=master_user, is_owner=True)
+                # member = Member.objects.get(username='finmars_bot')
+                #
+                # celery_task = CeleryTask.objects.create(master_user=master_user,
+                #                                         member=member,
+                #                                         verbose_name="Inital Finmars Configuration Import",
+                #                                         type='configuration_import')
+                #
+                # options_object = {
+                #     'data': response_data['data'],
+                #     'mode': 'skip'
+                # }
+                #
+                # celery_task.options_object = options_object
+                # celery_task.save()
+                #
+                # transaction.on_commit(
+                #     lambda: configuration_import_as_json.apply_async(kwargs={'task_id': celery_task.id}))
 
                 master_user = MasterUser.objects.filter()[0]
                 # member = Member.objects.get(master_user=master_user, is_owner=True)
@@ -323,21 +401,20 @@ class BootstrapConfig(AppConfig):
 
                 celery_task = CeleryTask.objects.create(master_user=master_user,
                                                         member=member,
-                                                        verbose_name="Inital Finmars Configuration Import",
-                                                        type='configuration_import')
+                                                        verbose_name="Install Configuration From Marketplace",
+                                                        type='install_configuration_from_marketplace')
 
                 options_object = {
-                    'data': response_data['data'],
-                    'mode': 'skip'
+                    'configuration_code': "com.finmars.initial",
+                    'version': "1.0.0",
+                    'is_package': True,
+                    # "access_token": get_access_token(request) TODO Implement when keycloak refactored
+                    # TODO check this later, important security thins, need to be destroyed inside task
                 }
-
                 celery_task.options_object = options_object
                 celery_task.save()
 
-                transaction.on_commit(
-                    lambda: configuration_import_as_json.apply_async(kwargs={'task_id': celery_task.id}))
-
-
+                install_package_from_marketplace.apply_async(kwargs={'task_id': celery_task.id})
 
             except Exception as e:
                 _l.error("Could not init configuration %s" % e)
@@ -347,14 +424,16 @@ class BootstrapConfig(AppConfig):
             _l.info("load_init_configuration error %s" % e)
 
     def create_base_folders(self):
+        from poms.common.storage import get_storage
+        from tempfile import NamedTemporaryFile
+        from poms_app import settings
+        from poms.users.models import Member
 
         try:
 
-            from poms.common.storage import get_storage
-            from tempfile import NamedTemporaryFile
             storage = get_storage()
-            from poms_app import settings
-            from poms.users.models import Member
+            if not storage:
+                return
 
             _l.info("create base folders if not exists")
 
@@ -368,6 +447,16 @@ class BootstrapConfig(AppConfig):
 
                     _l.info("create .system folder")
 
+            if not storage.exists(settings.BASE_API_URL + '/.system/tmp/.init'):
+                path = settings.BASE_API_URL + '/.system/tmp/.init'
+
+                with NamedTemporaryFile() as tmpf:
+                    tmpf.write(b'')
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
+                    _l.info("create .system/tmp folder")
+
             if not storage.exists(settings.BASE_API_URL + '/.system/log/.init'):
                 path = settings.BASE_API_URL + '/.system/log/.init'
 
@@ -378,6 +467,16 @@ class BootstrapConfig(AppConfig):
 
                     _l.info("create system log folder")
 
+            if not storage.exists(settings.BASE_API_URL + '/.system/new-member-setup-configurations/.init'):
+                path = settings.BASE_API_URL + '/.system/new-member-setup-configurations/.init'
+
+                with NamedTemporaryFile() as tmpf:
+                    tmpf.write(b'')
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
+                    _l.info("create system new-member-setup-configurations folder")
+
             if not storage.exists(settings.BASE_API_URL + '/public/.init'):
                 path = settings.BASE_API_URL + '/public/.init'
 
@@ -387,6 +486,16 @@ class BootstrapConfig(AppConfig):
                     storage.save(path, tmpf)
 
                     _l.info("create public folder")
+
+            if not storage.exists(settings.BASE_API_URL + '/configurations/.init'):
+                path = settings.BASE_API_URL + '/configurations/.init'
+
+                with NamedTemporaryFile() as tmpf:
+                    tmpf.write(b'')
+                    tmpf.flush()
+                    storage.save(path, tmpf)
+
+                    _l.info("create configurations folder")
 
             if not storage.exists(settings.BASE_API_URL + '/workflows/.init'):
                 path = settings.BASE_API_URL + '/workflows/.init'
@@ -445,3 +554,16 @@ class BootstrapConfig(AppConfig):
         cancel_existing_tasks(celery_app)
         from poms.common.celery import cancel_existing_procedures
         cancel_existing_procedures(celery_app)
+
+    def create_local_configuration(self):
+
+        from poms.configuration.models import Configuration
+
+        try:
+            configuration = Configuration.objects.get(configuration_code="com.finmars.local")
+            _l.info("Local Configuration is already created")
+        except Configuration.DoesNotExist:
+            Configuration.objects.create(configuration_code="com.finmars.local", name="Local Configuration",
+                                         version="1.0.0", description="Local Configuration")
+
+            _l.info("Local Configuration created")

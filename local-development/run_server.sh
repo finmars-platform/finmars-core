@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+python poms_app/print_finmars.py
+
 . ../venv/bin/activate
 REDIS_HOST=0.0.0.0:6379 \
 DB_NAME=finmars_dev \
@@ -33,4 +36,7 @@ JWT_SECRET_KEY=09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3ab 
 ADMIN_USERNAME=admin \
 ADMIN_PASSWORD=d798nf0rgpp6g8qp \
 BASE_API_URL=space00000 \
-BACKEND_ROLES="ALL" python manage.py runserver
+BACKEND_ROLES="ALL" \
+python manage.py runserver
+
+#gunicorn --config poms_app/gunicorn-dev.py poms_app.wsgi

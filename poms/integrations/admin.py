@@ -264,14 +264,14 @@ class ComplexTransactionImportSchemeInputInline(admin.TabularInline):
 
 class ComplexTransactionImportSchemeRuleScenarioInline(admin.TabularInline):
     model = ComplexTransactionImportSchemeRuleScenario
-    raw_id_fields = ['transaction_type']
+    raw_id_fields = []
     show_change_link = True
     extra = 0
 
 
 class ComplexTransactionImportSchemeFieldInline(admin.TabularInline):
     model = ComplexTransactionImportSchemeField
-    raw_id_fields = ['rule_scenario', 'transaction_type_input']
+    raw_id_fields = ['rule_scenario']
     extra = 0
 
 
@@ -317,10 +317,10 @@ admin.site.register(ComplexTransactionImportScheme, ComplexTransactionImportSche
 class ComplexTransactionImportSchemeRuleScenarioAdmin(AbstractModelAdmin):
     model = ComplexTransactionImportSchemeRuleScenario
     master_user_path = 'scheme__master_user'
-    list_display = ['id', 'master_user', 'scheme', 'transaction_type']
+    list_display = ['id', 'master_user', 'scheme',]
     list_select_related = ['scheme', 'scheme__master_user', ]
     search_fields = ['id', 'scheme__user_code', ]
-    raw_id_fields = ['scheme', 'transaction_type']
+    raw_id_fields = ['scheme', ]
     inlines = [
         ComplexTransactionImportSchemeFieldInline,
     ]

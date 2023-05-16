@@ -290,10 +290,6 @@ class ReportResponsibleSerializer(ResponsibleSerializer):
         self.fields.pop('portfolios')
         self.fields.pop('portfolios_object')
 
-        # self.fields.pop('user_object_permissions')
-        # self.fields.pop('group_object_permissions')
-        # self.fields.pop('object_permissions')
-
         self.fields.pop('is_default')
 
 
@@ -307,10 +303,6 @@ class ReportCounterpartySerializer(CounterpartySerializer):
 
         self.fields.pop('portfolios')
         self.fields.pop('portfolios_object')
-
-        # self.fields.pop('user_object_permissions')
-        # self.fields.pop('group_object_permissions')
-        # self.fields.pop('object_permissions')
 
         self.fields.pop('is_default')
 

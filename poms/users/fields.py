@@ -4,9 +4,10 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.fields import CurrentUserDefault
 
+from poms.iam.models import Group, Role, AccessPolicy
 from poms.common.fields import PrimaryKeyRelatedFilteredField
 from poms.users.filters import OwnerByMasterUserFilter
-from poms.users.models import Member, Group
+from poms.users.models import Member
 
 
 class CurrentMasterUserDefault(object):
@@ -14,12 +15,12 @@ class CurrentMasterUserDefault(object):
 
     def set_context(self, serializer_field):
 
-        request = serializer_field.context['request']
-        master_user = None
         if 'master_user' in serializer_field.context:
             master_user = serializer_field.context['master_user']
         else:
+            request = serializer_field.context['request']
             master_user = request.user.master_user
+
         self._master_user = master_user
 
     def __call__(self, serializer_field):
@@ -105,7 +106,11 @@ class MemberField(PrimaryKeyRelatedFilteredField):
 class UserField(PrimaryKeyRelatedFilteredField):
     queryset = User.objects.all()
 
-
 class GroupField(PrimaryKeyRelatedFilteredField):
     queryset = Group.objects.all()
-    filter_backends = [OwnerByMasterUserFilter]
+
+class RoleField(PrimaryKeyRelatedFilteredField):
+    queryset = Role.objects.all()
+
+class AccessPolicyField(PrimaryKeyRelatedFilteredField):
+    queryset = AccessPolicy.objects.all()

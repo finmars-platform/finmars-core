@@ -14,16 +14,14 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty
 from rest_framework.serializers import ListSerializer
 
-from poms.common.fields import ExpressionField
+from poms.common.fields import ExpressionField, ContentTypeOrPrimaryKeyRelatedField
 from poms.common.formula import safe_eval, ExpressionEvalError
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import ModelWithUserCodeSerializer
+from poms.common.serializers import ModelWithUserCodeSerializer, ModelMetaSerializer
 from poms.integrations.models import PortfolioClassifierMapping, ProviderClass, AccountClassifierMapping, \
     CounterpartyClassifierMapping, ResponsibleClassifierMapping, InstrumentClassifierMapping
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier, GenericAttribute
-from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
-from poms.obj_perms.utils import has_view_perms, obj_perms_filter_objects_for_view
 from poms.users.fields import MasterUserField, HiddenMemberField
 from poms.users.utils import get_member_from_context, get_master_user_from_context
 
@@ -335,7 +333,7 @@ class GenericAttributeTypeOptionIsHiddenField(serializers.BooleanField):
 
 
 # class GenericAttributeTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
-class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
+class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     is_hidden = GenericAttributeTypeOptionIsHiddenField()
     classifiers = GenericClassifierSerializer(required=False, allow_null=True, many=True)
@@ -344,14 +342,20 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
     expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, allow_null=True,
                            default='""')
 
+    content_type = ContentTypeOrPrimaryKeyRelatedField()
+
     class Meta:
         model = GenericAttributeType
-        fields = ['id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+        fields = ['id', 'master_user',
+
+                  'user_code', 'configuration_code',
+
+                  'name', 'short_name', 'public_name', 'notes',
                   'prefix',
                   'favorites',
                   'expr', 'can_recalculate',
                   'tooltip',
-                  'kind',
+                  'kind', 'content_type',
                   'value_type', 'order', 'is_hidden', 'classifiers', 'classifiers_flat']
 
     def __init__(self, *args, **kwargs):
@@ -376,9 +380,9 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
             c_id = c.get('id', None)
             c_user_code = c.get('user_code', None)
             if c_id and c_id in id_set:
-                raise ValidationError("non unique id")
+                raise ValidationError("classifiers non unique id")
             if c_user_code and c_user_code in user_code_set:
-                raise ValidationError("non unique user_code")
+                raise ValidationError("classifiers non unique user_code")
             if c_id:
                 id_set.add(c_id)
             if c_user_code:
@@ -491,7 +495,8 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
 
             self.create_classifier_node_mapping(instance, o)
 
-        except IntegrityError:
+        except IntegrityError as e:
+            _l.error("Error save_classifier %s " % e)
             raise ValidationError("non unique user_code")
 
         processed.add(o.id)
@@ -582,7 +587,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer):
         GenericAttribute.objects.bulk_create(attrs)
 
 
-class GenericAttributeTypeViewSerializer(ModelWithObjectPermissionSerializer):
+class GenericAttributeTypeViewSerializer(serializers.ModelSerializer):
     is_hidden = GenericAttributeTypeOptionIsHiddenField()
 
     class Meta:
@@ -599,7 +604,6 @@ class GenericAttributeListSerializer(serializers.ListSerializer):
             return instance.attributes
         master_user = get_master_user_from_context(self.context)
         attribute_type_qs = GenericAttributeType.objects.filter(master_user=master_user)
-        attribute_type_qs = obj_perms_filter_objects_for_view(member, attribute_type_qs)
         # return instance.attributes.filter(attribute_type__in=attribute_type_qs)
 
         # Probably deprecated 2023-03-10
@@ -624,9 +628,7 @@ class GenericAttributeViewListSerializer(serializers.ListSerializer):
         objects = super(GenericAttributeViewListSerializer, self).get_attribute(instance)
         objects = objects.all() if isinstance(objects, models.Manager) else objects
         member = get_member_from_context(self.context)
-        return [
-            o for o in objects if has_view_perms(member, o.attribute)
-        ]
+        return objects
 
 
 class GenericAttributeSerializer(serializers.ModelSerializer):

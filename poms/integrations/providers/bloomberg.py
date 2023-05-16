@@ -1049,7 +1049,7 @@ class FakeBloombergDataProvider(BloombergDataProvider):
             "INDUSTRY_SECTOR": "Industrial",
             "INDUSTRY_SUBGROUP": "Transport-Marine",
             "INT_ACC_DT": "06/16/2016",
-            "ISSUER": "SCF CAPITAL LTD",
+            "ISSUER": "SCF CAPITAL LTD (THIS IS SANDBOX)",
             "MATURITY": "06/16/2023",
             "MTY_TYP": "AT MATURITY",
             "OPT_PUT_CALL": "",

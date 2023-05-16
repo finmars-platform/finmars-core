@@ -5,22 +5,17 @@ from django_filters.rest_framework import FilterSet
 from rest_framework.settings import api_settings
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from poms.common.filters import CharFilter, NoOpFilter, ModelExtWithPermissionMultipleChoiceFilter, AttributeFilter, \
+from poms.common.filters import CharFilter, NoOpFilter, AttributeFilter, \
     GroupsAttributeFilter, EntitySpecificFilter
 from poms.common.pagination import CustomPaginationMixin
 from poms.common.utils import get_list_of_entity_attributes
+from poms.common.views import AbstractModelViewSet
 from poms.counterparties.models import Counterparty, Responsible, CounterpartyGroup, ResponsibleGroup
 from poms.counterparties.serializers import CounterpartySerializer, ResponsibleSerializer, CounterpartyGroupSerializer, \
-    ResponsibleGroupSerializer, ResponsibleLightSerializer, CounterpartyLightSerializer, CounterpartyEvSerializer, \
-    ResponsibleEvSerializer
+    ResponsibleGroupSerializer, ResponsibleLightSerializer, CounterpartyLightSerializer
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
-from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
-    ObjectPermissionPermissionFilter
-from poms.obj_perms.permissions import PomsConfigurationPermission
-from poms.obj_perms.utils import get_permissions_prefetch_lookups
-from poms.obj_perms.views import AbstractWithObjectPermissionViewSet, AbstractEvGroupWithObjectPermissionViewSet
 from poms.portfolios.models import Portfolio
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -30,7 +25,6 @@ class CounterpartyAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model_serializer = CounterpartySerializer
 
     permission_classes = GenericAttributeTypeViewSet.permission_classes + [
-        PomsConfigurationPermission
     ]
 
 
@@ -45,25 +39,18 @@ class CounterpartyGroupFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
-    member = ObjectPermissionMemberFilter(object_permission_model=CounterpartyGroup)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=CounterpartyGroup)
-    permission = ObjectPermissionPermissionFilter(object_permission_model=CounterpartyGroup)
 
     class Meta:
         model = CounterpartyGroup
         fields = []
 
 
-class CounterpartyGroupViewSet(AbstractWithObjectPermissionViewSet):
+class CounterpartyGroupViewSet(AbstractModelViewSet):
     queryset = CounterpartyGroup.objects.select_related(
         'master_user'
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            (None, CounterpartyGroup),
-        )
     )
     serializer_class = CounterpartyGroupSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
     filter_class = CounterpartyGroupFilterSet
@@ -80,25 +67,6 @@ class CounterpartyGroupViewSet(AbstractWithObjectPermissionViewSet):
         items_qs.update(group=default_group)
 
 
-class CounterpartyGroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
-    queryset = CounterpartyGroup.objects.select_related(
-        'master_user'
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            (None, CounterpartyGroup),
-        )
-    )
-    serializer_class = CounterpartyGroupSerializer
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = CounterpartyGroupFilterSet
-
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        AttributeFilter,
-        EntitySpecificFilter
-    ]
-
-
 class CounterpartyFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
@@ -106,34 +74,23 @@ class CounterpartyFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
-    group = ModelExtWithPermissionMultipleChoiceFilter(model=CounterpartyGroup)
-    portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio, field_name='portfolios')
-    member = ObjectPermissionMemberFilter(object_permission_model=Counterparty)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Counterparty)
-    permission = ObjectPermissionPermissionFilter(object_permission_model=Counterparty)
 
     class Meta:
         model = Counterparty
         fields = []
 
 
-class CounterpartyViewSet(AbstractWithObjectPermissionViewSet):
+class CounterpartyViewSet(AbstractModelViewSet):
     queryset = Counterparty.objects.select_related(
         'master_user',
         'group',
     ).prefetch_related(
         'portfolios',
         # Prefetch('attributes', queryset=CounterpartyAttribute.objects.select_related('attribute_type', 'classifier')),
-        get_attributes_prefetch(),
-        *get_permissions_prefetch_lookups(
-            (None, Counterparty),
-            ('group', CounterpartyGroup),
-            ('portfolios', Portfolio),
-            # ('attributes__attribute_type', CounterpartyAttributeType),
-        )
+        get_attributes_prefetch()
     )
     serializer_class = CounterpartySerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
@@ -210,112 +167,13 @@ class CounterpartyViewSet(AbstractWithObjectPermissionViewSet):
 
         return Response(result)
 
-# Deprecated
-class CounterpartyEvFilterSet(FilterSet):
-    id = NoOpFilter()
-    is_deleted = django_filters.BooleanFilter()
-    user_code = CharFilter()
-    name = CharFilter()
-    short_name = CharFilter()
-    group = ModelExtWithPermissionMultipleChoiceFilter(model=CounterpartyGroup)
-    member = ObjectPermissionMemberFilter(object_permission_model=Counterparty)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Counterparty)
-    permission = ObjectPermissionPermissionFilter(object_permission_model=Counterparty)
-
-    class Meta:
-        model = Counterparty
-        fields = []
-
-# Deprecated
-class CounterpartyEvViewSet(AbstractWithObjectPermissionViewSet):
-    queryset = Counterparty.objects.select_related(
-        'master_user',
-        'group',
-    ).prefetch_related(
-        'attributes',
-        'attributes__classifier',
-        # get_attributes_prefetch(),
-        *get_permissions_prefetch_lookups(
-            (None, Counterparty),
-            ('group', CounterpartyGroup),
-        )
-    )
-    serializer_class = CounterpartyEvSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        AttributeFilter,
-        GroupsAttributeFilter,
-        EntitySpecificFilter
-    ]
-    filter_class = CounterpartyEvFilterSet
-    ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name'
-    ]
-
-
-class CounterpartyLightFilterSet(FilterSet):
-    id = NoOpFilter()
-    is_deleted = django_filters.BooleanFilter()
-    user_code = CharFilter()
-    name = CharFilter()
-    short_name = CharFilter()
-
-    class Meta:
-        model = Counterparty
-        fields = []
-
-# DEPRECATED
-class CounterpartyLightViewSet(AbstractWithObjectPermissionViewSet):
-    queryset = Counterparty.objects.select_related(
-        'master_user'
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            (None, Counterparty)
-        )
-    )
-    serializer_class = CounterpartyLightSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        EntitySpecificFilter
-    ]
-    filter_class = CounterpartyLightFilterSet
-    ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name'
-    ]
-
-# Deprecated
-class CounterpartyEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
-    queryset = Counterparty.objects.select_related(
-        'master_user',
-        'group',
-    ).prefetch_related(
-        'portfolios',
-        # Prefetch('attributes', queryset=CounterpartyAttribute.objects.select_related('attribute_type', 'classifier')),
-        get_attributes_prefetch(),
-        *get_permissions_prefetch_lookups(
-            (None, Counterparty),
-            ('group', CounterpartyGroup),
-            ('portfolios', Portfolio),
-            # ('attributes__attribute_type', CounterpartyAttributeType),
-        )
-    )
-    serializer_class = CounterpartySerializer
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = CounterpartyFilterSet
-
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        AttributeFilter,
-        EntitySpecificFilter
-    ]
-
 
 class ResponsibleAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Responsible
     target_model_serializer = ResponsibleSerializer
 
     permission_classes = GenericAttributeTypeViewSet.permission_classes + [
-        PomsConfigurationPermission
+
     ]
 
 
@@ -329,25 +187,17 @@ class ResponsibleGroupFilterSet(FilterSet):
     user_code = CharFilter()
     name = CharFilter()
     short_name = CharFilter()
-    member = ObjectPermissionMemberFilter(object_permission_model=ResponsibleGroup)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=ResponsibleGroup)
-    permission = ObjectPermissionPermissionFilter(object_permission_model=ResponsibleGroup)
-
     class Meta:
         model = ResponsibleGroup
         fields = []
 
 
-class ResponsibleGroupViewSet(AbstractWithObjectPermissionViewSet):
+class ResponsibleGroupViewSet(AbstractModelViewSet):
     queryset = ResponsibleGroup.objects.select_related(
         'master_user'
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            (None, ResponsibleGroup),
-        )
     )
     serializer_class = ResponsibleGroupSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         EntitySpecificFilter
     ]
@@ -364,26 +214,6 @@ class ResponsibleGroupViewSet(AbstractWithObjectPermissionViewSet):
 
         items_qs.update(group=default_group)
 
-# Deprecated
-class ResponsibleGroupEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
-    queryset = ResponsibleGroup.objects.select_related(
-        'master_user'
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            (None, ResponsibleGroup),
-        )
-    )
-    serializer_class = ResponsibleGroupSerializer
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = ResponsibleGroupFilterSet
-
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        AttributeFilter,
-        EntitySpecificFilter
-    ]
-
-
 class ResponsibleFilterSet(FilterSet):
     id = NoOpFilter()
     is_deleted = django_filters.BooleanFilter()
@@ -392,31 +222,19 @@ class ResponsibleFilterSet(FilterSet):
     short_name = CharFilter()
     public_name = CharFilter()
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
-    group = ModelExtWithPermissionMultipleChoiceFilter(model=CounterpartyGroup)
-    portfolio = ModelExtWithPermissionMultipleChoiceFilter(model=Portfolio, field_name='portfolios')
-    member = ObjectPermissionMemberFilter(object_permission_model=Responsible)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Responsible)
-    permission = ObjectPermissionPermissionFilter(object_permission_model=Responsible)
 
     class Meta:
         model = Responsible
         fields = []
 
 
-class ResponsibleViewSet(AbstractWithObjectPermissionViewSet):
+class ResponsibleViewSet(AbstractModelViewSet):
     queryset = Responsible.objects.select_related(
         'master_user',
         'group',
     ).prefetch_related(
         'portfolios',
         get_attributes_prefetch(),
-        # Prefetch('attributes', queryset=ResponsibleAttribute.objects.select_related('attribute_type', 'classifier')),
-        *get_permissions_prefetch_lookups(
-            (None, Responsible),
-            ('group', ResponsibleGroup),
-            ('portfolios', Portfolio),
-            # ('attributes__attribute_type', ResponsibleAttributeType),
-        )
     )
     # prefetch_permissions_for = (
     #     ('group', ResponsibleGroup),
@@ -424,7 +242,7 @@ class ResponsibleViewSet(AbstractWithObjectPermissionViewSet):
     #     ('attributes__attribute_type', ResponsibleAttributeType)
     # )
     serializer_class = ResponsibleSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
+    filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
@@ -503,104 +321,3 @@ class ResponsibleViewSet(AbstractWithObjectPermissionViewSet):
         }
 
         return Response(result)
-
-
-class ResponsibleEvFilterSet(FilterSet):
-    id = NoOpFilter()
-    is_deleted = django_filters.BooleanFilter()
-    user_code = CharFilter()
-    name = CharFilter()
-    short_name = CharFilter()
-    public_name = CharFilter()
-    is_valid_for_all_portfolios = django_filters.BooleanFilter()
-    group = ModelExtWithPermissionMultipleChoiceFilter(model=CounterpartyGroup)
-    member = ObjectPermissionMemberFilter(object_permission_model=Responsible)
-    member_group = ObjectPermissionGroupFilter(object_permission_model=Responsible)
-    permission = ObjectPermissionPermissionFilter(object_permission_model=Responsible)
-
-    class Meta:
-        model = Responsible
-        fields = []
-
-
-class ResponsibleEvViewSet(AbstractWithObjectPermissionViewSet):
-    queryset = Responsible.objects.select_related(
-        'master_user',
-        'group',
-    ).prefetch_related(
-        'attributes',
-        'attributes__classifier',
-        # get_attributes_prefetch(),
-        *get_permissions_prefetch_lookups(
-            (None, Responsible),
-            ('group', ResponsibleGroup),
-        )
-    )
-    serializer_class = ResponsibleEvSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        AttributeFilter,
-        GroupsAttributeFilter,
-        EntitySpecificFilter
-    ]
-    filter_class = ResponsibleEvFilterSet
-    ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name',
-    ]
-
-
-class ResponsibleLightFilterSet(FilterSet):
-    id = NoOpFilter()
-    is_deleted = django_filters.BooleanFilter()
-    user_code = CharFilter()
-    name = CharFilter()
-    short_name = CharFilter()
-    public_name = CharFilter()
-
-    class Meta:
-        model = Responsible
-        fields = []
-
-# DEPRECATED
-class ResponsibleLightViewSet(AbstractWithObjectPermissionViewSet):
-    queryset = Responsible.objects.select_related(
-        'master_user',
-    ).prefetch_related(
-        *get_permissions_prefetch_lookups(
-            (None, Responsible),
-        )
-    )
-    serializer_class = ResponsibleLightSerializer
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter
-    ]
-    filter_class = ResponsibleLightFilterSet
-    ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name',
-    ]
-
-
-class ResponsibleEvGroupViewSet(AbstractEvGroupWithObjectPermissionViewSet, CustomPaginationMixin):
-    queryset = Responsible.objects.select_related(
-        'master_user',
-        'group',
-    ).prefetch_related(
-        'portfolios',
-        get_attributes_prefetch(),
-        # Prefetch('attributes', queryset=ResponsibleAttribute.objects.select_related('attribute_type', 'classifier')),
-        *get_permissions_prefetch_lookups(
-            (None, Responsible),
-            ('group', ResponsibleGroup),
-            ('portfolios', Portfolio),
-            # ('attributes__attribute_type', ResponsibleAttributeType),
-        )
-    )
-    serializer_class = ResponsibleSerializer
-    pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
-    filter_class = ResponsibleFilterSet
-
-    filter_backends = AbstractWithObjectPermissionViewSet.filter_backends + [
-        OwnerByMasterUserFilter,
-        AttributeFilter,
-        EntitySpecificFilter
-    ]

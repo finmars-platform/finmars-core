@@ -15,7 +15,6 @@ from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedMo
 from poms.common.utils import date_now
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
-from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser
 
 # Probably Deprecated
@@ -55,14 +54,63 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
 
     default_fx_rate = models.FloatField(default=1, verbose_name=gettext_lazy('default fx rate'))
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('currency')
         verbose_name_plural = gettext_lazy('currencies')
         permissions = [
             # ('view_currency', 'Can view currency'),
             ('manage_currency', 'Can manage currency'),
+        ]
+
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "reference_for_pricing",
+                "name": "Reference for pricing",
+                "value_type": 10
+            },
+            {
+                "key": "default_fx_rate",
+                "name": "Default FX rate",
+                "value_type": 20
+            },
+            {
+                "key": "pricing_condition",
+                "name": "Pricing Condition",
+                "value_content_type": "instruments.pricingcondition",
+                "value_entity": "pricing-condition",
+                "code": "user_code",
+                "value_type": "field"
+            }
         ]
 
 

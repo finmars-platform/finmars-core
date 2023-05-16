@@ -8,6 +8,7 @@ from django.utils.translation import gettext_lazy
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.models import NamedModel, DataTimeStampedModel
 from poms.common.utils import date_now
+from poms.configuration.models import ConfigurationModel
 from poms.integrations.models import DataProvider
 from poms.schedules.models import ScheduleInstance
 from poms.users.models import Member
@@ -15,7 +16,7 @@ from poms.users.models import Member
 _l = logging.getLogger('poms.procedures')
 
 
-class BaseProcedure(NamedModel, DataTimeStampedModel):
+class BaseProcedure(NamedModel, DataTimeStampedModel, ConfigurationModel):
     master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
@@ -341,7 +342,7 @@ class RequestDataFileProcedure(BaseProcedure):
 
     scheme_type = models.CharField(max_length=255, choices=SCHEME_TYPE_CHOICES, default='transaction_import')
 
-    scheme_user_code = models.CharField(max_length=255)
+    scheme_user_code = models.CharField(max_length=1024)
 
     date_from = models.DateField(null=True, blank=True, verbose_name=gettext_lazy('price date from'))
 

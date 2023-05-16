@@ -32,7 +32,6 @@ from poms.integrations.models import InstrumentDownloadScheme, InstrumentDownloa
     PriceDownloadSchemeMapping, AccountTypeMapping, PricingPolicyMapping, PricingConditionMapping
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
-from poms.obj_perms.utils import obj_perms_filter_objects
 from poms.portfolios.models import Portfolio
 from poms.pricing.models import InstrumentPricingScheme, CurrencyPricingScheme, InstrumentTypePricingPolicy
 from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer, \
@@ -49,9 +48,9 @@ from poms.transactions.models import TransactionType, TransactionTypeInput, Tran
     TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
     TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionInstrumentFactorSchedule, \
     TransactionTypeActionInstrumentManualPricingFormula, NotificationClass, EventClass, TransactionClass
-from poms.ui.models import EditLayout, ListLayout, Bookmark, ComplexTransactionUserFieldModel, InstrumentUserFieldModel, \
+from poms.ui.models import EditLayout, ListLayout, Bookmark, ComplexTransactionUserField, InstrumentUserField, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, ColorPaletteColor, ColumnSortData, \
-    CrossEntityAttributeExtension, TransactionUserFieldModel
+    CrossEntityAttributeExtension, TransactionUserField
 from poms.ui.serializers import BookmarkSerializer
 from poms_app import settings
 
@@ -133,12 +132,6 @@ def get_codename_set(model_cls):
     }
     return {perm % kwargs for perm in codename_set}
 
-
-def permission_filter(queryset, member):
-    return obj_perms_filter_objects(member, get_codename_set(queryset.model), queryset,
-                                    prefetch=False)
-
-
 def get_access_table(member):
     result = {
         'obj_attrs.attributetype': False,
@@ -184,7 +177,6 @@ def get_access_table(member):
 
 
 class ConfigurationExportViewSet(AbstractModelViewSet):
-
     serializer_class = EmptySerializer
 
     def list(self, request):
@@ -790,8 +782,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
             .exclude(user_code='-') \
             .prefetch_related('inputs')
 
-        qs = permission_filter(qs, self._member)
-
         transaction_types = to_json_objects(qs)
         results = []
 
@@ -872,7 +862,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
     def get_account_types(self):
 
         qs = AccountType.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-')
-        qs = permission_filter(qs, self._member)
 
         account_types = to_json_objects(qs)
         results = []
@@ -1039,7 +1028,6 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
     def get_instrument_types(self):
 
         qs = InstrumentType.objects.filter(master_user=self._master_user, is_deleted=False).exclude(user_code='-')
-        qs = permission_filter(qs, self._member)
 
         instrument_types = to_json_objects(qs)
         results = []
@@ -1387,7 +1375,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
     def get_complex_transaction_user_fields(self):
 
         user_fields = to_json_objects(
-            ComplexTransactionUserFieldModel.objects.filter(master_user=self._master_user))
+            ComplexTransactionUserField.objects.filter(master_user=self._master_user))
 
         results = []
 
@@ -1402,7 +1390,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'pk')
 
         result = {
-            "entity": "ui.complextransactionuserfieldmodel",
+            "entity": "ui.complextransactionuserfield",
             "count": len(results),
             "content": results
         }
@@ -1412,7 +1400,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
     def get_transaction_user_fields(self):
 
         user_fields = to_json_objects(
-            TransactionUserFieldModel.objects.filter(master_user=self._master_user))
+            TransactionUserField.objects.filter(master_user=self._master_user))
 
         results = []
 
@@ -1427,7 +1415,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'pk')
 
         result = {
-            "entity": "ui.transactionuserfieldmodel",
+            "entity": "ui.transactionuserfield",
             "count": len(results),
             "content": results
         }
@@ -1437,7 +1425,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
     def get_instrument_user_fields(self):
 
         user_fields = to_json_objects(
-            InstrumentUserFieldModel.objects.filter(master_user=self._master_user))
+            InstrumentUserField.objects.filter(master_user=self._master_user))
 
         results = []
 
@@ -1452,7 +1440,7 @@ class ConfigurationExportViewSet(AbstractModelViewSet):
         delete_prop(results, 'pk')
 
         result = {
-            "entity": "ui.instrumentuserfieldmodel",
+            "entity": "ui.instrumentuserfield",
             "count": len(results),
             "content": results
         }

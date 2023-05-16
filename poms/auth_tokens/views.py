@@ -14,7 +14,7 @@ from poms.auth_tokens.models import AuthToken
 from poms.auth_tokens.serializers import SetAuthTokenSerializer, CreateUserSerializer, CreateMasterUserSerializer, \
     CreateMemberSerializer, DeleteMemberSerializer, RenameMasterUserSerializer, MasterUserChangeOwnerSerializer
 from poms.auth_tokens.utils import generate_random_string
-from poms.users.models import MasterUser, Member, UserProfile, Group
+from poms.users.models import MasterUser, Member, UserProfile
 from poms_app import settings
 
 _l = logging.getLogger('poms.auth_tokens')
@@ -263,9 +263,9 @@ class CreateMasterUser(APIView):
             member = Member.objects.create(user=user, master_user=master_user, is_owner=True, is_admin=True)
             member.save()
 
-            admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
-            admin_group.members.add(member.id)
-            admin_group.save()
+            # admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
+            # admin_group.members.add(member.id)
+            # admin_group.save()
 
         return Response({'status': 'ok'})
 
@@ -384,31 +384,30 @@ class CreateMember(APIView):
         #
         # user_profile = UserProfile.objects.get(user_unique_id=user_id)
 
-
         user, created = User.objects.get_or_create(username=username)
 
         master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
         try:
-            member = Member.objects.create(user=user, master_user=master_user)
+            member = Member.objects.create(user=user, username=user.username, master_user=master_user)
             member.save()
 
-            admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
-            admin_group.members.add(member.id)
-            admin_group.save()
+            # admin_group = Group.objects.get(master_user=master_user, role=Group.ADMIN)
+            # admin_group.members.add(member.id)
+            # admin_group.save()
             member.is_admin = True
             member.save()
 
-            if groups:
-
-                groups_list = groups.split(',')
-
-                for group in groups_list:
-
-                    if group != 'Administrators':
-                        group = Group.objects.get(master_user=master_user, role=Group.USER, name=group)
-                        group.members.add(member.id)
-                        group.save()
+            # if groups:
+            #
+            #     groups_list = groups.split(',')
+            #
+            #     for group in groups_list:
+            #
+            #         if group != 'Administrators':
+            #             group = Group.objects.get(master_user=master_user, role=Group.USER, name=group)
+            #             group.members.add(member.id)
+            #             group.save()
 
 
 

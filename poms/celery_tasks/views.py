@@ -59,7 +59,6 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='execute')
     def execute(self, request, pk=None):
-
         from poms_app import celery_app
 
         task_name = request.data.get('task_name')
@@ -80,11 +79,9 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=['PUT'], url_path='cancel')
     def cancel(self, request, pk=None):
-
         task = CeleryTask.objects.get(pk=pk)
 
         async_result = AsyncResult(task.celery_task_id).revoke()
-
 
         task.status = CeleryTask.STATUS_CANCELED
 
@@ -102,7 +99,26 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         codes = ComplexTransaction.objects.filter(linked_import_task=pk).values_list('code', flat=True)
 
-        complex_transactions = ComplexTransaction.objects.filter(linked_import_task=pk).delete()
+        complex_transactions_ids = list(
+            ComplexTransaction.objects.filter(linked_import_task=pk).values_list('id', flat=True))
+
+        options_object = {
+            'content_type': 'transactions.complextransaction',
+            'ids': complex_transactions_ids
+        }
+
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            options_object=options_object,
+            verbose_name="Bulk Delete",
+            type='bulk_delete'
+        )
+
+        from poms_app import celery_app
+
+        celery_app.send_task('celery_tasks.bulk_delete', kwargs={"task_id": celery_task.id},
+                             queue='backend-delete-queue')
 
         _l.info("%s complex transactions were deleted" % count)
 

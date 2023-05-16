@@ -8,6 +8,7 @@ from django.db import connection
 from poms.accounts.models import Account, AccountType
 from poms.common.utils import get_last_business_day
 from poms.currencies.models import Currency
+from poms.iam.utils import get_allowed_queryset
 from poms.instruments.models import Instrument, InstrumentType, LongUnderlyingExposure, ShortUnderlyingExposure, \
     ExposureCalculationModel
 from poms.portfolios.models import Portfolio
@@ -40,6 +41,22 @@ class BalanceReportBuilderSql:
         _l.debug('self.instance master_user %s' % self.instance.master_user)
         _l.debug('self.instance report_date %s' % self.instance.report_date)
 
+        '''TODO IAM_SECURITY_VERIFY need to check, if user somehow passes id of object he has no access to we should throw error'''
+
+        '''Important security methods'''
+        self.transform_to_allowed_portfolios()
+        self.transform_to_allowed_accounts()
+
+    def transform_to_allowed_portfolios(self):
+
+        if not len(self.instance.portfolios):
+            self.instance.portfolios = get_allowed_queryset(self.instance.member, Portfolio.objects.all())
+
+    def transform_to_allowed_accounts(self):
+
+        if not len(self.instance.accounts):
+            self.instance.accounts = get_allowed_queryset(self.instance.member, Account.objects.all())
+
     def build_balance(self):
         st = time.perf_counter()
 
@@ -53,7 +70,9 @@ class BalanceReportBuilderSql:
 
         relation_prefetch_st = time.perf_counter()
 
-        self.add_data_items()
+        if not self.instance.only_numbers:
+
+            self.add_data_items()
 
         self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
 
@@ -450,6 +469,7 @@ class BalanceReportBuilderSql:
                     instrument_principal_price,
                     instrument_accrued_price,
                     instrument_factor,
+                    instrument_ytm,
                     daily_price_change,
                     
                     currency_id,
@@ -618,6 +638,7 @@ class BalanceReportBuilderSql:
                         (1) as instrument_principal_price,
                         (0) as instrument_accrued_price,
                         (1) as instrument_factor,
+                        (0) as instrument_ytm,
                         (0) as daily_price_change,
                         
                         (c.id) as co_directional_exposure_currency_id,
@@ -841,6 +862,7 @@ class BalanceReportBuilderSql:
                     instrument_principal_price,
                     instrument_accrued_price,
                     instrument_factor,
+                    instrument_ytm,
                     daily_price_change,
                     
                     currency_id,
@@ -985,6 +1007,7 @@ class BalanceReportBuilderSql:
                         instrument_principal_price,
                         instrument_accrued_price,
                         instrument_factor,
+                        instrument_ytm,
                         daily_price_change,
                         
                         (-1) as currency_id,
@@ -1172,6 +1195,7 @@ class BalanceReportBuilderSql:
                         (principal_price) as instrument_principal_price,
                         (accrued_price) as instrument_accrued_price,
                         (factor) as instrument_factor,
+                        (ytm) as instrument_ytm,
                         
                         case when coalesce(yesterday_principal_price,0) = 0
                                 then 0
@@ -1389,6 +1413,15 @@ class BalanceReportBuilderSql:
                                 date = '{report_date}' and
                                 pricing_policy_id = {pricing_policy_id})
                             as factor,
+                            
+                            (select 
+                                ytm
+                            from instruments_pricehistory
+                            where 
+                                instrument_id=i.id and 
+                                date = '{report_date}' and
+                                pricing_policy_id = {pricing_policy_id})
+                            as ytm,
                             
                             (select 
                                 accrued_price
@@ -1669,6 +1702,7 @@ class BalanceReportBuilderSql:
                 result_item["instrument_principal_price"] = item["instrument_principal_price"]
                 result_item["instrument_accrued_price"] = item["instrument_accrued_price"]
                 result_item["instrument_factor"] = item["instrument_factor"]
+                result_item["instrument_ytm"] = item["instrument_ytm"]
                 result_item["daily_price_change"] = item["daily_price_change"]
 
                 result_item["fx_rate"] = item["fx_rate"]
@@ -1817,6 +1851,7 @@ class BalanceReportBuilderSql:
                                 "instrument_principal_price": None,
                                 "instrument_accrued_price": None,
                                 "instrument_factor": None,
+                                "instrument_ytm": None,
                                 "daily_price_change": None,
 
                                 "market_value": None,
@@ -1926,7 +1961,7 @@ class BalanceReportBuilderSql:
 
         self.instance.item_portfolios = Portfolio.objects.prefetch_related(
             'attributes'
-        ).defer('object_permissions', 'responsibles', 'counterparties', 'transaction_types', 'accounts') \
+        ).defer('responsibles', 'counterparties', 'transaction_types', 'accounts') \
             .filter(master_user=self.instance.master_user) \
             .filter(
             id__in=ids)
@@ -1937,7 +1972,7 @@ class BalanceReportBuilderSql:
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_account_types(self, accounts):
 
@@ -1966,21 +2001,21 @@ class BalanceReportBuilderSql:
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies2(self, ids):
         self.instance.item_strategies2 = Strategy2.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies3(self, ids):
         self.instance.item_strategies3 = Strategy3.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items(self):
 

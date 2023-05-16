@@ -34,12 +34,19 @@ class HistoryNavViewSet(AbstractViewSet):
             portfolio = request.query_params.get('portfolio', None)
             segmentation_type = request.query_params.get('segmentation_type', None)
 
+
             if not portfolio:
                 raise ValidationError("Portfolio is no set")
 
+            try:
+                portfolio_id = int(portfolio)
+                portfolio_instance = Portfolio.objects.get(id=portfolio_id)
+            except Exception as e:
+                portfolio_instance = Portfolio.objects.get(user_code=portfolio)
+
             if not date_from:
                 # date_from = str(datetime.datetime.now().year) + "-01-01"
-                date_from = get_first_transaction(portfolio).accounting_date.strftime("%Y-%m-%d")
+                date_from = get_first_transaction(portfolio_instance).accounting_date.strftime("%Y-%m-%d")
 
             if not date_to:
                 date_to = get_closest_bday_of_yesterday(to_string=True)
@@ -68,7 +75,7 @@ class HistoryNavViewSet(AbstractViewSet):
                 report_currency=currency
             )
 
-            balance_report_histories = balance_report_histories.filter(portfolio_id=portfolio)
+            balance_report_histories = balance_report_histories.filter(portfolio=portfolio_instance)
 
             _l.info('balance_report_histories %s' % len(list(balance_report_histories)))
 
@@ -158,7 +165,6 @@ class HistoryNavViewSet(AbstractViewSet):
             pricing_policy_object = PricingPolicy.objects.get(id=pricing_policy)
             cost_method_object = CostMethod.objects.get(id=cost_method)
 
-            portfolio_instance = Portfolio.objects.get(id=portfolio)
 
             portfolio_instance_json = {
                 "id": portfolio_instance.id,
@@ -188,7 +194,7 @@ class HistoryNavViewSet(AbstractViewSet):
                     "name": cost_method_object.name,
                     "user_code": cost_method_object.user_code
                 },
-                "portfolio": portfolio,
+                "portfolio": portfolio_instance.id,
                 "portfolio_object": portfolio_instance_json,
 
                 "items": items
@@ -218,8 +224,17 @@ class HistoryPlViewSet(AbstractViewSet):
         accounts = request.query_params.get('accounts', [])
         segmentation_type = request.query_params.get('segmentation_type', None)
 
+        if not portfolio:
+            raise ValidationError("Portfolio is no set")
+
+        try:
+            portfolio_id = int(portfolio)
+            portfolio_instance = Portfolio.objects.get(id=portfolio_id)
+        except Exception as e:
+            portfolio_instance = Portfolio.objects.get(user_code=portfolio)
+
         if not date_from:
-            date_from = get_first_transaction(portfolio).accounting_date.strftime("%Y-%m-%d")
+            date_from = get_first_transaction(portfolio_instance).accounting_date.strftime("%Y-%m-%d")
 
         if not date_to:
             date_to = get_closest_bday_of_yesterday(to_string=True)
@@ -248,10 +263,8 @@ class HistoryPlViewSet(AbstractViewSet):
             report_currency=currency
         )
 
-        if not portfolio:
-            raise ValidationError("Portfolio is not set")
 
-        pl_report_histories = pl_report_histories.filter(portfolio=portfolio)
+        pl_report_histories = pl_report_histories.filter(portfolio=portfolio_instance)
 
         if accounts:
             accounts = accounts.split(',')
@@ -343,8 +356,6 @@ class HistoryPlViewSet(AbstractViewSet):
         pricing_policy_object = PricingPolicy.objects.get(id=pricing_policy)
         cost_method_object = CostMethod.objects.get(id=cost_method)
 
-        portfolio_instance = Portfolio.objects.get(id=portfolio)
-
         portfolio_instance_json = {
             "id": portfolio_instance.id,
             "name": portfolio_instance.name,
@@ -391,12 +402,19 @@ class StatsViewSet(AbstractViewSet):
         benchmark = request.query_params.get('benchmark', 'sp_500')
 
         if not portfolio:
-            raise ValidationError("Portfolio is required")
+            raise ValidationError("Portfolio is no set")
+
+        try:
+            portfolio_id = int(portfolio)
+            portfolio_instance = Portfolio.objects.get(id=portfolio_id)
+        except Exception as e:
+            portfolio_instance = Portfolio.objects.get(user_code=portfolio)
+
 
         _l.info("StatsViewSet.date %s" % date)
-        _l.info("StatsViewSet.portfolio %s" % portfolio)
+        _l.info("StatsViewSet.portfolio %s" % portfolio_instance)
 
-        widget = WidgetStats.objects.get(date=date, portfolio_id=portfolio, benchmark=benchmark)
+        widget = WidgetStats.objects.get(date=date, portfolio=portfolio_instance, benchmark=benchmark)
 
         serializer = WidgetStatsSerializer(instance=widget)
 

@@ -34,6 +34,7 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
                   'is_system_task',
                   'created', 'modified',
                   'attachments',
+                  'notes',
 
                   'verbose_name', 'verbose_result',
                   'progress_object',

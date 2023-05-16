@@ -3,18 +3,14 @@ from __future__ import unicode_literals
 import json
 import logging
 import time
-from collections import OrderedDict
 from os.path import getsize
 
 from celery.result import AsyncResult
-from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import FieldDoesNotExist
 from django.core.signing import TimestampSigner
-from django.db import transaction
-from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import permissions, status
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter
@@ -27,15 +23,47 @@ from poms.common.filtering_handlers import handle_filters, handle_global_table_s
 from poms.common.filters import ByIdFilterBackend, ByIsDeletedFilterBackend, OrderingPostFilter, \
     ByIsEnabledFilterBackend
 from poms.common.grouping_handlers import handle_groups, count_groups
-from poms.common.mixins import BulkModelMixin, DestroyModelFakeMixin, UpdateModelMixinExt
+from poms.common.mixins import BulkModelMixin, DestroyModelFakeMixin, UpdateModelMixinExt, ListLightModelMixin, \
+    ListEvModelMixin
 from poms.common.sorting import sort_by_dynamic_attrs
-from poms.history.mixins import HistoryMixin
+from poms.iam.views import AbstractFinmarsAccessPolicyViewSet
 from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.users.utils import get_master_user_and_member
 
 _l = logging.getLogger('poms.common')
 
 from django.http import HttpResponse, Http404
+
+from drf_yasg.inspectors import SwaggerAutoSchema
+
+
+class CustomSwaggerAutoSchema(SwaggerAutoSchema):
+    def get_operation(self, operation_keys=None):
+        operation = super().get_operation(operation_keys)
+
+        splitted_dash_operation_keys = [word for item in operation_keys for word in item.split('-')]
+        splitted_underscore_operation_keys = [word for item in splitted_dash_operation_keys for word in item.split('_')]
+
+        capitalized_operation_keys = [word.capitalize() for word in splitted_underscore_operation_keys]
+
+        operation.operationId = ' '.join(capitalized_operation_keys)
+
+        # operation.operationId = f"{self.view.queryset.model._meta.verbose_name.capitalize()} {operation_keys[-1].capitalize()}"
+        return operation
+
+    def get_tags(self, operation_keys=None):
+        tags = super().get_tags(operation_keys)
+
+        splitted_tags = [word.split('-') for word in tags]
+
+        result = []
+
+        for splitted_tag in splitted_tags:
+            capitalized_tag = [word.capitalize() for word in splitted_tag]
+
+            result.append(' '.join(capitalized_tag))
+
+        return result
 
 
 class AbstractApiView(APIView):
@@ -60,6 +88,8 @@ class AbstractApiView(APIView):
 
         self.auth_time = float("{:3.3f}".format(time.perf_counter() - auth_st))
 
+    swagger_schema = CustomSwaggerAutoSchema
+
 
 class AbstractViewSet(AbstractApiView, ViewSet):
     serializer_class = None
@@ -70,7 +100,9 @@ class AbstractViewSet(AbstractApiView, ViewSet):
     def get_serializer(self, *args, **kwargs):
         serializer_class = self.get_serializer_class()
         kwargs['context'] = self.get_serializer_context()
-        return serializer_class(*args, **kwargs)
+        if serializer_class:
+            return serializer_class(*args, **kwargs)
+        return None
 
     def get_serializer_class(self):
         return self.serializer_class
@@ -81,6 +113,7 @@ class AbstractViewSet(AbstractApiView, ViewSet):
             'format': self.format_kwarg,
             'view': self
         }
+
 
 # DEPRECATED
 class AbstractEvGroupViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelFakeMixin,
@@ -217,16 +250,20 @@ class AbstractEvGroupViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelF
         return Response(filtered_qs)
 
 
-class AbstractModelViewSet(AbstractApiView, HistoryMixin, UpdateModelMixinExt, DestroyModelFakeMixin,
-                           BulkModelMixin, ModelViewSet):
-    permission_classes = [
+class AbstractModelViewSet(AbstractApiView,
+                           ListLightModelMixin,
+                           ListEvModelMixin,
+                           UpdateModelMixinExt,
+                           DestroyModelFakeMixin,
+                           BulkModelMixin, AbstractFinmarsAccessPolicyViewSet):
+    permission_classes = AbstractFinmarsAccessPolicyViewSet.permission_classes + [
         IsAuthenticated
     ]
-    filter_backends = [
+    filter_backends = AbstractFinmarsAccessPolicyViewSet.filter_backends + [
         ByIdFilterBackend,
         ByIsDeletedFilterBackend,
         ByIsEnabledFilterBackend,
-        DjangoFilterBackend,
+        # DjangoFilterBackend, # Create duplicate error, possibly inheriths from AbstractFinmarsAccessPolicyViewSet
         OrderingFilter,
         OrderingPostFilter,
     ]
@@ -264,9 +301,8 @@ class AbstractModelViewSet(AbstractApiView, HistoryMixin, UpdateModelMixinExt, D
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    # Deprecated
-    @action(detail=False, methods=['post', 'get'], url_path='filtered')
-    def filtered_list(self, request, *args, **kwargs):
+    @action(detail=False, methods=['post'], url_path='ev-item')
+    def list_ev_item(self, request, *args, **kwargs):
 
         start_time = time.perf_counter()
 
@@ -330,73 +366,8 @@ class AbstractModelViewSet(AbstractApiView, HistoryMixin, UpdateModelMixinExt, D
         #
         # return Response(serializer.data)
 
-    @action(detail=False, methods=['post', 'get'], url_path='ev-item')
-    def ev_item(self, request, *args, **kwargs):
-
-        start_time = time.perf_counter()
-
-        filter_settings = request.data.get('filter_settings', None)
-        global_table_search = request.data.get('global_table_search', '')
-        content_type = ContentType.objects.get_for_model(self.serializer_class.Meta.model)
-        master_user = request.user.master_user
-
-        filters_st = time.perf_counter()
-        queryset = self.filter_queryset(self.get_queryset())
-
-        if content_type.model not in ['currencyhistory', 'pricehistory', 'complextransaction', 'transaction',
-                                      'currencyhistoryerror', 'pricehistoryerror']:
-
-            is_enabled = request.data.get('is_enabled', 'true')
-
-            if is_enabled == 'true':
-                queryset = queryset.filter(is_enabled=True)
-
-        if content_type.model in ['complextransaction']:
-            queryset = queryset.filter(is_deleted=False)
-
-        queryset = handle_filters(queryset, filter_settings, master_user, content_type)
-
-        ordering = request.data.get('ordering', None)
-
-        _l.debug('ordering %s' % ordering)
-
-        if ordering:
-            sort_st = time.perf_counter()
-            queryset = sort_by_dynamic_attrs(queryset, ordering, master_user, content_type)
-            # _l.debug('filtered_list sort done: %s', "{:3.3f}".format(time.perf_counter() - sort_st))
-
-        # _l.debug('filtered_list apply filters done: %s', "{:3.3f}".format(time.perf_counter() - filters_st))
-
-        page_st = time.perf_counter()
-
-        if global_table_search:
-            queryset = handle_global_table_search(queryset, global_table_search, self.serializer_class.Meta.model,
-                                                  content_type)
-
-        page = self.paginator.post_paginate_queryset(queryset, request)
-
-        # _l.debug('filtered_list get page done: %s', "{:3.3f}".format(time.perf_counter() - page_st))
-
-        serialize_st = time.perf_counter()
-
-        serializer = self.get_serializer(page, many=True)
-
-        result = self.get_paginated_response(serializer.data)
-
-        # _l.debug('filtered_list serialize done: %s', "{:3.3f}".format(time.perf_counter() - serialize_st))
-
-        # _l.debug('filtered_list done: %s', "{:3.3f}".format(time.perf_counter() - start_time))
-
-        return result
-
-        # serializer = self.get_serializer(queryset, many=True)
-        #
-        # print("Filtered List %s seconds " % (time.time() - start_time))
-        #
-        # return Response(serializer.data)
-
-    @action(detail=False, methods=['post', 'get'], url_path='ev-group')
-    def ev_group(self, request, *args, **kwargs):
+    @action(detail=False, methods=['post'], url_path='ev-group')
+    def list_ev_group(self, request, *args, **kwargs):
 
         start_time = time.time()
 

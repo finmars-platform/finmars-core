@@ -7,9 +7,87 @@ from django.utils.translation import gettext_lazy
 from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedModel
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
-from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser
 
+
+def _get_strategy_system_attrs(strategy_number):
+    '''
+    Returns system attributes for strategies.
+
+    :param strategy_number:
+    :type strategy_number: str
+    :return: Attributes that front end uses
+    '''
+    return [
+        {
+            "key": "name",
+            "name": "Name",
+            "value_type": 10
+        },
+        {
+            "key": "short_name",
+            "name": "Short name",
+            "value_type": 10
+        },
+        {
+            "key": "user_code",
+            "name": "User code",
+            "value_type": 10
+        },
+        {
+            "key": "public_name",
+            "name": "Public name",
+            "value_type": 10,
+            "allow_null": True
+        },
+        {
+            "key": "notes",
+            "name": "Notes",
+            "value_type": 10
+        },
+        {
+            "key": "subgroup",
+            "name": "Group",
+            "value_type": "field",
+            "value_entity": "strategy-" + strategy_number + "-subgroup",
+            "value_content_type": "strategies.strategy" + strategy_number + "subgroup",
+            "code": "user_code"
+        },
+    ]
+
+
+class _SubgroupSystemAttrsMixin:
+    @staticmethod
+    def get_system_attrs():
+        '''
+        Returns system attributes for subgroups of strategies.
+    
+        :param strategy_number:
+        :type strategy_number: str
+        :return: Attributes that front end uses
+        '''
+        return [
+           {
+               "key": "name",
+               "name": "Name",
+               "value_type": 10
+           },
+           {
+               "key": "short_name",
+               "name": "Short name",
+               "value_type": 10
+           },
+           {
+               "key": "notes",
+               "name": "Notes",
+               "value_type": 10
+           },
+           {
+               "key": "user_code",
+               "name": "User code",
+               "value_type": 10
+           },
+        ]
 
 # 1 --
 
@@ -17,8 +95,6 @@ from poms.users.models import MasterUser
 class Strategy1Group(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategy1_groups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
-
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy1 group')
@@ -37,12 +113,10 @@ class Strategy1Group(NamedModel, FakeDeletableModel):
         return self.master_user.strategy1_group_id == self.id if self.master_user_id else False
 
 
-class Strategy1Subgroup(NamedModel, FakeDeletableModel):
+class Strategy1Subgroup(NamedModel, FakeDeletableModel, _SubgroupSystemAttrsMixin):
     master_user = models.ForeignKey(MasterUser, related_name='strategy1_subgroups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(Strategy1Group, null=True, blank=True, on_delete=models.PROTECT, related_name='subgroups')
-
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy1 subgroup')
@@ -56,6 +130,13 @@ class Strategy1Subgroup(NamedModel, FakeDeletableModel):
         #     ['group', 'user_code']
         # ]
 
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return _get_strategy_system_attrs("1")
+
     @property
     def is_default(self):
         return self.master_user.strategy1_subgroup_id == self.id if self.master_user_id else False
@@ -66,8 +147,6 @@ class Strategy1(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
                                     on_delete=models.CASCADE)
     subgroup = models.ForeignKey(Strategy1Subgroup, null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='strategies')
-
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
@@ -83,6 +162,13 @@ class Strategy1(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
         #     ['subgroup', 'user_code']
         # ]
 
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return _get_strategy_system_attrs("1")
+
     @property
     def is_default(self):
         return self.master_user.strategy1_id == self.id if self.master_user_id else False
@@ -94,8 +180,6 @@ class Strategy1(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
 class Strategy2Group(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategy2_groups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
-
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy2 group')
@@ -114,12 +198,10 @@ class Strategy2Group(NamedModel, FakeDeletableModel):
         return self.master_user.strategy2_group_id == self.id if self.master_user_id else False
 
 
-class Strategy2Subgroup(NamedModel, FakeDeletableModel):
+class Strategy2Subgroup(NamedModel, FakeDeletableModel, _SubgroupSystemAttrsMixin):
     master_user = models.ForeignKey(MasterUser, related_name='strategy2_subgroups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(Strategy2Group, null=True, blank=True, on_delete=models.PROTECT, related_name='subgroups')
-
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy2 subgroup')
@@ -144,8 +226,6 @@ class Strategy2(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
     subgroup = models.ForeignKey(Strategy2Subgroup, null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='strategies')
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
@@ -160,6 +240,13 @@ class Strategy2(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
         #     ['subgroup', 'user_code']
         # ]
 
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return _get_strategy_system_attrs("2")
+
     @property
     def is_default(self):
         return self.master_user.strategy2_id == self.id if self.master_user_id else False
@@ -171,8 +258,6 @@ class Strategy2(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
 class Strategy3Group(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(MasterUser, related_name='strategy3_groups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
-
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy3 group')
@@ -191,12 +276,10 @@ class Strategy3Group(NamedModel, FakeDeletableModel):
         return self.master_user.strategy3_group_id == self.id if self.master_user_id else False
 
 
-class Strategy3Subgroup(NamedModel, FakeDeletableModel):
+class Strategy3Subgroup(NamedModel, FakeDeletableModel, _SubgroupSystemAttrsMixin):
     master_user = models.ForeignKey(MasterUser, related_name='strategy3_subgroups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
     group = models.ForeignKey(Strategy3Group, null=True, blank=True, on_delete=models.PROTECT, related_name='subgroups')
-
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('strategy3 subgroup')
@@ -221,8 +304,6 @@ class Strategy3(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
     subgroup = models.ForeignKey(Strategy3Subgroup, null=True, blank=True, on_delete=models.PROTECT,
                                  related_name='strategies')
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
@@ -236,6 +317,13 @@ class Strategy3(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
         # unique_together = [
         #     ['subgroup', 'user_code']
         # ]
+
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return _get_strategy_system_attrs("3")
 
     @property
     def is_default(self):

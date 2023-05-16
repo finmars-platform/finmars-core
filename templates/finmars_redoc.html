@@ -1,0 +1,463 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Page</title>
+    <link rel="stylesheet" href="{% static 'css/redoc.css' %}">
+</head>
+<body>
+
+<div class="logo">
+    <a href="https://finmars.com"><img src="{% static 'img/logo.png' %}" alt="Logo"></a>
+</div>
+
+<div class="content">
+
+    <div>
+        <h3>API Reference</h3>
+        <p><span class="color-orange">Finmars</span> API is organized around REST. Our API has predictable
+            resource-oriented URLs, accepts form-encoded request bodies, returns JSON-encoded responses, and uses
+            standard HTTP response codes, authentication, and verbs.</p>
+    </div>
+
+    <div class="documentation-block">
+
+        <h4 class="documentation-header">Data</h4>
+
+        <div class="display-flex-row">
+
+            <div class="display-flex-column">
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/instrument">Instrument</a>
+                    <div class="api-description">
+                        <p>
+                            The instrument entity represents a financial asset that can be bought and sold in Finmars.
+                            Instruments can include stocks, bonds, mutual funds, and other types of securities.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/account">Account</a>
+                    <div class="api-description">
+                        <p>
+                            The /accounts/ API endpoint provides access to information about user accounts in Finmars.
+                            This
+                            endpoint
+                            allows users to create new accounts, retrieve information about existing accounts, and
+                            update
+                            account
+                            details.
+                        </p>
+                    </div>
+                </div>
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/portfolio">Portfolio</a>
+                    <div class="api-description">
+                        <p>
+                            The portfolio entity represents a collection of financial assets held by a user in Finmars.
+                            A portfolio is also linked to transactions, which represent the buying and selling of
+                            financial assets within the portfolio.
+                        </p>
+                    </div>
+                </div>
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/currency">Currency</a>
+                    <div class="api-description">
+                        <p>
+                            The currency entity represents a unit of currency used in Finmars. Each currency is
+                            identified by a
+                            unique
+                            code, and can have a corresponding name and symbol.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/strategy">Strategy</a>
+                    <div class="api-description">
+                        <p>
+                            The strategy entity represents an investment strategy that our users can use to manage their
+                            portfolio. A strategy can be a predefined portfolio mix of assets, a set of rules for buying
+                            and selling assets, or a combination of both. Each strategy object includes details such as
+                            the name, description, and the assets or rules associated with the strategy.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="display-flex-column">
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/transaction">Transaction</a>
+                    <div class="api-description">
+                        <p>
+                            The transaction entity represents a single financial transaction that occurs in Finmars.
+                            Each transaction is associated with a user account and a financial instrument, and includes
+                            details such as the transaction type (buy or sell), the quantity of shares or units traded,
+                            and the price per share or unit.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/instrument#tag/Price-History">Price History</a>
+                    <div class="api-description">
+                        <p>
+                            The price history entity represents the historical prices for a financial instrument in
+                            Finmars. Each price history object includes the date of the price, the price itself, and
+                            pricing policy.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/currency#tag/Currency-History">FX Rate History</a>
+                    <div class="api-description">
+                        <p>
+                            The FX rate history entity represents the historical exchange rates between two currencies
+                            in Finmars. Each FX rate history object includes the rate to the Space Base Currency
+                            and the date of the rate update.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/counterparty">Counterparty</a>
+                    <div class="api-description">
+                        <p>
+                            The counterparty entity represents a financial institution, broker, or company that our
+                            users interact with in our fintech app. A counterparty can be a bank where a user holds an
+                            account, a brokerage firm where a user invests, or a company where a user has a financial
+                            interest. Each counterparty object includes details such as the name, contact information,
+                            and the user accounts associated with the counterparty.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/counterparty#tag/Responsible">Responsible</a>
+                    <div class="api-description">
+                        <p>
+                            The responsible entity represents a person or department responsible for managing finance
+                            assets in organization. Each responsible object includes details such as the name,
+                            contact information, and the assets assigned to the responsible party.
+                        </p>
+                    </div>
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+    <div class="documentation-block">
+
+        <h4 class="documentation-header">Reports</h4>
+
+        <div class="display-flex-row">
+
+            <div class="display-flex-column">
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/report#tag/Balance-Report">Balance Report</a>
+                    <div class="api-description">
+                        <p>
+                            The balance report entity represents a report that shows the current balance and holdings of
+                            a user's accounts and assets. This report can be used to provide an overview of the user's
+                            financial status at a given point in time. Each balance report object includes details such
+                            as the date and time of the report, the total balance of the user's accounts and assets, and
+                            a list of account and asset objects with their individual balances.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/report#tag/Transaction-Report">Transaction Report</a>
+                    <div class="api-description">
+                        <p>
+                            The transaction report entity represents a report that shows a list of transactions for a
+                            user's accounts and assets. This report can be used to provide an overview of the user's
+                            financial activity over a period of time. Each transaction report object includes details
+                            such as the date range of the report and a list of transaction objects with their individual
+                            details.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="display-flex-column">
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/report#tag/Pl-Report">P&L Report</a>
+                    <div class="api-description">
+                        <p>
+                            The PL report entity represents a report that shows the profits and losses of a user's
+                            investments over a period of time. This report can be used to provide an overview of the
+                            user's financial performance and can help the user make informed investment decisions. Each
+                            PL report object includes details such as the date range of the report, the total profit or
+                            loss for the period.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/report#tag/Performance-Report">Performance Report</a>
+                    <div class="api-description">
+                        <p>
+                            The performance report entity represents a report that shows the performance of a user's
+                            investments over a period of time. This report can be used to provide an overview of the
+                            user's investment returns and can help the user make informed investment decisions. Each
+                            performance report object includes details such as the date range of the report, the total
+                            return for the period, and a list of investment objects with their individual returns.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+    <div class="documentation-block">
+
+        <h4 class="documentation-header">Data Import</h4>
+
+        <div class="display-flex-row">
+
+            <div class="display-flex-column">
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/import#tag/Simple-Import">Simple Import</a>
+                    <div class="api-description">
+                        <p>
+                            The data import API endpoint allows users to import data related to Portfolios, Accounts,
+                            and
+                            Instruments from CSV and JSON files into the application's database. Users can submit a file
+                            containing data in either CSV or JSON format, and the API will parse the file and add the
+                            data
+                            to the appropriate database tables.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="display-flex-column">
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/import#tag/Transaction-Import">Transaction Import</a>
+                    <div class="api-description">
+                        <p>
+                            The transaction import API endpoint allows users to import transactions from CSV and JSON
+                            files
+                            into the application's database. Users can submit a file containing transaction data in
+                            either
+                            CSV or JSON format, and the API will parse the file and add the transactions to Finmars
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="documentation-block">
+
+        <h4 class="documentation-header">Configuration</h4>
+
+        <div class="display-flex-row">
+
+            <div class="display-flex-column">
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/transaction#tag/Transaction-Type">Transaction Type</a>
+                    <div class="api-description">
+                        <p>
+                            The Transaction Type entity represents the different types of financial transactions that
+                            can be
+                            performed in the application. Each Transaction Type has a unique name and may have
+                            additional
+                            attributes, such as a description or default values for certain fields. In addition, each
+                            Transaction Type can define custom templates and logic for creating and processing
+                            transactions
+                            of that type.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/procedure#tag/Data-Procedure">Data Procedure</a>
+                    <div class="api-description">
+                        <p>
+                            The Data Procedure entity represents a configured connection to a data source. Each Data
+                            Procedure has a unique name and a set of configuration attributes that specify the details
+                            of
+                            the connection, such as the type of data source, the location of the data source, and any
+                            credentials required for authentication.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/procedure#tag/Expression-Procedure">Expression Procedure</a>
+                    <div class="api-description">
+                        <p>
+                            The Expression Procedure entity represents a custom Python-like script that can be executed
+                            within the application. Each Expression Procedure has a unique name and a script that
+                            defines
+                            the logic to be executed. Expression Procedures are often used for data processing and
+                            transformation, allowing users to define custom logic to transform data within the
+                            application.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/ui">Input Form Layout</a>
+                    <div class="api-description">
+                        <p>
+                            The Input Form Layout entity represents a user interface (UI) configuration for an input
+                            form in
+                            JSON format. Each Input Form Layout has a unique name and a set of configuration attributes
+                            that
+                            define the UI components and their layout for the corresponding input form.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="display-flex-column">
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/instrument#tag/Instrument-Type">Instrument Type</a>
+                    <div class="api-description">
+                        <p>
+                            The Instrument Type entity represents the different types of financial instruments that can
+                            be
+                            tracked in the application. Each Instrument Type has a unique name and may have additional
+                            attributes, such as a description or default values for certain fields.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/procedure#tag/Pricing-Procedure">Pricing Procedure</a>
+                    <div class="api-description">
+                        <p>
+                            The Pricing Procedure entity represents a set of rules for downloading and updating price
+                            history and foreign exchange (FX) rates within the application. Each Pricing Procedure has a
+                            unique name and a set of configuration attributes that specify the details of the pricing
+                            data
+                            to be retrieved, such as the data source, frequency of updates, and any transformation or
+                            mapping required.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/ui#tag/List-Layout">Entity Viewer / Report Layout</a>
+                    <div class="api-description">
+                        <p>
+                            The Layout entity represents a user interface (UI) configuration in JSON format. Each Layout
+                            has
+                            a unique name and a set of configuration attributes that define the UI components and their
+                            layout.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/ui">Other Layouts</a>
+                    <div class="api-description">
+                        <p>
+                            Such as Dashboards, Context menus, Aliases, etc.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/transaction#tag/Transaction-Type">Schedule</a>
+                    <div class="api-description">
+                        <p>
+                            -
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="documentation-block">
+
+        <h4 class="documentation-header">System</h4>
+
+        <div class="display-flex-row">
+
+            <div class="display-flex-column">
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/explorer">Explorer</a>
+                    <div class="api-description">
+                        <p>The Explorer entity represents a web file storage system that allows users to store and
+                            manage
+                            files
+                            through a web interface.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/import">Other</a>
+                    <div class="api-description">
+                        -
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="display-flex-column">
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/iam">Permissions (IAM)</a>
+                    <div class="api-description">
+                        <p>The IAM (Identity and Access Management) API endpoints provide functionality for managing
+                            users,
+                            groups, roles, and permissions within an application.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="documentation-endpoint-block">
+                    <a href="/{{space_code}}/docs/api/v1/import">Task</a>
+                    <div class="api-description">
+                        -
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

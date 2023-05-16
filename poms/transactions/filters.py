@@ -9,10 +9,6 @@ from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentType, Instrument, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
     Periodicity, AccrualCalculationModel
 from poms.integrations.models import PriceDownloadScheme
-from poms.obj_perms.filters import ObjectPermissionMemberFilter, ObjectPermissionGroupFilter, \
-    ObjectPermissionPermissionFilter
-from poms.obj_perms.models import GenericObjectPermission
-from poms.obj_perms.utils import obj_perms_filter_objects_for_view, obj_perms_filter_objects
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import EventClass, NotificationClass
@@ -23,37 +19,25 @@ class TransactionObjectPermissionFilter(BaseFilterBackend):
         master_user = request.user.master_user
         member = request.user.member
 
-        # if member.is_superuser:
-        #     return queryset
-        #
-        # portfolio_qs = obj_perms_filter_objects_for_view(member, Portfolio.objects.filter(master_user=master_user))
-        # account_qs = obj_perms_filter_objects_for_view(member, Account.objects.filter(master_user=master_user))
-        # # minimize inlined SQL
-        # portfolio_qs = list(portfolio_qs.values_list('id', flat=True))
-        # account_qs = list(account_qs.values_list('id', flat=True))
-        # queryset = queryset.filter(
-        #     Q(portfolio__in=portfolio_qs) |
-        #     (Q(account_position__in=account_qs) | Q(account_cash__in=account_qs) | Q(account_interim__in=account_qs))
-        # )
-        # return queryset
         return self.filter_qs(queryset, master_user, member)
 
     @classmethod
     def filter_qs(self, queryset, master_user, member):
-        if member.is_superuser:
+        if member.is_admin:
             return queryset
 
-        queryset = obj_perms_filter_objects_for_view(member, queryset)
+        from poms.iam.utils import get_allowed_queryset
 
-        # portfolio_qs = obj_perms_filter_objects_for_view(member, Portfolio.objects.filter(master_user=master_user))
-        # account_qs = obj_perms_filter_objects_for_view(member, Account.objects.filter(master_user=master_user))
-        # # minimize inlined SQL
-        # portfolio_qs = list(portfolio_qs.values_list('id', flat=True))
-        # account_qs = list(account_qs.values_list('id', flat=True))
-        # queryset = queryset.filter(
-        #     Q(portfolio__in=portfolio_qs) |
-        #     (Q(account_position__in=account_qs) | Q(account_cash__in=account_qs) | Q(account_interim__in=account_qs))
-        # )
+        '''TODO IAM_SECURITY_VERIFY check if appoach is good for business requirements '''
+        allowed_portfolios = get_allowed_queryset(member, Portfolio.objects.all())
+        allowed_accounts = get_allowed_queryset(member, Account.objects.all())
+
+        queryset = queryset.filter(portfolio__in=allowed_portfolios)
+
+        queryset = queryset.filter(
+            Q(account_position__in=allowed_accounts) | Q(account_cash__in=allowed_accounts) | Q(
+                account_interim__in=allowed_accounts))
+
         return queryset
 
 
@@ -68,139 +52,30 @@ class TransactionTypeInputContentTypeFilter(BaseFilterBackend):
 
 class ComplexTransactionPermissionFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        return queryset.filter(master_user=request.user.master_user)
+        master_user = request.user.master_user
+        member = request.user.member
 
-        # trn_qs = Transaction.objects.filter(master_user=request.user.master_user)
-        # trn_qs = TransactionObjectPermissionFilter().filter_queryset(request, trn_qs, view)
-        #
-        #
-        # return queryset.filter(
-        #     transaction_type__master_user=request.user.master_user,
-        #     pk__in=trn_qs.values_list('complex_transaction', flat=True)
-        # )
+        return self.filter_qs(queryset, master_user, member)
 
+    @classmethod
+    def filter_qs(self, queryset, master_user, member):
+        if member.is_admin:
+            return queryset
 
-class TransactionObjectPermissionMemberFilter(ObjectPermissionMemberFilter):
-    # def get_user_filter_q(self, value):
-    #     user_lookup_name, user_obj_perms_model = get_user_obj_perms_model(self.object_permission_model)
-    #     pk_q = user_obj_perms_model.objects.filter(member__groups__in=value).values_list(
-    #         'content_object__id', flat=True)
-    #
-    #     if issubclass(self.object_permission_model, Account):
-    #         return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
-    #     elif issubclass(self.object_permission_model, Portfolio):
-    #         return Q(portfolio__in=pk_q)
-    #     else:
-    #         raise ValueError('Invalid object_permission_model')
-    #
-    # def get_group_filter_q(self, value):
-    #     group_lookup_name, group_obj_perms_model = get_group_obj_perms_model(self.object_permission_model)
-    #     pk_q = group_obj_perms_model.objects.filter(group__in=value).values_list('content_object__id', flat=True)
-    #
-    #     if issubclass(self.object_permission_model, Account):
-    #         return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
-    #     elif issubclass(self.object_permission_model, Portfolio):
-    #         return Q(portfolio__in=pk_q)
-    #     else:
-    #         raise ValueError('Invalid object_permission_model')
+        from poms.iam.utils import get_allowed_queryset
 
-    def get_permission_filter(self, value):
-        ctype = ContentType.objects.get_for_model(self.object_permission_model)
-        pk_q = Q(
-            pk__in=GenericObjectPermission.objects.filter(
-                content_type=ctype, permission__content_type=ctype,
-            ).filter(
-                Q(member__in=value) | Q(group__members__in=value)
-            ).values_list('object_id', flat=True)
-        )
+        '''TODO IAM_SECURITY_VERIFY check if appoach is good for business requirements '''
+        allowed_portfolios = get_allowed_queryset(member, Portfolio.objects.all())
+        allowed_accounts = get_allowed_queryset(member, Account.objects.all())
 
-        if issubclass(self.object_permission_model, Account):
-            return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
-        elif issubclass(self.object_permission_model, Portfolio):
-            return Q(portfolio__in=pk_q)
-        else:
-            raise ValueError('Invalid object_permission_model')
+        queryset = queryset.filter(transactions__portfolio__in=allowed_portfolios)
 
+        '''TODO check maybe performance issue'''
+        queryset = queryset.filter(
+            Q(transactions__account_position__in=allowed_accounts) | Q(transactions__account_cash__in=allowed_accounts) | Q(
+                transactions__account_interim__in=allowed_accounts))
 
-class TransactionObjectPermissionGroupFilter(ObjectPermissionGroupFilter):
-    # def get_user_filter_q(self, value):
-    #     user_lookup_name, user_obj_perms_model = get_user_obj_perms_model(self.object_permission_model)
-    #     pk_q = user_obj_perms_model.objects.filter(member__groups__in=value).values_list(
-    #         'content_object__id', flat=True)
-    #
-    #     if issubclass(self.object_permission_model, Account):
-    #         return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
-    #     elif issubclass(self.object_permission_model, Portfolio):
-    #         return Q(portfolio__in=pk_q)
-    #     else:
-    #         raise ValueError('Invalid object_permission_model')
-    #
-    # def get_group_filter_q(self, value):
-    #     group_lookup_name, group_obj_perms_model = get_group_obj_perms_model(self.object_permission_model)
-    #     pk_q = group_obj_perms_model.objects.filter(group__in=value).values_list(
-    #         'content_object__id', flat=True)
-    #     if issubclass(self.object_permission_model, Account):
-    #         return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
-    #     elif issubclass(self.object_permission_model, Portfolio):
-    #         return Q(portfolio__in=pk_q)
-    #     else:
-    #         raise ValueError('Invalid object_permission_model')
-
-    def get_permission_filter(self, value):
-        ctype = ContentType.objects.get_for_model(self.object_permission_model)
-        pk_q = Q(
-            pk__in=GenericObjectPermission.objects.filter(
-                content_type=ctype, permission__content_type=ctype,
-            ).filter(
-                Q(member__groups__in=value) | Q(group__in=value)
-            ).values_list('object_id', flat=True)
-        )
-        if issubclass(self.object_permission_model, Account):
-            return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
-        elif issubclass(self.object_permission_model, Portfolio):
-            return Q(portfolio__in=pk_q)
-        else:
-            raise ValueError('Invalid object_permission_model')
-
-
-class TransactionObjectPermissionPermissionFilter(ObjectPermissionPermissionFilter):
-    # def get_user_filter_q(self, value):
-    #     user_lookup_name, user_obj_perms_model = get_user_obj_perms_model(self.object_permission_model)
-    #     pk_q = user_obj_perms_model.objects.filter(permission__codename__in=value).values_list(
-    #         'content_object__id', flat=True)
-    #
-    #     if issubclass(self.object_permission_model, Account):
-    #         return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
-    #     elif issubclass(self.object_permission_model, Portfolio):
-    #         return Q(portfolio__in=pk_q)
-    #     else:
-    #         raise ValueError('Invalid object_permission_model')
-    #
-    # def get_group_filter_q(self, value):
-    #     group_lookup_name, group_obj_perms_model = get_group_obj_perms_model(self.object_permission_model)
-    #     pk_q = group_obj_perms_model.objects.filter(permission__codename__in=value).values_list(
-    #         'content_object__id', flat=True)
-    #     if issubclass(self.object_permission_model, Account):
-    #         return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
-    #     elif issubclass(self.object_permission_model, Portfolio):
-    #         return Q(portfolio__in=pk_q)
-    #     else:
-    #         raise ValueError('Invalid object_permission_model')
-
-    def get_permission_filter(self, value):
-        ctype = ContentType.objects.get_for_model(self.object_permission_model)
-        pk_q = Q(
-            pk__in=GenericObjectPermission.objects.filter(
-                content_type=ctype, permission__content_type=ctype,
-                permission__codename__in=value
-            ).values_list('object_id', flat=True)
-        )
-        if issubclass(self.object_permission_model, Account):
-            return Q(account_position__in=pk_q) | Q(account_cash__in=pk_q) | Q(account_interim__in=pk_q)
-        elif issubclass(self.object_permission_model, Portfolio):
-            return Q(portfolio__in=pk_q)
-        else:
-            raise ValueError('Invalid object_permission_model')
+        return queryset
 
 
 class ComplexTransactionSpecificFilter(BaseFilterBackend):
@@ -243,24 +118,5 @@ class ComplexTransactionSpecificFilter(BaseFilterBackend):
 
         if is_canceled == False:
             queryset = queryset.filter(is_canceled=is_canceled)
-
-        partially_visible_permissions = ['view_complextransaction_show_parameters',
-                                         'view_complextransaction_hide_parameters']
-        full_visible_permissions = ['view_complextransaction']
-
-        if is_partially_visible == False:
-            queryset = obj_perms_filter_objects(member, full_visible_permissions, queryset,
-                                                prefetch=False)
-
-        # if not member.is_admin:
-        #
-        #     if is_partially_visible:
-        #         queryset = obj_perms_filter_objects(member, partially_visible_permissions, queryset,
-        #                                             prefetch=False)
-        #     else:
-        #         queryset = obj_perms_filter_objects(member, full_visible_permissions, queryset,
-        #                                             prefetch=False)
-
-        # print("ComplexTransactionSpecificFilter after %s" % len(queryset))
 
         return queryset

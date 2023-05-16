@@ -1,25 +1,40 @@
-from __future__ import unicode_literals
-
 from django.contrib import admin
 
 from poms.common.admin import AbstractModelAdmin
 from poms.obj_attrs.admin import GenericAttributeInline
-from poms.obj_perms.admin import GenericObjectPermissionInline
-from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord, PortfolioBundle
+from poms.portfolios.models import (
+    Portfolio,
+    PortfolioBundle,
+    PortfolioRegister,
+    PortfolioRegisterRecord,
+)
 
 
 class PortfolioAdmin(AbstractModelAdmin):
     model = Portfolio
-    master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'user_code', 'name', 'is_deleted', ]
-    list_select_related = ['master_user']
-    list_filter = ['is_deleted', ]
-    search_fields = ['id', 'user_code', 'name']
-    raw_id_fields = ['master_user', 'accounts', 'responsibles', 'counterparties', 'transaction_types']
+    master_user_path = "master_user"
+    list_display = [
+        "id",
+        "master_user",
+        "user_code",
+        "name",
+        "is_deleted",
+    ]
+    list_select_related = ["master_user"]
+    list_filter = [
+        "is_deleted",
+    ]
+    search_fields = ["id", "user_code", "name"]
+    raw_id_fields = [
+        "master_user",
+        "accounts",
+        "responsibles",
+        "counterparties",
+        "transaction_types",
+    ]
     inlines = [
         # AbstractAttributeInline,
         GenericAttributeInline,
-        GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline,
     ]
@@ -46,10 +61,22 @@ admin.site.register(Portfolio, PortfolioAdmin)
 
 class PortfolioRegisterAdmin(AbstractModelAdmin):
     model = PortfolioRegister
-    master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'portfolio', 'linked_instrument', 'valuation_pricing_policy',
-                    'valuation_currency']
-    raw_id_fields = ['master_user', 'portfolio', 'linked_instrument', 'valuation_pricing_policy', 'valuation_currency']
+    master_user_path = "master_user"
+    list_display = [
+        "id",
+        "master_user",
+        "portfolio",
+        "linked_instrument",
+        "valuation_pricing_policy",
+        "valuation_currency",
+    ]
+    raw_id_fields = [
+        "master_user",
+        "portfolio",
+        "linked_instrument",
+        "valuation_pricing_policy",
+        "valuation_currency",
+    ]
 
 
 admin.site.register(PortfolioRegister, PortfolioRegisterAdmin)
@@ -57,10 +84,23 @@ admin.site.register(PortfolioRegister, PortfolioRegisterAdmin)
 
 class PortfolioRegisterRecordAdmin(AbstractModelAdmin):
     model = PortfolioRegisterRecord
-    master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'transaction_date', 'portfolio', 'instrument', 'transaction_class',
-                    'portfolio_register']
-    raw_id_fields = ['master_user', 'portfolio', 'instrument', 'portfolio_register']
+    master_user_path = "master_user"
+    list_display = [
+        "id",
+        "master_user",
+        "transaction_date",
+        "portfolio",
+        "instrument",
+        "transaction_class",
+        "portfolio_register",
+        "share_price_calculation_type",
+    ]
+    raw_id_fields = [
+        "master_user",
+        "portfolio",
+        "instrument",
+        "portfolio_register",
+    ]
 
 
 admin.site.register(PortfolioRegisterRecord, PortfolioRegisterRecordAdmin)
@@ -68,11 +108,11 @@ admin.site.register(PortfolioRegisterRecord, PortfolioRegisterRecordAdmin)
 
 class PortfolioBundleAdmin(AbstractModelAdmin):
     model = PortfolioBundle
-    master_user_path = 'master_user'
-    list_display = ['id', 'master_user', 'name']
-    raw_id_fields = ['master_user']
+    master_user_path = "master_user"
+    list_display = ["id", "master_user", "name"]
+    raw_id_fields = ["master_user"]
 
-    filter_horizontal = ('registers',)
+    filter_horizontal = ("registers",)
 
 
 admin.site.register(PortfolioBundle, PortfolioBundleAdmin)

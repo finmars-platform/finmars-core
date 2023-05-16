@@ -6,12 +6,12 @@ from django.utils.translation import gettext_lazy
 
 from poms.common.models import NamedModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH, DataTimeStampedModel
 from poms.common.wrapper_models import NamedModelAutoMapping
+from poms.configuration.models import ConfigurationModel
 from poms.obj_attrs.models import GenericAttribute
-from poms.obj_perms.models import GenericObjectPermission
 from poms.users.models import MasterUser
 
 
-class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel, ConfigurationModel):
     '''
 
     Meta Entity, part of Finmars Configuration
@@ -29,14 +29,67 @@ class AccountType(NamedModel, FakeDeletableModel, DataTimeStampedModel):
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
 
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
-
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('account type')
         verbose_name_plural = gettext_lazy('account types')
         permissions = [
             # ('view_accounttype', 'Can view account type'),
             ('manage_accounttype', 'Can manage account type'),
+        ]
+
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+                "allow_null": True
+
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+                "allow_null": True
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
+            {
+                "key": "configuration_code",
+                "name": "Configuration code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+                "allow_null": True
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+                "allow_null": True
+            },
+            {
+                "key": "show_transaction_details",
+                "name": "Show transaction details",
+                "value_type": 50,
+                "allow_null": True
+            },
+            {
+                "key": "transaction_details_expr",
+                "name": "Transaction details expr",
+                "value_type": 10,
+                "allow_null": True
+            },
         ]
 
 class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
@@ -52,7 +105,6 @@ class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
                                                       verbose_name=gettext_lazy('is valid for all portfolios'))
 
     attributes = GenericRelation(GenericAttribute, verbose_name=gettext_lazy('attributes'))
-    object_permissions = GenericRelation(GenericObjectPermission, verbose_name=gettext_lazy('object permissions'))
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('account')
@@ -60,6 +112,47 @@ class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
         permissions = [
             # ('view_account', 'Can view account'),
             ('manage_account', 'Can manage account'),
+        ]
+
+    @staticmethod
+    def get_system_attrs():
+        """
+        Returns attributes that front end uses
+        """
+        return [
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10
+            },
+            {
+                "key": "type",
+                "name": "Type",
+                "value_type": "field",
+                "value_content_type": "accounts.accounttype",
+                "value_entity": "account-type",
+                "code": "user_code"
+            }
         ]
 
     @property

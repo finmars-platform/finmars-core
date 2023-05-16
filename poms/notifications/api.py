@@ -41,13 +41,10 @@ def send(recipients, message=None, actor=None, verb=None, action_object=None, ta
 
 
 def _send_instance_action_message(master_user, member, instance, verb, check_perms=False):
-    from poms.obj_perms.utils import has_any_perms
 
     recipients = []
     for m in master_user.members.all():
         if m.is_deleted or m.user_id is None:
-            continue
-        if check_perms and not has_any_perms(m, instance):
             continue
         recipients.append(m)
     if recipients:

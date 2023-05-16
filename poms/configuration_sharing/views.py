@@ -11,7 +11,6 @@ from poms.configuration_sharing.filters import OwnerByRecipient, OwnerBySender
 from poms.configuration_sharing.models import SharedConfigurationFile, InviteToSharedConfigurationFile
 from poms.configuration_sharing.serializers import SharedConfigurationFileSerializer, \
     InviteToSharedConfigurationFileSerializer, MyInviteToSharedConfigurationFileSerializer
-from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.ui.models import ListLayout
 
 _l = logging.getLogger('poms.configuration_sharing')
@@ -31,7 +30,6 @@ class SharedConfigurationFileViewSet(AbstractModelViewSet):
         # OwnerByUserFilter
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
-        PomsConfigurationPermission
     ]
 
     def update(self, request, *args, **kwargs):
@@ -92,7 +90,7 @@ class InviteToSharedConfigurationFileViewSet(AbstractModelViewSet):
         OwnerBySender,
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
-        PomsConfigurationPermission
+
     ]
 
 
@@ -104,5 +102,5 @@ class MyInviteToSharedConfigurationFileViewSet(AbstractModelViewSet):
         OwnerByRecipient,
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
-        PomsConfigurationPermission
+
     ]

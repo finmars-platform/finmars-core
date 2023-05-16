@@ -26,8 +26,9 @@ from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Fiel
     Strategy1GroupField, Strategy2GroupField, Strategy2SubgroupField, Strategy3GroupField, Strategy3SubgroupField
 from poms.transactions.fields import TransactionTypeField
 from poms.ui.models import ListLayout, EditLayout
-from poms.users.fields import MasterUserField, MemberField, GroupField, HiddenMemberField
-from poms.users.models import MasterUser, UserProfile, Group, Member, TIMEZONE_CHOICES, InviteToMasterUser, \
+from poms.users.fields import MasterUserField, MemberField, GroupField, HiddenMemberField, RoleField, \
+    AccessPolicyField
+from poms.users.models import MasterUser, UserProfile,  Member, TIMEZONE_CHOICES,  \
     EcosystemDefault, OtpToken, UsercodePrefix
 from poms.users.utils import get_user_from_context, get_master_user_from_context, get_member_from_context
 
@@ -271,6 +272,7 @@ class MasterUserSerializer(serializers.ModelSerializer):
     # url = serializers.HyperlinkedIdentityField(view_name='masteruser-detail')
     language = serializers.ChoiceField(choices=settings.LANGUAGES, default=settings.LANGUAGE_CODE)
     timezone = serializers.ChoiceField(choices=TIMEZONE_CHOICES)
+
     # is_current = serializers.SerializerMethodField()
     # is_admin = serializers.SerializerMethodField()
     # is_owner = serializers.SerializerMethodField()
@@ -310,6 +312,7 @@ class MasterUserSerializer(serializers.ModelSerializer):
             'timezone',
             'notification_business_days',
             'journal_status',
+            'journal_storage_policy',
             # 'system_currency',
             # 'currency',
             # 'account_type', 'account',
@@ -329,7 +332,6 @@ class MasterUserSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         super(MasterUserSerializer, self).__init__(*args, **kwargs)
 
-        from poms.currencies.serializers import CurrencyViewSerializer
         # from poms.accounts.serializers import AccountTypeViewSerializer, AccountViewSerializer
         # from poms.counterparties.serializers import CounterpartyGroupViewSerializer, CounterpartyViewSerializer, \
         #     ResponsibleGroupViewSerializer, ResponsibleViewSerializer
@@ -662,8 +664,14 @@ class MemberSerializer(serializers.ModelSerializer):
     # username = serializers.SlugRelatedField(queryset=User.objects.all(), slug_field='username')
     is_current = serializers.SerializerMethodField()
     join_date = DateTimeTzAwareField(read_only=True)
-    groups = GroupField(many=True, required=False)
-    groups_object = serializers.PrimaryKeyRelatedField(source='groups', read_only=True, many=True)
+    groups = GroupField(source='iam_groups', many=True, required=False)
+    groups_object = serializers.PrimaryKeyRelatedField(source='iam_groups', read_only=True, many=True)
+
+    roles = RoleField(source='iam_roles', many=True, required=False)
+    roles_object = serializers.PrimaryKeyRelatedField(source='iam_roles', read_only=True, many=True)
+
+    access_policies = AccessPolicyField(source='iam_access_policies', many=True, required=False)
+    access_policies_object = serializers.PrimaryKeyRelatedField(source='iam_access_policies', read_only=True, many=True)
 
     data = serializers.JSONField(allow_null=True)
 
@@ -672,7 +680,11 @@ class MemberSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'master_user', 'join_date', 'is_owner', 'is_admin', 'is_superuser', 'is_current',
             'notification_level', 'interface_level',
-            'is_deleted', 'username', 'first_name', 'last_name',  'groups', 'groups_object',
+            'is_deleted', 'username', 'first_name', 'last_name',
+
+            'groups', 'groups_object',
+            'roles', 'roles_object',
+            'access_policies', 'access_policies_object',
             'data'
         ]
         read_only_fields = [
@@ -682,7 +694,11 @@ class MemberSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super(MemberSerializer, self).__init__(*args, **kwargs)
-        self.fields['groups_object'] = GroupViewSerializer(source='groups', many=True, read_only=True)
+        from poms.iam.serializers import IamRoleSerializer, IamGroupSerializer, IamAccessPolicySerializer
+        self.fields['groups_object'] = IamGroupSerializer(source='iam_groups', many=True, read_only=True)
+        self.fields['access_policies_object'] = IamAccessPolicySerializer(source='iam_access_policies', many=True, read_only=True)
+        self.fields['roles_object'] = IamRoleSerializer(source='iam_roles', many=True, read_only=True)
+
         if self.instance:
             self.fields['username'].read_only = True
         else:
@@ -757,140 +773,3 @@ class UsercodePrefixSerializer(serializers.ModelSerializer):
         model = UsercodePrefix
         fields = ['id', 'master_user', 'value', 'notes']
 
-
-class GroupSerializer(serializers.ModelSerializer):
-    # url = serializers.HyperlinkedIdentityField(view_name='group-detail')
-    master_user = MasterUserField()
-    members = MemberField(many=True, required=False)
-    members_object = serializers.PrimaryKeyRelatedField(source='members', read_only=True, many=True)
-
-    permission_table = serializers.JSONField(allow_null=True)
-
-    class Meta:
-        model = Group
-        fields = ['id', 'master_user', 'name', 'members', 'members_object', 'role', 'permission_table']
-
-    def __init__(self, *args, **kwargs):
-        super(GroupSerializer, self).__init__(*args, **kwargs)
-
-        self.fields['members_object'] = MemberViewSerializer(source='members', many=True, read_only=True)
-
-
-class GroupViewSerializer(serializers.ModelSerializer):
-    # url = serializers.HyperlinkedIdentityField(view_name='group-detail')
-
-    class Meta:
-        model = Group
-        fields = ['id', 'name', 'permission_table']
-
-
-class InviteToMasterUserSerializer(serializers.ModelSerializer):
-    status = serializers.ChoiceField(choices=InviteToMasterUser.STATUS_CHOICES, default=InviteToMasterUser.SENT)
-
-    from_member_object = serializers.SerializerMethodField(read_only=True, )
-    user_object = serializers.SerializerMethodField(read_only=True, )
-    to_master_user = serializers.SerializerMethodField(read_only=True, )
-    to_master_user_object = serializers.SerializerMethodField(read_only=True, )
-
-    groups = serializers.SerializerMethodField()
-    groups_object = serializers.PrimaryKeyRelatedField(source='groups', read_only=True, many=True)
-
-    def __init__(self, *args, **kwargs):
-        super(InviteToMasterUserSerializer, self).__init__(*args, **kwargs)
-        self.fields['groups_object'] = GroupViewSerializer(source='groups', many=True, read_only=True)
-
-    def update(self, instance, validated_data):
-
-        if validated_data['status'] == InviteToMasterUser.ACCEPTED:
-            user = get_user_from_context(self.context)
-
-            member = Member.objects.create(user=user, master_user=instance.master_user)
-            member.groups.set(instance.groups.all())
-
-            try:
-                admin_group = Group.objects.get(master_user=instance.master_user, role=Group.ADMIN)
-
-                for group in instance.groups.all():
-
-                    if group.id == admin_group.id:
-                        member.is_admin = True
-            except Group.DoesNotExist:
-                print("Old ecosystem?")
-
-            member.save()
-
-        return super(InviteToMasterUserSerializer, self).update(instance, validated_data)
-
-    class Meta:
-        model = InviteToMasterUser
-        fields = ['id', 'status', 'from_member', 'from_member_object', 'user', 'user_object', 'groups', 'groups_object',
-                  'to_master_user', 'to_master_user_object']
-
-    def get_from_member_object(self, obj):
-        return {
-            'id': obj.from_member.id,
-            'username': obj.from_member.username
-        }
-
-    def get_to_master_user(self, obj):
-        return obj.master_user.id
-
-    def get_to_master_user_object(self, obj):
-        return {
-            'id': obj.master_user.id,
-            'name': obj.master_user.name,
-            'description': obj.master_user.description
-        }
-
-    def get_groups(self, obj):
-
-        result = []
-
-        for group in obj.groups.all():
-            result.append(group.id)
-
-        return result
-
-    def get_user_object(self, obj):
-        return {
-            'id': obj.user.id,
-            'username': obj.user.username
-        }
-
-    def get_status(self, obj):
-        return obj.get_status_display()
-
-
-class InviteCreateSerializer(serializers.Serializer):
-    username = serializers.CharField(max_length=30, required=True)
-    groups = GroupField(many=True, required=False)
-
-    def create(self, validated_data):
-        username = validated_data.get('username')
-        groups = validated_data.get('groups')
-
-        member = get_member_from_context(self.context)
-        master_user = get_master_user_from_context(self.context)
-        user_to = User.objects.get(username=username)
-
-        if not user_to:
-            raise serializers.ValidationError({'user_to': "User with this username does not exist"})
-
-        if InviteToMasterUser.objects.filter(user=user_to, from_member=member, status=InviteToMasterUser.SENT).exists():
-            raise serializers.ValidationError({'user_to': "User with this username already received invitation"})
-
-        invite = InviteToMasterUser.objects.create(user=user_to, from_member=member, master_user=master_user)
-        invite.groups.set(groups)
-        invite.save()
-
-        message = "You have been invited to %s database. Check all your invitations at https://finmars.com/#!/profile" % member.master_user.name
-
-        subject = "Invitation to %s database" % member.master_user.name
-        recipient_list = [user_to.email]
-
-        try:
-            send_mail(subject, message, None, recipient_list, html_message=message)
-        except (Exception, smtplib.SMTPSenderRefused):
-            _l.debug("Can't send email. SMTP is not configured?")
-
-        return validated_data

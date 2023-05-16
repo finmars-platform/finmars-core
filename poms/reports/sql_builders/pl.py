@@ -9,6 +9,7 @@ from django.db import connection
 from poms.accounts.models import Account, AccountType
 from poms.common.utils import get_closest_bday_of_yesterday, get_last_business_day
 from poms.currencies.models import Currency
+from poms.iam.utils import get_allowed_queryset
 from poms.instruments.models import Instrument, CostMethod, InstrumentType
 from poms.portfolios.models import Portfolio
 from poms.reports.common import Report
@@ -35,6 +36,22 @@ class PLReportBuilderSql:
 
         _l.debug('self.instance master_user %s' % self.instance.master_user)
         _l.debug('self.instance report_date %s' % self.instance.report_date)
+
+        '''TODO IAM_SECURITY_VERIFY need to check, if user somehow passes id of object he has no access to we should throw error'''
+
+        '''Important security methods'''
+        self.transform_to_allowed_portfolios()
+        self.transform_to_allowed_accounts()
+
+    def transform_to_allowed_portfolios(self):
+
+        if not len(self.instance.portfolios):
+            self.instance.portfolios = get_allowed_queryset(self.instance.member, Portfolio.objects.all())
+
+    def transform_to_allowed_accounts(self):
+
+        if not len(self.instance.accounts):
+            self.instance.accounts = get_allowed_queryset(self.instance.member, Account.objects.all())
 
     def get_first_transaction(self):
 
@@ -711,7 +728,8 @@ class PLReportBuilderSql:
             instrument_accrued_currency_fx_rate,    
             instrument_principal_price,
             instrument_accrued_price,
-            instrument_factor,    
+            instrument_factor, 
+            instrument_ytm,   
             daily_price_change,
           
             position_size,
@@ -832,6 +850,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price,   
             instrument_factor,
+            instrument_ytm,
             daily_price_change,
           
             position_size,
@@ -953,6 +972,7 @@ class PLReportBuilderSql:
                     instrument_principal_price,
                     instrument_accrued_price,  
                     instrument_factor,
+                    instrument_ytm,
                     daily_price_change, 
 
                     position_size,
@@ -1078,6 +1098,7 @@ class PLReportBuilderSql:
                         (cur_price) as instrument_principal_price,
                         (cur_accr_price) as instrument_accrued_price,
                         (cur_factor) as instrument_factor,
+                        (cur_ytm) as instrument_ytm,
                         case when coalesce(yesterday_price,0) = 0
                                 then 0
                                 else
@@ -1218,6 +1239,7 @@ class PLReportBuilderSql:
                             i.cur_price,
                             i.yesterday_price,
                             i.cur_factor,
+                            i.cur_ytm,
                             i.cur_accr_price,
                             i.prc_cur_fx,
                             i.accr_cur_fx,
@@ -1616,6 +1638,15 @@ class PLReportBuilderSql:
                                     and iph.instrument_id=ii.id
                                     and iph.pricing_policy_id = {pricing_policy_id}
                                    ) as cur_factor,
+                                (select
+                                    ytm
+                                from
+                                    instruments_pricehistory iph
+                                where
+                                    date = '{report_date}'
+                                    and iph.instrument_id=ii.id
+                                    and iph.pricing_policy_id = {pricing_policy_id}
+                                   ) as cur_ytm,
                                   -- add current accrued
                                 (select
                                     accrued_price
@@ -1663,6 +1694,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price, 
             instrument_factor,
+            instrument_ytm,
             daily_price_change,
           
             position_size,
@@ -1784,6 +1816,7 @@ class PLReportBuilderSql:
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
                 (1) as instrument_factor,
+                (0) as instrument_ytm,
                 (0) as daily_price_change,
 
                 position_size,
@@ -2015,6 +2048,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price, 
             instrument_factor,
+            instrument_ytm,
             daily_price_change,
           
             position_size,
@@ -2137,6 +2171,7 @@ class PLReportBuilderSql:
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
                 (1) as instrument_factor,
+                (0) as instrument_ytm,
                 (0) as daily_price_change,
               
                 position_size,
@@ -2327,6 +2362,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price, 
             instrument_factor,
+            instrument_ytm,
             daily_price_change,
 
             position_size,
@@ -2448,6 +2484,7 @@ class PLReportBuilderSql:
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
                 (1) as instrument_factor,
+                (0) as instrument_ytm,
                 (0) as daily_price_change,
               
                 position_size,
@@ -2635,6 +2672,7 @@ class PLReportBuilderSql:
             instrument_principal_price,
             instrument_accrued_price, 
             instrument_factor,
+            instrument_ytm,
             daily_price_change,
           
             position_size,
@@ -2756,6 +2794,7 @@ class PLReportBuilderSql:
                 (0) as instrument_principal_price,
                 (0) as instrument_accrued_price, 
                 (1) as instrument_factor,
+                (0) as instrument_ytm,
                 (0) as daily_price_change,
               
                 position_opened as position_size,
@@ -3090,6 +3129,7 @@ class PLReportBuilderSql:
                             (q2.instrument_principal_price) as instrument_principal_price,
                             (q2.instrument_accrued_price) as instrument_accrued_price,
                             (q2.instrument_factor) as instrument_factor,
+                            (q2.instrument_ytm) as instrument_ytm,
                             (q2.daily_price_change) as daily_price_change,
                             
                             
@@ -3335,6 +3375,7 @@ class PLReportBuilderSql:
                 result_item_opened["instrument_principal_price"] = item["instrument_principal_price"]
                 result_item_opened["instrument_accrued_price"] = item["instrument_accrued_price"]
                 result_item_opened["instrument_factor"] = item["instrument_factor"]
+                result_item_opened["instrument_ytm"] = item["instrument_ytm"]
                 result_item_opened["daily_price_change"] = item["daily_price_change"]
 
                 result_item_opened["principal"] = item["principal_opened"]
@@ -3545,6 +3586,7 @@ class PLReportBuilderSql:
                     result_item_closed["instrument_principal_price"] = item["instrument_principal_price"]
                     result_item_closed["instrument_accrued_price"] = item["instrument_accrued_price"]
                     result_item_closed["instrument_factor"] = item["instrument_factor"]
+                    result_item_closed["instrument_ytm"] = item["instrument_ytm"]
                     result_item_closed["daily_price_change"] = item["daily_price_change"]
 
                     result_item_closed["position_size"] = 0
@@ -3652,7 +3694,7 @@ class PLReportBuilderSql:
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions', 'responsibles', 'counterparties', 'transaction_types', 'accounts') \
+        ).defer('responsibles', 'counterparties', 'transaction_types', 'accounts') \
             .filter(master_user=self.instance.master_user) \
             .filter(
             id__in=ids)
@@ -3663,7 +3705,7 @@ class PLReportBuilderSql:
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_account_types(self, accounts):
 

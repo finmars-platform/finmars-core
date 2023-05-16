@@ -3,7 +3,7 @@ import traceback
 
 def sync_schedules():
     import logging
-    _l = logging.getLogger('poms.schedules')
+    _l = logging.getLogger('provision')
 
     try:
 

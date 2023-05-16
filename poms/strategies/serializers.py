@@ -2,7 +2,6 @@ from __future__ import unicode_literals
 
 from poms.common.serializers import ModelWithUserCodeSerializer, ModelWithTimeStampSerializer
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
-from poms.obj_perms.serializers import ModelWithObjectPermissionSerializer
 from poms.strategies.fields import Strategy1GroupField, Strategy1SubgroupField, Strategy2GroupField, \
     Strategy2SubgroupField, Strategy3GroupField, Strategy3SubgroupField, Strategy1GroupDefault, \
     Strategy1SubgroupDefault, \
@@ -12,7 +11,7 @@ from poms.strategies.models import Strategy1Group, Strategy1Subgroup, Strategy1,
 from poms.users.fields import MasterUserField
 
 
-class Strategy1GroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+class Strategy1GroupSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     class Meta:
@@ -23,15 +22,15 @@ class Strategy1GroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
         ]
 
 
-class Strategy1GroupViewSerializer(ModelWithObjectPermissionSerializer):
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+class Strategy1GroupViewSerializer(ModelWithUserCodeSerializer):
+    class Meta:
         model = Strategy1Group
         fields = [
             'id', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_deleted',
         ]
 
 
-class Strategy1SubgroupSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+class Strategy1SubgroupSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
     group = Strategy1GroupField(default=Strategy1GroupDefault())
     group_object = Strategy1GroupViewSerializer(source='group', read_only=True)
@@ -44,10 +43,10 @@ class Strategy1SubgroupSerializer(ModelWithObjectPermissionSerializer, ModelWith
         ]
 
 
-class Strategy1SubgroupViewSerializer(ModelWithObjectPermissionSerializer):
+class Strategy1SubgroupViewSerializer(ModelWithUserCodeSerializer):
     group_object = Strategy1GroupViewSerializer(source='group', read_only=True)
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = Strategy1Subgroup
         fields = [
             'id', 'group', 'user_code', 'name', 'short_name', 'public_name', 'is_deleted', 'notes',
@@ -55,7 +54,7 @@ class Strategy1SubgroupViewSerializer(ModelWithObjectPermissionSerializer):
         ]
 
 
-class Strategy1Serializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer,
+class Strategy1Serializer(ModelWithUserCodeSerializer,
                           ModelWithAttributesSerializer, ModelWithTimeStampSerializer):
     master_user = MasterUserField()
     subgroup = Strategy1SubgroupField(default=Strategy1SubgroupDefault())
@@ -69,24 +68,7 @@ class Strategy1Serializer(ModelWithObjectPermissionSerializer, ModelWithUserCode
         ]
 
 
-class Strategy1EvSerializer(ModelWithObjectPermissionSerializer, ModelWithAttributesSerializer,
-                            ModelWithUserCodeSerializer):
-    master_user = MasterUserField()
-
-    subgroup = Strategy1SubgroupField(default=Strategy1SubgroupDefault())
-    subgroup_object = Strategy1SubgroupViewSerializer(source='subgroup', read_only=True)
-
-    class Meta:
-        model = Strategy1
-        fields = [
-            'id', 'master_user',
-            'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'is_deleted', 'is_enabled',
-            'subgroup', 'subgroup_object',
-        ]
-
-
-class Strategy1LightSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
+class Strategy1LightSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
 
     class Meta:
@@ -97,10 +79,10 @@ class Strategy1LightSerializer(ModelWithObjectPermissionSerializer, ModelWithUse
         ]
 
 
-class Strategy1ViewSerializer(ModelWithObjectPermissionSerializer):
+class Strategy1ViewSerializer(ModelWithUserCodeSerializer):
     subgroup_object = Strategy1SubgroupViewSerializer(source='subgroup', read_only=True)
 
-    class Meta(ModelWithObjectPermissionSerializer.Meta):
+    class Meta:
         model = Strategy1
         fields = [
             'id', 'subgroup', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_deleted',
@@ -141,14 +123,6 @@ class Strategy2Serializer(Strategy1Serializer):
     subgroup_object = Strategy2SubgroupViewSerializer(source='subgroup', read_only=True)
 
     class Meta(Strategy1Serializer.Meta):
-        model = Strategy2
-
-
-class Strategy2EvSerializer(Strategy1EvSerializer):
-    subgroup = Strategy2SubgroupField(default=Strategy2SubgroupDefault())
-    subgroup_object = Strategy2SubgroupViewSerializer(source='subgroup', read_only=True)
-
-    class Meta(Strategy1EvSerializer.Meta):
         model = Strategy2
 
 
@@ -198,14 +172,6 @@ class Strategy3Serializer(Strategy1Serializer, ModelWithAttributesSerializer):
     subgroup_object = Strategy3SubgroupViewSerializer(source='subgroup', read_only=True)
 
     class Meta(Strategy1Serializer.Meta):
-        model = Strategy3
-
-
-class Strategy3EvSerializer(Strategy1EvSerializer):
-    subgroup = Strategy3SubgroupField(default=Strategy3SubgroupDefault())
-    subgroup_object = Strategy3SubgroupViewSerializer(source='subgroup', read_only=True)
-
-    class Meta(Strategy1EvSerializer.Meta):
         model = Strategy3
 
 

@@ -10,7 +10,6 @@ from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, PaymentSizeDetail, DailyPricingModel, InstrumentType
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_attrs.admin import GenericAttributeInline
-from poms.obj_perms.admin import GenericObjectPermissionInline
 from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy3, Strategy2, Strategy1
 from poms.transactions.models import TransactionClass, Transaction, TransactionType, TransactionTypeInput, \
@@ -38,7 +37,6 @@ class TransactionTypeGroupAdmin(AbstractModelAdmin):
     search_fields = ['id', 'user_code', 'name']
     raw_id_fields = ['master_user']
     inlines = [
-        GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline,
     ]
@@ -359,7 +357,6 @@ class TransactionTypeAdmin(AbstractModelAdmin):
         TransactionTypeActionInstrumentInline,
         TransactionTypeActionTransactionInline,
         EventToHandleInline,
-        GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline,
     ]
@@ -420,7 +417,7 @@ class ComplexTransactionAdmin(AbstractModelAdmin):
     search_fields = ['id']
     raw_id_fields = ['transaction_type']
     inlines = [GenericAttributeInline, TransactionInline, ComplexTransactionInputInline,
-               GenericObjectPermissionInline, ]
+              ]
     save_as = True
 
     def master_user(self, obj):
@@ -505,7 +502,6 @@ class TransactionAdmin(AbstractModelAdmin):
     inlines = [
         # AbstractAttributeInline,
         GenericAttributeInline,
-        GenericObjectPermissionInline,
     ]
     fields = (
         'master_user',

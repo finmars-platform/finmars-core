@@ -11,21 +11,25 @@ EXPRESSION_FIELD_LENGTH = 4096
 
 
 class OwnerModel(models.Model):
-
     owner = models.ForeignKey('users.Member', verbose_name=gettext_lazy('owner'),
                               on_delete=models.CASCADE)
 
     class Meta:
         abstract = True
 
+
 class NamedModel(models.Model):
-    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
-    name = models.CharField(max_length=255, verbose_name=gettext_lazy('name'))
-    # short_name = models.CharField(max_length=50, null=True, blank=True, verbose_name=gettext_lazy('short name'))
-    short_name = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('short name'))
+    user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('user code'),
+                                 help_text=gettext_lazy(
+                                     'Unique Code for this object. Used in Configuration and Permissions Logic'))
+    name = models.CharField(max_length=255, verbose_name=gettext_lazy('name'),
+                            help_text="Human Readable Name of the object")
+    short_name = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('short name'),
+                                  help_text="Short Name of the object. Used in dropdown menus")
     public_name = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('public name'),
-                                   help_text=gettext_lazy('used if user does not have permissions to view object'))
-    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
+                                   help_text=gettext_lazy('Used if user does not have permissions to view object'))
+    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'),
+                             help_text="Notes, any useful information about the object")
 
     is_enabled = models.BooleanField(default=True, db_index=True, verbose_name=gettext_lazy('is enabled'))
 
@@ -100,9 +104,12 @@ class AbstractClassModel(models.Model):
 
 
 class FakeDeletableModel(models.Model):
-    is_deleted = models.BooleanField(default=False, db_index=True, verbose_name=gettext_lazy('is deleted'))
+    is_deleted = models.BooleanField(default=False, db_index=True,
+                                     verbose_name=gettext_lazy('is deleted'),
+                                     help_text="Mark object as deleted. Does not actually delete the object.")
     deleted_user_code = models.CharField(max_length=255, null=True, blank=True,
-                                         verbose_name=gettext_lazy('deleted user code'))
+                                         verbose_name=gettext_lazy('deleted user code'),
+                                         help_text="Stores original user_code of object. Deleted objects has null user_code which makes it available again.")
 
     class Meta:
         abstract = True

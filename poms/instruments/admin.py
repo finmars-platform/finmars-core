@@ -13,7 +13,6 @@ from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, I
     Country
 from poms.instruments.tasks import calculate_prices_accrued_price
 from poms.obj_attrs.admin import GenericAttributeInline
-from poms.obj_perms.admin import GenericObjectPermissionInline
 
 admin.site.register(InstrumentClass, ClassModelAdmin)
 admin.site.register(DailyPricingModel, ClassModelAdmin)
@@ -54,7 +53,6 @@ class InstrumentTypeAdmin(AbstractModelAdmin):
     search_fields = ['id', 'user_code', 'name']
     raw_id_fields = ['master_user', 'one_off_event', 'regular_event', 'factor_same', 'factor_up', 'factor_down']
     inlines = [
-        GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline,
     ]
@@ -112,7 +110,6 @@ class InstrumentAdmin(AbstractModelAdmin):
         InstrumentFactorScheduleInline,
         EventScheduleInline,
         GenericAttributeInline,
-        GenericObjectPermissionInline,
         # UserObjectPermissionInline,
         # GroupObjectPermissionInline,
     ]

@@ -1,13 +1,15 @@
 import logging
 import time
+import traceback
 from datetime import timedelta
 
 from django.db import connection
 from django.views.generic.dates import timezone_today
 
-from poms.accounts.models import Account
+from poms.accounts.models import Account, AccountType
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
+from poms.iam.utils import get_allowed_queryset
 from poms.instruments.models import Instrument, InstrumentType
 from poms.portfolios.models import Portfolio
 from poms.reports.models import TransactionReportCustomField
@@ -39,6 +41,22 @@ class TransactionReportBuilderSql:
 
         if not self.instance.end_date:
             self.instance.end_date = timezone_today()
+
+        '''TODO IAM_SECURITY_VERIFY need to check, if user somehow passes id of object he has no access to we should throw error'''
+
+        '''Important security methods'''
+        self.transform_to_allowed_portfolios()
+        self.transform_to_allowed_accounts()
+
+    def transform_to_allowed_portfolios(self):
+
+        if not len(self.instance.portfolios):
+            self.instance.portfolios = get_allowed_queryset(self.instance.member, Portfolio.objects.all())
+
+    def transform_to_allowed_accounts(self):
+
+        if not len(self.instance.accounts):
+            self.instance.accounts = get_allowed_queryset(self.instance.member, Account.objects.all())
 
     def build_transaction(self):
         st = time.perf_counter()
@@ -84,6 +102,7 @@ class TransactionReportBuilderSql:
 
         portfolios = list(Portfolio.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
         instruments = list(Instrument.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
+        currencies = list(Currency.objects.all().values('id', 'user_code', 'short_name', 'name', 'public_name'))
 
         _l.info("add_user_filters.instruments %s" % len(instruments))
 
@@ -93,7 +112,8 @@ class TransactionReportBuilderSql:
 
                 if filter['options']['enabled'] and filter['options']['filter_values']:
 
-                    if filter['key'] in ['portfolio.user_code', 'portfolio.name', 'portfolio.short_name', 'portfolio.public_name']:
+                    if filter['key'] in ['portfolio.user_code', 'portfolio.name', 'portfolio.short_name',
+                                         'portfolio.public_name']:
 
                         field_key = filter['key'].split('.')[1]
 
@@ -112,7 +132,8 @@ class TransactionReportBuilderSql:
 
                             result = result + 'and t.portfolio_id IN (%s)' % res
 
-                    if filter['key'] in ['instrument.user_code', 'instrument.name', 'instrument.short_name', 'instrument.public_name']:
+                    if filter['key'] in ['instrument.user_code', 'instrument.name', 'instrument.short_name',
+                                         'instrument.public_name']:
 
                         field_key = filter['key'].split('.')[1]
 
@@ -126,15 +147,55 @@ class TransactionReportBuilderSql:
                                     instrument_ids.append(str(instrument['id']))
 
                         if instrument_ids:
-
                             res = "'" + "\',\'".join(instrument_ids)
                             res = res + "'"
 
                             result = result + 'and t.instrument_id IN (%s)' % res
 
+                    if filter['key'] in ['entry_item_user_code']:
+
+                        # field_key = filter['key'].split('.')[1]
+
+                        instrument_ids = []
+
+                        for instrument in instruments:
+
+                            for value in filter['options']['filter_values']:
+
+                                if value == instrument['user_code']:
+                                    instrument_ids.append(str(instrument['id']))
+
+                        _l.info('instrument_ids %s' % instrument_ids)
+
+                        if instrument_ids:
+                            res = "'" + "\',\'".join(instrument_ids)
+                            res = res + "'"
+
+                            result = result + 'and t.instrument_id IN (%s)' % res
+
+                        currencies_ids = []
+
+                        for currency in currencies:
+
+                            for value in filter['options']['filter_values']:
+
+                                if value == currency['user_code']:
+                                    currencies_ids.append(str(currency['id']))
+
+                        _l.info('currencies_ids %s' % currencies_ids)
+
+                        if currencies_ids:
+                            res = "'" + "\',\'".join(currencies_ids)
+                            res = res + "'"
+
+                            result = result + 'and t.settlement_currency_id IN (%s)' % res
+
+                        _l.info('result %s' % result)
+
         except Exception as e:
 
-            _l.error("User filters layou error %s" % e)
+            _l.error("User filters layout error %s" % e)
+            _l.error("User filters layout traceback %s" % traceback.format_exc())
 
         # accounts = Account.objects.all.values_list('id', 'user_code', 'short_name', 'name', 'public_name', flat=True)
         #
@@ -156,7 +217,7 @@ class TransactionReportBuilderSql:
         #
         #         result = result + 'and (account_interim_id IN (%s) or account_position_id IN (%s) or account_cash_id IN (%s))' % res
 
-        _l.info('add_user_filters result %s' %  result)
+        _l.info('add_user_filters result %s' % result)
 
         return result
 
@@ -168,8 +229,6 @@ class TransactionReportBuilderSql:
 
             filter_sql_string = get_transaction_report_filter_sql_string(self.instance)
             date_filter_sql_string = get_transaction_report_date_filter_sql_string(self.instance)
-
-
 
             query = """
                     SELECT
@@ -258,7 +317,7 @@ class TransactionReportBuilderSql:
                 """
 
             # statuses = ['1', '3']
-            statuses = ['1'] # FN-1327
+            statuses = ['1']  # FN-1327
 
             _l.info('complex_transaction_statuses_filter %s ' % self.instance.complex_transaction_statuses_filter)
 
@@ -418,7 +477,7 @@ class TransactionReportBuilderSql:
                 """
 
             # statuses = ['1', '3']
-            statuses = ['1'] # FN-1327
+            statuses = ['1']  # FN-1327
 
             _l.info('complex_transaction_statuses_filter %s ' % self.instance.complex_transaction_statuses_filter)
 
@@ -476,7 +535,6 @@ class TransactionReportBuilderSql:
             filter_sql_string = get_transaction_report_filter_sql_string(self.instance)
             date_filter_sql_string = get_transaction_report_date_filter_sql_string(self.instance)
             user_filters = self.add_user_filters()
-
 
             query = """
                     SELECT
@@ -583,7 +641,7 @@ class TransactionReportBuilderSql:
                 """
 
             # statuses = ['1', '3']
-            statuses = ['1'] # FN-1327
+            statuses = ['1']  # FN-1327
 
             _l.info('complex_transaction_statuses_filter %s ' % self.instance.complex_transaction_statuses_filter)
 
@@ -645,11 +703,11 @@ class TransactionReportBuilderSql:
                 if result_item['transaction_class_id'] == TransactionClass.CASH_INFLOW or result_item[
                     'transaction_class_id'] == TransactionClass.CASH_OUTFLOW:
 
-                    if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date < result_item[
-                        'cash_date']) or \
+                    if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date <
+                        result_item[
+                            'cash_date']) or \
                             (self.instance.end_date > result_item['accounting_date'] and self.instance.end_date >
                              result_item['cash_date']):
-
 
                         result_item['entry_account'] = result_item['account_cash_id']
                         result_item['entry_strategy'] = result_item['strategy1_cash_id']
@@ -711,13 +769,13 @@ class TransactionReportBuilderSql:
                     entry1 = result_item.copy()
                     entry2 = result_item.copy()
 
-                    if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date < result_item[
-                        'cash_date']) or \
+                    if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date <
+                        result_item[
+                            'cash_date']) or \
                             (self.instance.end_date > result_item['accounting_date'] and self.instance.end_date >
                              result_item['cash_date']):
 
                         if result_item['account_position_id']:
-
                             entry1['id'] = str(result_item['id']) + '_1'
 
                             entry1['entry_account'] = result_item['account_position_id']
@@ -730,7 +788,6 @@ class TransactionReportBuilderSql:
                             results.append(entry1)
 
                         if result_item['account_cash_id']:
-
                             entry2['id'] = str(result_item['id']) + '_2'
 
                             entry2['entry_account'] = result_item['account_cash_id']
@@ -747,7 +804,6 @@ class TransactionReportBuilderSql:
                         if result_item['accounting_date'] < result_item['cash_date']:
 
                             if result_item['account_position_id']:
-
                                 entry1['id'] = str(result_item['id']) + '_1'
 
                                 entry1['entry_account'] = result_item['account_position_id']
@@ -760,7 +816,6 @@ class TransactionReportBuilderSql:
                                 results.append(entry1)
 
                             if result_item['account_cash_id']:
-
                                 entry2['id'] = str(result_item['id']) + '_2'
 
                                 entry2['entry_account'] = result_item['account_interim_id']  # IMPORTANT
@@ -775,20 +830,18 @@ class TransactionReportBuilderSql:
                         else:
 
                             if result_item['account_position_id']:
-
                                 entry1['id'] = str(result_item['id']) + '_1'
 
                                 entry1['entry_account'] = result_item['account_interim_id']
                                 entry1['entry_strategy'] = result_item['strategy1_position_id']
                                 entry1['entry_instrument'] = result_item['instrument_id']
-                                entry1['entry_amount'] = result_item['cash_consideration'] * -1 # IMPORTANT
+                                entry1['entry_amount'] = result_item['cash_consideration'] * -1  # IMPORTANT
                                 entry1['entry_item_type'] = ITEM_TYPE_INSTRUMENT
                                 entry1['entry_item_type_name'] = 'Instrument'
 
                                 results.append(entry1)
 
                             if result_item['account_cash_id']:
-
                                 entry2['id'] = str(result_item['id']) + '_2'
 
                                 entry2['entry_account'] = result_item['account_cash_id']
@@ -806,13 +859,13 @@ class TransactionReportBuilderSql:
                     entry1 = result_item.copy()
                     entry2 = result_item.copy()
 
-                    if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date < result_item[
-                        'cash_date']) or \
+                    if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date <
+                        result_item[
+                            'cash_date']) or \
                             (self.instance.end_date > result_item['accounting_date'] and self.instance.end_date >
                              result_item['cash_date']):
 
                         if result_item['account_position_id']:
-
                             entry1['id'] = str(result_item['id']) + '_1'
 
                             entry1['entry_account'] = result_item['account_position_id']
@@ -825,7 +878,6 @@ class TransactionReportBuilderSql:
                             results.append(entry1)
 
                         if result_item['account_cash_id']:
-
                             entry2['id'] = str(result_item['id']) + '_2'
 
                             entry2['entry_account'] = result_item['account_cash_id']
@@ -837,12 +889,11 @@ class TransactionReportBuilderSql:
 
                             results.append(entry2)
 
-                    else: # in between
+                    else:  # in between
 
                         if result_item['accounting_date'] < result_item['cash_date']:
 
                             if result_item['account_position_id']:
-
                                 entry1['id'] = str(result_item['id']) + '_1'
 
                                 entry1['entry_account'] = result_item['account_position_id']
@@ -855,10 +906,9 @@ class TransactionReportBuilderSql:
                                 results.append(entry1)
 
                             if result_item['account_cash_id']:
-
                                 entry2['id'] = str(result_item['id']) + '_2'
 
-                                entry2['entry_account'] = result_item['account_interim_id'] # IMPORTANT
+                                entry2['entry_account'] = result_item['account_interim_id']  # IMPORTANT
                                 entry2['entry_strategy'] = result_item['strategy1_cash_id']
                                 entry2['entry_currency'] = result_item['settlement_currency_id']
                                 entry2['entry_amount'] = result_item['cash_consideration']
@@ -870,20 +920,18 @@ class TransactionReportBuilderSql:
                         else:
 
                             if result_item['account_position_id']:
-
                                 entry1['id'] = str(result_item['id']) + '_1'
 
                                 entry1['entry_account'] = result_item['account_interim_id']
                                 entry1['entry_strategy'] = result_item['strategy1_cash_id']
                                 entry1['entry_currency'] = result_item['transaction_currency_id']
-                                entry1['entry_amount'] = result_item['cash_consideration'] * -1 # IMPORTANT
+                                entry1['entry_amount'] = result_item['cash_consideration'] * -1  # IMPORTANT
                                 entry1['entry_item_type'] = ITEM_TYPE_CURRENCY
                                 entry1['entry_item_type_name'] = 'Currency'
 
                                 results.append(entry1)
 
                             if result_item['account_cash_id']:
-
                                 entry2['id'] = str(result_item['id']) + '_2'
 
                                 entry2['entry_account'] = result_item['account_cash_id']
@@ -900,8 +948,9 @@ class TransactionReportBuilderSql:
                     entry1 = result_item.copy()
                     entry2 = result_item.copy()
 
-                    if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date < result_item[
-                        'cash_date']) or \
+                    if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date <
+                        result_item[
+                            'cash_date']) or \
                             (self.instance.end_date > result_item['accounting_date'] and self.instance.end_date >
                              result_item['cash_date']):
 
@@ -931,7 +980,7 @@ class TransactionReportBuilderSql:
 
                             results.append(entry2)
 
-                    else: # in between
+                    else:  # in between
 
                         if result_item['accounting_date'] < result_item['cash_date']:
 
@@ -952,7 +1001,7 @@ class TransactionReportBuilderSql:
 
                                 entry2['id'] = str(result_item['id']) + '_2'
 
-                                entry2['entry_account'] = result_item['account_interim_id'] # IMPORTANT
+                                entry2['entry_account'] = result_item['account_interim_id']  # IMPORTANT
                                 entry2['entry_strategy'] = result_item['strategy1_position_id']
                                 entry2['entry_currency'] = result_item['settlement_currency_id']
                                 entry2['entry_amount'] = result_item['cash_consideration']
@@ -996,8 +1045,9 @@ class TransactionReportBuilderSql:
                     entry1 = result_item.copy()
                     entry2 = result_item.copy()
 
-                    if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date < result_item[
-                        'cash_date']) or \
+                    if (self.instance.end_date < result_item['accounting_date'] and self.instance.end_date <
+                        result_item[
+                            'cash_date']) or \
                             (self.instance.end_date > result_item['accounting_date'] and self.instance.end_date >
                              result_item['cash_date']):
 
@@ -1027,7 +1077,7 @@ class TransactionReportBuilderSql:
 
                             results.append(entry1)
 
-                    else: # in between
+                    else:  # in between
 
                         if result_item['accounting_date'] < result_item['cash_date']:
 
@@ -1035,7 +1085,7 @@ class TransactionReportBuilderSql:
 
                                 entry2['id'] = str(result_item['id']) + '_2'
 
-                                entry2['entry_account'] = result_item['account_position_id'] # Important
+                                entry2['entry_account'] = result_item['account_position_id']  # Important
                                 entry2['entry_strategy'] = result_item['strategy1_cash_id']
                                 entry2['entry_currency'] = result_item['settlement_currency_id']
                                 entry2['entry_amount'] = result_item['position_size_with_sign']
@@ -1051,7 +1101,8 @@ class TransactionReportBuilderSql:
                                 entry1['entry_account'] = result_item['account_interim_id']
                                 entry1['entry_strategy'] = result_item['strategy1_position_id']
                                 entry1['entry_instrument'] = result_item['instrument_id']
-                                entry1['entry_amount'] = result_item['position_size_with_sign'] * -1  # Important see FN-1077
+                                entry1['entry_amount'] = result_item[
+                                                             'position_size_with_sign'] * -1  # Important see FN-1077
                                 entry1['entry_item_type'] = ITEM_TYPE_INSTRUMENT
                                 entry1['entry_item_type_name'] = 'Instrument'
 
@@ -1079,7 +1130,8 @@ class TransactionReportBuilderSql:
                                 entry1['entry_account'] = result_item['account_position_id']
                                 entry1['entry_strategy'] = result_item['strategy1_position_id']
                                 entry1['entry_instrument'] = result_item['instrument_id']
-                                entry1['entry_amount'] = result_item[ 'position_size_with_sign'] * -1  # Important see FN-1077
+                                entry1['entry_amount'] = result_item[
+                                                             'position_size_with_sign'] * -1  # Important see FN-1077
                                 entry1['entry_item_type'] = ITEM_TYPE_INSTRUMENT
                                 entry1['entry_item_type_name'] = 'Instrument'
 
@@ -1143,13 +1195,27 @@ class TransactionReportBuilderSql:
         ).filter(master_user=self.instance.master_user) \
             .filter(id__in=ids)
 
+    def add_data_items_account_types(self, accounts):
+
+        ids = []
+
+        for account in accounts:
+            ids.append(account.type_id)
+
+        self.instance.item_account_types = AccountType.objects.prefetch_related(
+            'attributes',
+            'attributes__attribute_type',
+            'attributes__classifier',
+        ).filter(master_user=self.instance.master_user) \
+            .filter(id__in=ids)
+
     def add_data_items_portfolios(self, ids):
 
         self.instance.item_portfolios = Portfolio.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions', 'responsibles', 'counterparties', 'transaction_types', 'accounts') \
+        ).defer('responsibles', 'counterparties', 'transaction_types', 'accounts') \
             .filter(master_user=self.instance.master_user) \
             .filter(
             id__in=ids)
@@ -1160,7 +1226,7 @@ class TransactionReportBuilderSql:
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_currencies(self, ids):
 
@@ -1191,21 +1257,21 @@ class TransactionReportBuilderSql:
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies2(self, ids):
         self.instance.item_strategies2 = Strategy2.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_strategies3(self, ids):
         self.instance.item_strategies3 = Strategy3.objects.prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
-        ).defer('object_permissions').filter(master_user=self.instance.master_user).filter(id__in=ids)
+        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
 
     def add_data_items_complex_transactions(self, ids):
 
@@ -1305,6 +1371,7 @@ class TransactionReportBuilderSql:
         # self.add_data_items_complex_transactions(complex_transactions_ids)  # too slow
 
         self.add_data_items_instrument_types(self.instance.item_instruments)
+        self.add_data_items_account_types(self.instance.item_accounts)
 
         if self.instance.depth_level == 'entry':
 

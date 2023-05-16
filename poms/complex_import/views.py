@@ -6,7 +6,6 @@ from rest_framework.parsers import MultiPartParser
 from poms.common.filters import NoOpFilter, CharFilter
 from poms.common.views import AbstractModelViewSet
 from poms.complex_import.serializers import ComplexImportSchemeSerializer, ComplexImportSerializer
-from poms.obj_perms.permissions import PomsConfigurationPermission
 from poms.users.filters import OwnerByMasterUserFilter
 from .models import ComplexImportScheme, ComplexImport
 
@@ -30,7 +29,7 @@ class ComplexImportSchemeViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
-        PomsConfigurationPermission
+
     ]
 
 

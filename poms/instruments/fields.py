@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeOrPrimaryKeyRelatedField
 from poms.instruments.models import Instrument, InstrumentType, PricingPolicy, AccrualCalculationModel, Periodicity, \
     EventSchedule, CostMethod, Country, PricingCondition, PaymentSizeDetail, DailyPricingModel
-from poms.obj_perms.fields import PrimaryKeyRelatedFilteredWithObjectPermissionField
 from poms.portfolios.models import PortfolioBundle
 from poms.transactions.models import NotificationClass, EventClass, TransactionTypeInputSettings, TransactionTypeInput
 from poms.users.filters import OwnerByMasterUserFilter, LinkedWithPortfolioFilter
@@ -54,33 +53,32 @@ class InstrumentDefault(object):
 
 class InstrumentField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Instrument.objects
-    filter_backends = [
-        OwnerByMasterUserFilter,
-    ]
+    # Probably Deprecated
+    # filter_backends = [
+    #     OwnerByMasterUserFilter,
+    # ]
+
 
 class CountryField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Country.objects
-    filter_backends = [
-    ]
+
+
 
 class PricingConditionField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PricingCondition.objects
-    filter_backends = [
-    ]
+
+
 
 class PaymentSizeDetailField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PaymentSizeDetail.objects
-    filter_backends = [
-    ]
+
+
 
 class DailyPricingModelField(UserCodeOrPrimaryKeyRelatedField):
     queryset = DailyPricingModel.objects
-    filter_backends = [
-    ]
 
 
-
-class RegisterField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+class RegisterField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Instrument.objects
     filter_backends = [
         OwnerByMasterUserFilter,
@@ -88,18 +86,20 @@ class RegisterField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
     ]
 
 
-class BundleField(PrimaryKeyRelatedFilteredWithObjectPermissionField):
+class BundleField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PortfolioBundle.objects
-    filter_backends = [
-        OwnerByMasterUserFilter
-    ]
+    # Probably Deprecated
+    # filter_backends = [
+    #     OwnerByMasterUserFilter
+    # ]
 
 
 class PricingPolicyField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PricingPolicy.objects
-    filter_backends = [
-        OwnerByMasterUserFilter,
-    ]
+    # Possibly Deprecated
+    # filter_backends = UserCodeOrPrimaryKeyRelatedField.filter_backends + [
+    #     OwnerByMasterUserFilter,
+    # ]
 
 
 class CostMethodField(PrimaryKeyRelatedFilteredField):
