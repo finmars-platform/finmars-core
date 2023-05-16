@@ -134,6 +134,9 @@ class FinmarsSFTPStorage(FinmarsStorage, SFTPStorage):
 
 class FinmarsAzureStorage(FinmarsStorage, AzureStorage):
 
+    def get_created_time(self, path):
+        return self.get_modified_time(path)
+
     def delete_directory(self, directory_path):
 
         from azure.storage.blob import ContainerClient
