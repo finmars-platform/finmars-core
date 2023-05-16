@@ -357,7 +357,7 @@ def get_record_context():
 
     if request := get_request():
 
-        _l.info('request.user %s' % request.user)
+        # _l.info('request.user %s' % request.user)
 
         # result["master_user"] = request.user.master_user
         result["master_user"] = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)

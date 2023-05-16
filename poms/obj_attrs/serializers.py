@@ -380,9 +380,9 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
             c_id = c.get('id', None)
             c_user_code = c.get('user_code', None)
             if c_id and c_id in id_set:
-                raise ValidationError("non unique id")
+                raise ValidationError("classifiers non unique id")
             if c_user_code and c_user_code in user_code_set:
-                raise ValidationError("non unique user_code")
+                raise ValidationError("classifiers non unique user_code")
             if c_id:
                 id_set.add(c_id)
             if c_user_code:
@@ -495,7 +495,8 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
 
             self.create_classifier_node_mapping(instance, o)
 
-        except IntegrityError:
+        except IntegrityError as e:
+            _l.error("Error save_classifier %s " % e)
             raise ValidationError("non unique user_code")
 
         processed.add(o.id)
