@@ -256,15 +256,20 @@ def filter_queryset_with_access_policies(member, queryset, view):
 
 
 def action_statement_into_object(action):
-    pieces = action.split(':')
 
-    result = {
-        'service': pieces[0].lower(),
-        'viewset': pieces[1].lower(),
-        'action': pieces[2].lower(),
-    }
+    try:
+        pieces = action.split(':')
 
-    return result
+        result = {
+            'service': pieces[0].lower(),
+            'viewset': pieces[1].lower(),
+            'action': pieces[2].lower(),
+        }
+
+        return result
+
+    except Exception as e:
+        raise Exception("Action is invalid %s" % action)
 
 
 def capitalize_first_letter(string):
@@ -275,6 +280,10 @@ def capitalize_first_letter(string):
 
 
 def get_allowed_queryset(member, queryset):
+
+    if member.is_admin:
+        return queryset
+
     # Retrieve the user's Access Policies and apply the filtering logic
     # You might need to adjust the logic based on your Access Policies implementation
     # TODO maybe has performance issues
