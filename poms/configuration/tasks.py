@@ -342,16 +342,18 @@ def push_configuration_to_marketplace(self, task_id):
     task.status = CeleryTask.STATUS_PENDING
     task.save()
 
+    options_object = task.options_object
+
+    username = options_object['username']
+    password = options_object['password']
+
+    del options_object['username']
+    del options_object['password']
+
+    task.options_object = options_object
+    task.save()
+
     try:
-
-        options_object = task.options_object
-
-        # access_token = options_object['access_token']
-        #
-        # del options_object['access_token']
-
-        task.options_object = options_object
-        task.save()
 
         configuration = Configuration.objects.get(configuration_code=options_object['configuration_code'])
 
@@ -382,16 +384,25 @@ def push_configuration_to_marketplace(self, task_id):
         # headers = {}
         # headers['Authorization'] = 'Token ' + access_token
 
-        bot = User.objects.get(username="finmars_bot")
-
-        refresh = RefreshToken.for_user(bot)
-
         # _l.info('refresh %s' % refresh.access_token)
 
-        # headers = {'Content-type': 'application/json', 'Accept': 'application/json',
-        #            'Authorization': 'Bearer %s' % refresh.access_token}
+        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
-        headers = {'Authorization': 'Bearer %s' % refresh.access_token}
+
+        response = requests.post(url='https://marketplace.finmars.com/api/v1/login/',
+                                 json={
+                                        'username': username,
+                                     'password': password
+                                 },
+                                 headers=headers)
+
+        data = response.json()
+
+        # _l.info('data %s' % data)
+
+        token = data['token']
+
+        headers = {'Authorization': 'Token %s' % token}
 
         # _l.info('push_configuration_to_marketplace.headers %s' % headers)
 
@@ -407,6 +418,9 @@ def push_configuration_to_marketplace(self, task_id):
             task.save()
 
         else:
+
+            _l.info("push_configuration_to_marketplace.Configuration pushed to marketplace")
+
             task.verbose_result = {"message": "Configuration pushed to marketplace"}
             task.status = CeleryTask.STATUS_DONE
             task.save()
