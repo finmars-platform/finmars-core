@@ -369,7 +369,7 @@ def push_configuration_to_marketplace(self, task_id):
             'name': configuration.name,
             'version': configuration.version,
             'description': configuration.description,
-            'author': task.member.username,
+            'author': username,
             'changelog': options_object.get('changelog', ''),
             'manifest': json.dumps(configuration.manifest)
         }
