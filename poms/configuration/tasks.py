@@ -391,16 +391,16 @@ def push_configuration_to_marketplace(self, task_id):
 
         response = requests.post(url='https://marketplace.finmars.com/api/v1/login/',
                                  json={
-                                        'username': username,
+                                      'username': username,
                                      'password': password
                                  },
                                  headers=headers)
 
-        data = response.json()
+        auth_data = response.json()
 
         # _l.info('data %s' % data)
 
-        token = data['token']
+        token = auth_data['token']
 
         headers = {'Authorization': 'Token %s' % token}
 
