@@ -7,7 +7,8 @@ from rest_framework.fields import CurrentUserDefault
 from poms.iam.models import Group, Role, AccessPolicy
 from poms.common.fields import PrimaryKeyRelatedFilteredField
 from poms.users.filters import OwnerByMasterUserFilter
-from poms.users.models import Member
+from poms.users.models import Member, MasterUser
+from poms_app import settings
 
 
 class CurrentMasterUserDefault(object):
@@ -15,11 +16,13 @@ class CurrentMasterUserDefault(object):
 
     def set_context(self, serializer_field):
 
-        if 'master_user' in serializer_field.context:
-            master_user = serializer_field.context['master_user']
-        else:
-            request = serializer_field.context['request']
-            master_user = request.user.master_user
+        # if 'master_user' in serializer_field.context:
+        #     master_user = serializer_field.context['master_user']
+        # else:
+        #     request = serializer_field.context['request']
+        #     master_user = request.user.master_user
+
+        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
         self._master_user = master_user
 
