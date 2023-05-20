@@ -364,7 +364,20 @@ class DashboardLayoutLightViewSet(AbstractModelViewSet):
     ]
     filter_class = DashboardLayoutFilterSet
     ordering_fields = ['name', 'is_default'
+
                        ]
+
+
+class MobileLayoutFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_default = django_filters.BooleanFilter()
+    is_active = django_filters.BooleanFilter()
+    name = CharFilter()
+
+    class Meta:
+        model = MobileLayout
+        fields = []
+
 
 class MobileLayoutViewSet(AbstractModelViewSet):
     queryset = MobileLayout.objects.select_related(
@@ -374,7 +387,7 @@ class MobileLayoutViewSet(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMemberFilter,
     ]
-    filter_class = DashboardLayoutFilterSet
+    filter_class = MobileLayoutFilterSet
     ordering_fields = ['name', 'is_default'
                        ]
 
