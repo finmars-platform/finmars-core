@@ -436,9 +436,6 @@ class ListLayout(BaseLayout, TimeStampedModel):
 
         is_fixed = True
 
-        if not self.user_code:
-            self.user_code = Truncator(self.name).chars(25, truncate='')
-
         if self.is_default:
             qs = ListLayout.objects.filter(member=self.member, content_type=self.content_type, is_default=True)
             if self.pk:
@@ -449,6 +446,12 @@ class ListLayout(BaseLayout, TimeStampedModel):
             if self.pk:
                 qs = qs.exclude(pk=self.pk)
             qs.update(is_active=False)
+        else:
+            count = ListLayout.objects.filter(member=self.member, content_type=self.content_type, is_default=True).count()
+
+            if count == 0:
+                self.is_default = True
+
 
         return super(ListLayout, self).save(*args, **kwargs)
 
@@ -472,9 +475,6 @@ class DashboardLayout(BaseUIModel, TimeStampedModel):
 
     def save(self, *args, **kwargs):
 
-        if not self.user_code:
-            self.user_code = Truncator(self.name).chars(25, truncate='')
-
         if self.is_default:
             qs = DashboardLayout.objects.filter(member=self.member, is_default=True)
             if self.pk:
@@ -485,11 +485,55 @@ class DashboardLayout(BaseUIModel, TimeStampedModel):
             if self.pk:
                 qs = qs.exclude(pk=self.pk)
             qs.update(is_active=False)
+        else:
+            count = DashboardLayout.objects.filter(member=self.member, is_default=True).count()
+
+            if count == 0:
+                self.is_default = True
 
         return super(DashboardLayout, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.name
+
+
+class MobileLayout(BaseUIModel, TimeStampedModel):
+    member = models.ForeignKey(Member, related_name='mobile_layouts', verbose_name=gettext_lazy('member'),
+                               on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=gettext_lazy('name'))
+    user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+    is_default = models.BooleanField(default=False, verbose_name=gettext_lazy('is default'))
+    is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
+
+    class Meta(BaseLayout.Meta):
+        unique_together = [
+            ['member', 'user_code'],
+        ]
+        ordering = ['name']
+
+    def save(self, *args, **kwargs):
+
+        if self.is_default:
+            qs = MobileLayout.objects.filter(member=self.member, is_default=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            qs.update(is_default=False)
+
+            qs = MobileLayout.objects.filter(member=self.member, is_active=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            qs.update(is_active=False)
+        else:
+            count = MobileLayout.objects.filter(member=self.member, is_default=True).count()
+
+            if count == 0:
+                self.is_default = True
+
+        return super(MobileLayout, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
 
 
 class ConfigurationExportLayout(BaseUIModel, TimeStampedModel):

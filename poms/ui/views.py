@@ -8,10 +8,10 @@ from rest_framework.viewsets import ModelViewSet
 from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter
 from poms.common.mixins import DestroySystemicModelMixin
 from poms.common.views import AbstractModelViewSet, AbstractViewSet, AbstractReadOnlyModelViewSet
-from poms.ui.models import ListLayout, EditLayout, Bookmark,  \
+from poms.ui.models import ListLayout, EditLayout, Bookmark, \
     ConfigurationExportLayout, ComplexTransactionUserField, InstrumentUserField, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, CrossEntityAttributeExtension, \
-    ColumnSortData, TransactionUserField
+    ColumnSortData, TransactionUserField, MobileLayout
 from poms.instruments.models import Instrument, InstrumentType
 from poms.currencies.models import Currency
 from poms.accounts.models import Account, AccountType
@@ -21,11 +21,12 @@ from poms.reports.models import BalanceReport
 from poms.transactions.models import TransactionType, TransactionTypeGroup
 from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsible, ResponsibleGroup
 from poms.ui.serializers import ListLayoutSerializer, \
-    EditLayoutSerializer, BookmarkSerializer,  ConfigurationExportLayoutSerializer, \
+    EditLayoutSerializer, BookmarkSerializer, ConfigurationExportLayoutSerializer, \
     ComplexTransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
     DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer, EntityTooltipSerializer, \
     ColorPaletteSerializer, ListLayoutLightSerializer, DashboardLayoutLightSerializer, \
-    CrossEntityAttributeExtensionSerializer, ColumnSortDataSerializer, TransactionUserFieldSerializer
+    CrossEntityAttributeExtensionSerializer, ColumnSortDataSerializer, TransactionUserFieldSerializer, \
+    MobileLayoutSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 
 
@@ -364,6 +365,29 @@ class DashboardLayoutLightViewSet(AbstractModelViewSet):
     filter_class = DashboardLayoutFilterSet
     ordering_fields = ['name', 'is_default'
                        ]
+
+class MobileLayoutViewSet(AbstractModelViewSet):
+    queryset = MobileLayout.objects.select_related(
+        'member'
+    )
+    serializer_class = MobileLayoutSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMemberFilter,
+    ]
+    filter_class = DashboardLayoutFilterSet
+    ordering_fields = ['name', 'is_default'
+                       ]
+
+    @action(detail=True, methods=['get'], url_path='ping')
+    def ping(self, request, pk=None):
+        layout = self.get_object()
+
+        return Response({
+            "id": layout.id,
+            "modified": layout.modified,
+            "is_default": layout.is_default
+        })
+
 
 
 class ConfigurationExportLayoutFilterSet(FilterSet):

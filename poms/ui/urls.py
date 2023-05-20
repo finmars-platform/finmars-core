@@ -8,6 +8,7 @@ router.register(r'list-layout', ui.ListLayoutViewSet)
 router.register(r'list-layout-light', ui.ListLayoutLightViewSet)  # deprecated
 router.register(r'template-layout', ui.TemplateLayoutViewSet)
 router.register(r'dashboard-layout', ui.DashboardLayoutViewSet)
+router.register(r'mobile-layout', ui.MobileLayoutViewSet)
 router.register(r'edit-layout', ui.EditLayoutViewSet)
 router.register(r'bookmark', ui.BookmarkViewSet)
 router.register(r'configuration-export-layout', ui.ConfigurationExportLayoutViewSet)
