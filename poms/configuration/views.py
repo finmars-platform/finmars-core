@@ -120,8 +120,8 @@ class ConfigurationViewSet(AbstractModelViewSet):
         options_object = {
             "configuration_code": configuration.configuration_code,
             "changelog": request.data.get("changelog", ""),
-            "access_token": get_access_token(request)
-            # TODO check this later, important security thins, need to be destroyed inside task
+            "username": request.data.get("username", ""),
+            "password": request.data.get("password", ""),
         }
 
         celery_task = CeleryTask.objects.create(

@@ -570,9 +570,9 @@ def get_serializer(content_type_key):
         'ui.dashboardlayout': DashboardLayoutSerializer,
         'ui.listlayout': ListLayoutSerializer,
         'ui.contextmenulayout': ContextMenuLayoutSerializer,
-        'ui.complextransactionuserfieldmodel': ComplexTransactionUserFieldSerializer,
-        'ui.transactionuserfieldmodel': TransactionUserFieldSerializer,
-        'ui.instrumentuserfieldmodel': InstrumentUserFieldSerializer,
+        'ui.complextransactionuserfield': ComplexTransactionUserFieldSerializer,
+        'ui.transactionuserfield': TransactionUserFieldSerializer,
+        'ui.instrumentuserfield': InstrumentUserFieldSerializer,
 
         'pricing.instrumentpricingscheme': InstrumentPricingSchemeSerializer,
         'pricing.currencypricingscheme': CurrencyPricingSchemeSerializer,

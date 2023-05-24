@@ -1330,6 +1330,7 @@ class SimpleImportProcess(object):
         if self.scheme.content_type.model == 'strategy3':
             relation_fields_map['subgroup'] = Strategy3Subgroup
 
+
         for entity_field in self.scheme.entity_fields.all():
 
             key = entity_field.system_property_key
