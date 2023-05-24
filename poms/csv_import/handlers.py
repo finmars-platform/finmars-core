@@ -17,6 +17,7 @@ from poms.common import formula
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.storage import get_storage
 from poms.common.utils import get_serializer
+from poms.counterparties.models import CounterpartyGroup, ResponsibleGroup
 from poms.csv_import.models import CsvImportScheme, SimpleImportResult, ProcessType, SimpleImportProcessPreprocessItem, \
     SimpleImportConversionItem, SimpleImportProcessItem, SimpleImportImportedItem
 from poms.csv_import.serializers import SimpleImportResultSerializer
@@ -26,6 +27,7 @@ from poms.instruments.models import Instrument, PaymentSizeDetail, AccrualCalcul
     PricingCondition, InstrumentType, PricingPolicy, DailyPricingModel
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.procedures.models import RequestDataFileProcedureInstance
+from poms.strategies.models import Strategy1Subgroup, Strategy2Subgroup, Strategy3Subgroup
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import EcosystemDefault
 
@@ -1310,8 +1312,18 @@ class SimpleImportProcess(object):
             'payment_size_detail': PaymentSizeDetail,
             'co_directional_exposure_currency': Currency,
             'counter_directional_exposure_currency': Currency,
-            'daily_pricing_model': DailyPricingModel
+            'daily_pricing_model': DailyPricingModel,
+            'strategy1_subgroup': Strategy1Subgroup,
+            'strategy2_subgroup': Strategy2Subgroup,
+            'strategy3_subgroup': Strategy3Subgroup,
+
         }
+
+        if self.scheme.content_type.model == 'counterparty':
+            relation_fields_map['group'] = CounterpartyGroup
+
+        if self.scheme.content_type.model == 'responsible':
+            relation_fields_map['group'] = ResponsibleGroup
 
         for entity_field in self.scheme.entity_fields.all():
 
