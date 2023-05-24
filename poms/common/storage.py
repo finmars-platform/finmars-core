@@ -139,17 +139,12 @@ class FinmarsAzureStorage(FinmarsStorage, AzureStorage):
 
     def delete_directory(self, directory_path):
 
-        from azure.storage.blob import ContainerClient
-
-        container_client = ContainerClient(account_url=self.account_url, container_name=self.azure_container,
-                                           credential=self.account_key)
-
         # List all files in the folder
-        blob_list = container_client.list_blobs(name_starts_with=directory_path)
+        blob_list = self.client.list_blobs(name_starts_with=directory_path)
 
         # Delete files in the folder
         for blob in blob_list:
-            container_client.delete_blob(blob.name)
+            self.client.delete_blob(blob.name)
 
     def download_directory(self, directory_path, local_destination_path):
 
@@ -157,12 +152,9 @@ class FinmarsAzureStorage(FinmarsStorage, AzureStorage):
         if folder:
             os.makedirs(folder, exist_ok=True)
 
-        from azure.storage.blob import ContainerClient
-
         # Download all files from the remote folder to the temporary local directory
-        container_client = ContainerClient(account_url=self.account_url, container_name=self.azure_container,
-                                           credential=self.account_key)
-        blob_list = container_client.list_blobs(name_starts_with=directory_path)
+
+        blob_list = self.client.list_blobs(name_starts_with=directory_path)
 
         for blob in blob_list:
             # Check if the blob is inside the folder
@@ -173,19 +165,16 @@ class FinmarsAzureStorage(FinmarsStorage, AzureStorage):
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
 
                 # Download the blob to the local file
-                blob_client = container_client.get_blob_client(blob.name)
+                blob_client = self.client.get_blob_client(blob.name)
                 with open(local_path, "wb") as local_file:
                     download_stream = blob_client.download_blob()
                     local_file.write(download_stream.readall())
 
     def download_directory_as_zip(self, directory_path):
 
-        from azure.storage.blob import ContainerClient
-
         # Download all files from the remote folder to the temporary local directory
-        container_client = ContainerClient(account_url=self.account_url, container_name=self.azure_container,
-                                           credential=self.account_key)
-        blob_list = container_client.list_blobs(name_starts_with=directory_path)
+
+        blob_list = self.client.list_blobs(name_starts_with=directory_path)
 
         temp_dir = tempfile.mkdtemp()
 
@@ -198,7 +187,7 @@ class FinmarsAzureStorage(FinmarsStorage, AzureStorage):
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
 
                 # Download the blob to the local file
-                blob_client = container_client.get_blob_client(blob.name)
+                blob_client = self.client.get_blob_client(blob.name)
                 with open(local_path, "wb") as local_file:
                     download_stream = blob_client.download_blob()
                     local_file.write(download_stream.readall())
