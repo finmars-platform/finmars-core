@@ -22,11 +22,16 @@ class CounterpartyGroupDefault(object):
 
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
-        self._master_user = request.user.master_user
+        from poms.users.models import MasterUser
+        from poms_app import settings
+        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
-        return self._master_user.counterparty_group
+        from poms.users.models import EcosystemDefault
+        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        return self.ecosystem_defaults.counterparty_group
 
 
 class CounterpartyGroupField(PrimaryKeyRelatedFilteredField):
@@ -41,11 +46,16 @@ class CounterpartyDefault(object):
 
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
-        self._master_user = request.user.master_user
+        from poms.users.models import MasterUser
+        from poms_app import settings
+        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
-        return self._master_user.counterparty
+        from poms.users.models import EcosystemDefault
+        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        return self.ecosystem_defaults.counterparty
 
 
 class CounterpartyField(PrimaryKeyRelatedFilteredField):
@@ -72,11 +82,16 @@ class ResponsibleGroupDefault(object):
 
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
-        self._master_user = request.user.master_user
+        from poms.users.models import MasterUser
+        from poms_app import settings
+        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
-        return self._master_user.responsible_group
+        from poms.users.models import EcosystemDefault
+        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        return self.ecosystem_defaults.responsible_group
 
 
 class ResponsibleGroupField(PrimaryKeyRelatedFilteredField):
@@ -91,11 +106,16 @@ class ResponsibleDefault(object):
 
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
-        self._master_user = request.user.master_user
+        from poms.users.models import MasterUser
+        from poms_app import settings
+        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
-        return self._master_user.responsible
+        from poms.users.models import EcosystemDefault
+        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        return self.ecosystem_defaults.responsible
 
 
 class ResponsibleField(PrimaryKeyRelatedFilteredField):
