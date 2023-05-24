@@ -36,7 +36,7 @@ class MasterUserChangeOwnerSerializer(serializers.Serializer):
 
 
 class CreateMemberSerializer(serializers.Serializer):
-    groups = serializers.CharField(required=False, label=_("Groups"))
+    groups = serializers.CharField(required=False, label=_("Groups"), allow_blank=True, allow_null=True)
     username = serializers.CharField(label=_("username"))
     user_id = serializers.CharField(label=_("User Id"))
     user_legacy_id = serializers.IntegerField(required=False, label=_("User legacy id"))
