@@ -1313,10 +1313,6 @@ class SimpleImportProcess(object):
             'co_directional_exposure_currency': Currency,
             'counter_directional_exposure_currency': Currency,
             'daily_pricing_model': DailyPricingModel,
-            'strategy1_subgroup': Strategy1Subgroup,
-            'strategy2_subgroup': Strategy2Subgroup,
-            'strategy3_subgroup': Strategy3Subgroup,
-
         }
 
         if self.scheme.content_type.model == 'counterparty':
@@ -1324,6 +1320,15 @@ class SimpleImportProcess(object):
 
         if self.scheme.content_type.model == 'responsible':
             relation_fields_map['group'] = ResponsibleGroup
+
+        if self.scheme.content_type.model == 'strategy1':
+            relation_fields_map['subgroup'] = Strategy1Subgroup
+
+        if self.scheme.content_type.model == 'strategy2':
+            relation_fields_map['subgroup'] = Strategy2Subgroup
+
+        if self.scheme.content_type.model == 'strategy3':
+            relation_fields_map['subgroup'] = Strategy3Subgroup
 
         for entity_field in self.scheme.entity_fields.all():
 
