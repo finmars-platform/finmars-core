@@ -483,18 +483,19 @@ def install_configuration_from_marketplace(self, task_id):
             configuration = Configuration.objects.create(configuration_code=remote_configuration['configuration_code'],
                                                          version="0.0.0")
 
-        if not is_newer_version(remote_configuration_release['version'], configuration.version):
-
-            if remote_configuration_release['version'] == configuration.version:
-                task.verbose_result = {"message": "Local Configuration has equal version %s to proposed %s" % (
-                    configuration.version, remote_configuration_release['version'])}
-            else:
-                task.verbose_result = {"message": "Local Configuration has newer version %s then proposed %s" % (
-                    configuration.version, remote_configuration_release['version'])}
-
-            task.status = CeleryTask.STATUS_DONE
-            task.save()
-            return
+        # Probably deprecated
+        # if not is_newer_version(remote_configuration_release['version'], configuration.version):
+        #
+        #     if remote_configuration_release['version'] == configuration.version:
+        #         task.verbose_result = {"message": "Local Configuration has equal version %s to proposed %s" % (
+        #             configuration.version, remote_configuration_release['version'])}
+        #     else:
+        #         task.verbose_result = {"message": "Local Configuration has newer version %s then proposed %s" % (
+        #             configuration.version, remote_configuration_release['version'])}
+        #
+        #     task.status = CeleryTask.STATUS_DONE
+        #     task.save()
+        #     return
 
         configuration.name = remote_configuration['name']
         configuration.description = remote_configuration['description']
