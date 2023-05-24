@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 
-from poms.common.fields import PrimaryKeyRelatedFilteredField
+from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeOrPrimaryKeyRelatedField
 from poms.counterparties.models import Counterparty, Responsible, CounterpartyGroup, ResponsibleGroup
 from poms.users.filters import OwnerByMasterUserFilter
 
@@ -34,7 +34,7 @@ class CounterpartyGroupDefault(object):
         return self.ecosystem_defaults.counterparty_group
 
 
-class CounterpartyGroupField(PrimaryKeyRelatedFilteredField):
+class CounterpartyGroupField(UserCodeOrPrimaryKeyRelatedField):
     queryset = CounterpartyGroup.objects
     filter_backends = [
         OwnerByMasterUserFilter,
@@ -58,7 +58,7 @@ class CounterpartyDefault(object):
         return self.ecosystem_defaults.counterparty
 
 
-class CounterpartyField(PrimaryKeyRelatedFilteredField):
+class CounterpartyField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Counterparty.objects
     filter_backends = [
         OwnerByMasterUserFilter,
@@ -94,7 +94,7 @@ class ResponsibleGroupDefault(object):
         return self.ecosystem_defaults.responsible_group
 
 
-class ResponsibleGroupField(PrimaryKeyRelatedFilteredField):
+class ResponsibleGroupField(UserCodeOrPrimaryKeyRelatedField):
     queryset = ResponsibleGroup.objects
     filter_backends = [
         OwnerByMasterUserFilter,
@@ -118,7 +118,7 @@ class ResponsibleDefault(object):
         return self.ecosystem_defaults.responsible
 
 
-class ResponsibleField(PrimaryKeyRelatedFilteredField):
+class ResponsibleField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Responsible.objects
     filter_backends = [
         OwnerByMasterUserFilter,
