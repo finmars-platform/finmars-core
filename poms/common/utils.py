@@ -539,6 +539,7 @@ def get_serializer(content_type_key):
     from poms.iam.serializers import AccessPolicySerializer
 
     from poms.reference_tables.serializers import ReferenceTableSerializer
+    from poms.ui.serializers import EditLayoutSerializer
     serializer_map = {
 
         'transactions.transactiontype': TransactionTypeSerializer,
@@ -569,6 +570,7 @@ def get_serializer(content_type_key):
 
         'ui.dashboardlayout': DashboardLayoutSerializer,
         'ui.listlayout': ListLayoutSerializer,
+        'ui.editlayout': EditLayoutSerializer,
         'ui.contextmenulayout': ContextMenuLayoutSerializer,
         'ui.complextransactionuserfield': ComplexTransactionUserFieldSerializer,
         'ui.transactionuserfield': TransactionUserFieldSerializer,
