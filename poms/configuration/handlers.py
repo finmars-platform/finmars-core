@@ -335,6 +335,12 @@ def export_configuration_to_directory(source_directory, configuration, master_us
 
         save_serialized_layout('ui.listlayout',
                                configuration.configuration_code,
+                               'strategies.strategy3',
+                               source_directory + '/ui/layouts/strategies2',
+                               context)
+
+        save_serialized_layout('ui.listlayout',
+                               configuration.configuration_code,
                                'pricing.pricehistoryerror',
                                source_directory + '/ui/layouts/price-journal',
                                context)
