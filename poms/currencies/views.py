@@ -1,5 +1,6 @@
 import logging
 
+
 import django_filters
 from django_filters.rest_framework import FilterSet
 
@@ -22,11 +23,11 @@ from poms.common.views import AbstractModelViewSet
 from poms.currencies.filters import OwnerByCurrencyFilter
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.currencies.serializers import (
+    CurrencyDatabaseSearchRequestSerializer,
+    CurrencyDatabaseSearchResponseSerializer,
     CurrencyHistorySerializer,
     CurrencyLightSerializer,
     CurrencySerializer,
-    CurrencyDatabaseSearchRequestSerializer,
-    CurrencyDatabaseSearchResponseSerializer,
 )
 from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
@@ -233,34 +234,42 @@ class CurrencyDatabaseSearchViewSet(APIView):
     #     responses={200: CurrencyDatabaseSearchResponseSerializer()},
     # )
 
-    def _empty_response(self) -> Response:
-        return Response(
-            {
-                "results": [],
-                "next": None,
-                "previous": None,
-                "count": 0,
-            }
-        )
+    def _prepare_response(self, results) -> Response:
+        response_data = {
+            "count": len(results),
+            "next": None,
+            "previous": None,
+            "results": results,
+        }
+        return Response(CurrencyDatabaseSearchResponseSerializer(response_data).data)
 
     def get(self, request):
+        """
+        Load all currencies items, and then filter them according to params
+        If name is given in params, then all currency fields will be filtered
+        to contain name value as substring
+        """
+
         log = f"{self.__class__.__name__}"
 
         serializer = CurrencyDatabaseSearchRequestSerializer(data=request.query_params)
         serializer.is_valid(raise_exception=True)
         params = dict(serializer.validated_data)
 
-        _l.info(f"{log} request params={params}")
+        _l.info(f"{log} currency params={params}")
 
-        if not serializer.params_has_name(params):
-            return self._empty_response()
+        monad: Monad = DatabaseService().get_results("currency", request_params={})
 
-        monad: Monad = DatabaseService().get_results("currency", params)
-
-        _l.info(f"{log} monad.status={monad.status} monad.data={monad.data}")
+        results = monad.data.get("results", []) if monad.data else []
 
         if monad.status != MonadStatus.DATA_READY:
-            _l.error(f"{log} error, monad.message={monad.message}")
-            return self._empty_response()
+            _l.error(f"{log} monad.status={monad.status} monad.message={monad.message}")
+            return self._prepare_response([])
 
-        return Response(CurrencyDatabaseSearchResponseSerializer(monad.data).data)
+        _l.info(f"{log} len(results)={len(results)}")
+
+        filtered_results = serializer.filter_results(results)
+
+        _l.info(f"{log} len(filtered_results)={len(filtered_results)}")
+
+        return self._prepare_response(filtered_results)
