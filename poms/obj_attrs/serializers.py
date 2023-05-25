@@ -497,7 +497,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
 
         except IntegrityError as e:
             _l.error("Error save_classifier %s " % e)
-            raise ValidationError("non unique user_code")
+            # raise ValidationError("non unique user_code")
 
         processed.add(o.id)
         prev_node = None

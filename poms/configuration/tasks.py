@@ -182,7 +182,8 @@ def import_configuration(self, task_id):
                         'status': 'error',
                         'error_message': str(serializer.errors)
                     }
-                    print(f"Invalid data in {json_file}: {serializer.errors}")
+
+                    _l.error(f"Invalid data in {json_file}: {serializer.errors}")
 
                     task.update_progress(
                         {
@@ -196,6 +197,9 @@ def import_configuration(self, task_id):
 
 
             except Exception as e:
+
+                _l.error("import_configuration e %s" % e)
+
                 stats['configuration'][json_file] = {
                     'status': 'error',
                     'error_message': str(e)
