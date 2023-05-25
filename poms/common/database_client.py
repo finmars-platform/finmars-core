@@ -49,8 +49,8 @@ class DatabaseService:
     def get_results(self, service_name: str, request_params: dict) -> Monad:
         _l.info(f"{log} get_result, service={service_name} options={request_params}")
 
-        if (service_name not in SERVICE_URLS) or not request_params:
-            raise RuntimeError(f"{log} invalid args!")
+        if service_name not in SERVICE_URLS:
+            raise RuntimeError(f"{log} no service_name!")
 
         try:
             data = self.http_client.get(
