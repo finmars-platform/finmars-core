@@ -507,25 +507,26 @@ class BootstrapConfig(AppConfig):
 
                     _l.info("create workflows folder")
 
-            if not storage.exists(settings.BASE_API_URL + '/workflows/schemas/.init'):
-                path = settings.BASE_API_URL + '/workflows/schemas/.init'
-
-                with NamedTemporaryFile() as tmpf:
-                    tmpf.write(b'')
-                    tmpf.flush()
-                    storage.save(path, tmpf)
-
-                    _l.info("create workflows schemas folder")
-
-            if not storage.exists(settings.BASE_API_URL + '/workflows/tasks/.init'):
-                path = settings.BASE_API_URL + '/workflows/tasks/.init'
-
-                with NamedTemporaryFile() as tmpf:
-                    tmpf.write(b'')
-                    tmpf.flush()
-                    storage.save(path, tmpf)
-
-                    _l.info("create workflows tasks folder")
+            # Deprecated, no workflows in workflows/com/finmars...
+            # if not storage.exists(settings.BASE_API_URL + '/workflows/schemas/.init'):
+            #     path = settings.BASE_API_URL + '/workflows/schemas/.init'
+            #
+            #     with NamedTemporaryFile() as tmpf:
+            #         tmpf.write(b'')
+            #         tmpf.flush()
+            #         storage.save(path, tmpf)
+            #
+            #         _l.info("create workflows schemas folder")
+            #
+            # if not storage.exists(settings.BASE_API_URL + '/workflows/tasks/.init'):
+            #     path = settings.BASE_API_URL + '/workflows/tasks/.init'
+            #
+            #     with NamedTemporaryFile() as tmpf:
+            #         tmpf.write(b'')
+            #         tmpf.flush()
+            #         storage.save(path, tmpf)
+            #
+            #         _l.info("create workflows tasks folder")
 
             members = Member.objects.all()
 

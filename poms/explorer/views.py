@@ -166,6 +166,99 @@ class ExplorerViewFileViewSet(AbstractViewSet):
         return response
 
 
+from bs4 import BeautifulSoup
+
+def sanitize_html(html):
+    soup = BeautifulSoup(html, "html.parser")
+
+    for script in soup(["script", "style"]):  # Remove these tags
+        script.extract()
+
+    return str(soup)
+
+class ExplorerServeFileViewSet(AbstractViewSet):
+    serializer_class = ExplorerSerializer
+
+    def retrieve(self, request, filepath=None):
+
+        _l.info('ExplorerServeFileViewSet.filepath %s' %  filepath)
+        filepath = filepath.rstrip('/')
+
+        if not '.' in filepath.split('/')[-1]:  # if the file does not have an extension
+            filepath += '.html'
+
+        path = settings.BASE_API_URL + '/' + filepath
+
+        # TODO validate path that eiher public/import/system or user home folder
+
+        _l.info('path %s' %  path)
+
+        with storage.open(path, 'rb') as file:
+
+            result = file.read()
+
+            file_content_type = None
+
+            if '.html' in file.name:
+                file_content_type = 'text/html'
+                # result = sanitize_html(result)
+
+            if '.txt' in file.name:
+                file_content_type = 'plain/text'
+
+            if '.js' in file.name:
+                file_content_type = 'text/javascript'
+
+            if '.csv' in file.name:
+                file_content_type = 'text/csv'
+
+            if '.json' in file.name:
+                file_content_type = 'application/json'
+
+            if '.yml' in file.name or '.yaml' in file.name:
+                file_content_type = 'application/yaml'
+
+            if '.py' in file.name:
+                file_content_type = 'text/x-python'
+
+            if '.png' in file.name:
+                file_content_type = 'image/png'
+
+            if '.jp' in file.name:
+                file_content_type = 'image/jpeg'
+
+            if '.pdf' in file.name:
+                file_content_type = 'application/pdf'
+
+            if '.doc' in file.name:
+                file_content_type = 'application/msword'
+
+            if '.doc' in file.name:
+                file_content_type = 'application/msword'
+
+            if '.css' in file.name:
+                file_content_type = 'text/css'
+
+            if '.xls' in file.name:
+                file_content_type = 'application/vnd.ms-excel'
+
+            if '.xlsx' in file.name:
+                file_content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+            # if file_content_type:
+            #     response = FileResponse(result, content_type=file_content_type)
+            # else:
+            #     response = FileResponse(result)
+
+            if file_content_type:
+                response = HttpResponse(result, content_type=file_content_type)
+            else:
+                response = HttpResponse(result)
+
+        return response
+
+
+
 class ExplorerUploadViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
