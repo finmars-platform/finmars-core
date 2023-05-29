@@ -1111,6 +1111,7 @@ class ReportSummary():
         return total
 
     def get_total_position_return_pl_daily(self, portfolio_id=None):
+
         total = 0
         market_value = 0
 
@@ -1134,7 +1135,7 @@ class ReportSummary():
                     market_value = market_value + item['market_value']
 
         if market_value:
-            return math.floor(total / market_value)
+            return math.floor(total / market_value * 10000) / 100 # TODO refactor
         return 0
 
     def get_total_pl_mtd(self, portfolio_id=None):
@@ -1182,7 +1183,7 @@ class ReportSummary():
                     market_value = market_value + item['market_value']
 
         if market_value:
-            return math.floor(total / market_value)
+            return math.floor(total / market_value * 10000) / 100 # TODO refactor
         return 0
 
     def get_total_pl_ytd(self, portfolio_id=None):
@@ -1217,20 +1218,25 @@ class ReportSummary():
                 if item['portfolio_id'] == portfolio_id:
                     if item['total']:
                         total = total + item['total']
+
                     if item['market_value']:
                         market_value = market_value + item['market_value']
 
         else:
 
             for item in self.pl_report_ytd.items:
+
                 if item['total']:
                     total = total + item['total']
 
                 if item['market_value']:
                     market_value = market_value + item['market_value']
 
+        _l.info('get_total_position_return_pl_ytd.total %s' % total)
+        _l.info('get_total_position_return_pl_ytd.market_value %s' % market_value)
+
         if market_value:
-            return math.floor(total / market_value)
+            return math.floor(total / market_value * 10000) / 100 # TODO refactor
         return 0
 
     def get_total_pl_inception_to_date(self, portfolio_id=None):
