@@ -19,15 +19,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Create necessary directories and change their permissions
-RUN mkdir -p /var/app-data/import/configs/ /var/app-data/import/files/ /var/app/example_data \
-            /var/app-data/media/ /var/log/example/backend /var/log/celery && \
-    chmod 777 /var/app/example_data
+RUN mkdir -p /var/app-data/import/configs/ /var/app-data/import/files/ /var/app/finmars_data \
+            /var/app-data/media/ /var/log/finmars/backend /var/log/celery && \
+    chmod 777 /var/app/finmars_data
 
 # Copy supervisor configs
 COPY docker/supervisor/*.conf /etc/supervisor/conf.d/
 
 # Change permission of the shell script
-RUN chmod +x /var/app/docker/example-run.sh
+RUN chmod +x /var/app/docker/finmars-run.sh
 
 # Set environment variables
 ENV LC_ALL=C.UTF-8 \
@@ -37,4 +37,4 @@ ENV LC_ALL=C.UTF-8 \
 EXPOSE 8080
 
 # Run the command on container startup
-CMD ["/bin/bash", "/var/app/docker/example-run.sh"]
+CMD ["/bin/bash", "/var/app/docker/finmars-run.sh"]
