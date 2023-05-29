@@ -483,20 +483,25 @@ def export_configuration_to_directory(source_directory, configuration, master_us
 
         # Aliases
 
-        save_serialized_entity('ui.instrumentuserfield',
-                               configuration.configuration_code,
-                               source_directory + '/ui/instrument-user-fields',
-                               context)
+        try:
 
-        save_serialized_entity('ui.transactionuserfield',
-                               configuration.configuration_code,
-                               source_directory + '/ui/transaction-user-fields',
-                               context)
+            save_serialized_entity('ui.instrumentuserfield',
+                                   configuration.configuration_code,
+                                   source_directory + '/ui/instrument-user-fields',
+                                   context)
 
-        save_serialized_entity('ui.complextransactionuserfield',
-                               configuration.configuration_code,
-                               source_directory + '/ui/complex-transaction-user-fields',
-                               context)
+            save_serialized_entity('ui.transactionuserfield',
+                                   configuration.configuration_code,
+                                   source_directory + '/ui/transaction-user-fields',
+                                   context)
+
+            save_serialized_entity('ui.complextransactionuserfield',
+                                   configuration.configuration_code,
+                                   source_directory + '/ui/complex-transaction-user-fields',
+                                   context)
+
+        except Exception as e:
+            _l.error("Could not export aliases e: %s" % e)
 
         #     IAM
         save_serialized_entity('iam.group',
