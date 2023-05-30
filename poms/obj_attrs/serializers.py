@@ -368,6 +368,12 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
         # if read_only_value_type:
         #     self.fields['value_type'].read_only = True
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        content_type = instance.content_type
+        representation['content_type'] = f"{content_type.app_label}.{content_type.model}"
+        return representation
+
     def validate(self, attrs):
         attrs = super(GenericAttributeTypeSerializer, self).validate(attrs)
         classifiers = attrs.get('classifiers', None)
