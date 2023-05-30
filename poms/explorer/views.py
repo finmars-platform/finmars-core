@@ -27,6 +27,11 @@ storage = get_storage()
 class ExplorerViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
+    def remove_first_folder_from_path(self, path):
+        split_path = path.split(os.path.sep)
+        new_path = os.path.sep.join(split_path[1:])
+        return new_path
+
     def list(self, request):
 
         path = request.query_params.get('path')
@@ -77,7 +82,7 @@ class ExplorerViewSet(AbstractViewSet):
                 'name': file,
                 'created': created,
                 'modified': modified,
-                'file_path': os.path.join(path, file),  # path already has / in end of str
+                'file_path': '/' + self.remove_first_folder_from_path(os.path.join(path, file)),  # path already has / in end of str
                 'size': storage.size(path + '/' + file),
                 'size_pretty': storage.convert_size(storage.size(path + '/' + file))
             }
