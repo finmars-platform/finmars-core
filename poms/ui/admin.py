@@ -5,7 +5,7 @@ from poms.ui.filters import LayoutContentTypeFilter
 from poms.ui.models import ListLayout, EditLayout, Bookmark, \
     ComplexTransactionUserField, PortalInterfaceAccessModel, DashboardLayout, ContextMenuLayout, TemplateLayout, \
     EntityTooltip, ColorPalette, ColorPaletteColor, CrossEntityAttributeExtension, TransactionUserField, \
-    InstrumentUserField
+    InstrumentUserField, MemberLayout
 
 
 class PortalInterfaceAccessModelAdmin(AbstractModelAdmin):
@@ -148,6 +148,26 @@ class DashboardLayoutAdmin(BaseLayoutAdmin):
 
 
 admin.site.register(DashboardLayout, DashboardLayoutAdmin)
+
+
+class MemberLayoutAdmin(BaseLayoutAdmin):
+    model = MemberLayout
+    master_user_path = 'member__master_user'
+    list_display = ['id', 'master_user', 'member', 'name', 'user_code']
+    list_select_related = ['member__master_user', 'member']
+    search_fields = ['id', 'name']
+    raw_id_fields = ['member']
+
+    def master_user(self, obj):
+        return obj.member.master_user
+
+    master_user.admin_order_field = 'member__master_user'
+
+
+admin.site.register(MemberLayout, MemberLayoutAdmin)
+
+
+
 
 
 class ContextMenuLayoutAdmin(BaseLayoutAdmin):

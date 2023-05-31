@@ -10,7 +10,7 @@ from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import ListLayout, EditLayout, Bookmark, \
     ConfigurationExportLayout, ComplexTransactionUserField, InstrumentUserField, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPaletteColor, ColorPalette, \
-    CrossEntityAttributeExtension, ColumnSortData, TransactionUserField, MobileLayout
+    CrossEntityAttributeExtension, ColumnSortData, TransactionUserField, MobileLayout, MemberLayout
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 
@@ -235,6 +235,19 @@ class DashboardLayoutLightSerializer(ModelWithTimeStampSerializer):
                   'user_code', 'configuration_code',
                   'is_default', 'is_active', 'origin_for_global_layout',
                   'sourced_from_global_layout']
+
+
+class MemberLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
+    member = HiddenMemberField()
+    data = serializers.JSONField(allow_null=False)
+
+    class Meta:
+        model = MemberLayout
+        fields = ['id', 'member', 'name',
+                  'user_code', 'configuration_code',
+                  'is_default', 'is_active', 'data', 'origin_for_global_layout',
+                  'sourced_from_global_layout']
+
 
 
 class MobileLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
