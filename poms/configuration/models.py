@@ -75,6 +75,15 @@ class Configuration(models.Model):
 
     manifest_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('manifest_data'))
 
+    created = models.DateTimeField(auto_now_add=True, editable=False, db_index=True,
+                                   verbose_name=gettext_lazy('created'))
+    modified = models.DateTimeField(auto_now=True, editable=False, db_index=True,
+                                    verbose_name=gettext_lazy('modified'))
+
+    class Meta:
+        get_latest_by = 'modified'
+        ordering = ['created', ]
+
     @property
     def manifest(self):
         if self.manifest_data is None:
