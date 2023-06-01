@@ -11,7 +11,7 @@ from poms.common.views import AbstractApiView
 from poms.users.filters import OwnerByMasterUserFilter
 from .filters import CeleryTaskQueryFilter, CeleryTaskDateRangeFilter
 from .models import CeleryTask
-from .serializers import CeleryTaskSerializer
+from .serializers import CeleryTaskSerializer, CeleryTaskLightSerializer
 
 _l = getLogger('poms.celery_tasks')
 
@@ -40,6 +40,18 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         DjangoFilterBackend,
         OwnerByMasterUserFilter,
     ]
+
+    @action(detail=False, methods=['get'], url_path='light', serializer_class=CeleryTaskLightSerializer)
+    def list_light(self, request, *args, **kwargs):
+
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        result = self.get_paginated_response(serializer.data)
+
+        return result
+
 
     @action(detail=True, methods=['get'], url_path='status')
     def status(self, request, pk=None):
