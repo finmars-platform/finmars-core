@@ -30,7 +30,14 @@ class CeleryTaskFilterSet(FilterSet):
 
 class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
     queryset = CeleryTask.objects.select_related(
-        'master_user'
+        'master_user',
+        'member',
+        'parent',
+        'file_report',
+        'parent__file_report',
+    ).prefetch_related(
+        'attachments',
+        'children'
     )
     serializer_class = CeleryTaskSerializer
     filter_class = CeleryTaskFilterSet
