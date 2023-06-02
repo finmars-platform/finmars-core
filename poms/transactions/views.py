@@ -91,14 +91,6 @@ class TransactionTypeGroupViewSet(AbstractModelViewSet):
         'user_code', 'name', 'short_name', 'public_name',
     ]
 
-    def perform_destroy(self, instance):
-        super(TransactionTypeGroupViewSet, self).perform_destroy(instance)
-
-        items_qs = TransactionType.objects.filter(master_user=instance.master_user, group=instance)
-        default_group = TransactionTypeGroup.objects.get(master_user=instance.master_user, user_code='-')
-
-        items_qs.update(group=default_group)
-
 
 class ModelExtWithAllWithPermissionMultipleChoiceFilter(ModelExtMultipleChoiceFilter):
     all_field_name = None

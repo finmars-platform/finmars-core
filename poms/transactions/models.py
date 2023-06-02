@@ -297,17 +297,17 @@ class PeriodicityGroup(AbstractClassModel):
         verbose_name_plural = gettext_lazy('periodicity group')
 
 
-class TransactionTypeGroup(NamedModel, FakeDeletableModel, ConfigurationModel):
+class TransactionTypeGroup(NamedModel, FakeDeletableModel, ConfigurationModel, DataTimeStampedModel):
     master_user = models.ForeignKey(MasterUser, related_name='transaction_type_groups',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy('transaction type group')
         verbose_name_plural = gettext_lazy('transaction type groups')
-        permissions = [
-            # ('view_transactiontypegroup', 'Can view transaction type group'),
-            ('manage_transactiontypegroup', 'Can manage transaction type group'),
-        ]
+        # permissions = [
+        #     # ('view_transactiontypegroup', 'Can view transaction type group'),
+        #     ('manage_transactiontypegroup', 'Can manage transaction type group'),
+        # ]
 
     @staticmethod
     def get_system_attrs():
