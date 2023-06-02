@@ -1271,6 +1271,7 @@ class InstrumentDatabaseSearchViewSet(APIView):
 
 class PriceHistoryFilterSet(FilterSet):
     id = NoOpFilter()
+    instrument = ModelExtMultipleChoiceFilter(model=Instrument, field_name='id')
     pricing_policy = ModelExtMultipleChoiceFilter(model=PricingPolicy)
     date = django_filters.DateFromToRangeFilter()
     principal_price = django_filters.RangeFilter()
