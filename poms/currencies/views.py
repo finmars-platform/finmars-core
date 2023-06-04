@@ -7,6 +7,7 @@ from django_filters.rest_framework import FilterSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import status
 
 from poms.common.database_client import DatabaseService
 from poms.common.filters import (
@@ -172,6 +173,17 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
         "pricing_policy__short_name",
         "pricing_policy__public_name",
     ]
+
+    @action(detail=False, methods=['post'], url_path='bulk-create')
+    def bulk_create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+
+        CurrencyHistory.objects.bulk_create([
+            CurrencyHistory(**item) for item in serializer.validated_data
+        ], ignore_conflicts=True)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):

@@ -18,6 +18,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
+from rest_framework import status
 
 from poms.accounts.models import Account
 from poms.accounts.models import AccountType
@@ -1303,6 +1304,17 @@ class PriceHistoryViewSet(AbstractModelViewSet):
         'pricing_policy__public_name',
         'date', 'principal_price', 'accrued_price',
     ]
+
+    @action(detail=False, methods=['post'], url_path='bulk-create')
+    def bulk_create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+
+        PriceHistory.objects.bulk_create([
+            PriceHistory(**item) for item in serializer.validated_data
+        ], ignore_conflicts=True)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'], url_path='attributes')
     def list_attributes(self, request, *args, **kwargs):
