@@ -1301,8 +1301,6 @@ class PriceHistoryViewSet(AbstractModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='bulk-create')
     def bulk_create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data, many=True)
-        serializer.is_valid(raise_exception=True)
 
         valid_data = []
         errors = []
