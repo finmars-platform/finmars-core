@@ -318,6 +318,6 @@ def wait_workflow_until_end(id):
         workflow = get_workflow(id)
 
         if workflow['status'] != 'init' and workflow['status'] != 'progress':
-            return workflow['result']
+            return workflow
 
         time.sleep(10)

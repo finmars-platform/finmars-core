@@ -125,7 +125,7 @@ def import_configuration(self, task_id):
                 index = index + 1
                 continue
 
-            if 'workflows' in json_file: # skip all json files that workflows
+            if 'workflows' in json_file:  # skip all json files that workflows
                 index = index + 1
                 continue
 
@@ -240,15 +240,21 @@ def import_configuration(self, task_id):
 
                     if workflow:
 
-                        _l.info("import_configuration.going to execute workflow %s" % workflow)
+                        try:
 
-                        response_data = run_workflow(workflow, {})
+                            _l.info("import_configuration.going to execute workflow %s" % workflow)
 
-                        id = response_data['id']
+                            response_data = run_workflow(workflow, {})
 
-                        response_data = wait_workflow_until_end(id)
+                            id = response_data['id']
 
-                        _l.info("import_configuration.workflow finished %s" % response_data)
+                            response_data = wait_workflow_until_end(id)
+
+                            _l.info("import_configuration.workflow finished %s" % response_data)
+
+                        except Exception as e:
+                            _l.error("Could not execute workflow e %s" % e)
+                            _l.error("Could not execute workflow traceback %s" % traceback.format_exc())
 
         _l.info('Workflows uploaded')
 
