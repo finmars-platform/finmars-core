@@ -2151,7 +2151,7 @@ class PriceHistory(DataTimeStampedModel):
 
         # TODO make readable exception if currency history is missing
 
-        cache.clear()
+        # cache.clear() # what do have in cache?
 
         if not self.procedure_modified_datetime:
             self.procedure_modified_datetime = date_now()
@@ -2161,37 +2161,39 @@ class PriceHistory(DataTimeStampedModel):
 
         ecosystem_default = EcosystemDefault.objects.get(master_user=self.instrument.master_user)
 
-        try:
+        if self.ytm == None: # check if correct
 
-            if self.instrument.accrued_currency_id == self.instrument.pricing_currency_id:
+            try:
 
-                self.instr_accrued_ccy_cur_fx = 1
-                self.instr_pricing_ccy_cur_fx = 1
+                if self.instrument.accrued_currency_id == self.instrument.pricing_currency_id:
 
-            else:
-
-                if ecosystem_default.currency_id == self.instrument.accrued_currency_id:
                     self.instr_accrued_ccy_cur_fx = 1
-                else:
-                    self.instr_accrued_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date,
-                                                                                currency=self.instrument.accrued_currency).fx_rate
-
-                if ecosystem_default.currency_id == self.instrument.pricing_currency_id:
                     self.instr_pricing_ccy_cur_fx = 1
+
                 else:
-                    self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date,
-                                                                                currency=self.instrument.pricing_currency).fx_rate
 
-            self.ytm = self.calculate_ytm(self.date)
-            self.modified_duration = self.calculate_duration(self.date)
+                    if ecosystem_default.currency_id == self.instrument.accrued_currency_id:
+                        self.instr_accrued_ccy_cur_fx = 1
+                    else:
+                        self.instr_accrued_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date,
+                                                                                    currency=self.instrument.accrued_currency).fx_rate
 
-            # _l.debug('self.ytm %s' % self.ytm)
-            # _l.debug('self.modified_duration %s' % self.modified_duration)
+                    if ecosystem_default.currency_id == self.instrument.pricing_currency_id:
+                        self.instr_pricing_ccy_cur_fx = 1
+                    else:
+                        self.instr_pricing_ccy_cur_fx = CurrencyHistory.objects.get(date=self.date,
+                                                                                    currency=self.instrument.pricing_currency).fx_rate
 
-        except Exception as error:
+                self.ytm = self.calculate_ytm(self.date)
+                self.modified_duration = self.calculate_duration(self.date)
 
-            _l.debug('Price History save ytm error %s' % error)
-            _l.debug(traceback.print_exc())
+                # _l.debug('self.ytm %s' % self.ytm)
+                # _l.debug('self.modified_duration %s' % self.modified_duration)
+
+            except Exception as error:
+
+                _l.debug('Price History save ytm error %s' % error)
+                _l.debug(traceback.print_exc())
 
         if not self.factor:
             try:
