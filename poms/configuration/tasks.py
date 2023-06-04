@@ -125,6 +125,10 @@ def import_configuration(self, task_id):
                 index = index + 1
                 continue
 
+            if 'workflows' in json_file: # skip all json files that workflows
+                index = index + 1
+                continue
+
             task.update_progress(
                 {
                     'current': index,
