@@ -12,18 +12,17 @@ from django.utils.timezone import now
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyRequest, ProxyUser
 from poms.common.storage import get_storage
-from poms.common.utils import get_serializer, is_newer_version
+from poms.common.utils import get_serializer
 from poms.configuration.handlers import export_workflows_to_directory, export_configuration_to_directory
 from poms.configuration.models import Configuration
 from poms.configuration.utils import unzip_to_directory, list_json_files, read_json_file, save_directory_to_storage, \
-    save_json_to_file, upload_directory_to_storage
+    save_json_to_file, upload_directory_to_storage, run_workflow, wait_workflow_until_end
 from poms.file_reports.models import FileReport
 from poms_app import settings
-from rest_framework_simplejwt.tokens import RefreshToken
-
 
 _l = logging.getLogger('poms.configuration')
 from django.contrib.auth import get_user_model
+
 User = get_user_model()
 storage = get_storage()
 
@@ -148,7 +147,7 @@ def import_configuration(self, task_id):
                 if user_code is not None:
                     # Check if the instance already exists
 
-                    try: # if member specific entity
+                    try:  # if member specific entity
                         Model.objects.model._meta.get_field('member')
                         instance = Model.objects.filter(user_code=user_code, member=task.member).first()
                     except FieldDoesNotExist:
@@ -228,6 +227,21 @@ def import_configuration(self, task_id):
             _l.info('dest_workflow_directory %s' % dest_workflow_directory)
 
             upload_directory_to_storage(output_directory + '/workflows', dest_workflow_directory)
+
+            if manifest.get('actions', None):
+
+                for action in manifest['actions']:
+                    workflow = action.get('workflow', None)
+
+                    _l.info("import_configuration.going to execute workflow %s" % workflow)
+
+                    response_data = run_workflow(workflow, {})
+
+                    id = response_data['id']
+
+                    response_data = wait_workflow_until_end(id)
+
+                    _l.info("import_configuration.workflow finished %s" % response_data)
 
         _l.info('Workflows uploaded')
 
@@ -392,10 +406,9 @@ def push_configuration_to_marketplace(self, task_id):
 
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
-
         response = requests.post(url='https://marketplace.finmars.com/api/v1/login/',
                                  json={
-                                      'username': username,
+                                     'username': username,
                                      'password': password
                                  },
                                  headers=headers)
