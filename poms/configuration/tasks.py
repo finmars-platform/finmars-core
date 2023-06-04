@@ -198,6 +198,7 @@ def import_configuration(self, task_id):
             except Exception as e:
 
                 _l.error("import_configuration e %s" % e)
+                _l.error("import_configuration traceback %s" % traceback.format_exc())
 
                 stats['configuration'][json_file] = {
                     'status': 'error',
@@ -233,15 +234,17 @@ def import_configuration(self, task_id):
                 for action in manifest['actions']:
                     workflow = action.get('workflow', None)
 
-                    _l.info("import_configuration.going to execute workflow %s" % workflow)
+                    if workflow:
 
-                    response_data = run_workflow(workflow, {})
+                        _l.info("import_configuration.going to execute workflow %s" % workflow)
 
-                    id = response_data['id']
+                        response_data = run_workflow(workflow, {})
 
-                    response_data = wait_workflow_until_end(id)
+                        id = response_data['id']
 
-                    _l.info("import_configuration.workflow finished %s" % response_data)
+                        response_data = wait_workflow_until_end(id)
+
+                        _l.info("import_configuration.workflow finished %s" % response_data)
 
         _l.info('Workflows uploaded')
 
