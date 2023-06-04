@@ -176,14 +176,29 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
 
     @action(detail=False, methods=['post'], url_path='bulk-create')
     def bulk_create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data, many=True)
-        serializer.is_valid(raise_exception=True)
 
-        CurrencyHistory.objects.bulk_create([
-            CurrencyHistory(**item) for item in serializer.validated_data
-        ], ignore_conflicts=True)
+        valid_data = []
+        errors = []
+
+        for item in request.data:
+            serializer = self.get_serializer(data=item)
+            if serializer.is_valid():
+                valid_data.append(CurrencyHistory(**serializer.validated_data))
+            else:
+                errors.append(serializer.errors)
+
+        _l.info('CurrencyHistoryViewSet.valid_data %s' % len(valid_data))
+
+        CurrencyHistory.objects.bulk_create(valid_data, ignore_conflicts=True)
+
+        if errors:
+            _l.info('CurrencyHistoryViewSet.bulk_create.errors %s' % errors)
+        #     # Here we just return the errors as part of the response.
+        #     # You may want to log them or handle them differently depending on your needs.
+        #     return Response({'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
     @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
