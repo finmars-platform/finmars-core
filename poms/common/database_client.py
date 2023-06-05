@@ -34,7 +34,7 @@ class DatabaseService:
         try:
             data = self.http_client.post(
                 url=SERVICE_URLS[service_name],
-                data=request_options,
+                json=request_options,
             )
         except HttpClientError as err:
             monad = Monad(status=MonadStatus.ERROR, message=repr(err))
