@@ -1512,8 +1512,10 @@ class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer)
                                                        context=self.context)
                 ret['transaction_type_input_object'] = s.data
             except Exception as e:
-                _l.error('Error in to_representation instance.rule_scenario.transaction_type: %s' % instance.rule_scenario.transaction_type)
-                _l.error('Error in to_representation instance.transaction_type_input: %s' % instance.transaction_type_input)
+                _l.error(
+                    'Error in to_representation instance.rule_scenario.transaction_type: %s' % instance.rule_scenario.transaction_type)
+                _l.error(
+                    'Error in to_representation instance.transaction_type_input: %s' % instance.transaction_type_input)
                 _l.error('Error in to_representation: %s' % e)
 
                 ret['transaction_type_input_object'] = None
@@ -1575,7 +1577,8 @@ class ComplexTransactionImportSchemeRuleScenarioSerializer(serializers.ModelSeri
 
         except Exception as e:
 
-            _l.error('ComplexTransactionImportSchemeRuleScenarioSerializer.instance.transaction_type %s' % instance.transaction_type)
+            _l.error(
+                'ComplexTransactionImportSchemeRuleScenarioSerializer.instance.transaction_type %s' % instance.transaction_type)
             _l.error('ComplexTransactionImportSchemeRuleScenarioSerializer.e %s' % e)
             _l.error('ComplexTransactionImportSchemeRuleScenarioSerializer.traceback %s' % traceback.format_exc())
 
@@ -1869,26 +1872,47 @@ class ComplexTransactionImportSchemeSerializer(ModelWithTimeStampSerializer, Mod
 
         # print('save_fie fields %s' % fields)
 
+        from poms.transactions.models import TransactionTypeInput
+
         if fields:
             for field_values in fields:
-                field_id = field_values.pop('id', None)
-                field0 = None
-                if field_id:
-                    try:
-                        field0 = rule_scenario.fields.get(pk=field_id)
-                    except ObjectDoesNotExist:
-                        pass
-                if field0 is None:
-                    field0 = ComplexTransactionImportSchemeField(rule_scenario=rule_scenario)
-                for name, value in field_values.items():
-                    setattr(field0, name, value)
 
-                # TODO check why is that?
-                # if field0.transaction_type_input.transaction_type_id != rule.transaction_type_id:
-                #     raise serializers.ValidationError(gettext_lazy('Invalid transaction type input. (Hacker has detected!)'))
+                try:
 
-                field0.save()
-                pk_set.add(field0.id)
+                    '''This is required to save only existing inputs'''
+                    input = TransactionTypeInput.objects.get(name=field_values['transaction_type_input'],
+                                                             transaction_type__user_code=rule_scenario.transaction_type)
+
+                    _l.debug("Input exists %s " % input)
+
+                    field_id = field_values.pop('id', None)
+                    field0 = None
+                    if field_id:
+                        try:
+                            field0 = rule_scenario.fields.get(pk=field_id)
+                        except ObjectDoesNotExist:
+                            pass
+                    if field0 is None:
+                        field0 = ComplexTransactionImportSchemeField(rule_scenario=rule_scenario)
+
+                    if field_values.get('transaction_type_input', None):
+                        field0.transaction_type_input = field_values['transaction_type_input']
+
+                    if field_values.get('value_expr', None):
+                        field0.value_expr = field_values['value_expr']
+
+                    # for name, value in field_values.items():
+                    #     setattr(field0, name, value)
+
+                    # TODO check why is that?
+                    # if field0.transaction_type_input.transaction_type_id != rule.transaction_type_id:
+                    #     raise serializers.ValidationError(gettext_lazy('Invalid transaction type input. (Hacker has detected!)'))
+
+                    field0.save()
+                    pk_set.add(field0.id)
+
+                except Exception as e:
+                    _l.error("Input does not exists %s " % e)
 
         rule_scenario.fields.exclude(pk__in=pk_set).delete()
 
