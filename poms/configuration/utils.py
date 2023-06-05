@@ -162,6 +162,31 @@ def save_serialized_attribute_type(content_type, configuration_code, content_typ
 
         save_json_to_file(path, serialized_data)
 
+def save_serialized_dashboard_layout(configuration_code, source_directory, context):
+    try:
+        model = apps.get_model('ui.dashboardlayout')
+    except Exception as e:
+        raise Exception("Could not find model for content type: %s" % 'ui.dashboardlayout')
+
+
+    filtered_objects = model.objects.filter(configuration_code=configuration_code,
+                                            member=context['member'])
+
+    _l.info('filtered_objects %s' % filtered_objects)
+
+    SerializerClass = get_serializer('ui.dashboardlayout')
+
+    for item in filtered_objects:
+        serializer = SerializerClass(item, context=context)
+        # serialized_data = remove_id_key_recursively(serializer.data)
+        serialized_data = serializer.data
+
+        serialized_data.pop('id')
+
+        path = source_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
+
+        save_json_to_file(path, serialized_data)
+
 
 def save_serialized_layout(content_type, configuration_code, content_type_key, source_directory, context):
     try:
@@ -183,7 +208,10 @@ def save_serialized_layout(content_type, configuration_code, content_type_key, s
 
     for item in filtered_objects:
         serializer = SerializerClass(item, context=context)
-        serialized_data = remove_id_key_recursively(serializer.data)
+        # serialized_data = remove_id_key_recursively(serializer.data)
+        serialized_data = serializer.data
+
+        serialized_data.pop('id')
 
         path = source_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
 

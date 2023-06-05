@@ -3,7 +3,8 @@ import traceback
 
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.configuration.export_helpers import export_instrument_types, export_pricing_policies, export_transaction_types
-from poms.configuration.utils import save_serialized_entity, save_serialized_attribute_type, save_serialized_layout
+from poms.configuration.utils import save_serialized_entity, save_serialized_attribute_type, save_serialized_layout, \
+    save_serialized_dashboard_layout
 from poms_app import settings
 
 _l = logging.getLogger('poms.configuration')
@@ -199,10 +200,14 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                        source_directory + '/attribute-types/responsible',
                                        context)
 
-        save_serialized_entity('ui.dashboardlayout',
-                               configuration.configuration_code,
-                               source_directory + '/ui/layouts/dashboard',
-                               context)
+        # save_serialized_entity('ui.dashboardlayout',
+        #                        configuration.configuration_code,
+        #                        source_directory + '/ui/layouts/dashboard',
+        #                        context)
+
+        save_serialized_dashboard_layout(configuration.configuration_code,
+                                         source_directory + '/ui/layouts/dashboard',
+                                         context)
 
         save_serialized_entity('ui.contextmenulayout',
                                configuration.configuration_code,
@@ -308,7 +313,6 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                source_directory + '/ui/layouts/transaction-report',
                                context)
 
-
         save_serialized_layout('ui.listlayout',
                                configuration.configuration_code,
                                'counterparties.responsible',
@@ -350,7 +354,6 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                'pricing.currencyhistoryerror',
                                source_directory + '/ui/layouts/fxrate-journal',
                                context)
-
 
         # Form Layouts
 
@@ -437,7 +440,6 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                source_directory + '/ui/form-layouts/transaction-report',
                                context)
 
-
         save_serialized_layout('ui.editlayout',
                                configuration.configuration_code,
                                'counterparties.responsible',
@@ -479,7 +481,6 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                'pricing.currencyhistoryerror',
                                source_directory + '/ui/form-layouts/fxrate-journal',
                                context)
-
 
         # Aliases
 
