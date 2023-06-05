@@ -21,7 +21,7 @@ class ConfigurationSerializer(serializers.ModelSerializer):
         model = Configuration
         fields = (
             'id', 'configuration_code', 'name', 'short_name', 'description', 'version', 'is_from_marketplace',
-            'is_package', 'manifest')
+            'is_package', 'manifest', 'is_primary')
 
 
 class ConfigurationImport:
