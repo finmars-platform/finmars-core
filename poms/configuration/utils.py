@@ -12,6 +12,7 @@ from django.http import FileResponse
 
 from poms.common.storage import get_storage
 from poms.common.utils import get_serializer, get_content_type_by_name
+from poms_app import settings
 
 _l = logging.getLogger('poms.configuration')
 storage = get_storage()
@@ -313,7 +314,6 @@ def get_workflow(id):
 
 
 def wait_workflow_until_end(id):
-
     while True:
         workflow = get_workflow(id)
 
@@ -321,3 +321,7 @@ def wait_workflow_until_end(id):
             return workflow
 
         time.sleep(10)
+
+
+def get_default_configuration_code():
+    return 'local.poms.' + settings.BASE_API_URL

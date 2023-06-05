@@ -18,7 +18,7 @@ class TimeStampedModel(models.Model):
         ordering = ['created', ]
 
 
-class AccessPolicy(models.Model):
+class AccessPolicy(ConfigurationModel):
     name = models.CharField(max_length=255, null=True, blank=True,
                             verbose_name=gettext_lazy('Name'))
 
@@ -28,10 +28,6 @@ class AccessPolicy(models.Model):
 
     policy = models.JSONField(null=True, blank=True, verbose_name=gettext_lazy('Policy'),
                               help_text="Access Policy JSON")
-
-    configuration_code = models.CharField(max_length=255,
-                                          default='com.finmars.local',
-                                          verbose_name=gettext_lazy('Configuration Code'))
 
     members = models.ManyToManyField(Member, related_name='iam_access_policies', blank=True, null=True)
 
@@ -44,7 +40,7 @@ class AccessPolicy(models.Model):
 
 
 class Role(ConfigurationModel):
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
 
     user_code = models.CharField(max_length=1024, unique=True,
@@ -64,7 +60,7 @@ class Group(ConfigurationModel):
     '''
     Part of configuration and thus has configuration_code
     '''
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     user_code = models.CharField(max_length=1024, unique=True,
                                  verbose_name=gettext_lazy('User Code'))
