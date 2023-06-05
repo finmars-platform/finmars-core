@@ -137,7 +137,8 @@ class CurrencyHistoryFilterSet(FilterSet):
     id = NoOpFilter()
     date = django_filters.DateFromToRangeFilter()
     currency = ModelExtMultipleChoiceFilter(model=Currency)
-    pricing_policy = ModelExtMultipleChoiceFilter(model=PricingPolicy)
+    # pricing_policy = ModelExtMultipleChoiceFilter(model=PricingPolicy)
+    pricing_policy = CharFilter(field_name="pricing_policy__user_code", lookup_expr="icontains")
     fx_rate = django_filters.RangeFilter()
 
     class Meta:
