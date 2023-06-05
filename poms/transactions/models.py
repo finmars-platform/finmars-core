@@ -401,8 +401,10 @@ class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel, Conf
 
     master_user = models.ForeignKey(MasterUser, related_name='transaction_types',
                                     verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
+
     group = models.ForeignKey(TransactionTypeGroup, null=True, blank=True, on_delete=models.PROTECT,
                               verbose_name=gettext_lazy('group'))
+
     date_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                  verbose_name=gettext_lazy('date expr'))
     display_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',

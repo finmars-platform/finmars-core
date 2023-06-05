@@ -478,7 +478,9 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
                 print("Policy %s is not found for instrument %s" % (
                     request.data['pricing_policy_object']['name'], instrument))
 
-        return Response({"status": "ok"})
+        return Response({"status": "ok", "data": {
+            "instruments_affected": len(instruments)
+        }})
 
 
 class InstrumentAttributeTypeViewSet(GenericAttributeTypeViewSet):
