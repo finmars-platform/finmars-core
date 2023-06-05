@@ -162,11 +162,11 @@ def save_serialized_attribute_type(content_type, configuration_code, content_typ
 
         save_json_to_file(path, serialized_data)
 
-def save_serialized_dashboard_layout(configuration_code, source_directory, context):
+def save_serialized_layout(content_type, configuration_code, source_directory, context):
     try:
-        model = apps.get_model('ui.dashboardlayout')
+        model = apps.get_model(content_type)
     except Exception as e:
-        raise Exception("Could not find model for content type: %s" % 'ui.dashboardlayout')
+        raise Exception("Could not find model for content type: %s" % content_type)
 
 
     filtered_objects = model.objects.filter(configuration_code=configuration_code,
@@ -174,7 +174,7 @@ def save_serialized_dashboard_layout(configuration_code, source_directory, conte
 
     _l.info('filtered_objects %s' % filtered_objects)
 
-    SerializerClass = get_serializer('ui.dashboardlayout')
+    SerializerClass = get_serializer(content_type)
 
     for item in filtered_objects:
         serializer = SerializerClass(item, context=context)
@@ -188,7 +188,7 @@ def save_serialized_dashboard_layout(configuration_code, source_directory, conte
         save_json_to_file(path, serialized_data)
 
 
-def save_serialized_layout(content_type, configuration_code, content_type_key, source_directory, context):
+def save_serialized_entity_layout(content_type, configuration_code, content_type_key, source_directory, context):
     try:
         model = apps.get_model(content_type)
     except Exception as e:
@@ -196,7 +196,7 @@ def save_serialized_layout(content_type, configuration_code, content_type_key, s
 
     entity_content_type = get_content_type_by_name(content_type_key)
 
-    _l.info('save_serialized_layout.entity_content_type %s' % entity_content_type)
+    _l.info('save_serialized_entity_layout.entity_content_type %s' % entity_content_type)
 
     filtered_objects = model.objects.filter(configuration_code=configuration_code,
                                             content_type=entity_content_type,
