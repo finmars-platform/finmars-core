@@ -668,11 +668,15 @@ class TransactionTypeViewSet(AbstractModelViewSet):
         context_report_date = request.query_params.get('context_report_date', None)
         context_report_start_date = request.query_params.get('context_report_start_date', None)
 
-        if pricing_policy_id:
+        if pricing_policy_id: # could be user_code
             try:
                 context_pricing_policy = PricingPolicy.objects.get(master_user=master_user, id=pricing_policy_id)
-            except PricingPolicy.DoesNotExist:
-                context_pricing_policy = None
+            except Exception as e:
+
+                try:
+                    context_pricing_policy = PricingPolicy.objects.get(master_user=master_user, user_code=pricing_policy_id)
+                except Exception as e:
+                    context_pricing_policy = None
 
         if currency_id:
             try:
