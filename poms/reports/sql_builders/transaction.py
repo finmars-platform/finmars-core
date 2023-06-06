@@ -306,14 +306,14 @@ class TransactionReportBuilderSql:
                       tt.name as transaction_type_name,
                       tt.short_name as transaction_type_short_name,
                       -- complex transaction transaction type group fields
-                      tt2.name as transaction_type_group_name,
+                      --tt2.name as transaction_type_group_name,-- ?? 
                       
                       cts.name as complex_transaction_status_name
                       
                     FROM transactions_transaction as t
                     INNER JOIN transactions_complextransaction tc on t.complex_transaction_id = tc.id
                     INNER JOIN transactions_transactiontype tt on tc.transaction_type_id = tt.id
-                    INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
+                    --INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id--
                     INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
                     WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND NOT tc.is_deleted AND tc.status_id IN {statuses} {filter_sql_string}
                     
@@ -466,13 +466,13 @@ class TransactionReportBuilderSql:
                       tt.name as transaction_type_name,
                       tt.short_name as transaction_type_short_name,
                       -- complex transaction transaction type group fields
-                      tt2.name as transaction_type_group_name,
+                      --tt2.name as transaction_type_group_name, --?
                       
                       cts.name as complex_transaction_status_name
                     FROM transactions_transaction as t
                     INNER JOIN transactions_complextransaction tc on t.complex_transaction_id = tc.id
                     INNER JOIN transactions_transactiontype tt on tc.transaction_type_id = tt.id
-                    INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
+                    --INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id--
                     INNER JOIN instruments_instrument i on t.instrument_id = i.id
                     INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
                     WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND NOT t.is_deleted AND tc.status_id IN {statuses} {filter_sql_string}
@@ -629,14 +629,14 @@ class TransactionReportBuilderSql:
                       tt.name as transaction_type_name,
                       tt.short_name as transaction_type_short_name,
                       -- complex transaction transaction type group fields
-                      tt2.name as transaction_type_group_name,
+                      --tt2.name as transaction_type_group_name, --?
                       
                       cts.name as complex_transaction_status_name
                     FROM transactions_transaction as t
                     INNER JOIN transactions_complextransaction tc on t.complex_transaction_id = tc.id
                     INNER JOIN transactions_transactiontype tt on tc.transaction_type_id = tt.id
                     INNER JOIN instruments_instrument i on t.instrument_id = i.id
-                    INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id
+                    --INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id--
                     INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
                     WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND NOT t.is_deleted AND tc.status_id IN {statuses} {filter_sql_string}
                     {user_filters}
@@ -1281,7 +1281,7 @@ class TransactionReportBuilderSql:
 
         self.instance.item_complex_transactions = ComplexTransaction.objects.prefetch_related(
             'transaction_type',
-            'transaction_type__group',
+            # 'transaction_type__group',
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier'

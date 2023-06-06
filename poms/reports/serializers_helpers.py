@@ -251,7 +251,7 @@ def serialize_transaction_report_item(item):
     result['complex_transaction.transaction_type.user_code'] = item['transaction_type_user_code']
     result['complex_transaction.transaction_type.name'] = item['transaction_type_name']
     result['complex_transaction.transaction_type.short_name'] = item['transaction_type_short_name']
-    result['complex_transaction.transaction_type.group'] = item['transaction_type_group_name']
+    result['complex_transaction.transaction_type.group'] = item.get('transaction_type_group_name', None) # TODO refactor to get group name
 
     result['complex_transaction.status.name'] = item['complex_transaction_status_name']
 

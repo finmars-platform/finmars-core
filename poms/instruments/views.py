@@ -187,15 +187,15 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         'master_user',
         'instrument_class',
         'one_off_event',
-        'one_off_event__group',
+        # 'one_off_event__group',
         'regular_event',
-        'regular_event__group',
+        # 'regular_event__group',
         'factor_same',
-        'factor_same__group',
+        # 'factor_same__group',
         'factor_up',
-        'factor_up__group',
+        # 'factor_up__group',
         'factor_down',
-        'factor_down__group',
+        # 'factor_down__group',
     ).prefetch_related(
         get_attributes_prefetch()
     )
@@ -1464,7 +1464,7 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
         'strategy3__subgroup__group',
         'action',
         'transaction_type',
-        'transaction_type__group',
+        # 'transaction_type__group',
         'member'
     )
     serializer_class = GeneratedEventSerializer
