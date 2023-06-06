@@ -7,6 +7,7 @@ from rest_framework.mixins import CreateModelMixin, UpdateModelMixin, DestroyMod
     RetrieveModelMixin
 
 from poms.common.mixins import ListLightModelMixin, ListEvModelMixin
+from poms.configuration.utils import get_default_configuration_code
 from poms.iam.models import AccessPolicy, Role
 from poms.iam.utils import capitalize_first_letter, add_to_list_if_not_exists
 from poms_app import settings
@@ -25,8 +26,9 @@ def generate_full_access_policies_for_viewsets(viewset_classes):
 
         service_name = settings.SERVICE_NAME
 
-        user_code = 'com.finmars.local:' + service_name + '-' + viewset_name.lower() + '-full'
-        configuration_code = 'com.finmars.local'
+        configuration_code = get_default_configuration_code()
+        user_code = configuration_code + ':' + service_name + '-' + viewset_name.lower() + '-full'
+
 
         name = capitalize_first_letter(viewset_name) + ' Full Access'
 
@@ -92,8 +94,8 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes):
 
         service_name = settings.SERVICE_NAME
 
-        user_code = 'com.finmars.local:' + service_name + '-' + viewset_name.lower() + '-readonly'
-        configuration_code = 'com.finmars.local'
+        configuration_code = get_default_configuration_code()
+        user_code = configuration_code + ':' + service_name + '-' + viewset_name.lower() + '-readonly'
 
         name = capitalize_first_letter(viewset_name) + ' Readonly Access'
         service_name = settings.SERVICE_NAME
@@ -144,8 +146,9 @@ def generate_readonly_access_policies_for_viewsets(viewset_classes):
 def generate_balance_report_access_policy():
     service_name = settings.SERVICE_NAME
 
-    user_code = 'com.finmars.local:' + service_name + '-balancereport'
-    configuration_code = 'com.finmars.local'
+    configuration_code = get_default_configuration_code()
+    user_code = configuration_code + ':' + service_name + '-balancereport'
+
 
     name = 'BalanceReport Access'
 
@@ -179,8 +182,8 @@ def generate_balance_report_access_policy():
 def generate_pl_report_access_policy():
     service_name = settings.SERVICE_NAME
 
-    user_code = 'com.finmars.local:' + service_name + '-plreport'
-    configuration_code = 'com.finmars.local'
+    configuration_code = get_default_configuration_code()
+    user_code = configuration_code + ':' + service_name + '-plreport'
 
     name = 'PLReport Access'
 
@@ -214,8 +217,8 @@ def generate_pl_report_access_policy():
 def generate_transaction_report_access_policy():
     service_name = settings.SERVICE_NAME
 
-    user_code = 'com.finmars.local:' + service_name + '-transactionreport'
-    configuration_code = 'com.finmars.local'
+    configuration_code = get_default_configuration_code()
+    user_code =  configuration_code + ':' + service_name + '-transactionreport'
 
     name = 'TransactionReport Access'
 
@@ -249,8 +252,8 @@ def generate_transaction_report_access_policy():
 def generate_transaction_view_access_policy():
     service_name = settings.SERVICE_NAME
 
-    user_code = 'com.finmars.local:' + service_name + '-complextransaction-view'
-    configuration_code = 'com.finmars.local'
+    configuration_code = get_default_configuration_code()
+    user_code = configuration_code + ':' + service_name + '-complextransaction-view'
 
     name = 'Complex Transaction View'
 
@@ -284,8 +287,8 @@ def generate_transaction_view_access_policy():
 def generate_transaction_book_access_policy():
     service_name = settings.SERVICE_NAME
 
-    user_code = 'com.finmars.local:' + service_name + '-complextransaction-book'
-    configuration_code = 'com.finmars.local'
+    configuration_code = get_default_configuration_code()
+    user_code = configuration_code + ':' + service_name + '-complextransaction-book'
 
     name = 'Complex Transaction Book'
 
@@ -319,8 +322,8 @@ def generate_transaction_book_access_policy():
 def generate_transaction_rebook_access_policy():
     service_name = settings.SERVICE_NAME
 
-    user_code = 'com.finmars.local:' + service_name + '-complextransaction-rebook'
-    configuration_code = 'com.finmars.local'
+    configuration_code = get_default_configuration_code()
+    user_code = configuration_code + ':' + service_name + '-complextransaction-rebook'
 
     name = 'Complex Transaction Rebook'
 
@@ -363,17 +366,20 @@ def generate_speicifc_policies_for_viewsets():
 
 
 def generate_viewer_role(readonly_access_policies):
+
+    configuration_code = get_default_configuration_code()
+
     try:
-        role = Role.objects.get(user_code='com.finmars.local:viewer')
+        role = Role.objects.get(user_code=configuration_code + ':viewer')
     except Exception as e:
-        role = Role.objects.create(user_code='com.finmars.local:viewer', configuration_code='com.finmars.local')
+        role = Role.objects.create(user_code=configuration_code + ':viewer', configuration_code=configuration_code)
 
     # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
 
     extra_policies_user_codes = [
-        'com.finmars.local:finmars-balancereport',
-        'com.finmars.local:finmars-plreport',
-        'com.finmars.local:finmars-transactionreport',
+        configuration_code + ':finmars-balancereport',
+        configuration_code + ':finmars-plreport',
+        configuration_code + ':finmars-transactionreport',
     ]
 
     extra_policies = list(AccessPolicy.objects.all().filter(user_code__in=extra_policies_user_codes))
@@ -387,10 +393,13 @@ def generate_viewer_role(readonly_access_policies):
 
 
 def generate_full_data_manager_role():
+
+    configuration_code = get_default_configuration_code()
+
     try:
-        role = Role.objects.get(user_code='com.finmars.local:full-data-manager')
+        role = Role.objects.get(user_code=configuration_code + ':full-data-manager')
     except Exception as e:
-        role = Role.objects.create(user_code='com.finmars.local:full-data-manager', configuration_code='com.finmars.local')
+        role = Role.objects.create(user_code=configuration_code +':full-data-manager', configuration_code=configuration_code)
 
     # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
 
@@ -399,63 +408,63 @@ def generate_full_data_manager_role():
 
     access_policy_user_codes = [
 
-        'com.finmars.local:finmars-complextransaction-view',
-        'com.finmars.local:finmars-complextransaction-book',
-        'com.finmars.local:finmars-complextransaction-rebook',
+        configuration_code + ':finmars-complextransaction-view',
+        configuration_code + ':finmars-complextransaction-book',
+        configuration_code + ':finmars-complextransaction-rebook',
 
-        'com.finmars.local:finmars-transactiontype-full',
-        'com.finmars.local:finmars-transactiontypeattributetype-readonly',
+        configuration_code + ':finmars-transactiontype-full',
+        configuration_code + ':finmars-transactiontypeattributetype-readonly',
 
-        'com.finmars.local:finmars-transaction-full',
-        'com.finmars.local:finmars-complextransaction-full',
-        'com.finmars.local:finmars-complextransactionattributetype-readonly',
+        configuration_code + ':finmars-transaction-full',
+        configuration_code + ':finmars-complextransaction-full',
+        configuration_code + ':finmars-complextransactionattributetype-readonly',
 
-        'com.finmars.local:finmars-portfolio-full',
-        'com.finmars.local:finmars-portfolioattributetype-readonly',
-        'com.finmars.local:finmars-account-full',
-        'com.finmars.local:finmars-accountattributetype-readonly',
+        configuration_code + ':finmars-portfolio-full',
+        configuration_code + ':finmars-portfolioattributetype-readonly',
+        configuration_code + ':finmars-account-full',
+        configuration_code + ':finmars-accountattributetype-readonly',
 
-        'com.finmars.local:finmars-accounttype-readonly'
-        'com.finmars.local:finmars-accounttypeattributetype-readonly',
-
-
-        'com.finmars.local:finmars-instrument-full',
-        'com.finmars.local:finmars-instrumentattributetype-readonly',
-        'com.finmars.local:finmars-instrumenttype-readonly',
-        'com.finmars.local:finmars-instrumenttypeattributetype-readonly',
+        configuration_code + ':finmars-accounttype-readonly',
+        configuration_code + ':finmars-accounttypeattributetype-readonly',
 
 
-        'com.finmars.local:finmars-currency-full',
-        'com.finmars.local:finmars-currencyattributetype-readonly',
+        configuration_code + ':finmars-instrument-full',
+        configuration_code + ':finmars-instrumentattributetype-readonly',
+        configuration_code + ':finmars-instrumenttype-readonly',
+        configuration_code + ':finmars-instrumenttypeattributetype-readonly',
 
 
-        'com.finmars.local:finmars-pricingpolicy-full',
+        configuration_code + ':finmars-currency-full',
+        configuration_code + ':finmars-currencyattributetype-readonly',
 
-        'com.finmars.local:finmars-pricehistory-full',
-        'com.finmars.local:finmars-currencyhistory-full',
 
-        'com.finmars.local:finmars-counterparty-full',
-        'com.finmars.local:finmars-counterpartyattributetype-readonly',
-        'com.finmars.local:finmars-responsible-full',
-        'com.finmars.local:finmars-responsibleattributetype-readonly',
+        configuration_code + ':finmars-pricingpolicy-full',
 
-        'com.finmars.local:finmars-strategy1-full',
-        'com.finmars.local:finmars-strategy1attributetype-readonly',
-        'com.finmars.local:finmars-strategy2-full',
-        'com.finmars.local:finmars-strategy2attributetype-readonly',
-        'com.finmars.local:finmars-strategy3-full',
-        'com.finmars.local:finmars-strategy3attributetype-readonly',
+        configuration_code + ':finmars-pricehistory-full',
+        configuration_code + ':finmars-currencyhistory-full',
 
-        'com.finmars.local:finmars-referencetable-full', # ?? maybe should go to member role
+        configuration_code + ':finmars-counterparty-full',
+        configuration_code + ':finmars-counterpartyattributetype-readonly',
+        configuration_code + ':finmars-responsible-full',
+        configuration_code + ':finmars-responsibleattributetype-readonly',
 
-        'com.finmars.local:finmars-balancereport',
-        'com.finmars.local:finmars-balancereportcustomfield-full',
+        configuration_code + ':finmars-strategy1-full',
+        configuration_code + ':finmars-strategy1attributetype-readonly',
+        configuration_code + ':finmars-strategy2-full',
+        configuration_code + ':finmars-strategy2attributetype-readonly',
+        configuration_code + ':finmars-strategy3-full',
+        configuration_code + ':finmars-strategy3attributetype-readonly',
 
-        'com.finmars.local:finmars-plreport',
-        'com.finmars.local:finmars-plreportcustomfield-full',
+        configuration_code + ':finmars-referencetable-full', # ?? maybe should go to member role
 
-        'com.finmars.local:finmars-transactionreport',
-        'com.finmars.local:finmars-transactionreportcustomfield-full',
+        configuration_code + ':finmars-balancereport',
+        configuration_code + ':finmars-balancereportcustomfield-full',
+
+        configuration_code + ':finmars-plreport',
+        configuration_code + ':finmars-plreportcustomfield-full',
+
+        configuration_code + ':finmars-transactionreport',
+        configuration_code + ':finmars-transactionreportcustomfield-full',
 
     ]
 
@@ -465,10 +474,13 @@ def generate_full_data_manager_role():
     role.save()
 
 def generate_base_data_manager_role():
+
+    configuration_code = get_default_configuration_code()
+
     try:
-        role = Role.objects.get(user_code='com.finmars.local:base-data-manager')
+        role = Role.objects.get(user_code=configuration_code + ':base-data-manager')
     except Exception as e:
-        role = Role.objects.create(user_code='com.finmars.local:base-data-manager', configuration_code='com.finmars.local')
+        role = Role.objects.create(user_code=configuration_code + ':base-data-manager', configuration_code=configuration_code)
 
     # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
 
@@ -477,61 +489,61 @@ def generate_base_data_manager_role():
 
     access_policy_user_codes = [
 
-        'com.finmars.local:finmars-complextransaction-view',
-        'com.finmars.local:finmars-complextransaction-book',
-        'com.finmars.local:finmars-complextransaction-rebook',
+        configuration_code + ':finmars-complextransaction-view',
+        configuration_code + ':finmars-complextransaction-book',
+        configuration_code + ':finmars-complextransaction-rebook',
 
-        'com.finmars.local:finmars-transactiontype-full',
-        'com.finmars.local:finmars-transactiontypeattributetype-readonly',
+        configuration_code + ':finmars-transactiontype-full',
+        configuration_code + ':finmars-transactiontypeattributetype-readonly',
 
-        'com.finmars.local:finmars-transaction-full',
-        'com.finmars.local:finmars-complextransaction-full',
-        'com.finmars.local:finmars-complextransactionattributetype-readonly',
+        configuration_code + ':finmars-transaction-full',
+        configuration_code + ':finmars-complextransaction-full',
+        configuration_code + ':finmars-complextransactionattributetype-readonly',
 
-        # 'com.finmars.local:finmars-portfolio-full', # not for base manager. see full-data-manager
-        'com.finmars.local:finmars-portfolioattributetype-readonly',
-        # 'com.finmars.local:finmars-account-full', # not for base manager. see full-data-manager
-        'com.finmars.local:finmars-accountattributetype-readonly',
+        # configuration_code + ':finmars-portfolio-full', # not for base manager. see full-data-manager
+        configuration_code + ':finmars-portfolioattributetype-readonly',
+        # configuration_code + ':finmars-account-full', # not for base manager. see full-data-manager
+        configuration_code + ':finmars-accountattributetype-readonly',
 
-        'com.finmars.local:finmars-accounttype-readonly'
-        'com.finmars.local:finmars-accounttypeattributetype-readonly',
+        configuration_code + ':finmars-accounttype-readonly',
+        configuration_code + ':finmars-accounttypeattributetype-readonly',
 
 
-        # 'com.finmars.local:finmars-instrument-full', # not for base manager. see full-data-manager
-        'com.finmars.local:finmars-instrumentattributetype-readonly',
-        'com.finmars.local:finmars-instrumenttype-readonly',
-        'com.finmars.local:finmars-instrumenttypeattributetype-readonly',
+        # configuration_code + ':finmars-instrument-full', # not for base manager. see full-data-manager
+        configuration_code + ':finmars-instrumentattributetype-readonly',
+        configuration_code + ':finmars-instrumenttype-readonly',
+        configuration_code + ':finmars-instrumenttypeattributetype-readonly',
 
-        'com.finmars.local:finmars-currency-full',
-        'com.finmars.local:finmars-currencyattributetype-readonly',
+        configuration_code + ':finmars-currency-full',
+        configuration_code + ':finmars-currencyattributetype-readonly',
 
-        'com.finmars.local:finmars-pricingpolicy-full',
+        configuration_code + ':finmars-pricingpolicy-full',
 
-        'com.finmars.local:finmars-pricehistory-full',
-        'com.finmars.local:finmars-currencyhistory-full',
+        configuration_code + ':finmars-pricehistory-full',
+        configuration_code + ':finmars-currencyhistory-full',
 
-        'com.finmars.local:finmars-counterparty-full',
-        'com.finmars.local:finmars-counterpartyattributetype-readonly',
-        'com.finmars.local:finmars-responsible-full',
-        'com.finmars.local:finmars-responsibleattributetype-readonly',
+        configuration_code + ':finmars-counterparty-full',
+        configuration_code + ':finmars-counterpartyattributetype-readonly',
+        configuration_code + ':finmars-responsible-full',
+        configuration_code + ':finmars-responsibleattributetype-readonly',
 
-        'com.finmars.local:finmars-strategy1-full',
-        'com.finmars.local:finmars-strategy1attributetype-readonly',
-        'com.finmars.local:finmars-strategy2-full',
-        'com.finmars.local:finmars-strategy2attributetype-readonly',
-        'com.finmars.local:finmars-strategy3-full',
-        'com.finmars.local:finmars-strategy3attributetype-readonly',
+        configuration_code + ':finmars-strategy1-full',
+        configuration_code + ':finmars-strategy1attributetype-readonly',
+        configuration_code + ':finmars-strategy2-full',
+        configuration_code + ':finmars-strategy2attributetype-readonly',
+        configuration_code + ':finmars-strategy3-full',
+        configuration_code + ':finmars-strategy3attributetype-readonly',
 
-        'com.finmars.local:finmars-referencetable-full', # ?? maybe should go to member role
+        configuration_code + ':finmars-referencetable-full', # ?? maybe should go to member role
 
-        'com.finmars.local:finmars-balancereport',
-        'com.finmars.local:finmars-balancereportcustomfield-full',
+        configuration_code + ':finmars-balancereport',
+        configuration_code + ':finmars-balancereportcustomfield-full',
 
-        'com.finmars.local:finmars-plreport',
-        'com.finmars.local:finmars-plreportcustomfield-full',
+        configuration_code + ':finmars-plreport',
+        configuration_code + ':finmars-plreportcustomfield-full',
 
-        'com.finmars.local:finmars-transactionreport',
-        'com.finmars.local:finmars-transactionreportcustomfield-full',
+        configuration_code + ':finmars-transactionreport',
+        configuration_code + ':finmars-transactionreportcustomfield-full',
 
     ]
 
@@ -543,10 +555,12 @@ def generate_base_data_manager_role():
 
 def generate_member_role():
 
+    configuration_code = get_default_configuration_code()
+
     try:
-        role = Role.objects.get(user_code='com.finmars.local:member')
+        role = Role.objects.get(user_code=configuration_code + ':member')
     except Exception as e:
-        role = Role.objects.create(user_code='com.finmars.local:member', configuration_code='com.finmars.local')
+        role = Role.objects.create(user_code=configuration_code + ':member', configuration_code=configuration_code)
 
     # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
 
@@ -556,21 +570,21 @@ def generate_member_role():
     access_policy_user_codes = [
 
 
-        'com.finmars.local:finmars-listlayout-full',
-        'com.finmars.local:finmars-editlayout-full',
-        'com.finmars.local:finmars-dashboardlayout-full',
-        'com.finmars.local:finmars-contextmenulayout-full',
+        configuration_code + ':finmars-listlayout-full',
+        configuration_code + ':finmars-editlayout-full',
+        configuration_code + ':finmars-dashboardlayout-full',
+        configuration_code + ':finmars-contextmenulayout-full',
 
-        'com.finmars.local:finmars-colorpalette-full',
-        'com.finmars.local:finmars-entitytooltip-full',
-        'com.finmars.local:finmars-templatelayout-full',
+        configuration_code + ':finmars-colorpalette-full',
+        configuration_code + ':finmars-entitytooltip-full',
+        configuration_code + ':finmars-templatelayout-full',
 
-        'com.finmars.local:finmars-ecosystemdefault-readonly',
-        'com.finmars.local:finmars-complextransactionuserfield-readonly',
-        'com.finmars.local:finmars-transactionuserfield-readonly',
-        'com.finmars.local:finmars-instrumentuserfield-readonly',
+        configuration_code + ':finmars-ecosystemdefault-readonly',
+        configuration_code + ':finmars-complextransactionuserfield-readonly',
+        configuration_code + ':finmars-transactionuserfield-readonly',
+        configuration_code + ':finmars-instrumentuserfield-readonly',
 
-        'com.finmars.local:finmars-configuration-readonly'
+        configuration_code + ':finmars-configuration-readonly'
 
     ]
 
@@ -581,11 +595,14 @@ def generate_member_role():
 
 
 def generate_configuration_manager_role():
+
+    configuration_code = get_default_configuration_code()
+
     try:
-        role = Role.objects.get(user_code='com.finmars.local:configuration-manager')
+        role = Role.objects.get(user_code=configuration_code + ':configuration-manager')
     except Exception as e:
-        role = Role.objects.create(user_code='com.finmars.local:configuration-manager',
-                                   configuration_code='com.finmars.local')
+        role = Role.objects.create(user_code=configuration_code + ':configuration-manager',
+                                   configuration_code=configuration_code)
 
     # _l.debug('generate_viewer_role.readonly_access_policies %s' % readonly_access_policies)
 
@@ -595,11 +612,11 @@ def generate_configuration_manager_role():
     '''
     Exclude IAM and Members Access Policies from Configuration Manager Role
     '''
-    exclude_policies = ['com.finmars.local:finmars-group-full',
-                        'com.finmars.local:finmars-role-full',
-                        'com.finmars.local:finmars-accesspolicy-full',
-                        'com.finmars.local:finmars-usermember-full',
-                        'com.finmars.local:finmars-member-full'
+    exclude_policies = [configuration_code + ':finmars-group-full',
+                        configuration_code + ':finmars-role-full',
+                        configuration_code + ':finmars-accesspolicy-full',
+                        configuration_code + ':finmars-usermember-full',
+                        configuration_code + ':finmars-member-full'
                         ]
 
     access_policies = AccessPolicy.objects.all().filter(user_code__icontains='-full').exclude(
@@ -648,11 +665,13 @@ def get_viewsets_from_all_apps():
 
 def patch_generated_policies():
 
-    item = AccessPolicy.objects.get(user_code='com.finmars.local:finmars-listlayout-readonly')
+    configuration_code = get_default_configuration_code()
+
+    item = AccessPolicy.objects.get(user_code=configuration_code + ':finmars-listlayout-readonly')
     add_to_list_if_not_exists('finmars:ListLayout:ping', item.policy['Statement'][0]["Action"])
     item.save()
 
-    item = AccessPolicy.objects.get(user_code='com.finmars.local:finmars-listlayout-full')
+    item = AccessPolicy.objects.get(user_code=configuration_code + ':finmars-listlayout-full')
     add_to_list_if_not_exists('finmars:ListLayout:ping', item.policy['Statement'][0]["Action"])
     item.save()
 
@@ -665,7 +684,9 @@ def create_base_iam_access_policies_templates():
     # _l.info('viewsets %s' % viewsets)
     _l.info('create_base_iam_access_policies_templates.viewsets %s' % len(viewsets))
 
-    if AccessPolicy.objects.filter(configuration_code='com.finmars.local').count() == 0:
+    configuration_code = get_default_configuration_code()
+
+    if AccessPolicy.objects.filter(configuration_code=configuration_code).count() == 0:
 
         _l.info('create_base_iam_access_policies_templates Access Policies are not found. Generating...')
 

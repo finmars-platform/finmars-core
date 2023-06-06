@@ -33,11 +33,16 @@ class Strategy1GroupDefault(object):
 
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
-        self._master_user = request.user.master_user
+        from poms.users.models import MasterUser
+        from poms_app import settings
+        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
-        return self._master_user.strategy1_group
+        from poms.users.models import EcosystemDefault
+        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        return self.ecosystem_defaults.strategy1_group
 
 
 class Strategy1SubgroupDefault(object):
@@ -45,11 +50,18 @@ class Strategy1SubgroupDefault(object):
 
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
-        self._master_user = request.user.master_user
+
+        from poms.users.models import MasterUser
+        from poms_app import settings
+        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
-        return self._master_user.strategy1_subgroup
+
+        from poms.users.models import EcosystemDefault
+        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        return self.ecosystem_defaults.strategy1_subgroup
 
 
 class Strategy1Default(object):
@@ -57,11 +69,16 @@ class Strategy1Default(object):
     requires_context = True
     def set_context(self, serializer_field):
         request = serializer_field.context['request']
-        self._master_user = request.user.master_user
+        from poms.users.models import MasterUser
+        from poms_app import settings
+        self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
-        return self._master_user.strategy1
+        from poms.users.models import EcosystemDefault
+        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        return self.ecosystem_defaults.strategy1
 
 
 # 2
@@ -79,18 +96,33 @@ class Strategy2Field(Strategy1Field):
 
 
 class Strategy2GroupDefault(Strategy1GroupDefault):
-    def __call__(self):
-        return self._master_user.strategy2_group
+    def __call__(self, serializer_field):
+        self.set_context(serializer_field)
+
+        from poms.users.models import EcosystemDefault
+        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        return self.ecosystem_defaults.strategy2_group
 
 
 class Strategy2SubgroupDefault(Strategy1SubgroupDefault):
-    def __call__(self):
-        return self._master_user.strategy2_subgroup
+    def __call__(self, serializer_field):
+        self.set_context(serializer_field)
+
+        from poms.users.models import EcosystemDefault
+        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        return self.ecosystem_defaults.strategy2_subgroup
 
 
 class Strategy2Default(Strategy1Default):
-    def __call__(self):
-        return self._master_user.strategy2
+    def __call__(self, serializer_field):
+        self.set_context(serializer_field)
+
+        from poms.users.models import EcosystemDefault
+        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        return self.ecosystem_defaults.strategy2
 
 
 # 3
@@ -109,15 +141,30 @@ class Strategy3Field(Strategy1Field):
 
 
 class Strategy3GroupDefault(Strategy1GroupDefault):
-    def __call__(self):
-        return self._master_user.strategy3_group
+    def __call__(self, serializer_field):
+        self.set_context(serializer_field)
+
+        from poms.users.models import EcosystemDefault
+        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        return self.ecosystem_defaults.strategy3_group
 
 
 class Strategy3SubgroupDefault(Strategy1SubgroupDefault):
-    def __call__(self):
-        return self._master_user.strategy3_subgroup
+    def __call__(self, serializer_field):
+        self.set_context(serializer_field)
+
+        from poms.users.models import EcosystemDefault
+        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        return self.ecosystem_defaults.strategy3_subgroup
 
 
 class Strategy3Default(Strategy1Default):
-    def __call__(self):
-        return self._master_user.strategy3
+    def __call__(self, serializer_field):
+        self.set_context(serializer_field)
+
+        from poms.users.models import EcosystemDefault
+        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        return self.ecosystem_defaults.strategy3

@@ -836,11 +836,15 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
 
 class UniversalInputViewSet(AbstractViewSet):
 
-
-
     def create(self, request):
 
-        data = json.loads(request.data)
+        if request.content_type == 'application/json':
+            data = request.data
+        else:
+            try:
+                data = json.loads(request.data)
+            except json.JSONDecodeError:
+                return Response(status=400, data={"error": "Invalid data format"})
 
         from poms.celery_tasks.models import CeleryTask
         celery_task = CeleryTask.objects.create(

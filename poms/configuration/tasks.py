@@ -12,18 +12,17 @@ from django.utils.timezone import now
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyRequest, ProxyUser
 from poms.common.storage import get_storage
-from poms.common.utils import get_serializer, is_newer_version
+from poms.common.utils import get_serializer
 from poms.configuration.handlers import export_workflows_to_directory, export_configuration_to_directory
 from poms.configuration.models import Configuration
 from poms.configuration.utils import unzip_to_directory, list_json_files, read_json_file, save_directory_to_storage, \
-    save_json_to_file, upload_directory_to_storage
+    save_json_to_file, upload_directory_to_storage, run_workflow, wait_workflow_until_end
 from poms.file_reports.models import FileReport
 from poms_app import settings
-from rest_framework_simplejwt.tokens import RefreshToken
-
 
 _l = logging.getLogger('poms.configuration')
 from django.contrib.auth import get_user_model
+
 User = get_user_model()
 storage = get_storage()
 
@@ -126,6 +125,10 @@ def import_configuration(self, task_id):
                 index = index + 1
                 continue
 
+            if 'workflows' in json_file:  # skip all json files that workflows
+                index = index + 1
+                continue
+
             task.update_progress(
                 {
                     'current': index,
@@ -148,7 +151,7 @@ def import_configuration(self, task_id):
                 if user_code is not None:
                     # Check if the instance already exists
 
-                    try: # if member specific entity
+                    try:  # if member specific entity
                         Model.objects.model._meta.get_field('member')
                         instance = Model.objects.filter(user_code=user_code, member=task.member).first()
                     except FieldDoesNotExist:
@@ -182,7 +185,8 @@ def import_configuration(self, task_id):
                         'status': 'error',
                         'error_message': str(serializer.errors)
                     }
-                    print(f"Invalid data in {json_file}: {serializer.errors}")
+
+                    _l.error(f"Invalid data in {json_file}: {serializer.errors}")
 
                     task.update_progress(
                         {
@@ -196,6 +200,10 @@ def import_configuration(self, task_id):
 
 
             except Exception as e:
+
+                _l.error("import_configuration e %s" % e)
+                _l.error("import_configuration traceback %s" % traceback.format_exc())
+
                 stats['configuration'][json_file] = {
                     'status': 'error',
                     'error_message': str(e)
@@ -224,6 +232,29 @@ def import_configuration(self, task_id):
             _l.info('dest_workflow_directory %s' % dest_workflow_directory)
 
             upload_directory_to_storage(output_directory + '/workflows', dest_workflow_directory)
+
+            if manifest.get('actions', None):
+
+                for action in manifest['actions']:
+                    workflow = action.get('workflow', None)
+
+                    if workflow:
+
+                        try:
+
+                            _l.info("import_configuration.going to execute workflow %s" % workflow)
+
+                            response_data = run_workflow(workflow, {})
+
+                            id = response_data['id']
+
+                            response_data = wait_workflow_until_end(id)
+
+                            _l.info("import_configuration.workflow finished %s" % response_data)
+
+                        except Exception as e:
+                            _l.error("Could not execute workflow e %s" % e)
+                            _l.error("Could not execute workflow traceback %s" % traceback.format_exc())
 
         _l.info('Workflows uploaded')
 
@@ -342,16 +373,18 @@ def push_configuration_to_marketplace(self, task_id):
     task.status = CeleryTask.STATUS_PENDING
     task.save()
 
+    options_object = task.options_object
+
+    username = options_object['username']
+    password = options_object['password']
+
+    del options_object['username']
+    del options_object['password']
+
+    task.options_object = options_object
+    task.save()
+
     try:
-
-        options_object = task.options_object
-
-        # access_token = options_object['access_token']
-        #
-        # del options_object['access_token']
-
-        task.options_object = options_object
-        task.save()
 
         configuration = Configuration.objects.get(configuration_code=options_object['configuration_code'])
 
@@ -367,7 +400,7 @@ def push_configuration_to_marketplace(self, task_id):
             'name': configuration.name,
             'version': configuration.version,
             'description': configuration.description,
-            'author': task.member.username,
+            'author': username,
             'changelog': options_object.get('changelog', ''),
             'manifest': json.dumps(configuration.manifest)
         }
@@ -382,16 +415,24 @@ def push_configuration_to_marketplace(self, task_id):
         # headers = {}
         # headers['Authorization'] = 'Token ' + access_token
 
-        bot = User.objects.get(username="finmars_bot")
-
-        refresh = RefreshToken.for_user(bot)
-
         # _l.info('refresh %s' % refresh.access_token)
 
-        # headers = {'Content-type': 'application/json', 'Accept': 'application/json',
-        #            'Authorization': 'Bearer %s' % refresh.access_token}
+        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
-        headers = {'Authorization': 'Bearer %s' % refresh.access_token}
+        response = requests.post(url='https://marketplace.finmars.com/api/v1/login/',
+                                 json={
+                                     'username': username,
+                                     'password': password
+                                 },
+                                 headers=headers)
+
+        auth_data = response.json()
+
+        # _l.info('data %s' % data)
+
+        token = auth_data['token']
+
+        headers = {'Authorization': 'Token %s' % token}
 
         # _l.info('push_configuration_to_marketplace.headers %s' % headers)
 
@@ -407,6 +448,9 @@ def push_configuration_to_marketplace(self, task_id):
             task.save()
 
         else:
+
+            _l.info("push_configuration_to_marketplace.Configuration pushed to marketplace")
+
             task.verbose_result = {"message": "Configuration pushed to marketplace"}
             task.status = CeleryTask.STATUS_DONE
             task.save()
@@ -483,18 +527,19 @@ def install_configuration_from_marketplace(self, task_id):
             configuration = Configuration.objects.create(configuration_code=remote_configuration['configuration_code'],
                                                          version="0.0.0")
 
-        if not is_newer_version(remote_configuration_release['version'], configuration.version):
-
-            if remote_configuration_release['version'] == configuration.version:
-                task.verbose_result = {"message": "Local Configuration has equal version %s to proposed %s" % (
-                    configuration.version, remote_configuration_release['version'])}
-            else:
-                task.verbose_result = {"message": "Local Configuration has newer version %s then proposed %s" % (
-                    configuration.version, remote_configuration_release['version'])}
-
-            task.status = CeleryTask.STATUS_DONE
-            task.save()
-            return
+        # Probably deprecated
+        # if not is_newer_version(remote_configuration_release['version'], configuration.version):
+        #
+        #     if remote_configuration_release['version'] == configuration.version:
+        #         task.verbose_result = {"message": "Local Configuration has equal version %s to proposed %s" % (
+        #             configuration.version, remote_configuration_release['version'])}
+        #     else:
+        #         task.verbose_result = {"message": "Local Configuration has newer version %s then proposed %s" % (
+        #             configuration.version, remote_configuration_release['version'])}
+        #
+        #     task.status = CeleryTask.STATUS_DONE
+        #     task.save()
+        #     return
 
         configuration.name = remote_configuration['name']
         configuration.description = remote_configuration['description']

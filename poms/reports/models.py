@@ -1,5 +1,7 @@
 from __future__ import unicode_literals
 
+import logging
+import math
 import time
 from datetime import timedelta
 
@@ -10,8 +12,8 @@ from poms.common.models import NamedModel, EXPRESSION_FIELD_LENGTH, DataTimeStam
 from poms.instruments.models import PricingPolicy, CostMethod
 from poms.users.models import MasterUser, Member, EcosystemDefault
 
-import logging
 _l = logging.getLogger('poms.reports')
+
 
 class BalanceReportCustomField(models.Model):
     STRING = 10
@@ -120,7 +122,7 @@ class BalanceReport(models.Model):
         Returns attributes that front end uses
         """
         return [
-            #region Balance report attributes
+            # region Balance report attributes
             {
                 "key": "name",
                 "name": "Name",
@@ -1016,6 +1018,9 @@ class ReportSummary():
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
 
+        _l.info('build_pl_mtd.instance.pl_first_date %s' % instance.pl_first_date)
+        _l.info('build_pl_mtd.instance.report_date %s' % instance.report_date)
+
         from poms.reports.sql_builders.pl import PLReportBuilderSql
         self.pl_report_mtd = PLReportBuilderSql(instance=instance).build_report()
 
@@ -1106,22 +1111,31 @@ class ReportSummary():
         return total
 
     def get_total_position_return_pl_daily(self, portfolio_id=None):
-        position_return = 0
+        total = 0
+        market_value = 0
 
         if portfolio_id:
 
             for item in self.pl_report_daily.items:
                 if item['portfolio_id'] == portfolio_id:
-                    if item['position_return']:
-                        position_return = position_return + item['position_return']
+                    if item['total']:
+                        total = total + item['total']
+
+                    if item['market_value']:
+                        total = market_value + item['market_value']
 
         else:
 
             for item in self.pl_report_daily.items:
-                if item['position_return']:
-                    position_return = position_return + item['position_return']
+                if item['total']:
+                    total = total + item['total']
 
-        return position_return
+                if item['market_value']:
+                    market_value = market_value + item['market_value']
+
+        if market_value:
+            return math.floor(total / market_value)
+        return 0
 
     def get_total_pl_mtd(self, portfolio_id=None):
 
@@ -1143,22 +1157,33 @@ class ReportSummary():
         return total
 
     def get_total_position_return_pl_mtd(self, portfolio_id=None):
-        position_return = 0
+        # position_return = 0
+
+        total = 0
+        market_value = 0
 
         if portfolio_id:
 
             for item in self.pl_report_mtd.items:
                 if item['portfolio_id'] == portfolio_id:
-                    if item['position_return']:
-                        position_return = position_return + item['position_return']
+                    if item['total']:
+                        total = total + item['total']
+
+                    if item['market_value']:
+                        market_value = market_value + item['market_value']
 
         else:
 
             for item in self.pl_report_mtd.items:
-                if item['position_return']:
-                    position_return = position_return + item['position_return']
+                if item['total']:
+                    total = total + item['total']
 
-        return position_return
+                if item['market_value']:
+                    market_value = market_value + item['market_value']
+
+        if market_value:
+            return math.floor(total / market_value)
+        return 0
 
     def get_total_pl_ytd(self, portfolio_id=None):
 
@@ -1181,22 +1206,32 @@ class ReportSummary():
         return total
 
     def get_total_position_return_pl_ytd(self, portfolio_id=None):
-        position_return = 0
+        # position_return = 0
+
+        total = 0
+        market_value = 0
 
         if portfolio_id:
 
             for item in self.pl_report_ytd.items:
                 if item['portfolio_id'] == portfolio_id:
-                    if item['position_return']:
-                        position_return = position_return + item['position_return']
+                    if item['total']:
+                        total = total + item['total']
+                    if item['market_value']:
+                        market_value = market_value + item['market_value']
 
         else:
 
             for item in self.pl_report_ytd.items:
-                if item['position_return']:
-                    position_return = position_return + item['position_return']
+                if item['total']:
+                    total = total + item['total']
 
-        return position_return
+                if item['market_value']:
+                    market_value = market_value + item['market_value']
+
+        if market_value:
+            return math.floor(total / market_value)
+        return 0
 
     def get_total_pl_inception_to_date(self, portfolio_id=None):
 

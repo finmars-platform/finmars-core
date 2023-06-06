@@ -19,7 +19,9 @@ class AccountTypeSerializer(ModelWithUserCodeSerializer, ModelWithAttributesSeri
     class Meta:
         model = AccountType
         fields = [
-            'id', 'master_user', 'user_code', 'name', 'short_name', 'public_name', 'notes',
+            'id', 'master_user',
+            'user_code', 'configuration_code',
+            'name', 'short_name', 'public_name', 'notes',
             'show_transaction_details', 'transaction_details_expr', 'is_deleted',
             'is_enabled'
         ]

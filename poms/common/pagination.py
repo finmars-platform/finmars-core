@@ -24,7 +24,8 @@ def _positive_int(integer_string, strict=False, cutoff=None):
 
 class PageNumberPaginationExt(PageNumberPagination):
     page_size_query_param = 'page_size'
-    max_page_size = api_settings.PAGE_SIZE * 10
+    # max_page_size = api_settings.PAGE_SIZE * 10
+    max_page_size = 1000
 
     def post_paginate_queryset(self, queryset, request, view=None):
 

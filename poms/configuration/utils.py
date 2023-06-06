@@ -2,14 +2,17 @@ import json
 import logging
 import os
 import re
+import time
 import zipfile
 
+import requests
 from django.apps import apps
-from django.http import FileResponse
 from django.core.files.base import ContentFile
+from django.http import FileResponse
 
 from poms.common.storage import get_storage
 from poms.common.utils import get_serializer, get_content_type_by_name
+from poms_app import settings
 
 _l = logging.getLogger('poms.configuration')
 storage = get_storage()
@@ -32,6 +35,7 @@ class DeleteFileAfterResponse(FileResponse):
 def replace_special_chars_and_spaces(s):
     return re.sub(r'[^A-Za-z0-9]+', '_', s)
 
+
 def remove_id_key_recursively(data):
     if not isinstance(data, dict):
         return data
@@ -48,6 +52,7 @@ def remove_id_key_recursively(data):
                 remove_id_key_recursively(item)
 
     return data
+
 
 def user_code_to_file_name(configuration_code, user_code):
     try:
@@ -95,6 +100,7 @@ def remove_object_keys(d: dict) -> dict:
         if '_object' not in key:
             filtered_dict[key] = value
     return filtered_dict
+
 
 def save_serialized_entity(content_type, configuration_code, source_directory, context):
     try:
@@ -156,8 +162,33 @@ def save_serialized_attribute_type(content_type, configuration_code, content_typ
 
         save_json_to_file(path, serialized_data)
 
+def save_serialized_layout(content_type, configuration_code, source_directory, context):
+    try:
+        model = apps.get_model(content_type)
+    except Exception as e:
+        raise Exception("Could not find model for content type: %s" % content_type)
 
-def save_serialized_layout(content_type, configuration_code, content_type_key, source_directory, context):
+
+    filtered_objects = model.objects.filter(configuration_code=configuration_code,
+                                            member=context['member'])
+
+    _l.info('filtered_objects %s' % filtered_objects)
+
+    SerializerClass = get_serializer(content_type)
+
+    for item in filtered_objects:
+        serializer = SerializerClass(item, context=context)
+        # serialized_data = remove_id_key_recursively(serializer.data)
+        serialized_data = serializer.data
+
+        serialized_data.pop('id')
+
+        path = source_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
+
+        save_json_to_file(path, serialized_data)
+
+
+def save_serialized_entity_layout(content_type, configuration_code, content_type_key, source_directory, context):
     try:
         model = apps.get_model(content_type)
     except Exception as e:
@@ -165,7 +196,7 @@ def save_serialized_layout(content_type, configuration_code, content_type_key, s
 
     entity_content_type = get_content_type_by_name(content_type_key)
 
-    _l.info('save_serialized_layout.entity_content_type %s' % entity_content_type)
+    _l.info('save_serialized_entity_layout.entity_content_type %s' % entity_content_type)
 
     filtered_objects = model.objects.filter(configuration_code=configuration_code,
                                             content_type=entity_content_type,
@@ -177,7 +208,10 @@ def save_serialized_layout(content_type, configuration_code, content_type_key, s
 
     for item in filtered_objects:
         serializer = SerializerClass(item, context=context)
-        serialized_data = remove_id_key_recursively(serializer.data)
+        # serialized_data = remove_id_key_recursively(serializer.data)
+        serialized_data = serializer.data
+
+        serialized_data.pop('id')
 
         path = source_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
 
@@ -252,3 +286,70 @@ def upload_directory_to_storage(local_directory, storage_directory):
             with open(local_file_path, 'rb') as local_file:
                 content = local_file.read()
                 storage.save(storage_file_path, ContentFile(content))
+
+
+def run_workflow(user_code, payload=None):
+    from rest_framework_simplejwt.tokens import RefreshToken
+    from django.contrib.auth import get_user_model
+    from poms_app import settings
+    User = get_user_model()
+
+    bot = User.objects.get(username="finmars_bot")
+
+    refresh = RefreshToken.for_user(bot)
+
+    # _l.info('refresh %s' % refresh.access_token)
+
+    headers = {'Content-type': 'application/json', 'Accept': 'application/json',
+               'Authorization': 'Bearer %s' % refresh.access_token}
+
+    url = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/workflow/api/workflow/run-workflow/'
+
+    data = {
+        'user_code': user_code,
+        'payload': payload
+    }
+
+    response = requests.post(url, headers=headers, json=data)
+
+    response_data = response.json()
+
+    return response_data
+
+
+def get_workflow(id):
+    from rest_framework_simplejwt.tokens import RefreshToken
+    from django.contrib.auth import get_user_model
+    from poms_app import settings
+    User = get_user_model()
+
+    bot = User.objects.get(username="finmars_bot")
+
+    refresh = RefreshToken.for_user(bot)
+
+    # _l.info('refresh %s' % refresh.access_token)
+
+    headers = {'Content-type': 'application/json', 'Accept': 'application/json',
+               'Authorization': 'Bearer %s' % refresh.access_token}
+
+    url = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/workflow/api/workflow/' + str(id) + '/'
+
+    response = requests.get(url, headers=headers)
+
+    response_data = response.json()
+
+    return response_data
+
+
+def wait_workflow_until_end(id):
+    while True:
+        workflow = get_workflow(id)
+
+        if workflow['status'] != 'init' and workflow['status'] != 'progress':
+            return workflow
+
+        time.sleep(10)
+
+
+def get_default_configuration_code():
+    return 'local.poms.' + settings.BASE_API_URL

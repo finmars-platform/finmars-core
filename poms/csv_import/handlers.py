@@ -10,6 +10,7 @@ from tempfile import NamedTemporaryFile
 from django.utils.timezone import now
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
+from django.contrib.contenttypes.models import ContentType
 
 from poms.accounts.models import AccountType
 from poms.celery_tasks.models import CeleryTask
@@ -17,6 +18,7 @@ from poms.common import formula
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.storage import get_storage
 from poms.common.utils import get_serializer
+from poms.counterparties.models import CounterpartyGroup, ResponsibleGroup
 from poms.csv_import.models import CsvImportScheme, SimpleImportResult, ProcessType, SimpleImportProcessPreprocessItem, \
     SimpleImportConversionItem, SimpleImportProcessItem, SimpleImportImportedItem
 from poms.csv_import.serializers import SimpleImportResultSerializer
@@ -26,6 +28,7 @@ from poms.instruments.models import Instrument, PaymentSizeDetail, AccrualCalcul
     PricingCondition, InstrumentType, PricingPolicy, DailyPricingModel
 from poms.obj_attrs.models import GenericAttributeType, GenericClassifier
 from poms.procedures.models import RequestDataFileProcedureInstance
+from poms.strategies.models import Strategy1Subgroup, Strategy2Subgroup, Strategy3Subgroup
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import EcosystemDefault
 
@@ -109,9 +112,12 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type, ecosys
         # Set attributes
         instrument_object['attributes'] = []
 
+        content_type = ContentType.objects.get(app_label='instruments', model='instrument')
+
         for attribute in instrument_type.instrument_attributes.all():
 
             attribute_type = GenericAttributeType.objects.get(master_user=instrument_type.master_user,
+                                                              content_type=content_type,
                                                               user_code=attribute.attribute_type_user_code)
 
             attr = {
@@ -1310,8 +1316,24 @@ class SimpleImportProcess(object):
             'payment_size_detail': PaymentSizeDetail,
             'co_directional_exposure_currency': Currency,
             'counter_directional_exposure_currency': Currency,
-            'daily_pricing_model': DailyPricingModel
+            'daily_pricing_model': DailyPricingModel,
         }
+
+        if self.scheme.content_type.model == 'counterparty':
+            relation_fields_map['group'] = CounterpartyGroup
+
+        if self.scheme.content_type.model == 'responsible':
+            relation_fields_map['group'] = ResponsibleGroup
+
+        if self.scheme.content_type.model == 'strategy1':
+            relation_fields_map['subgroup'] = Strategy1Subgroup
+
+        if self.scheme.content_type.model == 'strategy2':
+            relation_fields_map['subgroup'] = Strategy2Subgroup
+
+        if self.scheme.content_type.model == 'strategy3':
+            relation_fields_map['subgroup'] = Strategy3Subgroup
+
 
         for entity_field in self.scheme.entity_fields.all():
 

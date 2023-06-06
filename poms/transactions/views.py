@@ -91,14 +91,6 @@ class TransactionTypeGroupViewSet(AbstractModelViewSet):
         'user_code', 'name', 'short_name', 'public_name',
     ]
 
-    def perform_destroy(self, instance):
-        super(TransactionTypeGroupViewSet, self).perform_destroy(instance)
-
-        items_qs = TransactionType.objects.filter(master_user=instance.master_user, group=instance)
-        default_group = TransactionTypeGroup.objects.get(master_user=instance.master_user, user_code='-')
-
-        items_qs.update(group=default_group)
-
 
 class ModelExtWithAllWithPermissionMultipleChoiceFilter(ModelExtMultipleChoiceFilter):
     all_field_name = None
@@ -676,11 +668,15 @@ class TransactionTypeViewSet(AbstractModelViewSet):
         context_report_date = request.query_params.get('context_report_date', None)
         context_report_start_date = request.query_params.get('context_report_start_date', None)
 
-        if pricing_policy_id:
+        if pricing_policy_id: # could be user_code
             try:
                 context_pricing_policy = PricingPolicy.objects.get(master_user=master_user, id=pricing_policy_id)
-            except PricingPolicy.DoesNotExist:
-                context_pricing_policy = None
+            except Exception as e:
+
+                try:
+                    context_pricing_policy = PricingPolicy.objects.get(master_user=master_user, user_code=pricing_policy_id)
+                except Exception as e:
+                    context_pricing_policy = None
 
         if currency_id:
             try:

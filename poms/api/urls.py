@@ -32,6 +32,7 @@ import poms.iam.views as iam
 from finmars_standardized_errors.views import ErrorRecordViewSet
 from poms.auth_tokens.views import ObtainAuthToken, SetAuthToken, CreateUser, CreateMasterUser, CreateMember, \
     DeleteMember, RenameMasterUser, MasterUserChangeOwner
+from poms.explorer.views import ExplorerServeFileViewSet
 
 router = routers.DefaultRouter()
 
@@ -209,6 +210,8 @@ urlpatterns = [
     re_path(r'^authorizer/delete-member/', DeleteMember.as_view(), name='delete-member'),
     re_path(r'^authorizer/master-user-change-owner/', MasterUserChangeOwner.as_view(), name='master-user-change-owner'),
 
+
+    re_path(r'^storage/(?P<filepath>.+)', ExplorerServeFileViewSet.as_view({'get': 'retrieve'}), name='storage'),
 ]
 
 # if 'rest_framework_swagger' in settings.INSTALLED_APPS:

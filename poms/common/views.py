@@ -410,6 +410,9 @@ class AbstractModelViewSet(AbstractApiView,
             if is_enabled == 'true':
                 filtered_qs = filtered_qs.filter(is_enabled=True)
 
+        if content_type.model in ['complextransaction']:
+            filtered_qs = filtered_qs.filter(is_deleted=False)
+
         filtered_qs = handle_groups(filtered_qs, groups_types, groups_values, groups_order, master_user,
                                     self.get_queryset(), content_type)
 
