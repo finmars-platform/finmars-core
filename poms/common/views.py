@@ -425,6 +425,32 @@ class AbstractModelViewSet(AbstractApiView,
 
         _l.debug("Filtered EV Group List %s seconds " % str((time.time() - start_time)))
 
+        if content_type.model == 'transactiontype':  # TODO refactor someday
+
+            from poms.transactions.models import TransactionTypeGroup  # TODO Really bad stuff here
+            '''It happens because we change TransactionTypeGroup relation to user_code,
+                so its broke default relation group counting, and now we need to get group name separately
+                maybe we need to refactor this whole module, or just provide user_codes and frontend app will get names of groups
+            '''
+
+            for item in page:
+
+                try:
+
+                    # _l.info('group_identifier %s' % item['group_identifier'])
+
+                    ttype_group = TransactionTypeGroup.objects.filter(user_code=item['group_identifier']).first()
+
+                    # _l.info('short_name %s' % ttype_group.short_name)
+
+                    item['group_name'] = ttype_group.short_name
+
+                except Exception as e:
+                    _l.info('e %s' % e)
+                    pass
+
+        _l.info('page %s' % page)
+
         if page is not None:
             return self.get_paginated_response(page)
 
