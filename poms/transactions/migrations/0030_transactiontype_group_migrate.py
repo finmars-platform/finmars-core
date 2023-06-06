@@ -39,7 +39,7 @@ def forwards_func(apps, schema_editor):
         try:
             if item.get('group_old_id', None):
                 group_user_code = \
-                    TransactionTypeGroup.objects.filter(id=item['transaction_type_old_id']).values_list('user_code', flat=True)[0]
+                    TransactionTypeGroup.objects.filter(id=item['group_old_id']).values_list('user_code', flat=True)[0]
 
                 ttype.group = group_user_code
                 index = index + 1
