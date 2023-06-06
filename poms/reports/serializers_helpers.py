@@ -267,17 +267,17 @@ def serialize_transaction_report_item(item):
     result['entry_item_type'] = item['entry_item_type']
     result['entry_item_type_name'] = item['entry_item_type_name']
 
-    result['user_text_1'] = item['user_text_1']
-    result['user_text_2'] = item['user_text_2']
-    result['user_text_3'] = item['user_text_3']
+    result['user_text_1'] = item.get('user_text_1', None)
+    result['user_text_2'] = item.get('user_text_2', None)
+    result['user_text_3'] = item.get('user_text_3', None)
 
-    result['user_number_1'] = item['user_number_1']
-    result['user_number_2'] = item['user_number_2']
-    result['user_number_3'] = item['user_number_3']
+    result['user_number_1'] = item.get('user_number_1', None)
+    result['user_number_2'] = item.get('user_number_2', None)
+    result['user_number_3'] = item.get('user_number_3', None)
 
-    result['user_date_1'] = item['user_date_1']
-    result['user_date_2'] = item['user_date_2']
-    result['user_date_3'] = item['user_date_3']
+    result['user_date_1'] = item.get('user_date_1', None)
+    result['user_date_2'] = item.get('user_date_2', None)
+    result['user_date_3'] = item.get('user_date_3', None)
 
     return result
 
