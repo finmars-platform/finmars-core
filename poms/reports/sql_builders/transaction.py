@@ -75,6 +75,10 @@ class TransactionReportBuilderSql:
 
         if self.instance.depth_level != 'complex_transaction':
             self.add_data_items()
+        else:
+            # TODO Figure Out
+            self.instance.item_instrument_types = []
+            self.instance.item_account_types = []
 
         self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
 
@@ -1369,6 +1373,9 @@ class TransactionReportBuilderSql:
         self.add_data_items_transaction_classes()
         self.add_data_items_complex_transaction_status()
         # self.add_data_items_complex_transactions(complex_transactions_ids)  # too slow
+
+        self.instance.item_instrument_types = []
+        self.instance.item_account_types = []
 
         self.add_data_items_instrument_types(self.instance.item_instruments)
         self.add_data_items_account_types(self.instance.item_accounts)

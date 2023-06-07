@@ -536,6 +536,44 @@ class MobileLayout(BaseUIModel, TimeStampedModel):
 
 
 
+class MemberLayout(BaseUIModel, TimeStampedModel):
+    member = models.ForeignKey(Member, related_name='member_layouts', verbose_name=gettext_lazy('member'),
+                               on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=gettext_lazy('name'))
+    user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+    is_default = models.BooleanField(default=False, verbose_name=gettext_lazy('is default'))
+    is_active = models.BooleanField(default=False, verbose_name=gettext_lazy('is active'))
+
+    class Meta(BaseLayout.Meta):
+        unique_together = [
+            ['member', 'user_code'],
+        ]
+        ordering = ['name']
+
+    def save(self, *args, **kwargs):
+
+        if self.is_default:
+            qs = MemberLayout.objects.filter(member=self.member, is_default=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            qs.update(is_default=False)
+
+            qs = MemberLayout.objects.filter(member=self.member, is_active=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            qs.update(is_active=False)
+        else:
+            count = MemberLayout.objects.filter(member=self.member, is_default=True).count()
+
+            if count == 0:
+                self.is_default = True
+
+        return super(MemberLayout, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
+
+
 class ConfigurationExportLayout(BaseUIModel, TimeStampedModel):
     member = models.ForeignKey(Member, related_name='configuration_export_layouts',
                                verbose_name=gettext_lazy('member'), on_delete=models.CASCADE)

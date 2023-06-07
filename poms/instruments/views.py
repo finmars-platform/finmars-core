@@ -12,21 +12,18 @@ from django.db.models import Prefetch, Q, Case, When, Value
 from django.utils import timezone
 from django_filters.rest_framework import FilterSet
 from rest_framework import serializers
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import MethodNotAllowed, PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.settings import api_settings
 from rest_framework.views import APIView
 
-from poms.accounts.models import Account
-from poms.accounts.models import AccountType
 from poms.common.authentication import get_access_token
-from poms.common.filters import CharFilter,  NoOpFilter, \
+from poms.common.filters import CharFilter, NoOpFilter, \
     ModelExtMultipleChoiceFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter
 from poms.common.jwt import encode_with_jwt
 from poms.common.mixins import UpdateModelMixinExt
-from poms.common.pagination import CustomPaginationMixin
 from poms.common.utils import date_now, get_list_of_entity_attributes
 from poms.common.views import AbstractClassModelViewSet, AbstractModelViewSet, AbstractReadOnlyModelViewSet
 from poms.csv_import.handlers import handler_instrument_object
@@ -37,7 +34,7 @@ from poms.instruments.handlers import GeneratedEventProcess, InstrumentTypeProce
 from poms.instruments.models import Instrument, PriceHistory, InstrumentClass, DailyPricingModel, \
     AccrualCalculationModel, PaymentSizeDetail, Periodicity, CostMethod, InstrumentType, PricingPolicy, \
     EventScheduleConfig, ManualPricingFormula, \
-    AccrualCalculationSchedule, EventSchedule, EventScheduleAction, GeneratedEvent, PricingCondition, \
+    AccrualCalculationSchedule, EventSchedule, GeneratedEvent, PricingCondition, \
     ExposureCalculationModel, LongUnderlyingExposure, ShortUnderlyingExposure, Country
 from poms.instruments.serializers import InstrumentSerializer, PriceHistorySerializer, \
     InstrumentClassSerializer, DailyPricingModelSerializer, AccrualCalculationModelSerializer, \
@@ -55,10 +52,8 @@ from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
-from poms.portfolios.models import Portfolio
-from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2, Strategy2Subgroup, \
-    Strategy2Group, Strategy3, Strategy3Subgroup, Strategy3Group
-from poms.transactions.models import TransactionType, TransactionTypeGroup, NotificationClass
+from poms.strategies.models import Strategy3
+from poms.transactions.models import NotificationClass
 from poms.transactions.serializers import TransactionTypeProcessSerializer
 from poms.users.filters import OwnerByMasterUserFilter
 from poms.users.models import MasterUser, EcosystemDefault
@@ -483,7 +478,9 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
                 print("Policy %s is not found for instrument %s" % (
                     request.data['pricing_policy_object']['name'], instrument))
 
-        return Response({"status": "ok"})
+        return Response({"status": "ok", "data": {
+            "instruments_affected": len(instruments)
+        }})
 
 
 class InstrumentAttributeTypeViewSet(GenericAttributeTypeViewSet):
@@ -1271,7 +1268,9 @@ class InstrumentDatabaseSearchViewSet(APIView):
 
 class PriceHistoryFilterSet(FilterSet):
     id = NoOpFilter()
-    pricing_policy = ModelExtMultipleChoiceFilter(model=PricingPolicy)
+    instrument = ModelExtMultipleChoiceFilter(model=Instrument, field_name='id')
+    # pricing_policy = ModelExtMultipleChoiceFilter(model=PricingPolicy)
+    pricing_policy = CharFilter(field_name="pricing_policy__user_code", lookup_expr="icontains")
     date = django_filters.DateFromToRangeFilter()
     principal_price = django_filters.RangeFilter()
     accrued_price = django_filters.RangeFilter()
@@ -1302,6 +1301,31 @@ class PriceHistoryViewSet(AbstractModelViewSet):
         'pricing_policy__public_name',
         'date', 'principal_price', 'accrued_price',
     ]
+
+    @action(detail=False, methods=['post'], url_path='bulk-create')
+    def bulk_create(self, request, *args, **kwargs):
+
+        valid_data = []
+        errors = []
+
+        for item in request.data:
+            serializer = self.get_serializer(data=item)
+            if serializer.is_valid():
+                valid_data.append(PriceHistory(**serializer.validated_data))
+            else:
+                errors.append(serializer.errors)
+
+        _l.info('PriceHistoryViewSet.valid_data %s' % len(valid_data))
+
+        PriceHistory.objects.bulk_create(valid_data, ignore_conflicts=True)
+
+        if errors:
+            _l.info('PriceHistoryViewSet.bulk_create.errors %s' % errors)
+        #     # Here we just return the errors as part of the response.
+        #     # You may want to log them or handle them differently depending on your needs.
+        #     return Response({'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'], url_path='attributes')
     def list_attributes(self, request, *args, **kwargs):
@@ -1383,6 +1407,7 @@ class PriceHistoryViewSet(AbstractModelViewSet):
         }
 
         return Response(result)
+
 
 class GeneratedEventFilterSet(FilterSet):
     id = NoOpFilter()

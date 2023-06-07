@@ -11,7 +11,7 @@ from poms.common.views import AbstractModelViewSet, AbstractViewSet, AbstractRea
 from poms.ui.models import ListLayout, EditLayout, Bookmark, \
     ConfigurationExportLayout, ComplexTransactionUserField, InstrumentUserField, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, CrossEntityAttributeExtension, \
-    ColumnSortData, TransactionUserField, MobileLayout
+    ColumnSortData, TransactionUserField, MobileLayout, MemberLayout
 from poms.instruments.models import Instrument, InstrumentType
 from poms.currencies.models import Currency
 from poms.accounts.models import Account, AccountType
@@ -26,7 +26,7 @@ from poms.ui.serializers import ListLayoutSerializer, \
     DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer, EntityTooltipSerializer, \
     ColorPaletteSerializer, ListLayoutLightSerializer, DashboardLayoutLightSerializer, \
     CrossEntityAttributeExtensionSerializer, ColumnSortDataSerializer, TransactionUserFieldSerializer, \
-    MobileLayoutSerializer
+    MobileLayoutSerializer, MemberLayoutSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 
 
@@ -400,6 +400,42 @@ class MobileLayoutViewSet(AbstractModelViewSet):
             "modified": layout.modified,
             "is_default": layout.is_default
         })
+
+
+
+class MemberLayoutFilterSet(FilterSet):
+    id = NoOpFilter()
+    is_default = django_filters.BooleanFilter()
+    is_active = django_filters.BooleanFilter()
+    name = CharFilter()
+
+    class Meta:
+        model = MemberLayout
+        fields = []
+
+
+class MemberLayoutViewSet(AbstractModelViewSet):
+    queryset = MemberLayout.objects.select_related(
+        'member'
+    )
+    serializer_class = MemberLayoutSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMemberFilter,
+    ]
+    filter_class = MemberLayoutFilterSet
+    ordering_fields = ['name', 'is_default'
+                       ]
+
+    @action(detail=True, methods=['get'], url_path='ping')
+    def ping(self, request, pk=None):
+        layout = self.get_object()
+
+        return Response({
+            "id": layout.id,
+            "modified": layout.modified,
+            "is_default": layout.is_default
+        })
+
 
 
 

@@ -1,57 +1,40 @@
+# Use an official Python runtime as a parent image
 FROM python:3.10-bullseye
 
+# Update and install packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    vim htop wget \
-    supervisor nfs-common
+    vim htop wget supervisor nfs-common && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN rm -rf /var/app
-COPY requirements.txt /var/app/requirements.txt
-RUN pip install -r /var/app/requirements.txt
+# Set working directory in the container
+WORKDIR /var/app
 
-COPY docker/finmars-run.sh /var/app/docker/finmars-run.sh
-COPY data/ /var/app/data/
-COPY poms/ /var/app/poms/
-COPY healthcheck/ /var/app/healthcheck/
-COPY finmars_standardized_errors/ /var/app/finmars_standardized_errors/
-COPY logstash/ /var/app/logstash/
-COPY poms_app/ /var/app/poms_app/
-COPY templates/ /var/app/templates/
-COPY manage.py /var/app/manage.py
+# Copy the requirements file into the container
+COPY requirements.txt .
 
-RUN mkdir -p /var/app/finmars_data
-RUN chmod 777 /var/app/finmars_data
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-RUN mkdir -p /var/app-data/
-RUN mkdir -p /var/app-data/media/
-RUN mkdir -p /var/app-data/import/configs/
-RUN mkdir -p /var/app-data/import/files/
-RUN mkdir -p /var/log/finmars
-RUN mkdir -p /var/log/finmars/backend
-#RUN chown -R www-data:www-data /var/log/finmars/
-#RUN chown -R www-data:www-data /var/app
-#RUN chown -R www-data:www-data /var/app-data
+# Copy the current directory contents into the container
+COPY . .
 
-COPY docker/supervisor/celery-worker-1.conf /etc/supervisor/conf.d/celery-worker-1.conf
-COPY docker/supervisor/celery-worker-2.conf /etc/supervisor/conf.d/celery-worker-2.conf
-COPY docker/supervisor/celerybeat.conf /etc/supervisor/conf.d/celerybeat.conf
+# Create necessary directories and change their permissions
+RUN mkdir -p /var/app-data/import/configs/ /var/app-data/import/files/ /var/app/finmars_data \
+            /var/app-data/media/ /var/log/finmars/backend /var/log/celery && \
+    chmod 777 /var/app/finmars_data
 
-#COPY docker/uwsgi-www.ini /etc/uwsgi/apps-enabled/finmars.ini
+# Copy supervisor configs
+COPY docker/supervisor/*.conf /etc/supervisor/conf.d/
 
-
+# Change permission of the shell script
 RUN chmod +x /var/app/docker/finmars-run.sh
 
-#RUN mkdir -p /var/run/gunicorn/
+# Set environment variables
+ENV LC_ALL=C.UTF-8 \
+    LANG=C.UTF-8
 
-# create celery user
-RUN mkdir -p /var/log/celery/
-#RUN useradd -N -M --system -s /bin/bash celery  && \
-## celery perms
-#    groupadd grp_celery && usermod -a -G grp_celery celery && mkdir -p /var/run/celery/ /var/log/celery/  && \
-#    chown -R celery:grp_celery /var/run/celery/ /var/log/celery/
-
-ENV LC_ALL=C.UTF-8
-ENV LANG=C.UTF-8
-
+# Make port 8080 available to the world outside this container
 EXPOSE 8080
 
+# Run the command on container startup
 CMD ["/bin/bash", "/var/app/docker/finmars-run.sh"]

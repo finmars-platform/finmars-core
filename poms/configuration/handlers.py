@@ -3,7 +3,9 @@ import traceback
 
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.configuration.export_helpers import export_instrument_types, export_pricing_policies, export_transaction_types
-from poms.configuration.utils import save_serialized_entity, save_serialized_attribute_type, save_serialized_layout
+from poms.configuration.utils import save_serialized_entity, save_serialized_attribute_type, \
+    save_serialized_entity_layout, \
+    save_serialized_layout
 from poms_app import settings
 
 _l = logging.getLogger('poms.configuration')
@@ -199,12 +201,20 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                        source_directory + '/attribute-types/responsible',
                                        context)
 
-        save_serialized_entity('ui.dashboardlayout',
-                               configuration.configuration_code,
+        # save_serialized_entity('ui.dashboardlayout',
+        #                        configuration.configuration_code,
+        #                        source_directory + '/ui/layouts/dashboard',
+        #                        context)
+
+        save_serialized_layout('ui.dashboardlayout', configuration.configuration_code,
                                source_directory + '/ui/layouts/dashboard',
                                context)
 
-        save_serialized_entity('ui.contextmenulayout',
+        save_serialized_layout('ui.memberlayout', configuration.configuration_code,
+                               source_directory + '/ui/layouts/member-layout',
+                               context)
+
+        save_serialized_layout('ui.contextmenulayout',
                                configuration.configuration_code,
                                source_directory + '/ui/layouts/context-menu',
                                context)
@@ -225,105 +235,279 @@ def export_configuration_to_directory(source_directory, configuration, master_us
         #                                source_directory + '/ui/user-fields/instrument',
         #                                context)
 
-        save_serialized_layout('ui.listlayout',
-                               configuration.configuration_code,
-                               'portfolios.portfolio',
-                               source_directory + '/ui/layouts/portfolio',
-                               context)
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'portfolios.portfolio',
+                                      source_directory + '/ui/layouts/portfolio',
+                                      context)
 
-        save_serialized_layout('ui.listlayout',
-                               configuration.configuration_code,
-                               'accounts.accounttype',
-                               source_directory + '/ui/layouts/account-type',
-                               context)
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'accounts.accounttype',
+                                      source_directory + '/ui/layouts/account-type',
+                                      context)
 
-        save_serialized_layout('ui.listlayout',
-                               configuration.configuration_code,
-                               'accounts.account',
-                               source_directory + '/ui/layouts/account',
-                               context)
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'accounts.account',
+                                      source_directory + '/ui/layouts/account',
+                                      context)
 
-        save_serialized_layout('ui.listlayout',
-                               configuration.configuration_code,
-                               'instruments.instrumenttype',
-                               source_directory + '/ui/layouts/instrument-type',
-                               context)
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'instruments.instrumenttype',
+                                      source_directory + '/ui/layouts/instrument-type',
+                                      context)
 
-        save_serialized_layout('ui.listlayout',
-                               configuration.configuration_code,
-                               'instruments.instrument',
-                               source_directory + '/ui/layouts/instrument',
-                               context)
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'instruments.instrument',
+                                      source_directory + '/ui/layouts/instrument',
+                                      context)
 
-        save_serialized_layout('ui.listlayout',
-                               configuration.configuration_code,
-                               'instruments.pricehistory',
-                               source_directory + '/ui/layouts/price-history',
-                               context)
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'instruments.pricehistory',
+                                      source_directory + '/ui/layouts/price-history',
+                                      context)
 
-        save_serialized_layout('ui.listlayout',
-                               configuration.configuration_code,
-                               'transactions.complextransaction',
-                               source_directory + '/ui/layouts/complex-transaction',
-                               context)
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'transactions.complextransaction',
+                                      source_directory + '/ui/layouts/complex-transaction',
+                                      context)
 
-        save_serialized_layout('ui.listlayout',
-                               configuration.configuration_code,
-                               'transactions.transaction',
-                               source_directory + '/ui/layouts/transaction',
-                               context)
-        save_serialized_layout('ui.listlayout',
-                               configuration.configuration_code,
-                               'transactions.transactiontype',
-                               source_directory + '/ui/layouts/transaction-type',
-                               context)
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'transactions.transaction',
+                                      source_directory + '/ui/layouts/transaction',
+                                      context)
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'transactions.transactiontype',
+                                      source_directory + '/ui/layouts/transaction-type',
+                                      context)
 
-        save_serialized_layout('ui.listlayout',
-                               configuration.configuration_code,
-                               'currencies.currency',
-                               source_directory + '/ui/layouts/currency',
-                               context)
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'currencies.currency',
+                                      source_directory + '/ui/layouts/currency',
+                                      context)
 
-        save_serialized_layout('ui.listlayout',
-                               configuration.configuration_code,
-                               'currencies.currencyhistory',
-                               source_directory + '/ui/layouts/currency-history',
-                               context)
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'currencies.currencyhistory',
+                                      source_directory + '/ui/layouts/currency-history',
+                                      context)
 
-        save_serialized_layout('ui.listlayout',
-                               configuration.configuration_code,
-                               'reports.balancereport',
-                               source_directory + '/ui/layouts/balance-report',
-                               context)
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'reports.balancereport',
+                                      source_directory + '/ui/layouts/balance-report',
+                                      context)
 
-        save_serialized_layout('ui.listlayout',
-                               configuration.configuration_code,
-                               'reports.plreport',
-                               source_directory + '/ui/layouts/pl-report',
-                               context)
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'reports.plreport',
+                                      source_directory + '/ui/layouts/pl-report',
+                                      context)
 
-        save_serialized_layout('ui.listlayout',
-                               configuration.configuration_code,
-                               'reports.transactionreport',
-                               source_directory + '/ui/layouts/transaction-report',
-                               context)
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'reports.transactionreport',
+                                      source_directory + '/ui/layouts/transaction-report',
+                                      context)
+
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'counterparties.responsible',
+                                      source_directory + '/ui/layouts/responsibles',
+                                      context)
+
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'counterparties.counterparty',
+                                      source_directory + '/ui/layouts/counterparties',
+                                      context)
+
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'strategies.strategy1',
+                                      source_directory + '/ui/layouts/strategies1',
+                                      context)
+
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'strategies.strategy2',
+                                      source_directory + '/ui/layouts/strategies2',
+                                      context)
+
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'strategies.strategy3',
+                                      source_directory + '/ui/layouts/strategies2',
+                                      context)
+
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'pricing.pricehistoryerror',
+                                      source_directory + '/ui/layouts/price-journal',
+                                      context)
+
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
+                                      'pricing.currencyhistoryerror',
+                                      source_directory + '/ui/layouts/fxrate-journal',
+                                      context)
+
+        # Form Layouts
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'portfolios.portfolio',
+                                      source_directory + '/ui/form-layouts/portfolio',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'accounts.accounttype',
+                                      source_directory + '/ui/form-layouts/account-type',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'accounts.account',
+                                      source_directory + '/ui/form-layouts/account',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'instruments.instrumenttype',
+                                      source_directory + '/ui/form-layouts/instrument-type',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'instruments.instrument',
+                                      source_directory + '/ui/form-layouts/instrument',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'instruments.pricehistory',
+                                      source_directory + '/ui/form-layouts/price-history',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'transactions.complextransaction',
+                                      source_directory + '/ui/form-layouts/complex-transaction',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'transactions.transaction',
+                                      source_directory + '/ui/form-layouts/transaction',
+                                      context)
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'transactions.transactiontype',
+                                      source_directory + '/ui/form-layouts/transaction-type',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'currencies.currency',
+                                      source_directory + '/ui/form-layouts/currency',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'currencies.currencyhistory',
+                                      source_directory + '/ui/form-layouts/currency-history',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'reports.balancereport',
+                                      source_directory + '/ui/form-layouts/balance-report',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'reports.plreport',
+                                      source_directory + '/ui/form-layouts/pl-report',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'reports.transactionreport',
+                                      source_directory + '/ui/form-layouts/transaction-report',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'counterparties.responsible',
+                                      source_directory + '/ui/form-layouts/responsibles',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'counterparties.counterparty',
+                                      source_directory + '/ui/form-layouts/counterparties',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'strategies.strategy1',
+                                      source_directory + '/ui/form-layouts/strategies1',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'strategies.strategy2',
+                                      source_directory + '/ui/form-layouts/strategies2',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'strategies.strategy3',
+                                      source_directory + '/ui/form-layouts/strategies3',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'pricing.pricehistoryerror',
+                                      source_directory + '/ui/form-layouts/price-journal',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'pricing.currencyhistoryerror',
+                                      source_directory + '/ui/form-layouts/fxrate-journal',
+                                      context)
 
         # Aliases
 
-        save_serialized_entity('ui.instrumentuserfield',
-                               configuration.configuration_code,
-                               source_directory + '/ui/instrument-user-fields',
-                               context)
+        try:
 
-        save_serialized_entity('ui.transactionuserfield',
-                               configuration.configuration_code,
-                               source_directory + '/ui/transaction-user-fields',
-                               context)
+            save_serialized_entity('ui.instrumentuserfield',
+                                   configuration.configuration_code,
+                                   source_directory + '/ui/instrument-user-fields',
+                                   context)
 
-        save_serialized_entity('ui.complextransactionuserfield',
-                               configuration.configuration_code,
-                               source_directory + '/ui/complex-transaction-user-fields',
-                               context)
+            save_serialized_entity('ui.transactionuserfield',
+                                   configuration.configuration_code,
+                                   source_directory + '/ui/transaction-user-fields',
+                                   context)
+
+            save_serialized_entity('ui.complextransactionuserfield',
+                                   configuration.configuration_code,
+                                   source_directory + '/ui/complex-transaction-user-fields',
+                                   context)
+
+        except Exception as e:
+            _l.error("Could not export aliases e: %s" % e)
 
         #     IAM
         save_serialized_entity('iam.group',

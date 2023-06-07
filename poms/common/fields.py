@@ -90,6 +90,7 @@ class UserCodeOrPrimaryKeyRelatedField(IamProtectedRelatedField):
 
     def to_representation(self, obj):
         return getattr(obj, 'id')
+        # return getattr(obj, 'user_code') # TODO someday move to user_code completely
 
 
 class UserCodeField(CharField):

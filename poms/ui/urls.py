@@ -8,6 +8,7 @@ router.register(r'list-layout', ui.ListLayoutViewSet)
 router.register(r'list-layout-light', ui.ListLayoutLightViewSet)  # deprecated
 router.register(r'template-layout', ui.TemplateLayoutViewSet)
 router.register(r'dashboard-layout', ui.DashboardLayoutViewSet)
+router.register(r'member-layout', ui.MemberLayoutViewSet)
 router.register(r'mobile-layout', ui.MobileLayoutViewSet)
 router.register(r'edit-layout', ui.EditLayoutViewSet)
 router.register(r'bookmark', ui.BookmarkViewSet)
@@ -21,4 +22,3 @@ router.register(r'color-palette', ui.ColorPaletteViewSet)
 router.register(r'cross-entity-attribute-extension', ui.CrossEntityAttributeExtensionViewSet)
 router.register(r'column-sort-data', ui.ColumnSortDataViewSet)
 router.register(r'system-attributes', ui.SystemAttributesViewSet, basename="System attributes")
-

@@ -53,11 +53,11 @@ class BootstrapConfig(AppConfig):
         self.load_master_user_data()
         self.create_finmars_bot()
         self.sync_users_at_authorizer_service()
+        self.create_member_layouts()
         self.load_init_configuration()
         self.create_base_folders()
         self.register_at_authorizer_service()
         self.create_local_configuration()
-        self.create_iam_roles_and_groups()
         self.create_iam_access_policies_templates()
 
     def create_finmars_bot(self):
@@ -92,24 +92,6 @@ class BootstrapConfig(AppConfig):
             except Exception as e:
                 _l.error("Warning. Could not creat finmars_bot")
 
-
-
-    def create_iam_roles_and_groups(self):
-        # Maybe not needed
-        pass
-
-        # from poms.iam.models import Group
-        #
-        # try:
-        #
-        #     group = Group.objects.get(user_code='com.finmars.local:administrators')
-        #
-        # except Exception as e:
-        #
-        #     group = Group.objects.create(
-        #         name='Administrators',
-        #         user_code='com.finmars.local:administrators')
-
     def create_iam_access_policies_templates(self):
 
         _l.info("create_iam_access_policies_templates")
@@ -118,7 +100,6 @@ class BootstrapConfig(AppConfig):
         create_base_iam_access_policies_templates()
 
         _l.info("create_iam_access_policies_templates done")
-
 
     # Probably deprecated
     def add_view_and_manage_permissions(self):
@@ -352,6 +333,29 @@ class BootstrapConfig(AppConfig):
         except Exception as e:
             _l.info("sync_users_at_authorizer_service error %s" % e)
 
+    def create_member_layouts(self):
+
+        from poms.users.models import Member
+        from poms.ui.models import MemberLayout
+
+        members = Member.objects.all()
+
+        from poms.configuration.utils import get_default_configuration_code
+        configuration_code = get_default_configuration_code()
+
+        for member in members:
+
+            try:
+                layout = MemberLayout.objects.get(member=member,
+                                                  configuration_code=configuration_code,
+                                                  user_code=configuration_code + ':default_member_layout')
+            except Exception as e:
+                layout = MemberLayout.objects.create(member=member,
+                                                     configuration_code=configuration_code,
+                                                     name='default',
+                                                     user_code=configuration_code + ':default_member_layout')
+                _l.info("Created member layout for %s" % member.username)
+
     def load_init_configuration(self):
         from poms.users.models import Member, MasterUser
         from poms.celery_tasks.models import CeleryTask
@@ -507,25 +511,26 @@ class BootstrapConfig(AppConfig):
 
                     _l.info("create workflows folder")
 
-            if not storage.exists(settings.BASE_API_URL + '/workflows/schemas/.init'):
-                path = settings.BASE_API_URL + '/workflows/schemas/.init'
-
-                with NamedTemporaryFile() as tmpf:
-                    tmpf.write(b'')
-                    tmpf.flush()
-                    storage.save(path, tmpf)
-
-                    _l.info("create workflows schemas folder")
-
-            if not storage.exists(settings.BASE_API_URL + '/workflows/tasks/.init'):
-                path = settings.BASE_API_URL + '/workflows/tasks/.init'
-
-                with NamedTemporaryFile() as tmpf:
-                    tmpf.write(b'')
-                    tmpf.flush()
-                    storage.save(path, tmpf)
-
-                    _l.info("create workflows tasks folder")
+            # Deprecated, no workflows in workflows/com/finmars...
+            # if not storage.exists(settings.BASE_API_URL + '/workflows/schemas/.init'):
+            #     path = settings.BASE_API_URL + '/workflows/schemas/.init'
+            #
+            #     with NamedTemporaryFile() as tmpf:
+            #         tmpf.write(b'')
+            #         tmpf.flush()
+            #         storage.save(path, tmpf)
+            #
+            #         _l.info("create workflows schemas folder")
+            #
+            # if not storage.exists(settings.BASE_API_URL + '/workflows/tasks/.init'):
+            #     path = settings.BASE_API_URL + '/workflows/tasks/.init'
+            #
+            #     with NamedTemporaryFile() as tmpf:
+            #         tmpf.write(b'')
+            #         tmpf.flush()
+            #         storage.save(path, tmpf)
+            #
+            #         _l.info("create workflows tasks folder")
 
             members = Member.objects.all()
 
@@ -559,11 +564,16 @@ class BootstrapConfig(AppConfig):
 
         from poms.configuration.models import Configuration
 
+        configuration_code = 'local.poms.' + settings.BASE_API_URL
+
         try:
-            configuration = Configuration.objects.get(configuration_code="com.finmars.local")
+            # configuration = Configuration.objects.get(configuration_code="com.finmars.local") # deprecated
+
+            configuration = Configuration.objects.get(configuration_code=configuration_code)
             _l.info("Local Configuration is already created")
         except Configuration.DoesNotExist:
-            Configuration.objects.create(configuration_code="com.finmars.local", name="Local Configuration",
+            Configuration.objects.create(configuration_code=configuration_code, name="Local Configuration",
+                                         is_primary=True,
                                          version="1.0.0", description="Local Configuration")
 
             _l.info("Local Configuration created")

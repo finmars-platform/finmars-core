@@ -22,9 +22,10 @@ class ReferenceTable(NamedModel, DataTimeStampedModel, ConfigurationModel):
     name = models.CharField(max_length=255, verbose_name=gettext_lazy('name'))
 
     class Meta:
-        unique_together = (
-            ('name', 'master_user')
-        )
+        # WTF?
+        # unique_together = (
+        #     ('name', 'master_user')
+        # )
         verbose_name = gettext_lazy('Reference Table')
         verbose_name_plural = gettext_lazy('Reference Tables')
 

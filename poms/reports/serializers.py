@@ -30,7 +30,7 @@ from poms.reports.base_serializers import ReportInstrumentSerializer, ReportInst
     ReportCounterpartySerializer, ReportComplexTransactionSerializer
 from poms.reports.common import Report, PerformanceReport, TransactionReport
 from poms.reports.fields import BalanceReportCustomFieldField, PLReportCustomFieldField, \
-    TransactionReportCustomFieldField
+    TransactionReportCustomFieldField, ReportCurrencyField, ReportPricingPolicyField
 from poms.reports.models import BalanceReportCustomField, PLReportCustomField, TransactionReportCustomField, \
     PLReportInstance, BalanceReportInstance, BalanceReportInstanceItem, PLReportInstanceItem, PerformanceReportInstance, \
     PerformanceReportInstanceItem
@@ -136,8 +136,8 @@ class ReportSerializer(ReportSerializerWithLogs):
     report_type = serializers.ChoiceField(read_only=True, choices=Report.TYPE_CHOICES)
     report_date = serializers.DateField(required=False, allow_null=True, default=date_now,
                                         help_text=gettext_lazy('Report date or second date for pl report'))
-    report_currency = CurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
-    pricing_policy = PricingPolicyField()
+    report_currency = ReportCurrencyField(required=False, allow_null=True, default=SystemCurrencyDefault())
+    pricing_policy = ReportPricingPolicyField()
     cost_method = serializers.PrimaryKeyRelatedField(queryset=CostMethod.objects, allow_null=True, allow_empty=True)
 
     portfolio_mode = serializers.ChoiceField(default=Report.MODE_INDEPENDENT,

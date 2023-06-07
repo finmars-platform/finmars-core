@@ -328,9 +328,12 @@ class TransactionImportProcess(object):
 
         _l.info('TransactionImportProcess.Task %s. process_type %s' % (self.task, self.process_type))
 
-    def get_default_relation(self, field):
+    def get_default_relation(self, rule_scenario, field):
 
-        i = field.transaction_type_input
+        # i = field.transaction_type_input
+        # TODO PERFORMANCE_ISSUE Maybe performance issue
+        i = TransactionTypeInput.objects.get(transaction_type__user_code=rule_scenario.transaction_type,
+                                             name=field.transaction_type_input)
 
         model_class = i.content_type.model_class()
 
@@ -425,7 +428,7 @@ class TransactionImportProcess(object):
 
                 if self.scheme.missing_data_handler == 'set_defaults':
 
-                    v = self.get_default_relation(field)
+                    v = self.get_default_relation(rule_scenario, field)
 
                 else:
                     item.status = 'error'

@@ -13,6 +13,7 @@ from poms.common.authentication import get_access_token
 from poms.common.filters import CharFilter
 from poms.common.storage import get_storage
 from poms.common.views import AbstractModelViewSet
+from poms.configuration.filters import ConfigurationQueryFilter
 from poms.configuration.models import Configuration, NewMemberSetupConfiguration
 from poms.configuration.serializers import ConfigurationSerializer, ConfigurationImportSerializer, \
     NewMemberSetupConfigurationSerializer
@@ -41,7 +42,7 @@ class ConfigurationViewSet(AbstractModelViewSet):
     serializer_class = ConfigurationSerializer
     filter_class = ConfigurationFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
-
+        ConfigurationQueryFilter
     ]
     permission_classes = AbstractModelViewSet.permission_classes + [
 

@@ -1232,9 +1232,6 @@ class ReportSummary():
                 if item['market_value']:
                     market_value = market_value + item['market_value']
 
-        _l.info('get_total_position_return_pl_ytd.total %s' % total)
-        _l.info('get_total_position_return_pl_ytd.market_value %s' % market_value)
-
         if market_value:
             return math.floor(total / market_value * 10000) / 100 # TODO refactor
         return 0

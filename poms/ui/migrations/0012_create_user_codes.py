@@ -14,7 +14,9 @@ def forwards_func(apps, schema_editor):
 
         if not item.user_code:
 
-            item.configuration_code = 'com.finmars.local'
+            # item.configuration_code = 'com.finmars.local'
+            from poms.configuration.utils import get_default_configuration_code
+            item.configuration_code = get_default_configuration_code()
 
             item.user_code = item.configuration_code + ':' + item.key.replace(' ', '_').lower()
 
@@ -26,7 +28,9 @@ def forwards_func(apps, schema_editor):
 
         if not item.user_code:
 
-            item.configuration_code = 'com.finmars.local'
+            # item.configuration_code = 'com.finmars.local'
+            from poms.configuration.utils import get_default_configuration_code
+            item.configuration_code = get_default_configuration_code()
 
             item.user_code = item.configuration_code + ':' + item.key.replace(' ', '_').lower()
 
@@ -38,7 +42,9 @@ def forwards_func(apps, schema_editor):
 
         if not item.user_code:
 
-            item.configuration_code = 'com.finmars.local'
+            # item.configuration_code = 'com.finmars.local'
+            from poms.configuration.utils import get_default_configuration_code
+            item.configuration_code = get_default_configuration_code()
 
             item.user_code = item.configuration_code + ':' + item.key.replace(' ', '_').lower()
 

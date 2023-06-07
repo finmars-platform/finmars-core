@@ -10,6 +10,7 @@ from tempfile import NamedTemporaryFile
 from django.utils.timezone import now
 from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
+from django.contrib.contenttypes.models import ContentType
 
 from poms.accounts.models import AccountType
 from poms.celery_tasks.models import CeleryTask
@@ -111,9 +112,12 @@ def set_defaults_from_instrument_type(instrument_object, instrument_type, ecosys
         # Set attributes
         instrument_object['attributes'] = []
 
+        content_type = ContentType.objects.get(app_label='instruments', model='instrument')
+
         for attribute in instrument_type.instrument_attributes.all():
 
             attribute_type = GenericAttributeType.objects.get(master_user=instrument_type.master_user,
+                                                              content_type=content_type,
                                                               user_code=attribute.attribute_type_user_code)
 
             attr = {
