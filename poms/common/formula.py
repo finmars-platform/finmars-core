@@ -1556,6 +1556,75 @@ def _get_factor_schedule(evaluator, date, instrument):
 _get_factor_schedule.evaluator = True
 
 
+def _get_instrument_attribute(evaluator, instrument, attribute_type_user_code):
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    result = None
+
+    for attribute in instrument.attributes.all():
+
+        if attribute.attribute_type.user_code == attribute_type_user_code:
+
+            if attribute.attribute_type.value_type == 10:
+                result = attribute.value_text
+
+            if attribute.attribute_type.value_type == 20:
+                result = attribute.value_float
+
+            if attribute.attribute_type.value_type == 30:
+                if attribute.classifier:
+                    result = attribute.classifier.name
+
+            if attribute.attribute_type.value_type == 40:
+                result = attribute.value_date
+
+    return result
+
+
+_get_instrument_attribute.evaluator = True
+
+
+def _get_currency_attribute(evaluator, currency, attribute_type_user_code):
+    from poms.users.utils import get_master_user_from_context
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    currency = _safe_get_currency(evaluator, currency)
+
+    result = None
+
+    for attribute in currency.attributes.all():
+
+        if attribute.attribute_type.user_code == attribute_type_user_code:
+
+            if attribute.attribute_type.value_type == 10:
+                result = attribute.value_text
+
+            if attribute.attribute_type.value_type == 20:
+                result = attribute.value_float
+
+            if attribute.attribute_type.value_type == 30:
+                if attribute.classifier:
+                    result = attribute.classifier.name
+
+            if attribute.attribute_type.value_type == 40:
+                result = attribute.value_date
+
+    return result
+
+
+_get_currency_attribute.evaluator = True
+
+
+
+
+
 def _add_factor_schedule(evaluator, instrument, effective_date, factor_value):
     from poms.users.utils import get_master_user_from_context
     from poms.instruments.models import InstrumentFactorSchedule
@@ -3799,6 +3868,9 @@ FUNCTIONS = [
     SimpleEval2Def('delete_accrual_schedules', _delete_accrual_schedules),
     SimpleEval2Def('get_instrument_pricing_scheme', _get_instrument_pricing_scheme),
     SimpleEval2Def('get_currency_pricing_scheme', _get_currency_pricing_scheme),
+
+    SimpleEval2Def('get_instrument_attribute', _get_instrument_attribute),
+    SimpleEval2Def('get_currency_attribute', _get_currency_attribute),
 
     SimpleEval2Def('add_fx_rate', _add_fx_rate),
     SimpleEval2Def('add_price_history', _add_price_history),
