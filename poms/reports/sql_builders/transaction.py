@@ -112,6 +112,13 @@ class TransactionReportBuilderSql:
 
         try:
 
+            item_type_filter = None  # TODO shitcode here
+
+            for filter in self.instance.filters:
+
+                if filter['key'] in ['entry_item_type']:
+                    item_type_filter = filter
+
             for filter in self.instance.filters:
 
                 if filter['options']['enabled'] and filter['options']['filter_values']:
@@ -159,42 +166,90 @@ class TransactionReportBuilderSql:
                     if filter['key'] in ['entry_item_user_code']:
 
                         # field_key = filter['key'].split('.')[1]
+                        '''Its needed because sometimes we have instruments with user code USD (its equals user_code of currency
+                            and because of that it breaks all logic) so in case if front send another filter object with item type
+                            we use it to do more detailed filtering
+                         '''
+                        if item_type_filter:
 
-                        instrument_ids = []
+                            item_type = item_type_filter['options']['filter_values'][0]
 
-                        for instrument in instruments:
+                            if int(item_type) == 1:
 
-                            for value in filter['options']['filter_values']:
+                                instrument_ids = []
 
-                                if value == instrument['user_code']:
-                                    instrument_ids.append(str(instrument['id']))
+                                for instrument in instruments:
 
-                        _l.info('instrument_ids %s' % instrument_ids)
+                                    for value in filter['options']['filter_values']:
 
-                        if instrument_ids:
-                            res = "'" + "\',\'".join(instrument_ids)
-                            res = res + "'"
+                                        if value == instrument['user_code']:
+                                            instrument_ids.append(str(instrument['id']))
 
-                            result = result + 'and t.instrument_id IN (%s)' % res
+                                _l.info('instrument_ids %s' % instrument_ids)
 
-                        currencies_ids = []
+                                if instrument_ids:
+                                    res = "'" + "\',\'".join(instrument_ids)
+                                    res = res + "'"
 
-                        for currency in currencies:
+                                    result = result + 'and t.instrument_id IN (%s)' % res
 
-                            for value in filter['options']['filter_values']:
+                            if int(item_type) == 2:
+                                currencies_ids = []
 
-                                if value == currency['user_code']:
-                                    currencies_ids.append(str(currency['id']))
+                                for currency in currencies:
 
-                        _l.info('currencies_ids %s' % currencies_ids)
+                                    for value in filter['options']['filter_values']:
 
-                        if currencies_ids:
-                            res = "'" + "\',\'".join(currencies_ids)
-                            res = res + "'"
+                                        if value == currency['user_code']:
+                                            currencies_ids.append(str(currency['id']))
 
-                            result = result + 'and t.settlement_currency_id IN (%s)' % res
+                                _l.info('currencies_ids %s' % currencies_ids)
 
-                        _l.info('result %s' % result)
+                                if currencies_ids:
+                                    res = "'" + "\',\'".join(currencies_ids)
+                                    res = res + "'"
+
+                                    result = result + 'and t.settlement_currency_id IN (%s)' % res
+
+                                _l.info('result %s' % result)
+
+                        else:
+
+                            instrument_ids = []
+
+                            for instrument in instruments:
+
+                                for value in filter['options']['filter_values']:
+
+                                    if value == instrument['user_code']:
+                                        instrument_ids.append(str(instrument['id']))
+
+                            _l.info('instrument_ids %s' % instrument_ids)
+
+                            if instrument_ids:
+                                res = "'" + "\',\'".join(instrument_ids)
+                                res = res + "'"
+
+                                result = result + 'and t.instrument_id IN (%s)' % res
+
+                            currencies_ids = []
+
+                            for currency in currencies:
+
+                                for value in filter['options']['filter_values']:
+
+                                    if value == currency['user_code']:
+                                        currencies_ids.append(str(currency['id']))
+
+                            _l.info('currencies_ids %s' % currencies_ids)
+
+                            if currencies_ids:
+                                res = "'" + "\',\'".join(currencies_ids)
+                                res = res + "'"
+
+                                result = result + 'and t.settlement_currency_id IN (%s)' % res
+
+                            _l.info('result %s' % result)
 
         except Exception as e:
 
