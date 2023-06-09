@@ -27,7 +27,7 @@ _l = logging.getLogger("poms.portfolios")
 celery_logger = get_task_logger(__name__)
 
 
-def calculate_simple_balance_report(report_date, portfolio_register, pricing_policy):
+def calculate_simple_balance_report(report_date, portfolio_register, pricing_policy, member):
     """
     Probably is duplicated method. Here we just getting Balance Report instance
     on specific date, portfolio and pricing policy
@@ -42,6 +42,7 @@ def calculate_simple_balance_report(report_date, portfolio_register, pricing_pol
     _l.info(f"calculate_simple_balance_report.report_date {report_date}")
 
     instance.master_user = portfolio_register.master_user
+    instance.member = member
     instance.report_date = report_date
     instance.pricing_policy = pricing_policy
     # instance.report_currency = portfolio_register.valuation_currency
@@ -288,6 +289,7 @@ def calculate_portfolio_register_record(self, task_id):
                     report_date,
                     portfolio_register,
                     portfolio_register.valuation_pricing_policy,
+                    task.member
                 )
 
                 nav = sum(
