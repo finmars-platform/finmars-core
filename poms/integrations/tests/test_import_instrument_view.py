@@ -4,6 +4,7 @@ from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
 from poms.common.monad import Monad, MonadStatus
+from poms.common.database_client import BACKEND_CALLBACK_URLS
 from poms.celery_tasks.models import CeleryTask
 from poms.instruments.models import Instrument
 
@@ -22,8 +23,8 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 400, response.content)
 
     @BaseTestCase.cases(
-        ("bonds_777", "bonds", 777),
         ("bonds_111", "bonds", 111),
+        ("bonds_777", "bonds", 777),
         ("stocks_333", "stocks", 333),
         ("stocks_999", "stocks", 999),
     )
@@ -53,10 +54,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.assertFalse(simple_instrument.is_active)
         celery_task = CeleryTask.objects.get(pk=data["task"])
         options = celery_task.options_object
-        callback_url = (
-            f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
-            f"/api/instruments/fdb-create-from-callback/"
-        )
+        callback_url = BACKEND_CALLBACK_URLS["instrument"]
         self.assertEqual(options["callback_url"], callback_url)
         results = celery_task.result_object
         self.assertEqual(results["instrument_id"], simple_instrument.id)
