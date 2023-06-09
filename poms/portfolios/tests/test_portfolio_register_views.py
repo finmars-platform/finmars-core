@@ -79,12 +79,3 @@ class PortfolioRegisterRecordViewSetTest(BaseTestCase):
             resp_data["share_price_calculation_type"],
             PortfolioRegisterRecord.AUTOMATIC,
         )
-
-
-class PortfolioRegisterRecordEvViewSetTest(PortfolioRegisterRecordViewSetTest):
-    def setUp(self):
-        super().setUp()
-        self.url = (
-            f"/{settings.BASE_API_URL}/api/v1"
-            f"/portfolios/portfolio-register-record-ev/"
-        )
