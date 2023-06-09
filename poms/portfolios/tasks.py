@@ -581,24 +581,26 @@ def calculate_portfolio_register_price_history(self, task_id):
                         .first()
                     )
 
-                    balance_report = calculate_simple_balance_report(
-                        date, portfolio_register, true_pricing_policy, task.member
-                    )
-
-                    nav = 0
-
-                    for item in balance_report.items:
-                        if item["market_value"]:
-                            nav = nav + item["market_value"]
-
-                    cash_flow = calculate_cash_flow(
-                        task.master_user, date, true_pricing_policy, portfolio_register
-                    )
-
-                    # principal_price = nav / (registry_record.n_shares_previous_day
-                    # + registry_record.n_shares_added)
-
                     if registry_record.rolling_shares_of_the_day != 0:
+
+                        balance_report = calculate_simple_balance_report(
+                            date, portfolio_register, true_pricing_policy, task.member
+                        )
+
+                        nav = 0
+
+                        for item in balance_report.items:
+                            if item["market_value"]:
+                                nav = nav + item["market_value"]
+
+                        cash_flow = calculate_cash_flow(
+                            task.master_user, date, true_pricing_policy, portfolio_register
+                        )
+
+                        # principal_price = nav / (registry_record.n_shares_previous_day
+                        # + registry_record.n_shares_added)
+
+
                         principal_price = nav / registry_record.rolling_shares_of_the_day
 
                         for pricing_policy in pricing_policies:
@@ -621,16 +623,16 @@ def calculate_portfolio_register_price_history(self, task_id):
 
                             price_history.save()
 
-                    count = count + 1
+                        count = count + 1
 
-                    task.update_progress(
-                        {
-                            "current": count,
-                            "percent": round(count / (total / 100)),
-                            "total": total,
-                            "description": f"Calculating {portfolio_register} at {date}",
-                        }
-                    )
+                        task.update_progress(
+                            {
+                                "current": count,
+                                "percent": round(count / (total / 100)),
+                                "total": total,
+                                "description": f"Calculating {portfolio_register} at {date}",
+                            }
+                        )
 
                 except Exception as e:
                     _l.error(f"calculate_portfolio_register_price_history.error {e} ")
