@@ -582,7 +582,7 @@ def calculate_portfolio_register_price_history(self, task_id):
                     )
 
                     balance_report = calculate_simple_balance_report(
-                        date, portfolio_register, true_pricing_policy
+                        date, portfolio_register, true_pricing_policy, task.member
                     )
 
                     nav = 0
