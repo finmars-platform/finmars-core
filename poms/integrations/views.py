@@ -1647,3 +1647,66 @@ class SupersetGetSecurityToken(APIView):
         response_json = response.json()
 
         return Response(response_json)
+
+
+class InstrumentDataBaseCallBackViewSet(APIView):
+    permission_classes = []
+
+    def get(self, request):
+        _l.info(f"{self.__class__.__name__}.get")
+
+        return Response({"ok"})
+
+    def post(self, request):
+        from poms.celery_tasks.models import CeleryTask
+
+        data = request.data
+        _l.info(f"{self.__class__.__name__}.post request.data={data}")
+        if not (request_id := data.get("request_id")):
+            return Response(
+                {"status": "error", "message": "no request_id in request.data"}
+            )
+
+        try:
+            task = CeleryTask.objects.get(id=request_id)
+            if "instruments" in data:
+                if "currencies" in data:
+                    for item in data["currencies"]:
+                        if item:
+                            create_currency_cbond(
+                                item,
+                                task.master_user,
+                                task.member,
+                            )
+
+                for item in data["instruments"]:
+                    create_instrument_cbond(
+                        item,
+                        task.master_user,
+                        task.member,
+                    )
+
+            elif "items" in data["data"]:
+                for item in data["data"]["items"]:
+                    create_instrument_cbond(
+                        item,
+                        task.master_user,
+                        task.member,
+                    )
+
+            _l.info(f"{self.__class__.__name__}.post instrument(s) created")
+
+            return Response({"status": "ok"})
+
+        except Exception as e:
+            err_msg = f"{self.__class__.__name__}.post unexpected {repr(e)}"
+            _l.info(err_msg)
+            return Response({"status": "error", "message": err_msg})
+
+
+class CurrencyDataBaseCallBackViewSet(APIView):
+    pass
+
+
+class CompanyDataBaseCallBackViewSet(APIView):
+    pass
