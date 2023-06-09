@@ -739,59 +739,34 @@ class PriceDownloadSchemeMappingViewSet(AbstractMappingViewSet):
     ]
 
 
-class ImportInstrumentViewSet(AbstractViewSet):
+class UnifiedImportViewSet(AbstractViewSet):
+    permission_classes = AbstractViewSet.permission_classes + []
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.create()
+        return Response(serializer.data)
+
+
+class ImportInstrumentViewSet(UnifiedImportViewSet):
     serializer_class = ImportInstrumentSerializer
-    permission_classes = AbstractViewSet.permission_classes + []
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
 
 
-class ImportInstrumentDatabaseViewSet(AbstractViewSet):
+class ImportInstrumentDatabaseViewSet(UnifiedImportViewSet):
     serializer_class = ImportInstrumentDatabaseSerializer
-    permission_classes = AbstractViewSet.permission_classes + []
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.create()
-        return Response(serializer.data)
 
 
-class ImportCurrencyDatabaseViewSet(AbstractViewSet):
+class ImportCurrencyDatabaseViewSet(UnifiedImportViewSet):
     serializer_class = ImportCurrencyDatabaseSerializer
-    permission_classes = AbstractViewSet.permission_classes + []
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.create()
-        return Response(serializer.data)
 
 
-class ImportCompanyDatabaseViewSet(AbstractViewSet):
+class ImportCompanyDatabaseViewSet(UnifiedImportViewSet):
     serializer_class = ImportCompanyDatabaseSerializer
-    permission_classes = AbstractViewSet.permission_classes + []
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.create()
-        return Response(serializer.data)
 
 
 class ImportUnifiedDataProviderViewSet(AbstractViewSet):
     serializer_class = ImportUnifiedDataProviderSerializer
-    permission_classes = AbstractViewSet.permission_classes + []
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
 
 
 class TestCertificateViewSet(AbstractViewSet):

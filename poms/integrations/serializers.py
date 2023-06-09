@@ -95,10 +95,11 @@ from poms.integrations.models import (
 )
 from poms.integrations.providers.base import ProviderException, get_provider
 from poms.integrations.tasks import (
-    download_currency_cbond,
     download_instrument,
     download_unified_data,
     export_instrument_finmars_database,
+    export_currency_finmars_database,
+    export_company_finmars_database,
     test_certificate,
 )
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
@@ -1350,14 +1351,14 @@ class ImportCompanyEntry(object):
         self,
         master_user=None,
         member=None,
-        company_code=None,
+        company_id=None,
         task=None,
         task_result_overrides=None,
         errors=None,
     ):
         self.master_user = master_user
         self.member = member
-        self.company_code = company_code
+        self.company_id = company_id
         self.task = task
         self._task_object = None
         self.task_result_overrides = task_result_overrides
@@ -1479,8 +1480,8 @@ class ImportInstrumentSerializer(serializers.Serializer):
         attrs["task_result_overrides"] = task_result_overrides
         return attrs
 
-    def create(self, validated_data):
-        task_result_overrides = validated_data.get("task_result_overrides", None)
+    def create(self, validated_data: dict) -> ImportInstrumentEntry:
+        task_result_overrides = validated_data.get("task_result_overrides")
         instance = ImportInstrumentEntry(**validated_data)
         if instance.task:
             task, instrument, errors = download_instrument(
@@ -1511,7 +1512,8 @@ class ImportInstrumentSerializer(serializers.Serializer):
             fields = obj.task_object.options_object["fields"]
             result_object = obj.task_object.result_object
             return {k: v for k, v in result_object.items() if k in fields}
-        return {}
+        else:
+            return {}
 
 
 class ImportInstrumentDatabaseSerializer(serializers.Serializer):
@@ -1527,14 +1529,14 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
 
     errors = serializers.ReadOnlyField()
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict) -> ImportInstrumentEntry:
         instance = ImportInstrumentEntry(**validated_data)
 
         task = CeleryTask.objects.create(
             master_user=instance.master_user,
             member=instance.member,
             verbose_name="Download Instrument From Finmars Database",
-            type="download_instrument_from_finmars_database",
+            type="export_instrument_from_finmars_database",
         )
         task.options_object = {
             "reference": instance.instrument_code,
@@ -1561,52 +1563,72 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
 class ImportCurrencyDatabaseSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
-    currency_code = serializers.CharField(required=True, initial="USD")
+    currency_code = serializers.CharField(required=True)
     task = serializers.IntegerField(required=False, allow_null=True)
     result_id = serializers.IntegerField(required=False, allow_null=True)
 
     errors = serializers.ReadOnlyField()
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict) -> ImportCurrencyEntry:
         instance = ImportCurrencyEntry(**validated_data)
 
-        task, errors = download_currency_cbond(
-            currency_code=instance.currency_code,
+        task = CeleryTask.objects.create(
             master_user=instance.master_user,
             member=instance.member,
+            verbose_name="Download Currency From Finmars Database",
+            type="export_currency_finmars_database",
         )
+        task.options_object = {
+            "code": instance.currency_code,
+        }
+        task.save()
+
+        _l.info(f"{self.__class__.__name__} created task.id={task.id}")
+
+        export_currency_finmars_database(task.id)
+
+        if task.result_object:
+            instance.result_id = task.result_object.get("currency_id")
+        if task.error_message:
+            instance.errors = task.error_message
+
         instance.task_object = task
-        instance.errors = errors
-
-        if task and task.result_object:
-            instance.result_id = task.result_object["currency_id"]
-
         return instance
 
 
 class ImportCompanyDatabaseSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
-    company_code = serializers.CharField(required=True)
+    company_id = serializers.CharField(required=True)
     task = serializers.IntegerField(required=False, allow_null=True)
     result_id = serializers.IntegerField(required=False, allow_null=True)
 
     errors = serializers.ReadOnlyField()
 
-    def create(self, validated_data):
+    def create(self, validated_data: dict) -> ImportCompanyEntry:
         instance = ImportCompanyEntry(**validated_data)
 
-        task, errors = download_currency_cbond(
-            currency_code=instance.company_code,
+        task = CeleryTask.objects.create(
             master_user=instance.master_user,
             member=instance.member,
+            verbose_name="Download Company From Finmars Database",
+            type="export_company_finmars_database",
         )
+        task.options_object = {
+            "company_id": instance.company_id,
+        }
+        task.save()
+
+        _l.info(f"{self.__class__.__name__} created task.id={task.id}")
+
+        export_company_finmars_database(task.id)
+
+        if task.result_object:
+            instance.result_id = task.result_object.get("company_id")
+        if task.error_message:
+            instance.errors = task.error_message
+
         instance.task_object = task
-        instance.errors = errors
-
-        if task and task.result_object:
-            instance.result_id = task.result_object["currency_id"]
-
         return instance
 
 

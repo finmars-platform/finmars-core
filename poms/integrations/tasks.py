@@ -4588,3 +4588,145 @@ def complex_transaction_csv_file_import_by_procedure_json(
 
         procedure_instance.status = RequestDataFileProcedureInstance.STATUS_ERROR
         procedure_instance.save()
+
+
+def export_currency_finmars_database(task_id: int):
+    func = "export_currency_finmars_database"
+    _l.info(f"{func} started, task_id={task_id}")
+
+    try:
+        task = CeleryTask.objects.get(id=task_id)
+    except CeleryTask.DoesNotExist:
+        _l.error(f"{func} no task with id={task_id}!")
+        return
+
+    if not task.options_object:
+        err_msg = f"{func} task id={task_id} has no options with currency data"
+        _l.error(err_msg)
+        update_task_with_error(task, err_msg)
+        return
+
+    callback_url = (
+        f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
+        f"/api/instruments/fdb-create-from-callback/"
+    )
+    options = {
+        "data": task.options_object,
+        "request_id": task.pk,
+        "base_api_url": settings.BASE_API_URL,
+        "callback_url": callback_url,
+    }
+    task.options_object = options
+    task.save()
+
+    _l.info(f"{func} request_options={options}")
+
+    try:
+        monad: Monad = DatabaseService().get_task("currency", options)
+
+        if monad.status == MonadStatus.DATA_READY:
+            _l.info(f"{func} received data={monad.data}")
+
+            update_task_with_database_data(
+                data=monad.data,
+                task=task,
+                new_status=CeleryTask.STATUS_DONE,
+            )
+
+        elif monad.status == MonadStatus.TASK_READY:
+            _l.info(f"{func} received task_id={monad.task_id}")
+
+            update_task_with_simple_instrument(
+                remote_task_id=monad.task_id,
+                task=task,
+                new_status=CeleryTask.STATUS_PENDING,
+            )
+
+        else:
+            err_msg = f"{func} received error={monad.message}"
+            _l.error(err_msg)
+            update_task_with_error(task, err_msg)
+
+    except Exception as e:
+        err_msg = f"{func} unexpected error={repr(e)} trace={traceback.format_exc()}"
+        _l.error(err_msg)
+        update_task_with_error(task, err_msg)
+
+
+@shared_task(name="integrations.download_instrument_finmars_database_async", bind=True)
+def download_currency_finmars_database_async(self, task_id):
+    _l.info(f"download_currency_finmars_database_async {task_id}")
+
+    export_currency_finmars_database(task_id)
+
+
+def export_company_finmars_database(task_id: int):
+    func = "export_company_finmars_database"
+    _l.info(f"{func} started, task_id={task_id}")
+
+    raise  NotImplementedError("export_company_finmars_database")
+
+    # try:
+    #     task = CeleryTask.objects.get(id=task_id)
+    # except CeleryTask.DoesNotExist:
+    #     _l.error(f"{func} no task with id={task_id}!")
+    #     return
+    #
+    # if not task.options_object:
+    #     err_msg = f"{func} task id={task_id} has no options with currency data"
+    #     _l.error(err_msg)
+    #     update_task_with_error(task, err_msg)
+    #     return
+    #
+    # callback_url = (
+    #     f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
+    #     f"/api/instruments/fdb-create-from-callback/"
+    # )
+    # options = {
+    #     "data": task.options_object,
+    #     "request_id": task.pk,
+    #     "base_api_url": settings.BASE_API_URL,
+    #     "callback_url": callback_url,
+    # }
+    # task.options_object = options
+    # task.save()
+    #
+    # _l.info(f"{func} request_options={options}")
+    #
+    # try:
+    #     monad: Monad = DatabaseService().get_task("currency", options)
+    #
+    #     if monad.status == MonadStatus.DATA_READY:
+    #         _l.info(f"{func} received data={monad.data}")
+    #
+    #         update_task_with_database_data(
+    #             data=monad.data,
+    #             task=task,
+    #             new_status=CeleryTask.STATUS_DONE,
+    #         )
+    #
+    #     elif monad.status == MonadStatus.TASK_READY:
+    #         _l.info(f"{func} received task_id={monad.task_id}")
+    #
+    #         update_task_with_simple_instrument(
+    #             remote_task_id=monad.task_id,
+    #             task=task,
+    #             new_status=CeleryTask.STATUS_PENDING,
+    #         )
+    #
+    #     else:
+    #         err_msg = f"{func} received error={monad.message}"
+    #         _l.error(err_msg)
+    #         update_task_with_error(task, err_msg)
+    #
+    # except Exception as e:
+    #     err_msg = f"{func} unexpected error={repr(e)} trace={traceback.format_exc()}"
+    #     _l.error(err_msg)
+    #     update_task_with_error(task, err_msg)
+
+
+@shared_task(name="integrations.download_instrument_finmars_database_async", bind=True)
+def download_company_finmars_database_async(self, task_id):
+    _l.info(f"download_company_finmars_database_async {task_id}")
+
+    export_company_finmars_database(task_id)

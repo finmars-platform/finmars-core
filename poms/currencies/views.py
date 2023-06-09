@@ -30,7 +30,7 @@ from poms.currencies.serializers import (
     CurrencyLightSerializer,
     CurrencySerializer,
 )
-from poms.instruments.models import PricingPolicy
+# from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet
 from poms.users.filters import OwnerByMasterUserFilter
@@ -248,56 +248,56 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
         return Response(result)
 
 # DEPRECATED task: FN-1736
-# class CurrencyDatabaseSearchViewSet(APIView):
-#     """
-#     Provides Currency info from Finmars-Database API based on CBOND's data
-#     """
-#
-#     permission_classes = []
-#
-#     # @swagger_auto_schema(
-#     #     tags=["Currencies"],
-#     #     operation_description="Provides Currency info based on CBOND's data",
-#     #     request_body=CurrencyDatabaseSearchRequestSerializer,
-#     #     responses={200: CurrencyDatabaseSearchResponseSerializer()},
-#     # )
-#
-#     def _prepare_response(self, results) -> Response:
-#         response_data = {
-#             "count": len(results),
-#             "next": None,
-#             "previous": None,
-#             "results": results,
-#         }
-#         return Response(CurrencyDatabaseSearchResponseSerializer(response_data).data)
-#
-#     def get(self, request):
-#         """
-#         Load all currencies items, and then filter them according to params
-#         If name is given in params, then all currency fields will be filtered
-#         to contain name value as substring
-#         """
-#
-#         log = f"{self.__class__.__name__}"
-#
-#         serializer = CurrencyDatabaseSearchRequestSerializer(data=request.query_params)
-#         serializer.is_valid(raise_exception=True)
-#         params = dict(serializer.validated_data)
-#
-#         _l.info(f"{log} currency params={params}")
-#
-#         monad: Monad = DatabaseService().get_results("currency", request_params=params)
-#
-#         results = monad.data.get("results", []) if monad.data else []
-#
-#         if monad.status != MonadStatus.DATA_READY:
-#             _l.error(f"{log} monad.status={monad.status} monad.message={monad.message}")
-#             return self._prepare_response([])
-#
-#         _l.info(f"{log} len(results)={len(results)}")
-#
-#         filtered_results = serializer.filter_results(results)
-#
-#         _l.info(f"{log} len(filtered_results)={len(filtered_results)}")
-#
-#         return self._prepare_response(filtered_results)
+class CurrencyDatabaseSearchViewSet(APIView):
+    """
+    Provides Currency info from Finmars-Database API based on CBOND's data
+    """
+
+    permission_classes = []
+
+    # @swagger_auto_schema(
+    #     tags=["Currencies"],
+    #     operation_description="Provides Currency info based on CBOND's data",
+    #     request_body=CurrencyDatabaseSearchRequestSerializer,
+    #     responses={200: CurrencyDatabaseSearchResponseSerializer()},
+    # )
+
+    def _prepare_response(self, results) -> Response:
+        response_data = {
+            "count": len(results),
+            "next": None,
+            "previous": None,
+            "results": results,
+        }
+        return Response(CurrencyDatabaseSearchResponseSerializer(response_data).data)
+
+    def get(self, request):
+        """
+        Load all currencies items, and then filter them according to params
+        If name is given in params, then all currency fields will be filtered
+        to contain name value as substring
+        """
+
+        log = f"{self.__class__.__name__}"
+
+        serializer = CurrencyDatabaseSearchRequestSerializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        params = dict(serializer.validated_data)
+
+        _l.info(f"{log} currency params={params}")
+
+        monad: Monad = DatabaseService().get_results("currency", request_params=params)
+
+        results = monad.data.get("results", []) if monad.data else []
+
+        if monad.status != MonadStatus.DATA_READY:
+            _l.error(f"{log} monad.status={monad.status} monad.message={monad.message}")
+            return self._prepare_response([])
+
+        _l.info(f"{log} len(results)={len(results)}")
+
+        filtered_results = serializer.filter_results(results)
+
+        _l.info(f"{log} len(filtered_results)={len(filtered_results)}")
+
+        return self._prepare_response(filtered_results)

@@ -14,6 +14,7 @@ SERVICE_URLS = {
     "instrument": f"{settings.FINMARS_DATABASE_URL}{V1}export/instrument",
     "instrument-narrow": f"{settings.FINMARS_DATABASE_URL}{V1}instrument-narrow",
     "currency": f"{settings.FINMARS_DATABASE_URL}{V1}currency",
+    "company": f"{settings.FINMARS_DATABASE_URL}{V1}company",
 }
 
 
