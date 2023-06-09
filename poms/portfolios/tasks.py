@@ -597,27 +597,29 @@ def calculate_portfolio_register_price_history(self, task_id):
 
                     # principal_price = nav / (registry_record.n_shares_previous_day
                     # + registry_record.n_shares_added)
-                    principal_price = nav / registry_record.rolling_shares_of_the_day
 
-                    for pricing_policy in pricing_policies:
-                        try:
-                            price_history = PriceHistory.objects.get(
-                                instrument=portfolio_register.linked_instrument,
-                                date=date,
-                                pricing_policy=pricing_policy,
-                            )
-                        except Exception:
-                            price_history = PriceHistory(
-                                instrument=portfolio_register.linked_instrument,
-                                date=date,
-                                pricing_policy=pricing_policy,
-                            )
+                    if registry_record.rolling_shares_of_the_day != 0:
+                        principal_price = nav / registry_record.rolling_shares_of_the_day
 
-                        price_history.nav = nav
-                        price_history.cash_flow = cash_flow
-                        price_history.principal_price = principal_price
+                        for pricing_policy in pricing_policies:
+                            try:
+                                price_history = PriceHistory.objects.get(
+                                    instrument=portfolio_register.linked_instrument,
+                                    date=date,
+                                    pricing_policy=pricing_policy,
+                                )
+                            except Exception:
+                                price_history = PriceHistory(
+                                    instrument=portfolio_register.linked_instrument,
+                                    date=date,
+                                    pricing_policy=pricing_policy,
+                                )
 
-                        price_history.save()
+                            price_history.nav = nav
+                            price_history.cash_flow = cash_flow
+                            price_history.principal_price = principal_price
+
+                            price_history.save()
 
                     count = count + 1
 
