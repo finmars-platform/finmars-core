@@ -1,89 +1,162 @@
-from __future__ import unicode_literals, print_function
-
+import json
 import logging
+import time
 
 import django_filters
-from celery.result import AsyncResult
 from django.conf import settings
 from django.db.models import Prefetch
 from django.http import HttpResponse
-from django_filters.rest_framework import FilterSet, DjangoFilterBackend
-from rest_framework.exceptions import ValidationError
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from poms.accounts.models import Account, AccountType
+import requests
+from celery.result import AsyncResult
+
 from poms.celery_tasks.models import CeleryTask
-from poms.common.filters import CharFilter,  NoOpFilter, \
-    ModelExtMultipleChoiceFilter, ByIdFilterBackend
-from poms.common.mixins import UpdateModelMixinExt, DestroyModelFakeMixin, BulkModelMixin
+from poms.common.filters import (
+    ByIdFilterBackend,
+    CharFilter,
+    ModelExtMultipleChoiceFilter,
+    NoOpFilter,
+)
+from poms.common.mixins import (
+    BulkModelMixin,
+    DestroyModelFakeMixin,
+    UpdateModelMixinExt,
+)
+from poms.common.storage import get_storage
 from poms.common.utils import datetime_now
-from poms.common.views import AbstractViewSet, AbstractModelViewSet, AbstractReadOnlyModelViewSet, \
-    AbstractClassModelViewSet, AbstractAsyncViewSet, AbstractApiView
-from poms.counterparties.models import Counterparty, Responsible
+from poms.common.views import (
+    AbstractApiView,
+    AbstractAsyncViewSet,
+    AbstractClassModelViewSet,
+    AbstractModelViewSet,
+    AbstractReadOnlyModelViewSet,
+    AbstractViewSet,
+)
 from poms.currencies.models import Currency
-from poms.instruments.models import InstrumentType, AccrualCalculationModel, Periodicity, Instrument, PaymentSizeDetail, \
-    PricingPolicy, PricingCondition
-from poms.integrations.filters import TaskFilter, InstrumentAttributeValueMappingObjectPermissionFilter, \
-    InstrumentTypeMappingObjectPermissionFilter, AccountMappingObjectPermissionFilter, \
-    InstrumentMappingObjectPermissionFilter, CounterpartyMappingObjectPermissionFilter, \
-    ResponsibleMappingObjectPermissionFilter, PortfolioMappingObjectPermissionFilter, \
-    Strategy1MappingObjectPermissionFilter, Strategy2MappingObjectPermissionFilter, \
-    Strategy3MappingObjectPermissionFilter, AccountTypeMappingObjectPermissionFilter
-from poms.integrations.models import ImportConfig, InstrumentDownloadScheme, ProviderClass, \
-    FactorScheduleDownloadMethod, AccrualScheduleDownloadMethod, PriceDownloadScheme, CurrencyMapping, \
-    InstrumentTypeMapping, InstrumentAttributeValueMapping, AccrualCalculationModelMapping, PeriodicityMapping, \
-    InstrumentDownloadSchemeAttribute, AccountMapping, InstrumentMapping, CounterpartyMapping, \
-    ResponsibleMapping, PortfolioMapping, Strategy1Mapping, Strategy2Mapping, Strategy3Mapping, \
-    DailyPricingModelMapping, \
-    PaymentSizeDetailMapping, PriceDownloadSchemeMapping, ComplexTransactionImportScheme, PortfolioClassifierMapping, \
-    AccountClassifierMapping, CounterpartyClassifierMapping, ResponsibleClassifierMapping, PricingPolicyMapping, \
-    InstrumentClassifierMapping, AccountTypeMapping, BloombergDataProviderCredential, PricingConditionMapping, \
-    TransactionFileResult, DataProvider
-from poms.integrations.serializers import ImportConfigSerializer, ImportInstrumentSerializer, \
-    InstrumentDownloadSchemeSerializer, ProviderClassSerializer, \
-    FactorScheduleDownloadMethodSerializer, AccrualScheduleDownloadMethodSerializer, PriceDownloadSchemeSerializer, \
-    CurrencyMappingSerializer, InstrumentTypeMappingSerializer, InstrumentAttributeValueMappingSerializer, \
-    AccrualCalculationModelMappingSerializer, PeriodicityMappingSerializer, \
-    ComplexTransactionCsvFileImportSerializer, AccountMappingSerializer, \
-    InstrumentMappingSerializer, CounterpartyMappingSerializer, ResponsibleMappingSerializer, \
-    PortfolioMappingSerializer, \
-    Strategy1MappingSerializer, Strategy2MappingSerializer, Strategy3MappingSerializer, \
-    DailyPricingModelMappingSerializer, PaymentSizeDetailMappingSerializer, PriceDownloadSchemeMappingSerializer, \
-    ComplexTransactionImportSchemeSerializer, PortfolioClassifierMappingSerializer, AccountClassifierMappingSerializer, \
-    CounterpartyClassifierMappingSerializer, ResponsibleClassifierMappingSerializer, PricingPolicyMappingSerializer, \
-    InstrumentClassifierMappingSerializer, AccountTypeMappingSerializer, TestCertificateSerializer, \
-    ComplexTransactionImportSchemeLightSerializer, BloombergDataProviderCredentialSerializer, \
-    PricingConditionMappingSerializer, TransactionFileResultSerializer, DataProviderSerializer, \
-    InstrumentDownloadSchemeLightSerializer, ImportInstrumentDatabaseSerializer, ImportUnifiedDataProviderSerializer, \
-    ImportCurrencyCbondsSerializer
-from poms.integrations.tasks import complex_transaction_csv_file_import_parallel, \
-    complex_transaction_csv_file_import_validate_parallel
-from poms.obj_attrs.models import GenericAttributeType
-from poms.portfolios.models import Portfolio
+from poms.instruments.models import (
+    AccrualCalculationModel,
+    PaymentSizeDetail,
+    Periodicity,
+    PricingCondition,
+    PricingPolicy,
+)
+from poms.integrations.filters import (
+    AccountMappingObjectPermissionFilter,
+    AccountTypeMappingObjectPermissionFilter,
+    CounterpartyMappingObjectPermissionFilter,
+    InstrumentAttributeValueMappingObjectPermissionFilter,
+    InstrumentMappingObjectPermissionFilter,
+    InstrumentTypeMappingObjectPermissionFilter,
+    PortfolioMappingObjectPermissionFilter,
+    ResponsibleMappingObjectPermissionFilter,
+    Strategy1MappingObjectPermissionFilter,
+    Strategy2MappingObjectPermissionFilter,
+    Strategy3MappingObjectPermissionFilter,
+)
+from poms.integrations.models import (
+    AccountClassifierMapping,
+    AccountMapping,
+    AccountTypeMapping,
+    AccrualCalculationModelMapping,
+    AccrualScheduleDownloadMethod,
+    BloombergDataProviderCredential,
+    ComplexTransactionImportScheme,
+    CounterpartyClassifierMapping,
+    CounterpartyMapping,
+    CurrencyMapping,
+    DailyPricingModelMapping,
+    DataProvider,
+    FactorScheduleDownloadMethod,
+    ImportConfig,
+    InstrumentAttributeValueMapping,
+    InstrumentClassifierMapping,
+    InstrumentDownloadScheme,
+    InstrumentDownloadSchemeAttribute,
+    InstrumentMapping,
+    InstrumentTypeMapping,
+    PaymentSizeDetailMapping,
+    PeriodicityMapping,
+    PortfolioClassifierMapping,
+    PortfolioMapping,
+    PriceDownloadScheme,
+    PriceDownloadSchemeMapping,
+    PricingConditionMapping,
+    PricingPolicyMapping,
+    ProviderClass,
+    ResponsibleClassifierMapping,
+    ResponsibleMapping,
+    Strategy1Mapping,
+    Strategy2Mapping,
+    Strategy3Mapping,
+    TransactionFileResult,
+)
+from poms.integrations.serializers import (
+    AccountClassifierMappingSerializer,
+    AccountMappingSerializer,
+    AccountTypeMappingSerializer,
+    AccrualCalculationModelMappingSerializer,
+    AccrualScheduleDownloadMethodSerializer,
+    BloombergDataProviderCredentialSerializer,
+    ComplexTransactionCsvFileImportSerializer,
+    ComplexTransactionImportSchemeLightSerializer,
+    ComplexTransactionImportSchemeSerializer,
+    CounterpartyClassifierMappingSerializer,
+    CounterpartyMappingSerializer,
+    CurrencyMappingSerializer,
+    DailyPricingModelMappingSerializer,
+    DataProviderSerializer,
+    FactorScheduleDownloadMethodSerializer,
+    ImportCompanyDatabaseSerializer,
+    ImportConfigSerializer,
+    ImportCurrencyDatabaseSerializer,
+    ImportInstrumentDatabaseSerializer,
+    ImportInstrumentSerializer,
+    ImportUnifiedDataProviderSerializer,
+    InstrumentAttributeValueMappingSerializer,
+    InstrumentClassifierMappingSerializer,
+    InstrumentDownloadSchemeLightSerializer,
+    InstrumentDownloadSchemeSerializer,
+    InstrumentMappingSerializer,
+    InstrumentTypeMappingSerializer,
+    PaymentSizeDetailMappingSerializer,
+    PeriodicityMappingSerializer,
+    PortfolioClassifierMappingSerializer,
+    PortfolioMappingSerializer,
+    PriceDownloadSchemeMappingSerializer,
+    PriceDownloadSchemeSerializer,
+    PricingConditionMappingSerializer,
+    PricingPolicyMappingSerializer,
+    ProviderClassSerializer,
+    ResponsibleClassifierMappingSerializer,
+    ResponsibleMappingSerializer,
+    Strategy1MappingSerializer,
+    Strategy2MappingSerializer,
+    Strategy3MappingSerializer,
+    TestCertificateSerializer,
+    TransactionFileResultSerializer,
+)
+from poms.integrations.tasks import (
+    complex_transaction_csv_file_import_parallel,
+    complex_transaction_csv_file_import_validate_parallel,
+)
 from poms.procedures.models import RequestDataFileProcedureInstance
-from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.system_messages.handlers import send_system_message
 from poms.transaction_import.handlers import TransactionImportProcess
 from poms.transaction_import.tasks import transaction_import
 from poms.users.filters import OwnerByMasterUserFilter
-from poms.users.models import Member, MasterUser
-from poms.users.permissions import SuperUserOrReadOnly, SuperUserOnly
+from poms.users.models import MasterUser
+from poms.users.permissions import SuperUserOnly, SuperUserOrReadOnly
 
-_l = logging.getLogger('poms.integrations')
-
-from rest_framework import status
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.decorators import action
-
-import requests
-import json
-import time
-
-from poms.common.storage import get_storage
+_l = logging.getLogger("poms.integrations")
 
 storage = get_storage()
 
@@ -103,8 +176,13 @@ class AccrualScheduleDownloadMethodViewSet(AbstractClassModelViewSet):
     serializer_class = AccrualScheduleDownloadMethodSerializer
 
 
-class BloombergDataProviderCredentialViewSet(AbstractApiView, UpdateModelMixinExt, DestroyModelFakeMixin,
-                                             BulkModelMixin, ModelViewSet):
+class BloombergDataProviderCredentialViewSet(
+    AbstractApiView,
+    UpdateModelMixinExt,
+    DestroyModelFakeMixin,
+    BulkModelMixin,
+    ModelViewSet,
+):
     queryset = BloombergDataProviderCredential.objects
     serializer_class = BloombergDataProviderCredentialSerializer
     permission_classes = AbstractModelViewSet.permission_classes + [
@@ -147,31 +225,39 @@ class InstrumentDownloadSchemeFilterSet(FilterSet):
 
 class InstrumentDownloadSchemeViewSet(AbstractModelViewSet):
     queryset = InstrumentDownloadScheme.objects.select_related(
-        'provider', 'payment_size_detail', 'daily_pricing_model', 'factor_schedule_method',
-        'accrual_calculation_schedule_method',
+        "provider",
+        "payment_size_detail",
+        "daily_pricing_model",
+        "factor_schedule_method",
+        "accrual_calculation_schedule_method",
     ).prefetch_related(
-        'inputs',
+        "inputs",
         Prefetch(
-            'attributes',
-            queryset=InstrumentDownloadSchemeAttribute.objects.select_related('attribute_type')
-        )
+            "attributes",
+            queryset=InstrumentDownloadSchemeAttribute.objects.select_related(
+                "attribute_type"
+            ),
+        ),
     )
     serializer_class = InstrumentDownloadSchemeSerializer
-    permission_classes = AbstractModelViewSet.permission_classes + [
-
-    ]
+    permission_classes = AbstractModelViewSet.permission_classes + []
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
     filter_class = InstrumentDownloadSchemeFilterSet
     ordering_fields = [
-        'scheme_name',
-        'provider', 'provider__name',
+        "scheme_name",
+        "provider",
+        "provider__name",
     ]
 
-    @action(detail=False, methods=['get'], url_path='light', serializer_class=InstrumentDownloadSchemeLightSerializer)
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="light",
+        serializer_class=InstrumentDownloadSchemeLightSerializer,
+    )
     def list_light(self, request, *args, **kwargs):
-
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
@@ -180,22 +266,22 @@ class InstrumentDownloadSchemeViewSet(AbstractModelViewSet):
 
         return result
 
+
 # DEPRECATED
 class InstrumentDownloadSchemeLightViewSet(AbstractModelViewSet):
     queryset = InstrumentDownloadScheme.objects.select_related(
-        'provider',
+        "provider",
     )
     serializer_class = InstrumentDownloadSchemeLightSerializer
-    permission_classes = AbstractModelViewSet.permission_classes + [
-
-    ]
+    permission_classes = AbstractModelViewSet.permission_classes + []
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
     filter_class = InstrumentDownloadSchemeFilterSet
     ordering_fields = [
-        'scheme_name',
-        'provider', 'provider__name',
+        "scheme_name",
+        "provider",
+        "provider__name",
     ]
 
 
@@ -210,9 +296,7 @@ class PriceDownloadSchemeFilterSet(FilterSet):
 
 
 class PriceDownloadSchemeViewSet(AbstractModelViewSet):
-    queryset = PriceDownloadScheme.objects.select_related(
-        'provider'
-    )
+    queryset = PriceDownloadScheme.objects.select_related("provider")
     serializer_class = PriceDownloadSchemeSerializer
     # permission_classes = AbstractModelViewSet.permission_classes + [
     #     SuperUserOrReadOnly,
@@ -222,12 +306,11 @@ class PriceDownloadSchemeViewSet(AbstractModelViewSet):
     ]
     filter_class = PriceDownloadSchemeFilterSet
     ordering_fields = [
-        'scheme_name',
-        'provider', 'provider__name',
+        "scheme_name",
+        "provider",
+        "provider__name",
     ]
-    permission_classes = AbstractModelViewSet.permission_classes + [
-
-    ]
+    permission_classes = AbstractModelViewSet.permission_classes + []
 
 
 class AbstractMappingFilterSet(FilterSet):
@@ -242,23 +325,26 @@ class AbstractMappingFilterSet(FilterSet):
 class AbstractMappingViewSet(AbstractModelViewSet):
     queryset = None
     serializer_class = None
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        SuperUserOrReadOnly
-    ]
+    permission_classes = AbstractModelViewSet.permission_classes + [SuperUserOrReadOnly]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
     filter_class = None
-    base_ordering_fields = ['provider', 'provider__name', 'value', 'content_object', ]
+    base_ordering_fields = [
+        "provider",
+        "provider__name",
+        "value",
+        "content_object",
+    ]
     ordering_fields = [
-        'provider',
-        'provider__name',
-        'value',
-        'content_object',
-        'content_object__user_code',
-        'content_object__name',
-        'content_object__short_name',
-        'content_object__public_name',
+        "provider",
+        "provider__name",
+        "value",
+        "content_object",
+        "content_object__user_code",
+        "content_object__name",
+        "content_object__short_name",
+        "content_object__public_name",
     ]
 
 
@@ -271,7 +357,7 @@ class CurrencyMappingFilterSet(AbstractMappingFilterSet):
 
 class CurrencyMappingViewSet(AbstractMappingViewSet):
     queryset = CurrencyMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = CurrencyMappingSerializer
     filter_class = CurrencyMappingFilterSet
@@ -286,21 +372,20 @@ class PricingPolicyMappingFilterSet(AbstractMappingFilterSet):
 
 class PricingPolicyMappingViewSet(AbstractMappingViewSet):
     queryset = PricingPolicyMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = PricingPolicyMappingSerializer
     filter_class = PricingPolicyMappingFilterSet
 
 
 class AccountTypeMappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = AccountTypeMapping
 
 
 class AccountTypeMappingViewSet(AbstractMappingViewSet):
     queryset = AccountTypeMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = AccountTypeMappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -310,14 +395,13 @@ class AccountTypeMappingViewSet(AbstractMappingViewSet):
 
 
 class InstrumentTypeMappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = InstrumentTypeMapping
 
 
 class InstrumentTypeMappingViewSet(AbstractMappingViewSet):
     queryset = InstrumentTypeMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = InstrumentTypeMappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -327,14 +411,13 @@ class InstrumentTypeMappingViewSet(AbstractMappingViewSet):
 
 
 class InstrumentAttributeValueMappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = InstrumentAttributeValueMapping
 
 
 class InstrumentAttributeValueMappingViewSet(AbstractMappingViewSet):
     queryset = InstrumentAttributeValueMapping.objects.select_related(
-        'master_user', 'provider', 'content_object', 'classifier'
+        "master_user", "provider", "content_object", "classifier"
     )
     serializer_class = InstrumentAttributeValueMappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -344,7 +427,9 @@ class InstrumentAttributeValueMappingViewSet(AbstractMappingViewSet):
 
 
 class AccrualCalculationModelMappingFilterSet(AbstractMappingFilterSet):
-    content_object = django_filters.ModelMultipleChoiceFilter(queryset=AccrualCalculationModel.objects)
+    content_object = django_filters.ModelMultipleChoiceFilter(
+        queryset=AccrualCalculationModel.objects
+    )
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = AccrualCalculationModelMapping
@@ -352,14 +437,16 @@ class AccrualCalculationModelMappingFilterSet(AbstractMappingFilterSet):
 
 class AccrualCalculationModelMappingViewSet(AbstractMappingViewSet):
     queryset = AccrualCalculationModelMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = AccrualCalculationModelMappingSerializer
     filter_class = AccrualCalculationModelMappingFilterSet
 
 
 class PeriodicityMappingFilterSet(AbstractMappingFilterSet):
-    content_object = django_filters.ModelMultipleChoiceFilter(queryset=Periodicity.objects)
+    content_object = django_filters.ModelMultipleChoiceFilter(
+        queryset=Periodicity.objects
+    )
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = PeriodicityMapping
@@ -367,27 +454,25 @@ class PeriodicityMappingFilterSet(AbstractMappingFilterSet):
 
 class PeriodicityMappingViewSet(AbstractMappingViewSet):
     queryset = PeriodicityMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = PeriodicityMappingSerializer
     filter_class = PeriodicityMappingFilterSet
 
 
 class AccountMappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = AccountMapping
 
 
 class AccountClassifierMappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = AccountClassifierMapping
 
 
 class AccountMappingViewSet(AbstractMappingViewSet):
     queryset = AccountMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = AccountMappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -398,7 +483,7 @@ class AccountMappingViewSet(AbstractMappingViewSet):
 
 class AccountClassifierMappingViewSet(AbstractMappingViewSet):
     queryset = AccountClassifierMapping.objects.select_related(
-        'master_user', 'provider', 'content_object', 'attribute_type'
+        "master_user", "provider", "content_object", "attribute_type"
     )
     serializer_class = AccountClassifierMappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -408,14 +493,13 @@ class AccountClassifierMappingViewSet(AbstractMappingViewSet):
 
 
 class InstrumentMappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = InstrumentMapping
 
 
 class InstrumentMappingViewSet(AbstractMappingViewSet):
     queryset = InstrumentMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = InstrumentMappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -425,14 +509,13 @@ class InstrumentMappingViewSet(AbstractMappingViewSet):
 
 
 class InstrumentClassifierMappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = InstrumentClassifierMapping
 
 
 class InstrumentClassifierMappingViewSet(AbstractMappingViewSet):
     queryset = InstrumentClassifierMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = InstrumentClassifierMappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -442,20 +525,18 @@ class InstrumentClassifierMappingViewSet(AbstractMappingViewSet):
 
 
 class CounterpartyMappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = CounterpartyMapping
 
 
 class CounterpartyClassifierMappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = CounterpartyClassifierMapping
 
 
 class CounterpartyMappingViewSet(AbstractMappingViewSet):
     queryset = CounterpartyMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = CounterpartyMappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -466,7 +547,7 @@ class CounterpartyMappingViewSet(AbstractMappingViewSet):
 
 class CounterpartyClassifierMappingViewSet(AbstractMappingViewSet):
     queryset = CounterpartyClassifierMapping.objects.select_related(
-        'master_user', 'provider', 'content_object', 'attribute_type'
+        "master_user", "provider", "content_object", "attribute_type"
     )
     serializer_class = CounterpartyClassifierMappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -476,20 +557,18 @@ class CounterpartyClassifierMappingViewSet(AbstractMappingViewSet):
 
 
 class ResponsibleMappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = ResponsibleMapping
 
 
 class ResponsibleClassifierMappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = ResponsibleClassifierMapping
 
 
 class ResponsibleMappingViewSet(AbstractMappingViewSet):
     queryset = ResponsibleMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = ResponsibleMappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -500,7 +579,7 @@ class ResponsibleMappingViewSet(AbstractMappingViewSet):
 
 class ResponsibleClassifierMappingViewSet(AbstractMappingViewSet):
     queryset = ResponsibleClassifierMapping.objects.select_related(
-        'master_user', 'provider', 'content_object', 'attribute_type'
+        "master_user", "provider", "content_object", "attribute_type"
     )
     serializer_class = ResponsibleClassifierMappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -510,20 +589,18 @@ class ResponsibleClassifierMappingViewSet(AbstractMappingViewSet):
 
 
 class PortfolioMappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = PortfolioMapping
 
 
 class PortfolioClassifierMappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = PortfolioClassifierMapping
 
 
 class PortfolioMappingViewSet(AbstractMappingViewSet):
     queryset = PortfolioMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = PortfolioMappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -534,7 +611,7 @@ class PortfolioMappingViewSet(AbstractMappingViewSet):
 
 class PortfolioClassifierMappingViewSet(AbstractMappingViewSet):
     queryset = PortfolioClassifierMapping.objects.select_related(
-        'master_user', 'provider', 'content_object', 'attribute_type'
+        "master_user", "provider", "content_object", "attribute_type"
     )
     serializer_class = PortfolioClassifierMappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -544,14 +621,13 @@ class PortfolioClassifierMappingViewSet(AbstractMappingViewSet):
 
 
 class Strategy1MappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = Strategy1Mapping
 
 
 class Strategy1MappingViewSet(AbstractMappingViewSet):
     queryset = Strategy1Mapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = Strategy1MappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -561,14 +637,13 @@ class Strategy1MappingViewSet(AbstractMappingViewSet):
 
 
 class Strategy2MappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = Strategy2Mapping
 
 
 class Strategy2MappingViewSet(AbstractMappingViewSet):
     queryset = Strategy2Mapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = Strategy2MappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -578,14 +653,13 @@ class Strategy2MappingViewSet(AbstractMappingViewSet):
 
 
 class Strategy3MappingFilterSet(AbstractMappingFilterSet):
-
     class Meta(AbstractMappingFilterSet.Meta):
         model = Strategy3Mapping
 
 
 class Strategy3MappingViewSet(AbstractMappingViewSet):
     queryset = Strategy3Mapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = Strategy3MappingSerializer
     filter_backends = AbstractMappingViewSet.filter_backends + [
@@ -595,7 +669,9 @@ class Strategy3MappingViewSet(AbstractMappingViewSet):
 
 
 class DailyPricingModelMappingFilterSet(AbstractMappingFilterSet):
-    content_object = django_filters.ModelMultipleChoiceFilter(queryset=DailyPricingModelMapping.objects)
+    content_object = django_filters.ModelMultipleChoiceFilter(
+        queryset=DailyPricingModelMapping.objects
+    )
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = DailyPricingModelMapping
@@ -603,14 +679,16 @@ class DailyPricingModelMappingFilterSet(AbstractMappingFilterSet):
 
 class DailyPricingModelMappingViewSet(AbstractMappingViewSet):
     queryset = DailyPricingModelMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = DailyPricingModelMappingSerializer
     filter_class = DailyPricingModelMappingFilterSet
 
 
 class PaymentSizeDetailMappingFilterSet(AbstractMappingFilterSet):
-    content_object = django_filters.ModelMultipleChoiceFilter(queryset=PaymentSizeDetail.objects)
+    content_object = django_filters.ModelMultipleChoiceFilter(
+        queryset=PaymentSizeDetail.objects
+    )
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = PaymentSizeDetailMapping
@@ -618,14 +696,16 @@ class PaymentSizeDetailMappingFilterSet(AbstractMappingFilterSet):
 
 class PaymentSizeDetailMappingViewSet(AbstractMappingViewSet):
     queryset = PaymentSizeDetailMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = PaymentSizeDetailMappingSerializer
     filter_class = PaymentSizeDetailMappingFilterSet
 
 
 class PricingConditionMappingFilterSet(AbstractMappingFilterSet):
-    content_object = django_filters.ModelMultipleChoiceFilter(queryset=PricingCondition.objects)
+    content_object = django_filters.ModelMultipleChoiceFilter(
+        queryset=PricingCondition.objects
+    )
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = PricingConditionMapping
@@ -633,14 +713,16 @@ class PricingConditionMappingFilterSet(AbstractMappingFilterSet):
 
 class PricingConditionMappingViewSet(AbstractMappingViewSet):
     queryset = PricingConditionMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = PricingConditionMappingSerializer
     filter_class = PricingConditionMappingFilterSet
 
 
 class PriceDownloadSchemeMappingFilterSet(AbstractMappingFilterSet):
-    content_object = ModelExtMultipleChoiceFilter(model=PriceDownloadScheme, field_name='scheme_name')
+    content_object = ModelExtMultipleChoiceFilter(
+        model=PriceDownloadScheme, field_name="scheme_name"
+    )
 
     class Meta(AbstractMappingFilterSet.Meta):
         model = PriceDownloadSchemeMapping
@@ -648,20 +730,18 @@ class PriceDownloadSchemeMappingFilterSet(AbstractMappingFilterSet):
 
 class PriceDownloadSchemeMappingViewSet(AbstractMappingViewSet):
     queryset = PriceDownloadSchemeMapping.objects.select_related(
-        'master_user', 'provider', 'content_object'
+        "master_user", "provider", "content_object"
     )
     serializer_class = PriceDownloadSchemeMappingSerializer
     filter_class = PriceDownloadSchemeMappingFilterSet
     ordering_fields = AbstractMappingViewSet.base_ordering_fields + [
-        'content_object__scheme_name',
+        "content_object__scheme_name",
     ]
 
 
 class ImportInstrumentViewSet(AbstractViewSet):
     serializer_class = ImportInstrumentSerializer
-    permission_classes = AbstractViewSet.permission_classes + [
-
-    ]
+    permission_classes = AbstractViewSet.permission_classes + []
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -672,41 +752,47 @@ class ImportInstrumentViewSet(AbstractViewSet):
 
 class ImportInstrumentDatabaseViewSet(AbstractViewSet):
     serializer_class = ImportInstrumentDatabaseSerializer
-    permission_classes = AbstractViewSet.permission_classes + [
-
-    ]
+    permission_classes = AbstractViewSet.permission_classes + []
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.create()
         return Response(serializer.data)
 
 
-class ImportCurrencyCbondsViewSet(AbstractViewSet):
-    serializer_class = ImportCurrencyCbondsSerializer
-    permission_classes = AbstractViewSet.permission_classes + [
-
-    ]
+class ImportCurrencyDatabaseViewSet(AbstractViewSet):
+    serializer_class = ImportCurrencyDatabaseSerializer
+    permission_classes = AbstractViewSet.permission_classes + []
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.create()
+        return Response(serializer.data)
+
+
+class ImportCompanyDatabaseViewSet(AbstractViewSet):
+    serializer_class = ImportCompanyDatabaseSerializer
+    permission_classes = AbstractViewSet.permission_classes + []
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.create()
         return Response(serializer.data)
 
 
 class ImportUnifiedDataProviderViewSet(AbstractViewSet):
     serializer_class = ImportUnifiedDataProviderSerializer
-    permission_classes = AbstractViewSet.permission_classes + [
-
-    ]
+    permission_classes = AbstractViewSet.permission_classes + []
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
 
 class TestCertificateViewSet(AbstractViewSet):
     serializer_class = TestCertificateSerializer
@@ -731,10 +817,10 @@ class ComplexTransactionImportSchemeFilterSet(FilterSet):
         fields = []
 
 
-class ComplexTransactionImportSchemeViewSet(AbstractApiView, UpdateModelMixinExt, ModelViewSet):
-    permission_classes = [
-        IsAuthenticated
-    ]
+class ComplexTransactionImportSchemeViewSet(
+    AbstractApiView, UpdateModelMixinExt, ModelViewSet
+):
+    permission_classes = [IsAuthenticated]
     filter_backends = [
         ByIdFilterBackend,
         DjangoFilterBackend,
@@ -747,12 +833,16 @@ class ComplexTransactionImportSchemeViewSet(AbstractApiView, UpdateModelMixinExt
 
     filter_class = ComplexTransactionImportSchemeFilterSet
     ordering_fields = [
-        'scheme_name',
+        "scheme_name",
     ]
 
-    @action(detail=False, methods=['get'], url_path='light', serializer_class=ComplexTransactionImportSchemeLightSerializer)
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="light",
+        serializer_class=ComplexTransactionImportSchemeLightSerializer,
+    )
     def list_light(self, request, *args, **kwargs):
-
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
@@ -765,16 +855,14 @@ class ComplexTransactionImportSchemeViewSet(AbstractApiView, UpdateModelMixinExt
 class TransactionImportViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
 
-    permission_classes = AbstractModelViewSet.permission_classes + [
-    ]
+    permission_classes = AbstractModelViewSet.permission_classes + []
 
     def get_serializer_context(self):
         context = super(AbstractAsyncViewSet, self).get_serializer_context()
-        context['show_object_permissions'] = False
+        context["show_object_permissions"] = False
         return context
 
     def get_status(self, request, *args, **kwargs):
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
@@ -782,12 +870,13 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         task_id = instance.task_id
 
         if task_id:
-
             # res = AsyncResult(signer.unsign(task_id))
             res = AsyncResult(task_id)
 
             try:
-                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, celery_task_id=task_id)
+                celery_task = CeleryTask.objects.get(
+                    master_user=request.user.master_user, celery_task_id=task_id
+                )
             except CeleryTask.DoesNotExist:
                 celery_task = None
                 raise PermissionDenied()
@@ -795,48 +884,46 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
             st = time.perf_counter()
 
             if res.ready():
-
                 instance = res.result
                 if celery_task:
                     celery_task.finished_at = datetime_now()
                     celery_task.file_report_id = instance.stats_file_report
 
             else:
-
                 if res.result:
-
-                    if 'processed_rows' in res.result:
-                        instance.processed_rows = res.result['processed_rows']
-                    if 'total_rows' in res.result:
-                        instance.total_rows = res.result['total_rows']
+                    if "processed_rows" in res.result:
+                        instance.processed_rows = res.result["processed_rows"]
+                    if "total_rows" in res.result:
+                        instance.total_rows = res.result["total_rows"]
 
                     if celery_task:
-
                         celery_task_data = {}
 
-                        if 'total_rows' in res.result:
-                            celery_task_data["total_rows"] = res.result['total_rows']
+                        if "total_rows" in res.result:
+                            celery_task_data["total_rows"] = res.result["total_rows"]
 
-                        if 'processed_rows' in res.result:
-                            celery_task_data["processed_rows"] = res.result['processed_rows']
+                        if "processed_rows" in res.result:
+                            celery_task_data["processed_rows"] = res.result[
+                                "processed_rows"
+                            ]
 
-                        if 'scheme_name' in res.result:
-                            celery_task_data["scheme_name"] = res.result['scheme_name']
+                        if "scheme_name" in res.result:
+                            celery_task_data["scheme_name"] = res.result["scheme_name"]
 
-                        if 'file_name' in res.result:
-                            celery_task_data["file_name"] = res.result['file_name']
+                        if "file_name" in res.result:
+                            celery_task_data["file_name"] = res.result["file_name"]
 
                         celery_task.data = celery_task_data
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
-            print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
+            print("AsyncResult res.ready: %s" % (time.perf_counter() - st))
 
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
 
-            print('TASK RESULT %s' % res.result)
-            print('TASK STATUS %s' % res.status)
+            print("TASK RESULT %s" % res.result)
+            print("TASK STATUS %s" % res.status)
 
             if celery_task:
                 celery_task.task_status = res.status
@@ -849,11 +936,11 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         else:
-
-            return Response({"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def create(self, request, *args, **kwargs):
-
         st = time.perf_counter()
 
         serializer = self.get_serializer(data=request.data)
@@ -863,76 +950,96 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         # REFACTOR THIS
 
         options_object = {}
-        options_object['file_name'] = instance.file_name  # posiblly optional
-        options_object['file_path'] = instance.file_path
+        options_object["file_name"] = instance.file_name  # posiblly optional
+        options_object["file_path"] = instance.file_path
         # options_object['preprocess_file'] = instance.preprocess_file
-        options_object['scheme_id'] = instance.scheme.id
-        options_object['execution_context'] = None
+        options_object["scheme_id"] = instance.scheme.id
+        options_object["execution_context"] = None
 
         # _l.info('options_object %s' % options_object)
 
-        celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
-                                                member=request.user.member,
-                                                options_object=options_object,
-                                                verbose_name="Transaction Import",
-                                                type='transaction_import')
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            options_object=options_object,
+            verbose_name="Transaction Import",
+            type="transaction_import",
+        )
 
-        _l.info('celery_task %s created ' % celery_task.pk)
+        _l.info("celery_task %s created " % celery_task.pk)
 
-        send_system_message(master_user=request.user.master_user,
-                            performed_by='System',
-                            description='Member %s started Transaction Import (scheme %s)' % (
-                                request.user.member.username, instance.scheme.name))
+        send_system_message(
+            master_user=request.user.master_user,
+            performed_by="System",
+            description="Member %s started Transaction Import (scheme %s)"
+            % (request.user.member.username, instance.scheme.name),
+        )
 
         transaction_import.apply_async(kwargs={"task_id": celery_task.pk})
 
-        _l.info('ComplexTransactionCsvFileImportViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.info(
+            "ComplexTransactionCsvFileImportViewSet done: %s",
+            "{:3.3f}".format(time.perf_counter() - st),
+        )
 
-        return Response({"task_id": celery_task.pk, "task_status": celery_task.status}, status=status.HTTP_200_OK)
+        return Response(
+            {"task_id": celery_task.pk, "task_status": celery_task.status},
+            status=status.HTTP_200_OK,
+        )
 
-    @action(detail=False, methods=['post'], url_path='execute')
+    @action(detail=False, methods=["post"], url_path="execute")
     def execute(self, request, *args, **kwargs):
-
         st = time.perf_counter()
 
         _l.info("TransactionImportViewSet.execute")
         options_object = {}
         # options_object['file_name'] = request.data['file_name']
-        options_object['items'] = request.data.get('items', None)
-        options_object['file_path'] = request.data.get('file_path', None)
+        options_object["items"] = request.data.get("items", None)
+        options_object["file_path"] = request.data.get("file_path", None)
 
-        if options_object['file_path']:
-            options_object['filename'] = request.data['file_path'].split('/')[-1]  # TODO refactor to file_name
+        if options_object["file_path"]:
+            options_object["filename"] = request.data["file_path"].split("/")[
+                -1
+            ]  # TODO refactor to file_name
         else:
-            options_object['filename'] = None
-        options_object['scheme_user_code'] = request.data['scheme_user_code']
-        options_object['execution_context'] = None
+            options_object["filename"] = None
+        options_object["scheme_user_code"] = request.data["scheme_user_code"]
+        options_object["execution_context"] = None
 
         # _l.info('options_object %s' % options_object)
 
-        celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
-                                                member=request.user.member,
-                                                options_object=options_object,
-                                                verbose_name="Transaction Import",
-                                                type='transaction_import')
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            options_object=options_object,
+            verbose_name="Transaction Import",
+            type="transaction_import",
+        )
 
-        _l.info('celery_task %s created ' % celery_task.pk)
+        _l.info("celery_task %s created " % celery_task.pk)
 
-        send_system_message(master_user=request.user.master_user,
-                            performed_by='System',
-                            description='Member %s started Transaction Import (scheme %s)' % (
-                                request.user.member.username, options_object['scheme_user_code']))
+        send_system_message(
+            master_user=request.user.master_user,
+            performed_by="System",
+            description="Member %s started Transaction Import (scheme %s)"
+            % (request.user.member.username, options_object["scheme_user_code"]),
+        )
 
         transaction_import.apply_async(kwargs={"task_id": celery_task.pk})
 
-        _l.info('ComplexTransactionCsvFileImportViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.info(
+            "ComplexTransactionCsvFileImportViewSet done: %s",
+            "{:3.3f}".format(time.perf_counter() - st),
+        )
 
-        return Response({"task_id": celery_task.pk, "task_status": celery_task.status}, status=status.HTTP_200_OK)
+        return Response(
+            {"task_id": celery_task.pk, "task_status": celery_task.status},
+            status=status.HTTP_200_OK,
+        )
 
-    @action(detail=False, methods=['post'], url_path='dry-run')
+    @action(detail=False, methods=["post"], url_path="dry-run")
     def dry_run(self, request, *args, **kwargs):
-
-        _l.info('TransactionImportViewSet Dry Run')
+        _l.info("TransactionImportViewSet Dry Run")
 
         st = time.perf_counter()
 
@@ -943,21 +1050,23 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         # REFACTOR THIS
 
         options_object = {}
-        options_object['file_name'] = instance.file_name  # posiblly optional
-        options_object['file_path'] = instance.file_path
+        options_object["file_name"] = instance.file_name  # posiblly optional
+        options_object["file_path"] = instance.file_path
         # options_object['preprocess_file'] = instance.preprocess_file
-        options_object['scheme_id'] = instance.scheme.id
-        options_object['execution_context'] = None
+        options_object["scheme_id"] = instance.scheme.id
+        options_object["execution_context"] = None
 
-        _l.info('options_object %s' % options_object)
+        _l.info("options_object %s" % options_object)
 
-        celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
-                                                member=request.user.member,
-                                                options_object=options_object,
-                                                verbose_name="Transaction Import",
-                                                type='transaction_import')
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            options_object=options_object,
+            verbose_name="Transaction Import",
+            type="transaction_import",
+        )
 
-        _l.info('celery_task %s created ' % celery_task.pk)
+        _l.info("celery_task %s created " % celery_task.pk)
 
         task_result = transaction_import.apply(kwargs={"task_id": celery_task.pk})
 
@@ -971,15 +1080,28 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
         except Exception as e:
             error_message = str(e)
 
-        _l.info('ComplexTransaction Dry Run done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.info(
+            "ComplexTransaction Dry Run done: %s",
+            "{:3.3f}".format(time.perf_counter() - st),
+        )
 
         from poms.transactions.models import ComplexTransaction
-        complex_transactions = ComplexTransaction.objects.filter(linked_import_task=celery_task.pk).delete()
+
+        complex_transactions = ComplexTransaction.objects.filter(
+            linked_import_task=celery_task.pk
+        ).delete()
 
         storage.delete(instance.file_path)
 
-        return Response({"task_id": celery_task.pk, "task_status": celery_task.status, "result": result,
-                         "error_message": error_message})
+        return Response(
+            {
+                "task_id": celery_task.pk,
+                "task_status": celery_task.status,
+                "result": result,
+                "error_message": error_message,
+            }
+        )
+
 
 # DEPRECATED
 class ComplexTransactionImportSchemeLightViewSet(AbstractModelViewSet):
@@ -991,23 +1113,19 @@ class ComplexTransactionImportSchemeLightViewSet(AbstractModelViewSet):
     ]
     filter_class = ComplexTransactionImportSchemeFilterSet
     ordering_fields = [
-        'scheme_name',
+        "scheme_name",
     ]
-    permission_classes = AbstractModelViewSet.permission_classes + [
-
-    ]
+    permission_classes = AbstractModelViewSet.permission_classes + []
 
 
 class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
 
-    permission_classes = AbstractModelViewSet.permission_classes + [
-
-    ]
+    permission_classes = AbstractModelViewSet.permission_classes + []
 
     def get_serializer_context(self):
         context = super(AbstractAsyncViewSet, self).get_serializer_context()
-        context['show_object_permissions'] = False
+        context["show_object_permissions"] = False
         return context
 
     def create(self, request, *args, **kwargs):
@@ -1017,30 +1135,39 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
 
         if not instance.scheme.data_preprocess_expression:
             raise ValidationError(
-                {'data_preprocess_expression': 'data_preprocess_expression is required to preprocess file'})
+                {
+                    "data_preprocess_expression": "data_preprocess_expression is required to preprocess file"
+                }
+            )
 
         options_object = {}
-        options_object['file_name'] = instance.file_name
-        options_object['file_path'] = instance.file_path
-        options_object['scheme_id'] = instance.scheme.id
+        options_object["file_name"] = instance.file_name
+        options_object["file_path"] = instance.file_path
+        options_object["scheme_id"] = instance.scheme.id
         # options_object['preprocess_file'] = True
-        options_object['execution_context'] = None
+        options_object["execution_context"] = None
 
-        celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
-                                                member=request.user.member,
-                                                options_object=options_object,
-                                                verbose_name="Transaction Import",
-                                                type='transaction_import')
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            options_object=options_object,
+            verbose_name="Transaction Import",
+            type="transaction_import",
+        )
 
         transaction_import_process = TransactionImportProcess(task_id=celery_task.id)
 
         transaction_import_process.fill_with_raw_items()
         new_raw_items = transaction_import_process.whole_file_preprocess()
 
-        filename_without_ext = instance.file_name.split('.')[0]
+        filename_without_ext = instance.file_name.split(".")[0]
 
-        response = HttpResponse(new_raw_items, content_type='application/force-download')
-        response['Content-Disposition'] = 'attachment; filename=%s' % 'preprocessed_' + filename_without_ext + '.json'
+        response = HttpResponse(
+            new_raw_items, content_type="application/force-download"
+        )
+        response["Content-Disposition"] = (
+            "attachment; filename=%s" % "preprocessed_" + filename_without_ext + ".json"
+        )
 
         return response
 
@@ -1048,17 +1175,14 @@ class ComplexTransactionFilePreprocessViewSet(AbstractAsyncViewSet):
 class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
 
-    permission_classes = AbstractModelViewSet.permission_classes + [
-
-    ]
+    permission_classes = AbstractModelViewSet.permission_classes + []
 
     def get_serializer_context(self):
         context = super(AbstractAsyncViewSet, self).get_serializer_context()
-        context['show_object_permissions'] = False
+        context["show_object_permissions"] = False
         return context
 
     def get_status(self, request, *args, **kwargs):
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
@@ -1066,12 +1190,13 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         task_id = instance.task_id
 
         if task_id:
-
             # res = AsyncResult(signer.unsign(task_id))
             res = AsyncResult(task_id)
 
             try:
-                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, celery_task_id=task_id)
+                celery_task = CeleryTask.objects.get(
+                    master_user=request.user.master_user, celery_task_id=task_id
+                )
             except CeleryTask.DoesNotExist:
                 celery_task = None
                 raise PermissionDenied()
@@ -1079,48 +1204,46 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
             st = time.perf_counter()
 
             if res.ready():
-
                 instance = res.result
                 if celery_task:
                     celery_task.finished_at = datetime_now()
                     celery_task.file_report_id = instance.stats_file_report
 
             else:
-
                 if res.result:
-
-                    if 'processed_rows' in res.result:
-                        instance.processed_rows = res.result['processed_rows']
-                    if 'total_rows' in res.result:
-                        instance.total_rows = res.result['total_rows']
+                    if "processed_rows" in res.result:
+                        instance.processed_rows = res.result["processed_rows"]
+                    if "total_rows" in res.result:
+                        instance.total_rows = res.result["total_rows"]
 
                     if celery_task:
-
                         celery_task_data = {}
 
-                        if 'total_rows' in res.result:
-                            celery_task_data["total_rows"] = res.result['total_rows']
+                        if "total_rows" in res.result:
+                            celery_task_data["total_rows"] = res.result["total_rows"]
 
-                        if 'processed_rows' in res.result:
-                            celery_task_data["processed_rows"] = res.result['processed_rows']
+                        if "processed_rows" in res.result:
+                            celery_task_data["processed_rows"] = res.result[
+                                "processed_rows"
+                            ]
 
-                        if 'scheme_name' in res.result:
-                            celery_task_data["scheme_name"] = res.result['scheme_name']
+                        if "scheme_name" in res.result:
+                            celery_task_data["scheme_name"] = res.result["scheme_name"]
 
-                        if 'file_name' in res.result:
-                            celery_task_data["file_name"] = res.result['file_name']
+                        if "file_name" in res.result:
+                            celery_task_data["file_name"] = res.result["file_name"]
 
                         celery_task.data = celery_task_data
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
-            print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
+            print("AsyncResult res.ready: %s" % (time.perf_counter() - st))
 
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
 
-            print('TASK RESULT %s' % res.result)
-            print('TASK STATUS %s' % res.status)
+            print("TASK RESULT %s" % res.result)
+            print("TASK STATUS %s" % res.status)
 
             if celery_task:
                 celery_task.task_status = res.status
@@ -1133,11 +1256,11 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         else:
-
-            return Response({"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def create(self, request, *args, **kwargs):
-
         st = time.perf_counter()
 
         serializer = self.get_serializer(data=request.data)
@@ -1147,48 +1270,55 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
         # REFACTOR THIS
 
         options_object = {}
-        options_object['file_name'] = instance.file_name
-        options_object['file_path'] = instance.file_path
+        options_object["file_name"] = instance.file_name
+        options_object["file_path"] = instance.file_path
         # options_object['preprocess_file'] = instance.preprocess_file
-        options_object['scheme_id'] = instance.scheme.id
-        options_object['execution_context'] = None
+        options_object["scheme_id"] = instance.scheme.id
+        options_object["execution_context"] = None
 
         # _l.info('options_object %s' % options_object)
 
-        celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
-                                                member=request.user.member,
-                                                options_object=options_object,
-                                                verbose_name="Transaction Import",
-                                                type='transaction_import')
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            options_object=options_object,
+            verbose_name="Transaction Import",
+            type="transaction_import",
+        )
 
-        _l.info('celery_task %s created ' % celery_task.pk)
+        _l.info("celery_task %s created " % celery_task.pk)
 
-        send_system_message(master_user=request.user.master_user,
-                            performed_by='System',
-                            description='Member %s started Transaction Import (scheme %s)' % (
-                                request.user.member.username, instance.scheme.name))
+        send_system_message(
+            master_user=request.user.master_user,
+            performed_by="System",
+            description="Member %s started Transaction Import (scheme %s)"
+            % (request.user.member.username, instance.scheme.name),
+        )
 
         transaction_import.apply_async(kwargs={"task_id": celery_task.pk})
 
-        _l.info('ComplexTransactionCsvFileImportViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.info(
+            "ComplexTransactionCsvFileImportViewSet done: %s",
+            "{:3.3f}".format(time.perf_counter() - st),
+        )
 
-        return Response({"task_id": celery_task.pk, "task_status": celery_task.status}, status=status.HTTP_200_OK)
+        return Response(
+            {"task_id": celery_task.pk, "task_status": celery_task.status},
+            status=status.HTTP_200_OK,
+        )
 
 
 class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
     serializer_class = ComplexTransactionCsvFileImportSerializer
 
-    permission_classes = AbstractModelViewSet.permission_classes + [
-
-    ]
+    permission_classes = AbstractModelViewSet.permission_classes + []
 
     def get_serializer_context(self):
         context = super(AbstractAsyncViewSet, self).get_serializer_context()
-        context['show_object_permissions'] = False
+        context["show_object_permissions"] = False
         return context
 
     def get_status(self, request, *args, **kwargs):
-
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
@@ -1198,12 +1328,13 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
         # signer = TimestampSigner()
 
         if task_id:
-
             # res = AsyncResult(signer.unsign(task_id))
             res = AsyncResult(task_id)
 
             try:
-                celery_task = CeleryTask.objects.get(master_user=request.user.master_user, task_id=task_id)
+                celery_task = CeleryTask.objects.get(
+                    master_user=request.user.master_user, task_id=task_id
+                )
             except CeleryTask.DoesNotExist:
                 celery_task = None
                 raise PermissionDenied()
@@ -1211,51 +1342,50 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
             st = time.perf_counter()
 
             if res.ready():
-
                 instance = res.result
                 if celery_task:
                     celery_task.finished_at = datetime_now()
                     celery_task.file_report_id = instance.stats_file_report
 
             else:
-
                 # DEPRECATED
                 if res.result:
-                    if 'processed_rows' in res.result:
-                        instance.processed_rows = res.result['processed_rows']
-                    if 'total_rows' in res.result:
-                        instance.total_rows = res.result['total_rows']
+                    if "processed_rows" in res.result:
+                        instance.processed_rows = res.result["processed_rows"]
+                    if "total_rows" in res.result:
+                        instance.total_rows = res.result["total_rows"]
 
                     if celery_task:
-
-                        _l.debug('celery_task %s' % celery_task)
-                        _l.debug('res %s' % res)
+                        _l.debug("celery_task %s" % celery_task)
+                        _l.debug("res %s" % res)
 
                         celery_task_data = {}
 
-                        if 'total_rows' in res.result:
-                            celery_task_data["total_rows"] = res.result['total_rows']
+                        if "total_rows" in res.result:
+                            celery_task_data["total_rows"] = res.result["total_rows"]
 
-                        if 'processed_rows' in res.result:
-                            celery_task_data["processed_rows"] = res.result['processed_rows']
+                        if "processed_rows" in res.result:
+                            celery_task_data["processed_rows"] = res.result[
+                                "processed_rows"
+                            ]
 
-                        if 'scheme_name' in res.result:
-                            celery_task_data["scheme_name"] = res.result['scheme_name']
+                        if "scheme_name" in res.result:
+                            celery_task_data["scheme_name"] = res.result["scheme_name"]
 
-                        if 'file_name' in res.result:
-                            celery_task_data["file_name"] = res.result['file_name']
+                        if "file_name" in res.result:
+                            celery_task_data["file_name"] = res.result["file_name"]
 
                         celery_task.data = celery_task_data
 
                 # print('TASK ITEMS LEN %s' % len(res.result.items))
 
-            print('AsyncResult res.ready: %s' % (time.perf_counter() - st))
+            print("AsyncResult res.ready: %s" % (time.perf_counter() - st))
 
             if instance.master_user.id != request.user.master_user.id:
                 raise PermissionDenied()
 
-            print('TASK RESULT %s' % res.result)
-            print('TASK STATUS %s' % res.status)
+            print("TASK RESULT %s" % res.result)
+            print("TASK STATUS %s" % res.status)
 
             instance.task_id = task_id
             instance.task_status = res.status
@@ -1268,11 +1398,11 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         else:
-
-            return Response({"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "Task not found"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
     def create(self, request, *args, **kwargs):
-
         st = time.perf_counter()
 
         serializer = self.get_serializer(data=request.data)
@@ -1282,16 +1412,18 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
         # REFACTOR THIS
 
         options_object = {}
-        options_object['file_name'] = instance.file_name
-        options_object['file_path'] = instance.file_path
-        options_object['scheme_id'] = instance.scheme.id
-        options_object['execution_context'] = None
+        options_object["file_name"] = instance.file_name
+        options_object["file_path"] = instance.file_path
+        options_object["scheme_id"] = instance.scheme.id
+        options_object["execution_context"] = None
 
-        celery_task = CeleryTask.objects.create(master_user=request.user.master_user,
-                                                member=request.user.member,
-                                                options_object=options_object,
-                                                verbose_import="Transaction Import Validation",
-                                                type='validate_transaction_import')
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            options_object=options_object,
+            verbose_import="Transaction Import Validation",
+            type="validate_transaction_import",
+        )
 
         # celery_task.save()
 
@@ -1309,9 +1441,15 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
         #
         # transaction.on_commit(oncommit)
 
-        _l.info('ComplexTransactionCsvFileImportValidateViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.info(
+            "ComplexTransactionCsvFileImportValidateViewSet done: %s",
+            "{:3.3f}".format(time.perf_counter() - st),
+        )
 
-        return Response({"task_id": celery_task.pk, "task_status": celery_task.status}, status=status.HTTP_200_OK)
+        return Response(
+            {"task_id": celery_task.pk, "task_status": celery_task.status},
+            status=status.HTTP_200_OK,
+        )
 
 
 class TransactionFileResultFilterSet(FilterSet):
@@ -1336,26 +1474,28 @@ class TransactionImportJson(APIView):
     permission_classes = []
 
     def get(self, request):
-        return Response({'status': 'ok'})
+        return Response({"status": "ok"})
 
     def post(self, request):
         # _l.debug('request.data %s' % request.data)
 
-        _l.debug('request.data %s' % request.data)
+        _l.debug("request.data %s" % request.data)
 
-        procedure_id = request.data['procedure_id']
+        procedure_id = request.data["procedure_id"]
 
-        master_user = MasterUser.objects.get(token=request.data['user']['token'])
+        master_user = MasterUser.objects.get(token=request.data["user"]["token"])
 
-        procedure_instance = RequestDataFileProcedureInstance.objects.get(id=procedure_id, master_user=master_user)
+        procedure_instance = RequestDataFileProcedureInstance.objects.get(
+            id=procedure_id, master_user=master_user
+        )
 
-        celery_task = CeleryTask.objects.create(master_user=master_user,
-                                                verbose_name="Transaction Import",
-                                                type='transaction_import')
+        celery_task = CeleryTask.objects.create(
+            master_user=master_user,
+            verbose_name="Transaction Import",
+            type="transaction_import",
+        )
 
-        celery_task.options_object = {
-            'reader': request.data['transactions']
-        }
+        celery_task.options_object = {"reader": request.data["transactions"]}
         celery_task.save()
 
         complex_transaction_csv_file_import_parallel(task_id=celery_task.pk)
@@ -1451,30 +1591,28 @@ class TransactionImportJson(APIView):
 
 
 class DataProviderViewSet(AbstractReadOnlyModelViewSet):
-    ordering_fields = ['name']
-    filter_fields = ['user_code', 'name']
+    ordering_fields = ["name"]
+    filter_fields = ["user_code", "name"]
     pagination_class = None
     queryset = DataProvider.objects
     serializer_class = DataProviderSerializer
 
 
 class SupersetGetSecurityToken(APIView):
-
     def get_admin_access_token(self):
         data = {
-            'username': 'admin',
+            "username": "admin",
             "provider": "db",
             "refresh": True,
-            'password': 'lr1018hxvb10yq95ip'
+            "password": "lr1018hxvb10yq95ip",
         }
 
-        headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        }
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
 
-        url = settings.SUPERSET_URL + 'api/v1/security/login'
-        response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
+        url = settings.SUPERSET_URL + "api/v1/security/login"
+        response = requests.post(
+            url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL
+        )
 
         response_json = response.json()
 
@@ -1484,18 +1622,18 @@ class SupersetGetSecurityToken(APIView):
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "Authorization": "Bearer %s" % tokens["access_token"]
+            "Authorization": "Bearer %s" % tokens["access_token"],
         }
 
-        url = settings.SUPERSET_URL + 'api/v1/security/csrf_token/'
+        url = settings.SUPERSET_URL + "api/v1/security/csrf_token/"
         response = requests.get(url=url, headers=headers, verify=settings.VERIFY_SSL)
 
         response_json = response.json()
 
-        return response_json['result']
+        return response_json["result"]
 
     def get(self, request):
-        id = request.query_params.get('id', None)
+        id = request.query_params.get("id", None)
 
         tokens = self.get_admin_access_token()
 
@@ -1508,30 +1646,28 @@ class SupersetGetSecurityToken(APIView):
             "user": {
                 "username": "finmars",
                 "first_name": "finmars",
-                "last_name": "finmars"
+                "last_name": "finmars",
             },
-            "resources": [{
-                "type": "dashboard",
-                "id": id
-            }],
-            "rls": [
-            ]
+            "resources": [{"type": "dashboard", "id": id}],
+            "rls": [],
         }
 
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
             "Authorization": "Bearer %s" % tokens["access_token"],
-            'X-CSRFToken': csrf_token
+            "X-CSRFToken": csrf_token,
         }
 
-        url = settings.SUPERSET_URL + 'api/v1/security/guest_token/'
+        url = settings.SUPERSET_URL + "api/v1/security/guest_token/"
 
         _l.info("SupersetGetSecurityToken.Requesting url %s" % url)
 
-        response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
+        response = requests.post(
+            url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL
+        )
 
-        _l.info('SupersetGetSecurityToken.response %s' % response.text)
+        _l.info("SupersetGetSecurityToken.response %s" % response.text)
 
         response_json = response.json()
 
