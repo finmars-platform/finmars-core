@@ -745,7 +745,7 @@ class UnifiedImportViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.create()
+        serializer.save()
         return Response(serializer.data)
 
 
