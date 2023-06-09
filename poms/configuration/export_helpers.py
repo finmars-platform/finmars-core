@@ -131,11 +131,11 @@ def export_transaction_types(configuration_code, output_directory, master_user, 
 
         serialized_data.pop("deleted_user_code", None)
 
-        # No need anymore # TODO remove later
-        # try:
-        #     serialized_data['group'] = TransactionTypeGroup.objects.get(id=serialized_data['group']).user_code
-        # except Exception as e:
-        #     serialized_data['group'] = None
+        # No need anymore # TODO remove later # careful maybe needed
+        try:
+            serialized_data['group'] = TransactionTypeGroup.objects.get(id=serialized_data['group']).user_code
+        except Exception as e:
+            serialized_data['group'] = None
 
         path = output_directory + '/' + user_code_to_file_name(configuration_code, item.user_code) + '.json'
 
