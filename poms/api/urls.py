@@ -180,14 +180,16 @@ urlpatterns = [
     re_path(r'^v1/iam/', include(iam_router.router.urls)),
     re_path(r'^v1/', include(router.urls)),
 
+    re_path(
+        r'instruments/instrument-database-search',
+        instruments.InstrumentDatabaseSearchViewSet.as_view(),
+    ),
+    re_path(  # DEPRECATED task: FN-1736
+        r'currencies/currency-database-search',
+        currencies.CurrencyDatabaseSearchViewSet.as_view(),
+    ),
+
     # external callbacks
-
-    re_path(r'instruments/instrument-database-search', instruments.InstrumentDatabaseSearchViewSet.as_view()),
-
-    # re_path(  DEPRECATED task: FN-1736
-    #     r'currencies/currency-database-search',
-    #     currencies.CurrencyDatabaseSearchViewSet.as_view(),
-    # ),
 
     re_path(r'internal/brokers/bloomberg/callback', csrf_exempt(pricing.PricingBrokerBloombergHandler.as_view())),
     re_path(r'internal/brokers/bloomberg-forwards/callback',
