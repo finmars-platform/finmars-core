@@ -69,7 +69,7 @@ class ConfigurationViewSet(AbstractModelViewSet):
 
             export_configuration.apply_async(kwargs={'task_id': task.id})
 
-            return Response({"status": "ok"})
+            return Response({"status": "ok", "task_id": task.id})
 
         except Exception as e:
 
