@@ -45,7 +45,7 @@ from poms.transactions.serializers import TransactionClassSerializer, Transactio
     RecalculatePermissionTransactionSerializer, RecalculatePermissionComplexTransactionSerializer, \
     TransactionTypeLightSerializerWithInputs, \
     TransactionTypeRecalculateSerializer, RecalculateUserFieldsSerializer, \
-    ComplexTransactionViewOnlySerializer, ComplexTransactionViewOnly
+    ComplexTransactionViewOnlySerializer, ComplexTransactionViewOnly, ComplexTransactionEvItemSerializer
 from poms.transactions.tasks import recalculate_permissions_transaction, recalculate_permissions_complex_transaction, \
     recalculate_user_fields
 from poms.users.filters import OwnerByMasterUserFilter
@@ -1473,6 +1473,11 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
         'code',
         'is_deleted',
     ]
+
+    @action(detail=False, methods=['post'], url_path='ev-item', serializer_class=ComplexTransactionEvItemSerializer)
+    def list_ev_item(self, request, *args, **kwargs):
+
+        return super(ComplexTransactionViewSet, self).list_ev_item(request, *args, **kwargs)
 
     @action(detail=False, methods=['get'], url_path='light', serializer_class=ComplexTransactionLightSerializer)
     def list_light(self, request, *args, **kwargs):
