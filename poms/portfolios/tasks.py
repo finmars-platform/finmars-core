@@ -545,6 +545,9 @@ def calculate_portfolio_register_price_history(self, task_id):
                     result[portfolio_register.user_code]["dates"] = []
                     continue
 
+            result["date_from"] = _date_from
+            result["date_to"] = date_to
+
             result[portfolio_register.user_code][
                 "dates"
             ] = get_list_of_dates_between_two_dates(_date_from, date_to)
@@ -570,6 +573,9 @@ def calculate_portfolio_register_price_history(self, task_id):
             true_pricing_policy = portfolio_register.valuation_pricing_policy
 
             _l.info('going calculate %s' % portfolio_register)
+            _l.info('going calculate _date_from %s' % result["date_from"])
+            _l.info('going calculate date_to %s' % result["date_to"])
+            _l.info('going calculate dates len %s' % len(item["dates"]))
 
             for date in item["dates"]:
                 try:
