@@ -150,6 +150,7 @@ from poms.integrations.tasks import (
     complex_transaction_csv_file_import_validate_parallel,
     create_currency_cbond,
     create_instrument_cbond,
+    create_counterparty_cbond,
 )
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.system_messages.handlers import send_system_message
@@ -1766,7 +1767,7 @@ class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
 
         try:
             for item in data["data"]["items"]:
-                create_company_cbond(
+                create_counterparty_cbond(
                     item,
                     task.master_user,
                     task.member,

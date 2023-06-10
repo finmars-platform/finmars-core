@@ -4523,6 +4523,30 @@ def complex_transaction_csv_file_import_by_procedure_json(
         procedure_instance.save()
 
 
+def create_counterparty_cbond(data, master_user, member):
+    from poms.counterparties.serializers import CounterpartySerializer
+
+    proxy_user = ProxyUser(member, master_user)
+    proxy_request = ProxyRequest(proxy_user)
+    context = {"request": proxy_request}
+
+    try:
+        instance = Counterparty.objects.get(
+            master_user=master_user,
+            user_code=data["user_code"],
+        )
+        serializer = CounterpartySerializer(
+            data=data,
+            context=context,
+            instance=instance,
+        )
+    except Counterparty.DoesNotExist:
+        serializer = CounterpartySerializer(data=data, context=context)
+
+    serializer.is_valid(raise_exception=True)
+    counterparty = serializer.save()
+
+
 def export_from_database_task(task_id: int, operation: str):
     func = f"export_{operation}_finmars_database"
     try:
