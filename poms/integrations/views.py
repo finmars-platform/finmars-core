@@ -1,6 +1,7 @@
 import json
 import logging
 import time
+from typing import Tuple, Optional
 
 import django_filters
 from django.conf import settings
@@ -147,6 +148,8 @@ from poms.integrations.serializers import (
 from poms.integrations.tasks import (
     complex_transaction_csv_file_import_parallel,
     complex_transaction_csv_file_import_validate_parallel,
+    create_currency_cbond,
+    create_instrument_cbond,
 )
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.system_messages.handlers import send_system_message
@@ -1649,26 +1652,59 @@ class SupersetGetSecurityToken(APIView):
         return Response(response_json)
 
 
-class InstrumentDataBaseCallBackViewSet(APIView):
+class DataBaseCallBackView(APIView):
     permission_classes = []
+
+    def create_err_log_it(self, err_msg: str, method="validate_post_data") -> dict:
+        _l.error(f"{self.__class__.__name__}.{method} error {err_msg}")
+        return {"status": "error", "message": err_msg}
+
+    def validate_post_data(
+        self,
+        request_data: dict,
+    ) -> Tuple[Optional["CeleryTask"], Optional[dict]]:
+        """
+        Check if data contains request_id, data, and there is task with id=request_id
+        """
+        _l.info(
+            f"{self.__class__.__name__}.validate_post_data request.data={request_data}"
+        )
+        if not (request_id := request_data.get("request_id")):
+            err_msg = "no request_id in request.data"
+            return None, self.create_err_log_it(err_msg)
+
+        if not (data := request_data.get("data")):
+            err_msg = "no or empty 'data' in request.data"
+            return None, self.create_err_log_it(err_msg)
+
+        if not ("items" in data):
+            err_msg = "no 'items' field in request.data"
+            return None, self.create_err_log_it(err_msg)
+
+        if not (task := CeleryTask.objects.filter(id=request_id).first()):
+            err_msg = f"no task with id={request_id}"
+            return None, self.create_err_log_it(err_msg)
+
+        return task, None
+
+    def create_ok_log_it(self, msg: str) -> dict:
+        _l.info(f"{self.__class__.__name__}.post successfully created {msg}")
+        return {"status": "ok"}
 
     def get(self, request):
         _l.info(f"{self.__class__.__name__}.get")
 
         return Response({"ok"})
 
-    def post(self, request):
-        from poms.celery_tasks.models import CeleryTask
 
+class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
+    def post(self, request):
         data = request.data
-        _l.info(f"{self.__class__.__name__}.post request.data={data}")
-        if not (request_id := data.get("request_id")):
-            return Response(
-                {"status": "error", "message": "no request_id in request.data"}
-            )
+        task, error = self.validate_post_data(request_data=data)
+        if error:
+            return Response(error)
 
         try:
-            task = CeleryTask.objects.get(id=request_id)
             if "instruments" in data:
                 if "currencies" in data:
                     for item in data["currencies"]:
@@ -1694,19 +1730,49 @@ class InstrumentDataBaseCallBackViewSet(APIView):
                         task.member,
                     )
 
-            _l.info(f"{self.__class__.__name__}.post instrument(s) created")
-
-            return Response({"status": "ok"})
+            return Response(self.create_ok_log_it("instrument(s)"))
 
         except Exception as e:
-            err_msg = f"{self.__class__.__name__}.post unexpected {repr(e)}"
-            _l.info(err_msg)
-            return Response({"status": "error", "message": err_msg})
+            return Response(self.create_err_log_it(repr(e), method="post creating"))
 
 
-class CurrencyDataBaseCallBackViewSet(APIView):
-    pass
+class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
+    def post(self, request):
+        data = request.data
+        task, error = self.validate_post_data(request_data=data)
+        if error:
+            return Response(error)
+
+        try:
+            for item in data["data"]["items"]:
+                create_currency_cbond(
+                    item,
+                    task.master_user,
+                    task.member,
+                )
+
+            return Response(self.create_ok_log_it("currency"))
+
+        except Exception as e:
+            return Response(self.create_err_log_it(repr(e), method="post creating"))
 
 
-class CompanyDataBaseCallBackViewSet(APIView):
-    pass
+class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
+    def post(self, request):
+        data = request.data
+        task, error = self.validate_post_data(request_data=data)
+        if error:
+            return Response(error)
+
+        try:
+            for item in data["data"]["items"]:
+                create_company_cbond(
+                    item,
+                    task.master_user,
+                    task.member,
+                )
+
+            return Response(self.create_ok_log_it("instrument"))
+
+        except Exception as e:
+            return Response(self.create_err_log_it(repr(e), method="post creating"))
