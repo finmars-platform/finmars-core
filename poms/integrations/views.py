@@ -781,8 +781,7 @@ class UnifiedImportDatabaseViewSet(AbstractViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.create_task(serializer.validated_data)
-        return Response(serializer.data)
+        return Response(serializer.create_task(serializer.validated_data))
 
 
 class ImportInstrumentDatabaseViewSet(UnifiedImportDatabaseViewSet):
