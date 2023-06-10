@@ -33,55 +33,55 @@ class ImportCurrencyDatabaseViewSetTest(BaseTestCase):
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 200, response.content)
 
-        data = response.json()
-        print("task_ready", data)
+        response_json = response.json()
+        print("task_ready", response_json)
 
-        self.assertEqual(data["code"], currency_code)
-        self.assertIsNone(data["result_id"])
-        self.assertIsNone(data["errors"])
-        celery_task = CeleryTask.objects.get(pk=data["task"])
+        self.assertEqual(response_json["code"], currency_code)
+        self.assertIsNone(response_json["result_id"])
+        self.assertIsNone(response_json["errors"])
+        celery_task = CeleryTask.objects.get(pk=response_json["task"])
         options = celery_task.options_object
         callback_url = BACKEND_CALLBACK_URLS["currency"]
         self.assertEqual(options["callback_url"], callback_url)
         results = celery_task.result_object
         self.assertEqual(results["task_id"], task_id)
 
-    # @BaseTestCase.cases(
-    #     ("USD", "USD"),
-    #     ("EUR", "EUR"),
-    # )
-    # @mock.patch("poms.common.database_client.DatabaseService.get_task")
-    # @mock.patch("poms.integrations.tasks.update_task_with_database_data")
-    # def test__data_ready(self, type_code, mock_update_data, mock_get_task):
-    #     mock_get_task.return_value = Monad(
-    #         status=MonadStatus.DATA_READY,
-    #         data={
-    #
-    #         },
-    #     )
-    #     currency_code = self.random_string()
-    #     request_data = {"currency_code": currency_code}
-    #     response = self.client.post(path=self.url, format="json", data=request_data)
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     mock_update_data.assert_called_once()
-    #
-    #     data = response.json()
-    #     print("data_ready", data)
-    #     self.assertEqual(data["code"], type_code)
+    @BaseTestCase.cases(
+        ("USD", "USD"),
+        ("EUR", "EUR"),
+    )
+    @mock.patch("poms.common.database_client.DatabaseService.get_task")
+    @mock.patch("poms.integrations.tasks.update_task_with_database_data")
+    def test__data_ready(self, type_code, mock_update_data, mock_get_task):
+        mock_get_task.return_value = Monad(
+            status=MonadStatus.DATA_READY,
+            data={
 
-    # @mock.patch("poms.common.database_client.DatabaseService.get_task")
-    # def test__error(self, mock_get_task):
-    #     message = self.random_string()
-    #     mock_get_task.return_value = Monad(
-    #         status=MonadStatus.ERROR,
-    #         message=message,
-    #     )
-    #
-    #     request_data = {"currency_code": "USD"}
-    #     response = self.client.post(path=self.url, format="json", data=request_data)
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     data = response.json()
-    #     self.assertIsNone(data["result_id"])
-    #     self.assertIn(message, data["errors"])
+            },
+        )
+        currency_code = self.random_string()
+        request_data = {"currency_code": currency_code}
+        response = self.client.post(path=self.url, format="json", data=request_data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        mock_update_data.assert_called_once()
+
+        response_json = response.json()
+        print("data_ready", response_json)
+        self.assertEqual(response_json["code"], type_code)
+
+    @mock.patch("poms.common.database_client.DatabaseService.get_task")
+    def test__error(self, mock_get_task):
+        message = self.random_string()
+        mock_get_task.return_value = Monad(
+            status=MonadStatus.ERROR,
+            message=message,
+        )
+
+        request_data = {"currency_code": "USD"}
+        response = self.client.post(path=self.url, format="json", data=request_data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+        self.assertIsNone(response_json["result_id"])
+        self.assertIn(message, response_json["errors"])

@@ -44,15 +44,15 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 200, response.content)
 
-        data = response.json()
-        self.assertEqual(data["instrument_code"], reference)
-        self.assertEqual(data["instrument_name"], name)
-        self.assertEqual(data["instrument_type_code"], type_code)
-        self.assertIsNone(data["errors"])
+        response_json = response.json()
+        self.assertEqual(response_json["instrument_code"], reference)
+        self.assertEqual(response_json["instrument_name"], name)
+        self.assertEqual(response_json["instrument_type_code"], type_code)
+        self.assertIsNone(response_json["errors"])
 
-        simple_instrument = Instrument.objects.get(pk=data["result_id"])
+        simple_instrument = Instrument.objects.get(pk=response_json["result_id"])
         self.assertFalse(simple_instrument.is_active)
-        celery_task = CeleryTask.objects.get(pk=data["task"])
+        celery_task = CeleryTask.objects.get(pk=response_json["task"])
         options = celery_task.options_object
         callback_url = BACKEND_CALLBACK_URLS["instrument"]
         self.assertEqual(options["callback_url"], callback_url)
@@ -83,8 +83,8 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
 
         mock_update_data.assert_called_once()
 
-        data = response.json()
-        self.assertEqual(data["instrument_type_code"], type_code)
+        response_json = response.json()
+        self.assertEqual(response_json["instrument_type_code"], type_code)
 
     @mock.patch("poms.common.database_client.DatabaseService.get_task")
     def test__error(self, mock_get_task):
@@ -102,6 +102,6 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 200, response.content)
 
-        data = response.json()
-        self.assertIsNone(data["result_id"])
-        self.assertIn(message, data["errors"])
+        response_json = response.json()
+        self.assertIsNone(response_json["result_id"])
+        self.assertIn(message, response_json["errors"])

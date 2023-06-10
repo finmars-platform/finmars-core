@@ -1465,7 +1465,7 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
     result_id = serializers.IntegerField(required=False, allow_null=True)
     errors = serializers.ReadOnlyField()
 
-    def update_task(self, validated_data: dict) -> CeleryTask:
+    def create_task(self, validated_data: dict):
         task = CeleryTask.objects.create(
             master_user=validated_data["master_user"],
             member=validated_data["member"],
@@ -1479,13 +1479,11 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
             "instrument_type_user_code": validated_data["instrument_type_code"],
         }
         task.save()
+        self.data["task"] = task.id
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
         import_instrument_finmars_database(task.id)
-
-        task.refresh_from_db()
-        return task
 
 
 class ImportCurrencyDatabaseSerializer(serializers.Serializer):
@@ -1496,7 +1494,7 @@ class ImportCurrencyDatabaseSerializer(serializers.Serializer):
     result_id = serializers.IntegerField(required=False, allow_null=True)
     errors = serializers.ReadOnlyField()
 
-    def update_task(self, validated_data: dict) -> CeleryTask:
+    def create_task(self, validated_data: dict):
         task = CeleryTask.objects.create(
             master_user=validated_data["master_user"],
             member=validated_data["member"],
@@ -1506,13 +1504,12 @@ class ImportCurrencyDatabaseSerializer(serializers.Serializer):
         )
         task.options_object = {"currency_code": validated_data["currency_code"]}
         task.save()
+        self.data["task"] = task.id
 
-        _l.info(f"{self.__class__.__name__} updated task.id={task.id}")
+        _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
         import_currency_finmars_database(task.id)
 
-        task.refresh_from_db()
-        return task
 
 
 class ImportCompanyDatabaseSerializer(serializers.Serializer):
@@ -1523,7 +1520,7 @@ class ImportCompanyDatabaseSerializer(serializers.Serializer):
     result_id = serializers.IntegerField(required=False, allow_null=True)
     errors = serializers.ReadOnlyField()
 
-    def update_task(self, validated_data: dict) -> CeleryTask:
+    def create_task(self, validated_data: dict):
         task = CeleryTask.objects.create(
             master_user=validated_data["master_user"],
             member=validated_data["member"],
@@ -1533,13 +1530,12 @@ class ImportCompanyDatabaseSerializer(serializers.Serializer):
         )
         task.options_object = {"company_id": validated_data["company_id"]}
         task.save()
+        self.data["task"] = task.id
 
-        _l.info(f"{self.__class__.__name__} updated task.id={task.id}")
+        _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
         import_company_finmars_database(task.id)
 
-        task.refresh_from_db()
-        return task
 
 
 class ImportUnifiedDataProviderSerializer(serializers.Serializer):
