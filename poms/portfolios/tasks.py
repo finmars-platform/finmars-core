@@ -332,15 +332,11 @@ def calculate_portfolio_register_record(self, task_id):
                         portfolio_register.default_price
                     )
 
-                record.n_shares_added = (
-                    trn.position_size_with_sign
-                    or (
-                            record.cash_amount_valuation_currency
-                            / record.dealing_price_valuation_currency
-                    )
-                    if record.dealing_price_valuation_currency
-                    else 0
-                )
+                if trn.position_size_with_sign:
+                    record.n_shares_added = trn.position_size_with_sign
+                else:
+                    # why  use cashamount , not    record.cash_amount_valuation_currency
+                    record.n_shares_added = record.cash_amount_valuation_currency / record.dealing_price_valuation_currency
 
                 # record.n_shares_end_of_the_day =
                 # record.n_shares_previous_day + record.n_shares_added
