@@ -12,7 +12,6 @@ BACKEND_URL = f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
 COMMON_PART = "api/v1/import/finmars-database"
 BACKEND_CALLBACK_URLS ={
     "instrument": f"{BACKEND_URL}/{COMMON_PART}/instrument/callback/",
-    "instrument-narrow": f"{BACKEND_URL}/{COMMON_PART}/instrument-narrow/callback/",
     "currency": f"{BACKEND_URL}/{COMMON_PART}/currency/callback/",
     "company": f"{BACKEND_URL}/{COMMON_PART}/company/callback/",
 }
