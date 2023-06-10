@@ -1008,65 +1008,6 @@ def create_simple_instrument(task) -> Instrument:
     return instrument
 
 
-def update_task_with_database_data(
-    data: dict, task: CeleryTask, new_status: str = CeleryTask.STATUS_DONE
-):
-    result_instrument = None
-    options = task.options_object
-    func = "update_task_with_database_data:"
-
-    if "instruments" in data["data"]:
-        _l.info(f"{func} instruments in data")
-
-        if "currencies" in data["data"] and data["data"]["currencies"]:
-            for item in data["data"]["currencies"]:
-                if item:
-                    create_currency_cbond(item, task.master_user, task.member)
-
-        for item in data["data"]["instruments"]:
-            instrument = create_instrument_from_finmars_database(
-                item, task.master_user, task.member
-            )
-
-            if instrument.user_code == options["reference"]:
-                result_instrument = instrument
-
-    elif "items" in data["data"]:
-        _l.info(f"{func} items in data")
-
-        for item in data["data"]["items"]:
-            instrument = create_instrument_from_finmars_database(
-                item, task.master_user, task.member
-            )
-
-            if instrument.user_code == options["reference"]:
-                result_instrument = instrument
-
-    else:
-        _l.info(f"{func} create instrument from data")
-
-        instrument = create_instrument_from_finmars_database(
-            data["data"],
-            task.master_user,
-            task.member,
-        )
-        result_instrument = instrument
-
-    update_task_with_instrument_id(result_instrument, task, new_status=new_status)
-
-
-def update_task_with_simple_instrument(
-    remote_task_id: int, task: CeleryTask, new_status: str
-):
-    result = task.result_object or {}
-    result["task_id"] = remote_task_id
-    if instrument := create_simple_instrument(task):
-        result["instrument_id"] = instrument.pk
-    task.result_object = result
-    task.status = new_status
-    task.save()
-
-
 @shared_task(
     name="integrations.download_instrument_cbond_task", bind=True, ignore_result=False
 )
@@ -4547,8 +4488,85 @@ def create_counterparty_cbond(data, master_user, member):
     counterparty = serializer.save()
 
 
-def export_from_database_task(task_id: int, operation: str):
-    func = f"export_{operation}_finmars_database"
+def update_task_with_instrument_data(data: dict, task: CeleryTask):
+    result_instrument = None
+    options = task.options_object
+    func = "update_task_with_instrument_data"
+
+    if "instruments" in data["data"]:
+        _l.info(f"{func} instruments in data")
+
+        if "currencies" in data["data"] and data["data"]["currencies"]:
+            for item in data["data"]["currencies"]:
+                if item:
+                    create_currency_cbond(item, task.master_user, task.member)
+
+        for item in data["data"]["instruments"]:
+            instrument = create_instrument_from_finmars_database(
+                item, task.master_user, task.member
+            )
+
+            if instrument.user_code == options["reference"]:
+                result_instrument = instrument
+
+    elif "items" in data["data"]:
+        _l.info(f"{func} items in data")
+
+        for item in data["data"]["items"]:
+            instrument = create_instrument_from_finmars_database(
+                item, task.master_user, task.member
+            )
+
+            if instrument.user_code == options["reference"]:
+                result_instrument = instrument
+
+    else:
+        _l.info(f"{func} create instrument from data")
+
+        instrument = create_instrument_from_finmars_database(
+            data["data"],
+            task.master_user,
+            task.member,
+        )
+        result_instrument = instrument
+
+    update_task_with_instrument_id(
+        result_instrument,
+        task,
+        new_status=CeleryTask.STATUS_DONE,
+    )
+
+
+def update_task_with_simple_instrument(remote_task_id: int, task: CeleryTask):
+    result = task.result_object or {}
+    result["task_id"] = remote_task_id
+    if instrument := create_simple_instrument(task):
+        result["instrument_id"] = instrument.pk
+    task.result_object = result
+    task.status = CeleryTask.STATUS_PENDING
+    task.save()
+
+
+def update_task_with_currency_data(data: dict, task: CeleryTask):
+    result_currency = None
+    options = task.options_object
+    func = "update_task_with_currency_data"
+
+
+def update_task_with_company_data(data: dict, task: CeleryTask):
+    result_company = None
+    options = task.options_object
+    func = "update_task_with_company_data"
+
+
+def update_task_with_remote_id(remote_task_id: int, task: CeleryTask):
+    task.result_object = {"task_id": remote_task_id}
+    task.status = CeleryTask.STATUS_PENDING
+    task.save()
+
+
+def import_from_database_task(task_id: int, operation: str):
+    func = f"import_{operation}_finmars_database"
     try:
         task = CeleryTask.objects.get(id=task_id)
     except CeleryTask.DoesNotExist:
@@ -4560,6 +4578,10 @@ def export_from_database_task(task_id: int, operation: str):
         update_task_with_error(task, err_msg)
         return
 
+    if operation not in BACKEND_CALLBACK_URLS:
+        _l.error(f"{func} invalid operation {operation}")
+        return
+
     options = {
         "data": task.options_object,
         "request_id": task.pk,
@@ -4569,28 +4591,34 @@ def export_from_database_task(task_id: int, operation: str):
     task.options_object = options
     task.save()
 
-    _l.info(f"{func} request_options={options}")
+    _l.info(f"{func} started, request_options={options}")
 
     try:
         monad: Monad = DatabaseService().get_task(operation, options)
 
         if monad.status == MonadStatus.DATA_READY:
-            _l.info(f"{func} received data={monad.data}")
+            _l.info(f"{func} received {operation} data={monad.data}")
 
-            update_task_with_database_data(
-                data=monad.data,
-                task=task,
-                new_status=CeleryTask.STATUS_DONE,
-            )
+            if operation == "instrument":
+                update_task_with_instrument_data(data=monad.data, task=task)
+            elif operation == "currency":
+                update_task_with_currency_data(data=monad.data, task=task)
+            else:  # operation == "company":
+                update_task_with_company_data(data=monad.data, task=task)
 
         elif monad.status == MonadStatus.TASK_READY:
             _l.info(f"{func} received task_id={monad.task_id}")
 
-            update_task_with_simple_instrument(
-                remote_task_id=monad.task_id,
-                task=task,
-                new_status=CeleryTask.STATUS_PENDING,
-            )
+            if operation == "instrument":
+                update_task_with_simple_instrument(
+                    remote_task_id=monad.task_id,
+                    task=task,
+                )
+            else:  # operation == "company" or "currency":
+                update_task_with_remote_id(
+                    remote_task_id=monad.task_id,
+                    task=task,
+                )
 
         else:
             err_msg = f"{func} received error={monad.message}"
@@ -4601,31 +4629,31 @@ def export_from_database_task(task_id: int, operation: str):
         update_task_with_error(task, err_msg)
 
 
-def export_instrument_finmars_database(task_id: int):
-    export_from_database_task(task_id=task_id, operation="instrument")
+def import_instrument_finmars_database(task_id: int):
+    import_from_database_task(task_id=task_id, operation="instrument")
 
 
 @shared_task(name="integrations.download_instrument_finmars_database_async", bind=True)
 def download_instrument_finmars_database_async(self, task_id):
     _l.info(f"download_instrument_finmars_database_async {task_id}")
-    export_instrument_finmars_database(task_id)
+    import_instrument_finmars_database(task_id)
 
 
-def export_currency_finmars_database(task_id: int):
-    export_from_database_task(task_id=task_id, operation="currency")
+def import_currency_finmars_database(task_id: int):
+    import_from_database_task(task_id=task_id, operation="currency")
 
 
 @shared_task(name="integrations.download_instrument_finmars_database_async", bind=True)
 def download_currency_finmars_database_async(self, task_id):
     _l.info(f"download_currency_finmars_database_async {task_id}")
-    export_currency_finmars_database(task_id)
+    import_currency_finmars_database(task_id)
 
 
-def export_company_finmars_database(task_id: int):
-    export_from_database_task(task_id=task_id, operation="company")
+def import_company_finmars_database(task_id: int):
+    import_from_database_task(task_id=task_id, operation="company")
 
 
 @shared_task(name="integrations.download_instrument_finmars_database_async", bind=True)
 def download_company_finmars_database_async(self, task_id):
     _l.info(f"download_company_finmars_database_async {task_id}")
-    export_company_finmars_database(task_id)
+    import_company_finmars_database(task_id)

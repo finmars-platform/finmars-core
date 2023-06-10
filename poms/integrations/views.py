@@ -743,8 +743,9 @@ class PriceDownloadSchemeMappingViewSet(AbstractMappingViewSet):
     ]
 
 
-class UnifiedImportViewSet(AbstractViewSet):
+class ImportInstrumentViewSet(AbstractViewSet):
     permission_classes = AbstractViewSet.permission_classes + []
+    serializer_class = ImportInstrumentSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -753,24 +754,15 @@ class UnifiedImportViewSet(AbstractViewSet):
         return Response(serializer.data)
 
 
-class ImportInstrumentViewSet(UnifiedImportViewSet):
-    serializer_class = ImportInstrumentSerializer
-
-
-class ImportInstrumentDatabaseViewSet(UnifiedImportViewSet):
-    serializer_class = ImportInstrumentDatabaseSerializer
-
-
-class ImportCurrencyDatabaseViewSet(UnifiedImportViewSet):
-    serializer_class = ImportCurrencyDatabaseSerializer
-
-
-class ImportCompanyDatabaseViewSet(UnifiedImportViewSet):
-    serializer_class = ImportCompanyDatabaseSerializer
-
-
 class ImportUnifiedDataProviderViewSet(AbstractViewSet):
+    permission_classes = AbstractViewSet.permission_classes + []
     serializer_class = ImportUnifiedDataProviderSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class TestCertificateViewSet(AbstractViewSet):
@@ -781,6 +773,28 @@ class TestCertificateViewSet(AbstractViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+class UnifiedImportDatabaseViewSet(AbstractViewSet):
+    permission_classes = AbstractViewSet.permission_classes + []
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.update_task(serializer.validated_data)
+        return Response(serializer.data)
+
+
+class ImportInstrumentDatabaseViewSet(UnifiedImportDatabaseViewSet):
+    serializer_class = ImportInstrumentDatabaseSerializer
+
+
+class ImportCurrencyDatabaseViewSet(UnifiedImportDatabaseViewSet):
+    serializer_class = ImportCurrencyDatabaseSerializer
+
+
+class ImportCompanyDatabaseViewSet(UnifiedImportDatabaseViewSet):
+    serializer_class = ImportCompanyDatabaseSerializer
 
 
 # ----------------------------------------
