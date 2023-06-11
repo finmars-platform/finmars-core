@@ -434,7 +434,6 @@ def start_new_collect_stats(task):
 
 @shared_task(name='widgets.collect_stats', bind=True)
 def collect_stats(self, task_id):
-
     '''
 
     Task that calculates metrics on portfolio for each day
@@ -553,7 +552,17 @@ def collect_stats(self, task_id):
 
 
 @shared_task(name='widgets.calculate_historical', bind=True)
-def calculate_historical(self, date_from=None, date_to=None, portfolios=None):
+def calculate_historical(self, task_id):
+    task = CeleryTask.objects.get(id=task_id)
+
+    date_from = None
+    date_to = None
+    portfolios = None
+
+    if task.options_object:
+        date_from = task.options_object.get('date_from', None)
+        date_to = task.options_object.get('date_to', None)
+        portfolios = task.options_object.get('portfolios', None)
 
     # member = Member.objects.get(is_owner=True)
     member = Member.objects.get(username='finmars_bot')
@@ -580,8 +589,6 @@ def calculate_historical(self, date_from=None, date_to=None, portfolios=None):
 
         # dates = [bday_yesterday]
         dates = get_list_of_dates_between_two_dates(date_from, date_to)
-
-
 
         ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
 
