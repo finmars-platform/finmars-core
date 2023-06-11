@@ -27,7 +27,9 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
             "data": {
                 "items": [
                     {
-                        "instrument_type": instrument_type,
+                        "instrument_type": {
+                            "user_code": instrument_type,
+                        },
                         "user_code": "test_user_code",
                         "short_name": "test_short_name",
                         "name": "test_name",

@@ -148,9 +148,9 @@ from poms.integrations.serializers import (
 from poms.integrations.tasks import (
     complex_transaction_csv_file_import_parallel,
     complex_transaction_csv_file_import_validate_parallel,
-    create_currency_cbond,
-    create_instrument_cbond,
-    create_counterparty_cbond,
+    create_currency_from_finmars_database,
+    create_counterparty_from_finmars_database,
+    create_instrument_from_finmars_database,
 )
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.system_messages.handlers import send_system_message
@@ -1722,14 +1722,18 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
             if "instruments" in data:
                 if "currencies" in data:  # 1st we need to create currencies
                     for item in data["currencies"]:
-                        create_currency_cbond(item, task.master_user, task.member)
+                        create_currency_from_finmars_database(item, task.master_user, task.member)
 
                 for item in data["instruments"]:
-                    create_instrument_cbond(item, task.master_user, task.member)
+                    create_instrument_from_finmars_database(
+                        item, task.master_user, task.member
+                    )
 
             elif "items" in data["data"]:
                 for item in data["data"]["items"]:
-                    create_instrument_cbond(item, task.master_user, task.member)
+                    create_instrument_from_finmars_database(
+                        item, task.master_user, task.member
+                    )
 
             return Response(self.create_ok_log_it("instrument(s)"))
 
@@ -1746,7 +1750,9 @@ class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
 
         try:
             for item in data["data"]["items"]:
-                create_currency_cbond(item, task.master_user, task.member)
+                create_instrument_from_finmars_database(
+                    item, task.master_user, task.member
+                )
 
             return Response(self.create_ok_log_it("currency"))
 
@@ -1763,7 +1769,7 @@ class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
 
         try:
             for item in data["data"]["items"]:
-                create_counterparty_cbond(item, task.master_user, task.member)
+                create_counterparty_from_finmars_database(item, task.master_user, task.member)
 
             return Response(self.create_ok_log_it("company"))
 

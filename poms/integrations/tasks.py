@@ -431,10 +431,11 @@ def create_instrument_from_finmars_database(data, master_user, member):
         except Exception as e:
             err_msg = (
                 f'Instrument Type {instrument_data["instrument_type"]["user_code"]} '
-                f"is not found {e}"
+                f"is not found {e}\n{traceback.format_exc()}"
             )
             _l.info(err_msg)
-            raise RuntimeError(err_msg) from e
+            raise
+            # raise RuntimeError(err_msg) from e
 
         object_data = handler_instrument_object(
             instrument_data,
@@ -538,8 +539,10 @@ def create_instrument_cbond(data, master_user, member):
         )
 
         try:
+            # all = InstrumentType.objects.all().values("id", "user_code", "master_user_id")
             instrument_type = InstrumentType.objects.get(
-                master_user=master_user, user_code=instrument_data["instrument_type"]
+                master_user=master_user,
+                user_code__contains=instrument_data["instrument_type"],
             )
 
         except Exception as e:
@@ -753,7 +756,7 @@ def download_instrument_cbond(
                 if "currencies" in data:
                     for item in data["currencies"]:
                         if item:
-                            create_currency_cbond(item, master_user, member)
+                            create_currency_from_finmars_database(item, master_user, member)
 
                 for item in data["instruments"]:
                     instrument = create_instrument_cbond(item, master_user, member)
@@ -855,7 +858,7 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
                 return task, errors
 
             try:
-                currency = create_currency_cbond(data, master_user, member)
+                currency = create_currency_from_finmars_database(data, master_user, member)
 
                 # if 'items' in data['data']:
                 #
@@ -4387,11 +4390,11 @@ def complex_transaction_csv_file_import_by_procedure_json(
         procedure_instance.save()
 
 
-def create_counterparty_cbond(data, master_user, member) -> Counterparty:
+def create_counterparty_from_finmars_database(data, master_user, member) -> Counterparty:
     from poms.counterparties.serializers import CounterpartySerializer
     from poms.counterparties.models import CounterpartyGroup
 
-    func = "create_counterparty_cbond"
+    func = "create_counterparty_from_database"
     proxy_user = ProxyUser(member, master_user)
     proxy_request = ProxyRequest(proxy_user)
     group = CounterpartyGroup.objects.get(master_user=master_user, user_code="-")
@@ -4399,7 +4402,7 @@ def create_counterparty_cbond(data, master_user, member) -> Counterparty:
     company_data = {
         "user_code": data["code"],
         "name": data["name"],
-        "short_name": data["shortName"],
+        "short_name": data["short_name"],
         "group": group.id,
     }
 
@@ -4435,10 +4438,10 @@ def create_counterparty_cbond(data, master_user, member) -> Counterparty:
         raise Exception(serializer.errors)
 
 
-def create_currency_cbond(data, master_user, member) -> Currency:
+def create_currency_from_finmars_database(data, master_user, member) -> Currency:
     from poms.currencies.serializers import CurrencySerializer
 
-    func = "create_currency_cbond"
+    func = "create_currency_from_finmars_database"
     proxy_user = ProxyUser(member, master_user)
     proxy_request = ProxyRequest(proxy_user)
     context = {"master_user": master_user, "request": proxy_request}
@@ -4520,7 +4523,7 @@ def update_task_with_instrument_data(data: dict, task: CeleryTask):
         if "currencies" in data["data"] and data["data"]["currencies"]:
             for item in data["data"]["currencies"]:
                 if item:
-                    create_currency_cbond(item, task.master_user, task.member)
+                    create_currency_from_finmars_database(item, task.master_user, task.member)
 
         for item in data["data"]["instruments"]:
             instrument = create_instrument_from_finmars_database(
@@ -4575,7 +4578,7 @@ def update_task_with_currency_data(data: dict, task: CeleryTask):
 
         _l.info(f"{func} company_data={currency_data}")
 
-        currency = create_currency_cbond(currency_data, task.master_user, task.member)
+        currency = create_currency_from_finmars_database(currency_data, task.master_user, task.member)
         result = task.result_object
         result["currency_id"] = currency.id
         task.result_object = result
@@ -4593,7 +4596,7 @@ def update_task_with_company_data(data: dict, task: CeleryTask):
 
         _l.info(f"{func} company_data={company_data}")
 
-        company = create_counterparty_cbond(company_data, task.master_user, task.member)
+        company = create_counterparty_from_finmars_database(company_data, task.master_user, task.member)
         result = task.result_object
         result["company_id"] = company.id
         task.result_object = result

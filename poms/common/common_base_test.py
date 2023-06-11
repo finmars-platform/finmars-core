@@ -252,7 +252,7 @@ class DbInitializer:
                 master_user=self.master_user,
                 instrument_class_id=InstrumentClass.GENERAL,
                 name=type_,
-                user_code=type_,
+                user_code=f"com.finmars.initial-instrument-type:{type_}",
                 short_name=type_,
                 public_name=type_,
             )
@@ -268,7 +268,7 @@ class DbInitializer:
                 master_user=self.master_user,
                 instrument_class_id=class_id,
                 name=type_,
-                user_code=type_,
+                user_code=f"com.finmars.initial-instrument-type:{type_}",
                 short_name=type_,
                 public_name=type_,
             )
