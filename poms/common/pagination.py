@@ -44,7 +44,7 @@ class PageNumberPaginationExt(PageNumberPagination):
             page_size = 40
 
         paginator = self.django_paginator_class(queryset, page_size)
-        if not page_number:
+        if request.data.get('page', None):
             page_number = request.data.get('page', 1)
 
         _l.info('here page_number %s' % page_number)
