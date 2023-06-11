@@ -6,7 +6,7 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase
 from poms.common.database_client import BACKEND_CALLBACK_URLS
 from poms.common.monad import Monad, MonadStatus
-from poms.currencies.models import Currency
+# from poms.currencies.models import Currency
 
 
 class ImportCurrencyDatabaseViewSetTest(BaseTestCase):
@@ -51,13 +51,12 @@ class ImportCurrencyDatabaseViewSetTest(BaseTestCase):
     )
     @mock.patch("poms.common.database_client.DatabaseService.get_task")
     @mock.patch("poms.integrations.tasks.update_task_with_currency_data")
-    def test__data_ready(self, type_code, mock_update_data, mock_get_task):
+    def test__data_ready(self, code, mock_update_data, mock_get_task):
         mock_get_task.return_value = Monad(
             status=MonadStatus.DATA_READY,
             data={},
         )
-        currency_code = self.random_string()
-        request_data = {"currency_code": currency_code}
+        request_data = {"currency_code": code}
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 200, response.content)
 
@@ -66,7 +65,7 @@ class ImportCurrencyDatabaseViewSetTest(BaseTestCase):
         response_json = response.json()
 
         # TODO extend test with creation of the currency
-        self.assertEqual(response_json["currency_code"], type_code)
+        self.assertEqual(response_json["currency_code"], code)
 
     @mock.patch("poms.common.database_client.DatabaseService.get_task")
     def test__error(self, mock_get_task):
