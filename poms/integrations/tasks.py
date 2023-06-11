@@ -4393,15 +4393,18 @@ def complex_transaction_csv_file_import_by_procedure_json(
 
 def create_counterparty_cbond(data, master_user, member) -> Counterparty:
     from poms.counterparties.serializers import CounterpartySerializer
+    from poms.counterparties.models import CounterpartyGroup
 
     func = "create_counterparty_cbond"
     proxy_user = ProxyUser(member, master_user)
     proxy_request = ProxyRequest(proxy_user)
+    group = CounterpartyGroup.objects.get(master_user=master_user, user_code="-")
     context = {"request": proxy_request}
     company_data = {
         "user_code": data["code"],
         "name": data["name"],
         "short_name": data["shortName"],
+        "group": group,
     }
 
     _l.info(f"{func} company_data={company_data}")

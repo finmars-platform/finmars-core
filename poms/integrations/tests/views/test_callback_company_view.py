@@ -21,9 +21,9 @@ class CallbackCompanyViewSetTest(CallbackSetTestMixin, BaseTestCase):
             "data": {
                 "items": [
                     {
-                        "user_code": "test_user_code",
-                        "code": "test_code",
+                        "code": "test_user_code",
                         "name": "test_name",
+                        "shortName": "test_short_name",
                     },
                 ],
             },

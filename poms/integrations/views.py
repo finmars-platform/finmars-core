@@ -1708,7 +1708,7 @@ class DataBaseCallBackView(APIView):
     def get(self, request):
         _l.info(f"{self.__class__.__name__}.get")
 
-        return Response({"ok"})
+        return Response({"ok"})  # for debugging
 
 
 class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):

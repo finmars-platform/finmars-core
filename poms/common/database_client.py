@@ -19,9 +19,9 @@ BACKEND_CALLBACK_URLS ={
 V1 = "api/v1/"
 FINMARS_DATABASE_URLS = {
     "instrument": f"{settings.FINMARS_DATABASE_URL}{V1}export/instrument",
-    "instrument-narrow": f"{settings.FINMARS_DATABASE_URL}{V1}instrument-narrow",
-    "currency": f"{settings.FINMARS_DATABASE_URL}{V1}currency",
-    "company": f"{settings.FINMARS_DATABASE_URL}{V1}company",
+    "instrument-narrow": f"{settings.FINMARS_DATABASE_URL}{V1}/export/instrument-narrow",
+    "currency": f"{settings.FINMARS_DATABASE_URL}{V1}/export/currency",
+    "company": f"{settings.FINMARS_DATABASE_URL}{V1}/export/company",
 }
 
 
