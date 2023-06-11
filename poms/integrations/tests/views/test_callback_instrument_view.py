@@ -21,7 +21,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         ("bond", "bond"),
         ("stock", "stock"),
     )
-    def test__instrument_created(self, instrument_type: str):
+    def test__instrument_no_currency_created(self, instrument_type: str):
         post_data = {
             "request_id": self.task.id,
             "data": {
@@ -49,6 +49,49 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                     },
                 ],
                 "currencies": [
+                ],
+            },
+        }
+
+        response = self.client.post(path=self.url, format="json", data=post_data)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+        self.assertEqual(response_json["status"], "ok", response_json)
+        self.assertNotIn("message", response_json)
+
+    @BaseTestCase.cases(
+        ("bond", "bond"),
+        ("stock", "stock"),
+    )
+    def test__instrument_with_currency_created(self, instrument_type: str):
+        post_data = {
+            "request_id": self.task.id,
+            "data": {
+                "instruments": [
+                    {
+                        "instrument_type": {
+                            "user_code": instrument_type,
+                        },
+                        "user_code": "test_user_code",
+                        "short_name": "test_short_name",
+                        "name": "test_name",
+                        "pricing_currency": {
+                            "code": "RUB",
+                        },
+                        "maturity_price": 100.0,
+                        "maturity": date.today(),
+                        "country": {
+                            "code": "USA",
+                        },
+                    },
+                ],
+                "currencies": [
+                    {
+                        "code": "RUB",
+                        "short_name": "RUB",
+                        "name": "Russian Ruble",
+                    }
                 ],
             },
         }

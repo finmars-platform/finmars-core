@@ -1749,9 +1749,9 @@ class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
             return Response(error)
 
         try:
-            for item in data["data"]["items"]:
+            for item in data["data"]:
                 create_instrument_from_finmars_database(
-                    item, task.master_user, task.member
+                    item, task.master_user, task.member,
                 )
 
             return Response(self.create_ok_log_it("currency"))
@@ -1768,9 +1768,9 @@ class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
             return Response(error)
 
         try:
-            for item in data["data"]["items"]:
+            for item in data["data"]:
                 create_counterparty_from_finmars_database(
-                    item, task.master_user, task.member
+                    item, task.master_user, task.member,
                 )
 
             return Response(self.create_ok_log_it("company"))

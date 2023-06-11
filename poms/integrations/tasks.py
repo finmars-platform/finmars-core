@@ -4449,8 +4449,8 @@ def create_currency_from_finmars_database(data, master_user, member) -> Currency
     currency_data = {
         "user_code": data["code"],
         "name": data["name"],
-        "short_name": data["shortName"],
-        "pricing_condition": PricingCondition.RUN_VALUATION_IF_NON_ZERO,
+        "short_name": data["short_name"],
+        "pricing_condition": PricingCondition.NO_VALUATION,
     }
 
     _l.info(f"{func} currency_data={currency_data}")
