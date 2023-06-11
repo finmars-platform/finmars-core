@@ -595,79 +595,6 @@ def create_instrument_cbond(data, master_user, member):
         raise Exception(e)
 
 
-def create_currency_cbond(data, master_user, member):
-    try:
-        from poms.currencies.serializers import CurrencySerializer
-
-        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
-        content_type = ContentType.objects.get(model="currency", app_label="currencies")
-
-        proxy_user = ProxyUser(member, master_user)
-        proxy_request = ProxyRequest(proxy_user)
-
-        context = {"master_user": master_user, "request": proxy_request}
-
-        currency_data = {
-            "user_code": data["code"],
-            "name": data["name"],
-            "short_name": data["shortName"],
-            "pricing_condition": PricingCondition.RUN_VALUATION_IF_NON_ZERO,
-        }
-
-        # for key, value in data.items():
-        #
-        #     if key == 'attributes':
-        #
-        #         for attr_key, attr_value in data['attributes'].items():
-        #
-        #             if attr_value == 'null':
-        #                 currency_data[attr_key] = None
-        #             else:
-        #                 currency_data[attr_key] = attr_value
-        #
-        #     else:
-        #
-        #         if value == 'null':
-        #             currency_data[key] = None
-        #         else:
-        #             currency_data[key] = value
-
-        attribute_types = GenericAttributeType.objects.filter(
-            master_user=master_user, content_type=content_type
-        )
-
-        try:
-            instance = Currency.objects.get(
-                master_user=master_user, user_code=currency_data["user_code"]
-            )
-
-            serializer = CurrencySerializer(
-                data=currency_data, context=context, instance=instance
-            )
-        except Currency.DoesNotExist:
-            serializer = CurrencySerializer(data=currency_data, context=context)
-
-        if serializer.is_valid():
-            currency = serializer.save()
-
-            for policy in currency.pricing_policies.all():
-                policy.default_value = currency_data["user_code"] + ".USD"
-
-                policy.save()
-
-            _l.info("Currency is imported successfully")
-
-            return currency
-        else:
-            _l.info(f"CurrencyExternalAPIViewSet error {serializer.errors}")
-            raise Exception(serializer.errors)
-
-    except Exception as e:
-        _l.info(f"CurrencyExternalAPIViewSet error {e}")
-        _l.info(traceback.format_exc())
-        raise Exception(e)
-
-
 def download_instrument_cbond(
     instrument_code=None,
     instrument_name=None,
@@ -4464,28 +4391,123 @@ def complex_transaction_csv_file_import_by_procedure_json(
         procedure_instance.save()
 
 
-def create_counterparty_cbond(data, master_user, member):
+def create_counterparty_cbond(data, master_user, member) -> Counterparty:
     from poms.counterparties.serializers import CounterpartySerializer
 
+    func = "create_counterparty_cbond"
     proxy_user = ProxyUser(member, master_user)
     proxy_request = ProxyRequest(proxy_user)
     context = {"request": proxy_request}
+    company_data = {
+        "user_code": data["code"],
+        "name": data["name"],
+        "short_name": data["shortName"],
+    }
+
+    _l.info(f"{func} company_data={company_data}")
 
     try:
         instance = Counterparty.objects.get(
             master_user=master_user,
-            user_code=data["user_code"],
+            user_code=company_data["user_code"],
         )
         serializer = CounterpartySerializer(
-            data=data,
+            data=company_data,
             context=context,
             instance=instance,
         )
-    except Counterparty.DoesNotExist:
-        serializer = CounterpartySerializer(data=data, context=context)
 
-    serializer.is_valid(raise_exception=True)
-    counterparty = serializer.save()
+    except Counterparty.DoesNotExist:
+        serializer = CounterpartySerializer(data=company_data, context=context)
+
+    except Exception as e:
+        _l.error(f"{func} unexpected {e}\n {traceback.format_exc()}")
+        raise Exception(e)
+
+    if serializer.is_valid():
+        counter_party = serializer.save()
+        _l.info(
+            f"{func} Counterparty {company_data['user_code']} is imported successfully"
+        )
+        return counter_party
+
+    else:
+        _l.error(f"{func} invalid company data {serializer.errors}")
+        raise Exception(serializer.errors)
+
+
+def create_currency_cbond(data, master_user, member) -> Currency:
+    from poms.currencies.serializers import CurrencySerializer
+
+    func = "create_currency_cbond"
+    proxy_user = ProxyUser(member, master_user)
+    proxy_request = ProxyRequest(proxy_user)
+    context = {"master_user": master_user, "request": proxy_request}
+    currency_data = {
+        "user_code": data["code"],
+        "name": data["name"],
+        "short_name": data["shortName"],
+        "pricing_condition": PricingCondition.RUN_VALUATION_IF_NON_ZERO,
+    }
+
+    _l.info(f"{func} currency_data={currency_data}")
+
+    # ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+    # content_type = ContentType.objects.get(model="currency", app_label="currencies")
+    # for key, value in data.items():
+    #
+    #     if key == 'attributes':
+    #
+    #         for attr_key, attr_value in data['attributes'].items():
+    #
+    #             if attr_value == 'null':
+    #                 currency_data[attr_key] = None
+    #             else:
+    #                 currency_data[attr_key] = attr_value
+    #
+    #     else:
+    #
+    #         if value == 'null':
+    #             currency_data[key] = None
+    #         else:
+    #             currency_data[key] = value
+    # attribute_types = GenericAttributeType.objects.filter(
+    #     master_user=master_user, content_type=content_type
+    # )
+
+    try:
+        instance = Currency.objects.get(
+            master_user=master_user,
+            user_code=currency_data["user_code"],
+        )
+        serializer = CurrencySerializer(
+            data=currency_data,
+            context=context,
+            instance=instance,
+        )
+    except Currency.DoesNotExist:
+        serializer = CurrencySerializer(data=currency_data, context=context)
+
+    except Exception as e:
+        _l.error(f"{func} unexpected {e}\n {traceback.format_exc()}")
+        raise Exception(e)
+
+    if serializer.is_valid():
+        currency = serializer.save()
+
+        for policy in currency.pricing_policies.all():
+            policy.default_value = currency_data["user_code"] + ".USD"
+            policy.save()
+
+        _l.info(
+            f"{func} Currency {currency_data['user_code']} is imported successfully"
+        )
+
+        return currency
+
+    else:
+        _l.error(f"{func} invalid currency data {serializer.errors}")
+        raise Exception(serializer.errors)
 
 
 def update_task_with_instrument_data(data: dict, task: CeleryTask):
@@ -4548,17 +4570,39 @@ def update_task_with_simple_instrument(remote_task_id: int, task: CeleryTask):
 
 
 def update_task_with_currency_data(data: dict, task: CeleryTask):
-    result_currency = None
-    options = task.options_object
     func = "update_task_with_currency_data"
-    # TODO create currency from received data
+    try:
+        currency_data = data["data"]["items"][0]
+
+        _l.info(f"{func} company_data={currency_data}")
+
+        currency = create_currency_cbond(currency_data, task.master_user, task.member)
+        result = task.result_object
+        result["currency_id"] = currency.id
+        task.result_object = result
+        task.status = CeleryTask.STATUS_DONE
+        task.save()
+    except Exception as e:
+        err_msg = f"{func} unexpected {repr(e)}"
+        update_task_with_error(task, err_msg)
 
 
 def update_task_with_company_data(data: dict, task: CeleryTask):
-    result_company = None
-    options = task.options_object
     func = "update_task_with_company_data"
-    # TODO create counterparty from received data
+    try:
+        company_data = data["data"]["items"][0]
+
+        _l.info(f"{func} company_data={company_data}")
+
+        company = create_counterparty_cbond(company_data, task.master_user, task.member)
+        result = task.result_object
+        result["company_id"] = company.id
+        task.result_object = result
+        task.status = CeleryTask.STATUS_DONE
+        task.save()
+    except Exception as e:
+        err_msg = f"{func} unexpected {repr(e)}"
+        update_task_with_error(task, err_msg)
 
 
 def update_task_with_remote_id(remote_task_id: int, task: CeleryTask):
