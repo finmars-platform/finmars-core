@@ -421,8 +421,8 @@ def create_instrument_from_finmars_database(data, master_user, member):
         try:
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
-                # user_code=instrument_type_user_code,
-                user_code__contains=short_type,  # FIXME DEBUG ONLY !
+                user_code=instrument_type_user_code,
+                # user_code__contains=short_type,  # FIXME DEBUG ONLY !
             )
         except InstrumentType.DoesNotExist as e:
             # all = InstrumentType.objects.all().values_list("id", "user_code", "master_user_id")

@@ -16,7 +16,7 @@ class CallbackSetTestMixin:
 
     def test__no_request_id(self):
         post_data = {
-            "data": {"items": []},
+            "data": [],
         }
         response = self.client.post(path=self.url, format="json", data=post_data)
         self.assertEqual(response.status_code, 200, response.content)
@@ -25,7 +25,10 @@ class CallbackSetTestMixin:
         self.assertIn("message", response_json)
 
     def test__invalid_request_id(self):
-        post_data = {"request_id": self.random_int(), "data": {"items": []}}
+        post_data = {
+            "request_id": self.random_int(),
+            "data": [],
+        }
         response = self.client.post(path=self.url, format="json", data=post_data)
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
