@@ -4363,7 +4363,7 @@ class SimpleEval2(object):
                 return val[node.attr]
             except (IndexError, KeyError, TypeError):
 
-                _l.info('AttributeDoesNotExist.node %s' % node)
+                _l.debug('AttributeDoesNotExist.node %s' % node)
 
                 raise AttributeDoesNotExist(node.attr)
 
