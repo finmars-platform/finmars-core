@@ -2156,10 +2156,10 @@ def _safe_get_instrument(evaluator, instrument):
 
         try:
             if pk is not None:
-                instrument = instrument_qs.get(pk=pk).prefetch_related('attributes')
+                instrument = instrument_qs.get(pk=pk)
 
             elif user_code is not None:
-                instrument = instrument_qs.get(user_code=user_code).prefetch_related('attributes')
+                instrument = instrument_qs.get(user_code=user_code)
 
         except Instrument.DoesNotExist:
             raise ExpressionEvalError()
