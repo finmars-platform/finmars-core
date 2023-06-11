@@ -2504,6 +2504,7 @@ class TransactionTypeProcess(object):
                     except formula.InvalidExpression as e:
 
                         _l.error('process_recalculate e %s' % e)
+                        _l.error('process_recalculate traceback %s' % traceback.format_exc())
                         _l.debug('process_recalculate e self.values %s' % self.values)
 
                         if inp.value_type == TransactionTypeInput.STRING:
