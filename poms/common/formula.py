@@ -1564,22 +1564,32 @@ def _get_instrument_attribute(evaluator, instrument, attribute_type_user_code):
 
     if isinstance(instrument, dict):
 
-        for attribute in instrument['attributes']:
+        # _l.info("_get_instrument_attribute.instrument is dict %s" % instrument['attributes'])
+        '''Weird code for demo 2023-06-11'''
+        '''TODO refactor'''
 
-            if attribute['attribute_type_object']['user_code'] == attribute_type_user_code:
+        if isinstance(instrument['attributes'], dict):
 
-                if attribute['attribute_type_object']['value_type'] == 10:
-                    result = attribute.value_text
+            result = instrument['attributes'][attribute_type_user_code]
 
-                if attribute['attribute_type_object']['value_type'] == 20:
-                    result = attribute.value_float
+        else:
 
-                if attribute['attribute_type_object']['value_type'] == 30:
-                    if attribute['classifier_object']:
-                        result = attribute['classifier_object']['name']
+            for attribute in instrument['attributes']:
 
-                if attribute['attribute_type_object']['value_type'] == 40:
-                    result = attribute.value_date
+                if attribute['attribute_type_object']['user_code'] == attribute_type_user_code:
+
+                    if attribute['attribute_type_object']['value_type'] == 10:
+                        result = attribute.value_text
+
+                    if attribute['attribute_type_object']['value_type'] == 20:
+                        result = attribute.value_float
+
+                    if attribute['attribute_type_object']['value_type'] == 30:
+                        if attribute['classifier_object']:
+                            result = attribute['classifier_object']['name']
+
+                    if attribute['attribute_type_object']['value_type'] == 40:
+                        result = attribute.value_date
 
     else:
 
