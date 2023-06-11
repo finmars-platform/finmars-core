@@ -29,7 +29,9 @@ class CallbackCompanyViewSetTest(BaseTestCase):
         )
 
     def test__no_request_id(self):
-        post_data = {"data": {"items": []}}
+        post_data = {
+            "data": {"items": []},
+        }
         response = self.client.post(path=self.url, format="json", data=post_data)
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
@@ -66,7 +68,10 @@ class CallbackCompanyViewSetTest(BaseTestCase):
         self.assertIn("message", response_json)
 
     def test__empty_items(self):
-        post_data = {"request_id": self.task.id, "data": {"items": []}}
+        post_data = {
+            "request_id": self.task.id,
+            "data": {"items": []},
+        }
         response = self.client.post(path=self.url, format="json", data=post_data)
         self.assertEqual(response.status_code, 200, response.content)
 
