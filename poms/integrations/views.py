@@ -1786,7 +1786,7 @@ class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
                     task.member,
                 )
 
-            return Response(self.create_ok_log_it("instrument"))
+            return Response(self.create_ok_log_it("company"))
 
         except Exception as e:
             return Response(self.create_err_log_it(repr(e), method="post creating"))
