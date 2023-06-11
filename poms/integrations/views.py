@@ -1720,29 +1720,16 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
 
         try:
             if "instruments" in data:
-                if "currencies" in data:
+                if "currencies" in data:  # 1st we need to create currencies
                     for item in data["currencies"]:
-                        if item:
-                            create_currency_cbond(
-                                item,
-                                task.master_user,
-                                task.member,
-                            )
+                        create_currency_cbond(item, task.master_user, task.member)
 
                 for item in data["instruments"]:
-                    create_instrument_cbond(
-                        item,
-                        task.master_user,
-                        task.member,
-                    )
+                    create_instrument_cbond(item, task.master_user, task.member)
 
             elif "items" in data["data"]:
                 for item in data["data"]["items"]:
-                    create_instrument_cbond(
-                        item,
-                        task.master_user,
-                        task.member,
-                    )
+                    create_instrument_cbond(item, task.master_user, task.member)
 
             return Response(self.create_ok_log_it("instrument(s)"))
 
@@ -1759,11 +1746,7 @@ class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
 
         try:
             for item in data["data"]["items"]:
-                create_currency_cbond(
-                    item,
-                    task.master_user,
-                    task.member,
-                )
+                create_currency_cbond(item, task.master_user, task.member)
 
             return Response(self.create_ok_log_it("currency"))
 
@@ -1780,11 +1763,7 @@ class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
 
         try:
             for item in data["data"]["items"]:
-                create_counterparty_cbond(
-                    item,
-                    task.master_user,
-                    task.member,
-                )
+                create_counterparty_cbond(item, task.master_user, task.member)
 
             return Response(self.create_ok_log_it("company"))
 
