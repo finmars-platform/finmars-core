@@ -43,7 +43,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                         },
                         "pricing_condition": 1,
                         "payment_size_detail": 1,
-                        "daily_pricing_model": 6,
+                        # "daily_pricing_model": 6,
                         # "attributes": [],
                         # "accrual_calculation_schedules": [],
                     },
@@ -51,7 +51,6 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
             },
         }
 
-        print(f"test master_user={self.user.master_user.id}")
         response = self.client.post(path=self.url, format="json", data=post_data)
         self.assertEqual(response.status_code, 200, response.content)
 

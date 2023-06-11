@@ -393,6 +393,10 @@ def handler_instrument_object(
     object_data["name"] = source_data["name"]
     object_data["short_name"] = source_data["short_name"]
 
+    object_data["pricing_condition"] = source_data.get("pricing_condition")
+    object_data["payment_size_detail"] = source_data.get("payment_size_detail")
+    object_data["daily_pricing_model"] = source_data.get("daily_pricing_model")
+
     object_data["accrued_currency"] = object_data["pricing_currency"]
     object_data["co_directional_exposure_currency"] = object_data["pricing_currency"]
     object_data["counter_directional_exposure_currency"] = object_data[
@@ -536,16 +540,16 @@ def handler_instrument_object(
     if (
         "accrual_calculation_schedules" in source_data
         and source_data["accrual_calculation_schedules"]
+    ) and (
+        len(source_data["accrual_calculation_schedules"])
+        and len(object_data["event_schedules"])
     ):
-        if len(source_data["accrual_calculation_schedules"]) and len(
-            object_data["event_schedules"]
-        ):
-            coupon_event = object_data["event_schedules"][0]
+        coupon_event = object_data["event_schedules"][0]
 
-            if "first_payment_date" in source_data["accrual_calculation_schedules"][0]:
-                coupon_event["effective_date"] = source_data[
-                    "accrual_calculation_schedules"
-                ][0]["first_payment_date"]
+        if "first_payment_date" in source_data["accrual_calculation_schedules"][0]:
+            coupon_event["effective_date"] = source_data[
+                "accrual_calculation_schedules"
+            ][0]["first_payment_date"]
 
     accrual_map = {
         "Actual/Actual (ICMA)": AccrualCalculationModel.ACT_ACT,

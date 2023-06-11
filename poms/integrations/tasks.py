@@ -403,10 +403,12 @@ def create_instrument_from_finmars_database(data, master_user, member):
                     )
 
                 _l.info(
-                    f'Reference for pricing updated {instrument_data["reference_for_pricing"]}'
+                    f'{func} Reference for pricing updated '
+                    f'{instrument_data["reference_for_pricing"]}'
                 )
 
-            _l.info("Overwrite Pricing Currency for stock")
+            _l.info(f"{func} Overwrite Pricing Currency for stock")
+
             if "default_currency_code" in instrument_data:
                 instrument_data["pricing_currency"] = instrument_data[
                     "default_currency_code"
@@ -419,13 +421,14 @@ def create_instrument_from_finmars_database(data, master_user, member):
         try:
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
-                # user_code=instrument_type_user_code,
-                user_code__contains=short_type,  # TODO DEBUG ONLY !
+                user_code=instrument_type_user_code,
+                # user_code__contains=short_type,  # DEBUG ONLY !
             )
         except InstrumentType.DoesNotExist:
-            all = InstrumentType.objects.all().values_list("id", "user_code", "master_user_id")
-            # err_msg = f"{func} No such InstrumentType user_code={instrument_type_user_code}"
-            err_msg = f"{func} NO InstrumentType contains user_code={short_type} all={all}"
+            # all = InstrumentType.objects.all().values_list("id", "user_code", "master_user_id")
+            # err_msg = f"{func} NO InstrumentType contains user_code={short_type} all={all}"
+
+            err_msg = f"{func} No such InstrumentType user_code={instrument_type_user_code}"
             _l.error(err_msg)
             raise RuntimeError(err_msg)
 
