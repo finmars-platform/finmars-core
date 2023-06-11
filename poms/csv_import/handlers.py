@@ -234,16 +234,10 @@ def set_defaults_from_instrument_type(
 
             for instrument_type_action in instrument_type_event.data["actions"]:
                 action = {
-                    "transaction_type": instrument_type_action[
-                        "transaction_type"
-                    ],
+                    "transaction_type": instrument_type_action["transaction_type"],
                     "text": instrument_type_action["text"],
-                    "is_sent_to_pending": instrument_type_action[
-                        "is_sent_to_pending"
-                    ],
-                    "is_book_automatic": instrument_type_action[
-                        "is_book_automatic"
-                    ],
+                    "is_sent_to_pending": instrument_type_action["is_sent_to_pending"],
+                    "is_book_automatic": instrument_type_action["is_book_automatic"],
                 }
                 event_schedule["actions"].append(action)
 
@@ -286,9 +280,7 @@ def set_defaults_from_instrument_type(
         return instrument_object
 
     except Exception as e:
-        _l.info(f"set_defaults_from_instrument_type e {e}")
-        _l.info(traceback.format_exc())
-
+        _l.error(f"set_defaults_from_instrument_type {e}\n {traceback.format_exc()}")
         raise RuntimeError(f"Instrument Type is not configured correctly {e}")
 
 
@@ -309,24 +301,22 @@ def set_events_for_instrument(instrument_object, data_object, instrument_type_ob
             "convertible_bonds",
             "index_linked_bonds",
             "short_term_notes",
-        }:
-            if len(instrument_object["event_schedules"]):
-                # C
-                coupon_event = instrument_object["event_schedules"][0]
+        } and len(instrument_object["event_schedules"]):
 
-                # coupon_event['periodicity'] = data_object['periodicity']
+            coupon_event = instrument_object["event_schedules"][0]
 
-                if "first_coupon_date" in data_object:
-                    coupon_event["effective_date"] = data_object["first_coupon_date"]
+            # coupon_event['periodicity'] = data_object['periodicity']
 
-                coupon_event["final_date"] = maturity
+            if "first_coupon_date" in data_object:
+                coupon_event["effective_date"] = data_object["first_coupon_date"]
 
-                if len(instrument_object["event_schedules"]) == 2:
-                    # M
-                    expiration_event = instrument_object["event_schedules"][1]
+            coupon_event["final_date"] = maturity
 
-                    expiration_event["effective_date"] = maturity
-                    expiration_event["final_date"] = maturity
+            if len(instrument_object["event_schedules"]) == 2:
+                # M
+                expiration_event = instrument_object["event_schedules"][1]
+                expiration_event["effective_date"] = maturity
+                expiration_event["final_date"] = maturity
 
         if instrument_type in {
             "bond_futures",
@@ -413,7 +403,7 @@ def handler_instrument_object(
         object_data["payment_size_detail"] = PaymentSizeDetail.objects.get(
             user_code=source_data["payment_size_detail"]
         ).id
-    except Exception as e:
+    except Exception:
         object_data["payment_size_detail"] = ecosystem_default.payment_size_detail.id
 
     # try:
@@ -470,7 +460,7 @@ def handler_instrument_object(
 
                 object_data["attributes"].append(attribute)
 
-    except Exception as e:
+    except Exception:
         _l.error("Could not set sector")
 
     # object_data['attributes'] = []

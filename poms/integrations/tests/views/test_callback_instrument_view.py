@@ -19,7 +19,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
 
     @BaseTestCase.cases(
         ("bonds", "bonds"),
-        # ("stocks", "stocks"),
+        ("stocks", "stocks"),
     )
     def test__instrument_created(self, instrument_type: str):
         post_data = {
@@ -27,13 +27,10 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
             "data": {
                 "items": [
                     {
-                        "instrument_type": {
-                            "user_code": instrument_type,
-                        },
+                        "instrument_type": instrument_type,
                         "user_code": "test_user_code",
                         "short_name": "test_short_name",
                         "name": "test_name",
-                        "isin": "TU12345678",
                         "pricing_currency": {
                             "code": "USD",
                         },
@@ -54,4 +51,4 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
 
         response_json = response.json()
         self.assertEqual(response_json["status"], "ok", response_json)
-        # self.assertNotIn("message", response_json)
+        self.assertNotIn("message", response_json)

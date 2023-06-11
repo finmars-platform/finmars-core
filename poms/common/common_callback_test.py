@@ -1,17 +1,12 @@
-from django.conf import settings
-
 from poms.celery_tasks.models import CeleryTask
-from poms.users.fields import MasterUser, Member
 
 
 # noinspection PyUnresolvedReferences
 class CallbackSetTestMixin:
     def create_task(self, name: str, func: str):
-        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
-        member = Member.objects.get(master_user=master_user)
         return CeleryTask.objects.create(
-            master_user=master_user,
-            member=member,
+            master_user=self.user.master_user,
+            member=self.member,
             verbose_name=name,
             function_name=func,
             type="import",

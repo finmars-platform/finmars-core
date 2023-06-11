@@ -180,12 +180,14 @@ TRANSACTIONS_TYPES = [
     INSTRUMENT_EXP,
     NON_INSTRUMENT_EXP,
 ]
+INSTRUMENTS_TYPES = [
+    "stocks",
+    "bonds",
+]
 INSTRUMENTS = [
     ("Apple", "stocks", InstrumentClass.GENERAL),
-    ("Boeing", "stocks", InstrumentClass.GENERAL),
     ("Tesla B.", "bonds", InstrumentClass.GENERAL),
-    ("Pfizer B.", "bonds", InstrumentClass.GENERAL),
-    ("Bitcoin", "Crypto", InstrumentClass.CONTRACT_FOR_DIFFERENCE),
+    # ("Bitcoin", "crypto", InstrumentClass.CONTRACT_FOR_DIFFERENCE),
 ]
 TRANSACTIONS_CLASSES = [
     TransactionClass.CASH_INFLOW,
@@ -243,11 +245,24 @@ class DbInitializer:
             maturity_date=date.today(),
         )
 
+    def create_instruments_types(self):
+        return [
+            InstrumentType.objects.create(
+                master_user=self.master_user,
+                instrument_class_id=InstrumentClass.GENERAL,
+                name=type_,
+                user_code=type_,
+                short_name=type_,
+                public_name=type_,
+            )
+            for type_ in INSTRUMENTS_TYPES
+        ]
+
     def get_or_create_instruments(self) -> dict:
         instruments = {}
         for name, type_, class_id in INSTRUMENTS:
             instrument_type = InstrumentType.objects.filter(
-                user_code=type_,
+                name=type_,
             ).first() or InstrumentType.objects.create(
                 master_user=self.master_user,
                 instrument_class_id=class_id,
@@ -309,7 +324,7 @@ class DbInitializer:
             default_fx_rate=1,
         )
 
-    def get_or_create_types(self) -> dict:
+    def get_or_create_transaction_types(self) -> dict:
         types = {}
         for name in TRANSACTIONS_TYPES:
             type_obj = TransactionType.objects.filter(
@@ -433,8 +448,9 @@ class DbInitializer:
         self.counter_party = self.create_counter_party()
         self.responsible = self.create_responsible()
         self.accounts, self.portfolios = self.create_accounts_and_portfolios()
-        self.transaction_types = self.get_or_create_types()
+        self.transaction_types = self.get_or_create_transaction_types()
         self.transaction_classes = self.get_or_create_classes()
+        self.instrument_type = self.create_instruments_types()
         self.instruments = self.get_or_create_instruments()
         self.default_instrument = self.get_or_create_default_instrument()
-        print("\n----------- db initialized, start tests -------------\n")
+        print("\n-------------- db initialized ---------------\n")
