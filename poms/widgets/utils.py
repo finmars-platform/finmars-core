@@ -1,3 +1,4 @@
+import datetime
 import logging
 import traceback
 
@@ -506,6 +507,9 @@ def collect_currency_category(report_type, master_user, instance_serialized, his
 
     item.save()
 
+
+def str_to_date(date_string):
+    return datetime.strptime(date_string, '%Y-%m-%d').date()
 
 def find_next_date_to_process(task):
     result = None

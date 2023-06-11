@@ -19,7 +19,7 @@ from poms.widgets.models import BalanceReportHistory, BalanceReportHistoryItem, 
     PLReportHistoryItem
 from poms.widgets.utils import find_next_date_to_process, collect_asset_type_category, collect_currency_category, \
     collect_country_category, collect_sector_category, collect_region_category, collect_pl_history, \
-    collect_balance_history, collect_widget_stats
+    collect_balance_history, collect_widget_stats, str_to_date
 
 _l = logging.getLogger('poms.widgets')
 
@@ -63,7 +63,7 @@ def collect_balance_report_history(self, task_id):
     _l.info('collect_balance_report_history init task_id %s' % task_id)
 
     task = CeleryTask.objects.get(id=task_id)
-    report_date = find_next_date_to_process(task)
+    report_date = str_to_date(find_next_date_to_process(task))
 
     try:
 
@@ -256,14 +256,14 @@ def collect_pl_report_history(self, task_id):
     _l.info('collect_pl_report_history init task_id %s' % task_id)
 
     task = CeleryTask.objects.get(id=task_id)
-    report_date = find_next_date_to_process(task)
+    report_date = str_to_date(find_next_date_to_process(task))
 
     try:
 
         _l.info('task.options_object %s' % task.options_object)
 
         report_currency = Currency.objects.get(id=task.options_object.get('report_currency_id', None))
-        pl_first_date = task.options_object['pl_first_date']
+        pl_first_date = str_to_date(task.options_object['pl_first_date'])
         cost_method = CostMethod.objects.get(id=task.options_object.get('cost_method_id', None))
         pricing_policy = PricingPolicy.objects.get(id=task.options_object.get('pricing_policy_id', None))
 
