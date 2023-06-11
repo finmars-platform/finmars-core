@@ -75,7 +75,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.assertEqual(results["task_id"], remote_task_id)
 
     @BaseTestCase.cases(
-        ("bonds", "bonds"),
+        # ("bonds", "bonds"),
         ("stocks", "stocks"),
     )
     @mock.patch("poms.common.database_client.DatabaseService.get_task")

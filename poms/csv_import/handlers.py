@@ -145,7 +145,8 @@ def set_defaults_from_instrument_type(
             ).pk
         except Exception as e:
             _l.info(
-                "Could not set co_directional_exposure_currency, fallback to default"
+                f"Could not set co_directional_exposure_currency, "
+                f"fallback to default {repr(e)}"
             )
             instrument_object[
                 "co_directional_exposure_currency"
@@ -160,7 +161,8 @@ def set_defaults_from_instrument_type(
             ).pk
         except Exception as e:
             _l.info(
-                "Could not set counter_directional_exposure_currency, fallback to default"
+                f"Could not set counter_directional_exposure_currency, "
+                f"fallback to default {repr(e)}"
             )
             instrument_object[
                 "counter_directional_exposure_currency"
@@ -185,10 +187,10 @@ def set_defaults_from_instrument_type(
             if attribute.value_type == 10:
                 attr["value_string"] = attribute.value_string
 
-            if attribute.value_type == 20:
+            elif attribute.value_type == 20:
                 attr["value_float"] = attribute.value_float
 
-            if attribute.value_type == 30:
+            elif attribute.value_type == 30:
                 try:
                     item = GenericClassifier.objects.get(
                         attribute_type__user_code=attribute.attribute_type_user_code,
@@ -198,11 +200,11 @@ def set_defaults_from_instrument_type(
                     attr["classifier"] = item.id
                     attr["classifier_object"] = {"id": item.id, "name": item.name}
                 except Exception as e:
-                    _l.info("Exception %s e " % e)
+                    _l.error(f"set_defaults_from_instrument_type {e}")
 
                     attr["classifier"] = None
 
-            if attribute.value_type == 40:
+            elif attribute.value_type == 40:
                 attr["value_date"] = attribute.value_date
 
             instrument_object["attributes"].append(attr)
@@ -227,23 +229,22 @@ def set_defaults_from_instrument_type(
                     if "default_value" in item:
                         event_schedule[item["key"]] = item["default_value"]
 
-            #
             event_schedule["is_auto_generated"] = True
             event_schedule["actions"] = []
 
             for instrument_type_action in instrument_type_event.data["actions"]:
-                action = {}
-                action["transaction_type"] = instrument_type_action[
-                    "transaction_type"
-                ]  # TODO check if here user code instead of id
-                action["text"] = instrument_type_action["text"]
-                action["is_sent_to_pending"] = instrument_type_action[
-                    "is_sent_to_pending"
-                ]
-                action["is_book_automatic"] = instrument_type_action[
-                    "is_book_automatic"
-                ]
-
+                action = {
+                    "transaction_type": instrument_type_action[
+                        "transaction_type"
+                    ],
+                    "text": instrument_type_action["text"],
+                    "is_sent_to_pending": instrument_type_action[
+                        "is_sent_to_pending"
+                    ],
+                    "is_book_automatic": instrument_type_action[
+                        "is_book_automatic"
+                    ],
+                }
                 event_schedule["actions"].append(action)
 
             instrument_object["event_schedules"].append(event_schedule)
@@ -253,13 +254,11 @@ def set_defaults_from_instrument_type(
         instrument_object["accrual_calculation_schedules"] = []
 
         for instrument_type_accrual in instrument_type.accruals.all():
-            accrual = {}
-
-            for item in instrument_type_accrual.data["items"]:
-                # TODO add check for value type
-                if "default_value" in item:
-                    accrual[item["key"]] = item["default_value"]
-
+            accrual = {
+                item["key"]: item["default_value"]
+                for item in instrument_type_accrual.data["items"]
+                if "default_value" in item
+            }
             instrument_object["accrual_calculation_schedules"].append(accrual)
 
         # Set Pricing Policy
@@ -268,29 +267,29 @@ def set_defaults_from_instrument_type(
             instrument_object["pricing_policies"] = []
 
             for it_pricing_policy in instrument_type.pricing_policies.all():
-                pricing_policy = {}
-
-                pricing_policy["pricing_policy"] = it_pricing_policy.pricing_policy.id
-                pricing_policy["pricing_scheme"] = it_pricing_policy.pricing_scheme.id
-                pricing_policy["notes"] = it_pricing_policy.notes
-                pricing_policy["default_value"] = it_pricing_policy.default_value
-                pricing_policy["attribute_key"] = it_pricing_policy.attribute_key
-                pricing_policy["json_data"] = it_pricing_policy.json_data
+                pricing_policy = {
+                    "pricing_policy": it_pricing_policy.pricing_policy.id,
+                    "pricing_scheme": it_pricing_policy.pricing_scheme.id,
+                    "notes": it_pricing_policy.notes,
+                    "default_value": it_pricing_policy.default_value,
+                    "attribute_key": it_pricing_policy.attribute_key,
+                    "json_data": it_pricing_policy.json_data,
+                }
 
                 instrument_object["pricing_policies"].append(pricing_policy)
 
         except Exception as e:
-            _l.info("Can't set default pricing policy %s" % e)
+            _l.info(f"Can't set default pricing policy {e}")
 
-        _l.info("instrument_object %s" % instrument_object)
+        _l.info(f"instrument_object {instrument_object}")
 
         return instrument_object
 
     except Exception as e:
-        _l.info("set_defaults_from_instrument_type e %s" % e)
+        _l.info(f"set_defaults_from_instrument_type e {e}")
         _l.info(traceback.format_exc())
 
-        raise Exception("Instrument Type is not configured correctly %s" % e)
+        raise RuntimeError(f"Instrument Type is not configured correctly {e}")
 
 
 def set_events_for_instrument(instrument_object, data_object, instrument_type_obj):
@@ -356,15 +355,13 @@ def set_accruals_for_instrument(instrument_object, data_object, instrument_type_
 
     instrument_type = instrument_type_obj.user_code.lower()
 
-    if instrument_type == "bonds":
-        if len(instrument_object["accrual_calculation_schedules"]):
-            accrual = instrument_object["accrual_calculation_schedules"][0]
+    if instrument_type == "bonds" and len(
+        instrument_object["accrual_calculation_schedules"]
+    ):
+        accrual = instrument_object["accrual_calculation_schedules"][0]
 
-            accrual["effective_date"] = data_object["first_coupon_date"]
-            accrual["accrual_end_date"] = data_object["maturity"]
-            # accrual['accrual_size'] = data_object['accrual_size']
-            # accrual['periodicity'] = data_object['periodicity']
-            # accrual['periodicity_n'] = data_object['periodicity_n']
+        accrual["effective_date"] = data_object["first_coupon_date"]
+        accrual["accrual_end_date"] = data_object["maturity"]
 
 
 # Global method for create instrument object from Instrument Type Defaults
@@ -739,7 +736,7 @@ class SimpleImportProcess(object):
         self.task = CeleryTask.objects.get(pk=task_id)
         self.parent_task = self.task.parent
 
-        _l.info("SimpleImportProcess.Task %s. init" % self.task)
+        _l.info(f"SimpleImportProcess.Task {self.task}. init")
 
         self.task.status = CeleryTask.STATUS_PENDING
         self.task.save()
@@ -751,13 +748,12 @@ class SimpleImportProcess(object):
             )
 
             _l.info(
-                "SimpleImportProcess.Task %s. init procedure_instance %s"
-                % (self.task, self.procedure_instance)
+                f"SimpleImportProcess.Task {self.task}. init procedure_instance {self.procedure_instance}"
             )
 
-        self.master_user = self.task.master_user
         self.member = self.task.member
 
+        self.master_user = self.task.master_user
         self.proxy_user = ProxyUser(self.member, self.master_user)
         self.proxy_request = ProxyRequest(self.proxy_user)
 
@@ -817,9 +813,7 @@ class SimpleImportProcess(object):
             section="import",
             type="success",
             title=import_system_message_title,
-            description=self.member.username
-            + " started import with scheme "
-            + self.scheme.name,
+            description=f"{self.member.username} started import with scheme {self.scheme.name}",
         )
 
     def generate_file_report(self):
@@ -832,11 +826,11 @@ class SimpleImportProcess(object):
             % self.scheme.missing_data_handler
         )
 
-        result = []
-
-        result.append("Type, Simple Import")
-        result.append("Scheme, " + self.scheme.user_code)
-        result.append("Error handle, " + self.scheme.error_handler)
+        result = [
+            "Type, Simple Import",
+            "Scheme, " + self.scheme.user_code,
+            "Error handle, " + self.scheme.error_handler,
+        ]
 
         if self.result.file_name:
             result.append("Filename, " + self.result.file_name)

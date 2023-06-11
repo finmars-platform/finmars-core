@@ -183,8 +183,8 @@ TRANSACTIONS_TYPES = [
 INSTRUMENTS = [
     ("Apple", "stocks", InstrumentClass.GENERAL),
     ("Boeing", "stocks", InstrumentClass.GENERAL),
-    ("Tesla", "stocks", InstrumentClass.GENERAL),
-    ("Pfizer", "stocks", InstrumentClass.GENERAL),
+    ("Tesla B.", "bonds", InstrumentClass.GENERAL),
+    ("Pfizer B.", "bonds", InstrumentClass.GENERAL),
     ("Bitcoin", "Crypto", InstrumentClass.CONTRACT_FOR_DIFFERENCE),
 ]
 TRANSACTIONS_CLASSES = [
@@ -247,7 +247,7 @@ class DbInitializer:
         instruments = {}
         for name, type_, class_id in INSTRUMENTS:
             instrument_type = InstrumentType.objects.filter(
-                name=type_,
+                user_code=type_,
             ).first() or InstrumentType.objects.create(
                 master_user=self.master_user,
                 instrument_class_id=class_id,
