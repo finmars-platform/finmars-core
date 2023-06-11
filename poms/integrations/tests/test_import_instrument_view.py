@@ -69,8 +69,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
 
         celery_task = CeleryTask.objects.get(pk=response_json["task"])
         options = celery_task.options_object
-        callback_url = BACKEND_CALLBACK_URLS["instrument"]
-        self.assertEqual(options["callback_url"], callback_url)
+        self.assertEqual(options["callback_url"], BACKEND_CALLBACK_URLS["instrument"])
         results = celery_task.result_object
         self.assertEqual(results["instrument_id"], simple_instrument.id)
         self.assertEqual(results["task_id"], remote_task_id)
