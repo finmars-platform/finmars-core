@@ -1185,11 +1185,11 @@ class Member(FakeDeletableModel):
         configuration_code = get_default_configuration_code()
 
         try:
-            layout = MemberLayout.objects.get(member=instance,
+            layout = MemberLayout.objects.get(member_id=instance.id,
                                               configuration_code=configuration_code,
                                               user_code=configuration_code + ':default_member_layout')
         except Exception as e:
-            layout = MemberLayout.objects.create(member=instance,
+            layout = MemberLayout.objects.create(member_id=instance.id,
                                                  configuration_code=configuration_code,
                                                  name='default',
                                                  user_code=configuration_code + ':default_member_layout')
