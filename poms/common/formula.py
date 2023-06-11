@@ -1562,26 +1562,47 @@ def _get_instrument_attribute(evaluator, instrument, attribute_type_user_code):
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
-    instrument = _safe_get_instrument(evaluator, instrument)
+    if isinstance(instrument, dict):
 
-    result = None
+        for attribute in instrument['attributes']:
 
-    for attribute in instrument.attributes.all():
+            if attribute['attribute_type_object']['user_code'] == attribute_type_user_code:
 
-        if attribute.attribute_type.user_code == attribute_type_user_code:
+                if attribute['attribute_type_object']['value_type'] == 10:
+                    result = attribute.value_text
 
-            if attribute.attribute_type.value_type == 10:
-                result = attribute.value_text
+                if attribute['attribute_type_object']['value_type'] == 20:
+                    result = attribute.value_float
 
-            if attribute.attribute_type.value_type == 20:
-                result = attribute.value_float
+                if attribute['attribute_type_object']['value_type'] == 30:
+                    if attribute['classifier_object']:
+                        result = attribute['classifier_object']['name']
 
-            if attribute.attribute_type.value_type == 30:
-                if attribute.classifier:
-                    result = attribute.classifier.name
+                if attribute['attribute_type_object']['value_type'] == 40:
+                    result = attribute.value_date
 
-            if attribute.attribute_type.value_type == 40:
-                result = attribute.value_date
+    else:
+
+        instrument = _safe_get_instrument(evaluator, instrument)
+
+        result = None
+
+        for attribute in instrument.attributes.all():
+
+            if attribute.attribute_type.user_code == attribute_type_user_code:
+
+                if attribute.attribute_type.value_type == 10:
+                    result = attribute.value_text
+
+                if attribute.attribute_type.value_type == 20:
+                    result = attribute.value_float
+
+                if attribute.attribute_type.value_type == 30:
+                    if attribute.classifier:
+                        result = attribute.classifier.name
+
+                if attribute.attribute_type.value_type == 40:
+                    result = attribute.value_date
 
     return result
 
