@@ -456,8 +456,10 @@ class CollectHistoryViewSet(AbstractViewSet):
         _l.info('CollectHistoryViewSet.date_from %s' % date_from)
         _l.info('CollectHistoryViewSet.date_to %s' % date_to)
 
+        portfolio_instance = Portfolio.objects.get(id=portfolio_id)
+
         if not date_from:
-            transaction = get_first_transaction(portfolio_id)
+            transaction = get_first_transaction(portfolio_instance)
 
             date_from = transaction.accounting_date
 
@@ -535,8 +537,10 @@ class CollectBalanceHistoryViewSet(AbstractViewSet):
         _l.info('CollectBalanceHistoryViewSet.date_from %s' % date_from)
         _l.info('CollectBalanceHistoryViewSet.date_to %s' % date_to)
 
+        portfolio_instance = Portfolio.objects.get(id=portfolio_id)
+
         if not date_from:
-            transaction = get_first_transaction(portfolio_id)
+            transaction = get_first_transaction(portfolio_instance)
 
             date_from = transaction.accounting_date
 
@@ -604,8 +608,10 @@ class CollectPlHistoryViewSet(AbstractViewSet):
         _l.info('CollectHistoryViewSet.date_from %s' % date_from)
         _l.info('CollectHistoryViewSet.date_to %s' % date_to)
 
+        portfolio_instance = Portfolio.objects.get(id=portfolio_id)
+
         if not date_from:
-            transaction = get_first_transaction(portfolio_id)
+            transaction = get_first_transaction(portfolio_instance)
 
             date_from = transaction.accounting_date
 
