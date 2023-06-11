@@ -23,7 +23,7 @@ class CallbackCompanyViewSetTest(CallbackSetTestMixin, BaseTestCase):
                     {
                         "code": "test_user_code",
                         "name": "test_name",
-                        "shortName": "test_short_name",
+                        "short_name": "test_short_name",
                     },
                 ],
             },

@@ -1709,14 +1709,15 @@ class DataBaseCallBackView(APIView):
 
 class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
     def post(self, request):
-        data = request.data
-        task, error = self.validate_post_data(request_data=data)
-        if error:
-            return Response(self.create_err_log_it(str(error)))
+        request_data = request.data
+        task, error_dict = self.validate_post_data(request_data=request_data)
+        if error_dict:
+            return Response(error_dict)
 
-        if not "instruments" in data or "currencies" in data:
+        data = request_data["data"]
+        if not ("instruments" in data and "currencies" in request_data):
             err_msg = "no 'instruments' or 'currencies' in request.data"
-            return Response(err_msg)
+            return Response(self.create_err_log_it(err_msg))
 
         try:
             for item in data["currencies"]:
