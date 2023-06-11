@@ -369,10 +369,7 @@ def create_instrument_from_finmars_database(data, master_user, member):
         )
 
         # TODO remove stocks ASAP as configuration ready
-        if instrument_data["instrument_type"]["user_code"] in [
-            "stocks",
-            "stock",
-        ]:
+        if instrument_data["instrument_type"]["user_code"] in {"stocks", "stock"}:
             if (
                 "default_exchange" in instrument_data
                 and instrument_data["default_exchange"]
@@ -432,14 +429,12 @@ def create_instrument_from_finmars_database(data, master_user, member):
             )
 
         except Exception as e:
-            _l.info(
+            err_msg = (
                 f'Instrument Type {instrument_data["instrument_type"]["user_code"]} '
                 f"is not found {e}"
             )
-
-            raise Exception(
-                f'Instrument Type {instrument_data["instrument_type"]} is not found {e}'
-            ) from e
+            _l.info(err_msg)
+            raise RuntimeError(err_msg) from e
 
         object_data = handler_instrument_object(
             instrument_data,

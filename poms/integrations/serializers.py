@@ -1458,9 +1458,9 @@ class ImportInstrumentSerializer(serializers.Serializer):
 
 def check_instrument_type(instrument_type: str) -> str:
     if "bond" in instrument_type:
-        return "bond"
+        return "bonds"
     elif "stock" in instrument_type:
-        return "stock"
+        return "stocks"
 
     raise ValidationError(f"invalid instrument_type_code='{instrument_type}'")
 

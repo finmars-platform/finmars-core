@@ -1,3 +1,5 @@
+from datetime import date
+
 from poms.common.common_base_test import BaseTestCase
 from poms.common.common_callback_test import CallbackSetTestMixin
 from poms.common.database_client import BACKEND_CALLBACK_URLS
@@ -15,15 +17,34 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         )
         self.url = BACKEND_CALLBACK_URLS["instrument"]
 
-    def test__instrument_created(self):
+    @BaseTestCase.cases(
+        ("bonds", "bonds"),
+        # ("stocks", "stocks"),
+    )
+    def test__instrument_created(self, instrument_type: str):
         post_data = {
             "request_id": self.task.id,
             "data": {
                 "items": [
                     {
+                        "instrument_type": {
+                            "user_code": instrument_type,
+                        },
                         "user_code": "test_user_code",
-                        "code": "test_code",
+                        "short_name": "test_short_name",
                         "name": "test_name",
+                        "isin": "TU12345678",
+                        "pricing_currency": {
+                            "code": "USD",
+                        },
+                        "payment_size_detail": None,
+                        "maturity_price": 1.0,
+                        "maturity": date.today(),
+                        "country": {
+                            "code": "USA",
+                        },
+                        # "attributes": [],
+                        # "accrual_calculation_schedules": [],
                     },
                 ],
             },

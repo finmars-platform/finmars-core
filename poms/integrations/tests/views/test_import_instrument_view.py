@@ -38,10 +38,10 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 400, response.content)
 
     @BaseTestCase.cases(
-        ("bonds_111", "bond", 111),
-        ("bonds_777", "bond", 777),
-        ("stocks_333", "stock", 333),
-        ("stocks_999", "stock", 999),
+        ("bonds_111", "bonds", 111),
+        ("bonds_777", "bonds", 777),
+        ("stocks_333", "stocks", 333),
+        ("stocks_999", "stocks", 999),
     )
     @mock.patch("poms.common.database_client.DatabaseService.get_task")
     def test__task_ready(self, type_code, remote_task_id, mock_get_task):
@@ -113,7 +113,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         request_data = {
             "instrument_code": "reference",
             "instrument_name": "name",
-            "instrument_type_code": "bond",
+            "instrument_type_code": "bonds",
         }
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 200, response.content)
