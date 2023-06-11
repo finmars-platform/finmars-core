@@ -1715,7 +1715,7 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
             return Response(error_dict)
 
         data = request_data["data"]
-        if not ("instruments" in data and "currencies" in request_data):
+        if not ("instruments" in data and "currencies" in data):
             err_msg = "no 'instruments' or 'currencies' in request.data"
             return Response(self.create_err_log_it(err_msg))
 
