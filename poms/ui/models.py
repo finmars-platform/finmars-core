@@ -552,6 +552,8 @@ class MemberLayout(BaseUIModel, TimeStampedModel):
 
     def save(self, *args, **kwargs):
 
+        instance = super(MemberLayout, self).save(*args, **kwargs)
+
         if self.is_default:
             qs = MemberLayout.objects.filter(member=self.member, is_default=True)
             if self.pk:
@@ -567,8 +569,6 @@ class MemberLayout(BaseUIModel, TimeStampedModel):
 
             if count == 0:
                 self.is_default = True
-
-        return super(MemberLayout, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.name
