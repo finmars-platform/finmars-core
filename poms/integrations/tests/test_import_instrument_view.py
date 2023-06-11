@@ -98,6 +98,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         mock_update_data.assert_called_once()
 
         response_json = response.json()
+        celery_task = CeleryTask.objects.get(pk=response_json["task"])
 
         # TODO extend test with creation of the full instrument
         self.assertEqual(response_json["instrument_type_code"], type_code)

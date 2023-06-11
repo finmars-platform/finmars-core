@@ -4551,12 +4551,14 @@ def update_task_with_currency_data(data: dict, task: CeleryTask):
     result_currency = None
     options = task.options_object
     func = "update_task_with_currency_data"
+    # TODO create currency from received data
 
 
 def update_task_with_company_data(data: dict, task: CeleryTask):
     result_company = None
     options = task.options_object
     func = "update_task_with_company_data"
+    # TODO create counterparty from received data
 
 
 def update_task_with_remote_id(remote_task_id: int, task: CeleryTask):
