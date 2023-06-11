@@ -1687,12 +1687,8 @@ class DataBaseCallBackView(APIView):
             err_msg = "no request_id in request.data"
             return None, self.create_err_log_it(err_msg)
 
-        if not (data := request_data.get("data")):
+        if not request_data.get("data"):
             err_msg = "no or empty 'data' in request.data"
-            return None, self.create_err_log_it(err_msg)
-
-        if not ("items" in data):
-            err_msg = "no 'items' field in request.data"
             return None, self.create_err_log_it(err_msg)
 
         if not (task := CeleryTask.objects.filter(id=request_id).first()):
@@ -1716,29 +1712,32 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
         data = request.data
         task, error = self.validate_post_data(request_data=data)
         if error:
-            return Response(error)
+            return Response(self.create_err_log_it(str(error)))
+
+        if not "instruments" in data or "currencies" in data:
+            err_msg = "no 'instruments' or 'currencies' in request.data"
+            return Response(err_msg)
 
         try:
-            if "instruments" in data:
-                if "currencies" in data:  # 1st we need to create currencies
-                    for item in data["currencies"]:
-                        create_currency_from_finmars_database(item, task.master_user, task.member)
+            for item in data["currencies"]:
+                create_currency_from_finmars_database(
+                    item,
+                    task.master_user,
+                    task.member,
+                )
 
-                for item in data["instruments"]:
-                    create_instrument_from_finmars_database(
-                        item, task.master_user, task.member
-                    )
-
-            elif "items" in data["data"]:
-                for item in data["data"]["items"]:
-                    create_instrument_from_finmars_database(
-                        item, task.master_user, task.member
-                    )
-
-            return Response(self.create_ok_log_it("instrument(s)"))
+            for item in data["instruments"]:
+                create_instrument_from_finmars_database(
+                    item,
+                    task.master_user,
+                    task.member,
+                )
 
         except Exception as e:
             return Response(self.create_err_log_it(repr(e), method="post creating"))
+
+        else:
+            return Response(self.create_ok_log_it("instrument(s)"))
 
 
 class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
@@ -1769,7 +1768,9 @@ class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
 
         try:
             for item in data["data"]["items"]:
-                create_counterparty_from_finmars_database(item, task.master_user, task.member)
+                create_counterparty_from_finmars_database(
+                    item, task.master_user, task.member
+                )
 
             return Response(self.create_ok_log_it("company"))
 

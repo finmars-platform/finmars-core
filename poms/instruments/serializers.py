@@ -1043,8 +1043,8 @@ class InstrumentSerializer(
     long_underlying_instrument = InstrumentField(required=False, allow_null=True)
     short_underlying_instrument = InstrumentField(required=False, allow_null=True)
 
-    pricing_condition = PricingConditionField()
-    payment_size_detail = PaymentSizeDetailField()
+    pricing_condition = PricingConditionField(required=False, allow_null=True)
+    payment_size_detail = PaymentSizeDetailField(required=False, allow_null=True)
     daily_pricing_model = DailyPricingModelField(required=False, allow_null=True)
     country = CountryField(required=False, allow_null=True)
 

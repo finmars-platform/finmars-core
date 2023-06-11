@@ -25,7 +25,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         post_data = {
             "request_id": self.task.id,
             "data": {
-                "items": [
+                "instruments": [
                     {
                         "instrument_type": {
                             "user_code": instrument_type,
@@ -41,12 +41,14 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                         "country": {
                             "code": "USA",
                         },
-                        "pricing_condition": 1,
-                        "payment_size_detail": 1,
+                        # "pricing_condition": 1,
+                        # "payment_size_detail": 1,
                         # "daily_pricing_model": 6,
                         # "attributes": [],
                         # "accrual_calculation_schedules": [],
                     },
+                ],
+                "currencies": [
                 ],
             },
         }
