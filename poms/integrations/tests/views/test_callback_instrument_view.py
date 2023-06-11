@@ -46,6 +46,8 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                 ],
             },
         }
+
+        print(f"test master_user={self.user.master_user.id}")
         response = self.client.post(path=self.url, format="json", data=post_data)
         self.assertEqual(response.status_code, 200, response.content)
 

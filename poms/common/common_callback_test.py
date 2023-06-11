@@ -5,7 +5,7 @@ from poms.celery_tasks.models import CeleryTask
 class CallbackSetTestMixin:
     def create_task(self, name: str, func: str):
         return CeleryTask.objects.create(
-            master_user=self.user.master_user,
+            master_user=self.master_user,
             member=self.member,
             verbose_name=name,
             function_name=func,

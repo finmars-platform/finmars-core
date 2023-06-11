@@ -1538,10 +1538,14 @@ class ImportCurrencyDatabaseSerializer(serializers.Serializer):
         import_currency_finmars_database(task.id)
 
         task.refresh_from_db()
+
+        result_id = (
+            task.result_object.get("currency_id") if task.result_object else None
+        )
         result = {
             "task": task.id,
             "errors": task.error_message,
-            "result_id": None,  # FIXME
+            "result_id": result_id,
             "currency_code": validated_data["currency_code"],
         }
 
@@ -1573,10 +1577,14 @@ class ImportCompanyDatabaseSerializer(serializers.Serializer):
         import_company_finmars_database(task.id)
 
         task.refresh_from_db()
+
+        result_id = (
+            task.result_object.get("company_id") if task.result_object else None
+        )
         result = {
             "task": task.id,
             "errors": task.error_message,
-            "result_id": None,  # FIXME
+            "result_id": result_id,
             "company_id": validated_data["company_id"],
         }
 

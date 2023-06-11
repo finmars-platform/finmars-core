@@ -154,12 +154,13 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
     def init_test_case(self):
         self.client = APIClient()
         self.db_data = DbInitializer()
-        self.user = User.objects.create(username="view_tester")
-        self.user.master_user = self.db_data.master_user
+        self.master_user = self.db_data.master_user
+        self.user, _ = User.objects.get_or_create(username="view_tester")
+        self.user.master_user = self.master_user
         self.user.save()
         self.member = Member.objects.create(
             user=self.user,
-            master_user=self.user.master_user,
+            master_user=self.master_user,
             is_admin=True,
             is_owner=True,
         )
@@ -208,7 +209,7 @@ USD = "USD"
 class DbInitializer:
     def get_or_create_master_user(self) -> MasterUser:
         master_user = (
-            MasterUser.objects.first()
+            MasterUser.objects.filter(name=MASTER_USER).first()
             or MasterUser.objects.create_master_user(
                 name=MASTER_USER,
                 journal_status="disabled",
@@ -453,4 +454,4 @@ class DbInitializer:
         self.instrument_type = self.create_instruments_types()
         self.instruments = self.get_or_create_instruments()
         self.default_instrument = self.get_or_create_default_instrument()
-        print("\n-------------- db initialized ---------------\n")
+        print(f"\n-------------- db initialized, master_user={self.master_user.id} ---------------\n")

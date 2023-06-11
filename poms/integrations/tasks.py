@@ -544,10 +544,11 @@ def create_instrument_cbond(data, master_user, member):
 
         except Exception as e:
             err_msg = (
-                f'Instrument Type {instrument_data["instrument_type"]} is not found {e}'
+                f'InstrumentType user_code={instrument_data["instrument_type"]} '
+                f'master_user={master_user.id} not found {e}'
             )
             _l.info(err_msg)
-            raise Exception(err_msg) from e
+            raise RuntimeError(err_msg) from e
 
         object_data = handler_instrument_object(
             instrument_data,
