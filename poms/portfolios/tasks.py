@@ -567,8 +567,8 @@ def calculate_portfolio_register_price_history(self, task_id):
             true_pricing_policy = portfolio_register.valuation_pricing_policy
 
             _l.info('going calculate %s' % portfolio_register)
-            _l.info('going calculate date_from %s' % item["date_from"])
-            _l.info('going calculate date_to %s' % item["date_to"])
+            # _l.info('going calculate date_from %s' % item["date_from"])
+            # _l.info('going calculate date_to %s' % item["date_to"])
             _l.info('going calculate dates len %s' % len(item["dates"]))
 
             for date in item["dates"]:
