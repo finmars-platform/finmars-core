@@ -29,13 +29,19 @@ def get_total_from_report_items(key, report_instance_items):
 
     return result
 
-
+# DEPRECATED, should be move to workflow/olap
 def collect_asset_type_category(report_type, master_user, instance_serialized, history, key='market_value'):
+
     instrument_content_type = ContentType.objects.get(app_label="instruments", model='instrument')
 
-    asset_types_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
+    try:
+        asset_types_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
+                                                                      content_type=instrument_content_type,
+                                                                      user_code='asset_types')
+    except Exception as e:
+        asset_types_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
                                                                   content_type=instrument_content_type,
-                                                                  user_code='asset_types')
+                                                                  user_code='com.finmars.marscapital-attribute:instruments.instrument:asset_type')
 
     asset_types = GenericClassifier.objects.filter(attribute_type=asset_types_attribute_type).values_list('name',
                                                                                                           flat=True)
