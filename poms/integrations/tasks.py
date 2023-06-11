@@ -4404,7 +4404,7 @@ def create_counterparty_cbond(data, master_user, member) -> Counterparty:
         "user_code": data["code"],
         "name": data["name"],
         "short_name": data["shortName"],
-        "group": group,
+        "group": group.id,
     }
 
     _l.info(f"{func} company_data={company_data}")

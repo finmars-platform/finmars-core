@@ -33,5 +33,7 @@ class CallbackCompanyViewSetTest(CallbackSetTestMixin, BaseTestCase):
 
         response_json = response.json()
         print("company_created", response_json)
-        # self.assertEqual(response_json["status"], "ok")
-        # self.assertNotIn("message", response_json)
+        self.assertEqual(response_json["status"], "ok", response_json)
+        self.assertNotIn("message", response_json)
+
+        #TODO Check Counterparty table

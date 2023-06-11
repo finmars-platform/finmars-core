@@ -15,7 +15,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         )
         self.url = BACKEND_CALLBACK_URLS["instrument"]
 
-    def test__company_created(self):
+    def test__instrument_created(self):
         post_data = {
             "request_id": self.task.id,
             "data": {
@@ -32,6 +32,5 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-        print("company_created", response_json)
-        # self.assertEqual(response_json["status"], "ok")
+        self.assertEqual(response_json["status"], "ok", response_json)
         # self.assertNotIn("message", response_json)
