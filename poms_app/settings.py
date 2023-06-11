@@ -137,7 +137,7 @@ INSTALLED_APPS = [
 
 ]
 
-if SERVER_TYPE == 'local' and USE_DEBUGGER:
+if USE_DEBUGGER:
     INSTALLED_APPS.append('debug_toolbar')
 
 # MIDDLEWARE_CLASSES = [
@@ -174,7 +174,7 @@ MIDDLEWARE = [
 
 ]
 
-if SERVER_TYPE == 'local' and USE_DEBUGGER:
+if USE_DEBUGGER:
     MIDDLEWARE.append('debug_toolbar.middleware.DebugToolbarMiddleware')
 
 PROFILER = ENV_BOOL('PROFILER', False)
@@ -617,7 +617,7 @@ INTERNAL_IPS = [
     # ...
 ]
 
-if SERVER_TYPE == 'local' and USE_DEBUGGER:
+if USE_DEBUGGER:
     DEBUG_TOOLBAR_PANELS = [
         'debug_toolbar.panels.versions.VersionsPanel',
         'debug_toolbar.panels.timer.TimerPanel',
