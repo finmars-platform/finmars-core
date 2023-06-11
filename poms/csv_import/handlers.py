@@ -302,7 +302,6 @@ def set_events_for_instrument(instrument_object, data_object, instrument_type_ob
             "index_linked_bonds",
             "short_term_notes",
         } and len(instrument_object["event_schedules"]):
-
             coupon_event = instrument_object["event_schedules"][0]
 
             # coupon_event['periodicity'] = data_object['periodicity']
@@ -358,12 +357,13 @@ def set_accruals_for_instrument(instrument_object, data_object, instrument_type_
 def handler_instrument_object(
     source_data, instrument_type, master_user, ecosystem_default, attribute_types
 ):
+    func = "handler_instrument_object"
     object_data = {"instrument_type": instrument_type.id}
     # object_data = source_data.copy()
 
     set_defaults_from_instrument_type(object_data, instrument_type, ecosystem_default)
 
-    _l.info("Settings defaults for instrument done")
+    _l.info(f"{func} Settings defaults for instrument done")
 
     try:
         # TODO remove, when finmars.database.com will be deployed
@@ -417,7 +417,7 @@ def handler_instrument_object(
         try:
             object_data["maturity_price"] = float(source_data["maturity_price"])
         except Exception as e:
-            _l.warning(f"Could not set maturity price {repr(e)}")
+            _l.error(f"{func} Could not set maturity price {repr(e)}")
 
     if "maturity" in source_data and source_data["maturity"] != "":
         object_data["maturity_date"] = source_data["maturity"]
@@ -440,7 +440,7 @@ def handler_instrument_object(
             object_data["country"] = country.id
 
     except Exception as e:
-        _l.error(f"Could not set country {repr(e)}")
+        _l.error(f"{func} Could not set country {repr(e)}")
 
     try:
         if "sector" in source_data:
@@ -460,13 +460,12 @@ def handler_instrument_object(
 
                 object_data["attributes"].append(attribute)
 
-    except Exception:
-        _l.error("Could not set sector")
-
-    # object_data['attributes'] = []
+    except Exception as e:
+        _l.error(f"{func} Could not set sector {repr(e)}")
 
     _l.info(
-        "Settings attributes for instrument done attribute_types %s " % attribute_types
+        f"{func} Settings attributes for instrument done "
+        f"attribute_types {attribute_types}"
     )
 
     _tmp_attributes_dict = {}
@@ -475,52 +474,48 @@ def handler_instrument_object(
         _tmp_attributes_dict[item["attribute_type"]] = item
 
     try:
-        if "attributes" in source_data:
-            if isinstance(source_data["attributes"], dict):
-                for attribute_type in attribute_types:
-                    lower_user_code = attribute_type.user_code.lower()
+        if "attributes" in source_data and isinstance(source_data["attributes"], dict):
+            for attribute_type in attribute_types:
+                lower_user_code = attribute_type.user_code.lower()
 
-                    for key, value in source_data["attributes"].items():
-                        _l_key = key.lower()
+                for key, value in source_data["attributes"].items():
+                    _l_key = key.lower()
 
-                        if _l_key == lower_user_code:
-                            attribute = {
-                                "attribute_type": attribute_type.id,
-                            }
+                    if _l_key == lower_user_code:
+                        attribute = {
+                            "attribute_type": attribute_type.id,
+                        }
 
-                            if attribute_type.value_type == 10:
-                                attribute["value_string"] = value
+                        if attribute_type.value_type == 10:
+                            attribute["value_string"] = value
 
-                            if attribute_type.value_type == 20:
-                                attribute["value_float"] = value
+                        if attribute_type.value_type == 20:
+                            attribute["value_float"] = value
 
-                            if attribute_type.value_type == 30:
-                                try:
-                                    classifier = GenericClassifier.objects.get(
-                                        attribute_type=attribute_type, name=value
-                                    )
+                        if attribute_type.value_type == 30:
+                            try:
+                                classifier = GenericClassifier.objects.get(
+                                    attribute_type=attribute_type, name=value
+                                )
 
-                                    attribute["classifier"] = classifier.id
+                                attribute["classifier"] = classifier.id
 
-                                except Exception as e:
-                                    attribute["classifier"] = None
+                            except Exception:
+                                attribute["classifier"] = None
 
-                            if attribute_type.value_type == 40:
-                                attribute["value_date"] = value
+                        if attribute_type.value_type == 40:
+                            attribute["value_date"] = value
 
-                            _tmp_attributes_dict[
-                                attribute["attribute_type"]
-                            ] = attribute
+                        _tmp_attributes_dict[attribute["attribute_type"]] = attribute
     except Exception as e:
-        _l.error("Could not set attributes from finmars database. Error %s" % e)
         _l.error(
-            "Could not set attributes from finmars database. Traceback %s"
-            % traceback.format_exc()
+            f"{func} Could not set attributes from finmars database. Error {repr(e)}\n"
+            f"{traceback.format_exc()}"
         )
 
     object_data["attributes"] = []
 
-    _l.info("_tmp_attributes_dict %s" % _tmp_attributes_dict)
+    _l.info(f"{func} _tmp_attributes_dict={_tmp_attributes_dict}")
 
     for key, value in _tmp_attributes_dict.items():
         object_data["attributes"].append(value)
@@ -534,24 +529,23 @@ def handler_instrument_object(
     object_data["factor_schedules"] = []
 
     set_events_for_instrument(object_data, source_data, instrument_type)
-    _l.info("Settings events for instrument done")
+    _l.info(f"{func} Settings events for instrument done")
 
     # _l.info('source_data %s' % source_data)
 
-    if "accrual_calculation_schedules" in source_data:
-        if source_data["accrual_calculation_schedules"]:
-            if len(source_data["accrual_calculation_schedules"]):
-                if len(object_data["event_schedules"]):
-                    # C
-                    coupon_event = object_data["event_schedules"][0]
+    if (
+        "accrual_calculation_schedules" in source_data
+        and source_data["accrual_calculation_schedules"]
+    ):
+        if len(source_data["accrual_calculation_schedules"]) and len(
+            object_data["event_schedules"]
+        ):
+            coupon_event = object_data["event_schedules"][0]
 
-                    if (
-                        "first_payment_date"
-                        in source_data["accrual_calculation_schedules"][0]
-                    ):
-                        coupon_event["effective_date"] = source_data[
-                            "accrual_calculation_schedules"
-                        ][0]["first_payment_date"]
+            if "first_payment_date" in source_data["accrual_calculation_schedules"][0]:
+                coupon_event["effective_date"] = source_data[
+                    "accrual_calculation_schedules"
+                ][0]["first_payment_date"]
 
     accrual_map = {
         "Actual/Actual (ICMA)": AccrualCalculationModel.ACT_ACT,
@@ -572,143 +566,134 @@ def handler_instrument_object(
     }
 
     if "accrual_calculation_schedules" in source_data:
-        if source_data["accrual_calculation_schedules"]:
-            if len(source_data["accrual_calculation_schedules"]):
-                _l.info("Setting up accrual schedules. Init")
+        if source_data["accrual_calculation_schedules"] and len(
+            source_data["accrual_calculation_schedules"]
+        ):
+            _l.info("Setting up accrual schedules. Init")
 
-                if len(object_data["accrual_calculation_schedules"]):
-                    _l.info("Setting up accrual schedules. Overwrite Existing")
+            if len(object_data["accrual_calculation_schedules"]):
+                _l.info("Setting up accrual schedules. Overwrite Existing")
 
-                    accrual = object_data["accrual_calculation_schedules"][0]
+                accrual = object_data["accrual_calculation_schedules"][0]
 
-                    if "day_count_convention" in source_data:
-                        if source_data["day_count_convention"] in accrual_map:
-                            accrual["accrual_calculation_model"] = accrual_map[
-                                source_data["day_count_convention"]
-                            ]
+                if "day_count_convention" in source_data:
+                    if source_data["day_count_convention"] in accrual_map:
+                        accrual["accrual_calculation_model"] = accrual_map[
+                            source_data["day_count_convention"]
+                        ]
 
-                        else:
-                            accrual[
-                                "accrual_calculation_model"
-                            ] = AccrualCalculationModel.DEFAULT
+                    else:
+                        accrual[
+                            "accrual_calculation_model"
+                        ] = AccrualCalculationModel.DEFAULT
 
-                    if (
-                        "accrual_start_date"
-                        in source_data["accrual_calculation_schedules"][0]
-                    ):
-                        accrual["accrual_start_date"] = source_data[
-                            "accrual_calculation_schedules"
-                        ][0]["accrual_start_date"]
+                if (
+                    "accrual_start_date"
+                    in source_data["accrual_calculation_schedules"][0]
+                ):
+                    accrual["accrual_start_date"] = source_data[
+                        "accrual_calculation_schedules"
+                    ][0]["accrual_start_date"]
 
-                    if (
-                        "first_payment_date"
-                        in source_data["accrual_calculation_schedules"][0]
-                    ):
-                        accrual["first_payment_date"] = source_data[
-                            "accrual_calculation_schedules"
-                        ][0]["first_payment_date"]
+                if (
+                    "first_payment_date"
+                    in source_data["accrual_calculation_schedules"][0]
+                ):
+                    accrual["first_payment_date"] = source_data[
+                        "accrual_calculation_schedules"
+                    ][0]["first_payment_date"]
 
-                    try:
-                        accrual["accrual_size"] = float(
-                            source_data["accrual_calculation_schedules"][0][
-                                "accrual_size"
-                            ]
-                        )
-                    except Exception as e:
-                        accrual["accrual_size"] = 0
+                try:
+                    accrual["accrual_size"] = float(
+                        source_data["accrual_calculation_schedules"][0]["accrual_size"]
+                    )
+                except Exception:
+                    accrual["accrual_size"] = 0
 
-                    try:
-                        accrual["periodicity_n"] = int(
-                            source_data["accrual_calculation_schedules"][0][
-                                "periodicity_n"
-                            ]
-                        )
+                try:
+                    accrual["periodicity_n"] = int(
+                        source_data["accrual_calculation_schedules"][0]["periodicity_n"]
+                    )
 
-                        if accrual["periodicity_n"] == 1:
-                            accrual["periodicity"] = Periodicity.ANNUALLY
+                    if accrual["periodicity_n"] == 1:
+                        accrual["periodicity"] = Periodicity.ANNUALLY
 
-                        if accrual["periodicity_n"] == 2:
-                            accrual["periodicity"] = Periodicity.SEMI_ANNUALLY
+                    if accrual["periodicity_n"] == 2:
+                        accrual["periodicity"] = Periodicity.SEMI_ANNUALLY
 
-                        if accrual["periodicity_n"] == 4:
-                            accrual["periodicity"] = Periodicity.QUARTERLY
+                    if accrual["periodicity_n"] == 4:
+                        accrual["periodicity"] = Periodicity.QUARTERLY
 
-                        if accrual["periodicity_n"] == 6:
-                            accrual["periodicity"] = Periodicity.BIMONTHLY
+                    if accrual["periodicity_n"] == 6:
+                        accrual["periodicity"] = Periodicity.BIMONTHLY
 
-                        if accrual["periodicity_n"] == 12:
-                            accrual["periodicity"] = Periodicity.MONTHLY
+                    if accrual["periodicity_n"] == 12:
+                        accrual["periodicity"] = Periodicity.MONTHLY
 
-                        _l.info("periodicity %s" % accrual["periodicity"])
+                    _l.info("periodicity %s" % accrual["periodicity"])
 
-                        accrual["periodicity_n"] = 0
+                    accrual["periodicity_n"] = 0
 
-                    except Exception as e:
-                        accrual["periodicity_n"] = 0
+                except Exception as e:
+                    accrual["periodicity_n"] = 0
 
-                else:
-                    _l.info("Setting up accrual schedules. Creating new")
+            else:
+                _l.info("Setting up accrual schedules. Creating new")
 
-                    accrual = {}
+                accrual = {}
 
-                    accrual[
-                        "accrual_calculation_model"
-                    ] = AccrualCalculationModel.ACT_365
-                    accrual["periodicity"] = Periodicity.ANNUALLY
+                accrual["accrual_calculation_model"] = AccrualCalculationModel.ACT_365
+                accrual["periodicity"] = Periodicity.ANNUALLY
 
-                    if (
-                        "accrual_start_date"
-                        in source_data["accrual_calculation_schedules"][0]
-                    ):
-                        accrual["accrual_start_date"] = source_data[
-                            "accrual_calculation_schedules"
-                        ][0]["accrual_start_date"]
+                if (
+                    "accrual_start_date"
+                    in source_data["accrual_calculation_schedules"][0]
+                ):
+                    accrual["accrual_start_date"] = source_data[
+                        "accrual_calculation_schedules"
+                    ][0]["accrual_start_date"]
 
-                    if (
-                        "first_payment_date"
-                        in source_data["accrual_calculation_schedules"][0]
-                    ):
-                        accrual["first_payment_date"] = source_data[
-                            "accrual_calculation_schedules"
-                        ][0]["first_payment_date"]
+                if (
+                    "first_payment_date"
+                    in source_data["accrual_calculation_schedules"][0]
+                ):
+                    accrual["first_payment_date"] = source_data[
+                        "accrual_calculation_schedules"
+                    ][0]["first_payment_date"]
 
-                    try:
-                        accrual["accrual_size"] = float(
-                            source_data["accrual_calculation_schedules"][0][
-                                "accrual_size"
-                            ]
-                        )
-                    except Exception:
-                        accrual["accrual_size"] = 0
+                try:
+                    accrual["accrual_size"] = float(
+                        source_data["accrual_calculation_schedules"][0]["accrual_size"]
+                    )
+                except Exception:
+                    accrual["accrual_size"] = 0
 
-                    try:
-                        accrual["periodicity_n"] = int(
-                            source_data["accrual_calculation_schedules"][0][
-                                "periodicity_n"
-                            ]
-                        )
+                try:
+                    accrual["periodicity_n"] = int(
+                        source_data["accrual_calculation_schedules"][0]["periodicity_n"]
+                    )
 
-                        if accrual["periodicity_n"] == 1:
-                            accrual["periodicity"] = Periodicity.ANNUALLY
+                    if accrual["periodicity_n"] == 1:
+                        accrual["periodicity"] = Periodicity.ANNUALLY
 
-                        if accrual["periodicity_n"] == 2:
-                            accrual["periodicity"] = Periodicity.SEMI_ANNUALLY
+                    if accrual["periodicity_n"] == 2:
+                        accrual["periodicity"] = Periodicity.SEMI_ANNUALLY
 
-                        if accrual["periodicity_n"] == 4:
-                            accrual["periodicity"] = Periodicity.QUARTERLY
+                    if accrual["periodicity_n"] == 4:
+                        accrual["periodicity"] = Periodicity.QUARTERLY
 
-                        if accrual["periodicity_n"] == 6:
-                            accrual["periodicity"] = Periodicity.BIMONTHLY
+                    if accrual["periodicity_n"] == 6:
+                        accrual["periodicity"] = Periodicity.BIMONTHLY
 
-                        if accrual["periodicity_n"] == 12:
-                            accrual["periodicity"] = Periodicity.MONTHLY
+                    if accrual["periodicity_n"] == 12:
+                        accrual["periodicity"] = Periodicity.MONTHLY
 
-                        _l.info("periodicity %s" % accrual["periodicity"])
+                    _l.info("periodicity %s" % accrual["periodicity"])
 
-                    except Exception as e:
-                        accrual["periodicity_n"] = 0
+                except Exception:
+                    accrual["periodicity_n"] = 0
 
-                    object_data["accrual_calculation_schedules"].append(accrual)
+                object_data["accrual_calculation_schedules"].append(accrual)
     else:
         set_accruals_for_instrument(object_data, source_data, instrument_type)
 

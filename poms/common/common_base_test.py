@@ -182,12 +182,12 @@ TRANSACTIONS_TYPES = [
     NON_INSTRUMENT_EXP,
 ]
 INSTRUMENTS_TYPES = [
-    "stocks",
-    "bonds",
+    "stock",
+    "bond",
 ]
 INSTRUMENTS = [
-    ("Apple", "stocks", InstrumentClass.GENERAL),
-    ("Tesla B.", "bonds", InstrumentClass.GENERAL),
+    ("Apple", "stock", InstrumentClass.GENERAL),
+    ("Tesla B.", "bond", InstrumentClass.GENERAL),
     # ("Bitcoin", "crypto", InstrumentClass.CONTRACT_FOR_DIFFERENCE),
 ]
 TRANSACTIONS_CLASSES = [
@@ -252,7 +252,7 @@ class DbInitializer:
                 master_user=self.master_user,
                 instrument_class_id=InstrumentClass.GENERAL,
                 name=type_,
-                user_code=f"com.finmars.initial-instrument-type:{type_}",
+                user_code=type_,
                 short_name=type_,
                 public_name=type_,
             )
@@ -268,7 +268,7 @@ class DbInitializer:
                 master_user=self.master_user,
                 instrument_class_id=class_id,
                 name=type_,
-                user_code=f"com.finmars.initial-instrument-type:{type_}",
+                user_code=type_,
                 short_name=type_,
                 public_name=type_,
             )

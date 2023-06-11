@@ -18,8 +18,8 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.url = BACKEND_CALLBACK_URLS["instrument"]
 
     @BaseTestCase.cases(
-        ("bonds", "bonds"),
-        ("stocks", "stocks"),
+        ("bond", "bond"),
+        ("stock", "stock"),
     )
     def test__instrument_created(self, instrument_type: str):
         post_data = {
@@ -36,12 +36,14 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                         "pricing_currency": {
                             "code": "USD",
                         },
-                        "payment_size_detail": None,
-                        "maturity_price": 1.0,
+                        "maturity_price": 100.0,
                         "maturity": date.today(),
                         "country": {
                             "code": "USA",
                         },
+                        "pricing_condition": 1,
+                        "payment_size_detail": 1,
+                        "daily_pricing_model": 6,
                         # "attributes": [],
                         # "accrual_calculation_schedules": [],
                     },
