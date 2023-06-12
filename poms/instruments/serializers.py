@@ -2198,7 +2198,7 @@ class InstrumentTypeProcessSerializer(serializers.Serializer):
         for itype_pp in list(obj.instrument["_instrument_type_pricing_policies"].all()):
             pricing_policy_data = InstrumentTypePricingPolicySerializer(
                 instance=itype_pp
-            ).data
+            , context=self.context).data
 
             pricing_policy = {
                 "pricing_policy": pricing_policy_data["pricing_policy"],

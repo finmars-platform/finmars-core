@@ -351,7 +351,7 @@ class TransactionTypeAdmin(AbstractModelAdmin):
     list_select_related = ['master_user']
     list_filter = ['is_deleted', ]
     search_fields = ['id', 'user_code', 'name']
-    raw_id_fields = ['master_user', 'group', 'instrument_types']
+    raw_id_fields = ['master_user',  'instrument_types']
     inlines = [
         TransactionTypeInputInline,
         TransactionTypeActionInstrumentInline,

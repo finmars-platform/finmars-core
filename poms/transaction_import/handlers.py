@@ -993,6 +993,10 @@ class TransactionImportProcess(object):
 
                                             self.book(item, rule_scenario)
 
+                                            _l.info("Savepoint commit for %s" % index)
+                                            # _l.error("Could not book error scenario %s" % e)
+                                            transaction.savepoint_commit(sid)
+
                                         except BookSkipException:
                                             _l.info("BookSkipException")
                                             transaction.savepoint_rollback(sid)
@@ -1003,19 +1007,15 @@ class TransactionImportProcess(object):
 
                                             try:
                                                 self.book(item, self.error_rule_scenario, error=e)
+                                                _l.info("Error Handler Savepoint commit for %s" % index)
+                                                transaction.savepoint_commit(sid)
+
                                             except Exception as e:  # any exception will work on error scenario
                                                 _l.error("Could not book error scenario %s" % e)
                                                 _l.info("Error Handler Savepoint rollback for %s" % index)
                                                 transaction.savepoint_rollback(sid)
-                                            else:
-                                                # release the savepoint for this model
-                                                _l.info("Error Handler Savepoint commit for %s" % index)
-                                                transaction.savepoint_commit(sid)
-                                        else:
-                                            _l.info("Savepoint commit for %s" % index)
-                                            # _l.error("Could not book error scenario %s" % e)
-                                            transaction.savepoint_commit(sid)
                             else:
+                                ''' For case when its actually skip mode'''
                                 selector_values = rule_scenario.selector_values.all()
 
                                 for selector_value in selector_values:
@@ -1032,18 +1032,32 @@ class TransactionImportProcess(object):
                             item.message = 'Selector %s does not match anything in scheme' % rule_value
                             try:
                                 self.book(item, self.default_rule_scenario)
+
+                                transaction.savepoint_commit(sid)
+
                             except Exception as e:
                                 _l.error("Could not book default scenario %s" % e)
                                 transaction.savepoint_rollback(sid)
-                            else:
-                                # release the savepoint for this model
-                                transaction.savepoint_commit(sid)
+
                     else:
 
-                        item.status = 'skip'
-                        item.message = 'Selector %s does not match anything in scheme' % rule_value
 
-                        self.book(item, self.default_rule_scenario)
+                        try:
+
+                            sid = transaction.savepoint()
+
+                            item.status = 'skip'
+                            item.message = 'Selector %s does not match anything in scheme' % rule_value
+
+                            self.book(item, self.default_rule_scenario)
+
+                            transaction.savepoint_commit(sid)
+
+                        except Exception as e:
+
+                            _l.error("Could not book default scenario %s" % e)
+
+                            transaction.savepoint_rollback(sid)
 
                     self.result.processed_rows = self.result.processed_rows + 1
 

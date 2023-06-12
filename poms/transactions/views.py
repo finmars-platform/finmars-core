@@ -179,7 +179,7 @@ class TransactionTypeEvFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
-    group = ModelExtMultipleChoiceFilter(model=TransactionTypeGroup)
+    # group = ModelExtMultipleChoiceFilter(model=TransactionTypeGroup)
     is_valid_for_all_portfolios = django_filters.BooleanFilter()
     is_valid_for_all_instruments = django_filters.BooleanFilter()
 
@@ -201,11 +201,11 @@ class TransactionTypeViewSet(AbstractModelViewSet):
         'name',
         'short_name',
         'public_name',
-        'group',
-        'group__user_code',
-        'group__name',
-        'group__short_name',
-        'group__public_name',
+        # 'group',
+        # 'group__user_code',
+        # 'group__name',
+        # 'group__short_name',
+        # 'group__public_name',
     ]
 
     @action(detail=False, methods=['get'], url_path='light', serializer_class=TransactionTypeLightSerializer)
@@ -987,7 +987,7 @@ def get_transaction_queryset(select_related=True, complex_transaction_transactio
         'master_user',
         'complex_transaction',
         'complex_transaction__transaction_type',
-        'complex_transaction__transaction_type__group',
+        # 'complex_transaction__transaction_type__group',
         'transaction_class',
         'instrument',
         'instrument__instrument_type',
@@ -1058,7 +1058,7 @@ def get_transaction_queryset(select_related=True, complex_transaction_transactio
 def get_complex_transaction_queryset(select_related=True, transactions=False):
     fields1 = (
         'transaction_type',
-        'transaction_type__group',
+        # 'transaction_type__group',
     )
     qs = ComplexTransaction.objects
 

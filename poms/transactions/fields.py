@@ -21,6 +21,30 @@ class TransactionTypeGroupField(UserCodeOrPrimaryKeyRelatedField):
         OwnerByMasterUserFilter,
     ]
 
+    def to_internal_value(self, data):
+        queryset = self.get_queryset()
+        try:
+            if isinstance(data, str):
+                return queryset.get(user_code=data).user_code
+            else:
+                return queryset.get(pk=data).user_code
+        except ObjectDoesNotExist:
+            self.fail('does_not_exist', value=str(data))
+        except (TypeError, ValueError):
+            self.fail('invalid')
+
+    def to_representation(self, obj):
+
+        try:
+
+            queryset = self.get_queryset()
+
+            return queryset.get(user_code=obj).id
+
+        except Exception as e: # TODO on frontend do case that user_code instead of id
+            return obj
+
+
 
 class TransactionTypeField(UserCodeOrPrimaryKeyRelatedField):
     queryset = TransactionType.objects
