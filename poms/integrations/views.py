@@ -1734,7 +1734,14 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
                     task.member,
                 )
 
+            task.status = CeleryTask.STATUS_DONE
+            task.save()
+
         except Exception as e:
+            task.error_message = str(e)
+            task.status = CeleryTask.STATUS_ERROR
+            task.save()
+
             return Response(self.create_err_log_it(repr(e), method="post creating"))
 
         else:
