@@ -14,6 +14,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
@@ -1669,9 +1670,19 @@ class SupersetGetSecurityToken(APIView):
 class DataBaseCallBackView(APIView):
     permission_classes = []
 
+    def update_task_status(self, task: CeleryTask, new_status: str, notes=None):
+        task.status = new_status
+        if notes:
+            task.notes = notes
+        task.save()
+
     def create_err_log_it(self, err_msg: str, method="validate_post_data") -> dict:
         _l.error(f"{self.__class__.__name__}.{method} error {err_msg}")
         return {"status": "error", "message": err_msg}
+
+    def create_ok_log_it(self, msg: str) -> dict:
+        _l.info(f"{self.__class__.__name__}.post successfully created {msg}")
+        return {"status": "ok"}
 
     def validate_post_data(
         self,
@@ -1697,14 +1708,9 @@ class DataBaseCallBackView(APIView):
 
         return task, None
 
-    def create_ok_log_it(self, msg: str) -> dict:
-        _l.info(f"{self.__class__.__name__}.post successfully created {msg}")
-        return {"status": "ok"}
-
     def get(self, request):
         _l.info(f"{self.__class__.__name__}.get")
-
-        return Response({"ok"})  # for debugging
+        return Response({"its": "ok"})  # for debugging
 
 
 class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
@@ -1712,12 +1718,19 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
         request_data = request.data
         task, error_dict = self.validate_post_data(request_data=request_data)
         if error_dict:
-            return Response(error_dict)
+            self.update_task_status(
+                task,
+                CeleryTask.STATUS_ERROR,
+                notes=error_dict["message"],
+            )
+            return Response(error_dict, status=HTTP_400_BAD_REQUEST)
 
         data = request_data["data"]
         if not ("instruments" in data and "currencies" in data):
             err_msg = "no 'instruments' or 'currencies' in request.data"
-            return Response(self.create_err_log_it(err_msg))
+            self.update_task_status(task, CeleryTask.STATUS_ERROR, notes=err_msg)
+            error_dict = self.create_err_log_it(err_msg)
+            return Response(error_dict, status=HTTP_400_BAD_REQUEST)
 
         try:
             for item in data["currencies"]:
@@ -1735,10 +1748,12 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
                 )
 
         except Exception as e:
-            return Response(self.create_err_log_it(repr(e), method="post creating"))
+            error_dict = self.create_err_log_it(repr(e), method="post creating")
+            return Response(error_dict, status=HTTP_400_BAD_REQUEST)
 
         else:
-            return Response(self.create_ok_log_it("instrument(s)"))
+            self.update_task_status(task, CeleryTask.STATUS_DONE)
+            return Response(self.create_ok_log_it("instrument"), status=HTTP_200_OK)
 
 
 class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
@@ -1751,7 +1766,9 @@ class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
         try:
             for item in data["data"]:
                 create_instrument_from_finmars_database(
-                    item, task.master_user, task.member,
+                    item,
+                    task.master_user,
+                    task.member,
                 )
 
             return Response(self.create_ok_log_it("currency"))
@@ -1770,7 +1787,9 @@ class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
         try:
             for item in data["data"]:
                 create_counterparty_from_finmars_database(
-                    item, task.master_user, task.member,
+                    item,
+                    task.master_user,
+                    task.member,
                 )
 
             return Response(self.create_ok_log_it("company"))
