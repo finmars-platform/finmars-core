@@ -1748,7 +1748,7 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
                 )
 
         except Exception as e:
-            error_dict = self.create_err_log_it(repr(e), method="post creating")
+            error_dict = self.create_err_log_it(repr(e), method="instrument creating")
             return Response(error_dict, status=HTTP_400_BAD_REQUEST)
 
         else:
@@ -1759,9 +1759,14 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
 class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
     def post(self, request):
         data = request.data
-        task, error = self.validate_post_data(request_data=data)
-        if error:
-            return Response(error)
+        task, error_dict = self.validate_post_data(request_data=data)
+        if error_dict:
+            self.update_task_status(
+                task,
+                CeleryTask.STATUS_ERROR,
+                notes=error_dict["message"],
+            )
+            return Response(error_dict, status=HTTP_400_BAD_REQUEST)
 
         try:
             for item in data["data"]:
@@ -1771,18 +1776,26 @@ class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
                     task.member,
                 )
 
-            return Response(self.create_ok_log_it("currency"))
-
         except Exception as e:
-            return Response(self.create_err_log_it(repr(e), method="post creating"))
+            error_dict = self.create_err_log_it(repr(e), method="currency creating")
+            return Response(error_dict, status=HTTP_400_BAD_REQUEST)
+
+        else:
+            self.update_task_status(task, CeleryTask.STATUS_DONE)
+            return Response(self.create_ok_log_it("currency"), status=HTTP_200_OK)
 
 
 class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
     def post(self, request):
         data = request.data
-        task, error = self.validate_post_data(request_data=data)
-        if error:
-            return Response(error)
+        task, error_dict = self.validate_post_data(request_data=data)
+        if error_dict:
+            self.update_task_status(
+                task,
+                CeleryTask.STATUS_ERROR,
+                notes=error_dict["message"],
+            )
+            return Response(error_dict, status=HTTP_400_BAD_REQUEST)
 
         try:
             for item in data["data"]:
@@ -1792,7 +1805,10 @@ class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
                     task.member,
                 )
 
-            return Response(self.create_ok_log_it("company"))
-
         except Exception as e:
-            return Response(self.create_err_log_it(repr(e), method="post creating"))
+            error_dict = self.create_err_log_it(repr(e), method="company creating")
+            return Response(error_dict, status=HTTP_400_BAD_REQUEST)
+
+        else:
+            self.update_task_status(task, CeleryTask.STATUS_DONE)
+            return Response(self.create_ok_log_it("company"), status=HTTP_200_OK)
