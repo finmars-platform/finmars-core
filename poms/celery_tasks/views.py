@@ -5,6 +5,7 @@ from django_filters.rest_framework import FilterSet, DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from celery.result import AsyncResult
 
 from poms.common.filters import CharFilter
 from poms.common.views import AbstractApiView

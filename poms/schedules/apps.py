@@ -12,7 +12,7 @@ class SchedulesConfig(AppConfig):
         post_migrate.connect(self.sync_user_schedules_with_celery_beat, sender=self)
         pass
 
-    # deprecated
+    # TODO update with auto_cancel_ttl_task
     def update_periodic_tasks(self, app_config, verbosity=2, using=DEFAULT_DB_ALIAS, **kwargs):
 
         from django_celery_beat.models import CrontabSchedule, PeriodicTask
