@@ -37,9 +37,21 @@ router.register(r'price-download-scheme-mapping', integrations.PriceDownloadSche
 router.register(r'pricing-condition-mapping', integrations.PricingConditionMappingViewSet)
 
 router.register(r'instrument', integrations.ImportInstrumentViewSet, 'importinstrument')
-router.register(r'finmars-database/instrument', integrations.ImportInstrumentDatabaseViewSet,
-                'importinstrumentdatabase')
-router.register(r'finmars-database/currency', integrations.ImportCurrencyCbondsViewSet, 'importcurrencycbonds')
+router.register(
+    r'finmars-database/instrument',
+    integrations.ImportInstrumentDatabaseViewSet,
+    'importinstrumentdatabase',
+)
+router.register(
+    r'finmars-database/currency',
+    integrations.ImportCurrencyDatabaseViewSet,
+    'importcurrencydatabase',
+)
+router.register(
+    r'finmars-database/company',
+    integrations.ImportCompanyDatabaseViewSet,
+    'importcompanydatabase',
+)
 router.register(r'unified-data-provider', integrations.ImportUnifiedDataProviderViewSet,
                 'importunifieddataprovider')
 router.register(r'test-certificate', integrations.TestCertificateViewSet, 'testcertificate')
@@ -59,4 +71,3 @@ router.register(r'complex-transaction-preprocess-file', integrations.ComplexTran
 router.register(r'complex-transaction-csv-file-import-validate',
                 integrations.ComplexTransactionCsvFileImportValidateViewSet,
                 'complextransactioncsvfileimportvalidate')
-

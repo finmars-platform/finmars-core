@@ -16,23 +16,23 @@ CURRENCY_DATA = {
             "name": "Afghani",
             "user_code": "AFN",
             "code": "AFN",
-            "numeric_code": "971"
+            "numeric_code": "971",
         },
         {
-            "id": 3,
+            "id": 2,
             "name": "Lek",
             "user_code": "ALL",
             "code": "ALL",
-            "numeric_code": "008"
+            "numeric_code": "008",
         },
         {
-            "id": 6,
+            "id": 3,
             "name": "Kwanza",
             "user_code": "AOA",
             "code": "AOA",
-            "numeric_code": "973"
+            "numeric_code": "973",
         },
-    ]
+    ],
 }
 
 
@@ -45,23 +45,35 @@ class CurrencyDatabaseSearchViewSetTest(BaseTestCase):
         )
 
     @BaseTestCase.cases(
-        ("no_name", {"page_size": 100}),
+        ("no_name", {"page_size": 200}),
         ("empty_name", {"page_size": 500, "name": ""}),
     )
-    def test__empty_name_200_with_empty_response(self, params):
+    @mock.patch("poms.common.database_client.DatabaseService.get_results")
+    def test__empty_name_results_in_full_list(self, params, mock_get_results):
+        test_data = deepcopy(CURRENCY_DATA)
+        test_data["results"] = CURRENCY_DATA["results"] * 100
+        expected_len = len(test_data["results"])
+        mock_get_results.return_value = Monad(
+            status=MonadStatus.DATA_READY,
+            data=test_data,
+        )
+
         response = self.client.get(self.url, data=params)
         self.assertEqual(response.status_code, 200, response.content)
         data = response.json()
         self.assertIsNone(data["next"])
         self.assertIsNone(data["previous"])
-        self.assertEqual(data["count"], 0)
-        self.assertEqual(len(data["results"]), 0)
+        self.assertEqual(data["count"], expected_len)
+        self.assertEqual(len(data["results"]), expected_len)
 
     @BaseTestCase.cases(
-        ("1", {"page_size": 1, "name": "name_2"}),
-        ("2", {"page_size": 1, "user_code": "name_2"}),
-        ("3", {"page_size": 1, "short_name": "name_2"}),
-        ("4", {"page_size": 1, "public_name": "name_2"}),
+        ("1", {"name": "Afgh"}),
+        ("2", {"code": "AFN"}),
+        ("3", {"user_code": "ALL"}),
+        ("4", {"numeric_code": "973"}),
+        ("5", {"name": "AFN"}),
+        ("6", {"name": "ALL"}),
+        ("7", {"name": "973"}),
     )
     @mock.patch("poms.common.database_client.DatabaseService.get_results")
     def test__data_ready(self, params, mock_get_results):
@@ -74,14 +86,14 @@ class CurrencyDatabaseSearchViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_data = response.json()
-        self.assertEqual(response_data["count"], 3)
-        self.assertEqual(len(response_data["results"]), 3)
+        self.assertEqual(response_data["count"], 1)
+        self.assertEqual(len(response_data["results"]), 1)
 
     @BaseTestCase.cases(
-        ("1", {"name": "name_2"}),
-        ("2", {"user_code": "name_2"}),
-        ("3", {"short_name": "name_2"}),
-        ("4", {"public_name": "name_2"}),
+        ("1", {"name": "Afgh"}),
+        ("2", {"code": "AFN"}),
+        ("3", {"user_code": "ALL"}),
+        ("4", {"numeric_code": "973"}),
     )
     @mock.patch("poms.common.database_client.DatabaseService.get_results")
     def test__error(self, params, mock_get_results):
