@@ -1488,7 +1488,6 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
             ttl=settings.FINMARS_DATABASE_TIMEOUT + 1
         )
         task.options_object = {
-            "request_id": task.id,
             "reference": validated_data["instrument_code"],
             "instrument_name": validated_data["instrument_name"],
             "instrument_type_user_code": validated_data["instrument_type_code"],
@@ -1534,7 +1533,6 @@ class ImportCurrencyDatabaseSerializer(serializers.Serializer):
             ttl=settings.FINMARS_DATABASE_TIMEOUT + 1
         )
         task.options_object = {
-            "request_id": task.id,
             "currency_code": validated_data["currency_code"],
         }
         task.save()
@@ -1577,7 +1575,6 @@ class ImportCompanyDatabaseSerializer(serializers.Serializer):
             ttl=settings.FINMARS_DATABASE_TIMEOUT + 1
         )
         task.options_object = {
-            "request_id": task.id,
             "company_id": validated_data["company_id"],
         }
         task.save()
