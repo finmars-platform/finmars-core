@@ -253,6 +253,12 @@ class PortfolioViewSerializer(ModelWithUserCodeSerializer):
             "public_name",
         ]
 
+class PortfolioRegisterViewSerializer(ModelWithUserCodeSerializer):
+    class Meta:
+        model = Portfolio
+        fields = [
+            'id', 'user_code', 'name', 'short_name', 'public_name',
+        ]
 
 class PortfolioGroupSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=256)
@@ -399,6 +405,21 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
 
     def __init__(self, *args, **kwargs):
         super(PortfolioRegisterRecordSerializer, self).__init__(*args, **kwargs)
+
+        from poms.currencies.serializers import CurrencyViewSerializer
+        self.fields['cash_currency_object'] = CurrencyViewSerializer(source='cash_currency', read_only=True)
+        self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
+
+        from poms.transactions.serializers import TransactionClassSerializer
+        self.fields['transaction_class_object'] = TransactionClassSerializer(source='transaction_class', read_only=True)
+        self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
+        from poms.transactions.serializers import ComplexTransactionViewSerializer
+        self.fields['complex_transaction_object'] = ComplexTransactionViewSerializer(source='complex_transaction', read_only=True)
+        self.fields['portfolio_register_object'] = PortfolioRegisterViewSerializer(source='portfolio_register', read_only=True)
+        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
+
+        self.fields['valuation_pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy",
+                                                                                 read_only=True)
 
     def create(self, valid_data: dict) -> PortfolioRegisterRecord:
         valid_data["share_price_calculation_type"] = get_price_calculation_type(

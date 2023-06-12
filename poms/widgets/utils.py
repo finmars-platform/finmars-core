@@ -1,3 +1,4 @@
+import datetime
 import logging
 import traceback
 
@@ -29,12 +30,18 @@ def get_total_from_report_items(key, report_instance_items):
     return result
 
 
+# DEPRECATED, should be move to workflow/olap
 def collect_asset_type_category(report_type, master_user, instance_serialized, history, key='market_value'):
     instrument_content_type = ContentType.objects.get(app_label="instruments", model='instrument')
 
-    asset_types_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
-                                                                  content_type=instrument_content_type,
-                                                                  user_code='asset_types')
+    try:
+        asset_types_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
+                                                                      content_type=instrument_content_type,
+                                                                      user_code='asset_types')
+    except Exception as e:
+        asset_types_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
+                                                                      content_type=instrument_content_type,
+                                                                      user_code='com.finmars.marscapital-attribute:instruments.instrument:asset_type')
 
     asset_types = GenericClassifier.objects.filter(attribute_type=asset_types_attribute_type).values_list('name',
                                                                                                           flat=True)
@@ -154,9 +161,15 @@ def get_unique_sectors(instance_serialized, master_user):
 def collect_sector_category(report_type, master_user, instance_serialized, history, key='market_value'):
     instrument_content_type = ContentType.objects.get(app_label="instruments", model='instrument')
 
-    sector_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
-                                                             content_type=instrument_content_type,
-                                                             user_code='sector')
+    try:
+        sector_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
+                                                                 content_type=instrument_content_type,
+                                                                 user_code='sector')
+    except Exception as e:
+
+        sector_attribute_type = GenericAttributeType.objects.get(master_user=master_user,
+                                                                 content_type=instrument_content_type,
+                                                                 user_code='com.finmars.marscapital-attribute:instruments.instrument:sector')
 
     sectors = get_unique_sectors(instance_serialized, master_user)
 
@@ -505,6 +518,10 @@ def collect_currency_category(report_type, master_user, instance_serialized, his
     item.value = get_total_from_report_items(key, no_category_items)
 
     item.save()
+
+
+def str_to_date(date_string):
+    return datetime.datetime.strptime(date_string, '%Y-%m-%d').date()
 
 
 def find_next_date_to_process(task):

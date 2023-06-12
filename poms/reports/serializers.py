@@ -287,7 +287,7 @@ class ReportSerializer(ReportSerializerWithLogs):
 
         data = super(ReportSerializer, self).to_representation(instance)
 
-        _l.debug('ReportSerializer to_representation_st done: %s' % "{:3.3f}".format(
+        _l.info('ReportSerializer to_representation_st done: %s' % "{:3.3f}".format(
             time.perf_counter() - to_representation_st))
 
         # _l.debug('data["custom_fields_to_calculate"] %s' % data["custom_fields_to_calculate"])
@@ -442,6 +442,9 @@ class ReportSerializer(ReportSerializerWithLogs):
                                 })
 
                     item['custom_fields'] = cfv
+
+        _l.info('ReportSerializer custom columns cal done: %s' % "{:3.3f}".format(
+            time.perf_counter() - st))
 
         data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 

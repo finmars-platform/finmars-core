@@ -934,170 +934,170 @@ class TransactionImportProcess(object):
         st = time.perf_counter()
         index = 0
 
-        with transaction.atomic():
+        # with transaction.atomic():
 
-            for item in self.items:
+        for item in self.items:
 
-                try:
+            try:
 
-                    _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ========' % (
-                        self.task, str(item.row_number), str(self.result.total_rows)))
+                _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ========' % (
+                    self.task, str(item.row_number), str(self.result.total_rows)))
 
-                    if self.scheme.filter_expression:
+                if self.scheme.filter_expression:
 
-                        # expr = Expression.parseString("a == 1 and b == 2")
+                    # expr = Expression.parseString("a == 1 and b == 2")
 
-                        result = bool(formula.safe_eval(self.scheme.filter_expression, names=item.inputs,
-                                                        context=self.context))
+                    result = bool(formula.safe_eval(self.scheme.filter_expression, names=item.inputs,
+                                                    context=self.context))
 
-                        if result:
-                            # filter passed
-                            pass
-                        else:
-
-                            item.status = 'skip'
-                            item.message = 'Skipped due filter'
-
-                            _l.info(
-                                'TransactionImportProcess.Task %s. Row skipped due filter %s' % (
-                                    self.task, str(item.row_number)))
-                            continue
-
-                    rule_value = self.get_rule_value_for_item(item)
-
-                    item.processed_rule_scenarios = []
-                    item.booked_transactions = []
-
-                    _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ======== %s ' % (
-                        self.task, str(item.row_number), str(self.result.total_rows), rule_value))
-
-                    if rule_value:
-
-                        found = False
-
-                        for rule_scenario in self.scheme.rule_scenarios.all():
-
-                            if rule_scenario.status != 'skip':
-
-                                selector_values = rule_scenario.selector_values.all()
-
-                                for selector_value in selector_values:
-
-                                    if selector_value.value == rule_value:
-
-                                        sid = transaction.savepoint()
-                                        _l.info("Create checkpoint for %s" % index)
-
-                                        found = True
-                                        try:
-
-                                            self.book(item, rule_scenario)
-
-                                            _l.info("Savepoint commit for %s" % index)
-                                            # _l.error("Could not book error scenario %s" % e)
-                                            transaction.savepoint_commit(sid)
-
-                                        except BookSkipException:
-                                            _l.info("BookSkipException")
-                                            transaction.savepoint_rollback(sid)
-                                            continue
-
-                                        except (BookUnhandledException, BookException) as e:
-                                            transaction.savepoint_rollback(sid)
-
-                                            try:
-                                                self.book(item, self.error_rule_scenario, error=e)
-                                                _l.info("Error Handler Savepoint commit for %s" % index)
-                                                transaction.savepoint_commit(sid)
-
-                                            except Exception as e:  # any exception will work on error scenario
-                                                _l.error("Could not book error scenario %s" % e)
-                                                _l.info("Error Handler Savepoint rollback for %s" % index)
-                                                transaction.savepoint_rollback(sid)
-                            else:
-                                ''' For case when its actually skip mode'''
-                                selector_values = rule_scenario.selector_values.all()
-
-                                for selector_value in selector_values:
-
-                                    if selector_value.value == rule_value:
-                                        found = True
-
-                        if not found:
-
-                            sid = transaction.savepoint()
-                            _l.info("Create checkpoint for %s" % index)
-
-                            item.status = 'skip'
-                            item.message = 'Selector %s does not match anything in scheme' % rule_value
-                            try:
-                                self.book(item, self.default_rule_scenario)
-
-                                transaction.savepoint_commit(sid)
-
-                            except Exception as e:
-                                _l.error("Could not book default scenario %s" % e)
-                                transaction.savepoint_rollback(sid)
-
+                    if result:
+                        # filter passed
+                        pass
                     else:
 
+                        item.status = 'skip'
+                        item.message = 'Skipped due filter'
 
+                        _l.info(
+                            'TransactionImportProcess.Task %s. Row skipped due filter %s' % (
+                                self.task, str(item.row_number)))
+                        continue
+
+                rule_value = self.get_rule_value_for_item(item)
+
+                item.processed_rule_scenarios = []
+                item.booked_transactions = []
+
+                _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ======== %s ' % (
+                    self.task, str(item.row_number), str(self.result.total_rows), rule_value))
+
+                if rule_value:
+
+                    found = False
+
+                    for rule_scenario in self.scheme.rule_scenarios.all():
+
+                        if rule_scenario.status != 'skip':
+
+                            selector_values = rule_scenario.selector_values.all()
+
+                            for selector_value in selector_values:
+
+                                if selector_value.value == rule_value:
+
+                                    # sid = transaction.savepoint()
+                                    _l.info("Create checkpoint for %s" % index)
+
+                                    found = True
+                                    try:
+
+                                        self.book(item, rule_scenario)
+
+                                        _l.info("Savepoint commit for %s" % index)
+                                        # _l.error("Could not book error scenario %s" % e)
+                                        # transaction.savepoint_commit(sid)
+
+                                    except BookSkipException:
+                                        _l.info("BookSkipException")
+                                        # transaction.savepoint_rollback(sid)
+                                        continue
+
+                                    except (BookUnhandledException, BookException) as e:
+                                        # transaction.savepoint_rollback(sid)
+
+                                        try:
+                                            self.book(item, self.error_rule_scenario, error=e)
+                                            _l.info("Error Handler Savepoint commit for %s" % index)
+                                            # transaction.savepoint_commit(sid)
+
+                                        except Exception as e:  # any exception will work on error scenario
+                                            _l.error("Could not book error scenario %s" % e)
+                                            _l.info("Error Handler Savepoint rollback for %s" % index)
+                                            # transaction.savepoint_rollback(sid)
+                        else:
+                            ''' For case when its actually skip mode'''
+                            selector_values = rule_scenario.selector_values.all()
+
+                            for selector_value in selector_values:
+
+                                if selector_value.value == rule_value:
+                                    found = True
+
+                    if not found:
+
+                        # sid = transaction.savepoint()
+                        _l.info("Create checkpoint for %s" % index)
+
+                        item.status = 'skip'
+                        item.message = 'Selector %s does not match anything in scheme' % rule_value
                         try:
-
-                            sid = transaction.savepoint()
-
-                            item.status = 'skip'
-                            item.message = 'Selector %s does not match anything in scheme' % rule_value
-
                             self.book(item, self.default_rule_scenario)
 
-                            transaction.savepoint_commit(sid)
+                            # transaction.savepoint_commit(sid)
 
                         except Exception as e:
-
                             _l.error("Could not book default scenario %s" % e)
+                            # transaction.savepoint_rollback(sid)
 
-                            transaction.savepoint_rollback(sid)
-
-                    self.result.processed_rows = self.result.processed_rows + 1
-
-                    # DEPRECATED
-                    # send_websocket_message(data={
-                    #     'type': 'transaction_import_status',
-                    #     'payload': {
-                    #         'parent_task_id': self.task.parent_id,
-                    #         'task_id': self.task.id,
-                    #         'state': CeleryTask.STATUS_PENDING,
-                    #         'processed_rows': self.result.processed_rows,
-                    #         'total_rows': self.result.total_rows,
-                    #         'scheme_name': self.scheme.user_code,
-                    #         'file_name': self.result.file_name}
-                    # }, level="member",
-                    #     context=self.context)
-
-                    self.task.update_progress(
-                        {
-                            'current': self.result.processed_rows,
-                            'total': len(self.items),
-                            'percent': round(self.result.processed_rows / (len(self.items) / 100)),
-                            'description': 'Row %s processed' % self.result.processed_rows
-                        }
-                    )
+                else:
 
 
+                    try:
 
-                except Exception as e:
+                        # sid = transaction.savepoint()
 
-                    item.status = 'error'
-                    item.message = 'Error %s' % e
+                        item.status = 'skip'
+                        item.message = 'Selector %s does not match anything in scheme' % rule_value
 
-                    _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Exception %s' % (
-                        self.task, str(item.row_number), e))
-                    _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Traceback %s' % (
-                        self.task, str(item.row_number), traceback.format_exc()))
-                finally:
+                        self.book(item, self.default_rule_scenario)
 
-                    index = index + 1
+                        # transaction.savepoint_commit(sid)
+
+                    except Exception as e:
+
+                        _l.error("Could not book default scenario %s" % e)
+
+                        # transaction.savepoint_rollback(sid)
+
+                self.result.processed_rows = self.result.processed_rows + 1
+
+                # DEPRECATED
+                # send_websocket_message(data={
+                #     'type': 'transaction_import_status',
+                #     'payload': {
+                #         'parent_task_id': self.task.parent_id,
+                #         'task_id': self.task.id,
+                #         'state': CeleryTask.STATUS_PENDING,
+                #         'processed_rows': self.result.processed_rows,
+                #         'total_rows': self.result.total_rows,
+                #         'scheme_name': self.scheme.user_code,
+                #         'file_name': self.result.file_name}
+                # }, level="member",
+                #     context=self.context)
+
+                self.task.update_progress(
+                    {
+                        'current': self.result.processed_rows,
+                        'total': len(self.items),
+                        'percent': round(self.result.processed_rows / (len(self.items) / 100)),
+                        'description': 'Row %s processed' % self.result.processed_rows
+                    }
+                )
+
+
+
+            except Exception as e:
+
+                item.status = 'error'
+                item.message = 'Error %s' % e
+
+                _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Exception %s' % (
+                    self.task, str(item.row_number), e))
+                _l.error('TransactionImportProcess.Task %s.  ========= process row %s ======== Traceback %s' % (
+                    self.task, str(item.row_number), traceback.format_exc()))
+            finally:
+
+                index = index + 1
 
         self.result.items = self.items
 

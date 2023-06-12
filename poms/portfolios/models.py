@@ -325,6 +325,7 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
     previous_date_record = models.ForeignKey(
         "portfolios.PortfolioRegisterRecord",
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         verbose_name=gettext_lazy("previous date record"),
     )

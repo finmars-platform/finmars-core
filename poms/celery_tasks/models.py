@@ -11,7 +11,7 @@ from poms.common.models import TimeStampedModel
 from poms.file_reports.models import FileReport
 
 _l = logging.getLogger('poms.celery_tasks')
-
+from celery.result import AsyncResult
 
 class CeleryTask(TimeStampedModel):
     '''
@@ -89,6 +89,18 @@ class CeleryTask(TimeStampedModel):
 
     def __str__(self):
         return '{0.verbose_name} [{0.pk}] ({0.status})>'.format(self)
+
+    def cancel(self):
+
+        if self.celery_task_id:
+            try:
+                async_result = AsyncResult(str(self.celery_task_id)).revoke()
+            except Exception as e:
+                _l.error("Error while canceling task: %s", e)
+
+        self.status = CeleryTask.STATUS_CANCELED
+
+        self.save()
 
     @property
     def options_object(self):

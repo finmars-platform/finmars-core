@@ -320,6 +320,12 @@ def export_configuration_to_directory(source_directory, configuration, master_us
 
         save_serialized_entity_layout('ui.listlayout',
                                       configuration.configuration_code,
+                                      'reports.performancereport',
+                                      source_directory + '/ui/layouts/performance-report',
+                                      context)
+
+        save_serialized_entity_layout('ui.listlayout',
+                                      configuration.configuration_code,
                                       'counterparties.responsible',
                                       source_directory + '/ui/layouts/responsibles',
                                       context)
@@ -485,6 +491,24 @@ def export_configuration_to_directory(source_directory, configuration, master_us
                                       configuration.configuration_code,
                                       'pricing.currencyhistoryerror',
                                       source_directory + '/ui/form-layouts/fxrate-journal',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'portfolios.portfolioregister',
+                                      source_directory + '/ui/form-layouts/portfolio-register',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'portfolios.portfolioregisterrecord',
+                                      source_directory + '/ui/form-layouts/portfolio-register-record',
+                                      context)
+
+        save_serialized_entity_layout('ui.editlayout',
+                                      configuration.configuration_code,
+                                      'transactions.transaction',
+                                      source_directory + '/ui/form-layouts/transaction',
                                       context)
 
         # Aliases

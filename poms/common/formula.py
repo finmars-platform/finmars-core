@@ -1562,26 +1562,57 @@ def _get_instrument_attribute(evaluator, instrument, attribute_type_user_code):
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
-    instrument = _safe_get_instrument(evaluator, instrument)
+    if isinstance(instrument, dict):
 
-    result = None
+        # _l.info("_get_instrument_attribute.instrument is dict %s" % instrument['attributes'])
+        '''Weird code for demo 2023-06-11'''
+        '''TODO refactor'''
 
-    for attribute in instrument.attributes.all():
+        if isinstance(instrument['attributes'], dict):
 
-        if attribute.attribute_type.user_code == attribute_type_user_code:
+            result = instrument['attributes'][attribute_type_user_code]
 
-            if attribute.attribute_type.value_type == 10:
-                result = attribute.value_text
+        else:
 
-            if attribute.attribute_type.value_type == 20:
-                result = attribute.value_float
+            for attribute in instrument['attributes']:
 
-            if attribute.attribute_type.value_type == 30:
-                if attribute.classifier:
-                    result = attribute.classifier.name
+                if attribute['attribute_type_object']['user_code'] == attribute_type_user_code:
 
-            if attribute.attribute_type.value_type == 40:
-                result = attribute.value_date
+                    if attribute['attribute_type_object']['value_type'] == 10:
+                        result = attribute.value_text
+
+                    if attribute['attribute_type_object']['value_type'] == 20:
+                        result = attribute.value_float
+
+                    if attribute['attribute_type_object']['value_type'] == 30:
+                        if attribute['classifier_object']:
+                            result = attribute['classifier_object']['name']
+
+                    if attribute['attribute_type_object']['value_type'] == 40:
+                        result = attribute.value_date
+
+    else:
+
+        instrument = _safe_get_instrument(evaluator, instrument)
+
+        result = None
+
+        for attribute in instrument.attributes.all():
+
+            if attribute.attribute_type.user_code == attribute_type_user_code:
+
+                if attribute.attribute_type.value_type == 10:
+                    result = attribute.value_text
+
+                if attribute.attribute_type.value_type == 20:
+                    result = attribute.value_float
+
+                if attribute.attribute_type.value_type == 30:
+                    if attribute.classifier:
+                        result = attribute.classifier.name
+
+                if attribute.attribute_type.value_type == 40:
+                    result = attribute.value_date
 
     return result
 
@@ -4363,7 +4394,10 @@ class SimpleEval2(object):
                 return val[node.attr]
             except (IndexError, KeyError, TypeError):
 
-                _l.info('AttributeDoesNotExist.node %s' % node)
+                _l.debug('AttributeDoesNotExist.node %s' % node)
+                _l.debug('AttributeDoesNotExist.node.attr %s' % node.attr)
+                _l.debug('AttributeDoesNotExist.node.value %s' % node.value)
+                _l.debug('AttributeDoesNotExist.val %s' % val)
 
                 raise AttributeDoesNotExist(node.attr)
 

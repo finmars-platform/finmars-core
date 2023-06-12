@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from celery.result import AsyncResult
+
 from django_filters.rest_framework import FilterSet, DjangoFilterBackend
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -98,13 +98,10 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=['PUT'], url_path='cancel')
     def cancel(self, request, pk=None):
+
         task = CeleryTask.objects.get(pk=pk)
 
-        async_result = AsyncResult(task.celery_task_id).revoke()
-
-        task.status = CeleryTask.STATUS_CANCELED
-
-        task.save()
+        task.cancel()
 
         return Response({'status': 'ok'})
 

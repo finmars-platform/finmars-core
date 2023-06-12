@@ -3,23 +3,23 @@ from django_filters.fields import Lookup
 from django_filters.rest_framework import FilterSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
 
+from poms.accounts.models import Account, AccountType
 from poms.common.filters import NoOpFilter, CharFilter, CharExactFilter
 from poms.common.mixins import DestroySystemicModelMixin
 from poms.common.views import AbstractModelViewSet, AbstractViewSet, AbstractReadOnlyModelViewSet
+from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsible, ResponsibleGroup
+from poms.currencies.models import Currency
+from poms.instruments.models import Instrument, InstrumentType
+from poms.portfolios.models import Portfolio
+from poms.reports.models import BalanceReport
+from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy2, Strategy2Subgroup, Strategy3, \
+    Strategy3Subgroup
+from poms.transactions.models import TransactionType, TransactionTypeGroup
 from poms.ui.models import ListLayout, EditLayout, Bookmark, \
     ConfigurationExportLayout, ComplexTransactionUserField, InstrumentUserField, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, CrossEntityAttributeExtension, \
     ColumnSortData, TransactionUserField, MobileLayout, MemberLayout
-from poms.instruments.models import Instrument, InstrumentType
-from poms.currencies.models import Currency
-from poms.accounts.models import Account, AccountType
-from poms.portfolios.models import Portfolio
-from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy2, Strategy2Subgroup, Strategy3, Strategy3Subgroup
-from poms.reports.models import BalanceReport
-from poms.transactions.models import TransactionType, TransactionTypeGroup
-from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsible, ResponsibleGroup
 from poms.ui.serializers import ListLayoutSerializer, \
     EditLayoutSerializer, BookmarkSerializer, ConfigurationExportLayoutSerializer, \
     ComplexTransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
@@ -60,20 +60,47 @@ class PortalInterfaceAccessViewSet(AbstractReadOnlyModelViewSet):
     pagination_class = None
 
 
+class ComplexTransactionUserFieldFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    configuration_code = CharFilter()
+    name = CharFilter()
+    user_code = CharFilter()
+
+    class Meta:
+        model = ComplexTransactionUserField
+        fields = []
+
+
 class ComplexTransactionUserFieldViewSet(AbstractModelViewSet):
     queryset = ComplexTransactionUserField.objects.select_related(
         'master_user',
     )
     serializer_class = ComplexTransactionUserFieldSerializer
+    filter_class = ComplexTransactionUserFieldFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
+
+
+class TransactionUserFieldFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    configuration_code = CharFilter()
+    name = CharFilter()
+    user_code = CharFilter()
+
+    class Meta:
+        model = TransactionUserField
+        fields = []
+
 
 class TransactionUserFieldViewSet(AbstractModelViewSet):
     queryset = TransactionUserField.objects.select_related(
         'master_user',
     )
     serializer_class = TransactionUserFieldSerializer
+    filter_class = TransactionUserFieldFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
@@ -177,11 +204,24 @@ class ColumnSortDataViewSet(AbstractModelViewSet):
     ]
 
 
+class InstrumentUserFieldFilterSet(FilterSet):
+    id = NoOpFilter()
+
+    configuration_code = CharFilter()
+    name = CharFilter()
+    user_code = CharFilter()
+
+    class Meta:
+        model = InstrumentUserField
+        fields = []
+
+
 class InstrumentUserFieldViewSet(AbstractModelViewSet):
     queryset = InstrumentUserField.objects.select_related(
         'master_user',
     )
     serializer_class = InstrumentUserFieldSerializer
+    filter_class = InstrumentUserFieldFilterSet
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
@@ -285,7 +325,6 @@ class ListLayoutViewSet(AbstractModelViewSet, DestroySystemicModelMixin):
 
     @action(detail=False, methods=['get'], url_path='light', serializer_class=ListLayoutLightSerializer)
     def list_light(self, request, *args, **kwargs):
-
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
@@ -303,6 +342,7 @@ class ListLayoutViewSet(AbstractModelViewSet, DestroySystemicModelMixin):
             "modified": layout.modified,
             "is_default": layout.is_default
         })
+
 
 # DEPRECATED
 class ListLayoutLightViewSet(AbstractModelViewSet):
@@ -402,7 +442,6 @@ class MobileLayoutViewSet(AbstractModelViewSet):
         })
 
 
-
 class MemberLayoutFilterSet(FilterSet):
     id = NoOpFilter()
     is_default = django_filters.BooleanFilter()
@@ -435,8 +474,6 @@ class MemberLayoutViewSet(AbstractModelViewSet):
             "modified": layout.modified,
             "is_default": layout.is_default
         })
-
-
 
 
 class ConfigurationExportLayoutFilterSet(FilterSet):
@@ -563,7 +600,6 @@ class BookmarkViewSet(AbstractModelViewSet):
 class SystemAttributesViewSet(AbstractViewSet):
     @staticmethod
     def list(request, *args, **kwargs):
-
         props = {
             'portfolios.portfolio': Portfolio.get_system_attrs(),
             'accounts.account': Account.get_system_attrs(),

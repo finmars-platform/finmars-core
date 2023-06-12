@@ -245,10 +245,10 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
     return qs
 
 
-def get_last_system_attr_group(qs, last_group, groups_order):
+def get_last_system_attr_group(qs, last_group, groups_order, content_type_key):
     print('last_group %s ' % last_group)
 
-    if is_relation(last_group):
+    if is_relation(last_group, content_type_key):
         qs = qs.values(last_group) \
             .annotate(group_identifier=F(last_group + '__user_code')) \
             .distinct() \
@@ -270,7 +270,7 @@ def get_last_system_attr_group(qs, last_group, groups_order):
     return qs
 
 
-def get_queryset_filters(qs, groups_types, groups_values, original_qs):
+def get_queryset_filters(qs, groups_types, groups_values, original_qs, content_type_key):
     start_time = time.time()
 
     i = 0
@@ -335,13 +335,13 @@ def get_queryset_filters(qs, groups_types, groups_values, original_qs):
 
                     res_attr = attr
 
-                    if is_relation(res_attr):
+                    if is_relation(res_attr, content_type_key):
                         res_attr = res_attr + '__user_code'
 
                     qs = qs.filter(Q(**{res_attr + '__isnull': True}) | Q(**{res_attr: '-'}))
 
                 else:
-                    if is_relation(attr):
+                    if is_relation(attr, content_type_key):
                         params[attr + '__user_code'] = groups_values[i]
                     else:
                         params[attr] = groups_values[i]
@@ -402,7 +402,7 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
 
     else:
 
-        qs = get_queryset_filters(qs, groups_types, groups_values, original_qs)
+        qs = get_queryset_filters(qs, groups_types, groups_values, original_qs, content_type_key)
 
         # print('handle groups after filters qs len %s' % len(qs))
         # print('handle groups after filters qs len %s' % qs)
@@ -413,7 +413,7 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
 
         else:
 
-            qs = get_last_system_attr_group(qs, last_group=groups_types[-1], groups_order=groups_order)
+            qs = get_last_system_attr_group(qs, last_group=groups_types[-1], groups_order=groups_order, content_type_key=content_type_key)
 
     # print('handle_groups  %s' % qs)
 

@@ -404,9 +404,6 @@ class TransactionType(NamedModel, FakeDeletableModel, DataTimeStampedModel, Conf
 
     group = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('group')) # group user_code
 
-    group_old = models.ForeignKey(TransactionTypeGroup, null=True, blank=True, on_delete=models.PROTECT,
-                              verbose_name=gettext_lazy('group_old'))
-
     date_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',
                                  verbose_name=gettext_lazy('date expr'))
     display_expr = models.CharField(max_length=EXPRESSION_FIELD_LENGTH, blank=True, default='',

@@ -58,7 +58,12 @@ def is_relation(item, content_type_key):
                     'allocation_balance', 'allocation_pl',
                     'linked_instrument',
 
-                    'subgroup'
+                    'subgroup',
+
+                    # Portfolio Register
+                    'cash_currency',
+                    'portfolio_register',
+                    'valuation_currency'
 
                     ]
 

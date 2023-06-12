@@ -2975,6 +2975,124 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
         return data
 
 
+class ComplexTransactionEvItemSerializer(ModelWithAttributesSerializer):
+    # text = serializers.SerializerMethodField()
+    master_user = MasterUserField()
+    transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        super(ComplexTransactionEvItemSerializer, self).__init__(*args, **kwargs)
+
+        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(
+            source='transaction_type', read_only=True)
+
+    class Meta:
+        model = ComplexTransaction
+        fields = [
+            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'master_user',
+
+            'visibility_status', 'is_locked', 'is_canceled', 'is_deleted', 'transaction_unique_code',
+
+            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
+            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
+
+            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
+            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
+            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
+
+            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
+            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
+            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
+
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
+
+        ]
+
+    def to_representation(self, instance):
+
+        st = time.perf_counter()
+
+        data = super(ComplexTransactionEvItemSerializer, self).to_representation(instance)
+
+        # print('instance.visibility_status %s' % instance.visibility_status)
+
+        hide_parameters = False
+
+        member = get_member_from_context(self.context)
+
+        if member.is_admin or member.is_owner:
+            hide_parameters = False
+
+        if hide_parameters:
+            data.pop('user_text_1')
+            data.pop('user_text_2')
+            data.pop('user_text_3')
+            data.pop('user_text_4')
+            data.pop('user_text_5')
+            data.pop('user_text_6')
+            data.pop('user_text_7')
+            data.pop('user_text_8')
+            data.pop('user_text_9')
+            data.pop('user_text_10')
+            data.pop('user_text_11')
+            data.pop('user_text_12')
+            data.pop('user_text_13')
+            data.pop('user_text_14')
+            data.pop('user_text_15')
+            data.pop('user_text_16')
+            data.pop('user_text_17')
+            data.pop('user_text_18')
+            data.pop('user_text_19')
+            data.pop('user_text_20')
+            data.pop('user_text_21')
+            data.pop('user_text_22')
+            data.pop('user_text_23')
+            data.pop('user_text_24')
+            data.pop('user_text_25')
+            data.pop('user_text_26')
+            data.pop('user_text_27')
+            data.pop('user_text_28')
+            data.pop('user_text_29')
+            data.pop('user_text_30')
+
+            data.pop('user_number_1')
+            data.pop('user_number_2')
+            data.pop('user_number_3')
+            data.pop('user_number_4')
+            data.pop('user_number_5')
+            data.pop('user_number_6')
+            data.pop('user_number_7')
+            data.pop('user_number_8')
+            data.pop('user_number_9')
+            data.pop('user_number_10')
+            data.pop('user_number_11')
+            data.pop('user_number_12')
+            data.pop('user_number_13')
+            data.pop('user_number_14')
+            data.pop('user_number_15')
+            data.pop('user_number_16')
+            data.pop('user_number_17')
+            data.pop('user_number_18')
+            data.pop('user_number_19')
+            data.pop('user_number_20')
+
+            data.pop('user_date_1')
+            data.pop('user_date_2')
+            data.pop('user_date_3')
+            data.pop('user_date_4')
+            data.pop('user_date_5')
+
+        # print('ComplexTransactionLightSerializer visibility status done: %s' % (time.perf_counter() - st))
+
+        return data
+
+
+
+
 # TransactionType processing -------------------------------------------------------------------------------------------
 
 

@@ -19,7 +19,7 @@ from poms.widgets.models import BalanceReportHistory, BalanceReportHistoryItem, 
     PLReportHistoryItem
 from poms.widgets.utils import find_next_date_to_process, collect_asset_type_category, collect_currency_category, \
     collect_country_category, collect_sector_category, collect_region_category, collect_pl_history, \
-    collect_balance_history, collect_widget_stats
+    collect_balance_history, collect_widget_stats, str_to_date
 
 _l = logging.getLogger('poms.widgets')
 
@@ -63,7 +63,7 @@ def collect_balance_report_history(self, task_id):
     _l.info('collect_balance_report_history init task_id %s' % task_id)
 
     task = CeleryTask.objects.get(id=task_id)
-    report_date = find_next_date_to_process(task)
+    report_date = str_to_date(find_next_date_to_process(task))
 
     try:
 
@@ -256,14 +256,14 @@ def collect_pl_report_history(self, task_id):
     _l.info('collect_pl_report_history init task_id %s' % task_id)
 
     task = CeleryTask.objects.get(id=task_id)
-    report_date = find_next_date_to_process(task)
+    report_date = str_to_date(find_next_date_to_process(task))
 
     try:
 
         _l.info('task.options_object %s' % task.options_object)
 
         report_currency = Currency.objects.get(id=task.options_object.get('report_currency_id', None))
-        pl_first_date = task.options_object['pl_first_date']
+        pl_first_date = str_to_date(task.options_object['pl_first_date'])
         cost_method = CostMethod.objects.get(id=task.options_object.get('cost_method_id', None))
         pricing_policy = PricingPolicy.objects.get(id=task.options_object.get('pricing_policy_id', None))
 
@@ -434,7 +434,6 @@ def start_new_collect_stats(task):
 
 @shared_task(name='widgets.collect_stats', bind=True)
 def collect_stats(self, task_id):
-
     '''
 
     Task that calculates metrics on portfolio for each day
@@ -553,7 +552,17 @@ def collect_stats(self, task_id):
 
 
 @shared_task(name='widgets.calculate_historical', bind=True)
-def calculate_historical(self, date_from=None, date_to=None, portfolios=None):
+def calculate_historical(self, task_id):
+    task = CeleryTask.objects.get(id=task_id)
+
+    date_from = None
+    date_to = None
+    portfolios = None
+
+    if task.options_object:
+        date_from = task.options_object.get('date_from', None)
+        date_to = task.options_object.get('date_to', None)
+        portfolios = task.options_object.get('portfolios', None)
 
     # member = Member.objects.get(is_owner=True)
     member = Member.objects.get(username='finmars_bot')
@@ -580,8 +589,6 @@ def calculate_historical(self, date_from=None, date_to=None, portfolios=None):
 
         # dates = [bday_yesterday]
         dates = get_list_of_dates_between_two_dates(date_from, date_to)
-
-
 
         ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
 
