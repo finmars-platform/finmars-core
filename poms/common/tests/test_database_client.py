@@ -66,7 +66,7 @@ class DatabaseClientGetTaskTest(BaseTestCase):
         ("none_data",  None),
         ("empty_data",  {}),
     )
-    def test__no_data(self, data):
+    def test__get_task_no_data(self, data):
         with self.assertRaises(RuntimeError):
             self.service.get_task("instrument", data)
 
@@ -81,7 +81,7 @@ class DatabaseClientGetResultsTest(BaseTestCase):
         ("results_2",  {"results": [3, 4]}),
     )
     @mock.patch("poms.common.http_client.HttpClient.get")
-    def test__results(self, data, mock_get):
+    def test__get_results_with_data(self, data, mock_get):
         mock_get.return_value = data
 
         monad : Monad = self.service.get_results("instrument-narrow", data)
@@ -90,7 +90,7 @@ class DatabaseClientGetResultsTest(BaseTestCase):
         self.assertEqual(monad.data, data)
 
     @mock.patch("poms.common.http_client.HttpClient.get")
-    def test__http_error(self, mock_get):
+    def test__get_results_http_error(self, mock_get):
         data = {"items": []}
         mock_get.side_effect = HttpClientError("test")
 
@@ -101,9 +101,10 @@ class DatabaseClientGetResultsTest(BaseTestCase):
         self.assertEqual(monad.message, repr(HttpClientError("test")))
 
     @BaseTestCase.cases(
-        ("none_data",  None),
-        ("empty_data",  {}),
+        ("wrong_service",  "xxx_service"),
+        ("empty_service",  ""),
+        ("no_service",  None),
     )
-    def test__no_data(self, data):
+    def test__get_results_wrong_service(self, service):
         with self.assertRaises(RuntimeError):
-            self.service.get_results("instrument-narrow", data)
+            self.service.get_results(service, {})

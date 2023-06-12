@@ -532,15 +532,13 @@ class MasterUser(models.Model):
         ccys = {}
         ccy = Currency.objects.create(master_user=self, name="-", user_code="-")
         ccy_usd = None
+        # dc_reference_for_pricing = dc.get('reference_for_pricing', None)
+        dc_reference_for_pricing = ""
+
         for dc in currencies_data.values():
             dc_user_code = dc["user_code"]
             dc_name = dc.get("name", dc_user_code)
-            # dc_reference_for_pricing = dc.get('reference_for_pricing', None)
-            dc_reference_for_pricing = ""
-
-            if dc_user_code == "-":
-                pass
-            else:
+            if dc_user_code != "-":
                 if dc_user_code == "USD":
                     c = Currency.objects.create(
                         master_user=self,

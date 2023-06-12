@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 from django.utils.timezone import now
 from rest_framework import serializers
 from rest_framework.fields import ReadOnlyField
@@ -12,9 +14,7 @@ from poms.currencies.fields import CurrencyField
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.fields import PricingPolicyField
 from poms.instruments.models import PricingPolicy
-from poms.obj_attrs.serializers import (
-    ModelWithAttributesSerializer,
-)
+from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.pricing.models import CurrencyHistoryError, CurrencyPricingPolicy
 from poms.system_messages.handlers import send_system_message
 from poms.users.fields import MasterUserField
@@ -37,7 +37,6 @@ def set_currency_pricing_scheme_parameters(pricing_policy, parameters):
 
 
 class CurrencySerializer(
-
     ModelWithUserCodeSerializer,
     ModelWithAttributesSerializer,
     ModelWithTimeStampSerializer,
@@ -179,7 +178,9 @@ class CurrencySerializer(
         # print('ids %s' % ids)
 
         if len(ids):
-            CurrencyPricingPolicy.objects.filter(currency=instance).exclude(id__in=ids).delete()
+            CurrencyPricingPolicy.objects.filter(currency=instance).exclude(
+                id__in=ids
+            ).delete()
 
 
 class CurrencyLightSerializer(ModelWithUserCodeSerializer):
@@ -199,7 +200,6 @@ class CurrencyLightSerializer(ModelWithUserCodeSerializer):
 
 
 class CurrencyViewSerializer(ModelWithUserCodeSerializer):
-
     class Meta:
         model = Currency
         fields = [
@@ -354,13 +354,54 @@ class CurrencyEvalSerializer(ModelWithUserCodeSerializer, ModelWithTimeStampSeri
 class CurrencyDatabaseSearchRequestSerializer(serializers.Serializer):
     name = serializers.CharField(required=False)
     user_code = serializers.CharField(required=False)
-    short_name = serializers.CharField(required=False)
-    public_name = serializers.CharField(required=False)
-    page_size = serializers.IntegerField(required=False)
+    code = serializers.CharField(required=False)
+    numeric_code = serializers.CharField(required=False)
 
-    def params_has_name(self, params: dict) -> bool:
-        params.pop("page_size", None)
-        return bool(params)
+    def _filter_list(self, items: List[Dict], key: str, value: str) -> List[Dict]:
+        if key and value and items:
+            value_lower = value.lower()
+            return list(filter(lambda x: value_lower in x[key].lower(), items))
+        else:
+            return []
+
+    def filter_results(self, results: List[Dict]) -> List[Dict]:
+        if not results:
+            return []
+
+        params = dict(self.validated_data)
+        if "name" in params:
+            value = params["name"]
+            filtered_results = []
+            for key in self.get_fields():
+                filtered_results = self._filter_list(
+                    results,
+                    key=key,
+                    value=value,
+                )
+                if filtered_results:
+                    break
+        elif "user_code" in params:
+            filtered_results = self._filter_list(
+                results,
+                key="user_code",
+                value=params["user_code"],
+            )
+        elif "code" in params:
+            filtered_results = self._filter_list(
+                results,
+                key="code",
+                value=params["code"],
+            )
+        elif "numeric_code" in params:
+            filtered_results = self._filter_list(
+                results,
+                key="numeric_code",
+                value=params["numeric_code"],
+            )
+        else:
+            filtered_results = results
+
+        return filtered_results
 
 
 class CurrencyItemSerializer(serializers.Serializer):
@@ -372,7 +413,7 @@ class CurrencyItemSerializer(serializers.Serializer):
 
 
 class CurrencyDatabaseSearchResponseSerializer(serializers.Serializer):
-    results = CurrencyItemSerializer(many=True)
+    count = serializers.IntegerField()
     next = serializers.CharField()
     previous = serializers.CharField()
-    count = serializers.IntegerField()
+    results = CurrencyItemSerializer(many=True)
