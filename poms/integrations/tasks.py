@@ -896,12 +896,17 @@ def create_simple_instrument(task) -> Instrument:
     i_type = None
     if options_data.get("instrument_type_user_code"):
         try:
+
+            instrument_type_user_code_full = 'com.finmars.initial-instrument-type:' + options_data.get("instrument_type_user_code")
+
             i_type = InstrumentType.objects.get(
                 master_user=task.master_user,
-                user_code=reference,
+                user_code=instrument_type_user_code_full,
             )
         except Exception:
             i_type = None
+
+    # TODO use InstrumentTypeProcess to set default from InstrumentType to simple Instrument object
 
     instrument_name = options_data.get("instrument_name") or reference
     ecosystem_defaults = EcosystemDefault.objects.get(master_user=task.master_user)

@@ -49,6 +49,37 @@ def remove_old_tasks():
         _l.error("remove_old_tasks.exception %s" % traceback.format_exc())
 
 
+@shared_task(name='celery_tasks.auto_cancel_task_by_ttl')
+def auto_cancel_task_by_ttl():
+    try:
+
+        tasks = CeleryTask.objects.filter(status=CeleryTask.STATUS_PENDING,
+                                          expiry_at__lte=now()
+                                          )
+
+        for task in tasks:
+
+            if not task.notes:
+                task.notes = ''
+
+            task.notes = task.notes + 'Task was cancelled by TTL \n'
+
+            task.status = CeleryTask.STATUS_TIMEOUT
+            task.save()
+
+
+    except Exception as e:
+
+        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+        send_system_message(master_user=master_user, action_status="required", type="warning",
+                            title='Could not cancel tasks by ttl',
+                            description=str(e))
+
+        _l.error("auto_cancel_task_by_ttl.exception %s" % e)
+        _l.error("auto_cancel_task_by_ttl.exception %s" % traceback.format_exc())
+
+
 @shared_task(name='celery_tasks.bulk_delete', bind=True)
 def bulk_delete(self, task_id):
     # is_fake = bool(request.query_params.get('is_fake'))

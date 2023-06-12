@@ -128,6 +128,7 @@ def collect_balance_report_history(self, task_id):
         BalanceReportHistoryItem.objects.filter(balance_report_history=balance_report_history).delete()
 
         # _l.info('instance_serialized %s' % instance_serialized)
+        _l.info('instance_serialized len items %s' % len(instance_serialized['items']))
 
         nav = 0
         for item in instance_serialized['items']:

@@ -52,6 +52,9 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
             "error_message",
             "finished_at",
             "file_report",
+
+            'ttl',
+            'expiry_at'
         )
 
     def __init__(self, *args, **kwargs):
