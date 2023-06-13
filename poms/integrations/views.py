@@ -1684,6 +1684,15 @@ class DataBaseCallBackView(APIView):
         _l.info(f"{self.__class__.__name__}.post successfully created {msg}")
         return {"status": "ok"}
 
+    def prepare_err_response(self, task: CeleryTask, error_dict: dict) -> Response:
+        if task:
+            self.update_task_status(
+                task,
+                CeleryTask.STATUS_ERROR,
+                notes=error_dict["message"],
+            )
+        return Response(error_dict, status=HTTP_400_BAD_REQUEST)
+
     def validate_post_data(
         self,
         request_data: dict,
@@ -1718,12 +1727,7 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
         request_data = request.data
         task, error_dict = self.validate_post_data(request_data=request_data)
         if error_dict:
-            self.update_task_status(
-                task,
-                CeleryTask.STATUS_ERROR,
-                notes=error_dict["message"],
-            )
-            return Response(error_dict, status=HTTP_400_BAD_REQUEST)
+            return self.prepare_err_response(task, error_dict)
 
         data = request_data["data"]
         if not ("instruments" in data and "currencies" in data):
@@ -1761,13 +1765,7 @@ class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
         data = request.data
         task, error_dict = self.validate_post_data(request_data=data)
         if error_dict:
-            if task:
-                self.update_task_status(
-                    task,
-                    CeleryTask.STATUS_ERROR,
-                    notes=error_dict["message"],
-                )
-            return Response(error_dict, status=HTTP_400_BAD_REQUEST)
+            return self.prepare_err_response(task, error_dict)
 
         try:
             currency = create_currency_from_finmars_database(
@@ -1791,12 +1789,7 @@ class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
         data = request.data
         task, error_dict = self.validate_post_data(request_data=data)
         if error_dict:
-            self.update_task_status(
-                task,
-                CeleryTask.STATUS_ERROR,
-                notes=error_dict["message"],
-            )
-            return Response(error_dict, status=HTTP_400_BAD_REQUEST)
+            return self.prepare_err_response(task, error_dict)
 
         try:
             company = create_counterparty_from_finmars_database(

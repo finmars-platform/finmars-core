@@ -4,7 +4,7 @@ from poms.common.common_base_test import BaseTestCase
 from poms.common.common_callback_test import CallbackSetTestMixin
 from poms.common.database_client import BACKEND_CALLBACK_URLS
 
-# from poms.counterparties.models import Instrument
+from poms.instruments.models import Instrument  # , InstrumentType, InstrumentClass
 
 
 class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
@@ -22,6 +22,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         ("stock", "stock"),
     )
     def test__instrument_no_currency_created(self, instrument_type: str):
+        user_code = self.random_string(10)
         post_data = {
             "request_id": self.task.id,
             "data": {
@@ -30,7 +31,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                         "instrument_type": {
                             "user_code": instrument_type,
                         },
-                        "user_code": "test_user_code",
+                        "user_code": user_code,
                         "short_name": "test_short_name",
                         "name": "test_name",
                         "pricing_currency": {
@@ -60,11 +61,14 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(response_json["status"], "ok", response_json)
         self.assertNotIn("message", response_json)
 
+        self.assertIsNotNone(Instrument.objects.filter(user_code=user_code).first())
+
     @BaseTestCase.cases(
         ("bond", "bond"),
         ("stock", "stock"),
     )
     def test__instrument_with_currency_created(self, instrument_type: str):
+        user_code = self.random_string(10)
         post_data = {
             "request_id": self.task.id,
             "data": {
@@ -73,7 +77,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                         "instrument_type": {
                             "user_code": instrument_type,
                         },
-                        "user_code": "test_user_code",
+                        "user_code": user_code,
                         "short_name": "test_short_name",
                         "name": "test_name",
                         "pricing_currency": {
@@ -102,3 +106,5 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         response_json = response.json()
         self.assertEqual(response_json["status"], "ok", response_json)
         self.assertNotIn("message", response_json)
+
+        self.assertIsNotNone(Instrument.objects.filter(user_code=user_code).first())

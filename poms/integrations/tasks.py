@@ -365,13 +365,8 @@ def create_instrument_from_finmars_database(data, master_user, member):
         instrument_data = {
             key: None if value == "null" else value for key, value in data.items()
         }
-        _l.info(
-            f"{func} instrument_data={instrument_data}"
-        )
+        _l.info(f"{func} instrument_data={instrument_data}")
         short_type = instrument_data["instrument_type"]["user_code"]
-        instrument_type_user_code = (
-            f"com.finmars.initial-instrument-type:{short_type}"
-        )
         # TODO remove stocks ASAP as configuration ready
         if short_type in {"stocks", "stock"}:
             if (
@@ -403,7 +398,7 @@ def create_instrument_from_finmars_database(data, master_user, member):
                     )
 
                 _l.info(
-                    f'{func} Reference for pricing updated '
+                    f"{func} Reference for pricing updated "
                     f'{instrument_data["reference_for_pricing"]}'
                 )
 
@@ -414,24 +409,26 @@ def create_instrument_from_finmars_database(data, master_user, member):
                     "default_currency_code"
                 ]
 
-        attribute_types = GenericAttributeType.objects.filter(
-            master_user=master_user, content_type=content_type
-        )
-
+        instrument_type_user_code = f"com.finmars.initial-instrument-type:{short_type}"
         try:
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
                 user_code=instrument_type_user_code,
-                # user_code__contains=short_type,  # FIXME DEBUG ONLY !
+                # user_code__contains=short_type,  # FOR DEBUG ONLY!
             )
         except InstrumentType.DoesNotExist as e:
-            # all = InstrumentType.objects.all().values_list("id", "user_code", "master_user_id")
-            # err_msg = f"{func} NO InstrumentType contains user_code={short_type} all={all}"
+            # all_types = InstrumentType.objects.all().values_list(
+            #     "id", "user_code", "master_user_id"
+            # )  # FOR DEBUG ONLY!
+            # err_msg = f"{func} No InstrumentType user_code={short_type} all={all_types}"
 
-            err_msg = f"{func} No such InstrumentType user_code={instrument_type_user_code}"
+            err_msg = f"{func} No InstrumentType user_code={instrument_type_user_code}"
             _l.error(err_msg)
             raise RuntimeError(err_msg) from e
 
+        attribute_types = GenericAttributeType.objects.filter(
+            master_user=master_user, content_type=content_type
+        )
         object_data = handler_instrument_object(
             instrument_data,
             instrument_type,
@@ -896,8 +893,10 @@ def create_simple_instrument(task) -> Instrument:
     i_type = None
     if options_data.get("instrument_type_user_code"):
         try:
-
-            instrument_type_user_code_full = 'com.finmars.initial-instrument-type:' + options_data.get("instrument_type_user_code")
+            instrument_type_user_code_full = (
+                "com.finmars.initial-instrument-type:"
+                + options_data.get("instrument_type_user_code")
+            )
 
             i_type = InstrumentType.objects.get(
                 master_user=task.master_user,
