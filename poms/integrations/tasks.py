@@ -4582,7 +4582,7 @@ def update_task_with_simple_instrument(remote_task_id: int, task: CeleryTask):
 def update_task_with_currency_data(data: dict, task: CeleryTask):
     func = "update_task_with_currency_data"
     try:
-        currency_data = data["data"]["items"][0]
+        currency_data = data["data"]
 
         _l.info(f"{func} company_data={currency_data}")
 
@@ -4602,7 +4602,7 @@ def update_task_with_currency_data(data: dict, task: CeleryTask):
 def update_task_with_company_data(data: dict, task: CeleryTask):
     func = "update_task_with_company_data"
     try:
-        company_data = data["data"]["items"][0]
+        company_data = data["data"]
 
         _l.info(f"{func} company_data={company_data}")
 

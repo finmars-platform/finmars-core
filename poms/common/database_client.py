@@ -13,14 +13,14 @@ COMMON_PART = "api/v1/import/finmars-database"
 BACKEND_CALLBACK_URLS ={
     "instrument": f"{BACKEND_URL}/{COMMON_PART}/instrument/callback/",
     "currency": f"{BACKEND_URL}/{COMMON_PART}/currency/callback/",
-    "company": f"{BACKEND_URL}/{COMMON_PART}/company/callback/",
+    # "company": f"{BACKEND_URL}/{COMMON_PART}/company/callback/",
 }
 
 V1 = "api/v1/"
 FINMARS_DATABASE_URLS = {
+    "currency": f"{settings.FINMARS_DATABASE_URL}{V1}/export/currency",
     "instrument": f"{settings.FINMARS_DATABASE_URL}{V1}export/instrument",
-    "instrument-narrow": f"{settings.FINMARS_DATABASE_URL}{V1}instrument-narrow",
-    "currency": f"{settings.FINMARS_DATABASE_URL}{V1}currency",
+    # "company": f"{settings.FINMARS_DATABASE_URL}{V1}export/company",
 }
 
 
@@ -53,24 +53,25 @@ class DatabaseService:
 
         return monad
 
-    def get_results(self, service_name: str, request_params: dict) -> Monad:
-        _l.info(f"{log}.get_result service={service_name} options={request_params}")
-
-        if service_name not in FINMARS_DATABASE_URLS:
-            raise RuntimeError(f"{log}.get_result no service_name!")
-
-        try:
-            data = self.http_client.get(
-                url=FINMARS_DATABASE_URLS[service_name],
-                params=request_params,
-            )
-        except HttpClientError as err:
-            monad = Monad(status=MonadStatus.ERROR, message=repr(err))
-        else:
-            if "results" in data:
-                monad = Monad(status=MonadStatus.DATA_READY, data=data)
-            else:
-                err_msg = f"{log}.get_result no 'results' in response.data={data}"
-                monad = Monad(status=MonadStatus.ERROR, message=err_msg)
-
-        return monad
+    # DEPRECATED task: FN-1736
+    # def get_results(self, service_name: str, request_params: dict) -> Monad:
+    #     _l.info(f"{log}.get_result service={service_name} options={request_params}")
+    #
+    #     if service_name not in FINMARS_DATABASE_URLS:
+    #         raise RuntimeError(f"{log}.get_result no service_name!")
+    #
+    #     try:
+    #         data = self.http_client.get(
+    #             url=FINMARS_DATABASE_URLS[service_name],
+    #             params=request_params,
+    #         )
+    #     except HttpClientError as err:
+    #         monad = Monad(status=MonadStatus.ERROR, message=repr(err))
+    #     else:
+    #         if "results" in data:
+    #             monad = Monad(status=MonadStatus.DATA_READY, data=data)
+    #         else:
+    #             err_msg = f"{log}.get_result no 'results' in response.data={data}"
+    #             monad = Monad(status=MonadStatus.ERROR, message=err_msg)
+    #
+    #     return monad
