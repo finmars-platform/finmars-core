@@ -1737,25 +1737,24 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
             return Response(error_dict, status=HTTP_400_BAD_REQUEST)
 
         try:
-            for item in data["currencies"]:
-                create_currency_from_finmars_database(
-                    item,
-                    task.master_user,
-                    task.member,
-                )
+            create_currency_from_finmars_database(
+                data["currencies"][0],
+                task.master_user,
+                task.member,
+            )
 
-            for item in data["instruments"]:
-                create_instrument_from_finmars_database(
-                    item,
-                    task.master_user,
-                    task.member,
-                )
+            instrument = create_instrument_from_finmars_database(
+                data["instruments"][0],
+                task.master_user,
+                task.member,
+            )
 
         except Exception as e:
             error_dict = self.create_err_log_it(repr(e), method="instrument creating")
             return Response(error_dict, status=HTTP_400_BAD_REQUEST)
 
         else:
+            task.result_object["result_id"] = instrument.id
             self.update_task_status(task, CeleryTask.STATUS_DONE)
             return Response(self.create_ok_log_it("instrument"), status=HTTP_200_OK)
 

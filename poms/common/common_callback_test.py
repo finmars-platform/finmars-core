@@ -11,6 +11,7 @@ class CallbackSetTestMixin:
             function_name=func,
             type="import_from_database",
             status=CeleryTask.STATUS_PENDING,
+            result="{}",
         )
 
     def test__no_request_id(self):

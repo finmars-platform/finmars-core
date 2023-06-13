@@ -4451,9 +4451,10 @@ def create_currency_from_finmars_database(data, master_user, member) -> Currency
     proxy_request = ProxyRequest(proxy_user)
     context = {"master_user": master_user, "request": proxy_request}
     currency_data = {
-        "user_code": data["code"],
+        "user_code": data["user_code"],
         "name": data["name"],
         "short_name": data["short_name"],
+        "public_name": data["public_name"],
         "pricing_condition": PricingCondition.NO_VALUATION,
     }
 
