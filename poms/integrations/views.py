@@ -1761,26 +1761,27 @@ class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
         data = request.data
         task, error_dict = self.validate_post_data(request_data=data)
         if error_dict:
-            self.update_task_status(
-                task,
-                CeleryTask.STATUS_ERROR,
-                notes=error_dict["message"],
-            )
+            if task:
+                self.update_task_status(
+                    task,
+                    CeleryTask.STATUS_ERROR,
+                    notes=error_dict["message"],
+                )
             return Response(error_dict, status=HTTP_400_BAD_REQUEST)
 
         try:
-            for item in data["data"]:
-                create_instrument_from_finmars_database(
-                    item,
-                    task.master_user,
-                    task.member,
-                )
+            currency = create_currency_from_finmars_database(
+                data["data"],
+                task.master_user,
+                task.member,
+            )
 
         except Exception as e:
             error_dict = self.create_err_log_it(repr(e), method="currency creating")
             return Response(error_dict, status=HTTP_400_BAD_REQUEST)
 
         else:
+            task.result_object["result_id"] = currency.id
             self.update_task_status(task, CeleryTask.STATUS_DONE)
             return Response(self.create_ok_log_it("currency"), status=HTTP_200_OK)
 
@@ -1798,17 +1799,17 @@ class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
             return Response(error_dict, status=HTTP_400_BAD_REQUEST)
 
         try:
-            for item in data["data"]:
-                create_counterparty_from_finmars_database(
-                    item,
-                    task.master_user,
-                    task.member,
-                )
+            company = create_counterparty_from_finmars_database(
+                data["data"],
+                task.master_user,
+                task.member,
+            )
 
         except Exception as e:
             error_dict = self.create_err_log_it(repr(e), method="company creating")
             return Response(error_dict, status=HTTP_400_BAD_REQUEST)
 
         else:
+            task.result_object["result_id"] = company.id
             self.update_task_status(task, CeleryTask.STATUS_DONE)
             return Response(self.create_ok_log_it("company"), status=HTTP_200_OK)

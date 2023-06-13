@@ -13,14 +13,14 @@ COMMON_PART = "api/v1/import/finmars-database"
 BACKEND_CALLBACK_URLS ={
     "instrument": f"{BACKEND_URL}/{COMMON_PART}/instrument/callback/",
     "currency": f"{BACKEND_URL}/{COMMON_PART}/currency/callback/",
-    # "company": f"{BACKEND_URL}/{COMMON_PART}/company/callback/",
+    "company": f"{BACKEND_URL}/{COMMON_PART}/company/callback/",
 }
 
 V1 = "api/v1/"
 FINMARS_DATABASE_URLS = {
     "currency": f"{settings.FINMARS_DATABASE_URL}{V1}/export/currency",
     "instrument": f"{settings.FINMARS_DATABASE_URL}{V1}export/instrument",
-    # "company": f"{settings.FINMARS_DATABASE_URL}{V1}export/company",
+    "company": f"{settings.FINMARS_DATABASE_URL}{V1}export/company",
 }
 
 

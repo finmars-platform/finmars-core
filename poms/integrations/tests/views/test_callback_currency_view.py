@@ -18,13 +18,11 @@ class CallbackCurrencyViewSetTest(CallbackSetTestMixin, BaseTestCase):
     def test__company_created(self):
         post_data = {
             "request_id": self.task.id,
-            "data": [
-                {
-                    "user_code": "test_user_code",
-                    "code": "test_code",
-                    "name": "test_name",
-                },
-            ],
+            "data": {
+                "user_code": "test_user_code",
+                "code": "test_code",
+                "name": "test_name",
+            },
         }
         response = self.client.post(path=self.url, format="json", data=post_data)
         self.assertEqual(response.status_code, 200, response.content)

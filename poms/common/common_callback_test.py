@@ -9,8 +9,7 @@ class CallbackSetTestMixin:
             member=self.member,
             verbose_name=name,
             function_name=func,
-            type="import",
-            result_object={"task_id": self.random_int()},
+            type="import_from_database",
             status=CeleryTask.STATUS_PENDING,
         )
 
