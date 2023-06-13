@@ -1,6 +1,7 @@
 import json
 import logging
 import time
+import traceback
 from typing import Tuple, Optional
 
 import django_filters
@@ -1676,44 +1677,44 @@ class DataBaseCallBackView(APIView):
             task.notes = notes
         task.save()
 
-    def create_err_log_it(self, err_msg: str, method="validate_post_data") -> dict:
-        _l.error(f"{self.__class__.__name__}.{method} error {err_msg}")
-        return {"status": "error", "message": err_msg}
-
-    def create_ok_log_it(self, msg: str) -> dict:
-        _l.info(f"{self.__class__.__name__}.post successfully created {msg}")
-        return {"status": "ok"}
-
-    def prepare_err_response(self, task: CeleryTask, error_dict: dict) -> Response:
+    def prepare_err_response(self, task: CeleryTask, err_msg: str) -> Response:
+        _l.error(f"{self.__class__.__name__} {err_msg}")
         if task:
-            self.update_task_status(
-                task,
-                CeleryTask.STATUS_ERROR,
-                notes=error_dict["message"],
-            )
-        return Response(error_dict, status=HTTP_400_BAD_REQUEST)
+            self.update_task_status(task, CeleryTask.STATUS_ERROR, notes=err_msg)
+
+        return Response(
+            {"status": "error", "message": err_msg},
+            status=HTTP_400_BAD_REQUEST,
+        )
+
+    def prepare_ok_response(self, task: CeleryTask, result_id: int) -> Response:
+        _l.info(f"{self.__class__.__name__} created result_id={result_id}")
+
+        task.result_object["result_id"] = result_id
+        self.update_task_status(task, CeleryTask.STATUS_DONE)
+
+        return Response(
+            {"status": "ok"},
+            status=HTTP_200_OK,
+        )
 
     def validate_post_data(
         self,
         request_data: dict,
-    ) -> Tuple[Optional["CeleryTask"], Optional[dict]]:
+    ) -> Tuple[Optional["CeleryTask"], Optional[str]]:
         """
         Check if data contains request_id, data, and there is task with id=request_id
         """
-        _l.info(
-            f"{self.__class__.__name__}.validate_post_data request.data={request_data}"
-        )
+        _l.info(f"{self.__class__.__name__}.validate request.data={request_data}")
+
         if not (request_id := request_data.get("request_id")):
-            err_msg = "no request_id in request.data"
-            return None, self.create_err_log_it(err_msg)
+            return None, "no request_id in request.data"
 
         if not request_data.get("data"):
-            err_msg = "no or empty 'data' in request.data"
-            return None, self.create_err_log_it(err_msg)
+            return None, "no or empty 'data' in request.data"
 
         if not (task := CeleryTask.objects.filter(id=request_id).first()):
-            err_msg = f"no task with id={request_id}"
-            return None, self.create_err_log_it(err_msg)
+            return None, f"no task with id={request_id}"
 
         return task, None
 
@@ -1725,16 +1726,14 @@ class DataBaseCallBackView(APIView):
 class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
     def post(self, request):
         request_data = request.data
-        task, error_dict = self.validate_post_data(request_data=request_data)
-        if error_dict:
-            return self.prepare_err_response(task, error_dict)
+        task, err_msg = self.validate_post_data(request_data=request_data)
+        if err_msg:
+            return self.prepare_err_response(task, err_msg)
 
         data = request_data["data"]
         if not ("instruments" in data and "currencies" in data):
             err_msg = "no 'instruments' or 'currencies' in request.data"
-            self.update_task_status(task, CeleryTask.STATUS_ERROR, notes=err_msg)
-            error_dict = self.create_err_log_it(err_msg)
-            return Response(error_dict, status=HTTP_400_BAD_REQUEST)
+            return self.prepare_err_response(task, err_msg)
 
         try:
             create_currency_from_finmars_database(
@@ -1750,13 +1749,11 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
             )
 
         except Exception as e:
-            error_dict = self.create_err_log_it(repr(e), method="instrument creating")
-            return Response(error_dict, status=HTTP_400_BAD_REQUEST)
+            err_msg = f"{repr(e)}\n {traceback.format_exc()}"
+            return self.prepare_err_response(task, err_msg)
 
         else:
-            task.result_object["result_id"] = instrument.id
-            self.update_task_status(task, CeleryTask.STATUS_DONE)
-            return Response(self.create_ok_log_it("instrument"), status=HTTP_200_OK)
+            return self.prepare_ok_response(task, instrument.id)
 
 
 class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
@@ -1774,21 +1771,19 @@ class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
             )
 
         except Exception as e:
-            error_dict = self.create_err_log_it(repr(e), method="currency creating")
-            return Response(error_dict, status=HTTP_400_BAD_REQUEST)
+            err_msg = f"{repr(e)}\n {traceback.format_exc()}"
+            return self.prepare_err_response(task, err_msg)
 
         else:
-            task.result_object["result_id"] = currency.id
-            self.update_task_status(task, CeleryTask.STATUS_DONE)
-            return Response(self.create_ok_log_it("currency"), status=HTTP_200_OK)
+            return self.prepare_ok_response(task, currency.id)
 
 
 class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
     def post(self, request):
         data = request.data
-        task, error_dict = self.validate_post_data(request_data=data)
-        if error_dict:
-            return self.prepare_err_response(task, error_dict)
+        task, err_msg = self.validate_post_data(request_data=data)
+        if err_msg:
+            return self.prepare_err_response(task, err_msg)
 
         try:
             company = create_counterparty_from_finmars_database(
@@ -1798,10 +1793,8 @@ class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
             )
 
         except Exception as e:
-            error_dict = self.create_err_log_it(repr(e), method="company creating")
-            return Response(error_dict, status=HTTP_400_BAD_REQUEST)
+            err_msg = f"{repr(e)}\n {traceback.format_exc()}"
+            return self.prepare_err_response(task, err_msg)
 
         else:
-            task.result_object["result_id"] = company.id
-            self.update_task_status(task, CeleryTask.STATUS_DONE)
-            return Response(self.create_ok_log_it("company"), status=HTTP_200_OK)
+            return self.prepare_ok_response(task, company.id)

@@ -467,7 +467,7 @@ def create_instrument_from_finmars_database(data, master_user, member):
             raise RuntimeError(err_msg)
 
     except Exception as e:
-        _l.info(f"{func} {e} {traceback.format_exc()}")
+        _l.info(f"{func} {repr(e)} {traceback.format_exc()}")
         raise e
 
 
