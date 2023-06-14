@@ -1952,6 +1952,7 @@ class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer)
                     % instance.transaction_type_input
                 )
                 _l.error("Error in to_representation: %s" % e)
+                _l.error('Error in to_representation traceback: %s' % traceback.format_exc())
 
                 ret["transaction_type_input_object"] = None
 

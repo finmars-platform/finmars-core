@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import datetime
 import logging
 import time
+import traceback
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
@@ -1191,6 +1192,7 @@ class TransactionTypeLightSerializer(ModelWithUserCodeSerializer):
         except Exception as e:
 
             _l.error('Error in to_representation: %s' % e)
+            _l.error('Error in to_representation traceback: %s' % traceback.format_exc())
 
             ret['group_object'] = None
 
@@ -1445,7 +1447,8 @@ class TransactionTypeSerializer(ModelWithUserCodeSerializer,
             ret['group_object'] = s.data
         except Exception as e:
 
-            _l.error('Error in to_representation: %s' % e)
+            _l.error('Error in to_representation error: %s' % e)
+            _l.error('Error in to_representation traceback: %s' % traceback.format_exc())
 
             ret['group_object'] = None
 
@@ -2090,6 +2093,7 @@ class TransactionTypeViewSerializer(ModelWithUserCodeSerializer):
         except Exception as e:
 
             _l.error('Error in to_representation: %s' % e)
+            _l.error('Error in to_representation traceback: %s' % traceback.format_exc())
 
             ret['group_object'] = None
 

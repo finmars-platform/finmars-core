@@ -489,10 +489,10 @@ class SimpleEval2(object):
                 return val[node.attr]
             except (IndexError, KeyError, TypeError):
 
-                _l.debug('AttributeDoesNotExist.node %s' % node)
-                _l.debug('AttributeDoesNotExist.node.attr %s' % node.attr)
-                _l.debug('AttributeDoesNotExist.node.value %s' % node.value)
-                _l.debug('AttributeDoesNotExist.val %s' % val)
+                # _l.debug('AttributeDoesNotExist.node %s' % node)
+                # _l.debug('AttributeDoesNotExist.node.attr %s' % node.attr)
+                # _l.debug('AttributeDoesNotExist.node.value %s' % node.value)
+                # _l.debug('AttributeDoesNotExist.val %s' % val)
 
                 raise AttributeDoesNotExist(node.attr)
 
@@ -516,8 +516,8 @@ class SimpleEval2(object):
                 if node.attr in ['years', 'months', 'days', 'leapdays', 'year', 'month', 'day', 'weekday']:
                     return getattr(val, node.attr)
 
-        _l.info('AttributeDoesNotExist.val %s' % val)
-        _l.info('AttributeDoesNotExist.node %s' % node.__dict__)
+        # _l.info('AttributeDoesNotExist.val %s' % val)
+        # _l.info('AttributeDoesNotExist.node %s' % node.__dict__)
 
         raise AttributeDoesNotExist(node.attr)
 
