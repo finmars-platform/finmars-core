@@ -2,7 +2,7 @@ from poms.common.common_base_test import BaseTestCase
 from poms.common.common_callback_test import CallbackSetTestMixin
 from poms.common.database_client import BACKEND_CALLBACK_URLS
 
-# from poms.counterparties.models import Currency
+from poms.currencies.models import Currency
 
 
 class CallbackCurrencyViewSetTest(CallbackSetTestMixin, BaseTestCase):
@@ -13,24 +13,25 @@ class CallbackCurrencyViewSetTest(CallbackSetTestMixin, BaseTestCase):
             name="Import Currency From Finmars Database",
             func="import_currency_finmars_database",
         )
+
         self.url = BACKEND_CALLBACK_URLS["currency"]
 
-    def test__company_created(self):
+    def test__currency_created(self):
+        user_code = self.random_string(3)
         post_data = {
             "request_id": self.task.id,
-            "data": [
-                {
-                    "user_code": "test_user_code",
-                    "code": "test_code",
-                    "name": "test_name",
-                },
-            ],
+            "data": {
+                "user_code": user_code,
+                "short_name": f"short_{user_code}",
+                "name": f"name_{user_code}",
+                "public_name": f"public_{user_code}",
+            },
         }
         response = self.client.post(path=self.url, format="json", data=post_data)
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-        print("currency_created", response_json)
+        self.assertEqual(response_json["status"], "ok", response_json)
+        self.assertNotIn("message", response_json)
 
-        # self.assertEqual(response_json["status"], "ok")
-        # self.assertNotIn("message", response_json)
+        self.assertIsNotNone(Currency.objects.filter(user_code=user_code).first())
