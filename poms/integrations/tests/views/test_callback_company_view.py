@@ -18,13 +18,11 @@ class CallbackCompanyViewSetTest(CallbackSetTestMixin, BaseTestCase):
     def test__company_created(self):
         post_data = {
             "request_id": self.task.id,
-            "data": [
-                {
-                    "code": "test_user_code",
-                    "name": "test_name",
-                    "short_name": "test_short_name",
-                },
-            ],
+            "data": {
+                "code": "test_user_code",
+                "name": "test_name",
+                "short_name": "test_short_name",
+            },
         }
         response = self.client.post(path=self.url, format="json", data=post_data)
         self.assertEqual(response.status_code, 200, response.content)

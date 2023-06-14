@@ -1,6 +1,7 @@
 import json
 import logging
 import time
+import traceback
 from typing import Tuple, Optional
 
 import django_filters
@@ -14,6 +15,7 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
@@ -1669,118 +1671,130 @@ class SupersetGetSecurityToken(APIView):
 class DataBaseCallBackView(APIView):
     permission_classes = []
 
-    def create_err_log_it(self, err_msg: str, method="validate_post_data") -> dict:
-        _l.error(f"{self.__class__.__name__}.{method} error {err_msg}")
-        return {"status": "error", "message": err_msg}
+    def update_task_status(self, task: CeleryTask, new_status: str, notes=None):
+        task.status = new_status
+        if notes:
+            task.notes = notes
+        task.save()
+
+    def prepare_err_response(self, task: CeleryTask, err_msg: str) -> Response:
+        _l.error(f"{self.__class__.__name__} {err_msg}")
+        if task:
+            self.update_task_status(task, CeleryTask.STATUS_ERROR, notes=err_msg)
+
+        return Response(
+            {"status": "error", "message": err_msg},
+            status=HTTP_400_BAD_REQUEST,
+        )
+
+    def prepare_ok_response(self, task: CeleryTask, result_id: int) -> Response:
+        _l.info(f"{self.__class__.__name__} created result_id={result_id}")
+
+        task.result_object["result_id"] = result_id
+        self.update_task_status(task, CeleryTask.STATUS_DONE)
+
+        return Response(
+            {"status": "ok"},
+            status=HTTP_200_OK,
+        )
 
     def validate_post_data(
         self,
         request_data: dict,
-    ) -> Tuple[Optional["CeleryTask"], Optional[dict]]:
+    ) -> Tuple[Optional["CeleryTask"], Optional[str]]:
         """
         Check if data contains request_id, data, and there is task with id=request_id
         """
-        _l.info(
-            f"{self.__class__.__name__}.validate_post_data request.data={request_data}"
-        )
+        _l.info(f"{self.__class__.__name__}.validate request.data={request_data}")
+
         if not (request_id := request_data.get("request_id")):
-            err_msg = "no request_id in request.data"
-            return None, self.create_err_log_it(err_msg)
+            return None, "no request_id in request.data"
 
         if not request_data.get("data"):
-            err_msg = "no or empty 'data' in request.data"
-            return None, self.create_err_log_it(err_msg)
+            return None, "no or empty 'data' in request.data"
 
         if not (task := CeleryTask.objects.filter(id=request_id).first()):
-            err_msg = f"no task with id={request_id}"
-            return None, self.create_err_log_it(err_msg)
+            return None, f"no task with id={request_id}"
 
         return task, None
 
-    def create_ok_log_it(self, msg: str) -> dict:
-        _l.info(f"{self.__class__.__name__}.post successfully created {msg}")
-        return {"status": "ok"}
-
     def get(self, request):
         _l.info(f"{self.__class__.__name__}.get")
-
-        return Response({"ok"})  # for debugging
+        return Response({"its": "ok"})  # for debugging
 
 
 class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
     def post(self, request):
         request_data = request.data
-        task, error_dict = self.validate_post_data(request_data=request_data)
-        if error_dict:
-            return Response(error_dict)
+        task, err_msg = self.validate_post_data(request_data=request_data)
+        if err_msg:
+            return self.prepare_err_response(task, err_msg)
 
         data = request_data["data"]
         if not ("instruments" in data and "currencies" in data):
             err_msg = "no 'instruments' or 'currencies' in request.data"
-            return Response(self.create_err_log_it(err_msg))
+            return self.prepare_err_response(task, err_msg)
 
         try:
-            for item in data["currencies"]:
-                create_currency_from_finmars_database(
-                    item,
-                    task.master_user,
-                    task.member,
-                )
+            create_currency_from_finmars_database(
+                data["currencies"][0],
+                task.master_user,
+                task.member,
+            )
 
-            for item in data["instruments"]:
-                create_instrument_from_finmars_database(
-                    item,
-                    task.master_user,
-                    task.member,
-                )
-
-            task.status = CeleryTask.STATUS_DONE
-            task.save()
+            instrument = create_instrument_from_finmars_database(
+                data["instruments"][0],
+                task.master_user,
+                task.member,
+            )
 
         except Exception as e:
-            task.error_message = str(e)
-            task.status = CeleryTask.STATUS_ERROR
-            task.save()
-
-            return Response(self.create_err_log_it(repr(e), method="post creating"))
+            err_msg = f"{repr(e)}\n {traceback.format_exc()}"
+            return self.prepare_err_response(task, err_msg)
 
         else:
-            return Response(self.create_ok_log_it("instrument(s)"))
+            return self.prepare_ok_response(task, instrument.id)
 
 
 class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
     def post(self, request):
         data = request.data
-        task, error = self.validate_post_data(request_data=data)
-        if error:
-            return Response(error)
+        task, error_dict = self.validate_post_data(request_data=data)
+        if error_dict:
+            return self.prepare_err_response(task, error_dict)
 
         try:
-            for item in data["data"]:
-                create_instrument_from_finmars_database(
-                    item, task.master_user, task.member,
-                )
-
-            return Response(self.create_ok_log_it("currency"))
+            currency = create_currency_from_finmars_database(
+                data["data"],
+                task.master_user,
+                task.member,
+            )
 
         except Exception as e:
-            return Response(self.create_err_log_it(repr(e), method="post creating"))
+            err_msg = f"{repr(e)}\n {traceback.format_exc()}"
+            return self.prepare_err_response(task, err_msg)
+
+        else:
+            return self.prepare_ok_response(task, currency.id)
 
 
 class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
     def post(self, request):
         data = request.data
-        task, error = self.validate_post_data(request_data=data)
-        if error:
-            return Response(error)
+        task, err_msg = self.validate_post_data(request_data=data)
+        if err_msg:
+            return self.prepare_err_response(task, err_msg)
 
         try:
-            for item in data["data"]:
-                create_counterparty_from_finmars_database(
-                    item, task.master_user, task.member,
-                )
-
-            return Response(self.create_ok_log_it("company"))
+            company = create_counterparty_from_finmars_database(
+                data["data"],
+                task.master_user,
+                task.member,
+            )
 
         except Exception as e:
-            return Response(self.create_err_log_it(repr(e), method="post creating"))
+            err_msg = f"{repr(e)}\n {traceback.format_exc()}"
+            return self.prepare_err_response(task, err_msg)
+
+        else:
+            return self.prepare_ok_response(task, company.id)
