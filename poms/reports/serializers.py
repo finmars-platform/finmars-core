@@ -404,8 +404,8 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                     item['custom_fields'] = cfv
 
-                    _l.info('ReportSerializer item done: %s' % "{:3.3f}".format(
-                        time.perf_counter() - item_st))
+                    # _l.debug('ReportSerializer item done: %s' % "{:3.3f}".format(
+                    #     time.perf_counter() - item_st))
 
 
         _l.info('ReportSerializer custom columns calc_st done: %s' % "{:3.3f}".format(
