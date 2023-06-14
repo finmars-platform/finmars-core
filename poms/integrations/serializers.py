@@ -1484,7 +1484,8 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
             member=validated_data["member"],
             verbose_name="Import Instrument From Finmars Database",
             function_name="import_instrument_finmars_database",
-            type="import",
+            type="import_from_database",
+            ttl=settings.FINMARS_DATABASE_TIMEOUT + 1
         )
         task.options_object = {
             "reference": validated_data["instrument_code"],
@@ -1528,9 +1529,12 @@ class ImportCurrencyDatabaseSerializer(serializers.Serializer):
             member=validated_data["member"],
             verbose_name="Import Currency From Finmars Database",
             function_name="import_currency_finmars_database",
-            type="import",
+            type="import_from_database",
+            ttl=settings.FINMARS_DATABASE_TIMEOUT + 1
         )
-        task.options_object = {"currency_code": validated_data["currency_code"]}
+        task.options_object = {
+            "currency_code": validated_data["currency_code"],
+        }
         task.save()
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
@@ -1567,9 +1571,12 @@ class ImportCompanyDatabaseSerializer(serializers.Serializer):
             member=validated_data["member"],
             verbose_name="Import Company From Finmars Database",
             function_name="import_company_finmars_database",
-            type="import",
+            type="import_from_database",
+            ttl=settings.FINMARS_DATABASE_TIMEOUT + 1
         )
-        task.options_object = {"company_id": validated_data["company_id"]}
+        task.options_object = {
+            "company_id": validated_data["company_id"],
+        }
         task.save()
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")

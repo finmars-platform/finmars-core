@@ -71,40 +71,41 @@ class DatabaseClientGetTaskTest(BaseTestCase):
             self.service.get_task("instrument", data)
 
 
-class DatabaseClientGetResultsTest(BaseTestCase):
-    def setUp(self):
-        super().setUp()
-        self.service = DatabaseService()
-
-    @BaseTestCase.cases(
-        ("results_1",  {"results": [1, 2]}),
-        ("results_2",  {"results": [3, 4]}),
-    )
-    @mock.patch("poms.common.http_client.HttpClient.get")
-    def test__get_results_with_data(self, data, mock_get):
-        mock_get.return_value = data
-
-        monad : Monad = self.service.get_results("instrument-narrow", data)
-
-        self.assertEqual(monad.status, MonadStatus.DATA_READY)
-        self.assertEqual(monad.data, data)
-
-    @mock.patch("poms.common.http_client.HttpClient.get")
-    def test__get_results_http_error(self, mock_get):
-        data = {"items": []}
-        mock_get.side_effect = HttpClientError("test")
-
-        monad : Monad = self.service.get_results("instrument-narrow", data)
-
-        self.assertEqual(monad.status, MonadStatus.ERROR)
-        self.assertIsNone(monad.data)
-        self.assertEqual(monad.message, repr(HttpClientError("test")))
-
-    @BaseTestCase.cases(
-        ("wrong_service",  "xxx_service"),
-        ("empty_service",  ""),
-        ("no_service",  None),
-    )
-    def test__get_results_wrong_service(self, service):
-        with self.assertRaises(RuntimeError):
-            self.service.get_results(service, {})
+# DEPRECATED task: FN-1736
+# class DatabaseClientGetResultsTest(BaseTestCase):
+#     def setUp(self):
+#         super().setUp()
+#         self.service = DatabaseService()
+#
+#     @BaseTestCase.cases(
+#         ("results_1",  {"results": [1, 2]}),
+#         ("results_2",  {"results": [3, 4]}),
+#     )
+#     @mock.patch("poms.common.http_client.HttpClient.get")
+#     def test__get_results_with_data(self, data, mock_get):
+#         mock_get.return_value = data
+#
+#         monad : Monad = self.service.get_results("instrument-narrow", data)
+#
+#         self.assertEqual(monad.status, MonadStatus.DATA_READY)
+#         self.assertEqual(monad.data, data)
+#
+#     @mock.patch("poms.common.http_client.HttpClient.get")
+#     def test__get_results_http_error(self, mock_get):
+#         data = {"items": []}
+#         mock_get.side_effect = HttpClientError("test")
+#
+#         monad : Monad = self.service.get_results("instrument-narrow", data)
+#
+#         self.assertEqual(monad.status, MonadStatus.ERROR)
+#         self.assertIsNone(monad.data)
+#         self.assertEqual(monad.message, repr(HttpClientError("test")))
+#
+#     @BaseTestCase.cases(
+#         ("wrong_service",  "xxx_service"),
+#         ("empty_service",  ""),
+#         ("no_service",  None),
+#     )
+#     def test__get_results_wrong_service(self, service):
+#         with self.assertRaises(RuntimeError):
+#             self.service.get_results(service, {})
