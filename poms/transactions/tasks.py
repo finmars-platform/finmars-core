@@ -1,19 +1,13 @@
 from __future__ import unicode_literals, print_function
 
 import logging
-import time
 import traceback
 
 from celery import shared_task
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
 
-from poms.accounts.models import Account
 from poms.celery_tasks.models import CeleryTask
-from poms.common import formula
-from poms.portfolios.models import Portfolio
-from poms.transactions.models import Transaction, ComplexTransaction, TransactionType, ComplexTransactionInput, \
-    TransactionTypeInput
+from poms.expressions_engine import formula
+from poms.transactions.models import ComplexTransaction, TransactionType, TransactionTypeInput
 from poms.transactions.serializers import RecalculateUserFields
 
 _l = logging.getLogger('poms.transactions')

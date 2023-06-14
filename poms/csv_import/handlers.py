@@ -15,7 +15,7 @@ from openpyxl.utils import column_index_from_string
 
 from poms.accounts.models import AccountType
 from poms.celery_tasks.models import CeleryTask
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.common.models import ProxyRequest, ProxyUser
 from poms.common.storage import get_storage
 from poms.common.utils import get_serializer

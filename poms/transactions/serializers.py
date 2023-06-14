@@ -12,7 +12,7 @@ from rest_framework.fields import empty
 
 from poms.accounts.fields import AccountField, AccountDefault
 from poms.accounts.models import Account
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, \

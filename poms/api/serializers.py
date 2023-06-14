@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.common.fields import ExpressionField
 
 _l = logging.getLogger('poms.api')

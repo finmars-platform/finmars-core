@@ -4,7 +4,7 @@ from django.core.cache import cache
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.common.middleware import get_request
 
 EXPRESSION_FIELD_LENGTH = 4096
