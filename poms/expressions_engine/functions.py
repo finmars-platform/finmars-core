@@ -1518,57 +1518,27 @@ def _get_instrument_attribute(evaluator, instrument, attribute_type_user_code):
     context = evaluator.context
     master_user = get_master_user_from_context(context)
 
-    if isinstance(instrument, dict):
-
-        # _l.info("_get_instrument_attribute.instrument is dict %s" % instrument['attributes'])
-        '''Weird code for demo 2023-06-11'''
-        '''TODO refactor'''
-
-        if isinstance(instrument['attributes'], dict):
-
-            result = instrument['attributes'][attribute_type_user_code]
-
-        else:
-
-            for attribute in instrument['attributes']:
-
-                if attribute['attribute_type_object']['user_code'] == attribute_type_user_code:
-
-                    if attribute['attribute_type_object']['value_type'] == 10:
-                        result = attribute.value_text
-
-                    if attribute['attribute_type_object']['value_type'] == 20:
-                        result = attribute.value_float
-
-                    if attribute['attribute_type_object']['value_type'] == 30:
-                        if attribute['classifier_object']:
-                            result = attribute['classifier_object']['name']
-
-                    if attribute['attribute_type_object']['value_type'] == 40:
-                        result = attribute.value_date
-
-    else:
-
+    if not isinstance(instrument, dict):
         instrument = _safe_get_instrument(evaluator, instrument)
 
-        result = None
+    if isinstance(instrument.get('attributes'), dict):
+        attributes = [instrument['attributes']]
+    else:
+        attributes = instrument['attributes']
 
-        for attribute in instrument.attributes.all():
+    result = None
+    for attribute in attributes:
+        if attribute.get('attribute_type_object', {}).get('user_code') == attribute_type_user_code:
+            value_type = attribute.get('attribute_type_object', {}).get('value_type')
 
-            if attribute.attribute_type.user_code == attribute_type_user_code:
-
-                if attribute.attribute_type.value_type == 10:
-                    result = attribute.value_text
-
-                if attribute.attribute_type.value_type == 20:
-                    result = attribute.value_float
-
-                if attribute.attribute_type.value_type == 30:
-                    if attribute.classifier:
-                        result = attribute.classifier.name
-
-                if attribute.attribute_type.value_type == 40:
-                    result = attribute.value_date
+            if value_type == 10:
+                result = attribute.get('value_text')
+            elif value_type == 20:
+                result = attribute.get('value_float')
+            elif value_type == 30:
+                result = attribute.get('classifier_object', {}).get('name')
+            elif value_type == 40:
+                result = attribute.get('value_date')
 
     return result
 
