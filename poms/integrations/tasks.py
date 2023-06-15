@@ -532,7 +532,10 @@ def create_instrument_cbond(data, master_user, member):
         )
 
         try:
-            user_code = 'com.finmars.initial-instrument-type:' + instrument_data["instrument_type"]
+            user_code = (
+                "com.finmars.initial-instrument-type:"
+                + instrument_data["instrument_type"]
+            )
 
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
@@ -888,25 +891,28 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
         return None, errors
 
 
-def create_simple_instrument(task) -> Instrument:
+def create_simple_instrument(task: CeleryTask) -> Instrument:
+    func = f"create_simple_instrument task.id={task.id}"
     options_data = task.options_object["data"]
-    _l.info(f"create_simple_instrument: options_data={options_data}")
+    _l.info(f"{func} started options_data={options_data}")
 
     reference = options_data["reference"]
+    instrument_type_user_code_full = (
+        "com.finmars.initial-instrument-type:"
+        + options_data.get("instrument_type_user_code")
+    )
     i_type = None
     if options_data.get("instrument_type_user_code"):
         try:
-            instrument_type_user_code_full = (
-                "com.finmars.initial-instrument-type:"
-                + options_data.get("instrument_type_user_code")
-            )
-
             i_type = InstrumentType.objects.get(
                 master_user=task.master_user,
                 user_code=instrument_type_user_code_full,
             )
-        except Exception:
-            i_type = None
+        except InstrumentType.DoesNotExist:
+            _l.error(
+                f"{func} now such instrument_type={instrument_type_user_code_full}"
+                f" create instrument with ecosystem.default type"
+            )
 
     # TODO use InstrumentTypeProcess to set default from InstrumentType to simple Instrument object
 
@@ -918,25 +924,27 @@ def create_simple_instrument(task) -> Instrument:
         user_code=reference,
         name=instrument_name,
         short_name=f"{instrument_name} ({reference})",
-        instrument_type=ecosystem_defaults.instrument_type,
+        instrument_type=i_type or ecosystem_defaults.instrument_type,
         accrued_currency=ecosystem_defaults.currency,
         pricing_currency=ecosystem_defaults.currency,
         co_directional_exposure_currency=ecosystem_defaults.currency,
         counter_directional_exposure_currency=ecosystem_defaults.currency,
+        is_active=False,
     )
 
-    if i_type:
-        instrument.instrument_type = i_type
-        small_item = {
-            "user_code": reference,
-            "instrument_type": options_data["instrument_type_user_code"],
-        }
+    # if i_type:
+    #     instrument.instrument_type = i_type
+    #     small_item = {
+    #         "user_code": reference,
+    #         "instrument_type": options_data["instrument_type_user_code"],
+    #     }
+    #
+    #     create_instrument_cbond(small_item, task.master_user, task.member)
+    #
+    # instrument.is_active = False
+    # instrument.save()
 
-        create_instrument_cbond(small_item, task.master_user, task.member)
-
-    instrument.is_active = False
-    instrument.save()
-
+    _l.info(f"{func} created instrument.id={instrument.id}")
     return instrument
 
 
