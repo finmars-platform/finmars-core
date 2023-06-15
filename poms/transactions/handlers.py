@@ -12,7 +12,7 @@ from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
 
 from poms.accounts.models import Account
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.common.utils import date_now, format_float, format_float_to_2
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency

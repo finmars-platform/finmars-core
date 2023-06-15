@@ -48,6 +48,7 @@ class BootstrapConfig(AppConfig):
         :return:
         '''
 
+        self.create_local_configuration()
         self.bootstrap_celery()
         self.add_view_and_manage_permissions()
         self.load_master_user_data()
@@ -57,7 +58,7 @@ class BootstrapConfig(AppConfig):
         self.load_init_configuration()
         self.create_base_folders()
         self.register_at_authorizer_service()
-        self.create_local_configuration()
+
         self.create_iam_access_policies_templates()
 
     def create_finmars_bot(self):
@@ -351,6 +352,7 @@ class BootstrapConfig(AppConfig):
                                                   user_code=configuration_code + ':default_member_layout')
             except Exception as e:
                 layout = MemberLayout.objects.create(member=member,
+                                                     is_default=True,
                                                      configuration_code=configuration_code,
                                                      name='default',
                                                      user_code=configuration_code + ':default_member_layout')

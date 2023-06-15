@@ -7,7 +7,7 @@ from django.db import transaction
 from django.utils.timezone import now
 
 from poms.celery_tasks.models import CeleryTask
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.common.crypto.RSACipher import RSACipher
 from poms.credentials.models import Credentials
 from poms.csv_import.tasks import data_csv_file_import_by_procedure_json

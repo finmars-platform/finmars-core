@@ -9,7 +9,6 @@ from math import isnan
 from dateutil import relativedelta, rrule
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core import serializers
-from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
@@ -17,7 +16,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
 from poms.common.formula_accruals import get_coupon, f_duration, f_xirr
 from poms.common.models import NamedModel, AbstractClassModel, FakeDeletableModel, EXPRESSION_FIELD_LENGTH, \

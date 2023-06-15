@@ -4,7 +4,7 @@ import time
 from django.db import transaction
 from django.db.models import Q
 
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.common.utils import date_now
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.instruments.models import PricingCondition

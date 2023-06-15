@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from dateutil.relativedelta import relativedelta
 
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.common.utils import date_now
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import PriceHistory

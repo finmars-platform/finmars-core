@@ -15,7 +15,7 @@ from rest_framework.fields import empty
 from rest_framework.serializers import ListSerializer
 
 from poms.common.fields import ExpressionField, ContentTypeOrPrimaryKeyRelatedField
-from poms.common.formula import safe_eval, ExpressionEvalError
+from poms.expressions_engine.formula import safe_eval, ExpressionEvalError
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithUserCodeSerializer, ModelMetaSerializer
 from poms.integrations.models import PortfolioClassifierMapping, ProviderClass, AccountClassifierMapping, \

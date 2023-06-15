@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import ModelWithTimeStampSerializer, ModelWithUserCodeSerializer, ModelMetaSerializer

@@ -4,7 +4,7 @@ import traceback
 
 from django.db.models import Q
 
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import PriceHistory
 from poms.integrations.providers.base import parse_date_iso

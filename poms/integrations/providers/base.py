@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext_lazy
 
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.common.models import ProxyRequest, ProxyUser
 from poms.currencies.models import CurrencyHistory, Currency
 from poms.instruments.models import Instrument, PriceHistory, InstrumentType

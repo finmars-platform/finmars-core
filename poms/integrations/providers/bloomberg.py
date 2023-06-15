@@ -12,7 +12,7 @@ from suds.client import Client
 from suds.transport import Reply
 from suds.transport.http import HttpAuthenticated
 
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.currencies.models import CurrencyHistory
 from poms.instruments.models import AccrualCalculationSchedule, InstrumentFactorSchedule, PriceHistory
 from poms.integrations.models import FactorScheduleDownloadMethod, AccrualScheduleDownloadMethod, ProviderClass, \

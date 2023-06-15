@@ -3,7 +3,7 @@ from logging import getLogger
 from celery import shared_task
 
 from poms.celery_tasks.models import CeleryTask
-from poms.common.formula import safe_eval, ExpressionEvalError
+from poms.expressions_engine.formula import safe_eval, ExpressionEvalError
 from poms.common.utils import datetime_now
 from poms.obj_attrs.models import GenericAttributeType, GenericAttribute
 

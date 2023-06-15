@@ -185,7 +185,7 @@ class PricingProcedure(BaseProcedure):
                 print('save procedure %s' % user_code)
 
                 from poms.instruments.models import Instrument
-                from poms.common import formula
+                from poms.expressions_engine import formula
                 instrument = Instrument.objects.get(master_user=self.master_user, user_code=user_code)
 
                 self.user_code = formula.safe_eval('generate_user_code("proc", "", 0)',
@@ -218,7 +218,7 @@ class PricingProcedure(BaseProcedure):
                 print('save procedure %s' % user_code)
 
                 from poms.currencies.models import Currency
-                from poms.common import formula
+                from poms.expressions_engine import formula
                 currency = Currency.objects.get(master_user=self.master_user, user_code=user_code)
 
                 self.user_code = formula.safe_eval('generate_user_code("proc", "", 0)',
