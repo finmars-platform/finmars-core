@@ -1687,10 +1687,10 @@ class DataBaseCallBackView(APIView):
             status=HTTP_400_BAD_REQUEST,
         )
 
-    def prepare_ok_response(self, task: CeleryTask, result_id: int) -> Response:
-        _l.info(f"{self.__class__.__name__} created result_id={result_id}")
+    def prepare_ok_response(self, task: CeleryTask, request_id: int) -> Response:
+        _l.info(f"{self.__class__.__name__} created request_id={request_id}")
 
-        task.result_object["result_id"] = result_id
+        task.result_object["request_id"] = request_id
         self.update_task_status(task, CeleryTask.STATUS_DONE)
 
         return Response(
