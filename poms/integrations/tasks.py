@@ -891,6 +891,8 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
 
 
 def create_simple_instrument(task: CeleryTask) -> Instrument:
+    from poms.instruments.handlers import InstrumentTypeProcess
+
     func = f"create_simple_instrument task.id={task.id}"
     options_data = task.options_object["data"]
     _l.info(f"{func} started options_data={options_data}")
@@ -914,11 +916,15 @@ def create_simple_instrument(task: CeleryTask) -> Instrument:
                 f" create instrument with ecosystem.default type"
             )
 
-    # TODO use InstrumentTypeProcess to set default from InstrumentType to simple Instrument object
-
     reference = options_data["reference"]
     instrument_name = options_data.get("instrument_name") or reference
     ecosystem_defaults = EcosystemDefault.objects.get(master_user=task.master_user)
+
+    # TODO use InstrumentTypeProcess to set defaults to simple Instrument object ?
+    if instrument_type:
+        handler = InstrumentTypeProcess(instrument_type=instrument_type)
+        instrument_dict = handler.fill_instrument_with_instrument_type_defaults()
+        # Use InstrumentSerializer to create Instrument
 
     instrument = Instrument.objects.create(
         master_user=task.master_user,
