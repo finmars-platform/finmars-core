@@ -96,6 +96,8 @@ from poms.users.models import EcosystemDefault
 
 _l = logging.getLogger("poms.integrations")
 
+TYPE_PREFIX = "com.finmars.initial-instrument-type:"
+
 storage = get_storage()
 
 
@@ -409,7 +411,7 @@ def create_instrument_from_finmars_database(data, master_user, member):
                     "default_currency_code"
                 ]
 
-        instrument_type_user_code = f"com.finmars.initial-instrument-type:{short_type}"
+        instrument_type_user_code = f"{TYPE_PREFIX}{short_type}"
         try:
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
@@ -532,10 +534,7 @@ def create_instrument_cbond(data, master_user, member):
         )
 
         try:
-            user_code = (
-                "com.finmars.initial-instrument-type:"
-                + instrument_data["instrument_type"]
-            )
+            user_code = f"{TYPE_PREFIX}{instrument_data['instrument_type']}"
 
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
@@ -897,10 +896,9 @@ def create_simple_instrument(task: CeleryTask) -> Instrument:
     _l.info(f"{func} started options_data={options_data}")
 
     reference = options_data["reference"]
-    instrument_type_user_code_full = (
-        "com.finmars.initial-instrument-type:"
-        + options_data.get("instrument_type_user_code")
-    )
+    short_type = options_data.get("instrument_type_user_code")
+    instrument_type_user_code_full = f"{TYPE_PREFIX}{short_type}"
+
     instrument_type = None
     if options_data.get("instrument_type_user_code"):
         try:
