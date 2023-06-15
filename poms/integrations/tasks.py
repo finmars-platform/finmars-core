@@ -895,12 +895,14 @@ def create_simple_instrument(task: CeleryTask) -> Instrument:
     options_data = task.options_object["data"]
     _l.info(f"{func} started options_data={options_data}")
 
-    reference = options_data["reference"]
-    short_type = options_data.get("instrument_type_user_code")
-    instrument_type_user_code_full = f"{TYPE_PREFIX}{short_type}"
-
     instrument_type = None
-    if options_data.get("instrument_type_user_code"):
+    if not (short_type := options_data.get("instrument_type_user_code")):
+        _l.error(
+            f"{func} no 'instrument_type_user_code' in task data"
+            f" create instrument with ecosystem.default type"
+        )
+    else:
+        instrument_type_user_code_full = f"{TYPE_PREFIX}{short_type}"
         try:
             instrument_type = InstrumentType.objects.get(
                 master_user=task.master_user,
@@ -914,6 +916,7 @@ def create_simple_instrument(task: CeleryTask) -> Instrument:
 
     # TODO use InstrumentTypeProcess to set default from InstrumentType to simple Instrument object
 
+    reference = options_data["reference"]
     instrument_name = options_data.get("instrument_name") or reference
     ecosystem_defaults = EcosystemDefault.objects.get(master_user=task.master_user)
 
