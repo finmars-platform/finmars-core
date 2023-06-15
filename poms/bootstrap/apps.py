@@ -352,6 +352,7 @@ class BootstrapConfig(AppConfig):
                                                   user_code=configuration_code + ':default_member_layout')
             except Exception as e:
                 layout = MemberLayout.objects.create(member=member,
+                                                     is_default=True,
                                                      configuration_code=configuration_code,
                                                      name='default',
                                                      user_code=configuration_code + ':default_member_layout')

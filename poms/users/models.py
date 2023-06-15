@@ -1188,6 +1188,7 @@ class Member(FakeDeletableModel):
                                               user_code=configuration_code + ':default_member_layout')
         except Exception as e:
             layout = MemberLayout.objects.create(member_id=self.id,
+                                                 is_default=True,
                                                  configuration_code=configuration_code,
                                                  name='default',
                                                  user_code=configuration_code + ':default_member_layout')
