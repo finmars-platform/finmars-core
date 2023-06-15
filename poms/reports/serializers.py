@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import logging
 import time
+import traceback
 import uuid
 from datetime import timedelta, date
 
@@ -309,6 +310,8 @@ class ReportSerializer(ReportSerializerWithLogs):
         try:
             return formula.safe_eval(expr, names=names, context=context)
         except formula.InvalidExpression as e:
+            _l.debug('evaluate_expression e %s' % e)
+            _l.debug('evaluate_expression traceback %s' % traceback.format_exc())
             return gettext_lazy('Invalid expression')
 
 
@@ -379,6 +382,8 @@ class ReportSerializer(ReportSerializerWithLogs):
                     cfv = []
 
                     custom_fields_names = {}
+
+                    # _l.info('names %s' % names)
 
 
                     for i in range(data['expression_iterations_count']):

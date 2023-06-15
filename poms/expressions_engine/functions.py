@@ -1521,22 +1521,24 @@ def _get_instrument_attribute(evaluator, instrument, attribute_type_user_code):
     if not isinstance(instrument, dict):
         instrument = _safe_get_instrument(evaluator, instrument)
 
-    if isinstance(instrument.get('attributes'), dict):
-        attributes = [instrument['attributes']]
-    else:
-        attributes = instrument['attributes']
+    attributes = instrument.get('attributes', [])
 
     result = None
     for attribute in attributes:
-        if attribute.get('attribute_type_object', {}).get('user_code') == attribute_type_user_code:
-            value_type = attribute.get('attribute_type_object', {}).get('value_type')
+        if attribute.get('attribute_type', {}).get('user_code') == attribute_type_user_code:
+            value_type = attribute.get('attribute_type', {}).get('value_type')
 
             if value_type == 10:
                 result = attribute.get('value_text')
             elif value_type == 20:
                 result = attribute.get('value_float')
             elif value_type == 30:
-                result = attribute.get('classifier_object', {}).get('name')
+
+                classifier = attribute.get('classifier', None)
+
+                if classifier is not None:
+                    result = classifier.get('name')
+
             elif value_type == 40:
                 result = attribute.get('value_date')
 
