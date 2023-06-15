@@ -4629,7 +4629,7 @@ def update_task_with_remote_id(remote_task_id: int, task: CeleryTask):
 
 
 def import_from_database_task(task_id: int, operation: str):
-    func = f"import_{operation}_finmars_database"
+    func = f"import_{operation}_finmars_database, task_id={task_id}"
     try:
         task = CeleryTask.objects.get(id=task_id)
     except CeleryTask.DoesNotExist:
