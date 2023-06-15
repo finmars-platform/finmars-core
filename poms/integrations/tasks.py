@@ -532,9 +532,12 @@ def create_instrument_cbond(data, master_user, member):
         )
 
         try:
+            user_code = 'com.finmars.initial-instrument-type:' + instrument_data["instrument_type"]
+
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
-                user_code__contains=instrument_data["instrument_type"],
+                user_code=user_code
+                # user_code__contains=instrument_data["instrument_type"],
             )
 
         except Exception as e:
