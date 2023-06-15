@@ -901,10 +901,10 @@ def create_simple_instrument(task: CeleryTask) -> Instrument:
         "com.finmars.initial-instrument-type:"
         + options_data.get("instrument_type_user_code")
     )
-    i_type = None
+    instrument_type = None
     if options_data.get("instrument_type_user_code"):
         try:
-            i_type = InstrumentType.objects.get(
+            instrument_type = InstrumentType.objects.get(
                 master_user=task.master_user,
                 user_code=instrument_type_user_code_full,
             )
@@ -924,7 +924,7 @@ def create_simple_instrument(task: CeleryTask) -> Instrument:
         user_code=reference,
         name=instrument_name,
         short_name=f"{instrument_name} ({reference})",
-        instrument_type=i_type or ecosystem_defaults.instrument_type,
+        instrument_type=instrument_type or ecosystem_defaults.instrument_type,
         accrued_currency=ecosystem_defaults.currency,
         pricing_currency=ecosystem_defaults.currency,
         co_directional_exposure_currency=ecosystem_defaults.currency,
