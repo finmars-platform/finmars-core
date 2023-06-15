@@ -1708,13 +1708,19 @@ class DataBaseCallBackView(APIView):
         _l.info(f"{self.__class__.__name__}.validate request.data={request_data}")
 
         if not (request_id := request_data.get("request_id")):
-            return None, "no request_id in request.data"
+            err_msg = "no request_id in request.data"
+            _l.error(f"{self.__class__.__name__}.validate {err_msg}")
+            return None, err_msg
 
         if not request_data.get("data"):
-            return None, "no or empty 'data' in request.data"
+            err_msg = "no or empty 'data' in request.data"
+            _l.error(f"{self.__class__.__name__}.validate {err_msg}")
+            return None, err_msg
 
         if not (task := CeleryTask.objects.filter(id=request_id).first()):
-            return None, f"no task with id={request_id}"
+            err_msg = f"no task with id={request_id}"
+            _l.error(f"{self.__class__.__name__}.validate {err_msg}")
+            return None, err_msg
 
         return task, None
 
