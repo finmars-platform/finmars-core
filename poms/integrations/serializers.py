@@ -1490,8 +1490,8 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
         )
         task.options_object = {
             "reference": validated_data["instrument_code"],
-            "instrument_name": validated_data["instrument_name"],
-            "instrument_type_user_code": validated_data["instrument_type_code"],
+            "name": validated_data["instrument_name"],
+            "type_user_code": validated_data["instrument_type_code"],
         }
         task.save()
 
@@ -1510,6 +1510,7 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
             "result_id": result_id,
             "instrument_code": validated_data["instrument_code"],
             "instrument_type_code": validated_data["instrument_type_code"],
+            "instrument_name": validated_data["instrument_name"],
         }
 
         _l.info(f"{self.__class__.__name__} result={result}")

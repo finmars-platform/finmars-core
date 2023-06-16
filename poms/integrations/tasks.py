@@ -898,26 +898,21 @@ def create_simple_instrument(task: CeleryTask) -> Instrument:
     _l.info(f"{func} started options_data={options_data}")
 
     instrument_type = None
-    if not (short_type := options_data.get("instrument_type_user_code")):
+    type_user_type = options_data["type_user_code"]
+    instrument_type_user_code_full = f"{TYPE_PREFIX}{type_user_type}"
+    try:
+        instrument_type = InstrumentType.objects.get(
+            master_user=task.master_user,
+            user_code=instrument_type_user_code_full,
+        )
+    except InstrumentType.DoesNotExist:
         _l.error(
-            f"{func} no 'instrument_type_user_code' in task data"
+            f"{func} now such instrument_type={instrument_type_user_code_full}"
             f" create instrument with ecosystem.default type"
         )
-    else:
-        instrument_type_user_code_full = f"{TYPE_PREFIX}{short_type}"
-        try:
-            instrument_type = InstrumentType.objects.get(
-                master_user=task.master_user,
-                user_code=instrument_type_user_code_full,
-            )
-        except InstrumentType.DoesNotExist:
-            _l.error(
-                f"{func} now such instrument_type={instrument_type_user_code_full}"
-                f" create instrument with ecosystem.default type"
-            )
 
     reference = options_data["reference"]
-    instrument_name = options_data.get("instrument_name") or reference
+    name = options_data.get("name") or reference
     ecosystem_defaults = EcosystemDefault.objects.get(master_user=task.master_user)
 
     # TODO use InstrumentTypeProcess to set defaults to simple Instrument object ?
@@ -929,8 +924,8 @@ def create_simple_instrument(task: CeleryTask) -> Instrument:
     instrument = Instrument.objects.create(
         master_user=task.master_user,
         user_code=reference,
-        name=instrument_name,
-        short_name=f"{instrument_name} ({reference})",
+        name=name,
+        short_name=f"{name} ({reference})",
         instrument_type=instrument_type or ecosystem_defaults.instrument_type,
         accrued_currency=ecosystem_defaults.currency,
         pricing_currency=ecosystem_defaults.currency,
@@ -4540,7 +4535,8 @@ def create_currency_from_finmars_database(data, master_user, member) -> Currency
 def update_task_with_instrument_data(data: dict, task: CeleryTask):
     result_instrument = None
     options = task.options_object
-    func = "update_task_with_instrument_data"
+    func = f"update_task_with_instrument_data, task.id={task.id}"
+    _l.info(f"{func} started...")
 
     if "instruments" in data["data"]:
         _l.info(f"{func} instruments in data")
