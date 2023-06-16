@@ -12,6 +12,7 @@ import uuid
 from datetime import date
 from io import BytesIO
 from tempfile import NamedTemporaryFile
+from typing import Optional
 
 import requests
 from celery import chord, shared_task
@@ -890,14 +891,20 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
         return None, errors
 
 
-def create_simple_instrument(task: CeleryTask) -> Instrument:
+def task_error(err_msg, task):
+    _l.error(err_msg)
+    task.error_message = err_msg
+    return None
+
+
+def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
     from poms.instruments.handlers import InstrumentTypeProcess
+    from poms.instruments.serializers import InstrumentSerializer
 
     func = f"create_simple_instrument task.id={task.id}"
     options_data = task.options_object["data"]
     _l.info(f"{func} started options_data={options_data}")
 
-    instrument_type = None
     type_user_type = options_data["type_user_code"]
     instrument_type_user_code_full = f"{TYPE_PREFIX}{type_user_type}"
     try:
@@ -906,49 +913,34 @@ def create_simple_instrument(task: CeleryTask) -> Instrument:
             user_code=instrument_type_user_code_full,
         )
     except InstrumentType.DoesNotExist:
-        _l.error(
+        err_msg = (
             f"{func} now such instrument_type={instrument_type_user_code_full}"
             f" create instrument with ecosystem.default type"
         )
+        return task_error(err_msg, task)
 
-    reference = options_data["reference"]
-    name = options_data.get("name") or reference
-    ecosystem_defaults = EcosystemDefault.objects.get(master_user=task.master_user)
-
-    # TODO use InstrumentTypeProcess to set defaults to simple Instrument object ?
-    if instrument_type:
-        handler = InstrumentTypeProcess(instrument_type=instrument_type)
-        instrument_dict = handler.fill_instrument_with_instrument_type_defaults()
-        # Use InstrumentSerializer to create Instrument
-
-    instrument = Instrument.objects.create(
-        master_user=task.master_user,
-        user_code=reference,
-        name=name,
-        short_name=f"{name} ({reference})",
-        instrument_type=instrument_type or ecosystem_defaults.instrument_type,
-        accrued_currency=ecosystem_defaults.currency,
-        pricing_currency=ecosystem_defaults.currency,
-        co_directional_exposure_currency=ecosystem_defaults.currency,
-        counter_directional_exposure_currency=ecosystem_defaults.currency,
-        is_active=False,
+    process = InstrumentTypeProcess(instrument_type=instrument_type)
+    instrument_dict = process.instrument
+    instrument_dict["name"] = options_data["name"]
+    instrument_dict["reference"] = options_data["reference"]
+    context = {
+        "master_user": task.master_user,
+        "member": task.member,
+        "request": ProxyRequest(ProxyUser(task.member, task.master_user)),
+    }
+    serializer = InstrumentSerializer(
+        data=instrument_dict,
+        context=context,
     )
 
-    # if instrument_type:
-    #     instrument.instrument_type = i_type
-    #     small_item = {
-    #         "user_code": reference,
-    #         "instrument_type": options_data["instrument_type_user_code"],
-    #         "name": options_data["instrument_name"],
-    #     }
-    #
-    #     create_instrument_cbond(small_item, task.master_user, task.member)
-    #
-    # instrument.is_active = False
-    # instrument.save()
+    if not serializer.is_valid():
+        err_msg = f"{func} instrument validation errors={serializer.errors}"
+        return task_error(err_msg, task)
 
+    instrument = serializer.save()
     _l.info(f"{func} created instrument.id={instrument.id}")
     return instrument
+
 
 
 @shared_task(
