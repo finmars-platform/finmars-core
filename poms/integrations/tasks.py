@@ -405,8 +405,8 @@ def create_instrument_from_finmars_database(data, master_user, member):
         try:
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
-                # user_code=instrument_type_user_code,
-                user_code__contains=short_type,  # FOR DEBUG ONLY!
+                user_code=instrument_type_user_code,
+                # user_code__contains=short_type,  # FOR DEBUG ONLY!
             )
         except InstrumentType.DoesNotExist as e:
             # all_types = InstrumentType.objects.all().values_list(
@@ -906,8 +906,8 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
     try:
         instrument_type = InstrumentType.objects.get(
             master_user=task.master_user,
-            # user_code=instrument_type_user_code_full,
-            user_code__contains=type_user_type,  # FOR DEBUG ONLY!
+            user_code=instrument_type_user_code_full,
+            # user_code__contains=type_user_type,  # FOR DEBUG ONLY!
         )
     except InstrumentType.DoesNotExist:
         err_msg = (
