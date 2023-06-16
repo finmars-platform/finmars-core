@@ -12,6 +12,7 @@ import uuid
 from datetime import date
 from io import BytesIO
 from tempfile import NamedTemporaryFile
+from typing import Optional
 
 import requests
 from celery import chord, shared_task
@@ -95,6 +96,8 @@ from poms.transactions.handlers import TransactionTypeProcess
 from poms.users.models import EcosystemDefault
 
 _l = logging.getLogger("poms.integrations")
+
+TYPE_PREFIX = "com.finmars.initial-instrument-type:"
 
 storage = get_storage()
 
@@ -351,22 +354,13 @@ def create_instrument_from_finmars_database(data, master_user, member):
     from poms.instruments.serializers import InstrumentSerializer
 
     func = "create_instrument_from_finmars_database"
+    _l.info(f"{func} data={data}")
+
+    instrument_data = {
+        key: None if value == "null" else value for key, value in data.items()
+    }
+    short_type = instrument_data["instrument_type"]["user_code"]
     try:
-        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
-        content_type = ContentType.objects.get(
-            model="instrument", app_label="instruments"
-        )
-
-        proxy_user = ProxyUser(member, master_user)
-        proxy_request = ProxyRequest(proxy_user)
-
-        context = {"master_user": master_user, "request": proxy_request}
-
-        instrument_data = {
-            key: None if value == "null" else value for key, value in data.items()
-        }
-        _l.info(f"{func} instrument_data={instrument_data}")
-        short_type = instrument_data["instrument_type"]["user_code"]
         # TODO remove stocks ASAP as configuration ready
         if short_type in {"stocks", "stock"}:
             if (
@@ -375,8 +369,6 @@ def create_instrument_from_finmars_database(data, master_user, member):
                 and "default_currency_code" in instrument_data
                 and instrument_data["default_currency_code"]
             ):
-                # isin.exchange:currency
-
                 if "." in instrument_data["user_code"]:
                     if ":" in instrument_data["user_code"]:
                         instrument_data["reference_for_pricing"] = instrument_data[
@@ -409,7 +401,7 @@ def create_instrument_from_finmars_database(data, master_user, member):
                     "default_currency_code"
                 ]
 
-        instrument_type_user_code = f"com.finmars.initial-instrument-type:{short_type}"
+        instrument_type_user_code = f"{TYPE_PREFIX}{short_type}"
         try:
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
@@ -425,6 +417,13 @@ def create_instrument_from_finmars_database(data, master_user, member):
             err_msg = f"{func} No InstrumentType user_code={instrument_type_user_code}"
             _l.error(err_msg)
             raise RuntimeError(err_msg) from e
+
+        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+        content_type = ContentType.objects.get(
+            model="instrument", app_label="instruments"
+        )
+        proxy_request = ProxyRequest(ProxyUser(member, master_user))
+        context = {"master_user": master_user, "request": proxy_request}
 
         attribute_types = GenericAttributeType.objects.filter(
             master_user=master_user, content_type=content_type
@@ -532,7 +531,7 @@ def create_instrument_cbond(data, master_user, member):
         )
 
         try:
-            user_code = 'com.finmars.initial-instrument-type:' + instrument_data["instrument_type"]
+            user_code = f"{TYPE_PREFIX}{instrument_data['instrument_type']}"
 
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
@@ -888,56 +887,56 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
         return None, errors
 
 
-def create_simple_instrument(task) -> Instrument:
+def task_error(err_msg, task):
+    _l.error(err_msg)
+    task.error_message = err_msg
+    return None
+
+
+def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
+    from poms.instruments.handlers import InstrumentTypeProcess
+    from poms.instruments.serializers import InstrumentSerializer
+
+    func = f"create_simple_instrument task.id={task.id}"
     options_data = task.options_object["data"]
-    _l.info(f"create_simple_instrument: options_data={options_data}")
+    _l.info(f"{func} started options_data={options_data}")
 
-    reference = options_data["reference"]
-    i_type = None
-    if options_data.get("instrument_type_user_code"):
-        try:
-            instrument_type_user_code_full = (
-                "com.finmars.initial-instrument-type:"
-                + options_data.get("instrument_type_user_code")
-            )
+    type_user_type = options_data["type_user_code"]
+    instrument_type_user_code_full = f"{TYPE_PREFIX}{type_user_type}"
+    try:
+        instrument_type = InstrumentType.objects.get(
+            master_user=task.master_user,
+            user_code=instrument_type_user_code_full,
+            # user_code__contains=type_user_type,  # FOR DEBUG ONLY!
+        )
+    except InstrumentType.DoesNotExist:
+        err_msg = (
+            f"{func} now such instrument_type={instrument_type_user_code_full}"
+            f" create instrument with ecosystem.default type"
+        )
+        return task_error(err_msg, task)
 
-            i_type = InstrumentType.objects.get(
-                master_user=task.master_user,
-                user_code=instrument_type_user_code_full,
-            )
-        except Exception:
-            i_type = None
-
-    # TODO use InstrumentTypeProcess to set default from InstrumentType to simple Instrument object
-
-    instrument_name = options_data.get("instrument_name") or reference
-    ecosystem_defaults = EcosystemDefault.objects.get(master_user=task.master_user)
-
-    instrument = Instrument.objects.create(
-        master_user=task.master_user,
-        user_code=reference,
-        name=instrument_name,
-        short_name=f"{instrument_name} ({reference})",
-        instrument_type=ecosystem_defaults.instrument_type,
-        accrued_currency=ecosystem_defaults.currency,
-        pricing_currency=ecosystem_defaults.currency,
-        co_directional_exposure_currency=ecosystem_defaults.currency,
-        counter_directional_exposure_currency=ecosystem_defaults.currency,
+    process = InstrumentTypeProcess(instrument_type=instrument_type)
+    instrument_dict = process.instrument
+    instrument_dict["name"] = options_data["name"]
+    instrument_dict["user_code"] = options_data["user_code"]
+    instrument_dict["is_active"] = False
+    context = {
+        "master_user": task.master_user,
+        "request": ProxyRequest(ProxyUser(task.member, task.master_user)),
+    }
+    serializer = InstrumentSerializer(
+        data=instrument_dict,
+        context=context,
     )
+    if not serializer.is_valid():
+        err_msg = f"{func} instrument validation errors={serializer.errors}"
+        return task_error(err_msg, task)
 
-    if i_type:
-        instrument.instrument_type = i_type
-        small_item = {
-            "user_code": reference,
-            "instrument_type": options_data["instrument_type_user_code"],
-        }
-
-        create_instrument_cbond(small_item, task.master_user, task.member)
-
-    instrument.is_active = False
-    instrument.save()
-
+    instrument = serializer.save()
+    _l.info(f"{func} created instrument.id={instrument.id}")
     return instrument
+
 
 
 @shared_task(
@@ -4524,7 +4523,8 @@ def create_currency_from_finmars_database(data, master_user, member) -> Currency
 def update_task_with_instrument_data(data: dict, task: CeleryTask):
     result_instrument = None
     options = task.options_object
-    func = "update_task_with_instrument_data"
+    func = f"update_task_with_instrument_data, task.id={task.id}"
+    _l.info(f"{func} started...")
 
     if "instruments" in data["data"]:
         _l.info(f"{func} instruments in data")
@@ -4577,8 +4577,12 @@ def update_task_with_simple_instrument(remote_task_id: int, task: CeleryTask):
     result["task_id"] = remote_task_id
     if instrument := create_simple_instrument(task):
         result["instrument_id"] = instrument.pk
+        task.status = CeleryTask.STATUS_DONE
+
+    else:
+        task.status = CeleryTask.STATUS_ERROR
+
     task.result_object = result
-    task.status = CeleryTask.STATUS_PENDING
     task.save()
 
 
@@ -4629,7 +4633,7 @@ def update_task_with_remote_id(remote_task_id: int, task: CeleryTask):
 
 
 def import_from_database_task(task_id: int, operation: str):
-    func = f"import_{operation}_finmars_database"
+    func = f"import_{operation}_finmars_database, task_id={task_id}"
     try:
         task = CeleryTask.objects.get(id=task_id)
     except CeleryTask.DoesNotExist:

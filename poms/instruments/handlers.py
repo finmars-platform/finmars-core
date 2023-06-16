@@ -119,12 +119,12 @@ class InstrumentTypeProcess(object):
             if self.instrument_type.accrued_currency:
                 self.instrument_object['accrued_currency'] = self.instrument_type.accrued_currency_id
             else:
-                self.instrument_object['accrued_currency'] = None
+                self.instrument_object['accrued_currency'] = self.ecosystem_default.currency.pk
 
             if self.instrument_type.pricing_currency:
                 self.instrument_object['pricing_currency'] = self.instrument_type.pricing_currency_id
             else:
-                self.instrument_object['pricing_currency'] = None
+                self.instrument_object['pricing_currency'] = self.ecosystem_default.currency.pk
 
             # used by poms.instruments.serializers.InstrumentTypeProcessSerializer
             self.instrument_object['instrument_type_pricing_policies'] = []

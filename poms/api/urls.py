@@ -184,12 +184,8 @@ urlpatterns = [
         r'instruments/instrument-database-search',
         instruments.InstrumentDatabaseSearchViewSet.as_view(),
     ),
-    # re_path(  # DEPRECATED task: FN-1736
-    #     r'currencies/currency-database-search',
-    #     currencies.CurrencyDatabaseSearchViewSet.as_view(),
-    # ),
 
-    # database import callbacks
+    # database import callbacks FN-1736
     re_path(
         r'^v1/import/finmars-database/instrument/callback',
         csrf_exempt(

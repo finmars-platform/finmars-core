@@ -1677,7 +1677,7 @@ class DataBaseCallBackView(APIView):
             task.notes = notes
         task.save()
 
-    def prepare_err_response(self, task: CeleryTask, err_msg: str) -> Response:
+    def error_task_and_response(self, task: CeleryTask, err_msg: str) -> Response:
         _l.error(f"{self.__class__.__name__} {err_msg}")
         if task:
             self.update_task_status(task, CeleryTask.STATUS_ERROR, notes=err_msg)
@@ -1687,10 +1687,10 @@ class DataBaseCallBackView(APIView):
             status=HTTP_400_BAD_REQUEST,
         )
 
-    def prepare_ok_response(self, task: CeleryTask, request_id: int) -> Response:
-        _l.info(f"{self.__class__.__name__} created request_id={request_id}")
+    def success_task_and_response(self, task: CeleryTask, result_id: int) -> Response:
+        _l.info(f"{self.__class__.__name__} created result_id={result_id}")
 
-        task.result_object["request_id"] = request_id
+        task.result_object["result_id"] = result_id
         self.update_task_status(task, CeleryTask.STATUS_DONE)
 
         return Response(
@@ -1708,13 +1708,19 @@ class DataBaseCallBackView(APIView):
         _l.info(f"{self.__class__.__name__}.validate request.data={request_data}")
 
         if not (request_id := request_data.get("request_id")):
-            return None, "no request_id in request.data"
+            err_msg = "no request_id in request.data"
+            _l.error(f"{self.__class__.__name__}.validate {err_msg}")
+            return None, err_msg
 
         if not request_data.get("data"):
-            return None, "no or empty 'data' in request.data"
+            err_msg = "no or empty 'data' in request.data"
+            _l.error(f"{self.__class__.__name__}.validate {err_msg}")
+            return None, err_msg
 
         if not (task := CeleryTask.objects.filter(id=request_id).first()):
-            return None, f"no task with id={request_id}"
+            err_msg = f"no task with id={request_id}"
+            _l.error(f"{self.__class__.__name__}.validate {err_msg}")
+            return None, err_msg
 
         return task, None
 
@@ -1728,12 +1734,12 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
         request_data = request.data
         task, err_msg = self.validate_post_data(request_data=request_data)
         if err_msg:
-            return self.prepare_err_response(task, err_msg)
+            return self.error_task_and_response(task, err_msg)
 
         data = request_data["data"]
         if not ("instruments" in data and "currencies" in data):
             err_msg = "no 'instruments' or 'currencies' in request.data"
-            return self.prepare_err_response(task, err_msg)
+            return self.error_task_and_response(task, err_msg)
 
         try:
             create_currency_from_finmars_database(
@@ -1750,10 +1756,10 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
 
         except Exception as e:
             err_msg = f"{repr(e)}\n {traceback.format_exc()}"
-            return self.prepare_err_response(task, err_msg)
+            return self.error_task_and_response(task, err_msg)
 
         else:
-            return self.prepare_ok_response(task, instrument.id)
+            return self.success_task_and_response(task, instrument.id)
 
 
 class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
@@ -1761,7 +1767,7 @@ class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
         data = request.data
         task, error_dict = self.validate_post_data(request_data=data)
         if error_dict:
-            return self.prepare_err_response(task, error_dict)
+            return self.error_task_and_response(task, error_dict)
 
         try:
             currency = create_currency_from_finmars_database(
@@ -1772,10 +1778,10 @@ class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
 
         except Exception as e:
             err_msg = f"{repr(e)}\n {traceback.format_exc()}"
-            return self.prepare_err_response(task, err_msg)
+            return self.error_task_and_response(task, err_msg)
 
         else:
-            return self.prepare_ok_response(task, currency.id)
+            return self.success_task_and_response(task, currency.id)
 
 
 class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
@@ -1783,7 +1789,7 @@ class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
         data = request.data
         task, err_msg = self.validate_post_data(request_data=data)
         if err_msg:
-            return self.prepare_err_response(task, err_msg)
+            return self.error_task_and_response(task, err_msg)
 
         try:
             company = create_counterparty_from_finmars_database(
@@ -1794,7 +1800,7 @@ class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
 
         except Exception as e:
             err_msg = f"{repr(e)}\n {traceback.format_exc()}"
-            return self.prepare_err_response(task, err_msg)
+            return self.error_task_and_response(task, err_msg)
 
         else:
-            return self.prepare_ok_response(task, company.id)
+            return self.success_task_and_response(task, company.id)

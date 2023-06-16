@@ -1480,17 +1480,18 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
 
     def create_task(self, validated_data: dict) -> dict:
         task = CeleryTask.objects.create(
+            status=CeleryTask.STATUS_PENDING,
             master_user=validated_data["master_user"],
             member=validated_data["member"],
             verbose_name="Import Instrument From Finmars Database",
             function_name="import_instrument_finmars_database",
             type="import_from_database",
-            ttl=settings.FINMARS_DATABASE_TIMEOUT + 1
+            ttl=settings.FINMARS_DATABASE_TIMEOUT + 1,
         )
         task.options_object = {
-            "reference": validated_data["instrument_code"],
-            "instrument_name": validated_data["instrument_name"],
-            "instrument_type_user_code": validated_data["instrument_type_code"],
+            "user_code": validated_data["instrument_code"],
+            "name": validated_data["instrument_name"],
+            "type_user_code": validated_data["instrument_type_code"],
         }
         task.save()
 
@@ -1509,6 +1510,7 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
             "result_id": result_id,
             "instrument_code": validated_data["instrument_code"],
             "instrument_type_code": validated_data["instrument_type_code"],
+            "instrument_name": validated_data["instrument_name"],
         }
 
         _l.info(f"{self.__class__.__name__} result={result}")
@@ -1525,12 +1527,13 @@ class ImportCurrencyDatabaseSerializer(serializers.Serializer):
 
     def create_task(self, validated_data: dict) -> dict:
         task = CeleryTask.objects.create(
+            status=CeleryTask.STATUS_PENDING,
             master_user=validated_data["master_user"],
             member=validated_data["member"],
             verbose_name="Import Currency From Finmars Database",
             function_name="import_currency_finmars_database",
             type="import_from_database",
-            ttl=settings.FINMARS_DATABASE_TIMEOUT + 1
+            ttl=settings.FINMARS_DATABASE_TIMEOUT + 1,
         )
         task.options_object = {
             "currency_code": validated_data["currency_code"],
@@ -1567,12 +1570,13 @@ class ImportCompanyDatabaseSerializer(serializers.Serializer):
 
     def create_task(self, validated_data: dict) -> dict:
         task = CeleryTask.objects.create(
+            status=CeleryTask.STATUS_PENDING,
             master_user=validated_data["master_user"],
             member=validated_data["member"],
             verbose_name="Import Company From Finmars Database",
             function_name="import_company_finmars_database",
             type="import_from_database",
-            ttl=settings.FINMARS_DATABASE_TIMEOUT + 1
+            ttl=settings.FINMARS_DATABASE_TIMEOUT + 1,
         )
         task.options_object = {
             "company_id": validated_data["company_id"],
