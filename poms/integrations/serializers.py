@@ -1489,7 +1489,7 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
             ttl=settings.FINMARS_DATABASE_TIMEOUT + 1,
         )
         task.options_object = {
-            "reference": validated_data["instrument_code"],
+            "user_code": validated_data["instrument_code"],
             "name": validated_data["instrument_name"],
             "type_user_code": validated_data["instrument_type_code"],
         }
