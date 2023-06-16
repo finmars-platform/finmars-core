@@ -354,22 +354,13 @@ def create_instrument_from_finmars_database(data, master_user, member):
     from poms.instruments.serializers import InstrumentSerializer
 
     func = "create_instrument_from_finmars_database"
+    _l.info(f"{func} data={data}")
+
+    instrument_data = {
+        key: None if value == "null" else value for key, value in data.items()
+    }
+    short_type = instrument_data["instrument_type"]["type_user_code"]
     try:
-        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
-        content_type = ContentType.objects.get(
-            model="instrument", app_label="instruments"
-        )
-
-        proxy_user = ProxyUser(member, master_user)
-        proxy_request = ProxyRequest(proxy_user)
-
-        context = {"master_user": master_user, "request": proxy_request}
-
-        instrument_data = {
-            key: None if value == "null" else value for key, value in data.items()
-        }
-        _l.info(f"{func} instrument_data={instrument_data}")
-        short_type = instrument_data["instrument_type"]["user_code"]
         # TODO remove stocks ASAP as configuration ready
         if short_type in {"stocks", "stock"}:
             if (
@@ -378,8 +369,6 @@ def create_instrument_from_finmars_database(data, master_user, member):
                 and "default_currency_code" in instrument_data
                 and instrument_data["default_currency_code"]
             ):
-                # isin.exchange:currency
-
                 if "." in instrument_data["user_code"]:
                     if ":" in instrument_data["user_code"]:
                         instrument_data["reference_for_pricing"] = instrument_data[
@@ -428,6 +417,13 @@ def create_instrument_from_finmars_database(data, master_user, member):
             err_msg = f"{func} No InstrumentType user_code={instrument_type_user_code}"
             _l.error(err_msg)
             raise RuntimeError(err_msg) from e
+
+        ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
+        content_type = ContentType.objects.get(
+            model="instrument", app_label="instruments"
+        )
+        proxy_request = ProxyRequest(ProxyUser(member, master_user))
+        context = {"master_user": master_user, "request": proxy_request}
 
         attribute_types = GenericAttributeType.objects.filter(
             master_user=master_user, content_type=content_type
@@ -911,6 +907,7 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
         instrument_type = InstrumentType.objects.get(
             master_user=task.master_user,
             user_code=instrument_type_user_code_full,
+            # user_code__contains=type_user_type,  # FOR DEBUG ONLY!
         )
     except InstrumentType.DoesNotExist:
         err_msg = (
@@ -922,17 +919,16 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
     process = InstrumentTypeProcess(instrument_type=instrument_type)
     instrument_dict = process.instrument
     instrument_dict["name"] = options_data["name"]
-    instrument_dict["reference"] = options_data["reference"]
+    instrument_dict["user_code"] = options_data["user_code"]
+    instrument_dict["is_active"] = False
     context = {
         "master_user": task.master_user,
-        "member": task.member,
         "request": ProxyRequest(ProxyUser(task.member, task.master_user)),
     }
     serializer = InstrumentSerializer(
         data=instrument_dict,
         context=context,
     )
-
     if not serializer.is_valid():
         err_msg = f"{func} instrument validation errors={serializer.errors}"
         return task_error(err_msg, task)
