@@ -939,11 +939,12 @@ def create_simple_instrument(task: CeleryTask) -> Instrument:
         is_active=False,
     )
 
-    # if i_type:
+    # if instrument_type:
     #     instrument.instrument_type = i_type
     #     small_item = {
     #         "user_code": reference,
     #         "instrument_type": options_data["instrument_type_user_code"],
+    #         "name": options_data["instrument_name"],
     #     }
     #
     #     create_instrument_cbond(small_item, task.master_user, task.member)
@@ -4592,8 +4593,12 @@ def update_task_with_simple_instrument(remote_task_id: int, task: CeleryTask):
     result["task_id"] = remote_task_id
     if instrument := create_simple_instrument(task):
         result["instrument_id"] = instrument.pk
+        task.status = CeleryTask.STATUS_DONE
+
+    else:
+        task.status = CeleryTask.STATUS_ERROR
+
     task.result_object = result
-    task.status = CeleryTask.STATUS_PENDING
     task.save()
 
 
