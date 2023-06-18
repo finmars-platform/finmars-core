@@ -19,6 +19,7 @@ from poms.configuration.utils import unzip_to_directory, list_json_files, read_j
     save_json_to_file, upload_directory_to_storage, run_workflow, wait_workflow_until_end
 from poms.file_reports.models import FileReport
 from poms_app import settings
+from celery import chain
 
 _l = logging.getLogger('poms.configuration')
 from django.contrib.auth import get_user_model
@@ -585,7 +586,25 @@ def install_configuration_from_marketplace(self, task_id):
         import_configuration_celery_task.options_object = options_object
         import_configuration_celery_task.save()
 
-        import_configuration.apply_async(kwargs={'task_id': import_configuration_celery_task.id})
+        # sync call
+        import_configuration.apply(kwargs={'task_id': import_configuration_celery_task.id})
+
+        if task.parent:
+
+            step = task.options_object['step']
+            total = len(task.parent.options_object['dependencies'])
+            percent = int((step / total) * 100)
+
+            description = "Step %s/%s is installed. %s" % (step, total, configuration.name)
+
+            task.parent.update_progress(
+                {
+                    'current': step,
+                    'total': total,
+                    'percent': percent,
+                    'description': description
+                }
+            )
 
         task.status = CeleryTask.STATUS_DONE
         task.save()
@@ -599,6 +618,26 @@ def install_configuration_from_marketplace(self, task_id):
         task.status = CeleryTask.STATUS_ERROR
         task.error_message = str(e)
         task.save()
+
+
+@shared_task(name='configuration.finish_package_install', bind=True)
+def finish_package_install(self, task_id):
+
+    task = CeleryTask.objects.get(id=task_id)
+    task.status = CeleryTask.STATUS_DONE
+
+    task.update_progress(
+        {
+            'current': len(task.options_object['dependencies']),
+            'total': len(task.options_object['dependencies']),
+            'percent': 100,
+            'description': 'Installation complete'
+        }
+    )
+
+    task.save()
+
+
 
 
 @shared_task(name='configuration.install_package_from_marketplace', bind=True)
@@ -660,28 +699,47 @@ def install_package_from_marketplace(self, task_id):
 
         configuration.save()
 
-        for key, value in configuration.manifest['dependencies'].items():
+        task_list = []
+
+        step = 1
+
+        options_object['dependencies'] = configuration.manifest['dependencies']
+
+        task.options_object = options_object
+        task.save()
+
+        for dependency  in configuration.manifest['dependencies']:
+
             module_celery_task = CeleryTask.objects.create(master_user=task.master_user,
                                                            member=task.member,
+                                                           parent=task,
                                                            verbose_name="Install Configuration From Marketplace",
                                                            type='install_configuration_from_marketplace')
 
             options_object = {
-                'configuration_code': key,
-                'version': value,
+                'configuration_code': dependency['configuration_code'],
+                'version': dependency['version'],
                 'is_package': False,
+                'step': step
                 # "access_token": access_token
             }
 
             module_celery_task.options_object = options_object
             module_celery_task.save()
 
-            install_configuration_from_marketplace.apply_async(
-                kwargs={'task_id': module_celery_task.id})
+            task_list.append(install_configuration_from_marketplace.s(
+                kwargs={'task_id': module_celery_task.id}))
 
-        task.status = CeleryTask.STATUS_DONE
-        task.save()
+            step = step + 1
 
+
+        task_list.append(finish_package_install.s({'task_id': task.id}))
+
+
+        workflow = chain(*task_list)
+
+        # execute the chain
+        workflow.apply_async()
 
     except Exception as e:
 
