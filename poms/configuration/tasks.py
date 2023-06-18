@@ -385,9 +385,28 @@ def push_configuration_to_marketplace(self, task_id):
     task.options_object = options_object
     task.save()
 
+
+
     try:
 
         configuration = Configuration.objects.get(configuration_code=options_object['configuration_code'])
+
+        if task.parent:
+
+            step = task.options_object['step']
+            total = len(task.parent.options_object['dependencies'])
+            percent = int((step / total) * 100)
+
+            description = "Step %s/%s is installing. %s" % (step, total, configuration.name)
+
+            task.parent.update_progress(
+                {
+                    'current': step,
+                    'total': total,
+                    'percent': percent,
+                    'description': description
+                }
+            )
 
         if configuration.is_from_marketplace:
             path = settings.BASE_API_URL + '/configurations/' + configuration.configuration_code + '/' + configuration.version
