@@ -590,7 +590,7 @@ def install_configuration_from_marketplace(self, **kwargs):
         import_configuration_celery_task.save()
 
         # sync call
-        import_configuration.apply(task_id=import_configuration_celery_task.id)
+        import_configuration.apply(args=[import_configuration_celery_task.id])
 
         if task.parent:
 
@@ -608,6 +608,13 @@ def install_configuration_from_marketplace(self, **kwargs):
                     'description': description
                 }
             )
+
+        result_object = {
+            "configuration_import": {
+                "task_id": import_configuration_celery_task.id
+            }
+        }
+        task.result_object = result_object
 
         task.status = CeleryTask.STATUS_DONE
         task.save()
@@ -637,6 +644,8 @@ def finish_package_install(self, task_id):
             'description': 'Installation complete'
         }
     )
+
+    task.verbose_result = "Configuration package installed successfully"
 
     task.save()
 
@@ -730,12 +739,13 @@ def install_package_from_marketplace(self, task_id):
             module_celery_task.options_object = options_object
             module_celery_task.save()
 
-            task_list.append(install_configuration_from_marketplace.s(task_id=module_celery_task.id))
+            # .si is important, we do not need to pass result from previous task
+            task_list.append(install_configuration_from_marketplace.si(task_id=module_celery_task.id))
 
             step = step + 1
 
-
-        task_list.append(finish_package_install.s(task_id=task.id))
+        # .si is important, we do not need to pass result from previous task
+        task_list.append(finish_package_install.si(task_id=task.id))
 
 
         workflow = chain(*task_list)
