@@ -750,6 +750,15 @@ def install_package_from_marketplace(self, task_id):
 
         workflow = chain(*task_list)
 
+        task.update_progress(
+            {
+                'current': 0,
+                'total': len(task.options_object['dependencies']),
+                'percent': 0,
+                'description': 'Installation started'
+            }
+        )
+
         # execute the chain
         workflow.apply_async()
 
