@@ -391,23 +391,6 @@ def push_configuration_to_marketplace(self, task_id):
 
         configuration = Configuration.objects.get(configuration_code=options_object['configuration_code'])
 
-        if task.parent:
-
-            step = task.options_object['step']
-            total = len(task.parent.options_object['dependencies'])
-            percent = int((step / total) * 100)
-
-            description = "Step %s/%s is installing. %s" % (step, total, configuration.name)
-
-            task.parent.update_progress(
-                {
-                    'current': step,
-                    'total': total,
-                    'percent': percent,
-                    'description': description
-                }
-            )
-
         if configuration.is_from_marketplace:
             path = settings.BASE_API_URL + '/configurations/' + configuration.configuration_code + '/' + configuration.version
         else:
@@ -572,6 +555,23 @@ def install_configuration_from_marketplace(self, **kwargs):
         configuration.is_from_marketplace = True
 
         configuration.save()
+
+        if task.parent:
+
+            step = task.options_object['step']
+            total = len(task.parent.options_object['dependencies'])
+            percent = int((step / total) * 100)
+
+            description = "Step %s/%s is installing. %s" % (step, total, configuration.name)
+
+            task.parent.update_progress(
+                {
+                    'current': step,
+                    'total': total,
+                    'percent': percent,
+                    'description': description
+                }
+            )
 
         response = requests.get(
             url='https://marketplace.finmars.com/api/v1/configuration-release/' + str(
