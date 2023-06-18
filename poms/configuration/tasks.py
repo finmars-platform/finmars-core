@@ -587,7 +587,7 @@ def install_configuration_from_marketplace(self, task_id):
         import_configuration_celery_task.save()
 
         # sync call
-        import_configuration.apply(kwargs={'task_id': import_configuration_celery_task.id})
+        import_configuration.apply(task_id=import_configuration_celery_task.id)
 
         if task.parent:
 
@@ -727,13 +727,12 @@ def install_package_from_marketplace(self, task_id):
             module_celery_task.options_object = options_object
             module_celery_task.save()
 
-            task_list.append(install_configuration_from_marketplace.s(
-                kwargs={'task_id': module_celery_task.id}))
+            task_list.append(install_configuration_from_marketplace.s(task_id=module_celery_task.id))
 
             step = step + 1
 
 
-        task_list.append(finish_package_install.s({'task_id': task.id}))
+        task_list.append(finish_package_install.s(task_id=task.id))
 
 
         workflow = chain(*task_list)
