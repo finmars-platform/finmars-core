@@ -467,7 +467,10 @@ def push_configuration_to_marketplace(self, task_id):
 
 
 @shared_task(name='configuration.install_configuration_from_marketplace', bind=True)
-def install_configuration_from_marketplace(self, task_id):
+def install_configuration_from_marketplace(self, **kwargs):
+
+    task_id = kwargs.get('task_id')
+
     _l.info("install_configuration_from_marketplace")
 
     task = CeleryTask.objects.get(id=task_id)
