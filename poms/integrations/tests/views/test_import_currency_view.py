@@ -23,7 +23,7 @@ class ImportCurrencyDatabaseViewSetTest(BaseTestCase):
         ("USD", "USD", 111),
         ("EUR", "EUR", 222),
     )
-    @mock.patch("poms.common.database_client.DatabaseService.get_task")
+    @mock.patch("poms.common.database_client.DatabaseService.get_monad")
     def test__task_ready(self, currency_code, task_id, mock_get_task):
         mock_get_task.return_value = Monad(
             status=MonadStatus.TASK_READY,
@@ -49,7 +49,7 @@ class ImportCurrencyDatabaseViewSetTest(BaseTestCase):
         ("USD", "USD"),
         ("EUR", "EUR"),
     )
-    @mock.patch("poms.common.database_client.DatabaseService.get_task")
+    @mock.patch("poms.common.database_client.DatabaseService.get_monad")
     @mock.patch("poms.integrations.tasks.update_task_with_currency_data")
     def test__data_ready(self, code, mock_update_data, mock_get_task):
         mock_get_task.return_value = Monad(
@@ -69,7 +69,7 @@ class ImportCurrencyDatabaseViewSetTest(BaseTestCase):
         # TODO extend test with creation of the currency
         self.assertEqual(response_json["currency_code"], code)
 
-    @mock.patch("poms.common.database_client.DatabaseService.get_task")
+    @mock.patch("poms.common.database_client.DatabaseService.get_monad")
     def test__error(self, mock_get_task):
         message = self.random_string()
         mock_get_task.return_value = Monad(

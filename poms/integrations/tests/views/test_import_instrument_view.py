@@ -17,6 +17,21 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.url = (
             f"/{settings.BASE_API_URL}/api/v1/import/finmars-database/instrument/"
         )
+        self.task = self.create_task(
+            name="Test",
+            func="test",
+        )
+
+    def create_task(self, name: str, func: str):
+        return CeleryTask.objects.create(
+            master_user=self.master_user,
+            member=self.member,
+            verbose_name=name,
+            function_name=func,
+            type="import_from_database",
+            status=CeleryTask.STATUS_PENDING,
+            result="{}",
+        )
 
     def test__400(self):
         response = self.client.post(path=self.url, format="json", data={})
@@ -38,16 +53,16 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 400, response.content)
 
     @BaseTestCase.cases(
-        ("bond_111", "bond", 111),
-        ("bond_777", "bond", 777),
-        ("stock_333", "stock", 333),
-        ("stock_999", "stock", 999),
+        ("bond_111", "bond"),
+        ("bond_777", "bond"),
+        ("stock_333", "stock"),
+        ("stock_999", "stock"),
     )
-    @mock.patch("poms.common.database_client.DatabaseService.get_task")
-    def test__task_ready(self, type_code, remote_task_id, mock_get_task):
+    @mock.patch("poms.common.database_client.DatabaseService.get_monad")
+    def test__task_ready(self, type_code, mock_get_task):
         mock_get_task.return_value = Monad(
             status=MonadStatus.TASK_READY,
-            task_id=remote_task_id,
+            task_id=self.task.id,
         )
         reference = self.random_string()
         name = self.random_string()
@@ -72,13 +87,13 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.assertEqual(options["callback_url"], BACKEND_CALLBACK_URLS["instrument"])
         results = celery_task.result_object
         self.assertEqual(results["instrument_id"], simple_instrument.id)
-        self.assertEqual(results["task_id"], remote_task_id)
+        self.assertEqual(results["task_id"], self.task.id)
 
     @BaseTestCase.cases(
-        # ("bonds", "bonds"),
-        ("stocks", "stocks"),
+        ("bond", "bond"),
+        ("stock", "stock"),
     )
-    @mock.patch("poms.common.database_client.DatabaseService.get_task")
+    @mock.patch("poms.common.database_client.DatabaseService.get_monad")
     @mock.patch("poms.integrations.tasks.update_task_with_instrument_data")
     def test__data_ready(self, type_code, mock_update_data, mock_get_task):
         mock_get_task.return_value = Monad(
@@ -98,12 +113,10 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         mock_update_data.assert_called_once()
 
         response_json = response.json()
-        celery_task = CeleryTask.objects.get(pk=response_json["task"])
 
-        # TODO extend test with creation of the full instrument
         self.assertEqual(response_json["instrument_type_code"], type_code)
 
-    @mock.patch("poms.common.database_client.DatabaseService.get_task")
+    @mock.patch("poms.common.database_client.DatabaseService.get_monad")
     def test__error(self, mock_get_task):
         message = self.random_string()
         mock_get_task.return_value = Monad(

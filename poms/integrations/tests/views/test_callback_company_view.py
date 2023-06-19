@@ -18,6 +18,7 @@ class CallbackCompanyViewSetTest(CallbackSetTestMixin, BaseTestCase):
     def test__company_created(self):
         post_data = {
             "request_id": self.task.id,
+            "task_id": None,
             "data": {
                 "code": "test_user_code",
                 "name": "test_name",

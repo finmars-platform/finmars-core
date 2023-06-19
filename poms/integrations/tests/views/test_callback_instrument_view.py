@@ -27,6 +27,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         currency_code = self.random_string(3)
         post_data = {
             "request_id": self.task.id,
+            "task_id": None,
             "data": {
                 "instruments": [
                     {
