@@ -3,109 +3,101 @@ from unittest import mock
 from poms.common.common_base_test import BaseTestCase
 from poms.common.database_client import DatabaseService
 from poms.common.http_client import HttpClientError
-
 from poms.common.monad import Monad, MonadStatus
+from poms.celery_tasks.models import CeleryTask
 
 
-class DatabaseClientGetTaskTest(BaseTestCase):
+class DatabaseClientTest(BaseTestCase):
     def setUp(self):
         super().setUp()
+        self.init_test_case()
+        self.task = self.create_task(
+            name="Test",
+            func="test",
+        )
         self.service = DatabaseService()
 
+    def create_task(self, name: str, func: str):
+        return CeleryTask.objects.create(
+            master_user=self.master_user,
+            member=self.member,
+            verbose_name=name,
+            function_name=func,
+            type="import_from_database",
+            status=CeleryTask.STATUS_PENDING,
+            result="{}",
+        )
+
     @BaseTestCase.cases(
-        ("task_id_111",  {"task_id": 111}),
-        ("task_id_777",  {"task_id": 777}),
+        ("task_id_111", {"task_id": 111, "data": None, "request_id": None}),
+        ("task_id_777", {"task_id": 777, "data": None, "request_id": None}),
     )
     @mock.patch("poms.common.http_client.HttpClient.post")
-    def test__task_id(self, data, mock_post):
-        mock_post.return_value = data
+    def test__task_id(self, request_data, mock_post):
+        request_data["request_id"] = self.task.id
+        mock_post.return_value = request_data
 
-        monad : Monad = self.service.get_task("instrument", data)
+        monad: Monad = self.service.get_monad("instrument", request_data)
 
         self.assertEqual(monad.status, MonadStatus.TASK_READY)
-        self.assertEqual(monad.task_id, data["task_id"])
+        self.assertEqual(monad.task_id, request_data["task_id"])
 
     @BaseTestCase.cases(
-        ("data_111",  {"data": {"test": 333}}),
-        ("data_777",  {"data": {"test": 999}}),
+        ("data_111", {"data": {"test": 333}, "request_id": None, "task_id": None}),
+        ("data_777", {"data": {"test": 999}, "request_id": None, "task_id": None}),
     )
     @mock.patch("poms.common.http_client.HttpClient.post")
-    def test__data(self, data, mock_post):
-        mock_post.return_value = data
+    def test__data(self, request_data: dict, mock_post):
+        request_data["request_id"] = self.task.id
+        mock_post.return_value = request_data
 
-        monad : Monad = self.service.get_task("instrument", data)
+        monad: Monad = self.service.get_monad("instrument", request_data)
 
         self.assertEqual(monad.status, MonadStatus.DATA_READY)
-        self.assertEqual(monad.task_id, 0)
-        self.assertEqual(monad.data, data)
+        self.assertEqual(monad.task_id, None)
+        self.assertEqual(monad.data, request_data["data"])
 
     @mock.patch("poms.common.http_client.HttpClient.post")
     def test__http_error(self, mock_post):
         data = {"items": []}
         mock_post.side_effect = HttpClientError("test")
 
-        monad : Monad = self.service.get_task("instrument", data)
+        monad: Monad = self.service.get_monad("instrument", data)
 
         self.assertEqual(monad.status, MonadStatus.ERROR)
-        self.assertEqual(monad.task_id, 0)
-        self.assertIsNone(monad.data)
         self.assertEqual(monad.message, repr(HttpClientError("test")))
 
     @BaseTestCase.cases(
-        ("wrong_service",  "xxx_service"),
-        ("empty_service",  ""),
-        ("no_service",  None),
+        ("wrong_service", "xxx_service"),
+        ("empty_service", ""),
+        ("no_service", None),
     )
     def test__wrong_service(self, service):
         data = {"items": []}
 
         with self.assertRaises(RuntimeError):
-            self.service.get_task(service, data)
+            self.service.get_monad(service, data)
 
     @BaseTestCase.cases(
-        ("none_data",  None),
-        ("empty_data",  {}),
+        ("no_data", {"task_id": None, "request_id": None, }),
+        ("no_task_id", {"data": {"test": 333}, "request_id": None,}),
+        ("no_both", {"data": None, "task_id": None, "request_id": None,}),
     )
-    def test__get_task_no_data(self, data):
-        with self.assertRaises(RuntimeError):
-            self.service.get_task("instrument", data)
+    @mock.patch("poms.common.http_client.HttpClient.post")
+    def test__missing_param(self, request_data: dict, mock_post):
+        request_data["request_id"] = self.task.id
+        mock_post.return_value = request_data
+        monad: Monad = self.service.get_monad("instrument", request_data)
+        self.assertEqual(monad.status, MonadStatus.ERROR)
+        print(f"\nmonad.message={monad.message}\n")
 
-
-# DEPRECATED task: FN-1736
-# class DatabaseClientGetResultsTest(BaseTestCase):
-#     def setUp(self):
-#         super().setUp()
-#         self.service = DatabaseService()
-#
-#     @BaseTestCase.cases(
-#         ("results_1",  {"results": [1, 2]}),
-#         ("results_2",  {"results": [3, 4]}),
-#     )
-#     @mock.patch("poms.common.http_client.HttpClient.get")
-#     def test__get_results_with_data(self, data, mock_get):
-#         mock_get.return_value = data
-#
-#         monad : Monad = self.service.get_results("instrument-narrow", data)
-#
-#         self.assertEqual(monad.status, MonadStatus.DATA_READY)
-#         self.assertEqual(monad.data, data)
-#
-#     @mock.patch("poms.common.http_client.HttpClient.get")
-#     def test__get_results_http_error(self, mock_get):
-#         data = {"items": []}
-#         mock_get.side_effect = HttpClientError("test")
-#
-#         monad : Monad = self.service.get_results("instrument-narrow", data)
-#
-#         self.assertEqual(monad.status, MonadStatus.ERROR)
-#         self.assertIsNone(monad.data)
-#         self.assertEqual(monad.message, repr(HttpClientError("test")))
-#
-#     @BaseTestCase.cases(
-#         ("wrong_service",  "xxx_service"),
-#         ("empty_service",  ""),
-#         ("no_service",  None),
-#     )
-#     def test__get_results_wrong_service(self, service):
-#         with self.assertRaises(RuntimeError):
-#             self.service.get_results(service, {})
+    @BaseTestCase.cases(
+        ("no_req_id", {"data": {"test": 1}, "task_id": 2, }),
+        ("wrong_reg_id", {"data": {"test": 1}, "task_id": 2, "request_id": 777,}),
+    )
+    @mock.patch("poms.common.http_client.HttpClient.post")
+    def test__invalid(self, request_data: dict, mock_post):
+        mock_post.return_value = request_data
+        monad: Monad = self.service.get_monad("instrument", request_data)
+        self.assertEqual(monad.status, MonadStatus.ERROR)
+        print(f"\nmonad.message={monad.message}\n")

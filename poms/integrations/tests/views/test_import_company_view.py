@@ -23,7 +23,7 @@ class ImportCompanyDatabaseViewSetTest(BaseTestCase):
         ("Raiffiesen", "12345", 111),
         ("IntesaSanPaolo", "67890", 222),
     )
-    @mock.patch("poms.common.database_client.DatabaseService.get_task")
+    @mock.patch("poms.common.database_client.DatabaseService.get_monad")
     def test__task_ready(self, company_id, task_id, mock_get_task):
         mock_get_task.return_value = Monad(
             status=MonadStatus.TASK_READY,
@@ -49,7 +49,7 @@ class ImportCompanyDatabaseViewSetTest(BaseTestCase):
         ("Raiffiesen", "12345"),
         ("IntesaSanPaolo", "67890"),
     )
-    @mock.patch("poms.common.database_client.DatabaseService.get_task")
+    @mock.patch("poms.common.database_client.DatabaseService.get_monad")
     @mock.patch("poms.integrations.tasks.update_task_with_company_data")
     def test__data_ready(self, code, mock_update_data, mock_get_task):
         mock_get_task.return_value = Monad(
@@ -69,7 +69,7 @@ class ImportCompanyDatabaseViewSetTest(BaseTestCase):
         # TODO extend test with creation of the company
         self.assertEqual(response_json["company_id"], code)
 
-    @mock.patch("poms.common.database_client.DatabaseService.get_task")
+    @mock.patch("poms.common.database_client.DatabaseService.get_monad")
     def test__error(self, mock_get_task):
         message = self.random_string()
         mock_get_task.return_value = Monad(

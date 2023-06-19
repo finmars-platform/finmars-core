@@ -20,6 +20,7 @@ class CallbackCurrencyViewSetTest(CallbackSetTestMixin, BaseTestCase):
         user_code = self.random_string(3)
         post_data = {
             "request_id": self.task.id,
+            "task_id": None,
             "data": {
                 "user_code": user_code,
                 "short_name": f"short_{user_code}",

@@ -18,11 +18,13 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
+from drf_yasg.utils import swagger_auto_schema
 
 import requests
 from celery.result import AsyncResult
 
 from poms.celery_tasks.models import CeleryTask
+from poms.common.database_client import DatabaseRequestSerializer
 from poms.common.filters import (
     ByIdFilterBackend,
     CharFilter,
@@ -1707,22 +1709,12 @@ class DataBaseCallBackView(APIView):
         """
         _l.info(f"{self.__class__.__name__}.validate request.data={request_data}")
 
-        if not (request_id := request_data.get("request_id")):
-            err_msg = "no request_id in request.data"
-            _l.error(f"{self.__class__.__name__}.validate {err_msg}")
-            return None, err_msg
+        serializer = DatabaseRequestSerializer(data=request_data)
+        if serializer.is_valid():
+            task = CeleryTask.objects.get(id=serializer.validated_data["request_id"])
+            return task, None
 
-        if not request_data.get("data"):
-            err_msg = "no or empty 'data' in request.data"
-            _l.error(f"{self.__class__.__name__}.validate {err_msg}")
-            return None, err_msg
-
-        if not (task := CeleryTask.objects.filter(id=request_id).first()):
-            err_msg = f"no task with id={request_id}"
-            _l.error(f"{self.__class__.__name__}.validate {err_msg}")
-            return None, err_msg
-
-        return task, None
+        return None, str(serializer.errors)
 
     def get(self, request):
         _l.info(f"{self.__class__.__name__}.get")
@@ -1730,6 +1722,12 @@ class DataBaseCallBackView(APIView):
 
 
 class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
+
+    @swagger_auto_schema(
+        request_body=DatabaseRequestSerializer,
+        responses={200: "ok"},
+        operation_description="receive database info and update instrument's task",
+    )
     def post(self, request):
         request_data = request.data
         task, err_msg = self.validate_post_data(request_data=request_data)
@@ -1763,6 +1761,12 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
 
 
 class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
+
+    @swagger_auto_schema(
+        request_body=DatabaseRequestSerializer,
+        responses={200: "ok"},
+        operation_description="receive database info and update currency's task",
+    )
     def post(self, request):
         data = request.data
         task, error_dict = self.validate_post_data(request_data=data)
@@ -1785,6 +1789,12 @@ class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
 
 
 class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
+
+    @swagger_auto_schema(
+        request_body=DatabaseRequestSerializer,
+        responses={200: "ok"},
+        operation_description="receive database info and update company's task",
+    )
     def post(self, request):
         data = request.data
         task, err_msg = self.validate_post_data(request_data=data)
