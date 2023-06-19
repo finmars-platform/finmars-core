@@ -4661,7 +4661,7 @@ def import_from_database_task(task_id: int, operation: str):
     _l.info(f"{func} started, request_options={options}")
 
     try:
-        monad: Monad = DatabaseService().get_task(operation, options)
+        monad: Monad = DatabaseService().get_monad(operation, options)
 
         if monad.status == MonadStatus.DATA_READY:
             _l.info(f"{func} received {operation} data={monad.data}")
