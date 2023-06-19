@@ -2316,6 +2316,9 @@ class TransactionTypeProcess(object):
         if bool(complex_transaction_errors):
             self.complex_transaction_errors.append(complex_transaction_errors)
 
+        if self.has_errors:
+            return # important to return here if we already had errors
+
         if self.complex_transaction_status is not None:
             self.complex_transaction.status_id = self.complex_transaction_status
 
