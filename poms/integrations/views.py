@@ -1684,6 +1684,15 @@ class DataBaseCallBackView(APIView):
         if task:
             self.update_task_status(task, CeleryTask.STATUS_ERROR, notes=err_msg)
 
+        # TODO In case of ERROR, CANCEL, TIMEOUT we should provide
+        # same object from Instruem
+        # task.result_object = {
+        #     "result_id": item.id,
+        #     "name": item.name,
+        #     "user_code": item.user_code,
+        #     "short_name": item.short_name,
+        # }
+
         return Response(
             {"status": "error", "message": err_msg},
             status=HTTP_400_BAD_REQUEST,
