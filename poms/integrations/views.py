@@ -1689,10 +1689,15 @@ class DataBaseCallBackView(APIView):
             status=HTTP_400_BAD_REQUEST,
         )
 
-    def success_task_and_response(self, task: CeleryTask, result_id: int) -> Response:
-        _l.info(f"{self.__class__.__name__} created result_id={result_id}")
+    def success_task_and_response(self, task: CeleryTask, item) -> Response:
+        _l.info(f"{self.__class__.__name__} created result_id={str(item)}")
 
-        task.result_object["result_id"] = result_id
+        task.result_object = {
+            "result_id": item.id,
+            "name": item.name,
+            "user_code": item.user_code,
+            "short_name": item.short_name,
+        }
         self.update_task_status(task, CeleryTask.STATUS_DONE)
 
         return Response(
@@ -1757,7 +1762,7 @@ class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
             return self.error_task_and_response(task, err_msg)
 
         else:
-            return self.success_task_and_response(task, instrument.id)
+            return self.success_task_and_response(task, instrument)
 
 
 class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
