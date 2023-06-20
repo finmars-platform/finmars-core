@@ -1790,7 +1790,7 @@ class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
             return self.error_task_and_response(task, err_msg)
 
         else:
-            return self.success_task_and_response(task, currency.id)
+            return self.success_task_and_response(task, currency)
 
 
 class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
@@ -1818,4 +1818,4 @@ class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
             return self.error_task_and_response(task, err_msg)
 
         else:
-            return self.success_task_and_response(task, company.id)
+            return self.success_task_and_response(task, company)
