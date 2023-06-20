@@ -226,11 +226,13 @@ class TransactionReportBuilderSql:
 
                         _l.info('instrument_ids %s' % instrument_ids)
 
+                        instrument_expression = ''
+
                         if instrument_ids:
                             res = "'" + "\',\'".join(instrument_ids)
                             res = res + "'"
 
-                            result = result + 'or t.instrument_id IN (%s)' % res
+                            instrument_expression = 't.instrument_id IN (%s)' % res
 
                         currencies_ids = []
 
@@ -243,13 +245,25 @@ class TransactionReportBuilderSql:
 
                         _l.info('currencies_ids %s' % currencies_ids)
 
+                        currency_expression = ''
+
                         if currencies_ids:
                             res = "'" + "\',\'".join(currencies_ids)
                             res = res + "'"
 
-                            result = result + 'or t.settlement_currency_id IN (%s)' % res
+                            currency_expression = 't.settlement_currency_id IN (%s)' % res
 
                         _l.info('result %s' % result)
+
+                        if instrument_expression and currency_expression:
+
+                            result = result + 'and (%s or %s)' % (instrument_expression, currency_expression)
+
+                        elif instrument_expression and not currency_expression:
+                            result = result + 'and %s' % instrument_expression
+
+                        elif not instrument_expression and currency_expression:
+                            result = result + 'and %s' % currency_expression
 
         except Exception as e:
 
