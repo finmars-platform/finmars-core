@@ -45,9 +45,9 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
     )
     def test__check_instrument_type(self, type_code):
         request_data = {
-            "instrument_code": "reference",
-            "instrument_name": "name",
-            "instrument_type_code": type_code,
+            "user_code": "user_code",
+            "name": "name",
+            "instrument_type_user_code": type_code,
         }
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 400, response.content)
@@ -65,11 +65,11 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
             status=MonadStatus.TASK_CREATED,
             task_id=remote_task_id,
         )
-        reference = self.random_string()
+        user_code = self.random_string()
         name = self.random_string()
         request_data = {
-            "instrument_code": reference,
-            "instrument_name": name,
+            "user_code": user_code,
+            "name": name,
             "instrument_type_code": type_code,
         }
         response = self.client.post(path=self.url, format="json", data=request_data)
@@ -104,7 +104,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
     )
     @mock.patch("poms.integrations.database_client.DatabaseService.get_monad")
     def test__data_ready(self, type_code, mock_get_monad):
-        instrument_code = self.random_string(10)
+        user_code = self.random_string(10)
         currency_code = self.random_string(3)
         mock_get_monad.return_value = Monad(
             status=MonadStatus.DATA_READY,
@@ -114,7 +114,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
                         "instrument_type": {
                             "user_code": type_code,
                         },
-                        "user_code": instrument_code,
+                        "user_code": user_code,
                         "short_name": "test_short_name",
                         "name": "test_name",
                         "pricing_currency": {
@@ -140,9 +140,9 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         reference = self.random_string()
         name = self.random_string()
         request_data = {
-            "instrument_code": reference,
-            "instrument_name": name,
-            "instrument_type_code": type_code,
+            "user_code": reference,
+            "name": name,
+            "instrument_type_user_code": type_code,
         }
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 200, response.content)
@@ -171,9 +171,9 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
             message=message,
         )
         request_data = {
-            "instrument_code": "code",
-            "instrument_name": "name",
-            "instrument_type_code": "bonds",
+            "user_code": "code",
+            "name": "name",
+            "instrument_type_user_code": "bonds",
         }
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 200, response.content)

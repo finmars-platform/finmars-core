@@ -26,12 +26,12 @@ class ImportCurrencyDatabaseViewSetTest(BaseTestCase):
         ("EUR", "EUR", 222),
     )
     @mock.patch("poms.integrations.database_client.DatabaseService.get_monad")
-    def test__task_ready(self, currency_code, task_id, mock_get_task):
+    def test__task_ready(self, user_code, task_id, mock_get_task):
         mock_get_task.return_value = Monad(
             status=MonadStatus.TASK_CREATED,
             task_id=task_id,
         )
-        request_data = {"currency_code": currency_code}
+        request_data = {"user_code": user_code}
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 200, response.content)
 
@@ -60,7 +60,7 @@ class ImportCurrencyDatabaseViewSetTest(BaseTestCase):
         ("EUR", "EUR"),
     )
     @mock.patch("poms.integrations.database_client.DatabaseService.get_monad")
-    def test__data_ready(self, code, mock_get_monad):
+    def test__data_ready(self, user_code, mock_get_monad):
         mock_get_monad.return_value = Monad(
             status=MonadStatus.DATA_READY,
             data={
@@ -72,7 +72,7 @@ class ImportCurrencyDatabaseViewSetTest(BaseTestCase):
                 "notes": self.random_string(),
             },
         )
-        request_data = {"currency_code": code}
+        request_data = {"user_code": user_code}
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 200, response.content)
 
@@ -96,7 +96,7 @@ class ImportCurrencyDatabaseViewSetTest(BaseTestCase):
             message=message,
         )
 
-        request_data = {"currency_code": "USD"}
+        request_data = {"user_code": "USD"}
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 200, response.content)
 
