@@ -1,8 +1,8 @@
 from datetime import date
 
 from poms.common.common_base_test import BaseTestCase
-from poms.common.common_callback_test import CallbackSetTestMixin
-from poms.common.database_client import BACKEND_CALLBACK_URLS
+from poms.integrations.tests.common_callback_test import CallbackSetTestMixin
+from poms.integrations.database_client import BACKEND_CALLBACK_URLS
 
 from poms.instruments.models import Instrument
 from poms.currencies.models import Currency

@@ -2,72 +2,218 @@ from rest_framework import routers
 
 import poms.integrations.views as integrations
 
+app_name = "poms.integrations"
+
 router = routers.DefaultRouter()
-router.register(r'config', integrations.ImportConfigViewSet)
 
-router.register(r'provider', integrations.ProviderClassViewSet)
-router.register(r'factor-schedule-download-method', integrations.FactorScheduleDownloadMethodViewSet)
-router.register(r'accrual-schedule-download-method', integrations.AccrualScheduleDownloadMethodViewSet)
-
-router.register(r'instrument-scheme', integrations.InstrumentDownloadSchemeViewSet)
-router.register(r'instrument-scheme-light', integrations.InstrumentDownloadSchemeLightViewSet)  # DEPRECATED
-router.register(r'currency-mapping', integrations.CurrencyMappingViewSet)
-router.register(r'pricing-policy-mapping', integrations.PricingPolicyMappingViewSet)
-router.register(r'instrument-type-mapping', integrations.InstrumentTypeMappingViewSet)
-router.register(r'instrument-attribute-value-mapping', integrations.InstrumentAttributeValueMappingViewSet)
-router.register(r'accrual-calculation-model-mapping', integrations.AccrualCalculationModelMappingViewSet)
-router.register(r'periodicity-mapping', integrations.PeriodicityMappingViewSet)
-router.register(r'account-mapping', integrations.AccountMappingViewSet)
-router.register(r'account-classifier-mapping', integrations.AccountClassifierMappingViewSet)
-router.register(r'account-type-mapping', integrations.AccountTypeMappingViewSet)
-router.register(r'instrument-mapping', integrations.InstrumentMappingViewSet)
-router.register(r'instrument-classifier-mapping', integrations.InstrumentClassifierMappingViewSet)
-router.register(r'counterparty-mapping', integrations.CounterpartyMappingViewSet)
-router.register(r'counterparty-classifier-mapping', integrations.CounterpartyClassifierMappingViewSet)
-router.register(r'responsible-mapping', integrations.ResponsibleMappingViewSet)
-router.register(r'responsible-classifier-mapping', integrations.ResponsibleClassifierMappingViewSet)
-router.register(r'portfolio-mapping', integrations.PortfolioMappingViewSet)
-router.register(r'portfolio-classifier-mapping', integrations.PortfolioClassifierMappingViewSet)
-router.register(r'strategy1-mapping', integrations.Strategy1MappingViewSet)
-router.register(r'strategy2-mapping', integrations.Strategy2MappingViewSet)
-router.register(r'strategy3-mapping', integrations.Strategy3MappingViewSet)
-router.register(r'daily-pricing-model-mapping', integrations.DailyPricingModelMappingViewSet)
-router.register(r'payment-size-detail-mapping', integrations.PaymentSizeDetailMappingViewSet)
-router.register(r'price-download-scheme-mapping', integrations.PriceDownloadSchemeMappingViewSet)
-router.register(r'pricing-condition-mapping', integrations.PricingConditionMappingViewSet)
-
-router.register(r'instrument', integrations.ImportInstrumentViewSet, 'importinstrument')
 router.register(
-    r'finmars-database/instrument',
+    "config",
+    integrations.ImportConfigViewSet,
+    basename="import_config",
+)
+router.register(
+    "provide",
+    integrations.ProviderClassViewSet,
+    basename="provider_class",
+)
+router.register(
+    "factor-schedule-download-method",
+    integrations.FactorScheduleDownloadMethodViewSet,
+    basename="factor-schedule-download-method",
+)
+router.register(
+    "accrual-schedule-download-method",
+    integrations.AccrualScheduleDownloadMethodViewSet,
+    basename="accrual-schedule-download-method",
+)
+router.register(
+    "instrument-scheme",
+    integrations.InstrumentDownloadSchemeViewSet,
+    basename="instrument-scheme",
+)
+router.register(
+    "currency-mapping",
+    integrations.CurrencyMappingViewSet,
+    basename="currency-mapping",
+)
+router.register(
+    "pricing-policy-mapping",
+    integrations.PricingPolicyMappingViewSet,
+    basename="pricing-policy-mapping",
+)
+router.register(
+    "instrument-type-mapping",
+    integrations.InstrumentTypeMappingViewSet,
+    basename="instrument-type-mapping",
+)
+router.register(
+    "instrument-attribute-value-mapping",
+    integrations.InstrumentAttributeValueMappingViewSet,
+    basename="instrument-attribute-value-mapping",
+)
+router.register(
+    "accrual-calculation-model-mapping",
+    integrations.AccrualCalculationModelMappingViewSet,
+    basename="accrual-calculation-model-mapping",
+)
+router.register(
+    "periodicity-mapping",
+    integrations.PeriodicityMappingViewSet,
+    basename="periodicity-mapping",
+)
+router.register(
+    "account-mapping",
+    integrations.AccountMappingViewSet,
+    basename="account-mapping",
+)
+router.register(
+    "account-classifier-mapping",
+    integrations.AccountClassifierMappingViewSet,
+    basename="account-classifier-mapping",
+)
+router.register(
+    "account-type-mapping",
+    integrations.AccountTypeMappingViewSet,
+    basename="account-type-mapping",
+)
+router.register(
+    "instrument-mapping",
+    integrations.InstrumentMappingViewSet,
+    basename="instrument-mapping",
+)
+router.register(
+    "instrument-classifier-mapping",
+    integrations.InstrumentClassifierMappingViewSet,
+    basename="instrument-classifier-mapping",
+)
+router.register(
+    "counterparty-mapping",
+    integrations.CounterpartyMappingViewSet,
+    basename="counterparty-mapping",
+)
+router.register(
+    "counterparty-classifier-mapping",
+    integrations.CounterpartyClassifierMappingViewSet,
+    basename="counterparty-classifier-mapping",
+)
+router.register(
+    "responsible-mapping",
+    integrations.ResponsibleMappingViewSet,
+    basename="responsible-mapping",
+)
+router.register(
+    "responsible-classifier-mapping",
+    integrations.ResponsibleClassifierMappingViewSet,
+    basename="responsible-classifier-mapping",
+)
+router.register(
+    "portfolio-mapping",
+    integrations.PortfolioMappingViewSet,
+    basename="portfolio-mapping",
+)
+router.register(
+    "portfolio-classifier-mapping",
+    integrations.PortfolioClassifierMappingViewSet,
+    basename="portfolio-classifier-mapping",
+)
+router.register(
+    "strategy1-mapping",
+    integrations.Strategy1MappingViewSet,
+    basename="strategy1-mapping",
+)
+router.register(
+    "strategy2-mapping",
+    integrations.Strategy2MappingViewSet,
+    basename="strategy2-mapping",
+)
+router.register(
+    "strategy3-mapping",
+    integrations.Strategy3MappingViewSet,
+    basename="strategy3-mapping",
+)
+router.register(
+    "daily-pricing-model-mapping",
+    integrations.DailyPricingModelMappingViewSet,
+    basename="daily-pricing-model-mapping",
+)
+router.register(
+    "payment-size-detail-mapping",
+    integrations.PaymentSizeDetailMappingViewSet,
+    basename="payment-size-detail-mapping",
+)
+router.register(
+    "price-download-scheme-mapping",
+    integrations.PriceDownloadSchemeMappingViewSet,
+    basename="price-download-scheme-mapping",
+)
+router.register(
+    "pricing-condition-mapping",
+    integrations.PricingConditionMappingViewSet,
+    basename="pricing-condition-mapping",
+)
+router.register(
+    "instrument",
+    integrations.ImportInstrumentViewSet,
+    basename="importinstrument",
+)
+router.register(
+    "finmars-database/instrument",
     integrations.ImportInstrumentDatabaseViewSet,
-    'importinstrumentdatabase',
+    basename="import_instrument_database",
 )
 router.register(
-    r'finmars-database/currency',
+    "finmars-database/currency",
     integrations.ImportCurrencyDatabaseViewSet,
-    'importcurrencydatabase',
+    basename="import_currency_database",
 )
 router.register(
-    r'finmars-database/company',
+    "finmars-database/company",
     integrations.ImportCompanyDatabaseViewSet,
-    'importcompanydatabase',
+    basename="import_company_database",
 )
-router.register(r'unified-data-provider', integrations.ImportUnifiedDataProviderViewSet,
-                'importunifieddataprovider')
-router.register(r'test-certificate', integrations.TestCertificateViewSet, 'testcertificate')
-
-router.register(r'complex-transaction-import-scheme', integrations.ComplexTransactionImportSchemeViewSet)
-router.register(r'complex-transaction-import-scheme-light',
-                integrations.ComplexTransactionImportSchemeLightViewSet)  # DEPRECATED
-router.register(r'complex-transaction-csv-file-import', integrations.ComplexTransactionCsvFileImportViewSet,
-                'complextransactioncsvfileimport')
-
-router.register(r'transaction-import', integrations.TransactionImportViewSet,
-                'transactionimportviewset')
-
-router.register(r'complex-transaction-preprocess-file', integrations.ComplexTransactionFilePreprocessViewSet,
-                'complextransactionfilepreprocessviewSet')
-
-router.register(r'complex-transaction-csv-file-import-validate',
-                integrations.ComplexTransactionCsvFileImportValidateViewSet,
-                'complextransactioncsvfileimportvalidate')
+router.register(
+    "unified-data-provide",
+    integrations.ImportUnifiedDataProviderViewSet,
+    basename="importunifieddataprovide",
+)
+router.register(
+    "test-certificate",
+    integrations.TestCertificateViewSet,
+    basename="testcertificate",
+)
+router.register(
+    "complex-transaction-import-scheme",
+    integrations.ComplexTransactionImportSchemeViewSet,
+    basename="complex-transaction-import-scheme",
+)
+router.register(
+    "complex-transaction-csv-file-import",
+    integrations.ComplexTransactionCsvFileImportViewSet,
+    basename="complextransactioncsvfileimport",
+)
+router.register(
+    "transaction-import",
+    integrations.TransactionImportViewSet,
+    basename="transactionimportviewset",
+)
+router.register(
+    "complex-transaction-preprocess-file",
+    integrations.ComplexTransactionFilePreprocessViewSet,
+    basename="complextransactionfilepreprocessviewSet",
+)
+router.register(
+    "complex-transaction-csv-file-import-validate",
+    integrations.ComplexTransactionCsvFileImportValidateViewSet,
+    basename="complextransactioncsvfileimportvalidate",
+)
+# Deprecated endpoints
+router.register(  # DEPRECATED
+    "instrument-scheme-light",
+    integrations.InstrumentDownloadSchemeLightViewSet,
+    basename="instrument-scheme-light",
+)
+router.register(  # DEPRECATED
+    "complex-transaction-import-scheme-light",
+    integrations.ComplexTransactionImportSchemeLightViewSet,
+    basename="complex-transaction-import-scheme-light",
+)

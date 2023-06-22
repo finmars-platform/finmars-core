@@ -95,14 +95,14 @@ from poms.integrations.models import (
     TransactionFileResult,
 )
 from poms.integrations.providers.base import ProviderException, get_provider
-from poms.integrations.tasks import (
-    download_instrument,
-    download_unified_data,
-    import_instrument_finmars_database,
-    import_currency_finmars_database,
-    import_company_finmars_database,
-    test_certificate,
-)
+
+# from poms.integrations.tasks import (
+#     # download_unified_data,
+#     # import_instrument_finmars_database,
+#     # import_currency_finmars_database,
+#     # import_company_finmars_database,
+#     test_certificate,
+# )
 from poms.obj_attrs.fields import GenericAttributeTypeField, GenericClassifierField
 from poms.obj_attrs.serializers import (
     GenericAttributeTypeSerializer,
@@ -1421,6 +1421,8 @@ class ImportInstrumentSerializer(serializers.Serializer):
         return attrs
 
     def create(self, validated_data: dict) -> ImportInstrumentEntry:
+        from poms.integrations.tasks import download_instrument
+
         task_result_overrides = validated_data.get("task_result_overrides")
         instance = ImportInstrumentEntry(**validated_data)
         if instance.task:
@@ -1465,6 +1467,7 @@ def check_instrument_type(instrument_type: str) -> str:
     raise ValidationError(f"invalid instrument_type_code='{instrument_type}'")
 
 
+# database import FN-1736
 class ImportInstrumentDatabaseSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
@@ -1479,6 +1482,11 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
     errors = serializers.ReadOnlyField()
 
     def create_task(self, validated_data: dict) -> dict:
+        from poms.integrations.tasks import (
+            import_instrument_finmars_database,
+            ttl_finisher,
+        )
+
         task = CeleryTask.objects.create(
             status=CeleryTask.STATUS_PENDING,
             master_user=validated_data["master_user"],
@@ -1486,14 +1494,16 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
             verbose_name="Import Instrument From Finmars Database",
             function_name="import_instrument_finmars_database",
             type="import_from_database",
-            ttl=settings.FINMARS_DATABASE_TIMEOUT + 1,
+            ttl=settings.FINMARS_DATABASE_TIMEOUT,
         )
-        task.options_object = {
+        task.options_object = {  # params expected in finmars-database view
             "user_code": validated_data["instrument_code"],
             "name": validated_data["instrument_name"],
             "type_user_code": validated_data["instrument_type_code"],
         }
+        task.result_object = {"task": task.id}
         task.save()
+        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl+1)
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
@@ -1501,22 +1511,15 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
 
         task.refresh_from_db()
 
-        result_id = (
-            task.result_object.get("instrument_id") if task.result_object else None
-        )
-        result = {
-            "task": task.id,
-            "errors": task.error_message,
-            "result_id": result_id,
-            "instrument_code": validated_data["instrument_code"],
-            "instrument_type_code": validated_data["instrument_type_code"],
-            "instrument_name": validated_data["instrument_name"],
-        }
+        result = task.result_object
+        result["errors"] = task.error_message
 
         _l.info(f"{self.__class__.__name__} result={result}")
+
         return result
 
 
+# database import FN-1736
 class ImportCurrencyDatabaseSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
@@ -1526,6 +1529,11 @@ class ImportCurrencyDatabaseSerializer(serializers.Serializer):
     errors = serializers.ReadOnlyField()
 
     def create_task(self, validated_data: dict) -> dict:
+        from poms.integrations.tasks import (
+            import_currency_finmars_database,
+            ttl_finisher,
+        )
+
         task = CeleryTask.objects.create(
             status=CeleryTask.STATUS_PENDING,
             master_user=validated_data["master_user"],
@@ -1533,12 +1541,14 @@ class ImportCurrencyDatabaseSerializer(serializers.Serializer):
             verbose_name="Import Currency From Finmars Database",
             function_name="import_currency_finmars_database",
             type="import_from_database",
-            ttl=settings.FINMARS_DATABASE_TIMEOUT + 1,
+            ttl=settings.FINMARS_DATABASE_TIMEOUT,
         )
-        task.options_object = {
-            "currency_code": validated_data["currency_code"],
+        task.options_object = {  # params expected in finmars-database view
+            "code": validated_data["currency_code"],
         }
+        task.result_object = {"task": task.id}
         task.save()
+        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl + 1)
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
@@ -1546,20 +1556,15 @@ class ImportCurrencyDatabaseSerializer(serializers.Serializer):
 
         task.refresh_from_db()
 
-        result_id = (
-            task.result_object.get("currency_id") if task.result_object else None
-        )
-        result = {
-            "task": task.id,
-            "errors": task.error_message,
-            "result_id": result_id,
-            "currency_code": validated_data["currency_code"],
-        }
+        result = task.result_object
+        result["errors"] = task.error_message
 
         _l.info(f"{self.__class__.__name__} result={result}")
+
         return result
 
 
+# database import FN-1736
 class ImportCompanyDatabaseSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
@@ -1569,6 +1574,11 @@ class ImportCompanyDatabaseSerializer(serializers.Serializer):
     errors = serializers.ReadOnlyField()
 
     def create_task(self, validated_data: dict) -> dict:
+        from poms.integrations.tasks import (
+            import_company_finmars_database,
+            ttl_finisher,
+        )
+
         task = CeleryTask.objects.create(
             status=CeleryTask.STATUS_PENDING,
             master_user=validated_data["master_user"],
@@ -1576,12 +1586,14 @@ class ImportCompanyDatabaseSerializer(serializers.Serializer):
             verbose_name="Import Company From Finmars Database",
             function_name="import_company_finmars_database",
             type="import_from_database",
-            ttl=settings.FINMARS_DATABASE_TIMEOUT + 1,
+            ttl=settings.FINMARS_DATABASE_TIMEOUT,
         )
-        task.options_object = {
+        task.options_object = {  # params expected in finmars-database view
             "company_id": validated_data["company_id"],
         }
+        task.result_object = {"task": task.id}
         task.save()
+        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl + 1)
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
@@ -1589,18 +1601,32 @@ class ImportCompanyDatabaseSerializer(serializers.Serializer):
 
         task.refresh_from_db()
 
-        result_id = (
-            task.result_object.get("company_id") if task.result_object else None
-        )
-        result = {
-            "task": task.id,
-            "errors": task.error_message,
-            "result_id": result_id,
-            "company_id": validated_data["company_id"],
-        }
+        result = task.result_object
+        result["errors"] = task.error_message
 
         _l.info(f"{self.__class__.__name__} result={result}")
+
         return result
+
+
+# database import callbacks FN-1736
+class DatabaseRequestSerializer(serializers.Serializer):
+    request_id = serializers.IntegerField(required=True, min_value=1)
+    task_id = serializers.IntegerField(required=True, allow_null=True)
+    data = serializers.DictField(required=True, allow_null=True)
+
+    def validate(self, attrs: dict) -> dict:
+        task = CeleryTask.objects.filter(id=attrs["request_id"]).first()
+        if not task:
+            err_msg = f"no celery task with id={attrs['request_id']}"
+            raise ValidationError({"request_id": "invalid"}, err_msg)
+        attrs["task"] = task
+
+        if (attrs["task_id"] is None) and (attrs["data"] is None):
+            err_msg = "data & task_id can't be both null"
+            raise ValidationError({"task_id": "null", "data": "null"}, err_msg)
+
+        return attrs
 
 
 class ImportUnifiedDataProviderSerializer(serializers.Serializer):
@@ -1614,6 +1640,8 @@ class ImportUnifiedDataProviderSerializer(serializers.Serializer):
     errors = serializers.ReadOnlyField()
 
     def create(self, validated_data):
+        from poms.integrations.tasks import download_unified_data
+
         instance = UnifiedDataEntry(**validated_data)
 
         task, errors = download_unified_data(
@@ -1780,6 +1808,8 @@ class TestCertificateSerializer(serializers.Serializer):
         return attrs
 
     def create(self, validated_data):
+        from poms.integrations.tasks import test_certificate
+
         instance = ImportTestCertificate(**validated_data)
 
         if instance.task:
@@ -1956,7 +1986,9 @@ class ComplexTransactionImportSchemeFieldSerializer(serializers.ModelSerializer)
                     % instance.transaction_type_input
                 )
                 _l.error("Error in to_representation: %s" % e)
-                _l.error('Error in to_representation traceback: %s' % traceback.format_exc())
+                _l.error(
+                    "Error in to_representation traceback: %s" % traceback.format_exc()
+                )
 
                 ret["transaction_type_input_object"] = None
 
