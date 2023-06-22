@@ -46,6 +46,39 @@ def show_all_urls():
     print("------------------------------------------------")
 
 
+def print_namespace():
+    from django import urls
+
+    url_resolver = urls.get_resolver(urls.get_urlconf())
+    print("namespaces=", url_resolver.namespace_dict.keys())
+
+
+def print_patterns(patterns, namespace="rest_framework"):
+    # # Get the URL resolver for the current Django app
+    # from django.urls import get_resolver
+    # resolver = get_resolver()
+    #
+    # # Get all URL patterns
+    # url_patterns = resolver.url_patterns
+    #
+    # # Print all patterns and namespaces
+    # print_patterns(url_patterns)
+
+    for pattern in patterns:
+        if hasattr(pattern, "url_patterns"):
+            # It's a URL pattern group, so recurse
+            new_namespace = (
+                namespace + pattern.namespace + ":" if pattern.namespace else ""
+            )
+            print_patterns(pattern.url_patterns, new_namespace)
+        elif hasattr(pattern, "callback") and hasattr(pattern.callback, "__name__"):
+            # It's a URL patter
+            print(
+                f"pattern: {pattern.pattern} name: {pattern.name}  namespace: "
+                f"{namespace}  view.name: {pattern.callback.__name__}"
+            )
+
+
 def change_created_time(instance: models.Model, new_time: datetime):
     if not isinstance(new_time, datetime):
         raise ValueError(f"value {new_time} must be a datetime object!")
@@ -208,13 +241,12 @@ USD = "USD"
 
 class DbInitializer:
     def get_or_create_master_user(self) -> MasterUser:
-        master_user = (
-            MasterUser.objects.filter(name=MASTER_USER).first()
-            or MasterUser.objects.create_master_user(
-                name=MASTER_USER,
-                journal_status="disabled",
-                base_api_url=settings.BASE_API_URL,
-            )
+        master_user = MasterUser.objects.filter(
+            name=MASTER_USER
+        ).first() or MasterUser.objects.create_master_user(
+            name=MASTER_USER,
+            journal_status="disabled",
+            base_api_url=settings.BASE_API_URL,
         )
         EcosystemDefault.objects.get_or_create(master_user=master_user)
         return master_user
@@ -454,4 +486,6 @@ class DbInitializer:
         self.instrument_type = self.create_instruments_types()
         self.instruments = self.get_or_create_instruments()
         self.default_instrument = self.get_or_create_default_instrument()
-        print(f"\n-------------- db initialized, master_user={self.master_user.id} ---------------\n")
+        print(
+            f"\n-------------- db initialized, master_user={self.master_user.id} ---------------\n"
+        )

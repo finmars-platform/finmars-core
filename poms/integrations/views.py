@@ -2,7 +2,7 @@ import json
 import logging
 import time
 import traceback
-from typing import Tuple, Optional
+from typing import Any
 
 import django_filters
 from django.conf import settings
@@ -15,7 +15,6 @@ from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 from drf_yasg.utils import swagger_auto_schema
@@ -24,7 +23,6 @@ import requests
 from celery.result import AsyncResult
 
 from poms.celery_tasks.models import CeleryTask
-from poms.common.database_client import DatabaseRequestSerializer
 from poms.common.filters import (
     ByIdFilterBackend,
     CharFilter,
@@ -125,6 +123,7 @@ from poms.integrations.serializers import (
     ImportCurrencyDatabaseSerializer,
     ImportInstrumentDatabaseSerializer,
     ImportInstrumentSerializer,
+    DatabaseRequestSerializer,
     ImportUnifiedDataProviderSerializer,
     InstrumentAttributeValueMappingSerializer,
     InstrumentClassifierMappingSerializer,
@@ -148,13 +147,6 @@ from poms.integrations.serializers import (
     Strategy3MappingSerializer,
     TestCertificateSerializer,
     TransactionFileResultSerializer,
-)
-from poms.integrations.tasks import (
-    complex_transaction_csv_file_import_parallel,
-    complex_transaction_csv_file_import_validate_parallel,
-    create_currency_from_finmars_database,
-    create_counterparty_from_finmars_database,
-    create_instrument_from_finmars_database,
 )
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.system_messages.handlers import send_system_message
@@ -779,25 +771,141 @@ class TestCertificateViewSet(AbstractViewSet):
         return Response(serializer.data)
 
 
+# database import callbacks FN-1736
 class UnifiedImportDatabaseViewSet(AbstractViewSet):
     permission_classes = AbstractViewSet.permission_classes + []
+    callback_serializer_class = DatabaseRequestSerializer
+
+    def handle_callback(self, validated_data: dict) -> dict:
+        raise NotImplementedError
+
+    def error_task_response(self, e: Exception, task: CeleryTask) -> dict:
+        err_msg = (
+            f"{self.__class__.__name__} callback {repr(e)}\n {traceback.format_exc()}"
+        )
+        _l.error(err_msg)
+        task.status = CeleryTask.STATUS_ERROR
+        task.notes = err_msg
+        task.save()
+
+        return {
+            "status": "error",
+            "notes": err_msg,
+            "request_id": task.id,
+        }
+
+    def success_task_response(self, task: CeleryTask, instance: Any) -> dict:
+        task.result_object = {
+            "result_id": instance.id,
+            "name": instance.name,
+            "user_code": instance.user_code,
+            "short_name": instance.short_name,
+        }
+        task.status = CeleryTask.STATUS_DONE
+        task.save()
+
+        return {
+            "status": "ok",
+            "notes": None,
+            "request_id": task.id,
+        }
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.create_task(serializer.validated_data))
 
+    @swagger_auto_schema(
+        request_body=DatabaseRequestSerializer,
+        responses={200: "ok"},
+        operation_description="receive database info and update task",
+    )
+    @action(detail=False, methods=["post"], name="callback", url_path="callback")
+    def callback(self, request, *args, **kwargs):
+        _l.info(f"{self.__class__.__name__}.callback request.data={request.data}")
+
+        serializer = self.callback_serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(self.handle_callback(serializer.validated_data))
+
 
 class ImportInstrumentDatabaseViewSet(UnifiedImportDatabaseViewSet):
     serializer_class = ImportInstrumentDatabaseSerializer
+
+    def handle_callback(self, validated_data: dict) -> dict:
+        from poms.integrations.tasks import (
+            create_currency_from_callback_data,
+            create_instrument_from_finmars_database,
+        )
+
+        task = validated_data["task"]
+        data = validated_data["data"]
+        if not ("instruments" in data and "currencies" in data):
+            err_msg = "no 'instruments' or 'currencies' in request.data"
+            raise ValidationError(err_msg)
+
+        try:
+            create_currency_from_callback_data(
+                data["currencies"][0],
+                task.master_user,
+                task.member,
+            )
+
+            instrument = create_instrument_from_finmars_database(
+                data["instruments"][0],
+                task.master_user,
+                task.member,
+            )
+
+        except Exception as e:
+            return self.error_task_response(e, task)
+
+        else:
+            return self.success_task_response(task, instrument)
 
 
 class ImportCurrencyDatabaseViewSet(UnifiedImportDatabaseViewSet):
     serializer_class = ImportCurrencyDatabaseSerializer
 
+    def handle_callback(self, validated_data: dict) -> dict:
+        from poms.integrations.tasks import create_currency_from_callback_data
+
+        task = validated_data["task"]
+        data = validated_data["data"]
+        try:
+            currency = create_currency_from_callback_data(
+                data,
+                task.master_user,
+                task.member,
+            )
+
+        except Exception as e:
+            return self.error_task_response(e, task)
+
+        else:
+            return self.success_task_response(task, currency)
+
 
 class ImportCompanyDatabaseViewSet(UnifiedImportDatabaseViewSet):
     serializer_class = ImportCompanyDatabaseSerializer
+
+    def handle_callback(self, validated_data: dict) -> dict:
+        from poms.integrations.tasks import create_counterparty_from_callback_data
+
+        task = validated_data["task"]
+        data = validated_data["data"]
+        try:
+            company = create_counterparty_from_callback_data(
+                data,
+                task.master_user,
+                task.member,
+            )
+
+        except Exception as e:
+            return self.error_task_response(e, task)
+
+        else:
+            return self.success_task_response(task, company)
 
 
 # ----------------------------------------
@@ -1399,6 +1507,10 @@ class ComplexTransactionCsvFileImportValidateViewSet(AbstractAsyncViewSet):
             )
 
     def create(self, request, *args, **kwargs):
+        from poms.integrations.tasks import (
+            complex_transaction_csv_file_import_validate_parallel,
+        )
+
         st = time.perf_counter()
 
         serializer = self.get_serializer(data=request.data)
@@ -1473,6 +1585,10 @@ class TransactionImportJson(APIView):
         return Response({"status": "ok"})
 
     def post(self, request):
+        from poms.integrations.tasks import (
+            complex_transaction_csv_file_import_parallel,
+        )
+
         # _l.debug('request.data %s' % request.data)
 
         _l.debug("request.data %s" % request.data)
@@ -1670,161 +1786,158 @@ class SupersetGetSecurityToken(APIView):
         return Response(response_json)
 
 
-class DataBaseCallBackView(APIView):
-    permission_classes = []
-
-    def update_task_status(self, task: CeleryTask, new_status: str, notes=None):
-        task.status = new_status
-        if notes:
-            task.notes = notes
-        task.save()
-
-    def error_task_and_response(self, task: CeleryTask, err_msg: str) -> Response:
-        _l.error(f"{self.__class__.__name__} {err_msg}")
-        if task:
-            self.update_task_status(task, CeleryTask.STATUS_ERROR, notes=err_msg)
-
-        # TODO In case of ERROR, CANCEL, TIMEOUT we should provide
-        # same object from Instruem
-        # task.result_object = {
-        #     "result_id": item.id,
-        #     "name": item.name,
-        #     "user_code": item.user_code,
-        #     "short_name": item.short_name,
-        # }
-
-        return Response(
-            {"status": "error", "message": err_msg},
-            status=HTTP_400_BAD_REQUEST,
-        )
-
-    def success_task_and_response(self, task: CeleryTask, item) -> Response:
-        _l.info(f"{self.__class__.__name__} created result_id={str(item)}")
-
-        task.result_object = {
-            "result_id": item.id,
-            "name": item.name,
-            "user_code": item.user_code,
-            "short_name": item.short_name,
-        }
-        self.update_task_status(task, CeleryTask.STATUS_DONE)
-
-        return Response(
-            {"status": "ok"},
-            status=HTTP_200_OK,
-        )
-
-    def validate_post_data(
-        self,
-        request_data: dict,
-    ) -> Tuple[Optional["CeleryTask"], Optional[str]]:
-        """
-        Check if data contains request_id, data, and there is task with id=request_id
-        """
-        _l.info(f"{self.__class__.__name__}.validate request.data={request_data}")
-
-        serializer = DatabaseRequestSerializer(data=request_data)
-        if serializer.is_valid():
-            task = CeleryTask.objects.get(id=serializer.validated_data["request_id"])
-            return task, None
-
-        return None, str(serializer.errors)
-
-    def get(self, request):
-        _l.info(f"{self.__class__.__name__}.get")
-        return Response({"its": "ok"})  # for debugging
-
-
-class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
-
-    @swagger_auto_schema(
-        request_body=DatabaseRequestSerializer,
-        responses={200: "ok"},
-        operation_description="receive database info and update instrument's task",
-    )
-    def post(self, request):
-        request_data = request.data
-        task, err_msg = self.validate_post_data(request_data=request_data)
-        if err_msg:
-            return self.error_task_and_response(task, err_msg)
-
-        data = request_data["data"]
-        if not ("instruments" in data and "currencies" in data):
-            err_msg = "no 'instruments' or 'currencies' in request.data"
-            return self.error_task_and_response(task, err_msg)
-
-        try:
-            create_currency_from_finmars_database(
-                data["currencies"][0],
-                task.master_user,
-                task.member,
-            )
-
-            instrument = create_instrument_from_finmars_database(
-                data["instruments"][0],
-                task.master_user,
-                task.member,
-            )
-
-        except Exception as e:
-            err_msg = f"{repr(e)}\n {traceback.format_exc()}"
-            return self.error_task_and_response(task, err_msg)
-
-        else:
-            return self.success_task_and_response(task, instrument)
-
-
-class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
-
-    @swagger_auto_schema(
-        request_body=DatabaseRequestSerializer,
-        responses={200: "ok"},
-        operation_description="receive database info and update currency's task",
-    )
-    def post(self, request):
-        data = request.data
-        task, error_dict = self.validate_post_data(request_data=data)
-        if error_dict:
-            return self.error_task_and_response(task, error_dict)
-
-        try:
-            currency = create_currency_from_finmars_database(
-                data["data"],
-                task.master_user,
-                task.member,
-            )
-
-        except Exception as e:
-            err_msg = f"{repr(e)}\n {traceback.format_exc()}"
-            return self.error_task_and_response(task, err_msg)
-
-        else:
-            return self.success_task_and_response(task, currency)
-
-
-class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
-
-    @swagger_auto_schema(
-        request_body=DatabaseRequestSerializer,
-        responses={200: "ok"},
-        operation_description="receive database info and update company's task",
-    )
-    def post(self, request):
-        data = request.data
-        task, err_msg = self.validate_post_data(request_data=data)
-        if err_msg:
-            return self.error_task_and_response(task, err_msg)
-
-        try:
-            company = create_counterparty_from_finmars_database(
-                data["data"],
-                task.master_user,
-                task.member,
-            )
-
-        except Exception as e:
-            err_msg = f"{repr(e)}\n {traceback.format_exc()}"
-            return self.error_task_and_response(task, err_msg)
-
-        else:
-            return self.success_task_and_response(task, company)
+# class DataBaseCallBackView(APIView):
+#     permission_classes = []
+#
+#     def update_task_status(self, task: CeleryTask, new_status: str, notes=None):
+#         task.status = new_status
+#         if notes:
+#             task.notes = notes
+#         task.save()
+#
+#     def error_task_and_response(self, task: CeleryTask, err_msg: str) -> Response:
+#         _l.error(f"{self.__class__.__name__} {err_msg}")
+#         if task:
+#             self.update_task_status(task, CeleryTask.STATUS_ERROR, notes=err_msg)
+#
+#         # TODO In case of ERROR, CANCEL, TIMEOUT we should provide
+#         # same object from Instruem
+#         # task.result_object = {
+#         #     "result_id": item.id,
+#         #     "name": item.name,
+#         #     "user_code": item.user_code,
+#         #     "short_name": item.short_name,
+#         # }
+#
+#         return Response(
+#             {"status": "error", "message": err_msg},
+#             status=HTTP_400_BAD_REQUEST,
+#         )
+#
+#     def success_task_and_response(self, task: CeleryTask, item) -> Response:
+#         _l.info(f"{self.__class__.__name__} created result_id={str(item)}")
+#
+#         task.result_object = {
+#             "result_id": item.id,
+#             "name": item.name,
+#             "user_code": item.user_code,
+#             "short_name": item.short_name,
+#         }
+#         self.update_task_status(task, CeleryTask.STATUS_DONE)
+#
+#         return Response(
+#             {"status": "ok"},
+#             status=HTTP_200_OK,
+#         )
+#
+#     def validate_post_data(
+#         self,
+#         request_data: dict,
+#     ) -> Tuple[Optional["CeleryTask"], Optional[str]]:
+#         """
+#         Check if data contains request_id, data, and there is task with id=request_id
+#         """
+#         _l.info(f"{self.__class__.__name__}.validate request.data={request_data}")
+#
+#         serializer = DatabaseRequestSerializer(data=request_data)
+#         if serializer.is_valid():
+#             task = CeleryTask.objects.get(id=serializer.validated_data["request_id"])
+#             return task, None
+#
+#         return None, str(serializer.errors)
+#
+#     def get(self, request):
+#         _l.info(f"{self.__class__.__name__}.get")
+#         return Response({"its": "ok"})  # for debugging
+#
+#
+# class InstrumentDataBaseCallBackViewSet(DataBaseCallBackView):
+#     @swagger_auto_schema(
+#         request_body=DatabaseRequestSerializer,
+#         responses={200: "ok"},
+#         operation_description="receive database info and update instrument's task",
+#     )
+#     def post(self, request):
+#         request_data = request.data
+#         task, err_msg = self.validate_post_data(request_data=request_data)
+#         if err_msg:
+#             return self.error_task_and_response(task, err_msg)
+#
+#         data = request_data["data"]
+#         if not ("instruments" in data and "currencies" in data):
+#             err_msg = "no 'instruments' or 'currencies' in request.data"
+#             return self.error_task_and_response(task, err_msg)
+#
+#         try:
+#             create_currency_from_finmars_database(
+#                 data["currencies"][0],
+#                 task.master_user,
+#                 task.member,
+#             )
+#
+#             instrument = create_instrument_from_finmars_database(
+#                 data["instruments"][0],
+#                 task.master_user,
+#                 task.member,
+#             )
+#
+#         except Exception as e:
+#             err_msg = f"{repr(e)}\n {traceback.format_exc()}"
+#             return self.error_task_and_response(task, err_msg)
+#
+#         else:
+#             return self.success_task_and_response(task, instrument)
+#
+#
+# class CurrencyDataBaseCallBackViewSet(DataBaseCallBackView):
+#     @swagger_auto_schema(
+#         request_body=DatabaseRequestSerializer,
+#         responses={200: "ok"},
+#         operation_description="receive database info and update currency's task",
+#     )
+#     def post(self, request):
+#         data = request.data
+#         task, error_dict = self.validate_post_data(request_data=data)
+#         if error_dict:
+#             return self.error_task_and_response(task, error_dict)
+#
+#         try:
+#             currency = create_currency_from_finmars_database(
+#                 data["data"],
+#                 task.master_user,
+#                 task.member,
+#             )
+#
+#         except Exception as e:
+#             err_msg = f"{repr(e)}\n {traceback.format_exc()}"
+#             return self.error_task_and_response(task, err_msg)
+#
+#         else:
+#             return self.success_task_and_response(task, currency)
+#
+#
+# class CompanyDataBaseCallBackViewSet(DataBaseCallBackView):
+#     @swagger_auto_schema(
+#         request_body=DatabaseRequestSerializer,
+#         responses={200: "ok"},
+#         operation_description="receive database info and update company's task",
+#     )
+#     def post(self, request):
+#         data = request.data
+#         task, err_msg = self.validate_post_data(request_data=data)
+#         if err_msg:
+#             return self.error_task_and_response(task, err_msg)
+#
+#         try:
+#             company = create_counterparty_from_finmars_database(
+#                 data["data"],
+#                 task.master_user,
+#                 task.member,
+#             )
+#
+#         except Exception as e:
+#             err_msg = f"{repr(e)}\n {traceback.format_exc()}"
+#             return self.error_task_and_response(task, err_msg)
+#
+#         else:
+#             return self.success_task_and_response(task, company)

@@ -1,9 +1,9 @@
 from unittest import mock
 
 from poms.common.common_base_test import BaseTestCase
-from poms.common.database_client import DatabaseService
+from poms.integrations.database_client import DatabaseService
 from poms.common.http_client import HttpClientError
-from poms.common.monad import Monad, MonadStatus
+from poms.integrations.monad import Monad, MonadStatus
 from poms.celery_tasks.models import CeleryTask
 
 
@@ -39,7 +39,7 @@ class DatabaseClientTest(BaseTestCase):
 
         monad: Monad = self.service.get_monad("instrument", request_data)
 
-        self.assertEqual(monad.status, MonadStatus.TASK_READY)
+        self.assertEqual(monad.status, MonadStatus.TASK_CREATED)
         self.assertEqual(monad.task_id, request_data["task_id"])
 
     @BaseTestCase.cases(

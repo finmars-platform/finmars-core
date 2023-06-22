@@ -2,54 +2,32 @@ import logging
 import traceback
 
 from django.conf import settings
-from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
-
+from django.urls import reverse
 from poms.common.http_client import HttpClient, HttpClientError
-from poms.common.monad import Monad, MonadStatus
-from poms.celery_tasks.models import CeleryTask
+from poms.integrations.monad import Monad, MonadStatus
+from poms.integrations.serializers import DatabaseRequestSerializer
 
 _l = logging.getLogger("default")
 log = "DatabaseClient"
 
-BACKEND_URL = f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
-COMMON_PART = "api/v1/import/finmars-database"
 BACKEND_CALLBACK_URLS = {
-    "instrument": f"{BACKEND_URL}/{COMMON_PART}/instrument/callback/",
-    "currency": f"{BACKEND_URL}/{COMMON_PART}/currency/callback/",
-    "company": f"{BACKEND_URL}/{COMMON_PART}/company/callback/",
+    "instrument": reverse("import_instrument_database-callback"),
+    "currency": reverse("import_currency_database-callback"),
+    "company": reverse("import_company_database-callback"),
 }
 
-V1 = "api/v1/"
+V1 = "api/v1"
 FINMARS_DATABASE_URLS = {
     "currency": f"{settings.FINMARS_DATABASE_URL}{V1}/export/currency",
-    "instrument": f"{settings.FINMARS_DATABASE_URL}{V1}export/instrument",
-    "company": f"{settings.FINMARS_DATABASE_URL}{V1}export/company",
+    "instrument": f"{settings.FINMARS_DATABASE_URL}{V1}/export/instrument",
+    "company": f"{settings.FINMARS_DATABASE_URL}{V1}/export/company",
 }
-
-
-
-class DatabaseRequestSerializer(serializers.Serializer):
-    request_id = serializers.IntegerField(required=True, min_value=1)
-    task_id = serializers.IntegerField(required=True, allow_null=True)
-    data = serializers.DictField(required=True, allow_null=True)
-
-    def validate(self, attrs: dict) -> dict:
-        if (attrs["task_id"] is None) and (attrs["data"] is None):
-            err_msg = "data & task_id can't be both null"
-            raise ValidationError({"task_id": "null", "data": "null"}, err_msg)
-
-        if not CeleryTask.objects.filter(id=attrs["request_id"]).first():
-            err_msg = f"no celery task with id={attrs['request_id']}"
-            raise ValidationError({"request_id": "invalid"}, err_msg)
-
-        return attrs
 
 
 class DatabaseMonadSerializer(DatabaseRequestSerializer):
     def create_good_monad(self) -> Monad:
         task_id = self.validated_data["task_id"]
-        status = MonadStatus.TASK_READY if task_id else MonadStatus.DATA_READY
+        status = MonadStatus.TASK_CREATED if task_id else MonadStatus.DATA_READY
         return Monad(
             status=status,
             task_id=task_id,
@@ -77,7 +55,6 @@ class DatabaseService:
 
         if (service_name not in FINMARS_DATABASE_URLS) or not request_options:
             raise RuntimeError(f"{log}.get_monad invalid args!")
-
         try:
             response_json = self.http_client.post(
                 url=FINMARS_DATABASE_URLS[service_name],

@@ -1,6 +1,6 @@
 from poms.common.common_base_test import BaseTestCase
-from poms.common.common_callback_test import CallbackSetTestMixin
-from poms.common.database_client import BACKEND_CALLBACK_URLS
+from poms.integrations.tests.common_callback_test import CallbackSetTestMixin
+from poms.integrations.database_client import BACKEND_CALLBACK_URLS
 
 from poms.currencies.models import Currency
 
@@ -13,7 +13,6 @@ class CallbackCurrencyViewSetTest(CallbackSetTestMixin, BaseTestCase):
             name="Import Currency From Finmars Database",
             func="import_currency_finmars_database",
         )
-
         self.url = BACKEND_CALLBACK_URLS["currency"]
 
     def test__currency_created(self):
@@ -22,10 +21,10 @@ class CallbackCurrencyViewSetTest(CallbackSetTestMixin, BaseTestCase):
             "request_id": self.task.id,
             "task_id": None,
             "data": {
+                "id": self.random_int(),
                 "user_code": user_code,
                 "short_name": f"short_{user_code}",
                 "name": f"name_{user_code}",
-                "public_name": f"public_{user_code}",
             },
         }
         response = self.client.post(path=self.url, format="json", data=post_data)
@@ -35,4 +34,9 @@ class CallbackCurrencyViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(response_json["status"], "ok", response_json)
         self.assertNotIn("message", response_json)
 
-        self.assertIsNotNone(Currency.objects.filter(user_code=user_code).first())
+        self.assertIsNotNone(
+            currency := Currency.objects.filter(user_code=user_code).first()
+        )
+        self.assertEqual(currency.user_code, user_code)
+        self.assertEqual(currency.short_name, f"short_{user_code}")
+        self.assertEqual(currency.name, f"name_{user_code}")

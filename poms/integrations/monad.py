@@ -12,7 +12,7 @@ from dataclasses import dataclass
 class MonadStatus:
     UNCOMPLETED = "uncompleted"
     DATA_READY = "data_ready"
-    TASK_READY = "task_ready"
+    TASK_CREATED = "task_created"
     ERROR = "error"
 
 
