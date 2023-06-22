@@ -412,7 +412,7 @@ class BootstrapConfig(AppConfig):
 
                 options_object = {
                     'configuration_code': "com.finmars.initial",
-                    'version': "1.0.0",
+                    'version': "1.0.1",
                     'is_package': True,
                     # "access_token": get_access_token(request) TODO Implement when keycloak refactored
                     # TODO check this later, important security thins, need to be destroyed inside task
