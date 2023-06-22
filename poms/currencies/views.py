@@ -7,10 +7,8 @@ from django_filters.rest_framework import FilterSet
 # from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.views import APIView
 from rest_framework import status
 
-from poms.common.database_client import DatabaseService
 from poms.common.filters import (
     AttributeFilter,
     CharFilter,
@@ -19,13 +17,10 @@ from poms.common.filters import (
     ModelExtMultipleChoiceFilter,
     NoOpFilter,
 )
-from poms.common.monad import Monad, MonadStatus
 from poms.common.views import AbstractModelViewSet
 from poms.currencies.filters import OwnerByCurrencyFilter
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.currencies.serializers import (
-    CurrencyDatabaseSearchRequestSerializer,
-    CurrencyDatabaseSearchResponseSerializer,
     CurrencyHistorySerializer,
     CurrencyLightSerializer,
     CurrencySerializer,

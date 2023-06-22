@@ -37,11 +37,11 @@ from poms.celery_tasks.models import CeleryTask
 from poms.expressions_engine import formula
 from poms.common.crypto.AESCipher import AESCipher
 from poms.common.crypto.RSACipher import RSACipher
-from poms.common.database_client import DatabaseService, BACKEND_CALLBACK_URLS
+from poms.integrations.database_client import DatabaseService, BACKEND_CALLBACK_URLS
 from poms.expressions_engine.formula import ExpressionEvalError
 from poms.common.jwt import encode_with_jwt
 from poms.common.models import ProxyRequest, ProxyUser
-from poms.common.monad import Monad, MonadStatus
+from poms.integrations.monad import Monad, MonadStatus
 from poms.common.storage import get_storage
 from poms.counterparties.models import Counterparty, Responsible
 from poms.counterparties.serializers import CounterpartySerializer
@@ -195,9 +195,7 @@ def update_task_with_error(task: CeleryTask, err_msg: str):
     task.save()
 
 
-def update_task_with_instrument_id(
-    instrument: Instrument, task: CeleryTask, new_status: str = CeleryTask.STATUS_DONE
-):
+def task_done_with_instrument_info(instrument: Instrument, task: CeleryTask):
     if not instrument or not task:
         _l.error(
             f"update_task_with_instrument error: missing task={task} or "
@@ -206,9 +204,12 @@ def update_task_with_instrument_id(
         return
 
     result = task.result_object or {}
-    result["instrument_id"] = instrument.pk
+    result["result_id"] = instrument.pk
+    result["name"] = instrument.name
+    result["short_name"] = instrument.short_name
+    result["user_code"] = instrument.user_code
     task.result_object = result
-    task.status = new_status
+    task.status = CeleryTask.STATUS_DONE
     task.save()
 
 
@@ -361,7 +362,7 @@ def create_instrument_from_finmars_database(data, master_user, member):
     }
     short_type = instrument_data["instrument_type"]["user_code"]
     try:
-        # TODO remove stocks ASAP as configuration ready
+        # remove stocks ASAP as configuration ready
         if short_type in {"stocks", "stock"}:
             if (
                 "default_exchange" in instrument_data
@@ -401,11 +402,11 @@ def create_instrument_from_finmars_database(data, master_user, member):
                     "default_currency_code"
                 ]
 
-        instrument_type_user_code = f"{TYPE_PREFIX}{short_type}"
+        instrument_type_user_code_full = f"{TYPE_PREFIX}{short_type}"
         try:
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
-                user_code=instrument_type_user_code,
+                user_code=instrument_type_user_code_full,
                 # user_code__contains=short_type,  # FOR DEBUG ONLY!
             )
         except InstrumentType.DoesNotExist as e:
@@ -414,7 +415,7 @@ def create_instrument_from_finmars_database(data, master_user, member):
             # )  # FOR DEBUG ONLY!
             # err_msg = f"{func} No InstrumentType user_code={short_type} all={all_types}"
 
-            err_msg = f"{func} No InstrumentType user_code={instrument_type_user_code}"
+            err_msg = f"{func} no such InstrumentType user_code={instrument_type_user_code_full}"
             _l.error(err_msg)
             raise RuntimeError(err_msg) from e
 
@@ -726,7 +727,7 @@ def download_instrument_cbond(
 
                 instrument.save()
 
-                update_task_with_instrument_id(instrument, task)
+                task_done_with_instrument_info(instrument, task)
             return task, errors
 
         except Exception as e:
@@ -750,7 +751,7 @@ def download_instrument_cbond(
                 if "currencies" in data:
                     for item in data["currencies"]:
                         if item:
-                            create_currency_from_finmars_database(
+                            create_currency_from_callback_data(
                                 item, master_user, member
                             )
 
@@ -771,7 +772,7 @@ def download_instrument_cbond(
                 instrument = create_instrument_cbond(data["data"], master_user, member)
                 result_instrument = instrument
 
-            update_task_with_instrument_id(result_instrument, task)
+            task_done_with_instrument_info(result_instrument, task)
 
         except Exception as e:
             errors.append(f"Could not create instrument. {str(e)}")
@@ -834,7 +835,7 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
             _l.info(f"settings.CBONDS_BROKER_URL {settings.CBONDS_BROKER_URL}")
 
             try:
-                # TODO refactor to /export/currency when available
+                # refactor to /export/currency when available
                 response = requests.get(
                     url=f"{str(settings.CBONDS_BROKER_URL)}instr/currency/{currency_code}",
                     headers=headers,
@@ -854,9 +855,7 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
                 return task, errors
 
             try:
-                currency = create_currency_from_finmars_database(
-                    data, master_user, member
-                )
+                currency = create_currency_from_callback_data(data, master_user, member)
 
                 # if 'items' in data['data']:
                 #
@@ -911,8 +910,7 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
         )
     except InstrumentType.DoesNotExist:
         err_msg = (
-            f"{func} now such instrument_type={instrument_type_user_code_full}"
-            f" create instrument with ecosystem.default type"
+            f"{func} no such InstrumentType user_code={instrument_type_user_code_full}"
         )
         return task_error(err_msg, task)
 
@@ -936,7 +934,6 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
     instrument = serializer.save()
     _l.info(f"{func} created instrument.id={instrument.id}")
     return instrument
-
 
 
 @shared_task(
@@ -4395,9 +4392,7 @@ def complex_transaction_csv_file_import_by_procedure_json(
         procedure_instance.save()
 
 
-def create_counterparty_from_finmars_database(
-    data, master_user, member
-) -> Counterparty:
+def create_counterparty_from_callback_data(data, master_user, member) -> Counterparty:
     from poms.counterparties.serializers import CounterpartySerializer
     from poms.counterparties.models import CounterpartyGroup
 
@@ -4407,13 +4402,15 @@ def create_counterparty_from_finmars_database(
     group = CounterpartyGroup.objects.get(master_user=master_user, user_code="-")
     context = {"request": proxy_request}
     company_data = {
-        "user_code": data["code"],
-        "name": data["name"],
-        "short_name": data["short_name"],
+        "user_code": data.get("user_code"),
+        "name": data.get("name"),
+        "short_name": data.get("short_name"),
+        "public_name": data.get("public_name"),
+        "notes": data.get("notes"),
         "group": group.id,
     }
 
-    _l.info(f"{func} company_data={company_data}")
+    _l.info(f"{func} started, company_data={company_data}")
 
     try:
         instance = Counterparty.objects.get(
@@ -4445,45 +4442,22 @@ def create_counterparty_from_finmars_database(
         raise Exception(serializer.errors)
 
 
-def create_currency_from_finmars_database(data, master_user, member) -> Currency:
+def create_currency_from_callback_data(data, master_user, member) -> Currency:
     from poms.currencies.serializers import CurrencySerializer
 
     func = "create_currency_from_finmars_database"
+
     proxy_user = ProxyUser(member, master_user)
     proxy_request = ProxyRequest(proxy_user)
     context = {"master_user": master_user, "request": proxy_request}
     currency_data = {
-        "user_code": data["user_code"],
-        "name": data["name"],
-        "short_name": data["short_name"],
-        "public_name": data["public_name"],
+        "user_code": data.get("user_code"),
+        "name": data.get("name"),
+        "short_name": data.get("short_name"),
         "pricing_condition": PricingCondition.NO_VALUATION,
     }
 
     _l.info(f"{func} currency_data={currency_data}")
-
-    # ecosystem_defaults = EcosystemDefault.objects.get(master_user=master_user)
-    # content_type = ContentType.objects.get(model="currency", app_label="currencies")
-    # for key, value in data.items():
-    #
-    #     if key == 'attributes':
-    #
-    #         for attr_key, attr_value in data['attributes'].items():
-    #
-    #             if attr_value == 'null':
-    #                 currency_data[attr_key] = None
-    #             else:
-    #                 currency_data[attr_key] = attr_value
-    #
-    #     else:
-    #
-    #         if value == 'null':
-    #             currency_data[key] = None
-    #         else:
-    #             currency_data[key] = value
-    # attribute_types = GenericAttributeType.objects.filter(
-    #     master_user=master_user, content_type=content_type
-    # )
 
     try:
         instance = Currency.objects.get(
@@ -4521,65 +4495,40 @@ def create_currency_from_finmars_database(data, master_user, member) -> Currency
 
 
 def update_task_with_instrument_data(data: dict, task: CeleryTask):
-    result_instrument = None
-    options = task.options_object
     func = f"update_task_with_instrument_data, task.id={task.id}"
-    _l.info(f"{func} started...")
 
-    if "instruments" in data["data"]:
-        _l.info(f"{func} instruments in data")
+    _l.info(f"{func} started, data={data}")
 
-        if "currencies" in data["data"] and data["data"]["currencies"]:
-            for item in data["data"]["currencies"]:
-                if item:
-                    create_currency_from_finmars_database(
-                        item, task.master_user, task.member
-                    )
-
-        for item in data["data"]["instruments"]:
-            instrument = create_instrument_from_finmars_database(
-                item, task.master_user, task.member
-            )
-
-            if instrument.user_code == options["reference"]:
-                result_instrument = instrument
-
-    elif "items" in data["data"]:
-        _l.info(f"{func} items in data")
-
-        for item in data["data"]["items"]:
-            instrument = create_instrument_from_finmars_database(
-                item, task.master_user, task.member
-            )
-
-            if instrument.user_code == options["reference"]:
-                result_instrument = instrument
-
-    else:
-        _l.info(f"{func} create instrument from data")
-
-        instrument = create_instrument_from_finmars_database(
-            data["data"],
+    try:
+        create_currency_from_callback_data(
+            data["currencies"][0],
             task.master_user,
             task.member,
         )
-        result_instrument = instrument
+        instrument = create_instrument_from_finmars_database(
+            data["instruments"][0],
+            task.master_user,
+            task.member,
+        )
 
-    update_task_with_instrument_id(
-        result_instrument,
-        task,
-        new_status=CeleryTask.STATUS_DONE,
-    )
+    except Exception as e:
+        err_msg = f"{func} unexpected {repr(e)}"
+        _l.error(err_msg)
+        task.status = CeleryTask.STATUS_ERROR
+        task.error_message = err_msg
+        task.save()
+
+    else:
+        task_done_with_instrument_info(instrument, task)
 
 
 def update_task_with_simple_instrument(remote_task_id: int, task: CeleryTask):
     result = task.result_object or {}
-    result["task_id"] = remote_task_id
+    result["remote_task_id"] = remote_task_id
 
     instrument = create_simple_instrument(task)
 
     if instrument:
-        # result["instrument_id"] = instrument.pk
         result["result_id"] = instrument.pk
         result["name"] = instrument.name
         result["short_name"] = instrument.short_name
@@ -4593,50 +4542,44 @@ def update_task_with_simple_instrument(remote_task_id: int, task: CeleryTask):
     task.save()
 
 
-def update_task_with_currency_data(data: dict, task: CeleryTask):
-    func = "update_task_with_currency_data"
+def update_task_with_currency_data(currency_data: dict, task: CeleryTask):
+    func = f"update_task_with_currency_data, task.id={task.id}"
+
+    _l.info(f"{func} company_data={currency_data}")
+
     try:
-        currency_data = data["data"]
-
-        _l.info(f"{func} company_data={currency_data}")
-
-        currency = create_currency_from_finmars_database(
+        currency = create_currency_from_callback_data(
             currency_data, task.master_user, task.member
         )
         result = task.result_object
-        result["currency_id"] = currency.id
+        result["result_id"] = currency.id
         task.result_object = result
         task.status = CeleryTask.STATUS_DONE
         task.save()
+
     except Exception as e:
         err_msg = f"{func} unexpected {repr(e)}"
         update_task_with_error(task, err_msg)
 
 
-def update_task_with_company_data(data: dict, task: CeleryTask):
-    func = "update_task_with_company_data"
+def update_task_with_company_data(company_data: dict, task: CeleryTask):
+    func = f"update_task_with_company_data, task.id={task.id}"
+
+    _l.info(f"{func} task.id={task.id} company_data={company_data}")
+
     try:
-        company_data = data["data"]
-
-        _l.info(f"{func} company_data={company_data}")
-
-        company = create_counterparty_from_finmars_database(
+        company = create_counterparty_from_callback_data(
             company_data, task.master_user, task.member
         )
         result = task.result_object
-        result["company_id"] = company.id
+        result["result_id"] = company.id
         task.result_object = result
         task.status = CeleryTask.STATUS_DONE
         task.save()
+
     except Exception as e:
         err_msg = f"{func} unexpected {repr(e)}"
         update_task_with_error(task, err_msg)
-
-
-def update_task_with_remote_id(remote_task_id: int, task: CeleryTask):
-    task.result_object = {"task_id": remote_task_id}
-    task.status = CeleryTask.STATUS_PENDING
-    task.save()
 
 
 def import_from_database_task(task_id: int, operation: str):
@@ -4676,12 +4619,12 @@ def import_from_database_task(task_id: int, operation: str):
             if operation == "instrument":
                 update_task_with_instrument_data(data=monad.data, task=task)
             elif operation == "currency":
-                update_task_with_currency_data(data=monad.data, task=task)
+                update_task_with_currency_data(currency_data=monad.data, task=task)
             else:  # operation == "company":
-                update_task_with_company_data(data=monad.data, task=task)
+                update_task_with_company_data(company_data=monad.data, task=task)
 
-        elif monad.status == MonadStatus.TASK_READY:
-            _l.info(f"{func} received task_id={monad.task_id}")
+        elif monad.status == MonadStatus.TASK_CREATED:
+            _l.info(f"{func} received remote task_id={monad.task_id}")
 
             if operation == "instrument":
                 update_task_with_simple_instrument(
@@ -4689,10 +4632,10 @@ def import_from_database_task(task_id: int, operation: str):
                     task=task,
                 )
             else:  # operation == "company" or "currency":
-                update_task_with_remote_id(
-                    remote_task_id=monad.task_id,
-                    task=task,
-                )
+                result = task.result_object
+                result["remote_task_id"] = monad.task_id
+                task.result_object = result
+                task.save()
 
         else:
             err_msg = f"{func} received error={monad.message}"
@@ -4731,3 +4674,30 @@ def import_company_finmars_database(task_id: int):
 def download_company_finmars_database_async(self, task_id):
     _l.info(f"download_company_finmars_database_async {task_id}")
     import_company_finmars_database(task_id)
+
+
+FINAL_STATUSES = {
+    CeleryTask.STATUS_DONE,
+    CeleryTask.STATUS_ERROR,
+    CeleryTask.STATUS_TIMEOUT,
+    CeleryTask.STATUS_CANCELED,
+    CeleryTask.STATUS_TRANSACTIONS_ABORTED,
+}
+
+
+@shared_task(name="integrations.ttl_finisher")
+def ttl_finisher(task_id: int):
+    func = f"ttl_finisher for task.id={task_id}"
+
+    task = CeleryTask.objects.filter(id=task_id).first()
+    if not task:
+        _l.error(f"{func} no such task!")
+        return
+
+    if task.status not in FINAL_STATUSES:
+        task.status = CeleryTask.STATUS_TIMEOUT
+        task.save()
+        _l.warning(f"{func} ttl={task.ttl} expired, new status={task.status}!")
+        return
+
+    _l.info(f"{func} no action required, status={task.status}")

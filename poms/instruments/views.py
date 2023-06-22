@@ -47,7 +47,6 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
     only_generate_events_at_date, \
     generate_events_do_not_inform_apply_default, only_generate_events_at_date_for_single_instrument
-from poms.integrations.tasks import create_currency_from_finmars_database, create_instrument_cbond
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
@@ -1048,6 +1047,10 @@ class InstrumentFDBCreateFromCallbackViewSet(APIView):
         return Response({'ok'})
 
     def post(self, request):
+        from poms.integrations.tasks import (
+            create_currency_from_callback_data,
+            create_instrument_cbond,
+        )
 
         try:
 
@@ -1069,7 +1072,7 @@ class InstrumentFDBCreateFromCallbackViewSet(APIView):
                 if 'currencies' in data:
                     for item in data['currencies']:
                         if item:
-                            currency = create_currency_from_finmars_database(item, task.master_user, task.member)
+                            currency = create_currency_from_callback_data(item, task.master_user, task.member)
 
                 for item in data['instruments']:
                     instrument = create_instrument_cbond(item, task.master_user, task.member)
