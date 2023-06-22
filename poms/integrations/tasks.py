@@ -4533,7 +4533,7 @@ def update_task_with_simple_instrument(remote_task_id: int, task: CeleryTask):
         result["name"] = instrument.name
         result["short_name"] = instrument.short_name
         result["user_code"] = instrument.user_code
-        # task.status = CeleryTask.STATUS_DONE # Important, task still in pending
+        # Important: Do not change status, task still in pending
 
     else:
         task.status = CeleryTask.STATUS_ERROR
