@@ -6,7 +6,7 @@ from poms_app import settings
 class FinmarsVault():
 
     def __init__(self):
-        self.vault_host = 'https://' + settings.DOMAIN_NAME + ':8200' + '/' + settings.BASE_API_URL + '/vault'
+        self.vault_host = 'https://' + settings.DOMAIN_NAME + '/' + settings.BASE_API_URL + '/vault'
         self.auth_token = settings.VAULT_TOKEN
 
     def get_headers(self):
