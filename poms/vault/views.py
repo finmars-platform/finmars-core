@@ -39,7 +39,7 @@ class VaultSecretViewSet(AbstractViewSet):
 class VaultEngineViewSet(AbstractViewSet):
     serializer_class = VaultEngineSerializer
 
-    def list(self):
+    def list(self, request):
         finmars_vault = FinmarsVault()
 
         return finmars_vault.get_list_engines()
@@ -86,7 +86,7 @@ class VaultEngineViewSet(AbstractViewSet):
 class VaultSecretViewSet(AbstractViewSet):
     serializer_class = VaultSecretSerializer
 
-    def list(self):
+    def list(self, request):
         finmars_vault = FinmarsVault()
 
         return finmars_vault.get_list_secrets()
