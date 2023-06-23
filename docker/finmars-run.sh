@@ -3,6 +3,10 @@
 timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "[${timestamp}] Finmars initialization"
 
+if [ -z "$VAULT_KEY" ]; then
+    echo "Warning! VAULT_KEY is not set"
+fi
+
 # TODO refactor settings permissions
 #echo "set chmod 777 /var/log/finmars/"
 
