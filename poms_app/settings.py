@@ -93,6 +93,7 @@ INSTALLED_APPS = [
     "poms.schedules",
     "poms.procedures",
     "poms.credentials",
+    "poms.vault",
     "poms.system_messages",
     "poms.configuration",
     "poms.auth_tokens",

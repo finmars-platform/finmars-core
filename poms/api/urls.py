@@ -159,6 +159,7 @@ import poms.reports.urls as report_router
 import poms.procedures.urls as procedure_router
 import poms.ui.urls as ui_router
 import poms.explorer.urls as explorer_router
+import poms.vault.urls as vault_router
 import poms.integrations.urls as integrations_router
 import poms.csv_import.urls as csv_import_router
 import poms.iam.urls as iam_router
@@ -177,6 +178,7 @@ urlpatterns = [
     re_path(r'^v1/import/', include(csv_import_router.router.urls)),
     re_path(r'^v1/ui/', include(ui_router.router.urls)),
     re_path(r'^v1/explorer/', include(explorer_router.router.urls)),
+    re_path(r'^v1/vault/', include(vault_router.router.urls)),
     re_path(r'^v1/iam/', include(iam_router.router.urls)),
     re_path(r'^v1/', include(router.urls)),
 

@@ -187,6 +187,19 @@ def get_iam_documentation():
     return schema_view
 
 
+def get_vault_documentation():
+    import poms.vault.urls as vault_router
+
+    local_urlpatterns = [
+        re_path(r'^' + settings.BASE_API_URL + '/api/v1/vault/', include(vault_router.router.urls)),
+    ]
+
+    schema_view = generate_schema(local_urlpatterns)
+
+    return schema_view
+
+
+
 def render_main_page(request):
     context = {
         'space_code': settings.BASE_API_URL
@@ -209,6 +222,7 @@ def get_redoc_urlpatterns():
     explorer_schema_view = get_explorer_documentation()
     import_schema_view = get_import_documentation()
     iam_schema_view = get_iam_documentation()
+    vault_schema_view = get_vault_documentation()
 
     urlpatterns = [
 
@@ -239,6 +253,8 @@ def get_redoc_urlpatterns():
                 import_schema_view.with_ui('redoc', cache_timeout=0), name='import'),
         re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/iam',
                 iam_schema_view.with_ui('redoc', cache_timeout=0), name='iam'),
+        re_path(r'^' + settings.BASE_API_URL + '/docs/api/v1/vault',
+                vault_schema_view.with_ui('redoc', cache_timeout=0), name='vault'),
 
     ]
 
