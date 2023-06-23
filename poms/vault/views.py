@@ -141,13 +141,13 @@ class VaultSecretViewSet(AbstractViewSet):
         request_body=GetVaultSecretSerializer,
         responses={200: VaultSecretSerializer}
     )
-    @action(detail=False, methods=['post'], url_path="get", serializer_class=VaultSecretSerializer)
+    @action(detail=False, methods=['get'], url_path="get")
     def get_secret(self, request):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        engine_name = request.query_params.get('engine_name')
+        path = request.query_params.get('path')
 
-        engine_name = serializer.validated_data['engine_name']
-        path = serializer.validated_data['path']
+        if not engine_name or not path:
+            return Response({'error': 'engine_name and path are required'}, status=status.HTTP_400_BAD_REQUEST)
 
         finmars_vault = FinmarsVault()
 
