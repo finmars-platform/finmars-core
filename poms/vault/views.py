@@ -68,7 +68,7 @@ class VaultEngineViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['delete'], url_path="delete", serializer_class=VaultEngineSerializer)
+    @action(detail=False, methods=['post'], url_path="delete", serializer_class=VaultEngineSerializer)
     def delete_engine(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -157,7 +157,7 @@ class VaultSecretViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['delete'], url_path="delete", serializer_class=VaultSecretSerializer)
+    @action(detail=False, methods=['post'], url_path="delete", serializer_class=VaultSecretSerializer)
     def delete_secret(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
