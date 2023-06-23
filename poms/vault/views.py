@@ -53,7 +53,7 @@ class VaultEngineViewSet(AbstractViewSet):
             status.HTTP_500_INTERNAL_SERVER_ERROR: openapi.Response("Internal server error"),
         }
     )
-    @action(detail=False, methods=['post'], serializer_class=VaultEngineSerializer)
+    @action(detail=False, methods=['post'], url_path="create", serializer_class=VaultEngineSerializer)
     def create_engine(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -68,7 +68,7 @@ class VaultEngineViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['delete'], serializer_class=VaultEngineSerializer)
+    @action(detail=False, methods=['delete'], url_path="delete", serializer_class=VaultEngineSerializer)
     def delete_engine(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -102,7 +102,7 @@ class VaultSecretViewSet(AbstractViewSet):
             status.HTTP_500_INTERNAL_SERVER_ERROR: openapi.Response("Internal server error"),
         }
     )
-    @action(detail=False, methods=['post'], serializer_class=VaultSecretSerializer)
+    @action(detail=False, methods=['post'], url_path="create", serializer_class=VaultSecretSerializer)
     def create_secret(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -119,7 +119,7 @@ class VaultSecretViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['put'], serializer_class=VaultSecretSerializer)
+    @action(detail=False, methods=['put'], url_path="update", serializer_class=VaultSecretSerializer)
     def update_secret(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -141,7 +141,7 @@ class VaultSecretViewSet(AbstractViewSet):
         request_body=GetVaultSecretSerializer,
         responses={200: VaultSecretSerializer}
     )
-    @action(detail=False, methods=['post'], serializer_class=VaultSecretSerializer)
+    @action(detail=False, methods=['post'], url_path="get", serializer_class=VaultSecretSerializer)
     def get_secret(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -157,7 +157,7 @@ class VaultSecretViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['delete'], serializer_class=VaultSecretSerializer)
+    @action(detail=False, methods=['delete'], url_path="delete", serializer_class=VaultSecretSerializer)
     def delete_secret(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
