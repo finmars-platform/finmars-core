@@ -42,7 +42,9 @@ class VaultEngineViewSet(AbstractViewSet):
     def list(self, request):
         finmars_vault = FinmarsVault()
 
-        return finmars_vault.get_list_engines()
+        data = finmars_vault.get_list_engines()
+
+        return Response(data)
 
     @swagger_auto_schema(
         request_body=VaultEngineSerializer,
@@ -89,7 +91,9 @@ class VaultSecretViewSet(AbstractViewSet):
     def list(self, request):
         finmars_vault = FinmarsVault()
 
-        return finmars_vault.get_list_secrets()
+        data = finmars_vault.get_list_secrets()
+
+        return Response(data)
 
     @swagger_auto_schema(
         request_body=VaultSecretSerializer,
