@@ -4688,6 +4688,7 @@ FINAL_STATUSES = {
 @shared_task(name="integrations.ttl_finisher")
 def ttl_finisher(task_id: int):
     func = f"ttl_finisher for task.id={task_id}"
+    _l.info(f"{func} started")
 
     task = CeleryTask.objects.filter(id=task_id).first()
     if not task:
@@ -4700,4 +4701,4 @@ def ttl_finisher(task_id: int):
         _l.warning(f"{func} ttl={task.ttl} expired, new status={task.status}!")
         return
 
-    _l.info(f"{func} no action required, status={task.status}")
+    _l.info(f"{func} no action required, task.status={task.status}")
