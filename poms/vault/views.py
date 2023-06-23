@@ -21,7 +21,7 @@ class VaultStatusViewSet(AbstractViewSet):
 
         data = {}
 
-        if settings.VAULT_KEY:
+        if settings.VAULT_TOKEN:
             data['status'] = 'ok'
             data['text'] = 'Vault is operational for storing secrets'
         else:
