@@ -1477,7 +1477,6 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
         required=True,
         validators=[check_instrument_type],
     )
-
     task = serializers.IntegerField(required=False, allow_null=True)
     result_id = serializers.IntegerField(required=False, allow_null=True)
     errors = serializers.ReadOnlyField()
@@ -1504,7 +1503,7 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
         }
         task.result_object = {"task": task.id}
         task.save()
-        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl+1)
+        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl)
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
@@ -1549,7 +1548,7 @@ class ImportCurrencyDatabaseSerializer(serializers.Serializer):
         }
         task.result_object = {"task": task.id}
         task.save()
-        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl + 1)
+        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl)
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
@@ -1594,7 +1593,7 @@ class ImportCompanyDatabaseSerializer(serializers.Serializer):
         }
         task.result_object = {"task": task.id}
         task.save()
-        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl + 1)
+        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl)
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
