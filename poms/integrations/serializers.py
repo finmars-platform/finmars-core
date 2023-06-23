@@ -1471,12 +1471,12 @@ def check_instrument_type(instrument_type: str) -> str:
 class ImportInstrumentDatabaseSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
-    instrument_code = serializers.CharField(required=True)
-    instrument_type_code = serializers.CharField(
+    user_code = serializers.CharField(required=True)
+    name = serializers.CharField(required=False, allow_null=True)
+    instrument_type_user_code = serializers.CharField(
         required=True,
         validators=[check_instrument_type],
     )
-    instrument_name = serializers.CharField(required=False, allow_null=True)
     task = serializers.IntegerField(required=False, allow_null=True)
     result_id = serializers.IntegerField(required=False, allow_null=True)
     errors = serializers.ReadOnlyField()
@@ -1497,13 +1497,13 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
             ttl=settings.FINMARS_DATABASE_TIMEOUT,
         )
         task.options_object = {  # params expected in finmars-database view
-            "user_code": validated_data["instrument_code"],
-            "name": validated_data["instrument_name"],
-            "type_user_code": validated_data["instrument_type_code"],
+            "user_code": validated_data["user_code"],
+            "name": validated_data["name"],
+            "type_user_code": validated_data["instrument_type_user_code"],
         }
         task.result_object = {"task": task.id}
         task.save()
-        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl+1)
+        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl)
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
@@ -1523,7 +1523,7 @@ class ImportInstrumentDatabaseSerializer(serializers.Serializer):
 class ImportCurrencyDatabaseSerializer(serializers.Serializer):
     master_user = MasterUserField()
     member = HiddenMemberField()
-    currency_code = serializers.CharField(required=True)
+    user_code = serializers.CharField(required=True)
     task = serializers.IntegerField(required=False, allow_null=True)
     result_id = serializers.IntegerField(required=False, allow_null=True)
     errors = serializers.ReadOnlyField()
@@ -1544,11 +1544,11 @@ class ImportCurrencyDatabaseSerializer(serializers.Serializer):
             ttl=settings.FINMARS_DATABASE_TIMEOUT,
         )
         task.options_object = {  # params expected in finmars-database view
-            "code": validated_data["currency_code"],
+            "user_code": validated_data["user_code"],
         }
         task.result_object = {"task": task.id}
         task.save()
-        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl + 1)
+        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl)
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
@@ -1593,7 +1593,7 @@ class ImportCompanyDatabaseSerializer(serializers.Serializer):
         }
         task.result_object = {"task": task.id}
         task.save()
-        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl + 1)
+        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl)
 
         _l.info(f"{self.__class__.__name__} created task.id={task.id}")
 
