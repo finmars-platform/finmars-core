@@ -24,4 +24,3 @@ class VaultEngineSerializer(serializers.Serializer):
 
 class DeleteVaultEngineSerializer(serializers.Serializer):
     engine_name = serializers.CharField(max_length=255)
-    path = serializers.CharField(required=True, allow_null=False, allow_blank=False)
