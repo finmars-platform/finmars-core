@@ -19,8 +19,7 @@ class FinmarsVault():
         url = f"{self.vault_host}/v1/sys/mounts"
         headers = self.get_headers()
         response = requests.get(url, headers=headers)
-        engines = response.json()
-        return engines.keys()
+        return response.json()
 
     def create_engine(self, engine_name):
 
