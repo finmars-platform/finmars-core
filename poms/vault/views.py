@@ -1,14 +1,14 @@
 import logging
+
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from poms.common.views import AbstractViewSet
 from poms.vault.serializers import VaultSecretSerializer, VaultEngineSerializer, VaultStatusSerializer, \
     GetVaultSecretSerializer, DeleteVaultEngineSerializer, DeleteVaultSecretSerializer
-from rest_framework.decorators import action
-
 from poms.vault.vault import FinmarsVault
 from poms_app import settings
 
@@ -32,6 +32,7 @@ class VaultStatusViewSet(AbstractViewSet):
         serializer = VaultStatusSerializer(data)
 
         return Response(serializer.data)
+
 
 class VaultSecretViewSet(AbstractViewSet):
     serializer_class = VaultSecretSerializer
@@ -83,7 +84,6 @@ class VaultEngineViewSet(AbstractViewSet):
             return Response({"message": "Vault engine deleted successfully"}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 
 class VaultSecretViewSet(AbstractViewSet):
@@ -160,6 +160,22 @@ class VaultSecretViewSet(AbstractViewSet):
 
         try:
             result = finmars_vault.get_secret(engine_name, path, version)
+            return Response(result, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'], url_path="get-metadata", serializer_class=GetVaultSecretSerializer)
+    def get_metadata(self, request):
+        engine_name = request.query_params.get('engine_name')
+        path = request.query_params.get('path')
+
+        if not engine_name or not path:
+            return Response({'error': 'engine_name and path are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        finmars_vault = FinmarsVault()
+
+        try:
+            result = finmars_vault.get_secret_metadata(engine_name, path)
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
