@@ -47,8 +47,7 @@ class FinmarsVault():
         url = f"{self.vault_host}/v1/{engine_name}/metadata"
         headers = self.get_headers()
         response = requests.get(url, headers=headers)
-        secrets = response.json()["data"]["keys"]
-        return secrets
+        return response.json()
 
     def delete_engine(self, engine_name):
         url = f"{self.vault_host}/v1/sys/mounts/{engine_name}"
