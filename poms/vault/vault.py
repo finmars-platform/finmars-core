@@ -119,8 +119,15 @@ class FinmarsVault():
         url = f"{self.vault_host}/v1/{engine_name}/data/{secret_path}"
         headers = self.get_headers()
 
+        data = {
+            'data': secret_data,
+            'options': {
+                'cas': 1 # TODO maybe need refactor, to update more then once
+            }
+        }
+
         try:
-            response = requests.put(url, headers=headers, json=secret_data)
+            response = requests.put(url, headers=headers, json=data)
             response.raise_for_status()
             _l.info(f'Secret {secret_path} updated successfully')
         except Exception as e:
