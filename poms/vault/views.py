@@ -89,9 +89,15 @@ class VaultSecretViewSet(AbstractViewSet):
     serializer_class = VaultSecretSerializer
 
     def list(self, request):
+
+        engine_name = request.query_params.get('engine_name')
+
+        if not engine_name:
+            return Response({'error': 'engine_name is required'}, status=status.HTTP_400_BAD_REQUEST)
+
         finmars_vault = FinmarsVault()
 
-        data = finmars_vault.get_list_secrets()
+        data = finmars_vault.get_list_secrets(engine_name)
 
         return Response(data)
 
