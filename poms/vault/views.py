@@ -151,6 +151,7 @@ class VaultSecretViewSet(AbstractViewSet):
     def get_secret(self, request):
         engine_name = request.query_params.get('engine_name')
         path = request.query_params.get('path')
+        version = request.query_params.get('version')
 
         if not engine_name or not path:
             return Response({'error': 'engine_name and path are required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -158,7 +159,7 @@ class VaultSecretViewSet(AbstractViewSet):
         finmars_vault = FinmarsVault()
 
         try:
-            result = finmars_vault.get_secret(engine_name, path)
+            result = finmars_vault.get_secret(engine_name, path, version)
             return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -109,8 +109,8 @@ class FinmarsVault():
         response = requests.get(url, headers=headers)
         return response.json()
 
-    def get_secret(self, engine_name, secret_path):
-        url = f"{self.vault_host}/v1/{engine_name}/data/{secret_path}?version=1"
+    def get_secret(self, engine_name, secret_path, version=1):
+        url = f"{self.vault_host}/v1/{engine_name}/data/{secret_path}?version={version}"
         headers = self.get_headers()
         response = requests.get(url, headers=headers)
         return response.json()
