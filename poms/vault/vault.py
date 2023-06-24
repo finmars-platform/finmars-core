@@ -42,8 +42,7 @@ class FinmarsVault():
             },
             "options": {
                 "version": 2
-            },
-            "id": engine_name
+            }
         }
 
         try:
