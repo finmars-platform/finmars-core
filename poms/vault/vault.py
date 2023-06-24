@@ -62,9 +62,17 @@ class FinmarsVault():
         return response.json()
 
     def create_secret(self, engine_name, secret_path, secret_data):
-        url = f"{self.vault_host}/v1/{engine_name}/{secret_path}"
+        url = f"{self.vault_host}/v1/{engine_name}/data/{secret_path}"
         headers = self.get_headers()
-        response = requests.post(url, headers=headers, json=secret_data)
+
+        data = {
+            'data': secret_data,
+            'options': {
+                'cas': 0
+            }
+        }
+
+        response = requests.post(url, headers=headers, json=data)
         return response.json()
 
     def get_secret_metadata(self, engine_name, secret_path):
@@ -80,13 +88,13 @@ class FinmarsVault():
         return response.json()
 
     def update_secret(self, engine_name, secret_path, secret_data):
-        url = f"{self.vault_host}/v1/{engine_name}/{secret_path}"
+        url = f"{self.vault_host}/v1/{engine_name}/data/{secret_path}"
         headers = self.get_headers()
         response = requests.put(url, headers=headers, json=secret_data)
         return response.json()
 
     def delete_secret(self, engine_name, secret_path):
-        url = f"{self.vault_host}/v1/{engine_name}/{secret_path}"
+        url = f"{self.vault_host}/v1/{engine_name}/data/{secret_path}"
         headers = self.get_headers()
         response = requests.delete(url, headers=headers)
         return response.json()
