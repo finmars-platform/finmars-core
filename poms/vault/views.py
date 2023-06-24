@@ -137,11 +137,11 @@ class VaultSecretViewSet(AbstractViewSet):
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @swagger_auto_schema(
-        method='post',
+        method='get',
         request_body=GetVaultSecretSerializer,
         responses={200: VaultSecretSerializer}
     )
-    @action(detail=False, methods=['get'], url_path="get")
+    @action(detail=False, methods=['get'], url_path="get", serializer_class=VaultSecretSerializer)
     def get_secret(self, request):
         engine_name = request.query_params.get('engine_name')
         path = request.query_params.get('path')
