@@ -28,10 +28,16 @@ class FinmarsVault():
         headers = self.get_headers()
 
         payload = {
-            'type': 'kv',
-            'options': {
-                'version': '2'
-            }
+            "path": engine_name,
+            "type": "kv",
+            "generate_signing_key": True,
+            "config": {
+                "id": "test-kv"
+            },
+            "options": {
+                "version": 2
+            },
+            "id": engine_name
         }
 
         try:
@@ -61,8 +67,14 @@ class FinmarsVault():
         response = requests.post(url, headers=headers, json=secret_data)
         return response.json()
 
+    def get_secret_metadata(self, engine_name, secret_path):
+        url = f"{self.vault_host}/v1/{engine_name}/metadata/{secret_path}"
+        headers = self.get_headers()
+        response = requests.get(url, headers=headers)
+        return response.json()
+
     def get_secret(self, engine_name, secret_path):
-        url = f"{self.vault_host}/v1/{engine_name}/{secret_path}"
+        url = f"{self.vault_host}/v1/{engine_name}/data/{secret_path}?version=2"
         headers = self.get_headers()
         response = requests.get(url, headers=headers)
         return response.json()
