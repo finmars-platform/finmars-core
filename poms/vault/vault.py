@@ -19,7 +19,15 @@ class FinmarsVault():
         url = f"{self.vault_host}/v1/sys/mounts"
         headers = self.get_headers()
         response = requests.get(url, headers=headers)
-        return response.json()
+
+        response_json = response.json()
+
+        filtered_keys = ["sys/", "identity/", "cubbyhole/"]
+
+        filtered_list = [{k: {"engine_name": k, "data": v}} for k, v in response_json['data'].items() if k not in filtered_keys]
+
+
+        return filtered_list
 
     def create_engine(self, engine_name):
 
