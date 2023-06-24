@@ -134,7 +134,7 @@ class FinmarsVault():
             _l.info(f'Failed to update secret: {e}')
 
     def delete_secret(self, engine_name, secret_path):
-        url = f"{self.vault_host}/v1/{engine_name}/data/{secret_path}"
+        url = f"{self.vault_host}/v1/{engine_name}/metadata/{secret_path}"
         headers = self.get_headers()
 
         try:
