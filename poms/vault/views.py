@@ -126,7 +126,7 @@ class VaultSecretViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['put'], url_path="update", serializer_class=VaultSecretSerializer)
+    @action(detail=False, methods=['post'], url_path="update", serializer_class=VaultSecretSerializer)
     def update_secret(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
