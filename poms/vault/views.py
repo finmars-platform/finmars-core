@@ -137,8 +137,8 @@ class VaultSecretViewSet(AbstractViewSet):
         finmars_vault = FinmarsVault()
 
         try:
-            finmars_vault.create_secret(engine_name, path, data)
-            return Response({"message": "Vault secret created successfully"}, status=status.HTTP_201_CREATED)
+            finmars_vault.update_secret(engine_name, path, data)
+            return Response({"message": "Vault secret update successfully"}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -157,8 +157,8 @@ class VaultSecretViewSet(AbstractViewSet):
         finmars_vault = FinmarsVault()
 
         try:
-            finmars_vault.get_secret(engine_name, path)
-            return Response({"message": "Vault secret created successfully"}, status=status.HTTP_201_CREATED)
+            result = finmars_vault.get_secret(engine_name, path)
+            return Response(result, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
