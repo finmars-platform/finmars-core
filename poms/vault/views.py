@@ -138,10 +138,9 @@ class VaultSecretViewSet(AbstractViewSet):
 
     @swagger_auto_schema(
         method='get',
-        request_body=GetVaultSecretSerializer,
         responses={200: VaultSecretSerializer}
     )
-    @action(detail=False, methods=['get'], url_path="get", serializer_class=VaultSecretSerializer)
+    @action(detail=False, methods=['get'], url_path="get", serializer_class=GetVaultSecretSerializer)
     def get_secret(self, request):
         engine_name = request.query_params.get('engine_name')
         path = request.query_params.get('path')
