@@ -50,7 +50,7 @@ class FinmarsVault():
         return response.json()
 
     def get_list_secrets(self, engine_name):
-        url = f"{self.vault_host}/v1/{engine_name}/metadata"
+        url = f"{self.vault_host}/v1/{engine_name}/metadata/?list=true"
         headers = self.get_headers()
         response = requests.get(url, headers=headers)
         return response.json()
