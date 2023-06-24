@@ -1,6 +1,10 @@
+import logging
+
 import requests
 
 from poms_app import settings
+
+_l = logging.getLogger('poms.vault')
 
 
 class FinmarsVault():
@@ -15,7 +19,7 @@ class FinmarsVault():
 
         return headers
 
-    def get_list_engines(self,):
+    def get_list_engines(self, ):
         url = f"{self.vault_host}/v1/sys/mounts"
         headers = self.get_headers()
         response = requests.get(url, headers=headers)
@@ -24,7 +28,8 @@ class FinmarsVault():
 
         filtered_keys = ["sys/", "identity/", "cubbyhole/"]
 
-        filtered_list = [{'engine_name': k, 'data': v} for k, v in response_json['data'].items() if k not in filtered_keys]
+        filtered_list = [{'engine_name': k, 'data': v} for k, v in response_json['data'].items() if
+                         k not in filtered_keys]
 
         return filtered_list
 
@@ -48,11 +53,11 @@ class FinmarsVault():
         try:
             response = requests.post(url, json=payload, headers=headers)
             response.raise_for_status()
-            print(f'Secret engine {engine_name} created successfully')
+            _l.info(f'Secret engine {engine_name} created successfully')
         except Exception as e:
-            print(f'Failed to create secret engine: {e}')
+            _l.info(f'Failed to create secret engine: {e}')
 
-        return response.json()
+        # return response.json()
 
     def get_list_secrets(self, engine_name):
         url = f"{self.vault_host}/v1/{engine_name}/metadata/?list=true"
@@ -77,8 +82,13 @@ class FinmarsVault():
             }
         }
 
-        response = requests.post(url, headers=headers, json=data)
-        return response.json()
+        try:
+            response = requests.post(url, headers=headers, json=data)
+            response.raise_for_status()
+            _l.info(f'Secret {secret_path} created successfully')
+        except Exception as e:
+            _l.info(f'Failed to create secret: {e}')
+        # return response.json()
 
     def get_secret_metadata(self, engine_name, secret_path):
         url = f"{self.vault_host}/v1/{engine_name}/metadata/{secret_path}"
@@ -95,11 +105,21 @@ class FinmarsVault():
     def update_secret(self, engine_name, secret_path, secret_data):
         url = f"{self.vault_host}/v1/{engine_name}/data/{secret_path}"
         headers = self.get_headers()
-        response = requests.put(url, headers=headers, json=secret_data)
-        return response.json()
+
+        try:
+            response = requests.put(url, headers=headers, json=secret_data)
+            response.raise_for_status()
+            _l.info(f'Secret {secret_path} updated successfully')
+        except Exception as e:
+            _l.info(f'Failed to update secret: {e}')
 
     def delete_secret(self, engine_name, secret_path):
         url = f"{self.vault_host}/v1/{engine_name}/data/{secret_path}"
         headers = self.get_headers()
-        response = requests.delete(url, headers=headers)
-        return response.json()
+
+        try:
+            response = requests.delete(url, headers=headers)
+            response.raise_for_status()
+            _l.info(f'Secret {secret_path} deleted successfully')
+        except Exception as e:
+            _l.info(f'Failed to delete secret: {e}')
