@@ -59,16 +59,20 @@ class FinmarsVault():
 
         # return response.json()
 
+    def delete_engine(self, engine_name):
+        url = f"{self.vault_host}/v1/sys/mounts/{engine_name}"
+        headers = self.get_headers()
+        try:
+            response = requests.delete(url, headers=headers)
+            response.raise_for_status()
+            _l.info(f'Secret engine {engine_name} deleted successfully')
+        except Exception as e:
+            _l.info(f'Failed to delete secret engine: {e}')
+
     def get_list_secrets(self, engine_name):
         url = f"{self.vault_host}/v1/{engine_name}/metadata/?list=true"
         headers = self.get_headers()
         response = requests.get(url, headers=headers)
-        return response.json()
-
-    def delete_engine(self, engine_name):
-        url = f"{self.vault_host}/v1/sys/mounts/{engine_name}"
-        headers = self.get_headers()
-        response = requests.delete(url, headers=headers)
         return response.json()
 
     def create_secret(self, engine_name, secret_path, secret_data):
