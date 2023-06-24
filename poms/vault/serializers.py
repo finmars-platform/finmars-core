@@ -14,6 +14,14 @@ class GetVaultSecretSerializer(serializers.Serializer):
     engine_name = serializers.CharField(required=True, allow_null=False, allow_blank=False)
     path = serializers.CharField(required=True, allow_null=False, allow_blank=False)
 
+class DeleteVaultSecretSerializer(serializers.Serializer):
+    engine_name = serializers.CharField(required=True, allow_null=False, allow_blank=False)
+    path = serializers.CharField(required=True, allow_null=False, allow_blank=False)
+
 
 class VaultEngineSerializer(serializers.Serializer):
     engine_name = serializers.CharField(max_length=255)
+
+class DeleteVaultEngineSerializer(serializers.Serializer):
+    engine_name = serializers.CharField(max_length=255)
+    path = serializers.CharField(required=True, allow_null=False, allow_blank=False)

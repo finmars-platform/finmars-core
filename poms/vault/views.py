@@ -5,7 +5,8 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from poms.common.views import AbstractViewSet
-from poms.vault.serializers import VaultSecretSerializer, VaultEngineSerializer, VaultStatusSerializer, GetVaultSecretSerializer
+from poms.vault.serializers import VaultSecretSerializer, VaultEngineSerializer, VaultStatusSerializer, \
+    GetVaultSecretSerializer, DeleteVaultEngineSerializer, DeleteVaultSecretSerializer
 from rest_framework.decorators import action
 
 from poms.vault.vault import FinmarsVault
@@ -68,7 +69,7 @@ class VaultEngineViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['post'], url_path="delete", serializer_class=VaultEngineSerializer)
+    @action(detail=False, methods=['post'], url_path="delete", serializer_class=DeleteVaultEngineSerializer)
     def delete_engine(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -162,7 +163,7 @@ class VaultSecretViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['post'], url_path="delete", serializer_class=VaultSecretSerializer)
+    @action(detail=False, methods=['post'], url_path="delete", serializer_class=DeleteVaultSecretSerializer)
     def delete_secret(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
