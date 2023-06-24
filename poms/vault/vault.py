@@ -6,6 +6,12 @@ from poms_app import settings
 
 _l = logging.getLogger('poms.vault')
 
+def remove_trailing_slash_from_keys(data):
+    modified_data = {}
+    for key, value in data.items():
+        new_key = key.rstrip('/')  # Remove trailing slash
+        modified_data[new_key] = value
+    return modified_data
 
 class FinmarsVault():
 
@@ -19,6 +25,7 @@ class FinmarsVault():
 
         return headers
 
+
     def get_list_engines(self, ):
         url = f"{self.vault_host}/v1/sys/mounts"
         headers = self.get_headers()
@@ -26,9 +33,11 @@ class FinmarsVault():
 
         response_json = response.json()
 
-        filtered_keys = ["sys/", "identity/", "cubbyhole/"]
+        formatted_data = remove_trailing_slash_from_keys(response_json['data'])
 
-        filtered_list = [{'engine_name': k, 'data': v} for k, v in response_json['data'].items() if
+        filtered_keys = ["sys", "identity", "cubbyhole"]
+
+        filtered_list = [{'engine_name': k, 'data': v} for k, v in formatted_data.items() if
                          k not in filtered_keys]
 
         return filtered_list
