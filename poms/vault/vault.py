@@ -27,6 +27,62 @@ class FinmarsVault():
 
         return headers
 
+    #  GENERAL ACTIONS STARTS
+
+    def get_status(self, request):
+
+        auth_header = request.META.get('HTTP_AUTHORIZATION').split()
+        token = auth_header[1] if len(auth_header) == 2 else auth_header[0]
+
+        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+        headers["Authorization"] = "Token " + token,
+
+        url = settings.AUTHORIZER_URL + '/master-user/' + settings.BASE_API_URL + '/vault-status/'
+
+        data = {}
+
+        response = requests.get(url=url, json=data, headers=headers, verify=settings.VERIFY_SSL)
+
+        return response.json()
+
+    def seal(self, request):
+
+        # TODO Refactor to create more descent autohorization between backend and authorizer
+        auth_header = request.META.get('HTTP_AUTHORIZATION').split()
+        token = auth_header[1] if len(auth_header) == 2 else auth_header[0]
+
+        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+        headers["Authorization"] = "Token " + token,
+
+        url = settings.AUTHORIZER_URL + '/master-user/' + settings.BASE_API_URL + '/vault-seal/'
+
+        data = {}
+
+        response = requests.put(url=url, json=data, headers=headers, verify=settings.VERIFY_SSL)
+
+        return response.json()
+
+    def unseal(self, request, key):
+
+        # TODO Refactor to create more descent autohorization between backend and authorizer
+        auth_header = request.META.get('HTTP_AUTHORIZATION').split()
+        token = auth_header[1] if len(auth_header) == 2 else auth_header[0]
+
+        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+        headers["Authorization"] = "Token " + token,
+
+        url = settings.AUTHORIZER_URL + '/master-user/' + settings.BASE_API_URL + '/vault-unseal/'
+
+        data = {
+            'unseal_key': key
+        }
+
+        response = requests.put(url=url, json=data, headers=headers, verify=settings.VERIFY_SSL)
+
+        return response.json()
+
+    # GENERAL ACTIONS ENDS
+
     def get_list_engines(self, ):
         url = f"{self.vault_host}/v1/sys/mounts"
         headers = self.get_headers()

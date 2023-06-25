@@ -8,23 +8,31 @@ from rest_framework.response import Response
 
 from poms.common.views import AbstractViewSet
 from poms.vault.serializers import VaultSecretSerializer, VaultEngineSerializer, VaultStatusSerializer, \
-    GetVaultSecretSerializer, DeleteVaultEngineSerializer, DeleteVaultSecretSerializer, UpdateVaultSecretSerializer
+    GetVaultSecretSerializer, DeleteVaultEngineSerializer, DeleteVaultSecretSerializer, UpdateVaultSecretSerializer, \
+    VaultSealSerializer, VaultUnsealSerializer
 from poms.vault.vault import FinmarsVault
 from poms_app import settings
 
 _l = logging.getLogger('poms.vault')
 
 
-class VaultStatusViewSet(AbstractViewSet):
-    serializer_class = VaultStatusSerializer
+class VaultViewSet(AbstractViewSet):
 
-    def list(self, request):
+    @action(detail=False, methods=['get'], url_path="status", serializer_class=VaultStatusSerializer)
+    def get_status(self, request):
 
         data = {}
 
         if settings.VAULT_TOKEN:
             data['status'] = 'ok'
             data['text'] = 'Vault is operational for storing secrets'
+
+            finmars_vault = FinmarsVault()
+
+            status = finmars_vault.get_status(request)
+
+            data['data'] = status
+
         else:
             data['status'] = 'unknown'
             data['text'] = 'Vault is not configured for this Space'
@@ -32,6 +40,41 @@ class VaultStatusViewSet(AbstractViewSet):
         serializer = VaultStatusSerializer(data)
 
         return Response(serializer.data)
+
+    @swagger_auto_schema(
+        request_body=VaultSealSerializer,
+        responses={
+            status.HTTP_200_OK: openapi.Response("Vault sealed successfully"),
+            status.HTTP_500_INTERNAL_SERVER_ERROR: openapi.Response("Internal server error"),
+        }
+    )
+    @action(detail=False, methods=['post'], url_path="seal", serializer_class=VaultSealSerializer)
+    def seal(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        finmars_vault = FinmarsVault()
+
+        try:
+            finmars_vault.seal(request)
+            return Response({"message": "Vault sealed successfully"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'], url_path="unseal", serializer_class=VaultUnsealSerializer)
+    def unseal(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        key = serializer.validated_data['key']
+
+        finmars_vault = FinmarsVault()
+
+        try:
+            finmars_vault.unseal(request, key)
+            return Response({"message": "Vault unseal key passed"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class VaultSecretViewSet(AbstractViewSet):
