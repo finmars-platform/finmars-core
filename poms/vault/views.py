@@ -30,7 +30,7 @@ class VaultViewSet(AbstractViewSet):
 
             finmars_vault = FinmarsVault()
 
-            status = finmars_vault.get_status(request)
+            status = finmars_vault.get_status()
 
             data['data'] = status
 
@@ -72,7 +72,7 @@ class VaultViewSet(AbstractViewSet):
         finmars_vault = FinmarsVault()
 
         try:
-            data = finmars_vault.unseal(request, key)
+            data = finmars_vault.unseal(key)
             return Response({"message": "Vault unseal key passed", "data": data}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

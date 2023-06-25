@@ -29,28 +29,42 @@ class FinmarsVault():
 
     #  GENERAL ACTIONS STARTS
 
-    def get_status(self, request):
+    def get_status(self):
 
-        # TODO Refactor to create more descent autohorization between backend and authorizer
-        from poms.common.authentication import KeycloakAuthentication
-        keycloakAuth = KeycloakAuthentication()
+        url = f'{self.vault_host}/v1/sys/seal-status'  # warning should be no trailing slash
+        headers = self.get_headers()
 
-        token = keycloakAuth.get_auth_token_from_request(request)
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            _l.info(f'Vault inited successfully')
+        except Exception as e:
+            _l.info(f'Failed to init: {e}')
 
-        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-        headers["Authorization"] = "Token " + token
+        return response.json()
 
-        url = settings.AUTHORIZER_URL + '/master-user/' + settings.BASE_API_URL + '/vault-status/'
+    def init(self):
 
-        data = {}
+        url = f'{self.vault_host}/v1/sys/init'  # warning should be no trailing slash
+        headers = self.get_headers()
 
-        response = requests.get(url=url, json=data, headers=headers, verify=settings.VERIFY_SSL)
+        data = {
+            "secret_shares": 5,
+            "secret_threshold": 3
+        }
+
+        try:
+            response = requests.post(url, json=data, headers=headers)
+            response.raise_for_status()
+            _l.info(f'Vault inited successfully')
+        except Exception as e:
+            _l.info(f'Failed to init: {e}')
 
         return response.json()
 
     def seal(self):
 
-        url = f'{self.vault_host}/v1/sys/seal' # warning should be no trailing slash
+        url = f'{self.vault_host}/v1/sys/seal'  # warning should be no trailing slash
         headers = self.get_headers()
 
         try:
@@ -60,26 +74,21 @@ class FinmarsVault():
         except Exception as e:
             _l.info(f'Failed to seal: {e}')
 
-    def unseal(self, request, key):
+    def unseal(self, key):
 
-        # TODO Refactor to create more descent autohorization between backend and authorizer
-        from poms.common.authentication import KeycloakAuthentication
-        keycloakAuth = KeycloakAuthentication()
-
-        token = keycloakAuth.get_auth_token_from_request(request)
-
-        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-        headers["Authorization"] = "Token " + token
-
-        url = settings.AUTHORIZER_URL + '/master-user/' + settings.BASE_API_URL + '/vault-unseal/'
+        url = f'{self.vault_host}/v1/sys/unseal'  # warning should be no trailing slash
+        headers = self.get_headers()
 
         data = {
-            'unseal_key': key
+            'key': key
         }
 
-        response = requests.put(url=url, json=data, headers=headers, verify=settings.VERIFY_SSL)
-
-        return response.json()
+        try:
+            response = requests.post(url, json=data, headers=headers)
+            response.raise_for_status()
+            _l.info(f'Vault sealed successfully')
+        except Exception as e:
+            _l.info(f'Failed to seal: {e}')
 
     # GENERAL ACTIONS ENDS
 
@@ -93,7 +102,6 @@ class FinmarsVault():
         filtered_list = []
 
         if 'data' in response_json:
-
             formatted_data = remove_trailing_slash_from_keys(response_json['data'])
 
             filtered_keys = ["sys", "identity", "cubbyhole"]
