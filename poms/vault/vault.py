@@ -37,7 +37,6 @@ class FinmarsVault():
 
         token = keycloakAuth.get_auth_token_from_request(request)
 
-
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
         headers["Authorization"] = "Token " + token
 
@@ -49,24 +48,17 @@ class FinmarsVault():
 
         return response.json()
 
-    def seal(self, request):
+    def seal(self):
 
-        # TODO Refactor to create more descent autohorization between backend and authorizer
-        from poms.common.authentication import KeycloakAuthentication
-        keycloakAuth = KeycloakAuthentication()
+        url = f'{self.vault_host}/v1/sys/seal/'
+        headers = self.get_headers()
 
-        token = keycloakAuth.get_auth_token_from_request(request)
-
-        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-        headers["Authorization"] = "Token " + token
-
-        url = settings.AUTHORIZER_URL + '/master-user/' + settings.BASE_API_URL + '/vault-seal/'
-
-        data = {}
-
-        response = requests.put(url=url, json=data, headers=headers, verify=settings.VERIFY_SSL)
-
-        return response.json()
+        try:
+            response = requests.post(url, headers=headers)
+            response.raise_for_status()
+            _l.info(f'Vault sealed successfully')
+        except Exception as e:
+            _l.info(f'Failed to seal: {e}')
 
     def unseal(self, request, key):
 

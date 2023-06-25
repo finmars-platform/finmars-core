@@ -17,7 +17,6 @@ _l = logging.getLogger('poms.vault')
 
 
 class VaultViewSet(AbstractViewSet):
-
     serializer_class = VaultStatusSerializer
 
     @action(detail=False, methods=['get'], url_path="status", serializer_class=VaultStatusSerializer)
@@ -58,7 +57,7 @@ class VaultViewSet(AbstractViewSet):
         finmars_vault = FinmarsVault()
 
         try:
-            data = finmars_vault.seal(request)
+            data = finmars_vault.seal()
             return Response({"message": "Vault sealed successfully", "data": data}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
