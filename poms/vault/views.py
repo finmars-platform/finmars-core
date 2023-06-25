@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from poms.common.views import AbstractViewSet
 from poms.vault.serializers import VaultSecretSerializer, VaultEngineSerializer, VaultStatusSerializer, \
-    GetVaultSecretSerializer, DeleteVaultEngineSerializer, DeleteVaultSecretSerializer
+    GetVaultSecretSerializer, DeleteVaultEngineSerializer, DeleteVaultSecretSerializer, UpdateVaultSecretSerializer
 from poms.vault.vault import FinmarsVault
 from poms_app import settings
 
@@ -126,7 +126,7 @@ class VaultSecretViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['post'], url_path="update", serializer_class=VaultSecretSerializer)
+    @action(detail=False, methods=['post'], url_path="update", serializer_class=UpdateVaultSecretSerializer)
     def update_secret(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -134,11 +134,12 @@ class VaultSecretViewSet(AbstractViewSet):
         engine_name = serializer.validated_data['engine_name']
         path = serializer.validated_data['path']
         data = serializer.validated_data['data']
+        version = serializer.validated_data['version']
 
         finmars_vault = FinmarsVault()
 
         try:
-            finmars_vault.update_secret(engine_name, path, data)
+            finmars_vault.update_secret(engine_name, path, data, version)
             return Response({"message": "Vault secret update successfully"}, status=status.HTTP_201_CREATED)
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
