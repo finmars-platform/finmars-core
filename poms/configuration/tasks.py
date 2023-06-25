@@ -31,6 +31,7 @@ storage = get_storage()
 @shared_task(name='configuration.import_configuration', bind=True)
 def import_configuration(self, task_id):
     _l.info("import_configuration")
+    _l.info("import_configuration %s" % task_id)
 
     task = CeleryTask.objects.get(id=task_id)
     task.celery_task_id = self.request.id
@@ -598,6 +599,7 @@ def install_configuration_from_marketplace(self, **kwargs):
 
         import_configuration_celery_task = CeleryTask.objects.create(master_user=task.master_user,
                                                                      member=task.member,
+                                                                     parent=task,
                                                                      verbose_name="Configuration Import",
                                                                      type='configuration_import')
 
@@ -609,7 +611,8 @@ def install_configuration_from_marketplace(self, **kwargs):
         import_configuration_celery_task.save()
 
         # sync call
-        import_configuration.apply(args=[import_configuration_celery_task.id])
+        # .si is important, we do not need to pass result from previous task
+        import_configuration.si(task_id=import_configuration_celery_task.id)
 
         if task.parent:
 
