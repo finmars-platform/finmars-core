@@ -39,7 +39,7 @@ class FinmarsVault():
 
 
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-        headers["Authorization"] = "Token " + token,
+        headers["Authorization"] = "Token " + token
 
         url = settings.AUTHORIZER_URL + '/master-user/' + settings.BASE_API_URL + '/vault-status/'
 
@@ -58,7 +58,7 @@ class FinmarsVault():
         token = keycloakAuth.get_auth_token_from_request(request)
 
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-        headers["Authorization"] = "Token " + token,
+        headers["Authorization"] = "Token " + token
 
         url = settings.AUTHORIZER_URL + '/master-user/' + settings.BASE_API_URL + '/vault-seal/'
 
@@ -77,7 +77,7 @@ class FinmarsVault():
         token = keycloakAuth.get_auth_token_from_request(request)
 
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-        headers["Authorization"] = "Token " + token,
+        headers["Authorization"] = "Token " + token
 
         url = settings.AUTHORIZER_URL + '/master-user/' + settings.BASE_API_URL + '/vault-unseal/'
 
