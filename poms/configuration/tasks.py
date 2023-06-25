@@ -609,7 +609,7 @@ def install_configuration_from_marketplace(self, **kwargs):
         # sync call
         # .si is important, we do not need to pass result from previous task
 
-        import_configuration(self, import_configuration_celery_task.id)
+        import_configuration(import_configuration_celery_task.id) # seems self is not needed
         # result = import_configuration.apply_async(kwargs={'task_id': import_configuration_celery_task.id})
 
         if task.parent:
