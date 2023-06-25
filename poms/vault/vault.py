@@ -110,6 +110,14 @@ class FinmarsVault():
         response = requests.get(url, headers=headers)
         return response.json()
 
+    def get_latest_version(self, engine_name, secret_path):
+
+        metadata = self.get_secret_metadata(engine_name, secret_path)
+
+        version = len(metadata['data']['versions'])
+
+        return version
+
     def get_secret(self, engine_name, secret_path, version=1):
         url = f"{self.vault_host}/v1/{engine_name}/data/{secret_path}?version={version}"
         headers = self.get_headers()
