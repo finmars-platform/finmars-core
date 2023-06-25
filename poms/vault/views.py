@@ -44,19 +44,13 @@ class VaultViewSet(AbstractViewSet):
 
         data = {}
 
-        if settings.VAULT_TOKEN:
-            data['status'] = 'ok'
-            data['text'] = 'Vault is operational for storing secrets'
+        data['status'] = 'ok'
+        data['text'] = 'Vault is responded with health check'
 
-            finmars_vault = FinmarsVault()
+        finmars_vault = FinmarsVault()
+        status = finmars_vault.get_health()
 
-            status = finmars_vault.get_health()
-
-            data['data'] = status
-
-        else:
-            data['status'] = 'unknown'
-            data['text'] = 'Vault is not configured for this Space'
+        data['data'] = status
 
         serializer = VaultStatusSerializer(data)
 
