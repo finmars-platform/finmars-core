@@ -39,6 +39,29 @@ class VaultViewSet(AbstractViewSet):
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @action(detail=False, methods=['get'], url_path="health", serializer_class=VaultStatusSerializer)
+    def health(self, request):
+
+        data = {}
+
+        if settings.VAULT_TOKEN:
+            data['status'] = 'ok'
+            data['text'] = 'Vault is operational for storing secrets'
+
+            finmars_vault = FinmarsVault()
+
+            status = finmars_vault.get_health()
+
+            data['data'] = status
+
+        else:
+            data['status'] = 'unknown'
+            data['text'] = 'Vault is not configured for this Space'
+
+        serializer = VaultStatusSerializer(data)
+
+        return Response(serializer.data)
+
     @action(detail=False, methods=['get'], url_path="status", serializer_class=VaultStatusSerializer)
     def get_status(self, request):
 

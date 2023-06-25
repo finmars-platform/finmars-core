@@ -29,6 +29,20 @@ class FinmarsVault():
 
     #  GENERAL ACTIONS STARTS
 
+    def get_health(self):
+
+        url = f'{self.vault_host}/v1/sys/health'  # warning should be no trailing slash
+        headers = self.get_headers()
+
+        try:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            _l.info(f'Vault get health successfully')
+        except Exception as e:
+            _l.info(f'Failed to get health: {e}')
+
+        return response.json()
+
     def get_status(self):
 
         url = f'{self.vault_host}/v1/sys/seal-status'  # warning should be no trailing slash
@@ -37,9 +51,9 @@ class FinmarsVault():
         try:
             response = requests.get(url, headers=headers)
             response.raise_for_status()
-            _l.info(f'Vault inited successfully')
+            _l.info(f'Vault get status successfully')
         except Exception as e:
-            _l.info(f'Failed to init: {e}')
+            _l.info(f'Failed to get status: {e}')
 
         return response.json()
 
