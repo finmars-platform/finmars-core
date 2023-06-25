@@ -5,6 +5,7 @@ import traceback
 from datetime import date
 
 import requests
+from celery import chain
 from celery import shared_task
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.timezone import now
@@ -19,7 +20,6 @@ from poms.configuration.utils import unzip_to_directory, list_json_files, read_j
     save_json_to_file, upload_directory_to_storage, run_workflow, wait_workflow_until_end
 from poms.file_reports.models import FileReport
 from poms_app import settings
-from celery import chain
 
 _l = logging.getLogger('poms.configuration')
 from django.contrib.auth import get_user_model
@@ -386,8 +386,6 @@ def push_configuration_to_marketplace(self, task_id):
     task.options_object = options_object
     task.save()
 
-
-
     try:
 
         configuration = Configuration.objects.get(configuration_code=options_object['configuration_code'])
@@ -471,7 +469,6 @@ def push_configuration_to_marketplace(self, task_id):
 
 @shared_task(name='configuration.install_configuration_from_marketplace', bind=True)
 def install_configuration_from_marketplace(self, **kwargs):
-
     task_id = kwargs.get('task_id')
 
     _l.info("install_configuration_from_marketplace")
@@ -558,7 +555,6 @@ def install_configuration_from_marketplace(self, **kwargs):
         configuration.save()
 
         if task.parent:
-
             step = task.options_object['step']
             total = len(task.parent.options_object['dependencies'])
             percent = int((step / total) * 100)
@@ -612,10 +608,11 @@ def install_configuration_from_marketplace(self, **kwargs):
 
         # sync call
         # .si is important, we do not need to pass result from previous task
-        import_configuration.si(task_id=import_configuration_celery_task.id)
+
+        result = import_configuration.apply_async(kwargs={'task_id': import_configuration_celery_task.id})
+        result.get()  # It forces to wait for result
 
         if task.parent:
-
             step = task.options_object['step']
             total = len(task.parent.options_object['dependencies'])
             percent = int((step / total) * 100)
@@ -654,7 +651,6 @@ def install_configuration_from_marketplace(self, **kwargs):
 
 @shared_task(name='configuration.finish_package_install', bind=True)
 def finish_package_install(self, task_id):
-
     task = CeleryTask.objects.get(id=task_id)
     task.status = CeleryTask.STATUS_DONE
 
@@ -670,8 +666,6 @@ def finish_package_install(self, task_id):
     task.verbose_result = "Configuration package installed successfully"
 
     task.save()
-
-
 
 
 @shared_task(name='configuration.install_package_from_marketplace', bind=True)
@@ -742,8 +736,7 @@ def install_package_from_marketplace(self, task_id):
         task.options_object = options_object
         task.save()
 
-        for dependency  in configuration.manifest['dependencies']:
-
+        for dependency in configuration.manifest['dependencies']:
             module_celery_task = CeleryTask.objects.create(master_user=task.master_user,
                                                            member=task.member,
                                                            parent=task,
@@ -768,7 +761,6 @@ def install_package_from_marketplace(self, task_id):
 
         # .si is important, we do not need to pass result from previous task
         task_list.append(finish_package_install.si(task_id=task.id))
-
 
         workflow = chain(*task_list)
 
