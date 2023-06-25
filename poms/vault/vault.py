@@ -50,7 +50,7 @@ class FinmarsVault():
 
     def seal(self):
 
-        url = f'{self.vault_host}/v1/sys/seal/'
+        url = f'{self.vault_host}/v1/sys/seal' # warning should be no trailing slash
         headers = self.get_headers()
 
         try:
@@ -90,12 +90,16 @@ class FinmarsVault():
 
         response_json = response.json()
 
-        formatted_data = remove_trailing_slash_from_keys(response_json['data'])
+        filtered_list = []
 
-        filtered_keys = ["sys", "identity", "cubbyhole"]
+        if 'data' in response_json:
 
-        filtered_list = [{'engine_name': k, 'data': v} for k, v in formatted_data.items() if
-                         k not in filtered_keys]
+            formatted_data = remove_trailing_slash_from_keys(response_json['data'])
+
+            filtered_keys = ["sys", "identity", "cubbyhole"]
+
+            filtered_list = [{'engine_name': k, 'data': v} for k, v in formatted_data.items() if
+                             k not in filtered_keys]
 
         return filtered_list
 
