@@ -13,7 +13,7 @@ class VaultSecretSerializer(serializers.Serializer):
 class UpdateVaultSecretSerializer(serializers.Serializer):
     engine_name = serializers.CharField(required=True, allow_null=False, allow_blank=False)
     path = serializers.CharField(required=True, allow_null=False, allow_blank=False)
-    version = serializers.IntegerField(required=True, allow_null=False, allow_blank=False)
+    version = serializers.IntegerField(required=True, default=1)
     data = serializers.JSONField(allow_null=False)
 
 class GetVaultSecretSerializer(serializers.Serializer):
