@@ -31,8 +31,12 @@ class FinmarsVault():
 
     def get_status(self, request):
 
-        auth_header = request.META.get('HTTP_AUTHORIZATION').split()
-        token = auth_header[1] if len(auth_header) == 2 else auth_header[0]
+        # TODO Refactor to create more descent autohorization between backend and authorizer
+        from poms.common.authentication import KeycloakAuthentication
+        keycloakAuth = KeycloakAuthentication()
+
+        token = keycloakAuth.get_auth_token_from_request(request)
+
 
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
         headers["Authorization"] = "Token " + token,
@@ -48,8 +52,10 @@ class FinmarsVault():
     def seal(self, request):
 
         # TODO Refactor to create more descent autohorization between backend and authorizer
-        auth_header = request.META.get('HTTP_AUTHORIZATION').split()
-        token = auth_header[1] if len(auth_header) == 2 else auth_header[0]
+        from poms.common.authentication import KeycloakAuthentication
+        keycloakAuth = KeycloakAuthentication()
+
+        token = keycloakAuth.get_auth_token_from_request(request)
 
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
         headers["Authorization"] = "Token " + token,
@@ -65,8 +71,10 @@ class FinmarsVault():
     def unseal(self, request, key):
 
         # TODO Refactor to create more descent autohorization between backend and authorizer
-        auth_header = request.META.get('HTTP_AUTHORIZATION').split()
-        token = auth_header[1] if len(auth_header) == 2 else auth_header[0]
+        from poms.common.authentication import KeycloakAuthentication
+        keycloakAuth = KeycloakAuthentication()
+
+        token = keycloakAuth.get_auth_token_from_request(request)
 
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
         headers["Authorization"] = "Token " + token,

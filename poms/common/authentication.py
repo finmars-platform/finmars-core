@@ -37,9 +37,7 @@ class KeycloakAuthentication(TokenAuthentication):
 
     '''
 
-    def authenticate(self, request):
-
-        # print('KeycloakAuthentication.authenticate')
+    def get_auth_token_from_request(self, request):
 
         auth = get_authorization_header(request).split()
 
@@ -65,6 +63,14 @@ class KeycloakAuthentication(TokenAuthentication):
         except UnicodeError:
             msg = _('Invalid token header. Token string should not contain invalid characters.')
             raise exceptions.AuthenticationFailed(msg)
+
+        return token
+
+    def authenticate(self, request):
+
+        # print('KeycloakAuthentication.authenticate')
+
+        token = self.get_auth_token_from_request(request)
 
         return self.authenticate_credentials(token)
 
