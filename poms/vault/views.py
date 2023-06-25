@@ -19,6 +19,26 @@ _l = logging.getLogger('poms.vault')
 class VaultViewSet(AbstractViewSet):
     serializer_class = VaultStatusSerializer
 
+    @swagger_auto_schema(
+        request_body=VaultSealSerializer,
+        responses={
+            status.HTTP_200_OK: openapi.Response("Vault init successfully"),
+            status.HTTP_500_INTERNAL_SERVER_ERROR: openapi.Response("Internal server error"),
+        }
+    )
+    @action(detail=False, methods=['post'], url_path="init", serializer_class=VaultSealSerializer)
+    def init(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        finmars_vault = FinmarsVault()
+
+        try:
+            data = finmars_vault.init()
+            return Response({"message": "Vault inited successfully", "data": data}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     @action(detail=False, methods=['get'], url_path="status", serializer_class=VaultStatusSerializer)
     def get_status(self, request):
 
