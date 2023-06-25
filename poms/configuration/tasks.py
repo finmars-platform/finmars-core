@@ -609,8 +609,8 @@ def install_configuration_from_marketplace(self, **kwargs):
         # sync call
         # .si is important, we do not need to pass result from previous task
 
-        result = import_configuration.apply_async(kwargs={'task_id': import_configuration_celery_task.id})
-        result.get()  # It forces to wait for result
+        import_configuration(self, import_configuration_celery_task.id)
+        # result = import_configuration.apply_async(kwargs={'task_id': import_configuration_celery_task.id})
 
         if task.parent:
             step = task.options_object['step']
