@@ -2,7 +2,6 @@ import logging
 import traceback
 
 from django.conf import settings
-from django.urls import reverse
 from poms.common.http_client import HttpClient, HttpClientError
 from poms.integrations.monad import Monad, MonadStatus
 from poms.integrations.serializers import DatabaseRequestSerializer
@@ -10,11 +9,12 @@ from poms.integrations.serializers import DatabaseRequestSerializer
 _l = logging.getLogger("default")
 log = "DatabaseClient"
 
+BACKEND_URL = f"https://{settings.DOMAIN_NAME}/{settings.BASE_API_URL}"
+COMMON_PART = "api/v1/import/finmars-database"
 BACKEND_CALLBACK_URLS = {
-    "instrument": reverse("import_instrument_database-callback"),
-    "currency": reverse("import_currency_database-callback"),
-    "company": reverse("import_company_database-callback"),
-    # "price": reverse("import_price_database-callback"),
+    "instrument": f"{BACKEND_URL}/{COMMON_PART}/instrument/callback/",
+    "currency": f"{BACKEND_URL}/{COMMON_PART}/currency/callback/",
+    "company": f"{BACKEND_URL}/{COMMON_PART}/company/callback/",
 }
 
 V1 = "api/v1"

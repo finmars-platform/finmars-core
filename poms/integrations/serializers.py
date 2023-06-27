@@ -1676,6 +1676,7 @@ class DatabaseRequestSerializer(serializers.Serializer):
         if not task:
             err_msg = f"no celery task with id={attrs['request_id']}"
             raise ValidationError({"request_id": "invalid"}, err_msg)
+
         attrs["task"] = task
 
         if (attrs["task_id"] is None) and (attrs["data"] is None):

@@ -4719,7 +4719,6 @@ def download_price_finmars_database_async(self, task_id):
     import_company_finmars_database(task_id)
 
 
-
 FINAL_STATUSES = {
     CeleryTask.STATUS_DONE,
     CeleryTask.STATUS_ERROR,
@@ -4740,9 +4739,10 @@ def ttl_finisher(task_id: int):
         return
 
     if task.status not in FINAL_STATUSES:
+        _l.warning(f"{func} task.status={task.status} ttl={task.ttl} expired!")
         task.status = CeleryTask.STATUS_TIMEOUT
         task.save()
-        _l.warning(f"{func} ttl={task.ttl} expired, new status={task.status}!")
+
         return
 
-    _l.info(f"{func} no action required, task.status={task.status}")
+    _l.info(f"{func} task.status={task.status} no action required")

@@ -70,7 +70,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         request_data = {
             "user_code": user_code,
             "name": name,
-            "instrument_type_code": type_code,
+            "instrument_type_user_code": type_code,
         }
         response = self.client.post(path=self.url, format="json", data=request_data)
         self.assertEqual(response.status_code, 200, response.content)
