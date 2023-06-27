@@ -14,6 +14,7 @@ BACKEND_CALLBACK_URLS = {
     "instrument": reverse("import_instrument_database-callback"),
     "currency": reverse("import_currency_database-callback"),
     "company": reverse("import_company_database-callback"),
+    # "price": reverse("import_price_database-callback"),
 }
 
 V1 = "api/v1"
@@ -21,6 +22,7 @@ FINMARS_DATABASE_URLS = {
     "currency": f"{settings.FINMARS_DATABASE_URL}{V1}/export/currency",
     "instrument": f"{settings.FINMARS_DATABASE_URL}{V1}/export/instrument",
     "company": f"{settings.FINMARS_DATABASE_URL}{V1}/export/company",
+    # "price": f"{settings.FINMARS_DATABASE_URL}{V1}/export/price",
 }
 
 

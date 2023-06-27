@@ -9,6 +9,7 @@ from django.conf import settings
 from django.db.models import Prefetch
 from django.http import HttpResponse
 from django_filters.rest_framework import DjangoFilterBackend, FilterSet
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -17,7 +18,6 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
-from drf_yasg.utils import swagger_auto_schema
 
 import requests
 from celery.result import AsyncResult
@@ -116,6 +116,7 @@ from poms.integrations.serializers import (
     CounterpartyMappingSerializer,
     CurrencyMappingSerializer,
     DailyPricingModelMappingSerializer,
+    DatabaseRequestSerializer,
     DataProviderSerializer,
     FactorScheduleDownloadMethodSerializer,
     ImportCompanyDatabaseSerializer,
@@ -123,7 +124,7 @@ from poms.integrations.serializers import (
     ImportCurrencyDatabaseSerializer,
     ImportInstrumentDatabaseSerializer,
     ImportInstrumentSerializer,
-    DatabaseRequestSerializer,
+    ImportPriceDatabaseSerializer,
     ImportUnifiedDataProviderSerializer,
     InstrumentAttributeValueMappingSerializer,
     InstrumentClassifierMappingSerializer,
@@ -908,6 +909,31 @@ class ImportCompanyDatabaseViewSet(UnifiedImportDatabaseViewSet):
             return self.success_task_response(task, company)
 
 
+class ImportPriceDatabaseViewSet(UnifiedImportDatabaseViewSet):
+    serializer_class = ImportPriceDatabaseSerializer
+
+    def handle_callback(self, validated_data: dict) -> dict:
+        from poms.integrations.tasks import create_counterparty_from_callback_data
+
+        task = validated_data["task"]
+        data = validated_data["data"]
+
+        raise NotImplemented
+
+        # try:  # TODO LATER
+        #     company = create_prices_from_callback_data(
+        #         data,
+        #         task.master_user,
+        #         task.member,
+        #     )
+        #
+        # except Exception as e:
+        #     return self.error_task_response(e, task)
+        #
+        # else:
+        #     return self.success_task_response(task, company)
+
+
 # ----------------------------------------
 
 
@@ -1585,9 +1611,7 @@ class TransactionImportJson(APIView):
         return Response({"status": "ok"})
 
     def post(self, request):
-        from poms.integrations.tasks import (
-            complex_transaction_csv_file_import_parallel,
-        )
+        from poms.integrations.tasks import complex_transaction_csv_file_import_parallel
 
         # _l.debug('request.data %s' % request.data)
 
