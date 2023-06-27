@@ -1,5 +1,4 @@
 import time
-from unittest import mock
 
 from poms.celery_tasks.models import CeleryTask
 from poms.common.common_base_test import BaseTestCase

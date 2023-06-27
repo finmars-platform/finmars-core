@@ -4428,7 +4428,7 @@ def create_counterparty_from_callback_data(data, master_user, member) -> Counter
 
     except Exception as e:
         _l.error(f"{func} unexpected {e}\n {traceback.format_exc()}")
-        raise Exception(e)
+        raise e
 
     if serializer.is_valid():
         counter_party = serializer.save()
@@ -4545,7 +4545,7 @@ def update_task_with_simple_instrument(remote_task_id: int, task: CeleryTask):
 def update_task_with_currency_data(currency_data: dict, task: CeleryTask):
     func = f"update_task_with_currency_data, task.id={task.id}"
 
-    _l.info(f"{func} company_data={currency_data}")
+    _l.info(f"{func} currency_data={currency_data}")
 
     try:
         currency = create_currency_from_callback_data(
@@ -4553,6 +4553,10 @@ def update_task_with_currency_data(currency_data: dict, task: CeleryTask):
         )
         result = task.result_object
         result["result_id"] = currency.id
+        result["user_code"] = currency.user_code
+        result["short_name"] = currency.short_name
+        result["name"] = currency.name
+
         task.result_object = result
         task.status = CeleryTask.STATUS_DONE
         task.save()
@@ -4565,7 +4569,7 @@ def update_task_with_currency_data(currency_data: dict, task: CeleryTask):
 def update_task_with_company_data(company_data: dict, task: CeleryTask):
     func = f"update_task_with_company_data, task.id={task.id}"
 
-    _l.info(f"{func} task.id={task.id} company_data={company_data}")
+    _l.info(f"{func} company_data={company_data}")
 
     try:
         company = create_counterparty_from_callback_data(
@@ -4573,6 +4577,9 @@ def update_task_with_company_data(company_data: dict, task: CeleryTask):
         )
         result = task.result_object
         result["result_id"] = company.id
+        result["user_code"] = company.user_code
+        result["short_name"] = company.short_name
+        result["name"] = company.name
         task.result_object = result
         task.status = CeleryTask.STATUS_DONE
         task.save()
@@ -4580,6 +4587,28 @@ def update_task_with_company_data(company_data: dict, task: CeleryTask):
     except Exception as e:
         err_msg = f"{func} unexpected {repr(e)}"
         update_task_with_error(task, err_msg)
+
+
+def update_task_with_price_data(price_data: dict, task: CeleryTask):
+    func = f"update_task_with_price_data, task.id={task.id}"
+
+    _l.info(f"{func} price_data={price_data}")
+
+    raise NotImplemented
+
+    # try:  # TODO LATER
+    #     create_prices_from_callback_data(
+    #         price_data, task.master_user, task.member
+    #     )
+    #     result = task.result_object
+    #     result["result_id"] = 0
+    #     task.result_object = result
+    #     task.status = CeleryTask.STATUS_DONE
+    #     task.save()
+    #
+    # except Exception as e:
+    #     err_msg = f"{func} unexpected {repr(e)}"
+    #     update_task_with_error(task, err_msg)
 
 
 def import_from_database_task(task_id: int, operation: str):
@@ -4620,8 +4649,12 @@ def import_from_database_task(task_id: int, operation: str):
                 update_task_with_instrument_data(data=monad.data, task=task)
             elif operation == "currency":
                 update_task_with_currency_data(currency_data=monad.data, task=task)
-            else:  # operation == "company":
+            elif operation == "company":
                 update_task_with_company_data(company_data=monad.data, task=task)
+            elif operation == "price":
+                update_task_with_price_data(price_data=monad.data, task=task)
+            else:
+                raise RuntimeError(f"invalid DatabaseService operation={operation}")
 
         elif monad.status == MonadStatus.TASK_CREATED:
             _l.info(f"{func} received remote task_id={monad.task_id}")
@@ -4631,7 +4664,7 @@ def import_from_database_task(task_id: int, operation: str):
                     remote_task_id=monad.task_id,
                     task=task,
                 )
-            else:  # operation == "company" or "currency":
+            else:
                 result = task.result_object
                 result["remote_task_id"] = monad.task_id
                 task.result_object = result
@@ -4674,6 +4707,17 @@ def import_company_finmars_database(task_id: int):
 def download_company_finmars_database_async(self, task_id):
     _l.info(f"download_company_finmars_database_async {task_id}")
     import_company_finmars_database(task_id)
+
+
+def import_price_finmars_database(task_id: int):
+    import_from_database_task(task_id=task_id, operation="price")
+
+
+@shared_task(name="integrations.download_instrument_finmars_database_async", bind=True)
+def download_price_finmars_database_async(self, task_id):
+    _l.info(f"download_price_finmars_database_async {task_id}")
+    import_company_finmars_database(task_id)
+
 
 
 FINAL_STATUSES = {

@@ -1609,6 +1609,62 @@ class ImportCompanyDatabaseSerializer(serializers.Serializer):
         return result
 
 
+# database import FN-1736
+class ImportPriceDatabaseSerializer(serializers.Serializer):
+    master_user = MasterUserField()
+    member = HiddenMemberField()
+    reference = serializers.CharField(required=True)
+    date_from = serializers.DateField(required=True)
+    date_to = serializers.DateField(required=True)
+    task = serializers.IntegerField(required=False, allow_null=True)
+    result_id = serializers.IntegerField(required=False, allow_null=True)
+    errors = serializers.ReadOnlyField()
+
+    def validate(self, attrs):
+        if attrs["date_from"] > attrs["date_to"]:
+            raise ValidationError("invalid dates range!")
+
+        return attrs
+
+    def create_task(self, validated_data: dict) -> dict:
+        from poms.integrations.tasks import (
+            import_price_finmars_database,
+            ttl_finisher,
+        )
+
+        task = CeleryTask.objects.create(
+            status=CeleryTask.STATUS_PENDING,
+            master_user=validated_data["master_user"],
+            member=validated_data["member"],
+            verbose_name="Import Price From Finmars Database",
+            function_name="import_price_finmars_database",
+            type="import_from_database",
+            ttl=settings.FINMARS_DATABASE_TIMEOUT,
+        )
+        task.options_object = {  # params expected in finmars-database view
+            "reference": validated_data["reference"],
+            "date_from": validated_data["date_from"],
+            "date_to": validated_data["date_to"],
+        }
+        task.result_object = {"task": task.id}
+        task.save()
+        ttl_finisher.apply_async(kwargs={"task_id": task.id}, countdown=task.ttl)
+
+        _l.info(f"{self.__class__.__name__} created task.id={task.id}")
+
+        import_price_finmars_database(task.id)
+
+        task.refresh_from_db()
+
+        result = task.result_object
+        result["errors"] = task.error_message
+
+        _l.info(f"{self.__class__.__name__} result={result}")
+
+        return result
+
+
+
 # database import callbacks FN-1736
 class DatabaseRequestSerializer(serializers.Serializer):
     request_id = serializers.IntegerField(required=True, min_value=1)
