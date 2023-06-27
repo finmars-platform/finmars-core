@@ -775,6 +775,7 @@ class TestCertificateViewSet(AbstractViewSet):
 # database import callbacks FN-1736
 class UnifiedImportDatabaseViewSet(AbstractViewSet):
     permission_classes = [AllowAny,]
+    authentication_classes = []
     callback_serializer_class = DatabaseRequestSerializer
 
     def handle_callback(self, validated_data: dict) -> dict:
