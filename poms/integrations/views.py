@@ -781,9 +781,9 @@ class UnifiedImportDatabaseViewSet(AbstractViewSet):
         raise NotImplementedError
 
     def error_task_response(self, e: Exception, task: CeleryTask) -> dict:
-        err_msg = (
-            f"{self.__class__.__name__} callback {repr(e)}\n {traceback.format_exc()}"
-        )
+        func = f"{self.__class__.__name__} task.id={task.id}"
+
+        err_msg = f"{func} callback {repr(e)}\n {traceback.format_exc()}"
         _l.error(err_msg)
         task.status = CeleryTask.STATUS_ERROR
         task.notes = err_msg
@@ -796,6 +796,9 @@ class UnifiedImportDatabaseViewSet(AbstractViewSet):
         }
 
     def success_task_response(self, task: CeleryTask, instance: Any) -> dict:
+        func = f"{self.__class__.__name__} task.id={task.id}"
+        _l.info(f"{func} success, {type(instance)}.id={instance.id} ")
+
         task.result_object = {
             "result_id": instance.id,
             "name": instance.name,

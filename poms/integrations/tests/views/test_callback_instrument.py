@@ -6,7 +6,7 @@ from poms.integrations.database_client import BACKEND_CALLBACK_URLS
 
 from poms.instruments.models import Instrument
 from poms.currencies.models import Currency
-
+from poms.celery_tasks.models import CeleryTask
 
 class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
     def setUp(self):
@@ -67,3 +67,9 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
 
         self.assertIsNotNone(Instrument.objects.filter(user_code=instrument_code).first())
         self.assertIsNotNone(Currency.objects.filter(user_code=currency_code).first())
+
+        self.task.refresh_from_db()
+
+        print("task.error_message=", self.task.error_message)
+
+        self.assertEqual(self.task.status, CeleryTask.STATUS_DONE)
