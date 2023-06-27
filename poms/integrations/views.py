@@ -14,7 +14,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.filters import OrderingFilter
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
@@ -774,7 +774,7 @@ class TestCertificateViewSet(AbstractViewSet):
 
 # database import callbacks FN-1736
 class UnifiedImportDatabaseViewSet(AbstractViewSet):
-    permission_classes = []
+    permission_classes = [AllowAny,]
     callback_serializer_class = DatabaseRequestSerializer
 
     def handle_callback(self, validated_data: dict) -> dict:
