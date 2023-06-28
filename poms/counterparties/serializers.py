@@ -111,7 +111,7 @@ class CounterpartyLightSerializer(ModelWithUserCodeSerializer):
         ]
 
 
-class CounterpartyViewSerializer(serializers.ModelSerializer):
+class CounterpartyViewSerializer(ModelWithUserCodeSerializer):
     group = CounterpartyGroupField()
     group_object = CounterpartyGroupViewSerializer(source="group", read_only=True)
 
@@ -127,6 +127,11 @@ class CounterpartyViewSerializer(serializers.ModelSerializer):
             "public_name",
         ]
 
+        def to_representation(self, instance):
+
+            result = super(CounterpartyViewSerializer, self).to_representation(instance)
+
+            return result
 
 class ResponsibleGroupSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
