@@ -35,6 +35,7 @@ from openpyxl.utils import column_index_from_string
 from poms.accounts.models import Account
 from poms.celery_tasks.models import CeleryTask
 from poms.expressions_engine import formula
+from poms.common.middleware import activate
 from poms.common.crypto.AESCipher import AESCipher
 from poms.common.crypto.RSACipher import RSACipher
 from poms.integrations.database_client import DatabaseService, BACKEND_CALLBACK_URLS
@@ -434,11 +435,12 @@ def create_instrument_from_finmars_database(data, master_user, member):
             ecosystem_defaults,
             attribute_types,
         )
-
         object_data["short_name"] = (
             object_data["name"] + " (" + object_data["user_code"] + ")"
         )
+
         proxy_request = ProxyRequest(ProxyUser(member, master_user))
+        activate(proxy_request)
         context = {
             "master_user": master_user,
             "request": proxy_request,
@@ -4402,14 +4404,15 @@ def create_counterparty_from_callback_data(data, master_user, member) -> Counter
 
     func = "create_counterparty_from_database"
 
-    proxy_user = ProxyUser(member, master_user)
-    proxy_request = ProxyRequest(proxy_user)
-    group = CounterpartyGroup.objects.get(master_user=master_user, user_code="-")
+    proxy_request = ProxyRequest(ProxyUser(member, master_user))
+    activate(proxy_request)
     context = {
         "master_user": master_user,
         "request": proxy_request,
         "member": member,
     }
+
+    group = CounterpartyGroup.objects.get(master_user=master_user, user_code="-")
     company_data = {
         "user_code": data.get("user_code"),
         "name": data.get("name"),
@@ -4456,13 +4459,14 @@ def create_currency_from_callback_data(data, master_user, member) -> Currency:
 
     func = "create_currency_from_finmars_database"
 
-    proxy_user = ProxyUser(member, master_user)
-    proxy_request = ProxyRequest(proxy_user)
+    proxy_request = ProxyRequest(ProxyUser(member, master_user))
+    activate(proxy_request)
     context = {
         "master_user": master_user,
         "request": proxy_request,
         "member": member,
     }
+
     currency_data = {
         "user_code": data.get("user_code"),
         "name": data.get("name"),
