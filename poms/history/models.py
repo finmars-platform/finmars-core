@@ -3,7 +3,7 @@ import json
 import logging
 import sys
 import traceback
-from datetime import datetime, timedelta
+# from datetime import datetime, timedelta
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.serializers.json import DjangoJSONEncoder
@@ -352,19 +352,22 @@ def get_notes_for_history_record(user_code, content_type, serialized_data):
 
 def get_record_context():
     from poms.users.models import MasterUser, Member
+    from poms.common.models import ProxyRequest
 
     result = {"master_user": None, "member": None, "context_url": "Unknown"}
 
     request = get_request()
     if request:
+        if isinstance(request, ProxyRequest):
+            _l.info(f'get_record_context: ProxyUser {request.user}')
+            result["master_user"] = request.user.master_user
+            result["member"] = request.user.member
 
-        # _l.info('request.user %s' % request.user)
-
-        # result["master_user"] = request.user.master_user
-        result["master_user"] = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
-        # result["master_user"] = request.user.member
-        result["member"] = Member.objects.get(user=request.user)
-        result["context_url"] = request.path
+        else:
+            _l.info(f'get_record_contex: User {request.user}')
+            result["master_user"] = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+            result["member"] = Member.objects.get(user=request.user)
+            result["context_url"] = request.path
 
     else:
         try:
