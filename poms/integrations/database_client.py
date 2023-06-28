@@ -4,7 +4,7 @@ import traceback
 from django.conf import settings
 from poms.common.http_client import HttpClient, HttpClientError
 from poms.integrations.monad import Monad, MonadStatus
-from poms.integrations.serializers import DatabaseRequestSerializer
+from poms.integrations.serializers import CallBackDataDictRequestSerializer
 
 _l = logging.getLogger("default")
 log = "DatabaseClient"
@@ -22,11 +22,10 @@ FINMARS_DATABASE_URLS = {
     "currency": f"{settings.FINMARS_DATABASE_URL}{V1}/export/currency",
     "instrument": f"{settings.FINMARS_DATABASE_URL}{V1}/export/instrument",
     "company": f"{settings.FINMARS_DATABASE_URL}{V1}/export/company",
-    # "price": f"{settings.FINMARS_DATABASE_URL}{V1}/export/price",
 }
 
 
-class DatabaseMonadSerializer(DatabaseRequestSerializer):
+class CallBackDataDictMonadSerializer(CallBackDataDictRequestSerializer):
     def create_good_monad(self) -> Monad:
         task_id = self.validated_data["task_id"]
         status = MonadStatus.TASK_CREATED if task_id else MonadStatus.DATA_READY
@@ -68,7 +67,7 @@ class DatabaseService:
             _l.error(f"{log}.get_monad unexpected {repr(e)} {traceback.format_exc()}")
             raise
 
-        serializer = DatabaseMonadSerializer(data=response_json)
+        serializer = CallBackDataDictMonadSerializer(data=response_json)
         return (
             serializer.create_good_monad()
             if serializer.is_valid()
