@@ -355,7 +355,8 @@ def get_record_context():
 
     result = {"master_user": None, "member": None, "context_url": "Unknown"}
 
-    if request := get_request():
+    request = get_request()
+    if request:
 
         # _l.info('request.user %s' % request.user)
 
@@ -447,7 +448,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
 
     if master_user.journal_status != MasterUser.JOURNAL_STATUS_DISABLED:
         user_code = None
-
+        content_type_key = None
         try:
             record_context = get_record_context()
             content_type = ContentType.objects.get_for_model(sender)
@@ -499,7 +500,8 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
 
         except Exception as e:
             _l.error(
-                f"Could not save history user_code {user_code} exception {e} "
+                f"Could not save history user_code={user_code} "
+                f"content_type_key={content_type_key}  exception {e}\n "
                 f"traceback {traceback.format_exc()}"
             )
 
