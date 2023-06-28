@@ -162,14 +162,29 @@ router.register(
     basename="import_instrument_database",
 )
 router.register(
+    "finmars-database/instrument/callback",
+    integrations.InstrumentCallBackViewSet,
+    basename="finmars-database_instrument_callback",
+)
+router.register(
     "finmars-database/currency",
     integrations.ImportCurrencyDatabaseViewSet,
     basename="import_currency_database",
 )
 router.register(
+    "finmars-database/currency/callback",
+    integrations.CurrencyCallBackViewSet,
+    basename="finmars-database_currency_callback",
+)
+router.register(
     "finmars-database/company",
     integrations.ImportCompanyDatabaseViewSet,
     basename="import_company_database",
+)
+router.register(
+    "finmars-database/company/callback",
+    integrations.CompanyCallBackViewSet,
+    basename="finmars-database_company_callback",
 )
 router.register(
     "unified-data-provide",
