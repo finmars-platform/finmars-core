@@ -842,14 +842,17 @@ class InstrumentCallBackViewSet(UnifiedCallBackDatabaseViewSet):
             raise ValidationError(err_msg)
 
         try:
-            create_currency_from_callback_data(
+            currency = create_currency_from_callback_data(
                 data["currencies"][0],
                 task.master_user,
                 task.member,
             )
 
+            instrument_data = data["instruments"][0]
+            instrument_data["pricing_currency"] = currency.user_code
+
             instrument = create_instrument_from_finmars_database(
-                data["instruments"][0],
+                instrument_data,
                 task.master_user,
                 task.member,
             )

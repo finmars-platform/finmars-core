@@ -463,7 +463,9 @@ def create_instrument_from_finmars_database(data, master_user, member):
         if serializer.is_valid():
             instrument = serializer.save()
 
-            _l.info(f"{func} Instrument was imported successfully")
+            _l.info(
+                f"{func} Instrument {instrument.user_code} was imported successfully"
+            )
 
             return instrument
 
