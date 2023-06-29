@@ -1066,12 +1066,11 @@ class InstrumentTypeAccrual(models.Model):
 
     @property
     def data(self):
-        if self.json_data:
-            try:
-                return json.loads(self.json_data)
-            except (ValueError, TypeError):
-                return None
-        else:
+        if not self.json_data:
+            return None
+        try:
+            return json.loads(self.json_data)
+        except (ValueError, TypeError):
             return None
 
     @data.setter
@@ -1107,12 +1106,11 @@ class InstrumentTypeEvent(models.Model):
 
     @property
     def data(self):
-        if self.json_data:
-            try:
-                return json.loads(self.json_data)
-            except (ValueError, TypeError):
-                return None
-        else:
+        if not self.json_data:
+            return None
+        try:
+            return json.loads(self.json_data)
+        except (ValueError, TypeError):
             return None
 
     @data.setter
@@ -1248,7 +1246,7 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
         )
 
     def __str__(self):
-        return "%s" % self.effective_date
+        return f"{self.effective_date}"
 
 
 class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
@@ -1755,20 +1753,13 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
             if isclose(f.factor_value, fprev.factor_value):
                 transaction_type = instrument_type.factor_same
-                if transaction_type is None:
-                    continue
-                    # raise ValueError('Field "factor same"  in instrument type "%s" must be set' % instrument_type)
             elif f.factor_value > fprev.factor_value:
                 transaction_type = instrument_type.factor_up
-                if transaction_type is None:
-                    continue
-                    # raise ValueError('Fields "factor up" in instrument type "%s" must be set' % instrument_type)
             else:
                 transaction_type = instrument_type.factor_down
-                if transaction_type is None:
-                    continue
-                    # raise ValueError('Fields "factor down" in instrument type "%s" must be set' % instrument_type)
-
+            if transaction_type is None:
+                continue
+                # raise ValueError('Field "factor same"  in instrument type "%s" must be set' % instrument_type)
             e = EventSchedule()
             e.instrument = self
             e.is_auto_generated = True
@@ -1826,7 +1817,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             event_action.save()
             processed.append(event.id)
         elif old_event:
-                processed.append(old_event.id)
+            processed.append(old_event.id)
 
     def get_accrual_calculation_schedules_all(self):
         accruals = list(self.accrual_calculation_schedules.all())
@@ -1862,11 +1853,11 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             # print('self.maturity_date %s ' % self.maturity_date)
             try:
                 a.accrual_end_date = self.maturity_date + timedelta(days=1)
-            except (OverflowError, Exception):
-                print("Overflow Error %s " % self.maturity_date)
+            except Exception:
+                print(f"Overflow Error {self.maturity_date} ")
 
                 a.accrual_end_date = self.maturity_date
-            # print('a.accrual_end_date %s ' % a.accrual_end_date)
+                # print('a.accrual_end_date %s ' % a.accrual_end_date)
 
         return accruals
 
@@ -1935,10 +1926,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
         accrual = self.find_accrual(price_date)
         # _l.debug('get_accrual_size.accrual %s' % accrual)
-        if accrual is None:
-            return 0.0
-
-        return float(accrual.accrual_size)
+        return 0.0 if accrual is None else float(accrual.accrual_size)
 
     def get_future_accrual_payments(self, d0, v0):
         pass
@@ -1954,14 +1942,12 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         if accrual is None:
             return 0.0
 
-        factor = coupon_accrual_factor(
+        return coupon_accrual_factor(
             accrual_calculation_schedule=accrual,
             dt1=accrual.accrual_start_date,
             dt2=price_date,
             dt3=accrual.first_payment_date,
         )
-
-        return factor
 
     def get_accrued_price(self, price_date):
         from poms.common.formula_accruals import coupon_accrual_factor
@@ -1981,7 +1967,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             datetime.strptime(accrual.first_payment_date, "%Y-%m-%d")
         )
 
-        _l.info("coupon_accrual_factor price_date %s " % price_date)
+        _l.info(f"coupon_accrual_factor price_date {price_date} ")
 
         factor = coupon_accrual_factor(
             accrual_calculation_schedule=accrual,
@@ -1993,7 +1979,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         return float(accrual.accrual_size) * factor
 
     def get_coupon(self, cpn_date, with_maturity=False, factor=False):
-        _l.info("get_coupon self.maturity_date %s" % self.maturity_date)
+        _l.info(f"get_coupon self.maturity_date {self.maturity_date}")
 
         if cpn_date == self.maturity_date:
             if with_maturity:
@@ -2006,7 +1992,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
         accruals = self.get_accrual_calculation_schedules_all()
 
-        _l.info("get_coupon len accruals %s " % len(accruals))
+        _l.info(f"get_coupon len accruals {len(accruals)} ")
 
         for accrual in accruals:
             accrual_start_date = datetime.date(
@@ -2018,14 +2004,15 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 datetime.strptime(accrual.first_payment_date, "%Y-%m-%d")
             )
 
-            _l.info("get_coupon  accrual_start_date %s " % accrual_start_date)
-            _l.info("get_coupon  accrual_end_date %s " % accrual_end_date)
-            _l.info("get_coupon  first_payment_date %s " % first_payment_date)
+            _l.info(
+                f"get_coupon  accrual_start_date {accrual_start_date} accrual_end_date"
+                f" {accrual_end_date} first_payment_date {first_payment_date}"
+            )
 
             if accrual_start_date <= cpn_date < accrual_end_date:
                 _l.info("get coupon start processing ")
                 prev_d = accrual_start_date
-                for i in range(0, 3652058):
+                for i in range(3652058):
                     stop = False
                     if i == 0:
                         d = first_payment_date
@@ -2037,7 +2024,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                                 same_date=accrual_start_date,
                             )
                         except (OverflowError, ValueError) as e:  # year is out of range
-                            _l.info("get_coupon overflow error %s" % e)
+                            _l.info(f"get_coupon overflow error {e}")
                             return 0.0, False
 
                     if d >= accrual_end_date:
@@ -2053,7 +2040,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                             factor=factor,
                         )
 
-                        _l.info("get_coupon  d == cpn_date %s" % val_or_factor)
+                        _l.info(f"get_coupon  d == cpn_date {val_or_factor}")
 
                         return val_or_factor, True
 
@@ -2313,7 +2300,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             else:
                 attr_notes.value_string = ""
 
-            _l.info("attr_notes=" % attr_notes.value_string)
+            _l.info(f"attr_notes={attr_notes.value_string}")
 
             attr_notes.save()
 
@@ -2917,18 +2904,21 @@ class EventSchedule(models.Model):
                 stop = False
                 try:
                     effective_date = edate + self.periodicity.to_timedelta(
-                        n=self.periodicity_n, i=i, same_date=edate
+                        n=self.periodicity_n,
+                        i=i,
+                        same_date=edate,
                     )
                 except (OverflowError, ValueError):  # year is out of range
                     # effective_date = date.max
                     # stop = True
                     break
 
-                if self.accrual_calculation_schedule_id is not None:
-                    if effective_date >= fdate:
-                        # magic date
-                        effective_date = fdate - timedelta(days=1)
-                        stop = True
+                if (
+                    self.accrual_calculation_schedule_id is not None
+                    and effective_date >= fdate
+                ):
+                    effective_date = fdate - timedelta(days=1)
+                    stop = True
 
                 # notification_date = effective_date - notify_in_n_days
                 # if self.effective_date <= notification_date <= self.final_date or self.effective_date <= effective_date <= self.final_date:
