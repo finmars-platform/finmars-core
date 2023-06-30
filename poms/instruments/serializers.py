@@ -1,5 +1,4 @@
 import logging
-import time
 from datetime import timedelta
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -7,7 +6,7 @@ from django.db import transaction
 from django.utils.timezone import now
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
-from rest_framework.fields import ReadOnlyField, empty
+from rest_framework.fields import ReadOnlyField
 from rest_framework.serializers import ListSerializer
 
 from poms.common.fields import DateTimeTzAwareField, ExpressionField, FloatEvalField
@@ -20,10 +19,7 @@ from poms.common.serializers import (
 )
 from poms.common.utils import date_now
 from poms.currencies.fields import CurrencyDefault
-from poms.currencies.serializers import (
-    CurrencyEvalSerializer,
-    CurrencyField,
-)
+from poms.currencies.serializers import CurrencyEvalSerializer, CurrencyField
 from poms.instruments.fields import (
     AccrualCalculationModelField,
     CountryField,
@@ -63,9 +59,7 @@ from poms.instruments.models import (
     PricingPolicy,
     ShortUnderlyingExposure,
 )
-from poms.obj_attrs.serializers import (
-    ModelWithAttributesSerializer,
-)
+from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.pricing.models import (
     InstrumentPricingPolicy,
     InstrumentTypePricingPolicy,
@@ -277,8 +271,7 @@ class PricingPolicySerializer(
                         )
                     except Exception as e:
                         _l.error(
-                            "Get error, trying to create new InstrumentTypePricingPolicy %s"
-                            % e
+                            f"Get error, trying to create new InstrumentTypePricingPolicy {e}"
                         )
 
                         pricing_policy = InstrumentTypePricingPolicy(
@@ -297,7 +290,7 @@ class PricingPolicySerializer(
                         pricing_policy.save()
 
                 except Exception as e:
-                    _l.error("InstrumentTypePricingPolicy create error %s" % e)
+                    _l.error(f"InstrumentTypePricingPolicy create error {e}")
 
     def create_instrument_pricing_policies(self, instance):
         from poms.pricing.models import InstrumentPricingPolicy
@@ -313,8 +306,7 @@ class PricingPolicySerializer(
                         )
                     except Exception as e:
                         _l.error(
-                            "Get error, trying to create new InstrumentPricingPolicy %s"
-                            % e
+                            f"Get error, trying to create new InstrumentPricingPolicy {e}"
                         )
 
                         pricing_policy = InstrumentPricingPolicy(
@@ -332,7 +324,7 @@ class PricingPolicySerializer(
 
                         pricing_policy.save()
                 except Exception as e:
-                    _l.error("InstrumentPricingPolicy create error %s" % e)
+                    _l.error(f"InstrumentPricingPolicy create error {e}")
 
     def create_currency_pricing_policies(self, instance):
         from poms.currencies.models import Currency
@@ -350,8 +342,7 @@ class PricingPolicySerializer(
 
                     except Exception as e:
                         _l.error(
-                            "Get error, trying to create new CurrencyPricingPolicy %s"
-                            % e
+                            f"Get error, trying to create new CurrencyPricingPolicy {e}"
                         )
 
                         pricing_policy = CurrencyPricingPolicy(
@@ -370,7 +361,7 @@ class PricingPolicySerializer(
                         pricing_policy.save()
 
                 except Exception as e:
-                    _l.error("CurrencyPricingPolicy create error %s" % e)
+                    _l.error(f"CurrencyPricingPolicy create error {e}")
 
     def create(self, validated_data):
         instance = super(PricingPolicySerializer, self).create(validated_data)
@@ -661,6 +652,14 @@ class InstrumentTypeSerializer(
 
         return instance
 
+    @staticmethod
+    def _update_and_save_accruals(item, o):
+        o.name = item["name"]
+        o.order = item["order"]
+        o.autogenerate = item["autogenerate"]
+        o.data = item["data"] if "data" in item else None
+        o.save()
+
     def save_accruals(self, instance, accruals):
         ids = set()
 
@@ -675,43 +674,29 @@ class InstrumentTypeSerializer(
                     o = InstrumentTypeAccrual.objects.get(
                         instrument_type=instance, id=oid
                     )
-
-                    o.name = item["name"]
-                    o.order = item["order"]
-                    o.autogenerate = item["autogenerate"]
-
-                    if "data" in item:
-                        o.data = item["data"]
-                    else:
-                        o.data = None
-
-                    o.save()
-
-                except InstrumentTypeAccrual.DoesNotExist as e:
+                    self._update_and_save_accruals(item, o)
+                except InstrumentTypeAccrual.DoesNotExist:
                     try:
                         o = InstrumentTypeAccrual.objects.create(
                             instrument_type=instance
                         )
-
-                        o.name = item["name"]
-                        o.order = item["order"]
-                        o.autogenerate = item["autogenerate"]
-
-                        if "data" in item:
-                            o.data = item["data"]
-                        else:
-                            o.data = None
-
-                        o.save()
-
+                        self._update_and_save_accruals(item, o)
                         ids.add(o.id)
 
                     except Exception as e:
-                        print("Can't Create Instrument Type Accrual %s" % e)
+                        _l.error(f"Can't Create Instrument Type Accrual {repr(e)}")
 
         InstrumentTypeAccrual.objects.filter(instrument_type=instance).exclude(
             id__in=ids
         ).delete()
+
+    @staticmethod
+    def _update_and_save_events(item, o):
+        o.name = item["name"]
+        o.order = item["order"]
+        o.autogenerate = item["autogenerate"]
+        o.data = item["data"] if "data" in item else None
+        o.save()
 
     def save_events(self, instance, events):
         ids = set()
@@ -728,42 +713,30 @@ class InstrumentTypeSerializer(
                         instrument_type=instance, id=oid
                     )
 
-                    o.name = item["name"]
-                    o.order = item["order"]
-                    o.autogenerate = item["autogenerate"]
-
-                    if "data" in item:
-                        o.data = item["data"]
-                    else:
-                        o.data = None
-
-                    o.save()
-
+                    self._update_and_save_events(item, o)
                 except InstrumentTypeEvent.DoesNotExist as e:
                     try:
                         o = InstrumentTypeEvent.objects.create(instrument_type=instance)
 
-                        o.name = item["name"]
-                        o.order = item["order"]
-                        o.autogenerate = item["autogenerate"]
-
-                        if "data" in item:
-                            o.data = item["data"]
-                        else:
-                            o.data = None
-
-                        o.save()
-
+                        self._update_and_save_events(item, o)
                         ids.add(o.id)
 
                     except Exception as e:
-                        print("Can't Create Instrument Type Event %s" % e)
-
-        # print('events create ids %s ' % ids)
+                        _l.error(f"Can't Create Instrument Type Event {repr(e)}")
 
         InstrumentTypeEvent.objects.filter(instrument_type=instance).exclude(
             id__in=ids
         ).delete()
+
+    @staticmethod
+    def _update_and_save_attributes(item, o):
+        o.attribute_type_user_code = item["attribute_type_user_code"]
+        o.value_type = item["value_type"]
+        o.value_string = item["value_string"]
+        o.value_float = item["value_float"]
+        o.value_date = item["value_date"]
+        o.value_classifier = item["value_classifier"]
+        o.save()
 
     def save_instrument_attributes(self, instance, events):
         ids = set()
@@ -780,42 +753,44 @@ class InstrumentTypeSerializer(
                         instrument_type=instance, id=oid
                     )
 
-                    o.attribute_type_user_code = item["attribute_type_user_code"]
-                    o.value_type = item["value_type"]
-                    o.value_string = item["value_string"]
-                    o.value_float = item["value_float"]
-                    o.value_date = item["value_date"]
-                    o.value_classifier = item["value_classifier"]
+                    self._update_and_save_attributes(item, o)
 
-                    o.save()
-
-                except InstrumentTypeInstrumentAttribute.DoesNotExist as e:
+                except InstrumentTypeInstrumentAttribute.DoesNotExist:
                     try:
                         o = InstrumentTypeInstrumentAttribute.objects.create(
                             instrument_type=instance
                         )
 
-                        o.attribute_type_user_code = item["attribute_type_user_code"]
-                        o.value_type = item["value_type"]
-                        o.value_string = item["value_string"]
-                        o.value_float = item["value_float"]
-                        o.value_date = item["value_date"]
-                        o.value_classifier = item["value_classifier"]
-
-                        o.save()
+                        self._update_and_save_attributes(item, o)
 
                         ids.add(o.id)
 
                     except Exception as e:
-                        print(
-                            "Can't Create Instrument Type Instrument Attribute %s" % e
+                        _l.error(
+                            f"Can't Create Instrument Type Instrument Attribute"
+                            f" {repr(e)}"
                         )
 
-        print("instrument attribute create ids %s " % ids)
+        _l.info(f"instrument attribute create ids {ids}")
 
         InstrumentTypeInstrumentAttribute.objects.filter(
             instrument_type=instance
         ).exclude(id__in=ids).delete()
+
+    @staticmethod
+    def _update_and_save_factor_schedules(item, o):
+        o.effective_date = item["effective_date"]
+        o.effective_date_value_type = item["effective_date_value_type"]
+        o.position_factor_value = item["position_factor_value"]
+        o.position_factor_value_value_type = item["position_factor_value_value_type"]
+        o.factor_value1 = item["factor_value1"]
+        o.factor_value1_value_type = item["factor_value1_value_type"]
+        o.factor_value2 = item["factor_value2"]
+        o.factor_value2_value_type = item["factor_value2_value_type"]
+        o.factor_value3 = item["factor_value3"]
+        o.factor_value3_value_type = item["factor_value3_value_type"]
+
+        o.save()
 
     def save_instrument_factor_schedules(self, instance, events):
         ids = set()
@@ -832,50 +807,21 @@ class InstrumentTypeSerializer(
                         instrument_type=instance, id=oid
                     )
 
-                    o.effective_date = item["effective_date"]
-                    o.effective_date_value_type = item["effective_date_value_type"]
-                    o.position_factor_value = item["position_factor_value"]
-                    o.position_factor_value_value_type = item[
-                        "position_factor_value_value_type"
-                    ]
-                    o.factor_value1 = item["factor_value1"]
-                    o.factor_value1_value_type = item["factor_value1_value_type"]
-                    o.factor_value2 = item["factor_value2"]
-                    o.factor_value2_value_type = item["factor_value2_value_type"]
-                    o.factor_value3 = item["factor_value3"]
-                    o.factor_value3_value_type = item["factor_value3_value_type"]
+                    self._update_and_save_factor_schedules(item, o)
 
-                    o.save()
-
-                except InstrumentTypeInstrumentFactorSchedule.DoesNotExist as e:
+                except InstrumentTypeInstrumentFactorSchedule.DoesNotExist:
                     try:
                         o = InstrumentTypeInstrumentFactorSchedule.objects.create(
                             instrument_type=instance
                         )
 
-                        o.effective_date = item["effective_date"]
-                        o.effective_date_value_type = item["effective_date_value_type"]
-                        o.position_factor_value = item["position_factor_value"]
-                        o.position_factor_value_value_type = item[
-                            "position_factor_value_value_type"
-                        ]
-                        o.factor_value1 = item["factor_value1"]
-                        o.factor_value1_value_type = item["factor_value1_value_type"]
-                        o.factor_value2 = item["factor_value2"]
-                        o.factor_value2_value_type = item["factor_value2_value_type"]
-                        o.factor_value3 = item["factor_value3"]
-                        o.factor_value3_value_type = item["factor_value3_value_type"]
-                        o.save()
-
+                        self._update_and_save_factor_schedules(item, o)
                         ids.add(o.id)
 
                     except Exception as e:
-                        print(
-                            "Can't Create Instrument Type Instrument Factor Schedule %s"
-                            % e
-                        )
+                        _l.error(f"Can't Create Instrument Factor Schedule {repr(e)}")
 
-        print("instrument Factor Schedule create ids %s " % ids)
+        _l.error(f"instrument Factor Schedule create ids {ids}")
 
         InstrumentTypeInstrumentFactorSchedule.objects.filter(
             instrument_type=instance
@@ -928,51 +874,19 @@ class InstrumentTypeSerializer(
                         instrument_type=instance, id=oid
                     )
 
-                    o.pricing_scheme = item["pricing_scheme"]
-                    o.default_value = item["default_value"]
-                    o.attribute_key = item["attribute_key"]
-
-                    if "data" in item:
-                        o.data = item["data"]
-                    else:
-                        o.data = None
-
-                    o.notes = item["notes"]
-                    o.overwrite_default_parameters = item[
-                        "overwrite_default_parameters"
-                    ]
-
-                    o.save()
-
+                    self._update_and_save_pricing_policies(item, o)
                 except InstrumentTypePricingPolicy.DoesNotExist as e:
                     try:
-                        # print("Id is not Provided. Trying to lookup.")
-
                         o = InstrumentTypePricingPolicy.objects.get(
                             instrument_type=instance,
                             pricing_policy=item["pricing_policy"],
                         )
 
-                        o.pricing_scheme = item["pricing_scheme"]
-                        o.default_value = item["default_value"]
-                        o.attribute_key = item["attribute_key"]
-
-                        if "data" in item:
-                            o.data = item["data"]
-                        else:
-                            o.data = None
-
-                        o.notes = item["notes"]
-                        o.overwrite_default_parameters = item[
-                            "overwrite_default_parameters"
-                        ]
-
-                        o.save()
-
+                        self._update_and_save_pricing_policies(item, o)
                         ids.add(o.id)
 
                     except Exception as e:
-                        print("Can't Find  Pricing Policy %s" % e)
+                        _l.warning(f"Can't Find  Pricing Policy {repr(e)}")
 
         # print('ids %s' % ids)
 
@@ -980,6 +894,17 @@ class InstrumentTypeSerializer(
             InstrumentTypePricingPolicy.objects.filter(
                 instrument_type=instance
             ).exclude(id__in=ids).delete()
+
+    @staticmethod
+    def _update_and_save_pricing_policies(item, o):
+        o.pricing_scheme = item["pricing_scheme"]
+        o.default_value = item["default_value"]
+        o.attribute_key = item["attribute_key"]
+        o.notes = item["notes"]
+        o.data = item["data"] if "data" in item else None
+        o.overwrite_default_parameters = item["overwrite_default_parameters"]
+
+        o.save()
 
 
 class TransactionTypeSimpleViewSerializer(ModelWithUserCodeSerializer):
@@ -1033,19 +958,25 @@ class InstrumentSerializer(
     master_user = MasterUserField()
 
     pricing_currency = CurrencyField()
+
     accrued_currency = CurrencyField()
 
     instrument_type = InstrumentTypeField()
 
     co_directional_exposure_currency = CurrencyField()
+
     counter_directional_exposure_currency = CurrencyField()
 
     long_underlying_instrument = InstrumentField(required=False, allow_null=True)
+
     short_underlying_instrument = InstrumentField(required=False, allow_null=True)
 
     pricing_condition = PricingConditionField(required=False, allow_null=True)
+
     payment_size_detail = PaymentSizeDetailField(required=False, allow_null=True)
+
     daily_pricing_model = DailyPricingModelField(required=False, allow_null=True)
+
     country = CountryField(required=False, allow_null=True)
 
     # ==== Objects below ====
@@ -1065,18 +996,15 @@ class InstrumentSerializer(
     counter_directional_exposure_currency_object = serializers.PrimaryKeyRelatedField(
         source="counter_directional_exposure_currency", read_only=True
     )
-
     long_underlying_instrument_object = serializers.PrimaryKeyRelatedField(
         source="long_underlying_instrument", read_only=True
     )
     short_underlying_instrument_object = serializers.PrimaryKeyRelatedField(
         source="short_underlying_instrument", read_only=True
     )
-
     exposure_calculation_model_object = ExposureCalculationModelSerializer(
         source="exposure_calculation_model", read_only=True
     )
-
     payment_size_detail_object = PaymentSizeDetailSerializer(
         source="payment_size_detail", read_only=True
     )
@@ -1172,16 +1100,12 @@ class InstrumentSerializer(
         self.fields["accrued_currency_object"] = CurrencyViewSerializer(
             source="accrued_currency", read_only=True
         )
-
         self.fields["co_directional_exposure_currency_object"] = CurrencyViewSerializer(
             source="accrued_currency", read_only=True
         )
         self.fields[
             "counter_directional_exposure_currency_object"
         ] = CurrencyViewSerializer(source="accrued_currency", read_only=True)
-
-        # self.fields['price_download_scheme_object'] = PriceDownloadSchemeViewSerializer(source='price_download_scheme',
-        #                                                                                 read_only=True)
 
         self.fields["manual_pricing_formulas"] = ManualPricingFormulaSerializer(
             many=True, required=False, allow_null=True
@@ -1197,60 +1121,122 @@ class InstrumentSerializer(
         self.fields["event_schedules"] = EventScheduleSerializer(
             many=True, required=False, allow_null=True
         )
-
         self.fields["pricing_policies"] = InstrumentPricingPolicySerializer(
             many=True, required=False, allow_null=True
         )
 
-    def create(self, validated_data):
-        manual_pricing_formulas = validated_data.pop("manual_pricing_formulas", None)
-        accrual_calculation_schedules = validated_data.pop(
-            "accrual_calculation_schedules", None
+    def create(self, validated_data: dict) -> Instrument:
+        func = f"{self.__class__.__name__}.create"
+
+        # remove all nested objects from Instrument validated data
+
+        manual_pricing_formulas = validated_data.pop(
+            "manual_pricing_formulas",
+            None,
         )
-        factor_schedules = validated_data.pop("factor_schedules", None)
-        event_schedules = validated_data.pop("event_schedules", None)
+        accrual_calculation_schedules = validated_data.pop(
+            "accrual_calculation_schedules",
+            None,
+        )
+        factor_schedules = validated_data.pop(
+            "factor_schedules",
+            None,
+        )
+        event_schedules = validated_data.pop(
+            "event_schedules",
+            None,
+        )
         pricing_policies = validated_data.pop("pricing_policies", [])
 
-        instance = super(InstrumentSerializer, self).create(validated_data)
+        instance = super().create(validated_data)
+        _l.info(f"{func} created instrument.user_code={instance.user_code}")
 
-        self.save_manual_pricing_formulas(instance, True, manual_pricing_formulas)
-        self.save_accrual_calculation_schedules(
-            instance, True, accrual_calculation_schedules
+        # created all related objects of the instance
+
+        self.save_manual_pricing_formulas(
+            instance,
+            True,
+            manual_pricing_formulas,
         )
-        self.save_factor_schedules(instance, True, factor_schedules)
-        self.save_event_schedules(instance, True, event_schedules)
-
+        self.save_accrual_calculation_schedules(
+            instance,
+            True,
+            accrual_calculation_schedules,
+        )
+        self.save_factor_schedules(
+            instance,
+            True,
+            factor_schedules,
+        )
+        self.save_event_schedules(
+            instance,
+            True,
+            event_schedules,
+        )
         self.save_pricing_policies(instance, pricing_policies)
-
-        # self.rebuild_event_schedules(instance, True)
 
         return instance
 
-    def update(self, instance, validated_data):
-        manual_pricing_formulas = validated_data.pop("manual_pricing_formulas", empty)
-        accrual_calculation_schedules = validated_data.pop(
-            "accrual_calculation_schedules", empty
+    def update(self, instance: Instrument, validated_data: dict) -> Instrument:
+        func = (
+            f"{self.__class__.__name__}.update instance.user_code="
+            f"{instance.user_code} "
         )
-        factor_schedules = validated_data.pop("factor_schedules", empty)
-        event_schedules = validated_data.pop("event_schedules", empty)
+
+        # remove all nested objects from Instrument validated data
+
+        manual_pricing_formulas = validated_data.pop(
+            "manual_pricing_formulas",
+            None,
+        )
+        accrual_calculation_schedules = validated_data.pop(
+            "accrual_calculation_schedules",
+            None,
+        )
+        factor_schedules = validated_data.pop(
+            "factor_schedules",
+            None,
+        )
+        event_schedules = validated_data.pop(
+            "event_schedules",
+            None,
+        )
         pricing_policies = validated_data.pop("pricing_policies", [])
 
-        instance = super(InstrumentSerializer, self).update(instance, validated_data)
+        instance = super().update(instance, validated_data)
+        _l.info(f"{func} updated instrument.user_code={instance.user_code}")
 
-        if manual_pricing_formulas is not empty:
-            self.save_manual_pricing_formulas(instance, False, manual_pricing_formulas)
-        if accrual_calculation_schedules is not empty:
-            self.save_accrual_calculation_schedules(
-                instance, False, accrual_calculation_schedules
+        # created or update all related objects of the instance
+
+        if manual_pricing_formulas:
+            self.save_manual_pricing_formulas(
+                instance,
+                False,
+                manual_pricing_formulas,
             )
-        if factor_schedules is not empty:
-            self.save_factor_schedules(instance, False, factor_schedules)
-        if event_schedules is not empty:
-            self.save_event_schedules(instance, False, event_schedules)
+        if accrual_calculation_schedules:
+            self.save_accrual_calculation_schedules(
+                instance,
+                False,
+                accrual_calculation_schedules,
+            )
+        if factor_schedules:
+            self.save_factor_schedules(
+                instance,
+                False,
+                factor_schedules,
+            )
+        if event_schedules:
+            self.save_event_schedules(
+                instance,
+                False,
+                event_schedules,
+            )
 
         self.save_pricing_policies(instance, pricing_policies)
 
         self.calculate_prices_accrued_price(instance, False)
+
         # self.rebuild_event_schedules(instance, False)
 
         # needed to update data about accrual_calculation_schedules and event_schedules
@@ -1273,8 +1259,6 @@ class InstrumentSerializer(
 
             except InstrumentPricingPolicy.DoesNotExist:
                 o = InstrumentPricingPolicy(instrument=instance, pricing_policy=policy)
-
-                # print('policy.default_instrument_pricing_scheme %s' % policy.default_instrument_pricing_scheme)
 
                 if policy.default_instrument_pricing_scheme:
                     o.pricing_scheme = policy.default_instrument_pricing_scheme
@@ -1305,14 +1289,10 @@ class InstrumentSerializer(
                     o.default_value = item["default_value"]
                     o.attribute_key = item["attribute_key"]
 
-                    if "data" in item:
-                        o.data = item["data"]
-                    else:
-                        o.data = None
-
+                    o.data = item["data"] if "data" in item else None
                     o.notes = item["notes"]
 
-                    print("attributekey %s" % o.attribute_key)
+                    _l.info(f"attribute_key={o.attribute_key}")
 
                     o.save()
 
@@ -1328,11 +1308,7 @@ class InstrumentSerializer(
                         o.default_value = item["default_value"]
                         o.attribute_key = item["attribute_key"]
 
-                        if "data" in item:
-                            o.data = item["data"]
-                        else:
-                            o.data = None
-
+                        o.data = item["data"] if "data" in item else None
                         o.notes = item["notes"]
 
                         o.save()
@@ -1340,7 +1316,7 @@ class InstrumentSerializer(
                         ids.add(o.id)
 
                     except Exception as e:
-                        print("Can't Find  Pricing Policy %s" % e)
+                        _l.info(f"Can't Find  Pricing Policy {repr(e)}")
 
         # print('ids %s' % ids)
 
@@ -1350,11 +1326,15 @@ class InstrumentSerializer(
             ).delete()
 
     def save_instr_related(
-        self, instrument, created, instrument_attr, model, validated_data, accept=None
+        self,
+        instrument: Instrument,
+        created: bool,
+        instrument_attr: str,
+        model,
+        validated_data: dict,
+        accept=None,
     ):
         validated_data = validated_data or []
-        # if validated_data is None:
-        #     return
 
         related_attr = getattr(instrument, instrument_attr)
         processed = {}
@@ -1368,11 +1348,11 @@ class InstrumentSerializer(
                     o = model(instrument=instrument)
             else:
                 o = model(instrument=instrument)
-            if callable(accept):
-                if not accept(attr, o):
-                    if o:
-                        processed[o.id] = o
-                    continue
+
+            if callable(accept) and not accept(attr, o):
+                if o:
+                    processed[o.id] = o
+                continue
             for k, v in attr.items():
                 if k not in ["id", "instrument", "actions"]:
                     setattr(o, k, v)
@@ -1432,6 +1412,7 @@ class InstrumentSerializer(
                 event_schedule = events[es["id"]]
             except KeyError:
                 continue
+
             if event_schedule.is_auto_generated:
                 continue
 
@@ -1470,47 +1451,7 @@ class InstrumentSerializer(
         try:
             instrument.rebuild_event_schedules()
         except ValueError as e:
-            raise ValidationError({"instrument_type": "%s" % e})
-
-
-# class InstrumentExternalApiSerializer(serializers.ModelSerializer):
-#
-#     class Meta:
-#         model = Instrument
-#         fields = [
-#             'id', 'master_user', 'instrument_type', 'user_code', 'name', 'short_name',
-#             'public_name', 'notes', 'is_active', 'is_deleted', 'has_linked_with_portfolio',
-#             'pricing_currency', 'price_multiplier',
-#             'accrued_currency', 'accrued_multiplier',
-#
-#
-#
-#             'payment_size_detail',  'default_price', 'default_accrued',
-#             'user_text_1', 'user_text_2', 'user_text_3',
-#             'reference_for_pricing',
-#             'daily_pricing_model',
-#             'pricing_condition',
-#             'price_download_scheme',
-#             'maturity_date', 'maturity_price',
-#             'manual_pricing_formulas', 'accrual_calculation_schedules', 'factor_schedules', 'event_schedules',
-#             'is_enabled',
-#
-#             'exposure_calculation_model',
-#
-#             'co_directional_exposure_currency', 'counter_directional_exposure_currency',
-#
-#             'long_underlying_instrument', 'short_underlying_instrument',
-#
-#             'underlying_long_multiplier', 'underlying_short_multiplier',
-#
-#             'long_underlying_exposure', 'short_underlying_exposure',
-#
-#             'position_reporting'
-#
-#         ]
-#
-#     def __init__(self, *args, **kwargs):
-#         super(InstrumentExternalApiSerializer, self).__init__(*args, **kwargs)
+            raise ValidationError({"instrument_type": f"{repr(e)}"}) from e
 
 
 class InstrumentLightSerializer(ModelWithUserCodeSerializer):
@@ -1532,13 +1473,7 @@ class InstrumentLightSerializer(ModelWithUserCodeSerializer):
         ]
 
     def to_representation(self, instance):
-        st = time.perf_counter()
-
-        result = super(InstrumentLightSerializer, self).to_representation(instance)
-
-        # _l.debug('InstrumentLightSerializer done: %s', "{:3.3f}".format(time.perf_counter() - st))
-
-        return result
+        return super().to_representation(instance)
 
 
 class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
@@ -1596,22 +1531,13 @@ class InstrumentForSelectSerializer(ModelWithUserCodeSerializer):
         ]
 
     def to_representation(self, instance):
-        st = time.perf_counter()
-
-        result = super(InstrumentForSelectSerializer, self).to_representation(instance)
-
-        # _l.debug('InstrumentLightSerializer done: %s', "{:3.3f}".format(time.perf_counter() - st))
-
-        return result
+        return super().to_representation(instance)
 
 
 class InstrumentViewSerializer(ModelWithUserCodeSerializer):
     instrument_type_object = InstrumentTypeViewSerializer(
         source="instrument_type", read_only=True
     )
-
-    # pricing_currency_object = serializers.PrimaryKeyRelatedField(source='pricing_currency', read_only=True)
-    # accrued_currency_object = serializers.PrimaryKeyRelatedField(source='accrued_currency', read_only=True)
 
     class Meta:
         model = Instrument
@@ -1627,9 +1553,6 @@ class InstrumentViewSerializer(ModelWithUserCodeSerializer):
             "is_active",
             "is_deleted",
             "has_linked_with_portfolio",
-            # 'pricing_currency', 'pricing_currency_object', 'price_multiplier',
-            # 'accrued_currency', 'accrued_currency_object', 'accrued_multiplier',
-            # 'payment_size_detail', 'payment_size_detail_object', 'default_price', 'default_accrued',
             "user_text_1",
             "user_text_2",
             "user_text_3",
@@ -1638,10 +1561,6 @@ class InstrumentViewSerializer(ModelWithUserCodeSerializer):
 
     def __init__(self, *args, **kwargs):
         super(InstrumentViewSerializer, self).__init__(*args, **kwargs)
-
-        # from poms.currencies.serializers import CurrencyViewSerializer
-        # self.fields['pricing_currency_object'] = CurrencyViewSerializer(source='pricing_currency', read_only=True)
-        # self.fields['accrued_currency_object'] = CurrencyViewSerializer(source='accrued_currency', read_only=True)
 
 
 # DEPRECTATED (25.05.2020) delete soon
@@ -1659,13 +1578,10 @@ class ManualPricingFormulaSerializer(serializers.ModelSerializer):
 
 class AccrualCalculationScheduleSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
-    # periodicity_n = serializers.IntegerField(required=False, default=0, initial=0, min_value=0, max_value=10 * 365)
-
     accrual_calculation_model = AccrualCalculationModelField()
     accrual_calculation_model_object = AccrualCalculationModelSerializer(
         source="accrual_calculation_model", read_only=True
     )
-
     periodicity = PeriodicityField(allow_null=False)
     periodicity_object = PeriodicitySerializer(source="periodicity", read_only=True)
 
@@ -1707,11 +1623,9 @@ class AccrualCalculationScheduleSerializer(serializers.ModelSerializer):
 
 
 class InstrumentFactorScheduleSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
-
     class Meta:
         model = InstrumentFactorSchedule
-        fields = ["id", "effective_date", "factor_value"]
+        fields = ["effective_date", "factor_value"]
 
 
 class EventScheduleActionSerializer(serializers.ModelSerializer):
@@ -1722,8 +1636,7 @@ class EventScheduleActionSerializer(serializers.ModelSerializer):
         allow_blank=True,
         allow_null=True,
     )
-    # transaction_type = TransactionTypeField()
-    # transaction_type_object = serializers.PrimaryKeyRelatedField(source='transaction_type', read_only=True)
+
     display_text = serializers.SerializerMethodField()
 
     data = serializers.JSONField(allow_null=True, required=False)
@@ -1743,9 +1656,6 @@ class EventScheduleActionSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, **kwargs):
         super(EventScheduleActionSerializer, self).__init__(*args, **kwargs)
-
-        # self.fields['transaction_type_object'] = TransactionTypeViewSerializer(source='transaction_type',
-        #                                                                        read_only=True)
 
     def get_display_text(self, obj):
         r = self.root
@@ -1902,8 +1812,20 @@ class PriceHistorySerializer(ModelMetaSerializer):
 
     def __init__(self, *args, **kwargs):
         super(PriceHistorySerializer, self).__init__(*args, **kwargs)
-        # if 'request' not in self.context:
-        #     self.fields.pop('url')
+
+    @staticmethod
+    def create_price_history_error(instance):
+        history_item = PriceHistoryError()
+        history_item.status = PriceHistoryError.STATUS_CREATED
+        history_item.master_user = instance.instrument.master_user
+        history_item.instrument = instance.instrument
+        history_item.principal_price = instance.principal_price
+        history_item.accrued_price = instance.accrued_price
+        history_item.date = instance.date
+        history_item.pricing_policy = instance.pricing_policy
+        history_item.created = now()
+        history_item.save()
+        return history_item
 
     def create(self, validated_data):
         instance = super(PriceHistorySerializer, self).create(validated_data)
@@ -1920,21 +1842,10 @@ class PriceHistorySerializer(ModelMetaSerializer):
             )[0]
 
             history_item.status = PriceHistoryError.STATUS_OVERWRITTEN
+            history_item.save()
 
         except (PriceHistoryError.DoesNotExist, IndexError):
-            history_item = PriceHistoryError()
-
-            history_item.status = PriceHistoryError.STATUS_CREATED
-
-            history_item.master_user = instance.instrument.master_user
-            history_item.instrument = instance.instrument
-            history_item.principal_price = instance.principal_price
-            history_item.accrued_price = instance.accrued_price
-            history_item.date = instance.date
-            history_item.pricing_policy = instance.pricing_policy
-            history_item.created = now()
-
-        history_item.save()
+            self.create_price_history_error(instance)
 
         member = get_member_from_context(self.context)
         master_user = get_master_user_from_context(self.context)
@@ -1959,33 +1870,10 @@ class PriceHistorySerializer(ModelMetaSerializer):
             instance.created = now()
 
         instance = super(PriceHistorySerializer, self).update(instance, validated_data)
-
         instance.procedure_modified_datetime = now()
         instance.save()
 
-        # try:
-        #
-        #     history_item = PriceHistoryError.objects.get(instrument=instance.instrument,
-        #                                                     master_user=instance.instrument.master_user, date=instance.date,
-        #                                                     pricing_policy=instance.pricing_policy)
-        #
-        #     history_item.status = PriceHistoryError.STATUS_OVERWRITTEN
-        #
-        # except PriceHistoryError.DoesNotExist:
-
-        history_item = PriceHistoryError()
-        history_item.created = now()
-
-        history_item.status = PriceHistoryError.STATUS_CREATED
-
-        history_item.master_user = instance.instrument.master_user
-        history_item.instrument = instance.instrument
-        history_item.principal_price = instance.principal_price
-        history_item.accrued_price = instance.accrued_price
-        history_item.date = instance.date
-        history_item.pricing_policy = instance.pricing_policy
-
-        history_item.save()
+        self.create_price_history_error(instance)
 
         member = get_member_from_context(self.context)
         master_user = get_master_user_from_context(self.context)
@@ -1996,11 +1884,10 @@ class PriceHistorySerializer(ModelMetaSerializer):
             section="prices",
             type="warning",
             title="Edit Price (manual)",
-            description=instance.instrument.user_code
-            + " "
-            + str(instance.date)
-            + " "
-            + str(instance.principal_price),
+            description=(
+                f"{instance.instrument.user_code} {str(instance.date)}"
+                f" {str(instance.principal_price)}"
+            ),
         )
 
         return instance
@@ -2008,7 +1895,6 @@ class PriceHistorySerializer(ModelMetaSerializer):
 
 class GeneratedEventSerializer(serializers.ModelSerializer):
     status_date = DateTimeTzAwareField(read_only=True)
-    # is_need_reaction = serializers.SerializerMethodField()
     is_need_reaction = serializers.BooleanField(read_only=True)
 
     data = serializers.JSONField(allow_null=False)
@@ -2099,46 +1985,11 @@ class GeneratedEventSerializer(serializers.ModelSerializer):
         finally:
             self._current_instance = None
 
-    # def get_is_need_reaction(self, obj):
-    #     now = date_now()
-    #     return obj.action is None and (
-    #         obj.is_need_reaction_on_notification_date(now) or obj.is_need_reaction_on_effective_date(now)
-    #     )
-
     def generate_text(self, exr, names=None):
-        # # member = get_member_from_context(self.context)
-        # names = names or {}
-        # if obj is None:
-        #     obj = self._current_instance
-        # names.update({
-        #     # 'event': obj,
-        #     # 'effective_date': serializers.DateField().to_representation(obj.effective_date),
-        #     # 'notification_date': serializers.DateField().to_representation(obj.notification_date),
-        #     'effective_date': obj.effective_date,
-        #     'notification_date': obj.notification_date,
-        #     # 'event_schedule': obj.event_schedule,
-        #     # 'instrument':  formula.get_model_data(obj.instrument, InstrumentViewSerializer, context=self.context),
-        #     # 'portfolio': formula.get_model_data(obj.portfolio, PortfolioViewSerializer, context=self.context),
-        #     # 'account': formula.get_model_data(obj.account, AccountViewSerializer, context=self.context),
-        #     # 'strategy1': formula.get_model_data(obj.strategy1, Strategy1ViewSerializer, context=self.context),
-        #     # 'strategy2': formula.get_model_data(obj.strategy2, Strategy2ViewSerializer, context=self.context),
-        #     # 'strategy3': formula.get_model_data(obj.strategy3, Strategy3ViewSerializer, context=self.context),
-        #     'instrument': obj.instrument,
-        #     'portfolio': obj.portfolio,
-        #     'account': obj.account,
-        #     'strategy1': obj.strategy1,
-        #     'strategy2': obj.strategy2,
-        #     'strategy3': obj.strategy3,
-        #     'position': obj.position,
-        # })
-        # # import json
-        # # print(json.dumps(names, indent=2))
-        # try:
-        #     return formula.safe_eval(exr, names=names, context=self.context)
-        # except formula.InvalidExpression as e:
-        #     return '<InvalidExpression>'
         return self._current_instance.generate_text(
-            exr, names=names, context=self.context
+            exr,
+            names=names,
+            context=self.context,
         )
 
 
@@ -2197,8 +2048,8 @@ class InstrumentTypeProcessSerializer(serializers.Serializer):
 
         for itype_pp in list(obj.instrument["_instrument_type_pricing_policies"].all()):
             pricing_policy_data = InstrumentTypePricingPolicySerializer(
-                instance=itype_pp
-            , context=self.context).data
+                instance=itype_pp, context=self.context
+            ).data
 
             pricing_policy = {
                 "pricing_policy": pricing_policy_data["pricing_policy"],
@@ -2365,7 +2216,6 @@ class InstrumentTypeEvalSerializer(
         self.fields["factor_down_object"] = TransactionTypeSimpleViewSerializer(
             source="factor_down", read_only=True
         )
-
         self.fields["pricing_policies"] = InstrumentTypePricingPolicySerializer(
             many=True, required=False, allow_null=True
         )

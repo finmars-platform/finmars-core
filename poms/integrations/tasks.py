@@ -393,7 +393,7 @@ def create_instrument_from_finmars_database(data, master_user, member):
 
                 _l.info(
                     f"{func} Reference for pricing updated "
-                    f'{instrument_data["reference_for_pricing"]}'
+                    f"{instrument_data['reference_for_pricing']}"
                 )
 
             _l.info(f"{func} Overwrite Pricing Currency for stock")
@@ -408,14 +408,9 @@ def create_instrument_from_finmars_database(data, master_user, member):
             instrument_type = InstrumentType.objects.get(
                 master_user=master_user,
                 user_code=instrument_type_user_code_full,
-                # user_code__contains=short_type,  # FOR DEBUG ONLY!
+                # user_code__contains=short_type,  #TODO FOR DEBUG ONLY!
             )
         except InstrumentType.DoesNotExist as e:
-            # all_types = InstrumentType.objects.all().values_list(
-            #     "id", "user_code", "master_user_id"
-            # )  # FOR DEBUG ONLY!
-            # err_msg = f"{func} No InstrumentType user_code={short_type} all={all_types}"
-
             err_msg = f"{func} no such InstrumentType user_code={instrument_type_user_code_full}"
             _l.error(err_msg)
             raise RuntimeError(err_msg) from e
@@ -455,7 +450,9 @@ def create_instrument_from_finmars_database(data, master_user, member):
             instance.is_active = True
 
             serializer = InstrumentSerializer(
-                data=object_data, context=context, instance=instance
+                data=object_data,
+                context=context,
+                instance=instance,
             )
         except Instrument.DoesNotExist:
             serializer = InstrumentSerializer(data=object_data, context=context)
@@ -588,13 +585,14 @@ def create_instrument_cbond(data, master_user, member):
 
             return instrument
         else:
-            _l.info(f"InstrumentExternalAPIViewSet error {serializer.errors}")
-            raise Exception(serializer.errors)
+            _l.error(f"InstrumentExternalAPIViewSet error {serializer.errors}")
+            raise RuntimeError(serializer.errors)
 
     except Exception as e:
-        _l.info(f"InstrumentExternalAPIViewSet error {e}")
-        _l.info(traceback.format_exc())
-        raise Exception(e)
+        _l.error(
+            f"InstrumentExternalAPIViewSet error {repr(e)} {traceback.format_exc()}"
+        )
+        raise e
 
 
 def download_instrument_cbond(
@@ -914,7 +912,7 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
         instrument_type = InstrumentType.objects.get(
             master_user=task.master_user,
             user_code=instrument_type_user_code_full,
-            # user_code__contains=type_user_type,  # FOR DEBUG ONLY!
+            # user_code__contains=type_user_type,  #TODO FOR DEBUG ONLY!
         )
     except InstrumentType.DoesNotExist:
         err_msg = (
@@ -2224,8 +2222,6 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
                         return result, processed_scenarios
                 finally:
                     _l.debug("final")
-                    # if settings.DEBUG:
-                    #     transaction.set_rollback(True)
 
             return result, processed_scenarios
 
