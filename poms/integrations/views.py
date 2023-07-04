@@ -830,10 +830,7 @@ class UnifiedCallBackDatabaseViewSet(ViewSet):
 # database import callbacks FN-1736
 class InstrumentCallBackViewSet(UnifiedCallBackDatabaseViewSet):
     def handle_callback(self, validated_data: dict) -> dict:
-        from poms.integrations.tasks import (
-            create_currency_from_callback_data,
-            create_instrument_from_finmars_database,
-        )
+        from poms.integrations.tasks import handle_currency_and_instrument
 
         task = validated_data["task"]
         data = validated_data["data"]
@@ -842,19 +839,10 @@ class InstrumentCallBackViewSet(UnifiedCallBackDatabaseViewSet):
             raise ValidationError(err_msg)
 
         try:
-            currency = create_currency_from_callback_data(
-                data["currencies"][0],
-                task.master_user,
-                task.member,
-            )
-
-            instrument_data = data["instruments"][0]
-            instrument_data["pricing_currency"] = currency.user_code
-
-            instrument = create_instrument_from_finmars_database(
-                instrument_data,
-                task.master_user,
-                task.member,
+            instrument = handle_currency_and_instrument(
+                api_data=data,
+                task=task,
+                log=f"{self.__class__.__name__} task.id={task.id}",
             )
 
         except Exception as e:

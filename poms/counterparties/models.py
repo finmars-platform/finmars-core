@@ -8,6 +8,7 @@ from poms.obj_attrs.models import GenericAttribute
 from poms.users.models import MasterUser
 
 
+# noinspection PyUnresolvedReferences
 class CounterpartyGroup(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(
         MasterUser,
@@ -20,7 +21,6 @@ class CounterpartyGroup(NamedModel, FakeDeletableModel):
         verbose_name = gettext_lazy("counterparty group")
         verbose_name_plural = gettext_lazy("counterparty groups")
         permissions = [
-            # ('view_counterpartygroup', 'Can view counterparty group'),
             ("manage_counterpartygroup", "Can manage counterparty group"),
         ]
 
@@ -46,12 +46,13 @@ class CounterpartyGroup(NamedModel, FakeDeletableModel):
         )
 
 
+# noinspection PyUnresolvedReferences
 class Counterparty(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
 
     """
     One of Core Finmars entities, real world meaning is hold here
-    information about Company, Bank, Broker, StockExchange or other entity who envolved into transaction
-    e.g. Revolut
+    information about Company, Bank, Broker, StockExchange or other entity
+    who envolved into transaction e.g. Revolut
     """
 
     master_user = models.ForeignKey(
@@ -81,7 +82,6 @@ class Counterparty(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMod
         verbose_name_plural = gettext_lazy("counterparties")
         ordering = ["user_code"]
         permissions = [
-            # ('view_counterparty', 'Can view counterparty'),
             ("manage_counterparty", "Can manage counterparty"),
         ]
 
@@ -91,9 +91,21 @@ class Counterparty(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMod
         Returns attributes that front end uses
         """
         return [
-            {"key": "name", "name": "Name", "value_type": 10},
-            {"key": "short_name", "name": "Short name", "value_type": 10},
-            {"key": "user_code", "name": "User code", "value_type": 10},
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
             {
                 "key": "public_name",
                 "name": "Public name",
@@ -121,6 +133,7 @@ class Counterparty(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMod
         )
 
 
+# noinspection PyUnresolvedReferences
 class ResponsibleGroup(NamedModel, FakeDeletableModel):
     master_user = models.ForeignKey(
         MasterUser,
@@ -133,7 +146,6 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
         verbose_name = gettext_lazy("responsible group")
         verbose_name_plural = gettext_lazy("responsible groups")
         permissions = [
-            # ('view_responsiblegroup', 'Can view responsible group'),
             ("manage_responsiblegroup", "Can manage responsible group"),
         ]
 
@@ -159,6 +171,7 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
         )
 
 
+# noinspection PyUnresolvedReferences
 class Responsible(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     """
     One of Core Finmars entities, real world meaning is to indicate who is executing/initiator of Transaction
@@ -201,9 +214,21 @@ class Responsible(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMode
         Returns attributes that front end uses
         """
         return [
-            {"key": "name", "name": "Name", "value_type": 10},
-            {"key": "short_name", "name": "Short name", "value_type": 10},
-            {"key": "user_code", "name": "User code", "value_type": 10},
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
             {
                 "key": "public_name",
                 "name": "Public name",
