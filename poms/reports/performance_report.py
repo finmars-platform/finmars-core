@@ -1112,6 +1112,14 @@ class PerformanceReportBuilder:
                     date_to_n = dates_map[str(date_to)]
                     date_from_n = dates_map[str(date_from)]
 
+                    # 2022-03-31
+                    # 2022-04-01
+
+                    # date_n = 2022-04-01
+                    # date_to_n = 2022-04-29
+                    # date_from_n = 2022-03-31
+
+                    #   (30 - 2) / (30 - 1) = 28 / 29 = 0
                     time_weight = (date_to_n - date_n) / (date_to_n - date_from_n)
 
                     if item['transaction_date_str'] == date_from_str:
