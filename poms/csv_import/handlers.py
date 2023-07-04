@@ -15,7 +15,6 @@ from openpyxl.utils import column_index_from_string
 
 from poms.accounts.models import AccountType
 from poms.celery_tasks.models import CeleryTask
-from poms.expressions_engine import formula
 from poms.common.models import ProxyRequest, ProxyUser
 from poms.common.storage import get_storage
 from poms.common.utils import get_serializer
@@ -31,6 +30,7 @@ from poms.csv_import.models import (
 )
 from poms.csv_import.serializers import SimpleImportResultSerializer
 from poms.currencies.models import Currency
+from poms.expressions_engine import formula
 from poms.file_reports.models import FileReport
 from poms.instruments.models import (
     AccrualCalculationModel,
@@ -284,6 +284,13 @@ def set_defaults_from_instrument_type(
         raise RuntimeError(f"Instrument Type is not configured correctly {e}")
 
 
+def undate_events_for_instrument(instrument_object, arg1, maturity):
+    # M
+    expiration_event = instrument_object["event_schedules"][arg1]
+    expiration_event["effective_date"] = maturity
+    expiration_event["final_date"] = maturity
+
+
 def set_events_for_instrument(instrument_object, data_object, instrument_type_obj):
     instrument_type = instrument_type_obj.user_code.lower()
 
@@ -304,18 +311,13 @@ def set_events_for_instrument(instrument_object, data_object, instrument_type_ob
         } and len(instrument_object["event_schedules"]):
             coupon_event = instrument_object["event_schedules"][0]
 
-            # coupon_event['periodicity'] = data_object['periodicity']
-
             if "first_coupon_date" in data_object:
                 coupon_event["effective_date"] = data_object["first_coupon_date"]
 
             coupon_event["final_date"] = maturity
 
             if len(instrument_object["event_schedules"]) == 2:
-                # M
-                expiration_event = instrument_object["event_schedules"][1]
-                expiration_event["effective_date"] = maturity
-                expiration_event["final_date"] = maturity
+                undate_events_for_instrument(instrument_object, 1, maturity)
 
         if instrument_type in {
             "bond_futures",
@@ -332,23 +334,17 @@ def set_events_for_instrument(instrument_object, data_object, instrument_type_ob
             "tbills",
             "warrants",
         }:
-            # M
-            expiration_event = instrument_object["event_schedules"][0]
-
-            expiration_event["effective_date"] = maturity
-            expiration_event["final_date"] = maturity
+            undate_events_for_instrument(instrument_object, 0, maturity)
 
 
 def set_accruals_for_instrument(instrument_object, data_object, instrument_type_obj):
-    # instrument_type = data_object['instrument_type']
-
     instrument_type = instrument_type_obj.user_code.lower()
 
+    # FIXME INVALID LOGIC
     if instrument_type == "bonds" and len(
         instrument_object["accrual_calculation_schedules"]
     ):
         accrual = instrument_object["accrual_calculation_schedules"][0]
-
         accrual["effective_date"] = data_object["first_coupon_date"]
         accrual["accrual_end_date"] = data_object["maturity"]
 
@@ -358,12 +354,10 @@ def handler_instrument_object(
     source_data, instrument_type, master_user, ecosystem_default, attribute_types
 ):
     func = "handler_instrument_object"
+
     object_data = {"instrument_type": instrument_type.id}
-    # object_data = source_data.copy()
 
     set_defaults_from_instrument_type(object_data, instrument_type, ecosystem_default)
-
-    _l.info(f"{func} Settings defaults for instrument done")
 
     try:
         # TODO remove, when finmars.database.com will be deployed
@@ -381,13 +375,6 @@ def handler_instrument_object(
     except Exception:
         object_data["pricing_currency"] = ecosystem_default.currency.id
 
-    # try:
-    #     object_data['accrued_currency'] = Currency.objects.get(master_user=master_user,
-    #                                                            user_code=source_data['accrued_currency']).id
-    # except Exception as e:
-    #
-    #     object_data['accrued_currency'] = ecosystem_default.currency.id
-
     object_data["public_name"] = source_data["name"]
     object_data["user_code"] = source_data["user_code"]
     object_data["name"] = source_data["name"]
@@ -396,12 +383,12 @@ def handler_instrument_object(
     object_data["pricing_condition"] = source_data.get("pricing_condition")
     object_data["payment_size_detail"] = source_data.get("payment_size_detail")
     object_data["daily_pricing_model"] = source_data.get("daily_pricing_model")
-
     object_data["accrued_currency"] = object_data["pricing_currency"]
     object_data["co_directional_exposure_currency"] = object_data["pricing_currency"]
     object_data["counter_directional_exposure_currency"] = object_data[
         "pricing_currency"
     ]
+    object_data["factor_schedules"] = source_data.get("factor_schedules", [])
 
     try:
         object_data["payment_size_detail"] = PaymentSizeDetail.objects.get(
@@ -409,13 +396,6 @@ def handler_instrument_object(
         ).id
     except Exception:
         object_data["payment_size_detail"] = ecosystem_default.payment_size_detail.id
-
-    # try:
-    #     object_data['pricing_condition'] = PricingCondition.objects.get(
-    #         user_code=source_data['pricing_condition']).id
-    # except Exception as e:
-    #
-    #     object_data['pricing_condition'] = ecosystem_default.pricing_condition.id
 
     if "maturity_price" in source_data:
         try:
@@ -467,11 +447,6 @@ def handler_instrument_object(
     except Exception as e:
         _l.error(f"{func} Could not set sector {repr(e)}")
 
-    _l.info(
-        f"{func} Settings attributes for instrument done "
-        f"attribute_types {attribute_types}"
-    )
-
     _tmp_attributes_dict = {}
 
     for item in object_data["attributes"]:
@@ -519,23 +494,13 @@ def handler_instrument_object(
 
     object_data["attributes"] = []
 
-    _l.info(f"{func} _tmp_attributes_dict={_tmp_attributes_dict}")
-
     for key, value in _tmp_attributes_dict.items():
         object_data["attributes"].append(value)
 
-    _l.info("Settings attributes for instrument done object_data %s " % object_data)
-
     object_data["master_user"] = master_user.id
     object_data["manual_pricing_formulas"] = []
-    # object_data['accrual_calculation_schedules'] = []
-    # object_data['event_schedules'] = []
-    object_data["factor_schedules"] = []
 
     set_events_for_instrument(object_data, source_data, instrument_type)
-    _l.info(f"{func} Settings events for instrument done")
-
-    # _l.info('source_data %s' % source_data)
 
     if (
         "accrual_calculation_schedules" in source_data
@@ -706,6 +671,8 @@ def handler_instrument_object(
 
     if "short_name" not in object_data and "user_code" in object_data:
         object_data["short_name"] = object_data["user_code"]
+
+    _l.info(f"{func} instrument={source_data['user_code']} object_data={object_data}")
 
     return object_data
 

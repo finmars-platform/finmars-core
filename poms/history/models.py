@@ -3,7 +3,7 @@ import json
 import logging
 import sys
 import traceback
-from datetime import datetime, timedelta
+# from datetime import datetime, timedelta
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.serializers.json import DjangoJSONEncoder
@@ -352,18 +352,22 @@ def get_notes_for_history_record(user_code, content_type, serialized_data):
 
 def get_record_context():
     from poms.users.models import MasterUser, Member
+    from poms.common.models import ProxyRequest
 
     result = {"master_user": None, "member": None, "context_url": "Unknown"}
 
-    if request := get_request():
+    request = get_request()
+    if request:
+        if isinstance(request, ProxyRequest):
+            _l.info(f'get_record_context: ProxyUser {request.user}')
+            result["master_user"] = request.user.master_user
+            result["member"] = request.user.member
 
-        # _l.info('request.user %s' % request.user)
-
-        # result["master_user"] = request.user.master_user
-        result["master_user"] = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
-        # result["master_user"] = request.user.member
-        result["member"] = Member.objects.get(user=request.user)
-        result["context_url"] = request.path
+        else:
+            _l.info(f'get_record_contex: User {request.user}')
+            result["master_user"] = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+            result["member"] = Member.objects.get(user=request.user)
+            result["context_url"] = request.path
 
     else:
         try:
@@ -447,7 +451,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
 
     if master_user.journal_status != MasterUser.JOURNAL_STATUS_DISABLED:
         user_code = None
-
+        content_type_key = None
         try:
             record_context = get_record_context()
             content_type = ContentType.objects.get_for_model(sender)
@@ -499,7 +503,8 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
 
         except Exception as e:
             _l.error(
-                f"Could not save history user_code {user_code} exception {e} "
+                f"Could not save history user_code={user_code} "
+                f"content_type_key={content_type_key}  exception {e}\n "
                 f"traceback {traceback.format_exc()}"
             )
 

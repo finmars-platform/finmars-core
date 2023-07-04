@@ -1664,9 +1664,8 @@ class ImportPriceDatabaseSerializer(serializers.Serializer):
         return result
 
 
-
 # database import callbacks FN-1736
-class DatabaseRequestSerializer(serializers.Serializer):
+class CallBackDataDictRequestSerializer(serializers.Serializer):
     request_id = serializers.IntegerField(required=True, min_value=1)
     task_id = serializers.IntegerField(required=True, allow_null=True)
     data = serializers.DictField(required=True, allow_null=True)

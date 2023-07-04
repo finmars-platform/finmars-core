@@ -17,7 +17,7 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, ViewSet
 
 import requests
 from celery.result import AsyncResult
@@ -109,6 +109,7 @@ from poms.integrations.serializers import (
     AccrualCalculationModelMappingSerializer,
     AccrualScheduleDownloadMethodSerializer,
     BloombergDataProviderCredentialSerializer,
+    CallBackDataDictRequestSerializer,
     ComplexTransactionCsvFileImportSerializer,
     ComplexTransactionImportSchemeLightSerializer,
     ComplexTransactionImportSchemeSerializer,
@@ -116,7 +117,6 @@ from poms.integrations.serializers import (
     CounterpartyMappingSerializer,
     CurrencyMappingSerializer,
     DailyPricingModelMappingSerializer,
-    DatabaseRequestSerializer,
     DataProviderSerializer,
     FactorScheduleDownloadMethodSerializer,
     ImportCompanyDatabaseSerializer,
@@ -124,7 +124,6 @@ from poms.integrations.serializers import (
     ImportCurrencyDatabaseSerializer,
     ImportInstrumentDatabaseSerializer,
     ImportInstrumentSerializer,
-    ImportPriceDatabaseSerializer,
     ImportUnifiedDataProviderSerializer,
     InstrumentAttributeValueMappingSerializer,
     InstrumentClassifierMappingSerializer,
@@ -773,9 +772,10 @@ class TestCertificateViewSet(AbstractViewSet):
 
 
 # database import callbacks FN-1736
-class UnifiedImportDatabaseViewSet(AbstractViewSet):
+class UnifiedCallBackDatabaseViewSet(ViewSet):
     permission_classes = []
-    callback_serializer_class = DatabaseRequestSerializer
+    authentication_classes = []
+    callback_serializer_class = CallBackDataDictRequestSerializer
 
     def handle_callback(self, validated_data: dict) -> dict:
         raise NotImplementedError
@@ -814,18 +814,12 @@ class UnifiedImportDatabaseViewSet(AbstractViewSet):
             "request_id": task.id,
         }
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.create_task(serializer.validated_data))
-
     @swagger_auto_schema(
-        request_body=DatabaseRequestSerializer,
+        request_body=CallBackDataDictRequestSerializer,
         responses={200: "ok"},
         operation_description="receive database info and update task",
     )
-    @action(detail=False, methods=["post"], name="callback", url_path="callback")
-    def callback(self, request, *args, **kwargs):
+    def create(self, request, *args, **kwargs):
         _l.info(f"{self.__class__.__name__}.callback request.data={request.data}")
 
         serializer = self.callback_serializer_class(data=request.data)
@@ -833,9 +827,8 @@ class UnifiedImportDatabaseViewSet(AbstractViewSet):
         return Response(self.handle_callback(serializer.validated_data))
 
 
-class ImportInstrumentDatabaseViewSet(UnifiedImportDatabaseViewSet):
-    serializer_class = ImportInstrumentDatabaseSerializer
-
+# database import callbacks FN-1736
+class InstrumentCallBackViewSet(UnifiedCallBackDatabaseViewSet):
     def handle_callback(self, validated_data: dict) -> dict:
         from poms.integrations.tasks import (
             create_currency_from_callback_data,
@@ -849,14 +842,17 @@ class ImportInstrumentDatabaseViewSet(UnifiedImportDatabaseViewSet):
             raise ValidationError(err_msg)
 
         try:
-            create_currency_from_callback_data(
+            currency = create_currency_from_callback_data(
                 data["currencies"][0],
                 task.master_user,
                 task.member,
             )
 
+            instrument_data = data["instruments"][0]
+            instrument_data["pricing_currency"] = currency.user_code
+
             instrument = create_instrument_from_finmars_database(
-                data["instruments"][0],
+                instrument_data,
                 task.master_user,
                 task.member,
             )
@@ -868,9 +864,8 @@ class ImportInstrumentDatabaseViewSet(UnifiedImportDatabaseViewSet):
             return self.success_task_response(task, instrument)
 
 
-class ImportCurrencyDatabaseViewSet(UnifiedImportDatabaseViewSet):
-    serializer_class = ImportCurrencyDatabaseSerializer
-
+# database import callbacks FN-1736
+class CurrencyCallBackViewSet(UnifiedCallBackDatabaseViewSet):
     def handle_callback(self, validated_data: dict) -> dict:
         from poms.integrations.tasks import create_currency_from_callback_data
 
@@ -890,9 +885,8 @@ class ImportCurrencyDatabaseViewSet(UnifiedImportDatabaseViewSet):
             return self.success_task_response(task, currency)
 
 
-class ImportCompanyDatabaseViewSet(UnifiedImportDatabaseViewSet):
-    serializer_class = ImportCompanyDatabaseSerializer
-
+# database import callbacks FN-1736
+class CompanyCallBackViewSet(UnifiedCallBackDatabaseViewSet):
     def handle_callback(self, validated_data: dict) -> dict:
         from poms.integrations.tasks import create_counterparty_from_callback_data
 
@@ -912,29 +906,31 @@ class ImportCompanyDatabaseViewSet(UnifiedImportDatabaseViewSet):
             return self.success_task_response(task, company)
 
 
-class ImportPriceDatabaseViewSet(UnifiedImportDatabaseViewSet):
-    serializer_class = ImportPriceDatabaseSerializer
+class ImportInstrumentDatabaseViewSet(AbstractViewSet):
+    serializer_class = ImportInstrumentDatabaseSerializer
 
-    def handle_callback(self, validated_data: dict) -> dict:
-        from poms.integrations.tasks import create_counterparty_from_callback_data
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.create_task(serializer.validated_data))
 
-        task = validated_data["task"]
-        data = validated_data["data"]
 
-        raise NotImplemented
+class ImportCurrencyDatabaseViewSet(AbstractViewSet):
+    serializer_class = ImportCurrencyDatabaseSerializer
 
-        # try:  # TODO LATER
-        #     company = create_prices_from_callback_data(
-        #         data,
-        #         task.master_user,
-        #         task.member,
-        #     )
-        #
-        # except Exception as e:
-        #     return self.error_task_response(e, task)
-        #
-        # else:
-        #     return self.success_task_response(task, company)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.create_task(serializer.validated_data))
+
+
+class ImportCompanyDatabaseViewSet(AbstractViewSet):
+    serializer_class = ImportCompanyDatabaseSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.create_task(serializer.validated_data))
 
 
 # ----------------------------------------
