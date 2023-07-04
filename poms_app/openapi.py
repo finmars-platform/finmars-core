@@ -16,7 +16,7 @@ def generate_schema(local_urlpatterns):
             contact=openapi.Contact(email="admin@finmars.com"),
             license=openapi.License(name="BSD License"),
             x_logo={
-                "url": "https://landing.finmars.com/wp-content/uploads/2023/04/logo.png",
+                "url": "https://finmars.com/wp-content/uploads/2023/04/logo.png",
                 "backgroundColor": "#000",
                 "href": '/' + settings.BASE_API_URL + '/docs/api/v1/'
             }
