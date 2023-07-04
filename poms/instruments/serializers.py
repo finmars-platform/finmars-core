@@ -1495,6 +1495,16 @@ class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
             "has_linked_with_portfolio",
             "pricing_currency",
             "accrued_currency",
+
+            'price_multiplier',
+            'accrued_multiplier',
+            'default_price',
+            'default_accrued',
+
+            'user_text_1',
+            'user_text_2',
+            'user_text_3',
+            'reference_for_pricing'
         ]
 
         read_only_fields = fields
