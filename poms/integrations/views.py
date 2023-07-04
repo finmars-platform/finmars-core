@@ -851,6 +851,12 @@ class InstrumentCallBackViewSet(UnifiedCallBackDatabaseViewSet):
             instrument_data = data["instruments"][0]
             instrument_data["pricing_currency"] = currency.user_code
 
+            _l.info(
+                f"{self.__class__.__name__} received instrument user_code="
+                f"{instrument_data['user_code']} & pricing_currency="
+                f"{instrument_data['pricing_currency']}"
+            )
+
             instrument = create_instrument_from_finmars_database(
                 instrument_data,
                 task.master_user,
