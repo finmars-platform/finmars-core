@@ -4509,12 +4509,17 @@ def create_currency_from_callback_data(data, master_user, member) -> Currency:
         raise Exception(serializer.errors)
 
 
-def handle_currency_and_instrument(
+def handle_currency_and_instrument_api_data(
     api_data: dict,
     task: CeleryTask,
-    log: str,
+    caller: str,
 ) -> Instrument:
-    _l.info(f"handle_currency_and_instrument called from {log} with data={api_data}")
+    """
+    Creates/Updates Currency & Instrument from raw API data
+    """
+    log = "handle_currency_and_instrument_api_data"
+
+    _l.info(f"{log} called from {caller} with data={api_data}")
 
     currency = create_currency_from_callback_data(
         api_data["currencies"][0],
@@ -4525,21 +4530,28 @@ def handle_currency_and_instrument(
     instrument_data = api_data["instruments"][0]
     instrument_data["pricing_currency"] = currency.user_code
 
-    return create_instrument_from_finmars_database(
+    instrument = create_instrument_from_finmars_database(
         instrument_data,
         task.master_user,
         task.member,
     )
+
+    _l.info(
+        f"{log} successfully created/updated instrument={instrument.user_code} "
+        f"currency={currency.user_code}"
+    )
+
+    return instrument
 
 
 def update_task_with_instrument_data(data: dict, task: CeleryTask):
     func = f"update_task_with_instrument_data, task.id={task.id}"
 
     try:
-        instrument = handle_currency_and_instrument(
+        instrument = handle_currency_and_instrument_api_data(
             api_data=data,
             task=task,
-            log=func,
+            caller=func,
         )
 
     except Exception as e:
