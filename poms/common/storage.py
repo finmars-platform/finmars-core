@@ -3,6 +3,7 @@ import math
 import os
 import shutil
 import tempfile
+from io import BytesIO
 from zipfile import ZipFile, ZIP_DEFLATED
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -76,7 +77,6 @@ class EncryptedStorage(object):
 
         encrypted_data = file.read()
 
-
         # Generate a random nonce
         # You can generate a random nonce using os.urandom(12) for AES-256-GCM.
         # The recommended length for the nonce in AES-GCM is 12 bytes (96 bits).
@@ -89,7 +89,11 @@ class EncryptedStorage(object):
 
         aesgcm = AESGCM(self.symmetric_key)
         decrypted_content = aesgcm.decrypt(nonce, ciphertext, None)
-        return ContentFile(decrypted_content)
+
+        # Create a file-like object from the decrypted content
+        decrypted_file = BytesIO(decrypted_content)
+
+        return decrypted_file
 
     def open_skip_decrypt(self, name, mode='rb'):
         file = super()._open(name, mode)
