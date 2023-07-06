@@ -557,6 +557,9 @@ class PLReportBuilderSql:
                         carry_with_sign,
                         overheads_with_sign,
                         
+                        (0) as amount_principal_with_sign,
+                        (0) as amount_carry_with_sign,
+                        
                         rolling_position_size,
   
                         transaction_currency_id,
@@ -621,6 +624,9 @@ class PLReportBuilderSql:
                        principal_with_sign,
                        carry_with_sign,
                        overheads_with_sign,
+                       
+                       (principal_with_sign) as amount_principal_with_sign,
+                       (carry_with_sign) as amount_carry_with_sign,
     
                        rolling_position_size,
                        
@@ -696,6 +702,9 @@ class PLReportBuilderSql:
                    (principal_with_sign * reference_fx_rate) as principal_with_sign_invested,
                    (carry_with_sign * reference_fx_rate) as carry_with_sign_invested,
                    (overheads_with_sign * reference_fx_rate) as overheads_with_sign_invested,
+                   
+                   (amount_principal_with_sign * reference_fx_rate) as amount_principal_with_sign_invested,
+                   (amount_carry_with_sign * reference_fx_rate) as amount_carry_with_sign_invested,
                    
                    (principal_with_sign) as principal_with_sign,
                    (carry_with_sign) as carry_with_sign,
@@ -1355,8 +1364,8 @@ class PLReportBuilderSql:
         
                             -- (i.accrual_size * i.accrued_multiplier  / (i.cur_price * i.price_multiplier) ) as ytm,
                     
-                            (principal_with_sign_invested) as principal_invested,
-                            (principal_with_sign_invested + carry_with_sign_invested + overheads_with_sign_invested) as amount_invested
+                            (amount_principal_with_sign_invested) as principal_invested,
+                            (amount_principal_with_sign_invested + amount_carry_with_sign_invested) as amount_invested
     
                     
                         from (
@@ -1401,6 +1410,9 @@ class PLReportBuilderSql:
                                 SUM(principal_with_sign_invested)      as principal_with_sign_invested, -- possibly missing pricing fx multiply 
                                 SUM(carry_with_sign_invested)          as carry_with_sign_invested,
                                 SUM(overheads_with_sign_invested)      as overheads_with_sign_invested,
+                                
+                                SUM(amount_principal_with_sign_invested)      as amount_principal_with_sign_invested,
+                                SUM(amount_carry_with_sign_invested)      as amount_carry_with_sign_invested,
                                 
                                 SUM(principal_fixed_opened)                                             as principal_fixed_opened,
                                 SUM(carry_fixed_opened)                                                 as carry_fixed_opened,
@@ -1488,6 +1500,9 @@ class PLReportBuilderSql:
                                     SUM(principal_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as principal_with_sign_invested,
                                     SUM(carry_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)            as carry_with_sign_invested,
                                     SUM(overheads_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as overheads_with_sign_invested,
+                                    
+                                    SUM(amount_principal_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as amount_principal_with_sign_invested,
+                                    SUM(amount_carry_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)            as amount_carry_with_sign_invested,
                                     
                                     SUM(principal_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as principal_fixed_opened,
                                     SUM(carry_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)            as carry_fixed_opened,

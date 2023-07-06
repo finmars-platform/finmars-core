@@ -29,8 +29,8 @@ def download_local_folder_as_zip(folder_path):
 
 
 class EncryptedStorage(object):
-    def __init__(self, location=None, base_url=None):
-        super().__init__(location, base_url)
+
+    def get_symmetric_key(self):
 
         if settings.ENCRYPTION_KEY:
 
@@ -365,5 +365,7 @@ def get_storage():
 
     if settings.USE_FILESYSTEM_STORAGE:
         storage = FinmarsLocalFileSystemStorage()
+
+    storage.get_symmetric_key()  # IMPORTANT Storage MUST BE inherited from EncryptedStorage
 
     return storage
