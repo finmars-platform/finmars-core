@@ -1,4 +1,5 @@
 import os
+import traceback
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from django.conf import settings
@@ -23,7 +24,8 @@ class Command(BaseCommand):
         try:
             self.encrypt_files_recursively(storage, symmetric_key, settings.BASE_API_URL)
         except Exception as e:
-            print('Error encrypting files: ', e)
+            print('Error encrypting files: %s ' % traceback.format_exc())
+            print('Error encrypting files: %s' % e)
 
         self.stdout.write(self.style.SUCCESS('All files have been encrypted.'))
 
