@@ -13,14 +13,17 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         # Generate a new symmetric key
-        symmetric_key = settings.ENCRYPTION_KEY
+        symmetric_key = bytes.fromhex(settings.ENCRYPTION_KEY)
 
         storage = get_storage()
         # Save the keys to Vault or any other secure storage
         # You can use the Vault client or any other library to store the keys securely
 
         # Encrypt files recursively
-        self.encrypt_files_recursively(storage, symmetric_key, '')
+        try:
+            self.encrypt_files_recursively(storage, symmetric_key, '')
+        except Exception as e:
+            print('Error encrypting files: ', e)
 
         self.stdout.write(self.style.SUCCESS('All files have been encrypted.'))
 
