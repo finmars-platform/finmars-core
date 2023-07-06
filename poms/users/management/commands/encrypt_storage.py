@@ -52,7 +52,6 @@ class Command(BaseCommand):
         subdirectories = storage.listdir(directory)[0]
         for subdirectory in subdirectories:
 
-            print(f"subdirectory {subdirectory_path}")
-
             subdirectory_path = os.path.join(directory, subdirectory)
+            print(f"subdirectory {subdirectory_path}")
             self.encrypt_files_recursively(storage, symmetric_key, subdirectory_path)
