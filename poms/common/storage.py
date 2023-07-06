@@ -28,6 +28,10 @@ def download_local_folder_as_zip(folder_path):
 
     return zip_file_path
 
+class NamedBytesIO(BytesIO):
+    def __init__(self, *args, name=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = name
 
 class EncryptedStorage(object):
 
@@ -91,7 +95,7 @@ class EncryptedStorage(object):
         decrypted_content = aesgcm.decrypt(nonce, ciphertext, None)
 
         # Create a file-like object from the decrypted content
-        decrypted_file = BytesIO(decrypted_content)
+        decrypted_file = NamedBytesIO(decrypted_content, name=file.name)
 
         return decrypted_file
 
