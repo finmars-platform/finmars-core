@@ -83,6 +83,14 @@ class EncryptedStorage(object):
         decrypted_content = aesgcm.decrypt(nonce, file_content, None)
         return ContentFile(decrypted_content)
 
+    def open_skip_decrypt(self, name, mode='rb'):
+        file = super()._open(name, mode)
+
+        if settings.SERVER_TYPE == 'local':  # Do not decrypt on local server
+            return file
+
+        return file
+
     def _open(self, name, mode='rb'):
         # Open the file and decrypt its content
         file = super()._open(name, mode)
