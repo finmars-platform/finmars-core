@@ -34,7 +34,7 @@ class EncryptedStorage(object):
 
         if settings.ENCRYPTION_KEY:
 
-            self.symmetric_key = settings.ENCRYPTION_KEY
+            self.symmetric_key = bytes.fromhex(settings.ENCRYPTION_KEY)
 
         else:
             # TODO move from Encryption Key to Vault
