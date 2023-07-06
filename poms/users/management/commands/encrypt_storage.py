@@ -35,9 +35,11 @@ class Command(BaseCommand):
 
             print("File_path %s" % file_path)
 
-            file = storage.open_skip_decrypt(file_path, 'rb')
-            file_content = ContentFile(file.read())
-            storage.save(file_path, file_content)
+            if not '.system/vault' in file_path: # TODO be careful about another services
+
+                file = storage.open_skip_decrypt(file_path, 'rb')
+                file_content = ContentFile(file.read())
+                storage.save(file_path, file_content)
 
         # Encrypt files within subdirectories
         subdirectories = storage.listdir(directory)[0]

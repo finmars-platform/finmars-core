@@ -2,6 +2,7 @@ import json
 import logging
 import mimetypes
 import os
+import traceback
 from tempfile import NamedTemporaryFile
 
 from django.http import FileResponse
@@ -82,7 +83,8 @@ class ExplorerViewSet(AbstractViewSet):
                 'name': file,
                 'created': created,
                 'modified': modified,
-                'file_path': '/' + self.remove_first_folder_from_path(os.path.join(path, file)),  # path already has / in end of str
+                'file_path': '/' + self.remove_first_folder_from_path(os.path.join(path, file)),
+                # path already has / in end of str
                 'size': storage.size(path + '/' + file),
                 'size_pretty': storage.convert_size(storage.size(path + '/' + file))
             }
@@ -100,78 +102,88 @@ class ExplorerViewFileViewSet(AbstractViewSet):
 
     def list(self, request):
 
-        path = request.query_params.get('path')
+        try:
 
-        if not path:
-            raise ValidationError("Path is required")
-        else:
-            if path[0] == '/':
-                path = settings.BASE_API_URL + path
+            path = request.query_params.get('path')
+
+            if not path:
+                raise ValidationError("Path is required")
             else:
-                path = settings.BASE_API_URL + '/' + path
+                if path[0] == '/':
+                    path = settings.BASE_API_URL + path
+                else:
+                    path = settings.BASE_API_URL + '/' + path
 
-        if settings.AZURE_ACCOUNT_KEY:
-            if path[-1] != '/':
-                path = path + '/'
+            if settings.AZURE_ACCOUNT_KEY:
+                if path[-1] != '/':
+                    path = path + '/'
 
-        # TODO validate path that eiher public/import/system or user home folder
+            # TODO validate path that eiher public/import/system or user home folder
 
-        with storage.open(path, 'rb') as file:
+            with storage.open(path, 'rb') as file:
 
-            result = file.read()
+                result = file.read()
 
-            file_content_type = None
+                file_content_type = None
 
-            if '.txt' in file.name:
-                file_content_type = 'plain/text'
+                if '.txt' in file.name:
+                    file_content_type = 'plain/text'
 
-            if '.csv' in file.name:
-                file_content_type = 'text/csv'
+                if '.csv' in file.name:
+                    file_content_type = 'text/csv'
 
-            if '.json' in file.name:
-                file_content_type = 'application/json'
+                if '.json' in file.name:
+                    file_content_type = 'application/json'
 
-            if '.yml' in file.name or '.yaml' in file.name:
-                file_content_type = 'application/yaml'
+                if '.yml' in file.name or '.yaml' in file.name:
+                    file_content_type = 'application/yaml'
 
-            if '.py' in file.name:
-                file_content_type = 'text/x-python'
+                if '.py' in file.name:
+                    file_content_type = 'text/x-python'
 
-            if '.png' in file.name:
-                file_content_type = 'image/png'
+                if '.png' in file.name:
+                    file_content_type = 'image/png'
 
-            if '.jp' in file.name:
-                file_content_type = 'image/jpeg'
+                if '.jp' in file.name:
+                    file_content_type = 'image/jpeg'
 
-            if '.pdf' in file.name:
-                file_content_type = 'application/pdf'
+                if '.pdf' in file.name:
+                    file_content_type = 'application/pdf'
 
-            if '.doc' in file.name:
-                file_content_type = 'application/msword'
+                if '.doc' in file.name:
+                    file_content_type = 'application/msword'
 
-            if '.doc' in file.name:
-                file_content_type = 'application/msword'
+                if '.doc' in file.name:
+                    file_content_type = 'application/msword'
 
-            if '.xls' in file.name:
-                file_content_type = 'application/vnd.ms-excel'
+                if '.xls' in file.name:
+                    file_content_type = 'application/vnd.ms-excel'
 
-            if '.xlsx' in file.name:
-                file_content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                if '.xlsx' in file.name:
+                    file_content_type = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-            # if file_content_type:
-            #     response = FileResponse(result, content_type=file_content_type)
-            # else:
-            #     response = FileResponse(result)
+                # if file_content_type:
+                #     response = FileResponse(result, content_type=file_content_type)
+                # else:
+                #     response = FileResponse(result)
 
-            if file_content_type:
-                response = HttpResponse(result, content_type=file_content_type)
-            else:
-                response = HttpResponse(result)
+                if file_content_type:
+                    response = HttpResponse(result, content_type=file_content_type)
+                else:
+                    response = HttpResponse(result)
 
-        return response
+            return response
+
+        except Exception as e:
+            _l.error('view file error %s' % e)
+            _l.error('view file traceback %s' % traceback.format_exc())
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 from bs4 import BeautifulSoup
+
 
 def sanitize_html(html):
     soup = BeautifulSoup(html, "html.parser")
@@ -181,12 +193,13 @@ def sanitize_html(html):
 
     return str(soup)
 
+
 class ExplorerServeFileViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
     def retrieve(self, request, filepath=None):
 
-        _l.info('ExplorerServeFileViewSet.filepath %s' %  filepath)
+        _l.info('ExplorerServeFileViewSet.filepath %s' % filepath)
         filepath = filepath.rstrip('/')
 
         if not '.' in filepath.split('/')[-1]:  # if the file does not have an extension
@@ -196,7 +209,7 @@ class ExplorerServeFileViewSet(AbstractViewSet):
 
         # TODO validate path that eiher public/import/system or user home folder
 
-        _l.info('path %s' %  path)
+        _l.info('path %s' % path)
 
         with storage.open(path, 'rb') as file:
 
@@ -261,7 +274,6 @@ class ExplorerServeFileViewSet(AbstractViewSet):
                 response = HttpResponse(result)
 
         return response
-
 
 
 class ExplorerUploadViewSet(AbstractViewSet):
@@ -413,7 +425,6 @@ class ExplorerDeleteFolderViewSet(AbstractViewSet):
             else:
                 path = settings.BASE_API_URL + '/' + path
 
-
         _l.info("Delete directory %s" % path)
 
         storage.delete_directory(path)
@@ -427,7 +438,6 @@ class DownloadAsZipViewSet(AbstractViewSet):
     serializer_class = ExplorerSerializer
 
     def create(self, request):
-
         paths = request.data.get('paths')
 
         # TODO validate path that eiher public/import/system or user home folder

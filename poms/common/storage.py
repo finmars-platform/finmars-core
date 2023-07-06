@@ -66,21 +66,29 @@ class EncryptedStorage(object):
 
         aesgcm = AESGCM(self.symmetric_key)
         encrypted_content = aesgcm.encrypt(nonce, file_content, None)
-        return ContentFile(encrypted_content)
+
+        encrypted_data = nonce + encrypted_content
+
+        return ContentFile(encrypted_data)
 
     def _decrypt_file(self, file):
         # Decrypt the file content using the symmetric key
+
+        encrypted_data = file.read()
+
 
         # Generate a random nonce
         # You can generate a random nonce using os.urandom(12) for AES-256-GCM.
         # The recommended length for the nonce in AES-GCM is 12 bytes (96 bits).
         # Ensure that you securely store and associate the nonce with the encrypted data
         # so that you can use the same nonce during decryption.
-        nonce = os.urandom(12)
+        # Extract the nonce from the encrypted data
+        nonce = encrypted_data[:12]
 
-        file_content = file.read()
+        ciphertext = encrypted_data[12:]
+
         aesgcm = AESGCM(self.symmetric_key)
-        decrypted_content = aesgcm.decrypt(nonce, file_content, None)
+        decrypted_content = aesgcm.decrypt(nonce, ciphertext, None)
         return ContentFile(decrypted_content)
 
     def open_skip_decrypt(self, name, mode='rb'):
