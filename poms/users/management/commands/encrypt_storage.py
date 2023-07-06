@@ -21,7 +21,7 @@ class Command(BaseCommand):
 
         # Encrypt files recursively
         try:
-            self.encrypt_files_recursively(storage, symmetric_key, '')
+            self.encrypt_files_recursively(storage, symmetric_key, settings.BASE_API_URL)
         except Exception as e:
             print('Error encrypting files: ', e)
 
@@ -29,16 +29,21 @@ class Command(BaseCommand):
 
     def encrypt_files_recursively(self, storage, symmetric_key, directory):
         files = storage.listdir(directory)[1]
-
         for file_name in files:
             file_path = os.path.join(directory, file_name)
-            if storage.isdir(file_path):
-                self.encrypt_files_recursively(storage, symmetric_key, file_path)
-            else:
-                file = storage.open(file_path, 'rb')
-                file_content = file.read()
-                aesgcm = AESGCM(symmetric_key)
-                nonce = os.urandom(12)
-                encrypted_content = aesgcm.encrypt(nonce, file_content, None)
-                encrypted_file = ContentFile(encrypted_content)
-                storage.save(file_path, encrypted_file)
+
+            file = storage.open(file_path, 'rb')
+            file_content = file.read()
+            aesgcm = AESGCM(symmetric_key)
+            nonce = os.urandom(12)
+            encrypted_content = aesgcm.encrypt(nonce, file_content, None)
+            encrypted_file = ContentFile(encrypted_content)
+            storage.save(file_path, encrypted_file)
+
+            self.stdout.write(self.style.SUCCESS('Encrypt %s' % file_name))
+
+        # Encrypt files within subdirectories
+        subdirectories = storage.listdir(directory)[0]
+        for subdirectory in subdirectories:
+            subdirectory_path = os.path.join(directory, subdirectory)
+            self.encrypt_files_recursively(storage, subdirectory_path, symmetric_key)
