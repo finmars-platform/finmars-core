@@ -5,6 +5,8 @@ import shutil
 import tempfile
 from zipfile import ZipFile, ZIP_DEFLATED
 
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from django.core.files.base import ContentFile
 from django.core.files.storage import FileSystemStorage
 from storages.backends.azure_storage import AzureStorage
 from storages.backends.s3boto3 import S3Boto3Storage
@@ -26,7 +28,81 @@ def download_local_folder_as_zip(folder_path):
     return zip_file_path
 
 
-class FinmarsStorage(object):
+class EncryptedStorage(object):
+    def __init__(self, location=None, base_url=None):
+        super().__init__(location, base_url)
+
+        if settings.ENCRYPTION_KEY:
+
+            self.symmetric_key = settings.ENCRYPTION_KEY
+
+        else:
+            # TODO move from Encryption Key to Vault
+            # TODO PROCEED ONLY AFTER NEW WAY OF SETTING UP SPACE IS READY
+            try:
+
+                # self.vault_client = Client(url='https://your-vault-url', token='your-vault-token')
+                # Retrieve encryption and decryption keys from Vault
+                self.symmetric_key = self._get_symmetric_key_from_vault()
+
+            except Exception as e:
+                raise Exception("Could not connect to Vault symmetric_key is not set. Error %s" % e)
+
+    def _get_symmetric_key_from_vault(self):
+        # Retrieve the symmetric key from Vault
+        # TODO IMPLEMENT
+        pass
+
+    def _encrypt_file(self, file):
+        # Encrypt the file content using the symmetric key
+        file_content = file.read()
+
+        # Generate a random nonce
+        # You can generate a random nonce using os.urandom(12) for AES-256-GCM.
+        # The recommended length for the nonce in AES-GCM is 12 bytes (96 bits).
+        # Ensure that you securely store and associate the nonce with the encrypted data
+        # so that you can use the same nonce during decryption.
+        nonce = os.urandom(12)
+
+        aesgcm = AESGCM(self.symmetric_key)
+        encrypted_content = aesgcm.encrypt(nonce, file_content, None)
+        return ContentFile(encrypted_content)
+
+    def _decrypt_file(self, file):
+        # Decrypt the file content using the symmetric key
+
+        # Generate a random nonce
+        # You can generate a random nonce using os.urandom(12) for AES-256-GCM.
+        # The recommended length for the nonce in AES-GCM is 12 bytes (96 bits).
+        # Ensure that you securely store and associate the nonce with the encrypted data
+        # so that you can use the same nonce during decryption.
+        nonce = os.urandom(12)
+
+        file_content = file.read()
+        aesgcm = AESGCM(self.symmetric_key)
+        decrypted_content = aesgcm.decrypt(nonce, file_content, None)
+        return ContentFile(decrypted_content)
+
+    def _open(self, name, mode='rb'):
+        # Open the file and decrypt its content
+        file = super()._open(name, mode)
+
+        if settings.SERVER_TYPE == 'local':  # Do not decrypt on local server
+            return file
+
+        return self._decrypt_file(file)
+
+    def _save(self, name, content):
+        # Encrypt the file content and save it
+
+        if settings.SERVER_TYPE == 'local':  # Do not encrypt on local server
+            return super()._save(name, content)
+
+        encrypted_content = self._encrypt_file(content)
+        return super()._save(name, encrypted_content)
+
+
+class FinmarsStorage(EncryptedStorage):
     '''
     To ensure that storage overwrite passed filepath insead of appending a number to it
     '''

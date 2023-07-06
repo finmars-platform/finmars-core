@@ -19,6 +19,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEBUG = ENV_BOOL("DEBUG", True)
 
 SECRET_KEY = ENV_STR("SECRET_KEY", "django_secret_key")
+ENCRYPTION_KEY = ENV_STR("ENCRYPTION_KEY", None)  # Need to encrypt everything related to storage
 SERVER_TYPE = ENV_STR("SERVER_TYPE", "local")
 USE_DEBUGGER = ENV_STR("USE_DEBUGGER", False)
 BASE_API_URL = ENV_STR("BASE_API_URL", "space00000")
