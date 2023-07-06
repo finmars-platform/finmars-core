@@ -32,7 +32,11 @@ class Command(BaseCommand):
     def encrypt_files_recursively(self, storage, symmetric_key, directory):
         files = storage.listdir(directory)[1]
         for file_name in files:
+
+
             file_path = os.path.join(directory, file_name)
+
+            print("File_path %s" % file_path )
 
             file = storage.open(file_path, 'rb')
             file_content = file.read()
@@ -42,10 +46,13 @@ class Command(BaseCommand):
             encrypted_file = ContentFile(encrypted_content)
             storage.save(file_path, encrypted_file)
 
-            self.stdout.write(self.style.SUCCESS('Encrypt %s' % file_name))
+
 
         # Encrypt files within subdirectories
         subdirectories = storage.listdir(directory)[0]
         for subdirectory in subdirectories:
+
+            print(f"subdirectory {subdirectory_path}")
+
             subdirectory_path = os.path.join(directory, subdirectory)
-            self.encrypt_files_recursively(storage, subdirectory_path, symmetric_key)
+            self.encrypt_files_recursively(storage, symmetric_key, subdirectory_path)
