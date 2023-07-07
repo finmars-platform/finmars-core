@@ -267,10 +267,8 @@ class FinmarsAzureStorage(FinmarsStorage, AzureStorage):
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
 
                 # Download the blob to the local file
-                blob_client = self.client.get_blob_client(blob.name)
-                with open(local_path, "wb") as local_file:
-                    download_stream = blob_client.download_blob()
-                    local_file.write(download_stream.readall())
+                with open(local_path, "wb") as local_file, self.open(blob.name) as download_stream:
+                    local_file.write(download_stream.read())
 
     def download_directory_as_zip(self, directory_path):
 
