@@ -1,5 +1,3 @@
-from __future__ import unicode_literals, print_function, division
-
 import ast
 import datetime
 import logging
@@ -7,13 +5,23 @@ import time
 import types
 from collections import OrderedDict
 
-from dateutil import relativedelta
 from django.conf import settings
 from django.utils.functional import Promise, SimpleLazyObject
-from poms.expressions_engine.exceptions import InvalidExpression, _Return, ExpressionSyntaxError, NameNotDefined, \
-    _Break, ExpressionEvalError, AttributeDoesNotExist, FunctionNotDefined
 
-_l = logging.getLogger('poms.formula')
+from dateutil import relativedelta
+
+from poms.expressions_engine.exceptions import (
+    AttributeDoesNotExist,
+    ExpressionEvalError,
+    ExpressionSyntaxError,
+    FunctionNotDefined,
+    InvalidExpression,
+    NameNotDefined,
+    _Break,
+    _Return,
+)
+
+_l = logging.getLogger("poms.formula")
 
 MAX_STR_LEN = 20000
 # MAX_EXPONENT = 4000000  # highest exponent
@@ -23,13 +31,11 @@ MAX_SHIFT = 10
 MAX_LEN = 1000
 
 
-
-
 def _op_power(a, b):
-    """ a limited exponent/to-the-power-of function, for safety reasons """
+    """a limited exponent/to-the-power-of function, for safety reasons"""
     if abs(a) > MAX_EXPONENT or abs(b) > MAX_EXPONENT:
-        raise InvalidExpression("Invalid exponent, max exponent is %s" % MAX_EXPONENT)
-    return a ** b
+        raise InvalidExpression(f"Invalid exponent, max exponent is {MAX_EXPONENT}")
+    return a**b
 
 
 def _op_mult(a, b):
@@ -39,23 +45,26 @@ def _op_mult(a, b):
     #     elif isinstance(b, int) and b * len(a) > MAX_STRING_LENGTH:
     #         raise InvalidExpression("Sorry, a string that long is not allowed")
     if isinstance(a, str):
-        raise TypeError("Can't convert '%s' object to str implicitly" % type(a).__name__)
+        raise TypeError(f"Can't convert '{type(a).__name__}' object to str implicitly")
     if isinstance(b, str):
-        raise TypeError("Can't convert '%s' object to str implicitly" % type(b).__name__)
+        raise TypeError(f"Can't convert '{type(b).__name__}' object to str implicitly")
     return a * b
 
 
 def _op_add(a, b):
-    """ string length limit again """
+    """string length limit again"""
     if isinstance(a, str) and isinstance(b, str) and len(a) + len(b) > MAX_STR_LEN:
-        raise InvalidExpression("Sorry, adding those two strings would make a too long string.")
+        raise InvalidExpression(
+            "Sorry, adding those two strings would make a too long string."
+        )
     return a + b
 
 
 def _op_lshift(a, b):
     if b > MAX_SHIFT:
-        raise InvalidExpression("Invalid left shift, max left shift is %s" % MAX_SHIFT)
+        raise InvalidExpression(f"Invalid left shift, max left shift is {MAX_SHIFT}")
     return a << b
+
 
 OPERATORS = {
     ast.Is: lambda a, b: a is b,
@@ -85,9 +94,8 @@ OPERATORS = {
     ast.Invert: lambda a: ~a,
     ast.Not: lambda a: not a,
     ast.UAdd: lambda a: +a,
-    ast.USub: lambda a: -a
+    ast.USub: lambda a: -a,
 }
-
 
 
 class _UserDef(object):
@@ -96,10 +104,10 @@ class _UserDef(object):
         self.node = node
 
     def __str__(self):
-        return '<def %s>' % self.node.name
+        return f"<def {self.node.name}>"
 
     def __repr__(self):
-        return '<def %s>' % self.node.name
+        return f"<def {self.node.name}>"
 
     def __call__(self, evaluator, *args, **kwargs):
         kwargs = kwargs.copy()
@@ -126,22 +134,49 @@ class _UserDef(object):
 
         return ret
 
-from poms.expressions_engine.functions import FINMARS_FUNCTIONS, SimpleEval2Def, _print, _parse_number, _parse_bool, \
-    _parse_date, _isleap, _date, _days
+
+from poms.expressions_engine.functions import (
+    FINMARS_FUNCTIONS,
+    SimpleEval2Def,
+    _parse_bool,
+    _parse_date,
+    _parse_number,
+    _print,
+)
 
 FUNCTIONS = FINMARS_FUNCTIONS
 
 
 empty = object()
 
-SAFE_TYPES = (bool, int, float, str, list, tuple, dict, OrderedDict,
-              datetime.date, datetime.timedelta, datetime.datetime, relativedelta.relativedelta,
-              SimpleEval2Def, _UserDef)
+SAFE_TYPES = (
+    bool,
+    int,
+    float,
+    str,
+    list,
+    tuple,
+    dict,
+    OrderedDict,
+    datetime.date,
+    datetime.timedelta,
+    datetime.datetime,
+    relativedelta.relativedelta,
+    SimpleEval2Def,
+    _UserDef,
+)
 
 
 class SimpleEval2(object):
-    def __init__(self, names=None, max_time=None, add_print=False, allow_assign=False, now=None, context=None):
-
+    def __init__(
+        self,
+        names=None,
+        max_time=None,
+        add_print=False,
+        allow_assign=False,
+        now=None,
+        context=None,
+    ):
         # st = time.perf_counter()
 
         self.max_time = max_time or 60 * 30  # 30 min
@@ -158,51 +193,52 @@ class SimpleEval2(object):
 
         _globals = {f.name: f for f in FUNCTIONS}
         if callable(now):
-            _globals['now'] = SimpleEval2Def('now', now)
+            _globals["now"] = SimpleEval2Def("now", now)
         elif isinstance(now, datetime.date):
-            _globals['now'] = SimpleEval2Def('now', lambda: now)
+            _globals["now"] = SimpleEval2Def("now", lambda: now)
 
         # _globals['transaction_import'] = {f.name: f for f in TRANSACTION_IMPORT_FUNCTIONS}
 
-        _globals['globals'] = SimpleEval2Def('globals', lambda: _globals)
-        _globals['locals'] = SimpleEval2Def('locals', lambda: self._table)
+        _globals["globals"] = SimpleEval2Def("globals", lambda: _globals)
+        _globals["locals"] = SimpleEval2Def("locals", lambda: self._table)
 
-
-        _globals['true'] = True
-        _globals['false'] = False
+        _globals["true"] = True
+        _globals["false"] = False
 
         if names:
             _globals.update(names)
 
         if add_print:
-            _globals['print'] = _print
+            _globals["print"] = _print
 
         self._table = _globals
 
     @staticmethod
     def try_parse(expr):
         if not expr:
-            raise InvalidExpression('Empty expression')
+            raise InvalidExpression("Empty expression")
         try:
             return ast.parse(expr)
         except SyntaxError as e:
-            raise ExpressionSyntaxError(e)
+            raise ExpressionSyntaxError(e) from e
         except Exception as e:
-            raise InvalidExpression(e)
+            raise InvalidExpression(e) from e
 
     def check_time(self):
         if settings.DEBUG:
             return
         self.tik_time = time.time()
         if self.tik_time - self.start_time > self.max_time:
-            raise InvalidExpression("Execution exceeded time limit, max runtime is %s" % self.max_time)
+            raise InvalidExpression(
+                f"Execution exceeded time limit, max runtime is {self.max_time}"
+            )
 
     @staticmethod
     def is_valid(expr):
         try:
             SimpleEval2.try_parse(expr)
             return True
-        except:
+        except Exception:
             return False
 
     def has_var(self, name):
@@ -217,10 +253,9 @@ class SimpleEval2(object):
     def _find_name(self, name):
         try:
             val = self._table[name]
-            val = self._check_value(val)
-            return val
-        except (IndexError, KeyError, TypeError):
-            raise NameNotDefined(name)
+            return self._check_value(val)
+        except (IndexError, KeyError, TypeError) as e:
+            raise NameNotDefined(name) from e
 
     def _check_value(self, val):
         # from django.db import models
@@ -231,10 +266,7 @@ class SimpleEval2(object):
         # elif isinstance(val, models.Model):
         else:
             # return get_model_data_ext(val, many=False, context=self.context)
-            key = (
-                type(val),
-                getattr(val, 'pk', getattr(val, 'id', None))
-            )
+            key = (type(val), getattr(val, "pk", getattr(val, "id", None)))
             if key in self._table:
                 val = self._table[key]
             else:
@@ -245,7 +277,7 @@ class SimpleEval2(object):
 
     def eval(self, expr, names=None):
         if not expr:
-            raise InvalidExpression('Empty expression')
+            raise InvalidExpression("Empty expression")
 
         self.expr = expr
         self.expr_ast = SimpleEval2.try_parse(expr)
@@ -264,7 +296,7 @@ class SimpleEval2(object):
             raise
         except Exception as e:
             # _l.debug('Exception', exc_info=True)
-            raise ExpressionEvalError(e)
+            raise ExpressionEvalError(e) from e
         finally:
             self._table = save_table
 
@@ -278,14 +310,16 @@ class SimpleEval2(object):
         try:
             if isinstance(node, (list, tuple)):
                 return self._on_many(node)
-            else:
-                op = '_on_ast_%s' % type(node).__name__
-                if hasattr(self, op):
-                    return getattr(self, op)(node)
+
+            op = f"_on_ast_{type(node).__name__}"
+            if hasattr(self, op):
+                return getattr(self, op)(node)
         except _Return as e:
             return e.value
 
-        raise InvalidExpression("Sorry, %s is not available in this evaluator" % type(node).__name__)
+        raise InvalidExpression(
+            f"Sorry, {type(node).__name__} is not available in this evaluator"
+        )
 
     def _on_many(self, node):
         ret = None
@@ -295,7 +329,9 @@ class SimpleEval2(object):
 
     def _on_ast_Assign(self, node):
         if not self.allow_assign:
-            raise InvalidExpression("Sorry, %s is not available in this evaluator" % type(node).__name__)
+            raise InvalidExpression(
+                f"Sorry, {type(node).__name__} is not available in this evaluator"
+            )
 
         ret = self._eval(node.value)
         for t in node.targets:
@@ -310,14 +346,16 @@ class SimpleEval2(object):
                 if isinstance(obj, (dict, OrderedDict)):
                     obj[t.attr] = ret
                 else:
-                    raise ExpressionSyntaxError('Invalid assign')
+                    raise ExpressionSyntaxError("Invalid assign")
                     # raise ExpressionSyntaxError('Invalid assign')
             else:
-                raise ExpressionSyntaxError('Invalid assign')
+                raise ExpressionSyntaxError("Invalid assign")
         return ret
 
     def _on_ast_If(self, node):
-        return self._eval(node.body) if self._eval(node.test) else self._eval(node.orelse)
+        return (
+            self._eval(node.body) if self._eval(node.test) else self._eval(node.orelse)
+        )
 
     def _on_ast_For(self, node):
         ret = None
@@ -374,7 +412,8 @@ class SimpleEval2(object):
     def _on_ast_Str(self, node):
         if len(node.s) > MAX_STR_LEN:
             raise ExpressionEvalError(
-                "String Literal in statement is too long! (%s, when %s is max)" % (len(node.s), MAX_STR_LEN))
+                f"String Literal in statement is too long! ({len(node.s)}, when {MAX_STR_LEN} is max)"
+            )
         return node.s
 
     def _on_ast_NameConstant(self, node):
@@ -390,7 +429,7 @@ class SimpleEval2(object):
             v = self._eval(v)
             d[k] = v
             if len(d) > MAX_LEN:
-                raise ExpressionEvalError('Max dict length.')
+                raise ExpressionEvalError("Max dict length.")
         return d
 
     def _on_ast_List(self, node):
@@ -399,7 +438,7 @@ class SimpleEval2(object):
             v = self._eval(v)
             d.append(v)
             if len(d) > MAX_LEN:
-                raise ExpressionEvalError('Max list/tuple/set length.')
+                raise ExpressionEvalError("Max list/tuple/set length.")
         return d
 
     def _on_ast_Tuple(self, node):
@@ -433,10 +472,14 @@ class SimpleEval2(object):
             return res
 
     def _on_ast_Compare(self, node):
-        return OPERATORS[type(node.ops[0])](self._eval(node.left), self._eval(node.comparators[0]))
+        return OPERATORS[type(node.ops[0])](
+            self._eval(node.left), self._eval(node.comparators[0])
+        )
 
     def _on_ast_IfExp(self, node):
-        return self._eval(node.body) if self._eval(node.test) else self._eval(node.orelse)
+        return (
+            self._eval(node.body) if self._eval(node.test) else self._eval(node.orelse)
+        )
 
     def _on_ast_Call(self, node):
         f = self._eval(node.func)
@@ -447,7 +490,7 @@ class SimpleEval2(object):
         f_kwargs = {k.arg: self._eval(k.value) for k in node.keywords}
 
         try:
-            if node.func.attr in ['append', 'pop', 'remove']:
+            if node.func.attr in ["append", "pop", "remove"]:
                 return f(*f_args)
         except Exception as e:
             pass
@@ -469,13 +512,11 @@ class SimpleEval2(object):
         index_or_key = self._eval(node.slice)
         try:
             val = val[index_or_key]
-            val = self._check_value(val)
-            return val
+            return self._check_value(val)
         except (IndexError, KeyError, TypeError):
             return None
 
     def _on_ast_Attribute(self, node, val=empty):
-
         if val is empty:
             val = self._eval(node.value)
         if val is None:
@@ -488,7 +529,6 @@ class SimpleEval2(object):
             try:
                 return val[node.attr]
             except (IndexError, KeyError, TypeError):
-
                 # _l.debug('AttributeDoesNotExist.node %s' % node)
                 # _l.debug('AttributeDoesNotExist.node.attr %s' % node.attr)
                 # _l.debug('AttributeDoesNotExist.node.value %s' % node.value)
@@ -500,20 +540,28 @@ class SimpleEval2(object):
             # _l.debug("list here? %s" % val)
             # _l.debug("list here? node.value %s" % node.value)
             # _l.debug("list here? node.attr %s" % node.attr)
-            if node.attr in ['append', 'pop', 'remove']:
+            if node.attr in ["append", "pop", "remove"]:
                 return getattr(val, node.attr)
         else:
-
             if isinstance(val, datetime.date):
-                if node.attr in ['year', 'month', 'day']:
+                if node.attr in ["year", "month", "day"]:
                     return getattr(val, node.attr)
 
             elif isinstance(val, datetime.timedelta):
-                if node.attr in ['days']:
+                if node.attr in ["days"]:
                     return getattr(val, node.attr)
 
             elif isinstance(val, relativedelta.relativedelta):
-                if node.attr in ['years', 'months', 'days', 'leapdays', 'year', 'month', 'day', 'weekday']:
+                if node.attr in [
+                    "years",
+                    "months",
+                    "days",
+                    "leapdays",
+                    "year",
+                    "month",
+                    "day",
+                    "weekday",
+                ]:
                     return getattr(val, node.attr)
 
         # _l.info('AttributeDoesNotExist.val %s' % val)
@@ -540,18 +588,33 @@ class SimpleEval2(object):
 
 def validate(expr):
     from rest_framework.exceptions import ValidationError
+
     try:
         SimpleEval2.try_parse(expr)
         # try_parse(expr)
     except InvalidExpression as e:
-        raise ValidationError('Invalid expression: %s' % e)
+        raise ValidationError(f"Invalid expression: {repr(e)}") from e
 
 
-def safe_eval(s, names=None, max_time=None, add_print=False, allow_assign=True, now=None, context=None):
-    st = time.perf_counter()
+def safe_eval(
+    s,
+    names=None,
+    max_time=None,
+    add_print=False,
+    allow_assign=True,
+    now=None,
+    context=None,
+):
+    # st = time.perf_counter()
 
-    e = SimpleEval2(names=names, max_time=max_time, add_print=add_print, allow_assign=allow_assign, now=now,
-                    context=context)
+    e = SimpleEval2(
+        names=names,
+        max_time=max_time,
+        add_print=add_print,
+        allow_assign=allow_assign,
+        now=now,
+        context=context,
+    )
     result = e.eval(s)
 
     # _l.debug('safe_eval done %s : %s' % (s, "{:3.3f}".format(time.perf_counter() - st)))
@@ -559,9 +622,23 @@ def safe_eval(s, names=None, max_time=None, add_print=False, allow_assign=True, 
     return result
 
 
-def safe_eval_with_logs(s, names=None, max_time=None, add_print=False, allow_assign=True, now=None, context=None):
-    e = SimpleEval2(names=names, max_time=max_time, add_print=add_print, allow_assign=allow_assign, now=now,
-                    context=context)
+def safe_eval_with_logs(
+    s,
+    names=None,
+    max_time=None,
+    add_print=False,
+    allow_assign=True,
+    now=None,
+    context=None,
+):
+    e = SimpleEval2(
+        names=names,
+        max_time=max_time,
+        add_print=add_print,
+        allow_assign=allow_assign,
+        now=now,
+        context=context,
+    )
     if "log" not in context:
         context["log"] = ""
 
@@ -577,18 +654,18 @@ def validate_num(val):
 
 
 def validate_bool(val):
-    print('validate_bool val %s' % val)
+    print(f"validate_bool val {val}")
 
     return _parse_bool(val)
 
 
 def register_fun(name, callback):
     if not callable(callback):
-        raise InvalidExpression('Bad function callback')
+        raise InvalidExpression("Bad function callback")
     if name is None:
-        raise InvalidExpression('Invalid function name')
+        raise InvalidExpression("Invalid function name")
     if name is FUNCTIONS:
-        raise InvalidExpression('Function with this name already registered')
+        raise InvalidExpression("Function with this name already registered")
 
     if isinstance(callback, SimpleEval2Def):
         FUNCTIONS[name] = callback
@@ -600,10 +677,9 @@ def value_prepare(orig):
     def _dict(data):
         ret = OrderedDict()
 
-        from poms.obj_attrs.models import GenericAttributeType
+        # from poms.obj_attrs.models import GenericAttributeType
 
         for k, v in data.items():
-
             # if k == 'attributes':
             #
             #     if 'attributes' not in ret:
@@ -652,8 +728,7 @@ def value_prepare(orig):
             #
             #     # print('ret[k] %s' % ret[k])
 
-
-            if k.endswith('_object'):
+            if k.endswith("_object"):
                 k = k[:-7]
                 ret[k] = _value(v)
 
@@ -684,7 +759,9 @@ def value_prepare(orig):
     return _value(orig)
 
 
-def get_model_data(instance, object_class, serializer_class, many=False, context=None, hide_fields=None):
+def get_model_data(
+    instance, object_class, serializer_class, many=False, context=None, hide_fields=None
+):
     def _dumps():
         serializer = serializer_class(instance=instance, many=many, context=context)
         if hide_fields:
@@ -694,9 +771,9 @@ def get_model_data(instance, object_class, serializer_class, many=False, context
         data = value_prepare(data)
         if isinstance(data, (list, tuple)):
             for o in data:
-                o['object_class'] = object_class
+                o["object_class"] = object_class
         else:
-            data['object_class'] = object_class
+            data["object_class"] = object_class
         # import json
         # print(json.dumps(data, indent=2))
         return data
@@ -705,30 +782,52 @@ def get_model_data(instance, object_class, serializer_class, many=False, context
 
 
 def _get_supported_models_serializer_class():
-    from poms.users.models import Member
-    from poms.users.serializers import MemberSerializer
-
     from poms.accounts.models import Account
     from poms.accounts.serializers import AccountEvalSerializer
     from poms.counterparties.models import Counterparty, Responsible
-    from poms.counterparties.serializers import CounterpartyEvalSerializer, ResponsibleEvalSerializer
-    from poms.instruments.models import Instrument, DailyPricingModel, PaymentSizeDetail, GeneratedEvent, Country, \
-        InstrumentType, Periodicity
-    from poms.instruments.serializers import InstrumentEvalSerializer, DailyPricingModelSerializer, \
-        InstrumentTypeEvalSerializer, CountrySerializer, \
-        PaymentSizeDetailSerializer, GeneratedEventSerializer, PeriodicitySerializer
+    from poms.counterparties.serializers import (
+        CounterpartyEvalSerializer,
+        ResponsibleEvalSerializer,
+    )
     from poms.currencies.models import Currency
     from poms.currencies.serializers import CurrencyEvalSerializer
-    from poms.portfolios.models import Portfolio
-    from poms.portfolios.serializers import PortfolioEvalSerializer
-    from poms.strategies.models import Strategy1, Strategy2, Strategy3
-    from poms.strategies.serializers import Strategy1EvalSerializer, Strategy2EvalSerializer, Strategy3EvalSerializer
+    from poms.instruments.models import (
+        Country,
+        DailyPricingModel,
+        GeneratedEvent,
+        Instrument,
+        InstrumentType,
+        PaymentSizeDetail,
+        Periodicity,
+    )
+    from poms.instruments.serializers import (
+        CountrySerializer,
+        DailyPricingModelSerializer,
+        GeneratedEventSerializer,
+        InstrumentEvalSerializer,
+        InstrumentTypeEvalSerializer,
+        PaymentSizeDetailSerializer,
+        PeriodicitySerializer,
+    )
     from poms.integrations.models import PriceDownloadScheme
     from poms.integrations.serializers import PriceDownloadSchemeSerializer
-    from poms.transactions.models import Transaction, ComplexTransaction
-    from poms.transactions.serializers import TransactionEvalSerializer, ComplexTransactionEvalSerializer
+    from poms.portfolios.models import Portfolio
+    from poms.portfolios.serializers import PortfolioEvalSerializer
     from poms.pricing.models import InstrumentPricingPolicy
     from poms.pricing.serializers import InstrumentPricingPolicySerializer
+    from poms.strategies.models import Strategy1, Strategy2, Strategy3
+    from poms.strategies.serializers import (
+        Strategy1EvalSerializer,
+        Strategy2EvalSerializer,
+        Strategy3EvalSerializer,
+    )
+    from poms.transactions.models import ComplexTransaction, Transaction
+    from poms.transactions.serializers import (
+        ComplexTransactionEvalSerializer,
+        TransactionEvalSerializer,
+    )
+    from poms.users.models import Member
+    from poms.users.serializers import MemberSerializer
 
     return {
         Account: AccountEvalSerializer,
@@ -751,15 +850,17 @@ def _get_supported_models_serializer_class():
         GeneratedEvent: GeneratedEventSerializer,
         Member: MemberSerializer,
         Country: CountrySerializer,
-        InstrumentPricingPolicy: InstrumentPricingPolicySerializer
+        InstrumentPricingPolicy: InstrumentPricingPolicySerializer,
     }
 
 
-_supported_models_serializer_class = SimpleLazyObject(_get_supported_models_serializer_class)
+_supported_models_serializer_class = SimpleLazyObject(
+    _get_supported_models_serializer_class
+)
 
 
 def get_model_data_ext(instance, context=None, hide_fields=None):
-    from django.db.models import QuerySet, Manager
+    from django.db.models import Manager, QuerySet
     from django.db.models.manager import BaseManager
 
     if instance is None:
@@ -790,7 +891,13 @@ def get_model_data_ext(instance, context=None, hide_fields=None):
 
     try:
         serializer_class = _supported_models_serializer_class[model]
-    except KeyError:
-        raise InvalidExpression("'%s' can't serialize" % model)
-    return get_model_data(instance=instance, object_class=object_class, serializer_class=serializer_class, many=many,
-                          context=context, hide_fields=hide_fields)
+    except KeyError as e:
+        raise InvalidExpression(f"'{model}' can't serialize") from e
+    return get_model_data(
+        instance=instance,
+        object_class=object_class,
+        serializer_class=serializer_class,
+        many=many,
+        context=context,
+        hide_fields=hide_fields,
+    )

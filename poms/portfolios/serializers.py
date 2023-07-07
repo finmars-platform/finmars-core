@@ -3,22 +3,22 @@ from logging import getLogger
 from rest_framework import serializers
 
 from poms.common.serializers import (
-    ModelWithUserCodeSerializer,
     ModelWithTimeStampSerializer,
+    ModelWithUserCodeSerializer,
 )
 from poms.instruments.handlers import InstrumentTypeProcess
-from poms.instruments.models import InstrumentType, Instrument
+from poms.instruments.models import Instrument, InstrumentType
 from poms.instruments.serializers import (
+    InstrumentSerializer,
     InstrumentViewSerializer,
     PricingPolicySerializer,
-    InstrumentSerializer,
 )
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
 from poms.portfolios.models import (
     Portfolio,
+    PortfolioBundle,
     PortfolioRegister,
     PortfolioRegisterRecord,
-    PortfolioBundle,
 )
 from poms.portfolios.utils import get_price_calculation_type
 from poms.users.fields import MasterUserField
@@ -66,14 +66,13 @@ class PortfolioPortfolioRegisterSerializer(
         ]
 
     def __init__(self, *args, **kwargs):
-        super(PortfolioPortfolioRegisterSerializer, self).__init__(*args, **kwargs)
-
         from poms.currencies.serializers import CurrencyViewSerializer
+
+        super().__init__(*args, **kwargs)
 
         self.fields["valuation_currency_object"] = CurrencyViewSerializer(
             source="valuation_currency", read_only=True
         )
-
         self.fields["linked_instrument_object"] = InstrumentViewSerializer(
             source="linked_instrument", read_only=True
         )
@@ -109,20 +108,19 @@ class PortfolioSerializer(
             "notes",
             "is_default",
             "is_deleted",
-            # 'accounts', 'responsibles', 'counterparties', 'transaction_types',
             "is_enabled",
             "registers",
         ]
 
     def __init__(self, *args, **kwargs):
-        super(PortfolioSerializer, self).__init__(*args, **kwargs)
-
         from poms.accounts.serializers import AccountViewSerializer
         from poms.counterparties.serializers import (
-            ResponsibleViewSerializer,
             CounterpartyViewSerializer,
+            ResponsibleViewSerializer,
         )
         from poms.transactions.serializers import TransactionTypeViewSerializer
+
+        super().__init__(*args, **kwargs)
 
         self.fields["accounts_object"] = AccountViewSerializer(
             source="accounts", many=True, read_only=True
@@ -141,23 +139,21 @@ class PortfolioSerializer(
         master_user = instance.master_user
 
         try:
-            portfolio_register = PortfolioRegister.objects.get(
+            PortfolioRegister.objects.get(
                 master_user=master_user,
                 portfolio=instance,
                 user_code=instance.user_code,
             )
 
-        except Exception as e:
+        except Exception:
             ecosystem_default = EcosystemDefault.objects.get(master_user=master_user)
-
-            new_instrument = None
 
             # TODO maybe create new instr instead of existing?
             try:
                 new_instrument = Instrument.objects.get(
                     master_user=master_user, user_code=instance.user_code
                 )
-            except Exception as e:
+            except Exception:
                 new_linked_instrument = {
                     "name": instance.name,
                     "user_code": instance.user_code,
@@ -171,7 +167,7 @@ class PortfolioSerializer(
                         master_user=master_user,
                         user_code=new_linked_instrument["instrument_type"],
                     )
-                except Exception as e:
+                except Exception:
                     instrument_type = ecosystem_default.instrument_type
 
                 process = InstrumentTypeProcess(instrument_type=instrument_type)
@@ -194,7 +190,10 @@ class PortfolioSerializer(
 
                 new_instrument = serializer.instance
 
-            _l.info(f"new_instrument {new_instrument}")
+            _l.info(
+                f"{self.__class__.__name__}.create_register_if_not_exists "
+                f"new_instrument={new_instrument}"
+            )
 
             PortfolioRegister.objects.create(
                 master_user=master_user,
@@ -210,14 +209,14 @@ class PortfolioSerializer(
             )
 
     def create(self, validated_data):
-        instance = super(PortfolioSerializer, self).create(validated_data)
+        instance = super().create(validated_data)
 
         self.create_register_if_not_exists(instance)
 
         return instance
 
     def update(self, instance, validated_data):
-        instance = super(PortfolioSerializer, self).update(instance, validated_data)
+        instance = super().update(instance, validated_data)
 
         self.create_register_if_not_exists(instance)
 
@@ -253,12 +252,18 @@ class PortfolioViewSerializer(ModelWithUserCodeSerializer):
             "public_name",
         ]
 
+
 class PortfolioRegisterViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = Portfolio
         fields = [
-            'id', 'user_code', 'name', 'short_name', 'public_name',
+            "id",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
         ]
+
 
 class PortfolioGroupSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=256)
@@ -326,7 +331,7 @@ class PortfolioRegisterSerializer(
         )
 
     def create(self, validated_data):
-        instance = super(PortfolioRegisterSerializer, self).create(validated_data)
+        instance = super().create(validated_data)
 
         new_linked_instrument = self.context["request"].data.get(
             "new_linked_instrument"
@@ -334,7 +339,10 @@ class PortfolioRegisterSerializer(
 
         master_user = instance.master_user
 
-        print(f"new_linked_instrument {new_linked_instrument}")
+        _l.info(
+            f"{self.__class__.__name__}.create new_linked_instrument="
+            f"{new_linked_instrument}"
+        )
 
         if new_linked_instrument and "name" in new_linked_instrument:
             if isinstance(new_linked_instrument["instrument_type"], int):
@@ -404,22 +412,38 @@ class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):
         ]
 
     def __init__(self, *args, **kwargs):
-        super(PortfolioRegisterRecordSerializer, self).__init__(*args, **kwargs)
-
         from poms.currencies.serializers import CurrencyViewSerializer
-        self.fields['cash_currency_object'] = CurrencyViewSerializer(source='cash_currency', read_only=True)
-        self.fields['valuation_currency_object'] = CurrencyViewSerializer(source='valuation_currency', read_only=True)
+        from poms.transactions.serializers import (
+            ComplexTransactionViewSerializer,
+            TransactionClassSerializer,
+        )
 
-        from poms.transactions.serializers import TransactionClassSerializer
-        self.fields['transaction_class_object'] = TransactionClassSerializer(source='transaction_class', read_only=True)
-        self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
-        from poms.transactions.serializers import ComplexTransactionViewSerializer
-        self.fields['complex_transaction_object'] = ComplexTransactionViewSerializer(source='complex_transaction', read_only=True)
-        self.fields['portfolio_register_object'] = PortfolioRegisterViewSerializer(source='portfolio_register', read_only=True)
-        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
+        super().__init__(*args, **kwargs)
 
-        self.fields['valuation_pricing_policy_object'] = PricingPolicySerializer(source="valuation_pricing_policy",
-                                                                                 read_only=True)
+        self.fields["cash_currency_object"] = CurrencyViewSerializer(
+            source="cash_currency", read_only=True
+        )
+        self.fields["valuation_currency_object"] = CurrencyViewSerializer(
+            source="valuation_currency", read_only=True
+        )
+        self.fields["transaction_class_object"] = TransactionClassSerializer(
+            source="transaction_class", read_only=True
+        )
+        self.fields["portfolio_object"] = PortfolioViewSerializer(
+            source="portfolio", read_only=True
+        )
+        self.fields["complex_transaction_object"] = ComplexTransactionViewSerializer(
+            source="complex_transaction", read_only=True
+        )
+        self.fields["portfolio_register_object"] = PortfolioRegisterViewSerializer(
+            source="portfolio_register", read_only=True
+        )
+        self.fields["instrument_object"] = InstrumentViewSerializer(
+            source="instrument", read_only=True
+        )
+        self.fields["valuation_pricing_policy_object"] = PricingPolicySerializer(
+            source="valuation_pricing_policy", read_only=True
+        )
 
     def create(self, valid_data: dict) -> PortfolioRegisterRecord:
         valid_data["share_price_calculation_type"] = get_price_calculation_type(
@@ -448,9 +472,6 @@ class PortfolioBundleSerializer(ModelWithTimeStampSerializer):
             "notes",
             "registers",
         ]
-
-    def __init__(self, *args, **kwargs):
-        super(PortfolioBundleSerializer, self).__init__(*args, **kwargs)
 
 
 class PortfolioEvalSerializer(
