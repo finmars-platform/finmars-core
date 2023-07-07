@@ -28,10 +28,12 @@ def download_local_folder_as_zip(folder_path):
 
     return zip_file_path
 
+
 class NamedBytesIO(BytesIO):
     def __init__(self, *args, name=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.name = name
+
 
 class EncryptedStorage(object):
 
@@ -287,10 +289,8 @@ class FinmarsAzureStorage(FinmarsStorage, AzureStorage):
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
 
                 # Download the blob to the local file
-                blob_client = self.client.get_blob_client(blob.name)
-                with open(local_path, "wb") as local_file:
-                    download_stream = blob_client.download_blob()
-                    local_file.write(download_stream.readall())
+                with open(local_path, "wb") as local_file, self.open(blob.name) as download_stream:
+                    local_file.write(download_stream.read())
 
         # Create a zip archive of the temporary local directory
         zip_file_path = download_local_folder_as_zip(temp_dir)
@@ -340,10 +340,17 @@ class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
         temp_dir = tempfile.mkdtemp()
 
         # Download all files from the remote folder to the temporary local directory
+        # for obj in self.bucket.objects.filter(Prefix=directory_path):
+        #     local_path = os.path.join(temp_dir, os.path.relpath(obj.key, directory_path))
+        #     os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        #     self.bucket.download_file(obj.key, local_path)
+
         for obj in self.bucket.objects.filter(Prefix=directory_path):
-            local_path = os.path.join(temp_dir, os.path.relpath(obj.key, directory_path))
-            os.makedirs(os.path.dirname(local_path), exist_ok=True)
-            self.bucket.download_file(obj.key, local_path)
+            if obj.key != directory_path:  # Exclude the directory itself
+                local_path = os.path.join(temp_dir, os.path.relpath(obj.key, directory_path))
+                os.makedirs(os.path.dirname(local_path), exist_ok=True)
+                with open(local_path, "wb") as local_file, self.open(obj.key) as s3_file:
+                    local_file.write(s3_file.read())
 
         # Create a zip archive of the temporary local directory
         zip_file_path = download_local_folder_as_zip(temp_dir)
