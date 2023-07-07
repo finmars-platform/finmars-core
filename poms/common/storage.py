@@ -390,6 +390,7 @@ def get_storage():
     if settings.USE_FILESYSTEM_STORAGE:
         storage = FinmarsLocalFileSystemStorage()
 
-    storage.get_symmetric_key()  # IMPORTANT Storage MUST BE inherited from EncryptedStorage
+    if storage:
+        storage.get_symmetric_key()  # IMPORTANT Storage MUST BE inherited from EncryptedStorage
 
     return storage

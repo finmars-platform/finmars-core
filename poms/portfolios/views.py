@@ -5,36 +5,42 @@ from django_filters.rest_framework import FilterSet
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.settings import api_settings
 
-from poms.accounts.models import Account
-from poms.common.filters import CharFilter, NoOpFilter, \
-    GroupsAttributeFilter, AttributeFilter, EntitySpecificFilter
-from poms.common.pagination import CustomPaginationMixin
+from poms.common.filters import (
+    AttributeFilter,
+    CharFilter,
+    EntitySpecificFilter,
+    GroupsAttributeFilter,
+    NoOpFilter,
+)
 from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import AbstractModelViewSet
-from poms.counterparties.models import Responsible, Counterparty
 from poms.obj_attrs.utils import get_attributes_prefetch
-from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
-    GenericClassifierViewSet
-from poms.portfolios.models import Portfolio, PortfolioRegister, PortfolioRegisterRecord, PortfolioBundle
-from poms.portfolios.serializers import PortfolioSerializer, PortfolioLightSerializer, \
-    PortfolioRegisterSerializer,  PortfolioRegisterRecordSerializer, \
-     PortfolioBundleSerializer
-from poms.portfolios.tasks import calculate_portfolio_register_record, calculate_portfolio_register_price_history
-from poms.transactions.models import TransactionType
+from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
+from poms.portfolios.models import (
+    Portfolio,
+    PortfolioBundle,
+    PortfolioRegister,
+    PortfolioRegisterRecord,
+)
+from poms.portfolios.serializers import (
+    PortfolioBundleSerializer,
+    PortfolioLightSerializer,
+    PortfolioRegisterRecordSerializer,
+    PortfolioRegisterSerializer,
+    PortfolioSerializer,
+)
+from poms.portfolios.tasks import calculate_portfolio_register_price_history
 from poms.users.filters import OwnerByMasterUserFilter
 
-_l = getLogger('poms.portfolios')
+_l = getLogger("poms.portfolios")
 
 
 class PortfolioAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Portfolio
     target_model_serializer = PortfolioSerializer
 
-    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
-
-    ]
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + []
 
 
 class PortfolioClassifierViewSet(GenericClassifierViewSet):
@@ -48,10 +54,6 @@ class PortfolioFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
-    # account = ModelExtWithPermissionMultipleChoiceFilter(model=Account, field_name='accounts')
-    # responsible = ModelExtWithPermissionMultipleChoiceFilter(model=Responsible, field_name='responsibles')
-    # counterparty = ModelExtWithPermissionMultipleChoiceFilter(model=Counterparty, field_name='counterparties')
-    # transaction_type = ModelExtWithPermissionMultipleChoiceFilter(model=TransactionType, field_name='transaction_types')
     attribute_types = GroupsAttributeFilter()
     attribute_values = GroupsAttributeFilter()
 
@@ -62,7 +64,7 @@ class PortfolioFilterSet(FilterSet):
 
 class PortfolioViewSet(AbstractModelViewSet):
     queryset = Portfolio.objects.select_related(
-        'master_user',
+        "master_user",
     ).prefetch_related(
         get_attributes_prefetch(),
     )
@@ -71,11 +73,14 @@ class PortfolioViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
-        EntitySpecificFilter
+        EntitySpecificFilter,
     ]
     filter_class = PortfolioFilterSet
     ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name',
+        "user_code",
+        "name",
+        "short_name",
+        "public_name",
     ]
 
     def create(self, request, *args, **kwargs):
@@ -86,26 +91,27 @@ class PortfolioViewSet(AbstractModelViewSet):
         #         calculate_portfolio_register_price_history.s()
         #     ])
 
-        _l.info("Create Portfolio")
+        _l.info(f"{self.__class__.__name__}.create data={request.data}")
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
 
     def update(self, request, *args, **kwargs):
-
         # trigger recalc after book properly
         # calculate_portfolio_register_record.apply_async(
         #     link=[
         #         calculate_portfolio_register_price_history.s()
         #     ])
 
-        _l.info("Update Portfolio")
+        _l.info(f"{self.__class__.__name__}.update data={request.data}")
 
-        partial = kwargs.pop('partial', False)
+        partial = kwargs.pop("partial", False)
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
@@ -113,54 +119,50 @@ class PortfolioViewSet(AbstractModelViewSet):
 
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'], url_path='light', serializer_class=PortfolioLightSerializer)
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="light",
+        serializer_class=PortfolioLightSerializer,
+    )
     def list_light(self, request, *args, **kwargs):
-
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
 
-        result = self.get_paginated_response(serializer.data)
+        return self.get_paginated_response(serializer.data)
 
-        return result
-
-    @action(detail=False, methods=['get'], url_path='attributes')
+    @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
-
         items = [
             {
                 "key": "name",
                 "name": "Name",
-                "value_type": 10
+                "value_type": 10,
             },
             {
                 "key": "short_name",
                 "name": "Short name",
-                "value_type": 10
+                "value_type": 10,
             },
             {
                 "key": "user_code",
                 "name": "User code",
-                "value_type": 10
+                "value_type": 10,
             },
             {
                 "key": "public_name",
                 "name": "Public name",
                 "value_type": 10,
             },
-            {
-                "key": "notes",
-                "name": "Notes",
-                "value_type": 10
-            },
+            {"key": "notes", "name": "Notes", "value_type": 10},
             {
                 "key": "accounts",
                 "name": "Accounts",
                 "value_content_type": "accounts.account",
                 "value_entity": "account",
                 "code": "user_code",
-                "value_type": "mc_field"
-
+                "value_type": "mc_field",
             },
             {
                 "key": "responsibles",
@@ -168,7 +170,7 @@ class PortfolioViewSet(AbstractModelViewSet):
                 "value_content_type": "counterparties.responsible",
                 "value_entity": "responsible",
                 "code": "user_code",
-                "value_type": "mc_field"
+                "value_type": "mc_field",
             },
             {
                 "key": "counterparties",
@@ -176,7 +178,7 @@ class PortfolioViewSet(AbstractModelViewSet):
                 "value_content_type": "counterparties.counterparty",
                 "value_entity": "counterparty",
                 "code": "user_code",
-                "value_type": "mc_field"
+                "value_type": "mc_field",
             },
             {
                 "key": "transaction_types",
@@ -184,17 +186,17 @@ class PortfolioViewSet(AbstractModelViewSet):
                 "value_content_type": "transactions.transactiontype",
                 "value_entity": "transaction-type",
                 "code": "user_code",
-                "value_type": "mc_field"
-            }
+                "value_type": "mc_field",
+            },
         ]
 
-        items = items + get_list_of_entity_attributes('portfolios.portfolio')
+        items += get_list_of_entity_attributes("portfolios.portfolio")
 
         result = {
             "count": len(items),
             "next": None,
             "previous": None,
-            "results": items
+            "results": items,
         }
 
         return Response(result)
@@ -204,8 +206,7 @@ class PortfolioRegisterAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = PortfolioRegister
     target_model_serializer = PortfolioRegisterSerializer
 
-    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
-    ]
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + []
 
 
 class PortfolioRegisterFilterSet(FilterSet):
@@ -223,7 +224,7 @@ class PortfolioRegisterFilterSet(FilterSet):
 
 class PortfolioRegisterViewSet(AbstractModelViewSet):
     queryset = PortfolioRegister.objects.select_related(
-        'master_user',
+        "master_user",
     ).prefetch_related(
         get_attributes_prefetch(),
     )
@@ -232,65 +233,69 @@ class PortfolioRegisterViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
-        EntitySpecificFilter
+        EntitySpecificFilter,
     ]
     filter_class = PortfolioRegisterFilterSet
     ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name',
+        "user_code",
+        "name",
+        "short_name",
+        "public_name",
     ]
 
-    @action(detail=False, methods=['post'], url_path='calculate-records')
+    @action(detail=False, methods=["post"], url_path="calculate-records")
     def calculate_records(self, request):
+        _l.info(f"{self.__class__.__name__}.calculate_records data={request.data}")
 
-        _l.debug("Run Calculate Portfolio Registry Records data %s" % request.data)
-
-        portfolio_ids = request.data['portfolio_ids']
-
-        master_user = request.user.master_user
+        # portfolio_ids = request.data["portfolio_ids"]
+        # master_user = request.user.master_user
 
         # Trigger Recalc Properly
         # calculate_portfolio_register_record.apply_async(
         #     kwargs={'portfolio_ids': portfolio_ids})
 
-        return Response({'status': 'ok'})
+        return Response({"status": "ok"})
 
-    @action(detail=False, methods=['post'], url_path='calculate-price-history')
+    @action(detail=False, methods=["post"], url_path="calculate-price-history")
     def calculate_price_history(self, request):
+        _l.info(
+            f"{self.__class__.__name__}.calculate_price_history data={request.data}"
+        )
 
-        _l.debug("Run Calculate Portfolio Registry navs data %s" % request.data)
-
-        master_user = request.user.master_user
+        # master_user = request.user.master_user
 
         calculate_portfolio_register_price_history.apply_async()
 
-        return Response({'status': 'ok'})
+        return Response({"status": "ok"})
 
     def destroy(self, request, *args, **kwargs):
+        from poms.instruments.models import Instrument
+
         instance = self.get_object()
 
-        keep_instrument = request.data.get('keep_instrument')
+        keep_instrument = request.data.get("keep_instrument")
 
         linked_instrument_id = instance.linked_instrument_id
 
+        _l.info(
+            f"{self.__class__.__name__}.destroy portfolio_register={instance.user_code}"
+            f"linked_instrument_id {linked_instrument_id} "
+            f"keep_instrument {keep_instrument}"
+        )
+
         self.perform_destroy(instance)
 
-        _l.info("Destroy portfolio register linked_instrument_id %s" % linked_instrument_id)
-        _l.info("Destroy portfolio register keep_instrument %s" % keep_instrument)
+        if keep_instrument != "true" and linked_instrument_id:
+            _l.info(f"{self.__class__.__name__} initiating fake delete for instrument")
 
-        self.perform_destroy(instance)
-
-        if keep_instrument != 'true':
-            if linked_instrument_id:
-                _l.info("initing fake delete for instrument")
-
-                from poms.instruments.models import Instrument
-                instrument = Instrument.objects.get(id=linked_instrument_id)
-                instrument.fake_delete()
+            instrument = Instrument.objects.get(id=linked_instrument_id)
+            instrument.fake_delete()
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 # Portfolio Register Record
+
 
 class PortfolioRegisterRecordFilterSet(FilterSet):
     id = NoOpFilter()
@@ -302,15 +307,13 @@ class PortfolioRegisterRecordFilterSet(FilterSet):
 
 class PortfolioRegisterRecordViewSet(AbstractModelViewSet):
     queryset = PortfolioRegisterRecord.objects.select_related(
-        'master_user',
+        "master_user",
     )
     serializer_class = PortfolioRegisterRecordSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter
-    ]
+    filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
     filter_class = PortfolioRegisterRecordFilterSet
-    ordering_fields = [
-    ]
+    ordering_fields = []
+
 
 class PortfolioBundleFilterSet(FilterSet):
     id = NoOpFilter()
@@ -322,13 +325,9 @@ class PortfolioBundleFilterSet(FilterSet):
 
 class PortfolioBundleViewSet(AbstractModelViewSet):
     queryset = PortfolioBundle.objects.select_related(
-        'master_user',
+        "master_user",
     )
     serializer_class = PortfolioBundleSerializer
-    filter_backends = AbstractModelViewSet.filter_backends + [
-        OwnerByMasterUserFilter
-    ]
+    filter_backends = AbstractModelViewSet.filter_backends + [OwnerByMasterUserFilter]
     filter_class = PortfolioBundleFilterSet
-    ordering_fields = [
-    ]
-
+    ordering_fields = []
