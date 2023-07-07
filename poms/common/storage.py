@@ -189,7 +189,9 @@ class FinmarsStorage(EncryptedStorage):
 
         zip_filename = 'archive.zip'
 
-        temp_dir_path = os.path.join(os.path.dirname(zip_filename), 'tmp/temp_download')
+        unique_path_prefix = os.urandom(32).hex()
+
+        temp_dir_path = os.path.join(os.path.dirname(zip_filename), 'tmp/temp_download/%s' % unique_path_prefix)
         os.makedirs(temp_dir_path, exist_ok=True)
 
         for path in paths:
