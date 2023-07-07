@@ -162,7 +162,7 @@ class FinmarsStorage(EncryptedStorage):
 
     def download_file_and_save_locally(self, storage_file_path, local_file_path):
 
-        with self.open(storage_file_path, 'rb') as remote_file:
+        with self._open(storage_file_path, 'rb') as remote_file:
             # Read the file content
             file_content = remote_file.read()
 
