@@ -222,6 +222,18 @@ class CreateUser(APIView):
             user_profile, created = UserProfile.objects.get_or_create(user_id=user.pk)
             user_profile.save()
 
+        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+        try:
+            member = Member.objects.create(user=user, username=user.username, master_user=master_user)
+            member.save()
+
+            # member.is_admin = True
+            member.save()
+
+        except Exception as e:
+            _l.info("Could not create member Error %s" % e)
+
         return Response({'status': 'ok'})
 
 

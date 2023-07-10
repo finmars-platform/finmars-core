@@ -210,7 +210,7 @@ urlpatterns = [
     re_path(r'^authorizer/create-master-user/', CreateMasterUser.as_view(), name='create-master-user'),
     # TODO deprecated delete soon
     re_path(r'^authorizer/rename-master-user/', RenameMasterUser.as_view(), name='rename-master-user'),
-    re_path(r'^authorizer/create-member/', CreateMember.as_view(), name='create-member'),
+    # re_path(r'^authorizer/create-member/', CreateMember.as_view(), name='create-member'), # Deprecated
     re_path(r'^authorizer/delete-member/', DeleteMember.as_view(), name='delete-member'),
     re_path(r'^authorizer/master-user-change-owner/', MasterUserChangeOwner.as_view(), name='master-user-change-owner'),
 
