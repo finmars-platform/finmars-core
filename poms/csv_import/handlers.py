@@ -411,11 +411,11 @@ def handler_instrument_object(
             source_data["maturity_date"] == "null"
             or source_data["maturity_date"] == "9999-00-00"
         ):
-            object_data["maturity_date"] = "2999-01-01"
+            object_data["maturity_date"] = None
         else:
             object_data["maturity_date"] = source_data["maturity_date"]
     else:
-        object_data["maturity_date"] = "2999-01-01"
+        object_data["maturity_date"] = None
 
     try:
         if "country" in source_data:
