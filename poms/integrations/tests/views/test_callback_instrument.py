@@ -94,10 +94,10 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                             "code": currency_code,
                         },
                         "maturity_price": 100.0,
-                        "maturity": date.today(),
-                        "country": {
-                            "code": "USA",
-                        },
+                        "maturity_date": date.today(),
+                        # "country": {
+                        #     "code": "USA",
+                        # },
                         "factor_schedules": [
                             {"effective_date": "2023-08-08", "factor_value": 1.0},
                             {"effective_date": "2024-02-08", "factor_value": 9.0},
