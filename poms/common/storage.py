@@ -7,7 +7,7 @@ from io import BytesIO
 from zipfile import ZipFile, ZIP_DEFLATED
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from django.core.files.base import ContentFile
+from django.core.files.base import ContentFile, File
 from django.core.files.storage import FileSystemStorage
 from storages.backends.azure_storage import AzureStorage
 from storages.backends.s3boto3 import S3Boto3Storage
@@ -96,10 +96,14 @@ class EncryptedStorage(object):
         aesgcm = AESGCM(self.symmetric_key)
         decrypted_content = aesgcm.decrypt(nonce, ciphertext, None)
 
-        # Create a file-like object from the decrypted content
-        decrypted_file = NamedBytesIO(decrypted_content, name=file.name)
+        # Create a ContentFile with the decrypted content
+        decrypted_file = ContentFile(decrypted_content)
 
-        return decrypted_file
+        # Create a File instance with the decrypted ContentFile and file name
+        decrypted_file_instance = File(decrypted_file, name=file.name)
+
+        return decrypted_file_instance
+
 
     def open_skip_decrypt(self, name, mode='rb'):
         file = super()._open(name, mode)
