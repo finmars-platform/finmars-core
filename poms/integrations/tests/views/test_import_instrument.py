@@ -121,7 +121,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
                             "code": currency_code,
                         },
                         "maturity_price": 100.0,
-                        "maturity": date.today(),
+                        "maturity_date": date.today(),
                         "country": {
                             "code": "USA",
                         },
