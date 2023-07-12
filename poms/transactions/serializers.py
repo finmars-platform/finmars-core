@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import datetime
 import logging
 import time
+import traceback
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
@@ -12,7 +13,7 @@ from rest_framework.fields import empty
 
 from poms.accounts.fields import AccountField, AccountDefault
 from poms.accounts.models import Account
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, \
@@ -1164,7 +1165,7 @@ class TransactionTypeLightSerializer(ModelWithUserCodeSerializer):
     instrument_types = InstrumentTypeField(required=False, allow_null=True, many=True)
     portfolios = PortfolioField(required=False, allow_null=True, many=True)
 
-    group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
+    # group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
 
     def __init__(self, *args, **kwargs):
         super(TransactionTypeLightSerializer, self).__init__(*args, **kwargs)
@@ -1175,6 +1176,27 @@ class TransactionTypeLightSerializer(ModelWithUserCodeSerializer):
         self.fields['instrument_types_object'] = InstrumentTypeViewSerializer(source='instrument_types', many=True,
                                                                               read_only=True)
         self.fields['portfolios_object'] = PortfolioViewSerializer(source='portfolios', many=True, read_only=True)
+
+    def to_representation(self, instance):
+
+        ret = super(TransactionTypeLightSerializer, self).to_representation(instance)
+
+        try:
+
+            instance = TransactionTypeGroup.objects.get(
+                id=ret['group'])
+
+            s = TransactionTypeGroupViewSerializer(instance=instance, read_only=True,
+                                                   context=self.context)
+            ret['group_object'] = s.data
+        except Exception as e:
+
+            _l.error('Error in to_representation: %s' % e)
+            _l.error('Error in to_representation traceback: %s' % traceback.format_exc())
+
+            ret['group_object'] = None
+
+        return ret
 
     class Meta:
         model = TransactionType
@@ -1205,7 +1227,7 @@ class TransactionTypeLightSerializer(ModelWithUserCodeSerializer):
             'is_valid_for_all_portfolios', 'is_valid_for_all_instruments', 'is_deleted',
 
             'instrument_types', 'portfolios',
-            'group_object',
+            # 'group_object',
 
             'configuration_code'
         ]
@@ -1387,7 +1409,7 @@ class TransactionTypeSerializer(ModelWithUserCodeSerializer,
     actions = TransactionTypeActionSerializer(required=False, many=True, read_only=False)
     book_transaction_layout = serializers.JSONField(required=False, allow_null=True)
 
-    group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
+    # group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
 
     visibility_status = serializers.ChoiceField(default=TransactionType.SHOW_PARAMETERS,
                                                 initial=TransactionType.SHOW_PARAMETERS,
@@ -1408,6 +1430,29 @@ class TransactionTypeSerializer(ModelWithUserCodeSerializer,
         self.fields['instrument_types_object'] = InstrumentTypeViewSerializer(source='instrument_types', many=True,
                                                                               read_only=True)
         self.fields['portfolios_object'] = PortfolioViewSerializer(source='portfolios', many=True, read_only=True)
+
+    def to_representation(self, instance):
+
+        ret = super(TransactionTypeSerializer, self).to_representation(instance)
+
+        try:
+
+            # _l.info('ret: %s' % ret['group'])
+
+            instance = TransactionTypeGroup.objects.get(
+                id=ret['group']) # should be already converted to id
+
+            s = TransactionTypeGroupViewSerializer(instance=instance, read_only=True,
+                                                   context=self.context)
+            ret['group_object'] = s.data
+        except Exception as e:
+
+            _l.error('Error in to_representation error: %s' % e)
+            _l.error('Error in to_representation traceback: %s' % traceback.format_exc())
+
+            ret['group_object'] = None
+
+        return ret
 
     class Meta:
         model = TransactionType
@@ -1439,7 +1484,7 @@ class TransactionTypeSerializer(ModelWithUserCodeSerializer,
             'book_transaction_layout',
             'instrument_types', 'portfolios',
             'inputs', 'actions', 'recon_fields', 'context_parameters', 'context_parameters_notes',
-            'group_object',
+            # 'group_object',
 
             'is_enabled',
             'configuration_code'
@@ -2004,14 +2049,13 @@ class TransactionTypeSerializer(ModelWithUserCodeSerializer,
 
 class TransactionTypeViewSerializer(ModelWithUserCodeSerializer):
     group = TransactionTypeGroupField(required=False, allow_null=False)
-    group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
+    # group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
 
     class Meta:
         model = TransactionType
         fields = [
             'id', 'group', 'user_code', 'name', 'short_name', 'public_name', 'notes',
             'is_valid_for_all_portfolios', 'is_valid_for_all_instruments', 'is_deleted',
-            'group_object',
             'transaction_unique_code_expr',
             'transaction_unique_code_options',
 
@@ -2034,6 +2078,26 @@ class TransactionTypeViewSerializer(ModelWithUserCodeSerializer):
 
         ]
 
+    def to_representation(self, instance):
+
+        ret = super(TransactionTypeViewSerializer, self).to_representation(instance)
+
+        try:
+
+            instance = TransactionTypeGroup.objects.get(
+                id=ret['group'])
+
+            s = TransactionTypeGroupViewSerializer(instance=instance, read_only=True,
+                                                   context=self.context)
+            ret['group_object'] = s.data
+        except Exception as e:
+
+            _l.error('Error in to_representation: %s' % e)
+            _l.error('Error in to_representation traceback: %s' % traceback.format_exc())
+
+            ret['group_object'] = None
+
+        return ret
 
 class TransactionTypeViewOnlySerializer(ModelWithUserCodeSerializer):
     inputs = TransactionTypeInputViewOnlySerializer(required=False, many=True)
@@ -2552,7 +2616,6 @@ class ComplexTransactionSerializer(ModelWithAttributesSerializer,
 
         member = get_member_from_context(self.context)
 
-
         if member.is_admin or member.is_owner:
             hide_parameters = False
 
@@ -2849,6 +2912,121 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
 
         member = get_member_from_context(self.context)
 
+        if member.is_admin or member.is_owner:
+            hide_parameters = False
+
+        if hide_parameters:
+            data.pop('user_text_1')
+            data.pop('user_text_2')
+            data.pop('user_text_3')
+            data.pop('user_text_4')
+            data.pop('user_text_5')
+            data.pop('user_text_6')
+            data.pop('user_text_7')
+            data.pop('user_text_8')
+            data.pop('user_text_9')
+            data.pop('user_text_10')
+            data.pop('user_text_11')
+            data.pop('user_text_12')
+            data.pop('user_text_13')
+            data.pop('user_text_14')
+            data.pop('user_text_15')
+            data.pop('user_text_16')
+            data.pop('user_text_17')
+            data.pop('user_text_18')
+            data.pop('user_text_19')
+            data.pop('user_text_20')
+            data.pop('user_text_21')
+            data.pop('user_text_22')
+            data.pop('user_text_23')
+            data.pop('user_text_24')
+            data.pop('user_text_25')
+            data.pop('user_text_26')
+            data.pop('user_text_27')
+            data.pop('user_text_28')
+            data.pop('user_text_29')
+            data.pop('user_text_30')
+
+            data.pop('user_number_1')
+            data.pop('user_number_2')
+            data.pop('user_number_3')
+            data.pop('user_number_4')
+            data.pop('user_number_5')
+            data.pop('user_number_6')
+            data.pop('user_number_7')
+            data.pop('user_number_8')
+            data.pop('user_number_9')
+            data.pop('user_number_10')
+            data.pop('user_number_11')
+            data.pop('user_number_12')
+            data.pop('user_number_13')
+            data.pop('user_number_14')
+            data.pop('user_number_15')
+            data.pop('user_number_16')
+            data.pop('user_number_17')
+            data.pop('user_number_18')
+            data.pop('user_number_19')
+            data.pop('user_number_20')
+
+            data.pop('user_date_1')
+            data.pop('user_date_2')
+            data.pop('user_date_3')
+            data.pop('user_date_4')
+            data.pop('user_date_5')
+
+        # print('ComplexTransactionLightSerializer visibility status done: %s' % (time.perf_counter() - st))
+
+        return data
+
+
+class ComplexTransactionEvItemSerializer(ModelWithAttributesSerializer):
+    # text = serializers.SerializerMethodField()
+    master_user = MasterUserField()
+    transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        super(ComplexTransactionEvItemSerializer, self).__init__(*args, **kwargs)
+
+        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(
+            source='transaction_type', read_only=True)
+
+    class Meta:
+        model = ComplexTransaction
+        fields = [
+            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'master_user',
+
+            'visibility_status', 'is_locked', 'is_canceled', 'is_deleted', 'transaction_unique_code',
+
+            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
+            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
+
+            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
+            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
+            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
+
+            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
+            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
+            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
+
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
+
+        ]
+
+    def to_representation(self, instance):
+
+        st = time.perf_counter()
+
+        data = super(ComplexTransactionEvItemSerializer, self).to_representation(instance)
+
+        # print('instance.visibility_status %s' % instance.visibility_status)
+
+        hide_parameters = False
+
+        member = get_member_from_context(self.context)
 
         if member.is_admin or member.is_owner:
             hide_parameters = False
@@ -2915,6 +3093,8 @@ class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
         # print('ComplexTransactionLightSerializer visibility status done: %s' % (time.perf_counter() - st))
 
         return data
+
+
 
 
 # TransactionType processing -------------------------------------------------------------------------------------------
@@ -3131,8 +3311,6 @@ class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer)
         self.fields['transactions_object'] = TransactionSerializer(
             source='transactions', many=True, read_only=True)
 
-
-
     class Meta:
         model = ComplexTransaction
         fields = [
@@ -3257,7 +3435,6 @@ class ComplexTransactionViewOnlyComplexTransactionSerializer(serializers.ModelSe
 
         self.fields['transactions_object'] = TransactionViewOnlySerializer(
             source='transactions', many=True, read_only=True)
-
 
     class Meta:
         model = ComplexTransaction

@@ -1,18 +1,14 @@
-import logging
-from pathlib import Path
-
 from django.conf import settings
 
 import requests
 from requests.adapters import HTTPAdapter, Retry
 from requests.exceptions import RequestException
 
-_l = logging.getLogger("default")
-log = Path(__file__).stem
-
 GET = "get"
 POST = "post"
-HEADERS = {"Accept": "application/json", "Content-type": "application/json"}
+HEADERS = {
+    "Accept": "application/json",
+}
 
 
 class HttpClientError(Exception):
@@ -42,8 +38,10 @@ class HttpClient:
             raise HttpClientError("url is not specified!")
         if not kwargs:
             kwargs = {}
-        kwargs["headers"] = HEADERS
+        if "headers" not in kwargs:
+            kwargs["headers"] = HEADERS
 
+        response = None
         try:
             http_method = getattr(self.session, method)
             response = http_method(
@@ -56,7 +54,10 @@ class HttpClient:
             return response.json()
 
         except RequestException as ex:
-            raise HttpClientError(f"method={method} url={url} error={ex}") from ex
+            err_msg = response.text if response and response.text else ""
+            raise HttpClientError(
+                f"method={method} url={url} err='{err_msg}' except={ex}",
+            ) from ex
 
     def get(self, url, **kwargs) -> dict:
         return self._fetch_response(GET, url, **kwargs)

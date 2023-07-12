@@ -3,19 +3,19 @@ import json
 import logging
 import sys
 import traceback
-from datetime import datetime, timedelta
 
+from deepdiff import DeepDiff
 from django.contrib.contenttypes.models import ContentType
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.forms.models import model_to_dict
 from django.utils.translation import gettext_lazy
 
-from deepdiff import DeepDiff
-from poms_app import settings
-
 from poms.common.celery import get_active_celery_task, get_active_celery_task_id
 from poms.common.middleware import get_request
+from poms_app import settings
+
+# from datetime import datetime, timedelta
 
 _l = logging.getLogger("poms.history")
 
@@ -352,18 +352,22 @@ def get_notes_for_history_record(user_code, content_type, serialized_data):
 
 def get_record_context():
     from poms.users.models import MasterUser, Member
+    from poms.common.models import ProxyRequest
 
     result = {"master_user": None, "member": None, "context_url": "Unknown"}
 
-    if request := get_request():
+    request = get_request()
+    if request:
+        if isinstance(request, ProxyRequest):
+            _l.info(f'get_record_context: ProxyUser {request.user}')
+            result["master_user"] = request.user.master_user
+            result["member"] = request.user.member
 
-        # _l.info('request.user %s' % request.user)
-
-        # result["master_user"] = request.user.master_user
-        result["master_user"] = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
-        # result["master_user"] = request.user.member
-        result["member"] = Member.objects.get(user=request.user)
-        result["context_url"] = request.path
+        else:
+            _l.info(f'get_record_contex: User {request.user}')
+            result["master_user"] = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+            result["member"] = Member.objects.get(user=request.user)
+            result["context_url"] = request.path
 
     else:
         try:
@@ -408,100 +412,106 @@ def update_result_with_celery_task_data(celery_task_id, result):
 
 
 def post_save(sender, instance, created, using=None, update_fields=None, **kwargs):
-    # _l.info('post_save.sender %s' % sender)
-    # _l.info('post_save.update_fields %s' % update_fields)
+    try:
+        # _l.info('post_save.sender %s' % sender)
+        # _l.info('post_save.update_fields %s' % update_fields)
 
-    from poms.users.models import MasterUser
+        from poms.users.models import MasterUser
 
-    master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
-    if sender == MasterUser and instance.journal_status == "disabled":
-        record_context = get_record_context()
-        content_type = ContentType.objects.get_for_model(sender)
-
-        already_disabled = False
-
-        with contextlib.suppress(Exception):
-            last_record = HistoricalRecord.objects.filter(
-                user_code=master_user.name,
-                content_type=content_type,
-            ).order_by("-created")[0]
-
-            _l.info(f"last_record {last_record.data}")
-
-            if last_record.data["journal_status"] == "disabled":
-                already_disabled = True
-
-        if not already_disabled:
-            data = get_serialized_data(sender, instance)
-
-            HistoricalRecord.objects.create(
-                master_user=record_context["master_user"],
-                member=record_context["member"],
-                action=HistoricalRecord.ACTION_DANGER,
-                user_code=master_user.name,
-                data=data,
-                notes="JOURNAL IS DISABLED. OBJECTS ARE NOT TRACKED",
-                content_type=content_type,
-            )
-
-    if master_user.journal_status != MasterUser.JOURNAL_STATUS_DISABLED:
-        user_code = None
-
-        try:
+        if sender == MasterUser and instance.journal_status == "disabled":
             record_context = get_record_context()
             content_type = ContentType.objects.get_for_model(sender)
-            content_type_key = get_model_content_type_as_text(sender)
-            user_code = get_user_code_from_instance(instance, content_type_key)
 
-            exist = bool(
-                HistoricalRecord.objects.filter(
-                    user_code=user_code, content_type=content_type
-                ).count()
-            )
-            if exist:
-                action = HistoricalRecord.ACTION_CHANGE
-            else:
-                action = HistoricalRecord.ACTION_CREATE
+            already_disabled = False
 
-            # _l.info('created %s' % created)
-            # _l.info('update_fields %s' % update_fields)
+            with contextlib.suppress(Exception):
+                last_record = HistoricalRecord.objects.filter(
+                    user_code=master_user.name,
+                    content_type=content_type,
+                ).order_by("-created")[0]
 
-            if update_fields and "is_deleted" in update_fields:
-                if instance.is_deleted:
-                    action = HistoricalRecord.ACTION_RECYCLE_BIN
-                else:
-                    action = HistoricalRecord.ACTION_CHANGE
+                _l.info(f"last_record {last_record.data}")
 
-            # TODO think about better performance
-            # if HistoricalRecord.ACTION_RECYCLE_BIN:
-            #     data = {"is_deleted": True}
-            #     notes = {"is_deleted": True}
-            # else:
+                if last_record.data["journal_status"] == "disabled":
+                    already_disabled = True
 
-            if action != HistoricalRecord.ACTION_RECYCLE_BIN:
+            if not already_disabled:
                 data = get_serialized_data(sender, instance)
-                notes = get_notes_for_history_record(user_code, content_type, data)
-            else:
-                data = None
-                notes = {"message": "User moved object to Recycle Bin"}
 
-            HistoricalRecord.objects.create(
-                master_user=record_context["master_user"],
-                member=record_context["member"],
-                action=action,
-                context_url=record_context["context_url"],
-                data=data,
-                notes=notes,
-                user_code=user_code,
-                content_type=content_type,
-            )
+                HistoricalRecord.objects.create(
+                    master_user=record_context["master_user"],
+                    member=record_context["member"],
+                    action=HistoricalRecord.ACTION_DANGER,
+                    user_code=master_user.name,
+                    data=data,
+                    notes="JOURNAL IS DISABLED. OBJECTS ARE NOT TRACKED",
+                    content_type=content_type,
+                )
 
-        except Exception as e:
-            _l.error(
-                f"Could not save history user_code {user_code} exception {e} "
-                f"traceback {traceback.format_exc()}"
-            )
+        if master_user.journal_status != MasterUser.JOURNAL_STATUS_DISABLED:
+            user_code = None
+            content_type_key = None
+            try:
+                record_context = get_record_context()
+                content_type = ContentType.objects.get_for_model(sender)
+                content_type_key = get_model_content_type_as_text(sender)
+                user_code = get_user_code_from_instance(instance, content_type_key)
+
+                exist = bool(
+                    HistoricalRecord.objects.filter(
+                        user_code=user_code, content_type=content_type
+                    ).count()
+                )
+                if exist:
+                    action = HistoricalRecord.ACTION_CHANGE
+                else:
+                    action = HistoricalRecord.ACTION_CREATE
+
+                # _l.info('created %s' % created)
+                # _l.info('update_fields %s' % update_fields)
+
+                if update_fields and "is_deleted" in update_fields:
+                    if instance.is_deleted:
+                        action = HistoricalRecord.ACTION_RECYCLE_BIN
+                    else:
+                        action = HistoricalRecord.ACTION_CHANGE
+
+                # TODO think about better performance
+                # if HistoricalRecord.ACTION_RECYCLE_BIN:
+                #     data = {"is_deleted": True}
+                #     notes = {"is_deleted": True}
+                # else:
+
+                if action != HistoricalRecord.ACTION_RECYCLE_BIN:
+                    data = get_serialized_data(sender, instance)
+                    notes = get_notes_for_history_record(user_code, content_type, data)
+                else:
+                    data = None
+                    notes = {"message": "User moved object to Recycle Bin"}
+
+                HistoricalRecord.objects.create(
+                    master_user=record_context["master_user"],
+                    member=record_context["member"],
+                    action=action,
+                    context_url=record_context["context_url"],
+                    data=data,
+                    notes=notes,
+                    user_code=user_code,
+                    content_type=content_type,
+                )
+
+            except Exception as e:
+                _l.error(
+                    f"Could not save history user_code={user_code} "
+                    f"content_type_key={content_type_key}  exception {e}\n "
+                    f"traceback {traceback.format_exc()}"
+                )
+
+    except Exception as e:
+        _l.error("history.post_save error %s" % e)
+        _l.error("history.post_save traceback %s" % traceback.format_exc())
 
 
 def post_delete(sender, instance, using=None, **kwargs):
@@ -556,7 +566,6 @@ def add_history_listeners(sender, **kwargs):
 
 
 def record_history():
-
     _l = logging.getLogger('provision')
 
     if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:

@@ -6,7 +6,7 @@ from tempfile import NamedTemporaryFile
 from celery import shared_task
 from django.utils.translation import gettext_lazy
 
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.common.utils import date_now
 from poms.reconciliation.models import ReconciliationNewBankFileField, ReconciliationBankFileField
 from poms.reconciliation.serializers import ReconciliationNewBankFileFieldSerializer, \

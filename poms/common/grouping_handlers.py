@@ -94,7 +94,13 @@ def get_root_dynamic_attr_group(qs, root_group, groups_order):
     return qs
 
 
-def is_relation(item):
+def is_relation(item, content_type_key):
+
+    if content_type_key == 'transactions.transactiontype':
+        if item == 'group':
+            return False # because configuration
+
+
     return item in ['type', 'currency', 'instrument',
                     'instrument_type', 'group',
                     'pricing_policy', 'portfolio',
@@ -130,8 +136,8 @@ def is_attribute(item):
     return 'attributes.' in item
 
 
-def get_root_system_attr_group(qs, root_group, groups_order):
-    if is_relation(root_group):
+def get_root_system_attr_group(qs, root_group, groups_order, content_type_key):
+    if is_relation(root_group, content_type_key):
 
         qs = qs.values(root_group) \
             .annotate(group_identifier=F(root_group + '__user_code')) \
@@ -239,10 +245,10 @@ def get_last_dynamic_attr_group(qs, last_group, groups_order):
     return qs
 
 
-def get_last_system_attr_group(qs, last_group, groups_order):
+def get_last_system_attr_group(qs, last_group, groups_order, content_type_key):
     print('last_group %s ' % last_group)
 
-    if is_relation(last_group):
+    if is_relation(last_group, content_type_key):
         qs = qs.values(last_group) \
             .annotate(group_identifier=F(last_group + '__user_code')) \
             .distinct() \
@@ -264,7 +270,7 @@ def get_last_system_attr_group(qs, last_group, groups_order):
     return qs
 
 
-def get_queryset_filters(qs, groups_types, groups_values, original_qs):
+def get_queryset_filters(qs, groups_types, groups_values, original_qs, content_type_key):
     start_time = time.time()
 
     i = 0
@@ -329,13 +335,13 @@ def get_queryset_filters(qs, groups_types, groups_values, original_qs):
 
                     res_attr = attr
 
-                    if is_relation(res_attr):
+                    if is_relation(res_attr, content_type_key):
                         res_attr = res_attr + '__user_code'
 
                     qs = qs.filter(Q(**{res_attr + '__isnull': True}) | Q(**{res_attr: '-'}))
 
                 else:
-                    if is_relation(attr):
+                    if is_relation(attr, content_type_key):
                         params[attr + '__user_code'] = groups_values[i]
                     else:
                         params[attr] = groups_values[i]
@@ -381,6 +387,8 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
     # print('handle_groups.groups_order %s' % groups_order)
     # print('handle_groups.queryset len %s' % len(qs))
 
+    content_type_key = content_type.app_label + '.' + content_type.model
+
     if is_root_groups_configuration(groups_types, groups_values):
 
         if is_dynamic_attribute(groups_types[0]):
@@ -390,11 +398,11 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
 
         else:
 
-            qs = get_root_system_attr_group(qs, root_group=groups_types[0], groups_order=groups_order)
+            qs = get_root_system_attr_group(qs, root_group=groups_types[0], groups_order=groups_order, content_type_key=content_type_key)
 
     else:
 
-        qs = get_queryset_filters(qs, groups_types, groups_values, original_qs)
+        qs = get_queryset_filters(qs, groups_types, groups_values, original_qs, content_type_key)
 
         # print('handle groups after filters qs len %s' % len(qs))
         # print('handle groups after filters qs len %s' % qs)
@@ -405,7 +413,7 @@ def handle_groups(qs, groups_types, groups_values, groups_order, master_user, or
 
         else:
 
-            qs = get_last_system_attr_group(qs, last_group=groups_types[-1], groups_order=groups_order)
+            qs = get_last_system_attr_group(qs, last_group=groups_types[-1], groups_order=groups_order, content_type_key=content_type_key)
 
     # print('handle_groups  %s' % qs)
 
@@ -424,6 +432,8 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
     # _l.info('group_values %s' % group_values)
 
     # _l.info('qs %s' % qs[0])
+
+    content_type_key = content_type.app_label + '.' + content_type.model
 
     for item in qs:
 
@@ -497,7 +507,7 @@ def count_groups(qs, groups_types, group_values, master_user, original_qs, conte
 
                 key = groups_type
 
-                if is_relation(groups_type):
+                if is_relation(groups_type, content_type_key):
                     key = key + '__user_code'
 
                 if len(group_values) and index < len(group_values):

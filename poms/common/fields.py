@@ -8,7 +8,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField, DateTimeField, FloatField, empty, RegexField
 from rest_framework.relations import PrimaryKeyRelatedField, SlugRelatedField, RelatedField
 from django.contrib.contenttypes.models import ContentType
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.iam.fields import IamProtectedRelatedField
 
 from django.utils.translation import gettext_lazy as _

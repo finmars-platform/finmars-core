@@ -3,11 +3,8 @@ from logging import getLogger
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy
-from poms.common.models import (
-    DataTimeStampedModel,
-    FakeDeletableModel,
-    NamedModel,
-)
+
+from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel
 from poms.common.utils import date_now
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.currencies.models import Currency
@@ -18,6 +15,7 @@ from poms.users.models import MasterUser
 _l = getLogger("poms.portfolios")
 
 
+# noinspection PyUnresolvedReferences
 class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     """
     Portfolio Entity - Way of grouping transactions in user-defined way.
@@ -53,7 +51,6 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
         blank=True,
         verbose_name=gettext_lazy("transaction types"),
     )
-
     attributes = GenericRelation(
         GenericAttribute, verbose_name=gettext_lazy("attributes")
     )
@@ -61,10 +58,14 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("portfolio")
         verbose_name_plural = gettext_lazy("portfolios")
-        permissions = (
-            # ('view_portfolio', 'Can view portfolio'),
-            ("manage_portfolio", "Can manage portfolio"),
-        )
+        permissions = (("manage_portfolio", "Can manage portfolio"),)
+
+    def fake_delete(self):
+        super().fake_delete()
+
+        # falsely delete corresponding PortfolioRegister objects
+        for register in self.registers.all():
+            register.fake_delete()
 
     @staticmethod
     def get_system_attrs():
@@ -75,28 +76,28 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
             {
                 "key": "name",
                 "name": "Name",
-                "value_type": 10
+                "value_type": 10,
             },
             {
                 "key": "short_name",
                 "name": "Short name",
-                "value_type": 10
+                "value_type": 10,
             },
             {
                 "key": "user_code",
                 "name": "User code",
-                "value_type": 10
+                "value_type": 10,
             },
             {
                 "key": "public_name",
                 "name": "Public name",
                 "value_type": 10,
-                "allow_null": True
+                "allow_null": True,
             },
             {
                 "key": "notes",
                 "name": "Notes",
-                "value_type": 10
+                "value_type": 10,
             },
             {
                 "key": "accounts",
@@ -104,8 +105,7 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
                 "value_content_type": "accounts.account",
                 "value_entity": "account",
                 "code": "user_code",
-                "value_type": "mc_field"
-
+                "value_type": "mc_field",
             },
             {
                 "key": "responsibles",
@@ -113,7 +113,7 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
                 "value_content_type": "counterparties.responsible",
                 "value_entity": "responsible",
                 "code": "user_code",
-                "value_type": "mc_field"
+                "value_type": "mc_field",
             },
             {
                 "key": "counterparties",
@@ -121,7 +121,7 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
                 "value_content_type": "counterparties.counterparty",
                 "value_entity": "counterparty",
                 "code": "user_code",
-                "value_type": "mc_field"
+                "value_type": "mc_field",
             },
             {
                 "key": "transaction_types",
@@ -129,7 +129,7 @@ class Portfolio(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel)
                 "value_content_type": "transactions.transactiontype",
                 "value_entity": "transaction-type",
                 "code": "user_code",
-                "value_type": "mc_field"
+                "value_type": "mc_field",
             },
         ]
 
@@ -156,14 +156,12 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-
     portfolio = models.ForeignKey(
         Portfolio,
         related_name="registers",
         verbose_name=gettext_lazy("portfolio"),
         on_delete=models.CASCADE,
     )
-
     linked_instrument = models.ForeignKey(
         Instrument,
         null=True,
@@ -171,7 +169,6 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         verbose_name=gettext_lazy("linked instrument"),
         on_delete=models.SET_NULL,
     )
-
     valuation_pricing_policy = models.ForeignKey(
         PricingPolicy,
         on_delete=models.CASCADE,
@@ -179,13 +176,11 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         blank=True,
         verbose_name=gettext_lazy("pricing policy"),
     )
-
     valuation_currency = models.ForeignKey(
         "currencies.Currency",
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("valuation currency"),
     )
-
     attributes = GenericRelation(
         GenericAttribute,
         verbose_name=gettext_lazy("attributes"),
@@ -238,7 +233,7 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
     so we filter them out and save as Register Record
 
     Its also contains NAV of the portfolio in previous date
-    And we also counting number of shares. In portfolio share it is position_size
+    And we're also counting number of shares. In portfolio share it is position_size
     """
 
     AUTOMATIC = "Automatic"
@@ -302,13 +297,16 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
         verbose_name=gettext_lazy("valuation currency"),
     )
     nav_previous_day_valuation_currency = models.FloatField(
-        default=0.0, verbose_name=gettext_lazy("nav previous day valuation currency")
+        default=0.0,
+        verbose_name=gettext_lazy("nav previous day valuation currency"),
     )
     n_shares_previous_day = models.FloatField(
-        default=0.0, verbose_name=gettext_lazy("n shares previous day")
+        default=0.0,
+        verbose_name=gettext_lazy("n shares previous day"),
     )
     n_shares_added = models.FloatField(
-        default=0.0, verbose_name=gettext_lazy("n shares added")
+        default=0.0,
+        verbose_name=gettext_lazy("n shares added"),
     )
     dealing_price_valuation_currency = models.FloatField(
         default=0.0,
@@ -316,7 +314,10 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
         help_text=gettext_lazy("Dealing price valuation currency"),
     )
 
-    # n_shares_end_of_the_day = models.FloatField(default=0.0, verbose_name=gettext_lazy("n shares end of the day"))
+    # n_shares_end_of_the_day = models.FloatField(
+    #     default=0.0,
+    #     verbose_name=gettext_lazy("n shares end of the day"),
+    # )
 
     rolling_shares_of_the_day = models.FloatField(
         default=0.0,
@@ -325,6 +326,7 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
     previous_date_record = models.ForeignKey(
         "portfolios.PortfolioRegisterRecord",
         null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         verbose_name=gettext_lazy("previous date record"),
     )
@@ -355,40 +357,6 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
     class Meta:
         verbose_name = gettext_lazy("portfolio register record")
         verbose_name_plural = gettext_lazy("portfolio registers record")
-
-    # def save(self, *args, **kwargs):
-    #
-    #     try:
-    #
-    #         previous = PortfolioRegisterRecord.objects.exclude(transaction_date=self.transaction_date).filter(
-    #             portfolio_register=self.portfolio_register).order_by('-transaction_date')[0]
-    #
-    #         date = self.transaction_date - timedelta(days=1)
-    #
-    #         price_history = None
-    #         try:
-    #             price_history = PriceHistory.objecst.get(instrument=self.instrument, date=date)
-    #         except Exception as e:
-    #             price_history = PriceHistory.objecst.create(instrument=self.instrument, date=date)
-    #
-    #
-    #         portfolio_share_price =  price_history.nav / previous.n_shares_end_of_the_day
-    #         nav = 123
-    #
-    #         price_history.portfolio_share_price = portfolio_share_price
-    #         price_history.nav = nav
-    #
-    #         price_history.save()
-    #
-    #         self.dealing_price_valuation_currency = portfolio_share_price
-    #
-    #     except Exception as e:
-    #
-    #         # ROOT RECORD
-    #
-    #         self.dealing_price_valuation_currency = self.portfolio.default_price
-    #
-    #     super(PortfolioRegisterRecord, self).save(*args, **kwargs)
 
     # def save(self, *args, **kwargs):
     #     if self.pk:  # check if instance already exists in database

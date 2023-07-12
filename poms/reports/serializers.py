@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import logging
 import time
+import traceback
 import uuid
 from datetime import timedelta, date
 
@@ -12,21 +13,20 @@ from rest_framework.exceptions import ValidationError
 
 from poms.accounts.fields import AccountField
 from poms.accounts.serializers import AccountViewSerializer
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
 from poms.common.utils import date_now
 from poms.currencies.fields import CurrencyField, SystemCurrencyDefault
 from poms.currencies.serializers import CurrencyViewSerializer
-from poms.instruments.fields import PricingPolicyField, RegisterField, BundleField
+from poms.instruments.fields import RegisterField, BundleField
 from poms.instruments.models import CostMethod
 from poms.instruments.serializers import PricingPolicyViewSerializer, CostMethodSerializer
 from poms.portfolios.fields import PortfolioField
 from poms.portfolios.serializers import PortfolioViewSerializer
 from poms.reports.base_serializers import ReportInstrumentSerializer, ReportInstrumentTypeSerializer, \
     ReportCurrencySerializer, ReportPortfolioSerializer, ReportAccountSerializer, ReportAccountTypeSerializer, \
-    ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, ReportCurrencyHistorySerializer, \
-    ReportPriceHistorySerializer, ReportAccrualCalculationScheduleSerializer, ReportResponsibleSerializer, \
+    ReportStrategy1Serializer, ReportStrategy2Serializer, ReportStrategy3Serializer, ReportResponsibleSerializer, \
     ReportCounterpartySerializer, ReportComplexTransactionSerializer
 from poms.reports.common import Report, PerformanceReport, TransactionReport
 from poms.reports.fields import BalanceReportCustomFieldField, PLReportCustomFieldField, \
@@ -279,6 +279,53 @@ class ReportSerializer(ReportSerializerWithLogs):
     def create(self, validated_data):
         return Report(**validated_data)
 
+    def _extract_names(self, item, data):
+        names = item.copy()
+        names.update({
+            'report_currency': data['report_currency'],
+            'report_date': data['report_date'],
+            'pl_first_date': data['pl_first_date'],
+            'cost_method': data['cost_method'],
+            'pricing_policy': data['pricing_policy'],
+            'portfolio_mode': data['portfolio_mode'],
+            'account_mode': data['account_mode'],
+        })
+        return names
+
+    def _get_item_dict(self, data, key):
+        return {o['id']: o for o in data[key]}
+
+    def _set_object(self, names, pk_attr, objs):
+
+        if pk_attr in names:
+            pk = names[pk_attr]
+            if pk is not None:
+
+                try:
+                    names['%s_object' % pk_attr] = objs[pk]
+                except KeyError:
+                    pass
+
+    def evaluate_expression(self, expr, names, context):
+        try:
+            return formula.safe_eval(expr, names=names, context=context)
+        except formula.InvalidExpression as e:
+            _l.debug('evaluate_expression e %s' % e)
+            _l.debug('evaluate_expression traceback %s' % traceback.format_exc())
+            return gettext_lazy('Invalid expression')
+
+
+    def process_custom_field(self, cf, value):
+        expr = cf['expr']
+        if expr:
+            if cf['value_type'] == 10:
+                return self.evaluate_expression('str(item)', names={'item': value}, context=self.context)
+            elif cf['value_type'] == 20:
+                return self.evaluate_expression('float(item)', names={'item': value}, context=self.context)
+            elif cf['value_type'] == 40:
+                return self.evaluate_expression("parse_date(item, '%d/%m/%Y')", names={'item': value}, context=self.context)
+        return None
+
     def to_representation(self, instance):
 
         to_representation_st = time.perf_counter()
@@ -287,78 +334,48 @@ class ReportSerializer(ReportSerializerWithLogs):
 
         data = super(ReportSerializer, self).to_representation(instance)
 
-        _l.debug('ReportSerializer to_representation_st done: %s' % "{:3.3f}".format(
+        _l.info('ReportSerializer to_representation_st done: %s' % "{:3.3f}".format(
             time.perf_counter() - to_representation_st))
 
         # _l.debug('data["custom_fields_to_calculate"] %s' % data["custom_fields_to_calculate"])
 
         st = time.perf_counter()
 
+        dict_st = time.perf_counter()
+
+        item_dicts = {
+            'portfolio': self._get_item_dict(data, 'item_portfolios'),
+            'account': self._get_item_dict(data, 'item_accounts'),
+            'strategy1': self._get_item_dict(data, 'item_strategies1'),
+            'strategy2': self._get_item_dict(data, 'item_strategies2'),
+            'strategy3': self._get_item_dict(data, 'item_strategies3'),
+            'instrument': self._get_item_dict(data, 'item_instruments'),
+            'currency': self._get_item_dict(data, 'item_currencies'),
+            'pricing_currency': self._get_item_dict(data, 'item_currencies'),
+            'exposure_currency': self._get_item_dict(data, 'item_currencies'),
+            'allocation': self._get_item_dict(data, 'item_instruments'),
+            'mismatch_portfolio': self._get_item_dict(data, 'item_portfolios'),
+            'mismatch_account': self._get_item_dict(data, 'item_accounts'),
+        }
+
+        _l.info('ReportSerializer custom columns dict  done: %s' % "{:3.3f}".format(
+            time.perf_counter() - dict_st))
+
         custom_fields = data['custom_fields_object']
+
+        calc_st = time.perf_counter()
 
         if len(data["custom_fields_to_calculate"]):
             if custom_fields:
                 items = data['items']
 
-                item_instruments = {o['id']: o for o in data['item_instruments']}
-                item_currencies = {o['id']: o for o in data['item_currencies']}
-                item_portfolios = {o['id']: o for o in data['item_portfolios']}
-                item_accounts = {o['id']: o for o in data['item_accounts']}
-                item_strategies1 = {o['id']: o for o in data['item_strategies1']}
-                item_strategies2 = {o['id']: o for o in data['item_strategies2']}
-                item_strategies3 = {o['id']: o for o in data['item_strategies3']}
-                # item_currency_fx_rates = {o['id']: o for o in data['item_currency_fx_rates']}
-                # item_instrument_pricings = {o['id']: o for o in data['item_instrument_pricings']}
-                # item_instrument_accruals = {o['id']: o for o in data['item_instrument_accruals']}
-
-                def _set_object(names, pk_attr, objs):
-
-                    if pk_attr in names:
-                        pk = names[pk_attr]
-                        if pk is not None:
-
-                            try:
-                                names['%s_object' % pk_attr] = objs[pk]
-                            except KeyError:
-                                pass
-
                 for item in items:
 
-                    names = {}
+                    item_st = time.perf_counter()
 
-                    for key, value in item.items():
-                        names[key] = value
-
-                    names['report_currency'] = data['report_currency']
-                    # _set_object(names, 'report_currency', item_currencies)
-                    names['report_date'] = data['report_date']
-                    names['pl_first_date'] = data['pl_first_date']
-                    names['cost_method'] = data['cost_method']
-                    names['pricing_policy'] = data['pricing_policy']
-                    names['portfolio_mode'] = data['portfolio_mode']
-                    names['account_mode'] = data['account_mode']
-
-                    _set_object(names, 'portfolio', item_portfolios)
-                    _set_object(names, 'account', item_accounts)
-                    _set_object(names, 'strategy1', item_strategies1)
-                    _set_object(names, 'strategy2', item_strategies2)
-                    _set_object(names, 'strategy3', item_strategies3)
-                    _set_object(names, 'instrument', item_instruments)
-                    _set_object(names, 'currency', item_currencies)
-                    _set_object(names, 'pricing_currency', item_currencies)
-                    _set_object(names, 'exposure_currency', item_currencies)
-                    _set_object(names, 'allocation', item_instruments)
-                    _set_object(names, 'mismatch_portfolio', item_portfolios)
-                    _set_object(names, 'mismatch_account', item_accounts)
-                    # _set_object(names, 'report_currency_history', item_currency_fx_rates)
-
-                    # _set_object(names, 'instrument_price_history', item_instrument_pricings)
-                    # _set_object(names, 'instrument_pricing_currency_history', item_currency_fx_rates)
-                    # _set_object(names, 'instrument_accrued_currency_history', item_currency_fx_rates)
-
-                    # _set_object(names, 'currency_history', item_currency_fx_rates)
-                    # _set_object(names, 'pricing_currency_history', item_currency_fx_rates)
-                    # _set_object(names, 'instrument_accrual', item_instrument_accruals)
+                    names = self._extract_names(item, data)
+                    for name, item_dict in item_dicts.items():
+                        self._set_object(names, name, item_dict)
 
                     names = formula.value_prepare(names)
 
@@ -366,75 +383,24 @@ class ReportSerializer(ReportSerializerWithLogs):
 
                     custom_fields_names = {}
 
+                    # _l.info('names %s' % names)
+
 
                     for i in range(data['expression_iterations_count']):
-
                         for cf in custom_fields:
-
                             if cf["name"] in data["custom_fields_to_calculate"]:
-
                                 expr = cf['expr']
-
-                                if expr:
-
-                                    try:
-                                        value = formula.safe_eval(expr, names=names, context=self.context)
-                                    except formula.InvalidExpression as e:
-                                        # _l.debug('error %s %s' % (cf["name"], e))
-                                        value = gettext_lazy('Invalid expression')
-                                else:
-                                    value = None
-
-                                if not cf['user_code'] in custom_fields_names:
+                                value = self.evaluate_expression(expr, names, context=self.context) if expr else None
+                                if cf['user_code'] not in custom_fields_names or \
+                                        custom_fields_names[cf['user_code']] in [None, gettext_lazy('Invalid expression')]:
                                     custom_fields_names[cf['user_code']] = value
-                                else:
-                                    if custom_fields_names[cf['user_code']] == None or custom_fields_names[
-                                        cf['user_code']] == gettext_lazy('Invalid expression'):
-                                        custom_fields_names[cf['user_code']] = value
 
-                        names['custom_fields'] = custom_fields_names
+                    names['custom_fields'] = custom_fields_names
 
                     for key, value in custom_fields_names.items():
-
                         for cf in custom_fields:
-
                             if cf['user_code'] == key:
-
-                                expr = cf['expr']
-
-                                if cf['value_type'] == 10:
-
-                                    if expr:
-                                        try:
-                                            value = formula.safe_eval('str(item)', names={'item': value},
-                                                                      context=self.context)
-                                        except formula.InvalidExpression:
-                                            value = gettext_lazy('Invalid expression (Type conversion error)')
-                                    else:
-                                        value = None
-
-                                elif cf['value_type'] == 20:
-
-                                    if expr:
-                                        try:
-                                            value = formula.safe_eval('float(item)', names={'item': value},
-                                                                      context=self.context)
-                                        except formula.InvalidExpression:
-                                            value = gettext_lazy('Invalid expression (Type conversion error)')
-                                    else:
-                                        value = None
-                                elif cf['value_type'] == 40:
-
-                                    if expr:
-                                        try:
-                                            value = formula.safe_eval("parse_date(item, '%d/%m/%Y')",
-                                                                      names={'item': value},
-                                                                      context=self.context)
-                                        except formula.InvalidExpression:
-                                            value = gettext_lazy('Invalid expression (Type conversion error)')
-                                    else:
-                                        value = None
-
+                                value = self.process_custom_field(cf, value)
                                 cfv.append({
                                     'custom_field': cf['id'],
                                     'user_code': cf['user_code'],
@@ -442,6 +408,16 @@ class ReportSerializer(ReportSerializerWithLogs):
                                 })
 
                     item['custom_fields'] = cfv
+
+                    # _l.debug('ReportSerializer item done: %s' % "{:3.3f}".format(
+                    #     time.perf_counter() - item_st))
+
+
+        _l.info('ReportSerializer custom columns calc_st done: %s' % "{:3.3f}".format(
+            time.perf_counter() - calc_st))
+
+        _l.info('ReportSerializer custom columns done: %s' % "{:3.3f}".format(
+            time.perf_counter() - st))
 
         data['serialization_time'] = float("{:3.3f}".format(time.perf_counter() - to_representation_st))
 

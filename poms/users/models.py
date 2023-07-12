@@ -3,17 +3,15 @@ import json
 import os
 import uuid
 
+import pytz
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.translation import gettext_lazy
 
-import pytz
-
 from poms.common.models import FakeDeletableModel
 from poms.common.utils import get_content_type_by_name
-
 
 AVAILABLE_APPS = [
     "accounts",
@@ -513,7 +511,6 @@ class MasterUser(models.Model):
             PricingCondition,
             PricingPolicy,
         )
-        from poms.integrations.models import ProviderClass
         from poms.portfolios.models import Portfolio
         from poms.pricing.models import CurrencyPricingScheme, InstrumentPricingScheme
         from poms.strategies.models import (
@@ -535,15 +532,13 @@ class MasterUser(models.Model):
         ccys = {}
         ccy = Currency.objects.create(master_user=self, name="-", user_code="-")
         ccy_usd = None
+        # dc_reference_for_pricing = dc.get('reference_for_pricing', None)
+        dc_reference_for_pricing = ""
+
         for dc in currencies_data.values():
             dc_user_code = dc["user_code"]
             dc_name = dc.get("name", dc_user_code)
-            # dc_reference_for_pricing = dc.get('reference_for_pricing', None)
-            dc_reference_for_pricing = ""
-
-            if dc_user_code == "-":
-                pass
-            else:
+            if dc_user_code != "-":
                 if dc_user_code == "USD":
                     c = Currency.objects.create(
                         master_user=self,
@@ -757,7 +752,7 @@ class MasterUser(models.Model):
         FakeSequence.objects.get_or_create(master_user=self, name="transaction")
 
     def patch_currencies(
-        self, overwrite_name=False, overwrite_reference_for_pricing=False
+            self, overwrite_name=False, overwrite_reference_for_pricing=False
     ):
         from poms.currencies.models import Currency, currencies_data
 
@@ -1178,6 +1173,28 @@ class Member(FakeDeletableModel):
         unique_together = [["master_user", "user"]]
         ordering = ["username"]
 
+    def save(self, *args, **kwargs):
+
+        instance = super(Member, self).save(*args, **kwargs)
+
+        from poms.ui.models import MemberLayout
+
+        from poms.configuration.utils import get_default_configuration_code
+        configuration_code = get_default_configuration_code()
+
+        try:
+            layout = MemberLayout.objects.get(member_id=self.id,
+                                              configuration_code=configuration_code,
+                                              user_code=configuration_code + ':default_member_layout')
+        except Exception as e:
+            layout = MemberLayout.objects.create(member_id=self.id,
+                                                 is_default=True,
+                                                 configuration_code=configuration_code,
+                                                 name='default',
+                                                 user_code=configuration_code + ':default_member_layout')
+
+        return instance
+
     def __str__(self):
         return self.username
 
@@ -1224,7 +1241,6 @@ class OtpToken(models.Model):
     )
 
 
-
 class UserProfile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -1269,8 +1285,8 @@ class UsercodePrefix(models.Model):
     master_user = models.ForeignKey(
         MasterUser, verbose_name=gettext_lazy("master user"), on_delete=models.CASCADE,
     )
-    value = models.CharField(max_length=80, verbose_name=gettext_lazy("prefix"),)
-    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy("notes"),)
+    value = models.CharField(max_length=80, verbose_name=gettext_lazy("prefix"), )
+    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy("notes"), )
 
 
 class FakeSequence(models.Model):
@@ -1307,7 +1323,6 @@ class FakeSequence(models.Model):
         seq.save(update_fields=["value"])
 
         return seq.value
-
 
 # @receiver(post_save, dispatch_uid='create_profile', sender=settings.AUTH_USER_MODEL)
 # def create_profile(sender, instance=None, created=None, **kwargs):

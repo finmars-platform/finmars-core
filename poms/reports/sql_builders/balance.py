@@ -1936,7 +1936,12 @@ class BalanceReportBuilderSql:
 
     def add_data_items_instruments(self, ids):
 
-        self.instance.item_instruments = Instrument.objects.prefetch_related(
+        self.instance.item_instruments = Instrument.objects.select_related(
+            'instrument_type',
+            'instrument_type__instrument_class',
+            'pricing_currency',
+            'accrued_currency',
+        ).prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',
@@ -1968,7 +1973,7 @@ class BalanceReportBuilderSql:
 
     def add_data_items_accounts(self, ids):
 
-        self.instance.item_accounts = Account.objects.prefetch_related(
+        self.instance.item_accounts = Account.objects.select_related('type').prefetch_related(
             'attributes',
             'attributes__attribute_type',
             'attributes__classifier',

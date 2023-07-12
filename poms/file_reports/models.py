@@ -1,6 +1,8 @@
+import traceback
+
 from django.db import models
 from django.utils.translation import gettext_lazy
-
+from django.core.files.base import ContentFile, File
 from poms.common.storage import get_storage
 from poms_app import settings
 
@@ -40,22 +42,13 @@ class FileReport(models.Model):
 
             encoded_text = text.encode('utf-8')
 
-            with NamedTemporaryFile() as tmpfile:
 
-                _l.debug('FileReport tmpfile.name %s' % tmpfile.name)
+            storage.save(file_url, ContentFile(encoded_text))
 
-                tmpfile.seek(0)
-
-                tmpfile.write(encoded_text)
-
-                tmpfile.flush()
-
-                _l.debug(tmpfile)
-
-                storage.save(file_url, tmpfile)
 
         except Exception as e:
-            _l.debug('Exception %s' % e)
+            _l.info('upload_file.Exception error %s' % e)
+            _l.info('upload_file.Exception traceback %s' % traceback.format_exc())
 
         self.file_url = file_url
 

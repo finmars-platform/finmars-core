@@ -1,15 +1,12 @@
 import logging
 
 import django_filters
+from django.db.models import Q
 from django_filters.rest_framework import FilterSet
-
-# from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework import status
 
-from poms.common.database_client import DatabaseService
 from poms.common.filters import (
     AttributeFilter,
     CharFilter,
@@ -18,7 +15,6 @@ from poms.common.filters import (
     ModelExtMultipleChoiceFilter,
     NoOpFilter,
 )
-from poms.common.monad import Monad, MonadStatus
 from poms.common.views import AbstractModelViewSet
 from poms.currencies.filters import OwnerByCurrencyFilter
 from poms.currencies.models import Currency, CurrencyHistory
@@ -26,10 +22,7 @@ from poms.currencies.serializers import (
     CurrencyHistorySerializer,
     CurrencyLightSerializer,
     CurrencySerializer,
-    CurrencyDatabaseSearchRequestSerializer,
-    CurrencyDatabaseSearchResponseSerializer,
 )
-from poms.instruments.models import PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet
 from poms.users.filters import OwnerByMasterUserFilter
@@ -52,10 +45,28 @@ class CurrencyFilterSet(FilterSet):
     short_name = CharFilter()
     public_name = CharFilter()
     reference_for_pricing = CharFilter()
+    query = CharFilter(method="query_search")
 
     class Meta:
         model = Currency
         fields = []
+
+    def query_search(self, queryset, _, value):
+        if value:
+            # Split the value by spaces to get individual search terms
+            search_terms = value.split()
+
+            # Create an OR condition to search across multiple fields
+            conditions = Q()
+            for term in search_terms:
+                conditions |= (
+                    Q(user_code__icontains=term)
+                    | Q(name__icontains=term)
+                    | Q(short_name__icontains=term)
+                )
+            queryset = queryset.filter(conditions)
+
+        return queryset
 
 
 class CurrencyViewSet(AbstractModelViewSet):
@@ -63,9 +74,6 @@ class CurrencyViewSet(AbstractModelViewSet):
         "master_user",
     ).prefetch_related(get_attributes_prefetch())
     serializer_class = CurrencySerializer
-    # permission_classes = AbstractModelViewSet.permission_classes + [
-    #     # SuperUserOrReadOnly,
-    # ]
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         AttributeFilter,
@@ -99,11 +107,31 @@ class CurrencyViewSet(AbstractModelViewSet):
     @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
         items = [
-            {"key": "name", "name": "Name", "value_type": 10},
-            {"key": "short_name", "name": "Short name", "value_type": 10},
-            {"key": "user_code", "name": "User code", "value_type": 10},
-            {"key": "public_name", "name": "Public name", "value_type": 10},
-            {"key": "notes", "name": "Notes", "value_type": 10},
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+            },
             {
                 "key": "reference_for_pricing",
                 "name": "Reference for pricing",
@@ -137,8 +165,9 @@ class CurrencyHistoryFilterSet(FilterSet):
     id = NoOpFilter()
     date = django_filters.DateFromToRangeFilter()
     currency = ModelExtMultipleChoiceFilter(model=Currency)
-    # pricing_policy = ModelExtMultipleChoiceFilter(model=PricingPolicy)
-    pricing_policy = CharFilter(field_name="pricing_policy__user_code", lookup_expr="icontains")
+    pricing_policy = CharFilter(
+        field_name="pricing_policy__user_code", lookup_expr="icontains"
+    )
     fx_rate = django_filters.RangeFilter()
 
     class Meta:
@@ -151,9 +180,7 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
         "currency", "pricing_policy"
     ).prefetch_related()
     serializer_class = CurrencyHistorySerializer
-    permission_classes = AbstractModelViewSet.permission_classes + [
-        # SuperUserOrReadOnly,
-    ]
+    permission_classes = AbstractModelViewSet.permission_classes + []
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByCurrencyFilter,
         AttributeFilter,
@@ -175,9 +202,8 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
         "pricing_policy__public_name",
     ]
 
-    @action(detail=False, methods=['post'], url_path='bulk-create')
+    @action(detail=False, methods=["post"], url_path="bulk-create")
     def bulk_create(self, request, *args, **kwargs):
-
         valid_data = []
         errors = []
 
@@ -188,18 +214,17 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
             else:
                 errors.append(serializer.errors)
 
-        _l.info('CurrencyHistoryViewSet.valid_data %s' % len(valid_data))
+        _l.info(f"CurrencyHistoryViewSet.valid_data {len(valid_data)}")
 
         CurrencyHistory.objects.bulk_create(valid_data, ignore_conflicts=True)
 
         if errors:
-            _l.info('CurrencyHistoryViewSet.bulk_create.errors %s' % errors)
+            _l.info(f"CurrencyHistoryViewSet.bulk_create.errors {errors}")
         #     # Here we just return the errors as part of the response.
         #     # You may want to log them or handle them differently depending on your needs.
         #     return Response({'errors': errors}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-
 
     @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
@@ -247,48 +272,57 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
         return Response(result)
 
 
-class CurrencyDatabaseSearchViewSet(APIView):
-    """
-    Provides Currency info from Finmars-Database API based on CBOND's data
-    """
-
-    permission_classes = []
-
-    # @swagger_auto_schema(
-    #     tags=["Currencies"],
-    #     operation_description="Provides Currency info based on CBOND's data",
-    #     request_body=CurrencyDatabaseSearchRequestSerializer,
-    #     responses={200: CurrencyDatabaseSearchResponseSerializer()},
-    # )
-
-    def _empty_response(self) -> Response:
-        return Response(
-            {
-                "results": [],
-                "next": None,
-                "previous": None,
-                "count": 0,
-            }
-        )
-
-    def get(self, request):
-        log = f"{self.__class__.__name__}"
-
-        serializer = CurrencyDatabaseSearchRequestSerializer(data=request.query_params)
-        serializer.is_valid(raise_exception=True)
-        params = dict(serializer.validated_data)
-
-        _l.info(f"{log} request params={params}")
-
-        if not serializer.params_has_name(params):
-            return self._empty_response()
-
-        monad: Monad = DatabaseService().get_results("currency", params)
-
-        _l.info(f"{log} monad.status={monad.status} monad.data={monad.data}")
-
-        if monad.status != MonadStatus.DATA_READY:
-            _l.error(f"{log} error, monad.message={monad.message}")
-            return self._empty_response()
-
-        return Response(CurrencyDatabaseSearchResponseSerializer(monad.data).data)
+# DEPRECATED task: FN-1736
+# class CurrencyDatabaseSearchViewSet(APIView):
+#     """
+#     Provides Currency info from Finmars-Database API based on CBOND's data
+#     """
+#
+#     permission_classes = []
+#
+#     # @swagger_auto_schema(
+#     #     tags=["Currencies"],
+#     #     operation_description="Provides Currency info based on CBOND's data",
+#     #     request_body=CurrencyDatabaseSearchRequestSerializer,
+#     #     responses={200: CurrencyDatabaseSearchResponseSerializer()},
+#     # )
+#
+#     def _prepare_response(self, results) -> Response:
+#         response_data = {
+#             "count": len(results),
+#             "next": None,
+#             "previous": None,
+#             "results": results,
+#         }
+#         return Response(CurrencyDatabaseSearchResponseSerializer(response_data).data)
+#
+#     def get(self, request):
+#         """
+#         Load all currencies items, and then filter them according to params
+#         If name is given in params, then all currency fields will be filtered
+#         to contain name value as substring
+#         """
+#
+#         log = f"{self.__class__.__name__}"
+#
+#         serializer = CurrencyDatabaseSearchRequestSerializer(data=request.query_params)
+#         serializer.is_valid(raise_exception=True)
+#         params = dict(serializer.validated_data)
+#
+#         _l.info(f"{log} currency params={params}")
+#
+#         monad: Monad = DatabaseService().get_results("currency", request_params=params)
+#
+#         results = monad.data.get("results", []) if monad.data else []
+#
+#         if monad.status != MonadStatus.DATA_READY:
+#             _l.error(f"{log} monad.status={monad.status} monad.message={monad.message}")
+#             return self._prepare_response([])
+#
+#         _l.info(f"{log} len(results)={len(results)}")
+#
+#         filtered_results = serializer.filter_results(results)
+#
+#         _l.info(f"{log} len(filtered_results)={len(filtered_results)}")
+#
+#         return self._prepare_response(filtered_results)

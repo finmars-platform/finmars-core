@@ -1,145 +1,232 @@
 import json
 import logging
+from datetime import timedelta
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils.timezone import now
 from django.utils.translation import gettext_lazy
-from django.db import transaction
+
+from celery.result import AsyncResult
 
 from poms.common.models import TimeStampedModel
 from poms.file_reports.models import FileReport
 
-_l = logging.getLogger('poms.celery_tasks')
+_l = logging.getLogger("poms.celery_tasks")
+log = "CeleryTask"
 
 
 class CeleryTask(TimeStampedModel):
-    '''
-
+    """
     Maybe should be rename just to Task (like in Workflow)
-    Kinda legacy functionality (everything to background processes should be moved to Workflow/Olap microservices)
+    Kinda legacy functionality (everything to background processes should
+    be moved to Workflow/Olap microservices)
     But still its in use
     Most important tasks are:
         Transaction Import (transactions itself, sometimes instruments)
-        Simple Import (Portfolios, Accounts, Instruments, Prices, FXrates)
-        Configuration Import (Account Type, Instrument Types, Transaction Types, UI layouts)
+        Simple Import (Portfolios, Accounts, Instruments, Prices, FxRates)
+        Configuration Import (Account Type, Instrument Types, Transaction Types,
+        UI layouts)
         Portfolio Records and Portfolio Prices
 
-    Also we have poms.procedures, and poms.pricings and somehow it different entities but they do the same thing as CeleryTask
-    Maybe in future procedures/pricing will be refactored and one day they will be just CeleryTask
+    Also we have poms.procedures, and poms.pricing and somehow it different
+    entities but they do the same thing as CeleryTask
+    Maybe in future procedures/pricing will be refactored and one day
+    they will be just CeleryTask
     And in far future even that will be moved to Workflow/Olap
+    """
 
-    '''
-    STATUS_INIT = 'I'
-    STATUS_PENDING = 'P'
-    STATUS_DONE = 'D'
-    STATUS_ERROR = 'E'
-    STATUS_TIMEOUT = 'T'
-    STATUS_CANCELED = 'C'
-    STATUS_TRANSACTIONS_ABORTED = 'X'
-    STATUS_REQUEST_SENT = 'S'
-    STATUS_WAIT_RESPONSE = 'W'
+    STATUS_INIT = "I"
+    STATUS_PENDING = "P"
+    STATUS_DONE = "D"
+    STATUS_ERROR = "E"
+    STATUS_TIMEOUT = "T"
+    STATUS_CANCELED = "C"
+    STATUS_TRANSACTIONS_ABORTED = "X"
+    STATUS_REQUEST_SENT = "S"
+    STATUS_WAIT_RESPONSE = "W"
 
     STATUS_CHOICES = (
-        (STATUS_INIT, 'INIT'),
-        (STATUS_PENDING, 'PENDING'),
-        (STATUS_DONE, 'DONE'),
-        (STATUS_ERROR, 'ERROR'),
-        (STATUS_TIMEOUT, 'TIMEOUT'),
-        (STATUS_CANCELED, 'CANCELED'),
-        (STATUS_TRANSACTIONS_ABORTED, 'TRANSACTIONS_ABORTED'),
-        (STATUS_REQUEST_SENT, 'REQUEST_SENT'),
-        (STATUS_WAIT_RESPONSE, 'WAIT_RESPONSE'),
+        (STATUS_INIT, "INIT"),
+        (STATUS_PENDING, "PENDING"),
+        (STATUS_DONE, "DONE"),
+        (STATUS_ERROR, "ERROR"),
+        (STATUS_TIMEOUT, "TIMEOUT"),
+        (STATUS_CANCELED, "CANCELED"),
+        (STATUS_TRANSACTIONS_ABORTED, "TRANSACTIONS_ABORTED"),
+        (STATUS_REQUEST_SENT, "REQUEST_SENT"),
+        (STATUS_WAIT_RESPONSE, "WAIT_RESPONSE"),
     )
 
-    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
-                                    on_delete=models.CASCADE)
-    member = models.ForeignKey('users.Member', verbose_name=gettext_lazy('member'), null=True, blank=True,
-                               on_delete=models.SET_NULL)
-
-    is_system_task = models.BooleanField(default=False, verbose_name=gettext_lazy("is system task"))
-
-    celery_task_id = models.CharField(null=True, max_length=255)
-    function_name = models.CharField(null=True, max_length=255)
-    status = models.CharField(null=True, max_length=1, default=STATUS_INIT, choices=STATUS_CHOICES,
-                              verbose_name='status')
-    type = models.CharField(max_length=255, blank=True, null=True)
-
-    parent = models.ForeignKey('self', null=True, blank=True, related_name='children',
-                               verbose_name=gettext_lazy('parent'), on_delete=models.SET_NULL)
-
-    options = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('options'))
-    result = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('result'))
-    progress = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('progress'))
-
-    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('notes'))
-    error_message = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('error message'))
-
-    file_report = models.ForeignKey('file_reports.FileReport', null=True, blank=True,
-                                    verbose_name=gettext_lazy('file report'), on_delete=models.SET_NULL)
-
-    verbose_name = models.CharField(null=True, max_length=255)
-    verbose_result = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('verbose result'))
-
-    finished_at = models.DateTimeField(null=True, db_index=True,
-                                       verbose_name=gettext_lazy('finished at'))
+    master_user = models.ForeignKey(
+        "users.MasterUser",
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
+    )
+    member = models.ForeignKey(
+        "users.Member",
+        verbose_name=gettext_lazy("member"),
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    is_system_task = models.BooleanField(
+        default=False,
+        verbose_name=gettext_lazy(
+            "is system task",
+        ),
+    )
+    celery_task_id = models.CharField(
+        null=True,
+        max_length=255,
+    )
+    function_name = models.CharField(
+        null=True,
+        max_length=255,
+    )
+    status = models.CharField(
+        null=True,
+        max_length=1,
+        default=STATUS_INIT,
+        choices=STATUS_CHOICES,
+        verbose_name="status",
+    )
+    type = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
+    parent = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        related_name="children",
+        verbose_name=gettext_lazy("parent"),
+        on_delete=models.SET_NULL,
+    )
+    options = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("options"),
+    )
+    result = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("result"),
+    )
+    progress = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("progress"),
+    )
+    notes = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("notes"),
+    )
+    error_message = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("error message"),
+    )
+    file_report = models.ForeignKey(
+        "file_reports.FileReport",
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("file report"),
+        on_delete=models.SET_NULL,
+    )
+    verbose_name = models.CharField(
+        null=True,
+        max_length=255,
+    )
+    verbose_result = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("verbose result"),
+    )
+    ttl = models.PositiveIntegerField(
+        default=0,
+        verbose_name=gettext_lazy("time to live"),
+        help_text="Amount of time to complet task before automatic cancelation. 0 - no limit.",
+    )
+    expiry_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        verbose_name=gettext_lazy("expiry at"),
+        help_text="Autogenerated. Task will be canceled after this time.",
+    )
+    finished_at = models.DateTimeField(
+        null=True,
+        db_index=True,
+        verbose_name=gettext_lazy("finished at"),
+    )
 
     class Meta:
-        ordering = ['-created']
+        ordering = ["-created"]
 
     def __str__(self):
-        return '{0.verbose_name} [{0.pk}] ({0.status})>'.format(self)
+        return f"{self.verbose_name} [{self.pk}] ({self.status})>"
+
+    def cancel(self):
+        if self.celery_task_id:
+            try:
+                AsyncResult(str(self.celery_task_id)).revoke()
+            except Exception as e:
+                _l.error(f"{log} Error while canceling task: {repr(e)}")
+
+        self.status = CeleryTask.STATUS_CANCELED
+        self.save()
 
     @property
     def options_object(self):
-        if self.options is None:
-            return None
-        return json.loads(self.options)
+        return None if self.options is None else json.loads(self.options)
 
     @options_object.setter
     def options_object(self, value):
         if value is None:
             self.options = None
         else:
-            self.options = json.dumps(value, cls=DjangoJSONEncoder, sort_keys=True, indent=1)
+            self.options = json.dumps(
+                value, cls=DjangoJSONEncoder, sort_keys=True, indent=1
+            )
 
     @property
     def result_object(self):
-        if self.result is None:
-            return None
-        return json.loads(self.result)
+        return None if self.result is None else json.loads(self.result)
 
     @result_object.setter
     def result_object(self, value):
         if value is None:
             self.result = None
         else:
-            self.result = json.dumps(value, cls=DjangoJSONEncoder, sort_keys=True, indent=1)
+            self.result = json.dumps(
+                value, cls=DjangoJSONEncoder, sort_keys=True, indent=1
+            )
 
     @property
     def progress_object(self):
-        if self.progress is None:
-            return None
-        return json.loads(self.progress)
+        return None if self.progress is None else json.loads(self.progress)
 
     @progress_object.setter
     def progress_object(self, value):
         if value is None:
             self.progress = None
         else:
-            self.progress = json.dumps(value, cls=DjangoJSONEncoder, sort_keys=True, indent=1)
+            self.progress = json.dumps(
+                value, cls=DjangoJSONEncoder, sort_keys=True, indent=1
+            )
 
     def add_attachment(self, file_report_id):
-
-        CeleryTaskAttachment.objects.create(celery_task=self,
-                                            file_report_id=file_report_id)
+        CeleryTaskAttachment.objects.create(
+            celery_task=self, file_report_id=file_report_id
+        )
 
     def mark_task_as_finished(self):
-
         self.finished_at = now()
 
     def update_progress(self, progress):
-
         # {
         #   current: 20,
         #   total: 100,
@@ -147,29 +234,51 @@ class CeleryTask(TimeStampedModel):
         #   description
         # }
 
-        _l.info('update_progress %s' % progress)
+        _l.info(f"{log} update_progress {progress}")
 
         self.progress_object = progress
 
         self.save()
 
     def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
-        super(CeleryTask, self).save(*args, **kwargs)
+        if self.ttl and not self.expiry_at:
+            self.expiry_at = self.created + timedelta(seconds=self.ttl)
 
-        count = CeleryTask.objects.all().count()
-
-        if count > 1000:
-            CeleryTask.objects.all().order_by('id')[0].delete()
+        if CeleryTask.objects.all().count() > 1000:
+            _l.warning(f"{log} tasks amount > 1000, delete oldest task")
+            CeleryTask.objects.all().order_by("id")[0].delete()
 
 
 class CeleryTaskAttachment(models.Model):
-    celery_task = models.ForeignKey(CeleryTask, verbose_name=gettext_lazy('celery task'),
-                                    on_delete=models.CASCADE, related_name="attachments")
-
-    file_url = models.TextField(null=True, blank=True, default='', verbose_name=gettext_lazy('File URL'))
-    file_name = models.CharField(null=True, max_length=255, blank=True, default='')
-    notes = models.TextField(null=True, blank=True, default='', verbose_name=gettext_lazy('notes'))
-
-    file_report = models.ForeignKey(FileReport, null=True, verbose_name=gettext_lazy('file report'),
-                                    on_delete=models.SET_NULL)
+    celery_task = models.ForeignKey(
+        CeleryTask,
+        verbose_name=gettext_lazy("celery task"),
+        on_delete=models.CASCADE,
+        related_name="attachments",
+    )
+    file_url = models.TextField(
+        null=True,
+        blank=True,
+        default="",
+        verbose_name=gettext_lazy("File URL"),
+    )
+    file_name = models.CharField(
+        null=True,
+        max_length=255,
+        blank=True,
+        default="",
+    )
+    notes = models.TextField(
+        null=True,
+        blank=True,
+        default="",
+        verbose_name=gettext_lazy("notes"),
+    )
+    file_report = models.ForeignKey(
+        FileReport,
+        null=True,
+        verbose_name=gettext_lazy("file report"),
+        on_delete=models.SET_NULL,
+    )

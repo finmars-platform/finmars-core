@@ -14,6 +14,7 @@ from poms.auth_tokens.models import AuthToken
 from poms.auth_tokens.serializers import SetAuthTokenSerializer, CreateUserSerializer, CreateMasterUserSerializer, \
     CreateMemberSerializer, DeleteMemberSerializer, RenameMasterUserSerializer, MasterUserChangeOwnerSerializer
 from poms.auth_tokens.utils import generate_random_string
+from poms.common.models import ProxyRequest, ProxyUser
 from poms.users.models import MasterUser, Member, UserProfile
 from poms_app import settings
 
@@ -177,7 +178,22 @@ class CreateUser(APIView):
         return self.serializer_class(*args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        # TODO Refactor to more sophisticated user creation system
+        # In current implementation there is no way to set IAM policies for invited user before he accepts invite
+
+        member = Member.objects.get(username="finmars_bot")
+        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+        proxy_user = ProxyUser(member, master_user)
+        proxy_request = ProxyRequest(proxy_user)
+
+        context = {
+            'request': proxy_request,
+            'master_user': master_user,
+            'member': member
+        }
+
+        serializer = self.get_serializer(data=request.data, context=context)
         serializer.is_valid(raise_exception=True)
 
         username = serializer.validated_data['username']
@@ -205,6 +221,18 @@ class CreateUser(APIView):
         if user:
             user_profile, created = UserProfile.objects.get_or_create(user_id=user.pk)
             user_profile.save()
+
+        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+        try:
+            member = Member.objects.create(user=user, username=user.username, master_user=master_user)
+            member.save()
+
+            # member.is_admin = True
+            member.save()
+
+        except Exception as e:
+            _l.info("Could not create member Error %s" % e)
 
         return Response({'status': 'ok'})
 

@@ -30,7 +30,12 @@ _l = logging.getLogger('poms.common')
 #             return queryset.filter(parent__isnull=True)
 
 
-def is_relation(item):
+def is_relation(item, content_type_key):
+
+    if content_type_key == 'transactions.transactiontype':
+        if item == 'group':
+            return False # because configuration
+
     return item in ['type', 'currency', 'instrument',
                     'instrument_type', 'group',
                     'pricing_policy', 'portfolio',
@@ -53,7 +58,12 @@ def is_relation(item):
                     'allocation_balance', 'allocation_pl',
                     'linked_instrument',
 
-                    'subgroup'
+                    'subgroup',
+
+                    # Portfolio Register
+                    'cash_currency',
+                    'portfolio_register',
+                    'valuation_currency'
 
                     ]
 
@@ -178,6 +188,8 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
         content_type = ContentType.objects.get_for_model(model, for_concrete_model=False)
 
+        content_type_key = content_type.app_label + '.' + content_type.model
+
         groups_types = list(map(lambda x: self.format_groups(x, master_user, content_type), groups_types))
 
         # print('GroupsAttributeFilter init')
@@ -252,14 +264,14 @@ class GroupsAttributeFilter(BaseFilterBackend):
 
                             res_attr = attr
 
-                            if is_relation(res_attr):
+                            if is_relation(res_attr, content_type_key):
                                 res_attr = res_attr + '__user_code'
 
                             queryset = queryset.filter(Q(**{res_attr + '__isnull': True}) | Q(**{res_attr: '-'}))
 
                         else:
 
-                            if is_relation(attr):
+                            if is_relation(attr, content_type_key):
                                 params[attr + '__user_code'] = groups_values[i]
                             else:
                                 params[attr] = groups_values[i]
@@ -317,6 +329,8 @@ class AttributeFilter(BaseFilterBackend):
             return queryset
 
         content_type = ContentType.objects.get_for_model(model, for_concrete_model=False)
+
+        content_type_key = content_type.app_label + '.' + content_type.model
 
         groups_types = list(map(lambda x: self.format_groups(x, master_user, content_type), groups_types))
 
@@ -379,13 +393,13 @@ class AttributeFilter(BaseFilterBackend):
 
                             res_attr = attr
 
-                            if is_relation(res_attr):
+                            if is_relation(res_attr, content_type_key):
                                 res_attr = res_attr + '__user_code'
 
                             queryset = queryset.filter(Q(**{res_attr + '__isnull': True}) | Q(**{res_attr: '-'}))
 
                         else:
-                            if is_relation(attr):
+                            if is_relation(attr, content_type_key):
                                 params[attr + '__user_code'] = groups_values[i]
                             else:
                                 params[attr] = groups_values[i]

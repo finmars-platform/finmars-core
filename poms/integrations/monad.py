@@ -7,19 +7,19 @@ if status is no_answer - no meaningfully results
 """
 
 from dataclasses import dataclass
-from typing import Any
 
 
 class MonadStatus:
     UNCOMPLETED = "uncompleted"
     DATA_READY = "data_ready"
-    TASK_READY = "task_ready"
+    TASK_CREATED = "task_created"
     ERROR = "error"
 
 
 @dataclass
 class Monad:
     status: int = MonadStatus.UNCOMPLETED
-    task_id: int = 0
     message: str = ""
-    data: Any = None
+    request_id: int = None
+    task_id: int = None
+    data: dict = None

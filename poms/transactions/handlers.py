@@ -12,7 +12,7 @@ from django.utils.translation import gettext_lazy
 from rest_framework.exceptions import ValidationError
 
 from poms.accounts.models import Account
-from poms.common import formula
+from poms.expressions_engine import formula
 from poms.common.utils import date_now, format_float, format_float_to_2
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
@@ -2316,6 +2316,9 @@ class TransactionTypeProcess(object):
         if bool(complex_transaction_errors):
             self.complex_transaction_errors.append(complex_transaction_errors)
 
+        if self.has_errors:
+            return # important to return here if we already had errors
+
         if self.complex_transaction_status is not None:
             self.complex_transaction.status_id = self.complex_transaction_status
 
@@ -2504,6 +2507,7 @@ class TransactionTypeProcess(object):
                     except formula.InvalidExpression as e:
 
                         _l.error('process_recalculate e %s' % e)
+                        _l.error('process_recalculate traceback %s' % traceback.format_exc())
                         _l.debug('process_recalculate e self.values %s' % self.values)
 
                         if inp.value_type == TransactionTypeInput.STRING:

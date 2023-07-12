@@ -46,6 +46,39 @@ def show_all_urls():
     print("------------------------------------------------")
 
 
+def print_namespace():
+    from django import urls
+
+    url_resolver = urls.get_resolver(urls.get_urlconf())
+    print("namespaces=", url_resolver.namespace_dict.keys())
+
+
+def print_patterns(patterns, namespace="rest_framework"):
+    # # Get the URL resolver for the current Django app
+    # from django.urls import get_resolver
+    # resolver = get_resolver()
+    #
+    # # Get all URL patterns
+    # url_patterns = resolver.url_patterns
+    #
+    # # Print all patterns and namespaces
+    # print_patterns(url_patterns)
+
+    for pattern in patterns:
+        if hasattr(pattern, "url_patterns"):
+            # It's a URL pattern group, so recurse
+            new_namespace = (
+                namespace + pattern.namespace + ":" if pattern.namespace else ""
+            )
+            print_patterns(pattern.url_patterns, new_namespace)
+        elif hasattr(pattern, "callback") and hasattr(pattern.callback, "__name__"):
+            # It's a URL patter
+            print(
+                f"pattern: {pattern.pattern} name: {pattern.name}  namespace: "
+                f"{namespace}  view.name: {pattern.callback.__name__}"
+            )
+
+
 def change_created_time(instance: models.Model, new_time: datetime):
     if not isinstance(new_time, datetime):
         raise ValueError(f"value {new_time} must be a datetime object!")
@@ -154,12 +187,13 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
     def init_test_case(self):
         self.client = APIClient()
         self.db_data = DbInitializer()
-        self.user = User.objects.create(username="view_tester")
-        self.user.master_user = self.db_data.master_user
+        self.master_user = self.db_data.master_user
+        self.user, _ = User.objects.get_or_create(username="view_tester")
+        self.user.master_user = self.master_user
         self.user.save()
         self.member = Member.objects.create(
             user=self.user,
-            master_user=self.user.master_user,
+            master_user=self.master_user,
             is_admin=True,
             is_owner=True,
         )
@@ -180,12 +214,14 @@ TRANSACTIONS_TYPES = [
     INSTRUMENT_EXP,
     NON_INSTRUMENT_EXP,
 ]
+INSTRUMENTS_TYPES = [
+    "stock",
+    "bond",
+]
 INSTRUMENTS = [
-    ("Apple", "stocks", InstrumentClass.GENERAL),
-    ("Boeing", "stocks", InstrumentClass.GENERAL),
-    ("Tesla", "stocks", InstrumentClass.GENERAL),
-    ("Pfizer", "stocks", InstrumentClass.GENERAL),
-    ("Bitcoin", "Crypto", InstrumentClass.CONTRACT_FOR_DIFFERENCE),
+    ("Apple", "stock", InstrumentClass.GENERAL),
+    ("Tesla B.", "bond", InstrumentClass.GENERAL),
+    # ("Bitcoin", "crypto", InstrumentClass.CONTRACT_FOR_DIFFERENCE),
 ]
 TRANSACTIONS_CLASSES = [
     TransactionClass.CASH_INFLOW,
@@ -205,13 +241,12 @@ USD = "USD"
 
 class DbInitializer:
     def get_or_create_master_user(self) -> MasterUser:
-        master_user = (
-            MasterUser.objects.first()
-            or MasterUser.objects.create_master_user(
-                name=MASTER_USER,
-                journal_status="disabled",
-                base_api_url=settings.BASE_API_URL,
-            )
+        master_user = MasterUser.objects.filter(
+            name=MASTER_USER
+        ).first() or MasterUser.objects.create_master_user(
+            name=MASTER_USER,
+            journal_status="disabled",
+            base_api_url=settings.BASE_API_URL,
         )
         EcosystemDefault.objects.get_or_create(master_user=master_user)
         return master_user
@@ -242,6 +277,19 @@ class DbInitializer:
             pricing_currency=self.usd,
             maturity_date=date.today(),
         )
+
+    def create_instruments_types(self):
+        return [
+            InstrumentType.objects.create(
+                master_user=self.master_user,
+                instrument_class_id=InstrumentClass.GENERAL,
+                name=type_,
+                user_code=type_,
+                short_name=type_,
+                public_name=type_,
+            )
+            for type_ in INSTRUMENTS_TYPES
+        ]
 
     def get_or_create_instruments(self) -> dict:
         instruments = {}
@@ -309,7 +357,7 @@ class DbInitializer:
             default_fx_rate=1,
         )
 
-    def get_or_create_types(self) -> dict:
+    def get_or_create_transaction_types(self) -> dict:
         types = {}
         for name in TRANSACTIONS_TYPES:
             type_obj = TransactionType.objects.filter(
@@ -433,8 +481,11 @@ class DbInitializer:
         self.counter_party = self.create_counter_party()
         self.responsible = self.create_responsible()
         self.accounts, self.portfolios = self.create_accounts_and_portfolios()
-        self.transaction_types = self.get_or_create_types()
+        self.transaction_types = self.get_or_create_transaction_types()
         self.transaction_classes = self.get_or_create_classes()
+        self.instrument_type = self.create_instruments_types()
         self.instruments = self.get_or_create_instruments()
         self.default_instrument = self.get_or_create_default_instrument()
-        print("\n----------- db initialized, start tests -------------\n")
+        print(
+            f"\n-------------- db initialized, master_user={self.master_user.id} ---------------\n"
+        )

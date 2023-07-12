@@ -62,7 +62,7 @@ class StatsHandler():
 
     def get_performance_report(self):
 
-        first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
+        first_transaction = get_first_transaction(self.portfolio)
 
         instance = PerformanceReport(
             master_user=self.master_user,
@@ -96,7 +96,7 @@ class StatsHandler():
 
     def get_annualized_return(self):
 
-        first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
+        first_transaction = get_first_transaction(self.portfolio)
         now = datetime.date.today()
 
         _l.info('get_annualized_return.first_transaction.accounting_date %s' % first_transaction.accounting_date)
@@ -193,7 +193,7 @@ class StatsHandler():
 
     def get_max_annualized_drawdown(self):
 
-        first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
+        first_transaction = get_first_transaction(self.portfolio)
 
         grand_date_from = first_transaction.accounting_date
 
@@ -314,7 +314,7 @@ class StatsHandler():
         portfolio_returns = []
         benchmarks_returns = []
 
-        first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
+        first_transaction = get_first_transaction(self.portfolio)
 
         date_from = first_transaction.accounting_date
 
@@ -361,7 +361,7 @@ class StatsHandler():
         alpha = 0
         # alpha = Retrurn_portfolio - Betta * Return_benchmark
         benchmarks_returns = []
-        first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
+        first_transaction = get_first_transaction(self.portfolio)
 
         date_from = first_transaction.accounting_date
 
@@ -399,7 +399,7 @@ class StatsHandler():
         portfolio_returns = []
         benchmarks_returns = []
 
-        first_transaction = get_first_transaction(portfolio_id=self.portfolio.id)
+        first_transaction = get_first_transaction(self.portfolio)
 
         date_from = first_transaction.accounting_date
 

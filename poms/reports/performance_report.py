@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import time
+import traceback
 from datetime import timedelta,date
 
 from django.forms import model_to_dict
@@ -657,30 +658,38 @@ class PerformanceReportBuilder:
 
                 for record in item['records']:
 
+
                     fx_rate = 1
 
-                    if self.instance.report_currency.id == record.valuation_currency.id:
+                    try:
+
+                        if self.instance.report_currency.id == record.valuation_currency.id:
+                            fx_rate = 1
+                        else:
+                            report_currency_fx_rate = None
+                            record_valuation_currency_fx_rate = None
+
+                            if self.instance.report_currency.id == self.ecosystem_defaults.currency.id:
+                                report_currency_fx_rate = 1
+                            else:
+                                report_currency_fx_rate = CurrencyHistory.objects.get(date=record.transaction_date,
+                                                                                      pricing_policy=record.portfolio_register.valuation_pricing_policy,
+                                                                                      currency=self.instance.report_currency).fx_rate
+
+                            if record.valuation_currency.id == self.ecosystem_defaults.currency.id:
+                                record_valuation_currency_fx_rate = 1
+                            else:
+                                record_valuation_currency_fx_rate = CurrencyHistory.objects.get(
+                                    date=record.transaction_date,
+                                    pricing_policy=record.portfolio_register.valuation_pricing_policy,
+                                    currency=record.valuation_currency).fx_rate
+
+                            fx_rate = record_valuation_currency_fx_rate / report_currency_fx_rate
+
+                    except Exception as e:
+                        _l.error("Could not calculate fx_rate e %s" % e)
+                        _l.error("Could not calculate fx_rate traceback %s" % traceback.format_exc())
                         fx_rate = 1
-                    else:
-                        report_currency_fx_rate = None
-                        record_valuation_currency_fx_rate = None
-
-                        if self.instance.report_currency.id == self.ecosystem_defaults.currency.id:
-                            report_currency_fx_rate = 1
-                        else:
-                            report_currency_fx_rate = CurrencyHistory.objects.get(date=record.transaction_date,
-                                                                                  pricing_policy=record.portfolio_register.valuation_pricing_policy,
-                                                                                  currency=self.instance.report_currency).fx_rate
-
-                        if record.valuation_currency.id == self.ecosystem_defaults.currency.id:
-                            record_valuation_currency_fx_rate = 1
-                        else:
-                            record_valuation_currency_fx_rate = CurrencyHistory.objects.get(
-                                date=record.transaction_date,
-                                pricing_policy=record.portfolio_register.valuation_pricing_policy,
-                                currency=record.valuation_currency).fx_rate
-
-                        fx_rate = record_valuation_currency_fx_rate / report_currency_fx_rate
 
                     # report / valuation
 
@@ -1015,33 +1024,40 @@ class PerformanceReportBuilder:
 
                         fx_rate = 1
 
-                        if self.instance.report_currency.id == item[
-                            'portfolio_register'].linked_instrument.pricing_currency.id:
+                        try:
+
+                            if self.instance.report_currency.id == item[
+                                'portfolio_register'].linked_instrument.pricing_currency.id:
+                                fx_rate = 1
+                            else:
+                                report_currency_fx_rate = None
+                                instrument_pricing_currency_fx_rate = None
+
+                                if self.instance.report_currency.id == self.ecosystem_defaults.currency.id:
+                                    report_currency_fx_rate = 1
+                                else:
+                                    report_currency_fx_rate = CurrencyHistory.objects.get(date=item['transaction_date'],
+                                                                                          currency=self.instance.report_currency,
+                                                                                          pricing_policy=item[
+                                                                                              'portfolio_register'].valuation_pricing_policy).fx_rate
+
+                                if item[
+                                    'portfolio_register'].linked_instrument.pricing_currency.id == self.ecosystem_defaults.currency.id:
+                                    instrument_pricing_currency_fx_rate = 1
+                                else:
+                                    instrument_pricing_currency_fx_rate = CurrencyHistory.objects.get(
+                                        date=item['transaction_date'],
+                                        currency=item[
+                                            'portfolio_register'].linked_instrument.pricing_currency,
+                                        pricing_policy=item[
+                                            'portfolio_register'].valuation_pricing_policy).fx_rate
+
+                                fx_rate = instrument_pricing_currency_fx_rate / report_currency_fx_rate
+
+                        except Exception as e:
+                            _l.error('fx_rate e %s' % e)
                             fx_rate = 1
-                        else:
-                            report_currency_fx_rate = None
-                            instrument_pricing_currency_fx_rate = None
 
-                            if self.instance.report_currency.id == self.ecosystem_defaults.currency.id:
-                                report_currency_fx_rate = 1
-                            else:
-                                report_currency_fx_rate = CurrencyHistory.objects.get(date=item['transaction_date'],
-                                                                                      currency=self.instance.report_currency,
-                                                                                      pricing_policy=item[
-                                                                                          'portfolio_register'].valuation_pricing_policy).fx_rate
-
-                            if item[
-                                'portfolio_register'].linked_instrument.pricing_currency.id == self.ecosystem_defaults.currency.id:
-                                instrument_pricing_currency_fx_rate = 1
-                            else:
-                                instrument_pricing_currency_fx_rate = CurrencyHistory.objects.get(
-                                    date=item['transaction_date'],
-                                    currency=item[
-                                        'portfolio_register'].linked_instrument.pricing_currency,
-                                    pricing_policy=item[
-                                        'portfolio_register'].valuation_pricing_policy).fx_rate
-
-                            fx_rate = instrument_pricing_currency_fx_rate / report_currency_fx_rate
 
                         nav = price_history.nav * fx_rate
                     except Exception as e:
@@ -1055,27 +1071,33 @@ class PerformanceReportBuilder:
 
                         fx_rate = 1
 
-                        if self.instance.report_currency.id == record.valuation_currency.id:
-                            fx_rate = 1
-                        else:
-                            report_currency_fx_rate = None
-                            record_valuation_currency_fx_rate = None
+                        try:
 
-                            if self.instance.report_currency.id == self.ecosystem_defaults.currency.id:
-                                report_currency_fx_rate = 1
+                            if self.instance.report_currency.id == record.valuation_currency.id:
+                                fx_rate = 1
                             else:
-                                report_currency_fx_rate = CurrencyHistory.objects.get(date=record.transaction_date,
-                                                                                      pricing_policy=record.portfolio_register.valuation_pricing_policy,
-                                                                                      currency=self.instance.report_currency).fx_rate
+                                report_currency_fx_rate = None
+                                record_valuation_currency_fx_rate = None
 
-                            if record.valuation_currency.id == self.ecosystem_defaults.currency.id:
-                                record_valuation_currency_fx_rate = 1
-                            else:
-                                record_valuation_currency_fx_rate = CurrencyHistory.objects.get(
-                                    pricing_policy=record.portfolio_register.valuation_pricing_policy,
-                                    date=record.transaction_date, currency=record.valuation_currency).fx_rate
+                                if self.instance.report_currency.id == self.ecosystem_defaults.currency.id:
+                                    report_currency_fx_rate = 1
+                                else:
+                                    report_currency_fx_rate = CurrencyHistory.objects.get(date=record.transaction_date,
+                                                                                          pricing_policy=record.portfolio_register.valuation_pricing_policy,
+                                                                                          currency=self.instance.report_currency).fx_rate
 
-                            fx_rate = record_valuation_currency_fx_rate / report_currency_fx_rate
+                                if record.valuation_currency.id == self.ecosystem_defaults.currency.id:
+                                    record_valuation_currency_fx_rate = 1
+                                else:
+                                    record_valuation_currency_fx_rate = CurrencyHistory.objects.get(
+                                        pricing_policy=record.portfolio_register.valuation_pricing_policy,
+                                        date=record.transaction_date, currency=record.valuation_currency).fx_rate
+
+                                fx_rate = record_valuation_currency_fx_rate / report_currency_fx_rate
+
+                        except Exception as e:
+                            _l.error('fx_rate e %s' % e)
+                            fx_rate = 1 # TODO check if this is correct
 
                         cash_flow = cash_flow + record.cash_amount_valuation_currency * fx_rate
 
@@ -1090,6 +1112,14 @@ class PerformanceReportBuilder:
                     date_to_n = dates_map[str(date_to)]
                     date_from_n = dates_map[str(date_from)]
 
+                    # 2022-03-31
+                    # 2022-04-01
+
+                    # date_n = 2022-04-01
+                    # date_to_n = 2022-04-29
+                    # date_from_n = 2022-03-31
+
+                    #   (30 - 2) / (30 - 1) = 28 / 29 = 0
                     time_weight = (date_to_n - date_n) / (date_to_n - date_from_n)
 
                     if item['transaction_date_str'] == date_from_str:

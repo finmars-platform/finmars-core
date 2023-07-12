@@ -3,8 +3,11 @@ import math
 import os
 import shutil
 import tempfile
+from io import BytesIO
 from zipfile import ZipFile, ZIP_DEFLATED
 
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from django.core.files.base import ContentFile, File
 from django.core.files.storage import FileSystemStorage
 from storages.backends.azure_storage import AzureStorage
 from storages.backends.s3boto3 import S3Boto3Storage
@@ -26,7 +29,110 @@ def download_local_folder_as_zip(folder_path):
     return zip_file_path
 
 
-class FinmarsStorage(object):
+class NamedBytesIO(BytesIO):
+    def __init__(self, *args, name=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = name
+
+
+class EncryptedStorage(object):
+
+    def get_symmetric_key(self):
+
+        if settings.ENCRYPTION_KEY:
+
+            self.symmetric_key = bytes.fromhex(settings.ENCRYPTION_KEY)
+
+        else:
+            # TODO move from Encryption Key to Vault
+            # TODO PROCEED ONLY AFTER NEW WAY OF SETTING UP SPACE IS READY
+            try:
+
+                # self.vault_client = Client(url='https://your-vault-url', token='your-vault-token')
+                # Retrieve encryption and decryption keys from Vault
+                self.symmetric_key = self._get_symmetric_key_from_vault()
+
+            except Exception as e:
+                raise Exception("Could not connect to Vault symmetric_key is not set. Error %s" % e)
+
+    def _get_symmetric_key_from_vault(self):
+        # Retrieve the symmetric key from Vault
+        # TODO IMPLEMENT
+        pass
+
+    def _encrypt_file(self, file):
+        # Encrypt the file content using the symmetric key
+        file_content = file.read()
+
+        # Generate a random nonce
+        # You can generate a random nonce using os.urandom(12) for AES-256-GCM.
+        # The recommended length for the nonce in AES-GCM is 12 bytes (96 bits).
+        # Ensure that you securely store and associate the nonce with the encrypted data
+        # so that you can use the same nonce during decryption.
+        nonce = os.urandom(12)
+
+        aesgcm = AESGCM(self.symmetric_key)
+        encrypted_content = aesgcm.encrypt(nonce, file_content, None)
+
+        encrypted_data = nonce + encrypted_content
+
+        return ContentFile(encrypted_data)
+
+    def _decrypt_file(self, file):
+        # Decrypt the file content using the symmetric key
+
+        encrypted_data = file.read()
+
+        # Generate a random nonce
+        # You can generate a random nonce using os.urandom(12) for AES-256-GCM.
+        # The recommended length for the nonce in AES-GCM is 12 bytes (96 bits).
+        # Ensure that you securely store and associate the nonce with the encrypted data
+        # so that you can use the same nonce during decryption.
+        # Extract the nonce from the encrypted data
+        nonce = encrypted_data[:12]
+
+        ciphertext = encrypted_data[12:]
+
+        aesgcm = AESGCM(self.symmetric_key)
+        decrypted_content = aesgcm.decrypt(nonce, ciphertext, None)
+
+        # Create a ContentFile with the decrypted content
+        decrypted_file = ContentFile(decrypted_content)
+
+        # Create a File instance with the decrypted ContentFile and file name
+        decrypted_file_instance = File(decrypted_file, name=file.name)
+
+        return decrypted_file_instance
+
+
+    def open_skip_decrypt(self, name, mode='rb'):
+        file = super()._open(name, mode)
+
+        if settings.SERVER_TYPE == 'local':  # Do not decrypt on local server
+            return file
+
+        return file
+
+    def _open(self, name, mode='rb'):
+        # Open the file and decrypt its content
+        file = super()._open(name, mode)
+
+        if settings.SERVER_TYPE == 'local':  # Do not decrypt on local server
+            return file
+
+        return self._decrypt_file(file)
+
+    def _save(self, name, content):
+        # Encrypt the file content and save it
+
+        if settings.SERVER_TYPE == 'local':  # Do not encrypt on local server
+            return super()._save(name, content)
+
+        encrypted_content = self._encrypt_file(content)
+        return super()._save(name, encrypted_content)
+
+
+class FinmarsStorage(EncryptedStorage):
     '''
     To ensure that storage overwrite passed filepath insead of appending a number to it
     '''
@@ -62,7 +168,7 @@ class FinmarsStorage(object):
 
     def download_file_and_save_locally(self, storage_file_path, local_file_path):
 
-        with self.open(storage_file_path, 'rb') as remote_file:
+        with self._open(storage_file_path, 'rb') as remote_file:
             # Read the file content
             file_content = remote_file.read()
 
@@ -87,7 +193,9 @@ class FinmarsStorage(object):
 
         zip_filename = 'archive.zip'
 
-        temp_dir_path = os.path.join(os.path.dirname(zip_filename), 'tmp/temp_download')
+        unique_path_prefix = os.urandom(32).hex()
+
+        temp_dir_path = os.path.join(os.path.dirname(zip_filename), 'tmp/temp_download/%s' % unique_path_prefix)
         os.makedirs(temp_dir_path, exist_ok=True)
 
         for path in paths:
@@ -165,10 +273,8 @@ class FinmarsAzureStorage(FinmarsStorage, AzureStorage):
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
 
                 # Download the blob to the local file
-                blob_client = self.client.get_blob_client(blob.name)
-                with open(local_path, "wb") as local_file:
-                    download_stream = blob_client.download_blob()
-                    local_file.write(download_stream.readall())
+                with open(local_path, "wb") as local_file, self.open(blob.name) as download_stream:
+                    local_file.write(download_stream.read())
 
     def download_directory_as_zip(self, directory_path):
 
@@ -187,10 +293,8 @@ class FinmarsAzureStorage(FinmarsStorage, AzureStorage):
                 os.makedirs(os.path.dirname(local_path), exist_ok=True)
 
                 # Download the blob to the local file
-                blob_client = self.client.get_blob_client(blob.name)
-                with open(local_path, "wb") as local_file:
-                    download_stream = blob_client.download_blob()
-                    local_file.write(download_stream.readall())
+                with open(local_path, "wb") as local_file, self.open(blob.name) as download_stream:
+                    local_file.write(download_stream.read())
 
         # Create a zip archive of the temporary local directory
         zip_file_path = download_local_folder_as_zip(temp_dir)
@@ -240,10 +344,17 @@ class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
         temp_dir = tempfile.mkdtemp()
 
         # Download all files from the remote folder to the temporary local directory
+        # for obj in self.bucket.objects.filter(Prefix=directory_path):
+        #     local_path = os.path.join(temp_dir, os.path.relpath(obj.key, directory_path))
+        #     os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        #     self.bucket.download_file(obj.key, local_path)
+
         for obj in self.bucket.objects.filter(Prefix=directory_path):
-            local_path = os.path.join(temp_dir, os.path.relpath(obj.key, directory_path))
-            os.makedirs(os.path.dirname(local_path), exist_ok=True)
-            self.bucket.download_file(obj.key, local_path)
+            if obj.key != directory_path:  # Exclude the directory itself
+                local_path = os.path.join(temp_dir, os.path.relpath(obj.key, directory_path))
+                os.makedirs(os.path.dirname(local_path), exist_ok=True)
+                with open(local_path, "wb") as local_file, self.open(obj.key) as s3_file:
+                    local_file.write(s3_file.read())
 
         # Create a zip archive of the temporary local directory
         zip_file_path = download_local_folder_as_zip(temp_dir)
@@ -289,5 +400,8 @@ def get_storage():
 
     if settings.USE_FILESYSTEM_STORAGE:
         storage = FinmarsLocalFileSystemStorage()
+
+    if storage:
+        storage.get_symmetric_key()  # IMPORTANT Storage MUST BE inherited from EncryptedStorage
 
     return storage

@@ -3,6 +3,10 @@
 timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "[${timestamp}] Finmars initialization"
 
+if [ -z "$VAULT_TOKEN" ]; then
+    echo "Warning! $VAULT_TOKEN is not set"
+fi
+
 # TODO refactor settings permissions
 #echo "set chmod 777 /var/log/finmars/"
 

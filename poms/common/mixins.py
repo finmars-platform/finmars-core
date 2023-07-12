@@ -1,74 +1,84 @@
-from __future__ import unicode_literals
-
 import logging
 
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import ObjectDoesNotExist, FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models import ProtectedError
 from django.utils.translation import gettext_lazy
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.exceptions import MethodNotAllowed, ValidationError, PermissionDenied
-from rest_framework.mixins import UpdateModelMixin, DestroyModelMixin, CreateModelMixin, ListModelMixin
+from rest_framework.exceptions import MethodNotAllowed
+from rest_framework.mixins import (
+    CreateModelMixin,
+    DestroyModelMixin,
+    ListModelMixin,
+    UpdateModelMixin,
+)
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 
-_l = logging.getLogger('poms.common.mixins')
-
-
-# TODO: Permissions for method and per-object must be verified!!!!
+_l = logging.getLogger("poms.common.mixins")
 
 
 class ListLightModelMixin(ListModelMixin):
-    '''
+    """
     Needs for when creating default IAM policies
-    '''
+    """
+
     pass
+
 
 class ListEvModelMixin(ListModelMixin):
-    '''
+    """
     Needs for when creating default IAM policies
-    '''
+    """
+
     pass
 
+# noinspection PyUnresolvedReferences
 class DestroyModelMixinExt(DestroyModelMixin):
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         try:
             self.perform_destroy(instance)
         except ProtectedError:
-            return Response({
-                api_settings.NON_FIELD_ERRORS_KEY: gettext_lazy(
-                    'Cannot delete instance because they are referenced through a protected foreign key'),
-            }, status=status.HTTP_409_CONFLICT)
+            return Response(
+                {
+                    api_settings.NON_FIELD_ERRORS_KEY: gettext_lazy(
+                        "Cannot delete instance because they are referenced through a protected foreign key"
+                    ),
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+# noinspection PyUnresolvedReferences
 class DestroyModelFakeMixin(DestroyModelMixinExt):
     def get_queryset(self):
-        qs = super(DestroyModelFakeMixin, self).get_queryset()
+        qs = super().get_queryset()
         try:
-            qs.model._meta.get_field('is_deleted')
+            qs.model._meta.get_field("is_deleted")
         except FieldDoesNotExist:
             return qs
         else:
-            is_deleted = self.request.query_params.get('is_deleted', None)
-            if is_deleted is None:
-                if getattr(self, 'action', '') == 'list':
-                    qs = qs.filter(is_deleted=False)
+            is_deleted = self.request.query_params.get("is_deleted", None)
+            if is_deleted is None and getattr(self, "action", "") == "list":
+                qs = qs.filter(is_deleted=False)
             return qs
 
     def perform_destroy(self, instance):
+        _l.info(
+            f"{self.__class__.__name__}.perform_destroy instance.user_code="
+            f"{instance.user_code}"
+        )
 
-        _l.info("DestroyModelFakeMixin.Performing destroy")
-
-        # if getattr(self, 'has_feature_is_deleted', False):
-        if hasattr(instance, 'is_deleted') and hasattr(instance, 'fake_delete'):
+        if hasattr(instance, "is_deleted") and hasattr(instance, "fake_delete"):
             instance.fake_delete()
         else:
-            super(DestroyModelFakeMixin, self).perform_destroy(instance)
+            super().perform_destroy(instance)
 
 
+# noinspection PyUnresolvedReferences
 class UpdateModelMixinExt(UpdateModelMixin):
     def update(self, request, *args, **kwargs):
         response = super(UpdateModelMixinExt, self).update(request, *args, **kwargs)
@@ -78,13 +88,6 @@ class UpdateModelMixinExt(UpdateModelMixin):
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         return response
-
-        # Incorrect
-        # def perform_update(self, serializer):
-        #     if hasattr(serializer.instance, 'is_deleted') and hasattr(serializer.instance, 'fake_delete'):
-        #         if serializer.is_deleted:
-        #             raise PermissionDenied()
-        #     return super(UpdateModelMixinExt, self).perform_update(serializer)
 
 
 class BulkCreateModelMixin(CreateModelMixin):
@@ -233,34 +236,36 @@ class BulkSaveModelMixin(CreateModelMixin, UpdateModelMixin):
     #         return Response(list(ret_serializer.data), status=status.HTTP_200_OK)
 
 
+# noinspection PyUnresolvedReferences
 class BulkDestroyModelMixin(DestroyModelMixin):
-    @action(detail=False, methods=['post'], url_path='bulk-delete')
+    @action(detail=False, methods=["post"], url_path="bulk-delete")
     def bulk_delete(self, request):
-
         data = request.data
 
         from poms.celery_tasks.models import CeleryTask
+
         queryset = self.filter_queryset(self.get_queryset())
 
         content_type = ContentType.objects.get_for_model(queryset.model)
-        content_type_key = content_type.app_label + '.' + content_type.model
+        content_type_key = f"{content_type.app_label}.{content_type.model}"
 
-        options_object = {
-            'content_type': content_type_key,
-            'ids': data['ids']
-        }
+        options_object = {"content_type": content_type_key, "ids": data["ids"]}
 
         celery_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
             member=request.user.member,
             options_object=options_object,
             verbose_name="Bulk Delete",
-            type='bulk_delete'
+            type="bulk_delete",
         )
 
         from poms_app import celery_app
 
-        celery_app.send_task('celery_tasks.bulk_delete', kwargs={"task_id": celery_task.id}, queue='backend-delete-queue')
+        celery_app.send_task(
+            "celery_tasks.bulk_delete",
+            kwargs={"task_id": celery_task.id},
+            queue="backend-delete-queue",
+        )
 
         # queryset = self.filter_queryset(self.get_queryset())
         # # is_fake = bool(request.query_params.get('is_fake'))
@@ -333,8 +338,10 @@ class BulkModelMixin(BulkCreateModelMixin, BulkUpdateModelMixin, BulkDestroyMode
 
 class DestroySystemicModelMixin(DestroyModelMixinExt):
     def perform_destroy(self, instance):
-        if hasattr(instance, 'is_systemic') and instance.is_systemic:
-            raise MethodNotAllowed('DELETE',
-                                   detail='Method "DELETE" not allowed. Can not delete entity with is_systemic == true')
+        if hasattr(instance, "is_systemic") and instance.is_systemic:
+            raise MethodNotAllowed(
+                "DELETE",
+                detail='Method "DELETE" not allowed. Can not delete entity with is_systemic == true',
+            )
         else:
             super(DestroySystemicModelMixin, self).perform_destroy(instance)

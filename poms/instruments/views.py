@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import datetime
 import logging
+import traceback
 
 import django_filters
 import requests
@@ -47,7 +48,6 @@ from poms.instruments.serializers import InstrumentSerializer, PriceHistorySeria
 from poms.instruments.tasks import calculate_prices_accrued_price, generate_events, process_events, \
     only_generate_events_at_date, \
     generate_events_do_not_inform_apply_default, only_generate_events_at_date_for_single_instrument
-from poms.integrations.tasks import create_currency_cbond, create_instrument_cbond
 from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
@@ -187,15 +187,15 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         'master_user',
         'instrument_class',
         'one_off_event',
-        'one_off_event__group',
+        # 'one_off_event__group',
         'regular_event',
-        'regular_event__group',
+        # 'regular_event__group',
         'factor_same',
-        'factor_same__group',
+        # 'factor_same__group',
         'factor_up',
-        'factor_up__group',
+        # 'factor_up__group',
         'factor_down',
-        'factor_down__group',
+        # 'factor_down__group',
     ).prefetch_related(
         get_attributes_prefetch()
     )
@@ -451,8 +451,8 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
 
         instruments = Instrument.objects.filter(instrument_type=instrument_type, master_user=request.user.master_user)
 
-        print("request.data %s " % request.data)
-        print("instruments affected %s" % len(instruments))
+        _l.info("request.data %s " % request.data)
+        _l.info("instruments affected %s" % len(instruments))
 
         from poms.pricing.models import InstrumentPricingPolicy
 
@@ -464,19 +464,19 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
 
                 if request.data['overwrite_default_parameters']:
 
-                    policy.pricing_scheme_id = request.data['pricing_scheme']
-                    policy.default_value = request.data['default_value']
-                    policy.data = request.data['data']
-                    policy.attribute_key = request.data['attribute_key']
+                    policy.pricing_scheme_id = request.data.get('pricing_scheme', None)
+                    policy.default_value = request.data.get('default_value', None)
+                    policy.data = request.data.get('data', None)
+                    policy.attribute_key = request.data.get('attribute_key', None)
                     policy.save()
 
-                    print("Policy %s updated" % policy)
+                    _l.info("Policy %s updated" % policy)
 
                 else:
-                    print("Nothing changed for %s" % policy)
-            except InstrumentPricingPolicy.DoesNotExist:
-                print("Policy %s is not found for instrument %s" % (
-                    request.data['pricing_policy_object']['name'], instrument))
+                    _l.info("Nothing changed for %s" % policy)
+            except Exception as e:
+                _l.error("Policy %s is not found for instrument %s" % e)
+                _l.error("Policy %s is not found for instrument %s" % traceback.format_exc())
 
         return Response({"status": "ok", "data": {
             "instruments_affected": len(instruments)
@@ -1048,6 +1048,10 @@ class InstrumentFDBCreateFromCallbackViewSet(APIView):
         return Response({'ok'})
 
     def post(self, request):
+        from poms.integrations.tasks import (
+            create_currency_from_callback_data,
+            create_instrument_cbond,
+        )
 
         try:
 
@@ -1069,7 +1073,7 @@ class InstrumentFDBCreateFromCallbackViewSet(APIView):
                 if 'currencies' in data:
                     for item in data['currencies']:
                         if item:
-                            currency = create_currency_cbond(item, task.master_user, task.member)
+                            currency = create_currency_from_callback_data(item, task.master_user, task.member)
 
                 for item in data['instruments']:
                     instrument = create_instrument_cbond(item, task.master_user, task.member)
@@ -1464,7 +1468,7 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
         'strategy3__subgroup__group',
         'action',
         'transaction_type',
-        'transaction_type__group',
+        # 'transaction_type__group',
         'member'
     )
     serializer_class = GeneratedEventSerializer

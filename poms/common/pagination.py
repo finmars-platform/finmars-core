@@ -33,6 +33,7 @@ class PageNumberPaginationExt(PageNumberPagination):
 
         # TODO Refactor this in more readable way
         page_size = request.query_params.get('page_size', None) # fot get requests
+        page_number = request.query_params.get('page', 1) # fot get requests
 
         if not page_size:
             page_size = request.data.get('page_size', self.page_size) # for post request
@@ -43,7 +44,10 @@ class PageNumberPaginationExt(PageNumberPagination):
             page_size = 40
 
         paginator = self.django_paginator_class(queryset, page_size)
-        page_number = request.data.get('page', 1)
+        if request.data.get('page', None):
+            page_number = request.data.get('page', 1)
+
+        _l.info('here page_number %s' % page_number)
         if page_number in self.last_page_strings:
             page_number = paginator.num_pages
 
@@ -73,7 +77,7 @@ class PageNumberPaginationExt(PageNumberPagination):
 
         res = list(self.page)
 
-        _l.debug('res %s' % len(res))
+        _l.debug('page_number %s' % page_number)
 
         _l.debug('post_paginate_queryset list page done: %s', "{:3.3f}".format(time.perf_counter() - list_page_st))
 
