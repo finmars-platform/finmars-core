@@ -297,7 +297,7 @@ class TransactionImportProcess(object):
 
         _l.info('TransactionImportProcess.generate_json_report uploading file')
 
-        _l.info('Uploading result len %' % len(result))
+        _l.info('Uploading result len %s' % len(result))
 
         file_report.upload_file(file_name=file_name, text=json.dumps(result, indent=4, default=str),
                                 master_user=self.master_user)

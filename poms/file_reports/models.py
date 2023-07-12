@@ -40,7 +40,11 @@ class FileReport(models.Model):
 
         try:
 
-            storage.save(file_url, ContentFile(text))
+            encoded_text = text.encode('utf-8')
+
+
+            storage.save(file_url, ContentFile(encoded_text))
+
 
         except Exception as e:
             _l.info('upload_file.Exception error %s' % e)
