@@ -50,8 +50,16 @@ class InstrumentClass(AbstractClassModel):
     DEFAULT = 6
 
     CLASSES = (
-        (GENERAL, "GENERAL", gettext_lazy("General Class")),
-        (EVENT_AT_MATURITY, "EVENT_AT_MATURITY", gettext_lazy("Event at Maturity")),
+        (
+            GENERAL,
+            "GENERAL",
+            gettext_lazy("General Class"),
+        ),
+        (
+            EVENT_AT_MATURITY,
+            "EVENT_AT_MATURITY",
+            gettext_lazy("Event at Maturity"),
+        ),
         (
             REGULAR_EVENT_AT_MATURITY,
             "REGULAR_EVENT_AT_MATURITY",
@@ -183,15 +191,6 @@ class ExposureCalculationModel(AbstractClassModel):
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("Exposure calculation model")
         verbose_name_plural = gettext_lazy("Exposure calculation models ")
-
-
-# <select id="u948_input" class="u948_input">
-#           <option class="u948_input_option" value="Zero">Zero</option>
-#           <option class="u948_input_option" value="Long Underlying Instrument Price Exposure">Long Underlying Instrument Price Exposure</option>
-#           <option class="u948_input_option" value="Long Underlying Instrument Price Delta-adjusted Exposure">Long Underlying Instrument Price Delta-adjusted Exposure</option>
-#           <option class="u948_input_option" value="Long Underlying Currency FX Rate Exposure">Long Underlying Currency FX Rate Exposure</option>
-#           <option class="u948_input_option" value="Long Underlying Currency FX Rate Delta-adjusted Exposure">Long Underlying Currency FX Rate Delta-adjusted Exposure</option>
-#         </select>
 
 
 class LongUnderlyingExposure(AbstractClassModel):
@@ -541,20 +540,12 @@ class Country(DataTimeStampedModel):
 
 
 class PricingPolicy(NamedModel, DataTimeStampedModel, ConfigurationModel):
-    # DISABLED = 0
-    # BLOOMBERG = 1
-    # TYPES = (
-    #     (DISABLED, gettext_lazy('Disabled')),
-    #     (BLOOMBERG, gettext_lazy('Bloomberg')),
-    # )
-
     master_user = models.ForeignKey(
         MasterUser,
         related_name="pricing_policies",
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-    # type = models.PositiveIntegerField(default=DISABLED, choices=TYPES)
 
     # expr - DEPRECATED
     expr = models.CharField(
@@ -587,14 +578,6 @@ class PricingPolicy(NamedModel, DataTimeStampedModel, ConfigurationModel):
         ordering = ["user_code"]
 
         base_manager_name = "objects"
-
-    # def delete(self, *args, **kwargs):
-    #
-    #     CurrencyPricingPolicy.objects.filter(pricing_policy=self).delete()
-    #     InstrumentTypePricingPolicy.objects.filter(pricing_policy=self).delete()
-    #     InstrumentPricingPolicy.objects.filter(pricing_policy=self).delete()
-    #
-    #     super(PricingPolicy, self).delete(*args, **kwargs)
 
 
 class InstrumentType(
@@ -1250,25 +1233,33 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
 
 
 class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
-    # class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
+    DIRECT_POSITION = 1
+    FACTOR_ADJUSTED_POSITION = 2
+    DO_NOT_SHOW = 3
+    VALUE_TYPES = (
+        (DIRECT_POSITION, gettext_lazy("Direct Position")),
+        (FACTOR_ADJUSTED_POSITION, gettext_lazy("Factor Adjusted Position")),
+        (DO_NOT_SHOW, gettext_lazy("Do not show")),
+    )
+
     master_user = models.ForeignKey(
         MasterUser,
         related_name="instruments",
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-
     instrument_type = models.ForeignKey(
         InstrumentType,
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("instrument type"),
     )
-
     is_active = models.BooleanField(
-        default=True, verbose_name=gettext_lazy("is active")
+        default=True,
+        verbose_name=gettext_lazy("is active"),
     )
     has_linked_with_portfolio = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("has linked with portfolio")
+        default=False,
+        verbose_name=gettext_lazy("has linked with portfolio"),
     )
     pricing_currency = models.ForeignKey(
         "currencies.Currency",
@@ -1276,7 +1267,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         verbose_name=gettext_lazy("pricing currency"),
     )
     price_multiplier = models.FloatField(
-        default=1.0, verbose_name=gettext_lazy("price multiplier")
+        default=1.0,
+        verbose_name=gettext_lazy("price multiplier"),
     )
     accrued_currency = models.ForeignKey(
         "currencies.Currency",
@@ -1285,9 +1277,9 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         verbose_name=gettext_lazy("accrued currency"),
     )
     accrued_multiplier = models.FloatField(
-        default=1.0, verbose_name=gettext_lazy("accrued multiplier")
+        default=1.0,
+        verbose_name=gettext_lazy("accrued multiplier"),
     )
-
     payment_size_detail = models.ForeignKey(
         PaymentSizeDetail,
         on_delete=models.PROTECT,
@@ -1295,14 +1287,13 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         blank=True,
         verbose_name=gettext_lazy("payment size detail"),
     )
-
     default_price = models.FloatField(
         default=0.0, verbose_name=gettext_lazy("default price")
     )
     default_accrued = models.FloatField(
-        default=0.0, verbose_name=gettext_lazy("default accrued")
+        default=0.0,
+        verbose_name=gettext_lazy("default accrued"),
     )
-
     user_text_1 = models.CharField(
         max_length=255,
         null=True,
@@ -1324,7 +1315,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         verbose_name=gettext_lazy("user text 3"),
         help_text=gettext_lazy("User specified field 3"),
     )
-
     reference_for_pricing = models.CharField(
         max_length=100,
         blank=True,
@@ -1338,7 +1328,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         verbose_name=gettext_lazy("daily pricing model"),
         on_delete=models.SET_NULL,
     )
-
     pricing_condition = models.ForeignKey(
         PricingCondition,
         null=True,
@@ -1346,7 +1335,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         verbose_name=gettext_lazy("pricing condition"),
         on_delete=models.SET_NULL,
     )
-
     exposure_calculation_model = models.ForeignKey(
         ExposureCalculationModel,
         null=True,
@@ -1354,7 +1342,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         verbose_name=gettext_lazy("exposure calculation model"),
         on_delete=models.SET_NULL,
     )
-
     long_underlying_instrument = models.ForeignKey(
         "self",
         null=True,
@@ -1363,11 +1350,10 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         verbose_name=gettext_lazy("long underlying instrument"),
         on_delete=models.SET_NULL,
     )
-
     underlying_long_multiplier = models.FloatField(
-        default=1.0, verbose_name=gettext_lazy("underlying long multiplier")
+        default=1.0,
+        verbose_name=gettext_lazy("underlying long multiplier"),
     )
-
     short_underlying_instrument = models.ForeignKey(
         "self",
         null=True,
@@ -1376,11 +1362,10 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         verbose_name=gettext_lazy("short underlying instrument"),
         on_delete=models.SET_NULL,
     )
-
     underlying_short_multiplier = models.FloatField(
-        default=1.0, verbose_name=gettext_lazy("underlying short multiplier")
+        default=1.0,
+        verbose_name=gettext_lazy("underlying short multiplier"),
     )
-
     long_underlying_exposure = models.ForeignKey(
         LongUnderlyingExposure,
         null=True,
@@ -1389,7 +1374,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         verbose_name=gettext_lazy("long underlying exposure"),
         on_delete=models.SET_NULL,
     )
-
     short_underlying_exposure = models.ForeignKey(
         ShortUnderlyingExposure,
         null=True,
@@ -1398,20 +1382,18 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         verbose_name=gettext_lazy("short underlying exposure"),
         on_delete=models.SET_NULL,
     )
-
-    # price_download_scheme = models.ForeignKey('integrations.PriceDownloadScheme', on_delete=models.PROTECT, null=True,
-    #                                           blank=True, verbose_name=gettext_lazy('price download scheme'))
     maturity_date = models.DateField(
-        null=True, verbose_name=gettext_lazy("maturity date")
+        null=True,
+        verbose_name=gettext_lazy("maturity date"),
     )
     maturity_price = models.FloatField(
-        default=0.0, verbose_name=gettext_lazy("maturity price")
+        default=0.0,
+        verbose_name=gettext_lazy("maturity price"),
     )
-
     attributes = GenericRelation(
-        GenericAttribute, verbose_name=gettext_lazy("attributes")
+        GenericAttribute,
+        verbose_name=gettext_lazy("attributes"),
     )
-
     co_directional_exposure_currency = models.ForeignKey(
         "currencies.Currency",
         related_name="co_directional_exposure_currency",
@@ -1420,7 +1402,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         blank=True,
         verbose_name=gettext_lazy("co directional exposure currency"),
     )
-
     counter_directional_exposure_currency = models.ForeignKey(
         "currencies.Currency",
         related_name="counter_directional_exposure_currency",
@@ -1429,23 +1410,11 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         blank=True,
         verbose_name=gettext_lazy("counter directional exposure currency"),
     )
-
-    DIRECT_POSITION = 1
-    FACTOR_ADJUSTED_POSITION = 2
-    DO_NOT_SHOW = 3
-
-    VALUE_TYPES = (
-        (DIRECT_POSITION, gettext_lazy("Direct Position")),
-        (FACTOR_ADJUSTED_POSITION, gettext_lazy("Factor Adjusted Position")),
-        (DO_NOT_SHOW, gettext_lazy("Do not show")),
-    )
-
     position_reporting = models.PositiveSmallIntegerField(
         choices=VALUE_TYPES,
         default=DIRECT_POSITION,
         verbose_name=gettext_lazy("position reporting"),
     )
-
     country = models.ForeignKey(
         Country,
         null=True,
@@ -1656,8 +1625,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
         processed = []
 
-        # process accruals
-        # accruals = list(self.accrual_calculation_schedules.order_by('accrual_start_date'))
         accruals = self.get_accrual_calculation_schedules_all()
         for i, accrual in enumerate(accruals):
             try:
@@ -1759,7 +1726,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 transaction_type = instrument_type.factor_down
             if transaction_type is None:
                 continue
-                # raise ValueError('Field "factor same"  in instrument type "%s" must be set' % instrument_type)
+
             e = EventSchedule()
             e.instrument = self
             e.is_auto_generated = True
@@ -1998,7 +1965,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             accrual_start_date = datetime.date(
                 datetime.strptime(accrual.accrual_start_date, "%Y-%m-%d")
             )
-            # accrual_end_date = datetime.date(datetime.strptime(accrual.accrual_end_date, '%Y-%m-%d'))
             accrual_end_date = accrual.accrual_end_date
             first_payment_date = datetime.date(
                 datetime.strptime(accrual.first_payment_date, "%Y-%m-%d")
