@@ -1,5 +1,6 @@
 from logging import getLogger
 
+from django.db import transaction
 from rest_framework import serializers
 
 from poms.common.serializers import (
@@ -330,56 +331,68 @@ class PortfolioRegisterSerializer(
             source="valuation_pricing_policy", read_only=True
         )
 
+    @transaction.atomic
     def create(self, validated_data):
         instance = super().create(validated_data)
 
         new_linked_instrument = self.context["request"].data.get(
             "new_linked_instrument"
         )
-
-        master_user = instance.master_user
-
-        _l.info(
-            f"{self.__class__.__name__}.create new_linked_instrument="
-            f"{new_linked_instrument}"
-        )
-
-        if new_linked_instrument and "name" in new_linked_instrument:
-            if isinstance(new_linked_instrument["instrument_type"], int):
-                instrument_type = InstrumentType.objects.get(
-                    master_user=master_user, id=new_linked_instrument["instrument_type"]
-                )
-            else:
-                instrument_type = InstrumentType.objects.get(
-                    master_user=master_user,
-                    user_code=new_linked_instrument["instrument_type"],
-                )
-
-            process = InstrumentTypeProcess(instrument_type=instrument_type)
-
-            instrument_object = process.instrument
-
-            instrument_object["name"] = new_linked_instrument["name"]
-            instrument_object["short_name"] = new_linked_instrument["short_name"]
-            instrument_object["user_code"] = new_linked_instrument["user_code"]
-            instrument_object["public_name"] = new_linked_instrument["public_name"]
-
-            serializer = InstrumentSerializer(
-                data=instrument_object, context=self.context
+        if new_linked_instrument and ("name" in new_linked_instrument):
+            _l.info(
+                f"{self.__class__.__name__}.create new_linked_instrument="
+                f"{new_linked_instrument}"
+            )
+            self.create_new_instrument(
+                instance.master_user,
+                new_linked_instrument,
+                instance,
             )
 
-            is_valid = serializer.is_valid(raise_exception=True)
-
-            if is_valid:
-                serializer.save()
-
-            new_instrument = serializer.instance
-
-            instance.linked_instrument_id = new_instrument.id
-
-            instance.save()
-
         return instance
+
+    def create_new_instrument(
+        self,
+        master_user,
+        new_linked_instrument: dict,
+        instance: PortfolioRegister,
+    ):
+        linked_instrument_type = new_linked_instrument["instrument_type"]
+        instrument_type = (
+            InstrumentType.objects.get(
+                master_user=master_user,
+                id=linked_instrument_type,
+            )
+            if isinstance(new_linked_instrument, int)
+            else InstrumentType.objects.get(
+                master_user=master_user,
+                user_code=linked_instrument_type,
+            )
+        )
+        process = InstrumentTypeProcess(instrument_type=instrument_type)
+
+        instrument_object = process.instrument
+
+        instrument_object["name"] = new_linked_instrument["name"]
+        instrument_object["short_name"] = new_linked_instrument["short_name"]
+        instrument_object["user_code"] = new_linked_instrument["user_code"]
+        instrument_object["public_name"] = new_linked_instrument["public_name"]
+
+        serializer = InstrumentSerializer(
+            data=instrument_object,
+            context=self.context,
+        )
+
+        is_valid = serializer.is_valid(raise_exception=True)
+
+        if is_valid:
+            serializer.save()
+
+        new_instrument = serializer.instance
+
+        instance.linked_instrument_id = new_instrument.id
+
+        instance.save()
 
 
 class PortfolioRegisterRecordSerializer(ModelWithTimeStampSerializer):

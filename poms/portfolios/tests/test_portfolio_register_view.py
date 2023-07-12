@@ -1,81 +1,54 @@
-from datetime import date
+import contextlib
 
 from django.conf import settings
 
 from poms.common.common_base_test import BIG, BaseTestCase
-from poms.portfolios.models import PortfolioRegisterRecord
-from poms.transactions.models import TransactionClass
+from poms.portfolios.models import PortfolioRegister
 
 
 class PortfolioRegisterRecordViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
-        self.url = (
-            f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio-register-record/"
-        )
-
-    def create_portfolio_register_record(
-        self,
-        trade_price: float = 0,
-        t_class: int = 0,
-    ):
-        portfolio = self.db_data.portfolios[BIG]
-        complex_transaction, transaction = self.db_data.cash_in_transaction(portfolio)
-        if trade_price > 0:
-            transaction.trade_price = trade_price
-            transaction.save()
-        if t_class == 0:
-            trans_class = self.db_data.transaction_classes[TransactionClass.CASH_INFLOW]
-        else:
-            trans_class = self.db_data.transaction_classes[t_class]
-        instrument = self.db_data.instruments["Apple"]
-        portfolio_register = self.db_data.create_portfolio_register(
-            portfolio,
-            instrument,
-        )
-        prr_data = {
-            "portfolio": portfolio.id,
-            "instrument": instrument.id,
-            "transaction_class": trans_class.id,
-            "transaction_code": self.random_int(1_000, 10_000),
-            "transaction_date": str(date.today()),
-            "cash_amount": self.random_int(100_000, 500_000),
-            "cash_currency": self.db_data.usd.id,
-            "fx_rate": self.db_data.usd.default_fx_rate,
+        self.url = f"/{settings.BASE_API_URL}/api/v1/portfolios/portfolio-register/"
+        self.portfolio = self.db_data.portfolios[BIG]
+        self.instrument = self.db_data.instruments["Apple"]
+        self.pr_data = None
+        self.pr_data = {
+            "portfolio": self.portfolio.id,
+            "linked_instrument": self.instrument.id,
             "valuation_currency": self.db_data.usd.id,
-            "transaction": transaction.id,
-            "complex_transaction": complex_transaction.id,
-            "portfolio_register": portfolio_register.id,
+            "name": "name",
+            "short_name": "short_name",
+            "user_code": "user_code",
+            "public_name": "public_name",
         }
-        response = self.client.post(self.url, data=prr_data, format="json")
-        self.assertEqual(response.status_code, 201, response.content)
-        return response.json()
 
     def test_check_url(self):
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 200, response.content)
 
-    def test_created_prr_has_new_field_automatic(self):
-        resp_data = self.create_portfolio_register_record(trade_price=0)
-        self.assertIn("share_price_calculation_type", resp_data)
-        self.assertEqual(
-            resp_data["share_price_calculation_type"],
-            PortfolioRegisterRecord.AUTOMATIC,
-        )
+    def test_create_simple(self):
+        response = self.client.post(self.url, data=self.pr_data, format="json")
+        self.assertEqual(response.status_code, 201, response.content)
 
-    def test_created_prr_has_new_field_manual(self):
-        resp_data = self.create_portfolio_register_record(trade_price=0.1)
-        self.assertIn("share_price_calculation_type", resp_data)
-        self.assertEqual(
-            resp_data["share_price_calculation_type"],
-            PortfolioRegisterRecord.MANUAL,
-        )
+        pr = PortfolioRegister.objects.filter(name="name").first()
+        self.assertIsNotNone(pr)
 
-    def test_created_prr_has_new_field_automatic_if_not_cash_in_out(self):
-        resp_data = self.create_portfolio_register_record(trade_price=0.1, t_class=3)
-        self.assertIn("share_price_calculation_type", resp_data)
-        self.assertEqual(
-            resp_data["share_price_calculation_type"],
-            PortfolioRegisterRecord.AUTOMATIC,
-        )
+    def test_no_create_with_invalid_new_instrument(self):
+        new_instrument = self.db_data.instruments["Tesla B."]
+        new_pr_data = {
+            **self.pr_data,
+            "new_linked_instrument": {
+                "name": new_instrument.name,
+                "short_name": new_instrument.short_name,
+                "user_code": new_instrument.user_code,
+                "public_name": new_instrument.public_name,
+                "instrument_type": self.random_int(),
+            },
+        }
+        with contextlib.suppress(Exception):
+            _ = self.client.post(self.url, data=new_pr_data, format="json")
+
+        pr = PortfolioRegister.objects.filter(name="name").first()
+        self.assertIsNone(pr)
