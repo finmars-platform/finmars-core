@@ -13,12 +13,12 @@ from openpyxl.utils import column_index_from_string
 
 from poms.accounts.models import Account
 from poms.celery_tasks.models import CeleryTask
-from poms.expressions_engine import formula
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.storage import get_storage
 # from poms.common.websockets import send_websocket_message
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
+from poms.expressions_engine import formula
 from poms.file_reports.models import FileReport
 from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, Periodicity, \
     AccrualCalculationModel
@@ -296,6 +296,8 @@ class TransactionImportProcess(object):
         file_report = FileReport()
 
         _l.info('TransactionImportProcess.generate_json_report uploading file')
+
+        _l.info('Uploading result len %' % len(result))
 
         file_report.upload_file(file_name=file_name, text=json.dumps(result, indent=4, default=str),
                                 master_user=self.master_user)
@@ -1038,7 +1040,6 @@ class TransactionImportProcess(object):
                             # transaction.savepoint_rollback(sid)
 
                 else:
-
 
                     try:
 
