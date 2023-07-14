@@ -369,7 +369,7 @@ def execute_user_fields_expressions(complex_transaction, values, context, target
 def recalculate_user_fields(self, task_id):
 
     task = CeleryTask.objects.get(id=task_id)
-    task.celery_task_id = self.id
+    task.celery_task_id = self.request.id
     task.save()
 
     try:
