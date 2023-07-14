@@ -1875,45 +1875,45 @@ class ComplexTransaction(DataTimeStampedModel):
 
     user_text_30 = models.TextField(null=True, blank=True, db_index=True, verbose_name=gettext_lazy('user text 30'))
 
-    user_number_1 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 1'))
+    user_number_1 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 1'))
 
-    user_number_2 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 2'))
+    user_number_2 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 2'))
 
-    user_number_3 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 3'))
+    user_number_3 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 3'))
 
-    user_number_4 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 4'))
+    user_number_4 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 4'))
 
-    user_number_5 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 5'))
+    user_number_5 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 5'))
 
-    user_number_6 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 6'))
+    user_number_6 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 6'))
 
-    user_number_7 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 7'))
+    user_number_7 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 7'))
 
-    user_number_8 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 8'))
+    user_number_8 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 8'))
 
-    user_number_9 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 9'))
+    user_number_9 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 9'))
 
-    user_number_10 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 10'))
+    user_number_10 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 10'))
 
-    user_number_11 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 11'))
+    user_number_11 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 11'))
 
-    user_number_12 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 12'))
+    user_number_12 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 12'))
 
-    user_number_13 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 13'))
+    user_number_13 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 13'))
 
-    user_number_14 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 14'))
+    user_number_14 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 14'))
 
-    user_number_15 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 15'))
+    user_number_15 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 15'))
 
-    user_number_16 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 16'))
+    user_number_16 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 16'))
 
-    user_number_17 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 17'))
+    user_number_17 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 17'))
 
-    user_number_18 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 18'))
+    user_number_18 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 18'))
 
-    user_number_19 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 19'))
+    user_number_19 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 19'))
 
-    user_number_20 = models.IntegerField(null=True, verbose_name=gettext_lazy('user number 20'))
+    user_number_20 = models.FloatField(null=True, verbose_name=gettext_lazy('user number 20'))
 
     user_date_1 = models.DateField(blank=True, db_index=True, null=True, verbose_name=gettext_lazy("user date 1"))
 
