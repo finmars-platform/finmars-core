@@ -17,23 +17,20 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 
-from poms.accounts.models import Account, AccountType
+from poms.accounts.models import Account
+from poms.celery_tasks.models import CeleryTask
 from poms.common.filters import CharFilter, ModelExtMultipleChoiceFilter, \
-    NoOpFilter, AttributeFilter, GroupsAttributeFilter, EntitySpecificFilter, ComplexTransactionStatusFilter, \
-    CharExactFilter
-from poms.common.pagination import CustomPaginationMixin
+    NoOpFilter, AttributeFilter, GroupsAttributeFilter, CharExactFilter
 from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import AbstractClassModelViewSet, AbstractAsyncViewSet, AbstractModelViewSet
-from poms.counterparties.models import Responsible, Counterparty, ResponsibleGroup, CounterpartyGroup
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, InstrumentType, PricingPolicy
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, \
     GenericClassifierViewSet
 from poms.portfolios.models import Portfolio
-from poms.strategies.models import Strategy1, Strategy2, Strategy3, Strategy1Subgroup, Strategy1Group, \
-    Strategy2Subgroup, Strategy2Group, Strategy3Subgroup, Strategy3Group
-from poms.transactions.filters import ComplexTransactionSpecificFilter, TransactionObjectPermissionFilter, \
+from poms.strategies.models import Strategy1, Strategy2, Strategy3
+from poms.transactions.filters import TransactionObjectPermissionFilter, \
     ComplexTransactionPermissionFilter
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionClass, Transaction, TransactionType, TransactionTypeGroup, \
@@ -75,6 +72,7 @@ class TransactionTypeGroupFilterSet(FilterSet):
     name = CharFilter()
     short_name = CharFilter()
     public_name = CharFilter()
+
     class Meta:
         model = TransactionTypeGroup
         fields = []
@@ -186,6 +184,7 @@ class TransactionTypeEvFilterSet(FilterSet):
     class Meta:
         model = TransactionType
         fields = []
+
 
 class TransactionTypeViewSet(AbstractModelViewSet):
     queryset = TransactionType.objects
@@ -668,13 +667,14 @@ class TransactionTypeViewSet(AbstractModelViewSet):
         context_report_date = request.query_params.get('context_report_date', None)
         context_report_start_date = request.query_params.get('context_report_start_date', None)
 
-        if pricing_policy_id: # could be user_code
+        if pricing_policy_id:  # could be user_code
             try:
                 context_pricing_policy = PricingPolicy.objects.get(master_user=master_user, id=pricing_policy_id)
             except Exception as e:
 
                 try:
-                    context_pricing_policy = PricingPolicy.objects.get(master_user=master_user, user_code=pricing_policy_id)
+                    context_pricing_policy = PricingPolicy.objects.get(master_user=master_user,
+                                                                       user_code=pricing_policy_id)
                 except Exception as e:
                     context_pricing_policy = None
 
@@ -913,21 +913,30 @@ class TransactionTypeViewSet(AbstractModelViewSet):
 
         print(f"instance={instance}")
 
-        if not instance.task_id:
-            instance.transaction_type_id = pk
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            status="P",
+            type="complex_transaction_user_field_recalculation"
+        )
 
-            celery_task = recalculate_user_fields.apply_async(
-                kwargs={
-                    "instance_data": RecalculateUserFieldsSerializer(
-                        instance=instance
-                    ).data,
-                }
-            )
+        celery_task.options_object = {
+            "transaction_type_id": pk,
+            "target_key": request.data.get('key', None)
+        }
 
-            print(f"celery_task.id={celery_task.id} status={celery_task.status}")
+        celery_task.save()
 
-            instance.task_id = celery_task.id
-            instance.task_status = celery_task.status
+        recalculate_user_fields.apply_async(
+            kwargs={
+                "task_id": celery_task.id,
+            }
+        )
+
+        instance.task_id = celery_task.id
+        instance.task_status = 'P'
+
+        print(f"celery_task.id={celery_task.id} status={celery_task.status}")
 
         deserializer = RecalculateUserFieldsSerializer(instance=instance)
 
@@ -975,6 +984,7 @@ class TransactionFilterSet(FilterSet):
     principal_amount = django_filters.RangeFilter()
     carry_amount = django_filters.RangeFilter()
     overheads = django_filters.RangeFilter()
+
     class Meta:
         model = Transaction
         fields = []
@@ -1937,7 +1947,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
                             instance.instruments_errors
                         ]
 
-                        return Response(errors) # TODO add 400 status code
+                        return Response(errors)  # TODO add 400 status code
 
                         # raise Exception("Rebook error %s" % errors)
                     else:
@@ -2148,6 +2158,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
                 transaction.save()
 
         return Response({'message': 'ok'})
+
 
 class RecalculatePermissionTransactionViewSet(AbstractAsyncViewSet):
     serializer_class = RecalculatePermissionTransactionSerializer
