@@ -8,7 +8,6 @@ from celery import shared_task
 from poms.celery_tasks.models import CeleryTask
 from poms.expressions_engine import formula
 from poms.transactions.models import ComplexTransaction, TransactionType, TransactionTypeInput
-from poms.transactions.serializers import RecalculateUserFields
 
 _l = logging.getLogger('poms.transactions')
 
@@ -160,7 +159,7 @@ def recalculate_permissions_transaction(self, instance):
 
 @shared_task(name='transactions.recalculate_permissions_complex_transaction', bind=True)
 def recalculate_permissions_complex_transaction(self, instance):
-    #DEPRECATED, NEED REFACTOR
+    # DEPRECATED, NEED REFACTOR
     pass
     # st = time.perf_counter()
     # data_st = time.perf_counter()
@@ -367,7 +366,6 @@ def execute_user_fields_expressions(complex_transaction, values, context, target
 
 @shared_task(name="transactions.recalculate_user_fields", bind=True)
 def recalculate_user_fields(self, task_id):
-
     task = CeleryTask.objects.get(id=task_id)
     task.celery_task_id = self.request.id
     task.save()
@@ -390,6 +388,17 @@ def recalculate_user_fields(self, task_id):
             f"len={len(complex_transactions)}"
         )
 
+        task.update_progress(
+            {
+                'current': 0,
+                'total': len(complex_transactions),
+                'percent': 0,
+                'description': 'Going to recalculate user fields'
+            }
+        )
+
+        index = 0
+
         context = {"master_user": task.master_user, "member": task.member}
         for complex_transaction in complex_transactions:
             values = get_values(complex_transaction)
@@ -401,9 +410,33 @@ def recalculate_user_fields(self, task_id):
             )
             complex_transaction.save()
 
-        task.task_status = "D"
+            task.update_progress(
+                {
+                    'current': index,
+                    'total': len(complex_transactions),
+                    'percent': int(index / len(complex_transactions) * 100),
+                    'description': f'Calculating user fields for {complex_transaction}'
+                }
+            )
+
+            index = index + 1
+
+        task.update_progress(
+            {
+                'current': len(complex_transactions),
+                'total': len(complex_transactions),
+                'percent': 100,
+                'description': 'Finished recalculate user fields'
+            }
+        )
+
+        task.verbose_result = f"Recalculated {len(complex_transactions)} complex transactions"
+
+        task.task_status = CeleryTask.STATUS_DONE
         task.save()
 
     except Exception as e:
+        task.task_status = CeleryTask.STATUS_ERROR
+        task.error_message = str(e)
+        task.save()
         _l.error(f"recalculate_user_fields: {repr(e)}\n{traceback.format_exc()}")
-
