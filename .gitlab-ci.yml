@@ -1,12 +1,15 @@
 image: python:3.10-bullseye  # adjust the Python version as necessary
 
 services:
+  - name: docker:20.10.8-dind
+    alias: dind
   - postgres:latest
 
 variables:
   POSTGRES_DB: mytestdb
   POSTGRES_USER: mytestuser
   POSTGRES_PASSWORD: mytestpassword
+  DOCKER_HOST: tcp://dind:2375
 
 # https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
 
@@ -17,6 +20,10 @@ stages:
 
 before_script:
   - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
+  - python -m venv venv
+  - source venv/bin/activate
+  - pip install -r requirements.txt
+  - python manage.py migrate
 
 Test:
   stage: test
