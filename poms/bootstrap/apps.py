@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 
 import json
 import logging
+import sys
 import traceback
 
 import requests
@@ -95,12 +96,14 @@ class BootstrapConfig(AppConfig):
 
     def create_iam_access_policies_templates(self):
 
-        _l.info("create_iam_access_policies_templates")
+        if not "test" in sys.argv:
 
-        from poms.iam.policy_generator import create_base_iam_access_policies_templates
-        create_base_iam_access_policies_templates()
+            _l.info("create_iam_access_policies_templates")
 
-        _l.info("create_iam_access_policies_templates done")
+            from poms.iam.policy_generator import create_base_iam_access_policies_templates
+            create_base_iam_access_policies_templates()
+
+            _l.info("create_iam_access_policies_templates done")
 
     # Probably deprecated
     def add_view_and_manage_permissions(self):

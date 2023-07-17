@@ -40,8 +40,8 @@ class ConfigurationModel(models.Model):
 
     def save(self, *args, **kwargs):
 
-        _l.info('self.configuration_code %s' % self.configuration_code)
-        _l.info('self.user_code %s' % self.user_code)
+        # _l.info('self.configuration_code %s' % self.configuration_code)
+        # _l.info('self.user_code %s' % self.user_code)
 
         if not self.configuration_code:
             '''Now new prefix is local.poms.[space_code] e.g. local.poms.space00000'''''

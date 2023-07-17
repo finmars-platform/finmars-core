@@ -1,5 +1,40 @@
 #!/usr/bin/env bash
-. ./venv/bin/activate
-DB_NAME=finmars_dev DB_USER=postgres DB_PASSWORD=postgres DB_HOST=localhost DB_PORT=5434 coverage run --omit='*/venv/*,*/migrations/*' manage.py test --keepdb -v 3
 
-# coverage report --omit='*/venv/*,*/migrations/*'
+python poms_app/print_finmars.py
+
+. ../venv/bin/activate
+REDIS_HOST=0.0.0.0:6379 \
+DB_NAME=finmars_dev \
+DB_USER=postgres \
+DB_PASSWORD=postgres \
+DB_HOST=localhost \
+DB_PORT=5434 \
+DEBUG=True \
+SEND_LOGS_TO_FINMARS=True \
+LOCAL=True \
+PROFILER=True \
+USE_DEBUGGER=True \
+ENABLE_DEV_DOCUMENTATION=True \
+ENV_CSRF_TRUSTED_ORIGINS=http://0.0.0.0:8080 \
+AWS_STORAGE_BUCKET_NAME=finmars-client00000local \
+AWS_S3_ACCESS_KEY_ID=AKIAZFI7MO4TROTNDZWN \
+AWS_S3_SECRET_ACCESS_KEY=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 \
+MEDIATOR_URL=http://localhost:8082/ \
+DJANGO_LOG_LEVEL=DEBUG \
+SERVER_TYPE=local \
+USE_WEBSOCKETS=False \
+WEBSOCKET_HOST=ws://0.0.0.0:6969 \
+KEYCLOAK_REALM=finmars \
+KEYCLOAK_SERVER_URL=https://dev-auth.finmars.com \
+KEYCLOAK_CLIENT_SECRET_KEY=jQ64iExlgclcrlBQbTxcOumL8cyU58RN \
+SECRET_KEY=mv83o5mq \
+FINMARS_DATABASE_URL=https://database.finmars.com/ \
+FINMARS_DATABASE_USER=finmars \
+FINMARS_DATABASE_PASSWORD=8ah9o7zq2nw10oud2ictqvgxw6ja81007m \
+SUPERSET_URL=https://superset.finmars.com/ \
+JWT_SECRET_KEY=09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3ab \
+ADMIN_USERNAME=admin \
+ADMIN_PASSWORD=d798nf0rgpp6g8qp \
+BASE_API_URL=space00000 \
+BACKEND_ROLES="ALL" \
+python manage.py test

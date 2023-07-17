@@ -1,12 +1,27 @@
+image: python:3.10-bullseye  # adjust the Python version as necessary
+
+services:
+  - postgres:latest
+
+variables:
+  POSTGRES_DB: mytestdb
+  POSTGRES_USER: mytestuser
+  POSTGRES_PASSWORD: mytestpassword
 
 # https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
 
 stages:
   - build
+  - test
   - push
 
 before_script:
   - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
+
+Test:
+  stage: test
+  script:
+    - python manage.py test
 
 Build:
   stage: build
