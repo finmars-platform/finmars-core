@@ -1,8 +1,7 @@
 image: python:3.10-bullseye  # adjust the Python version as necessary
 
 services:
-  - name: docker:20.10.8-dind
-    alias: docker
+  - docker:20.10.8-dind
   - postgres:latest
 
 variables:
