@@ -8,7 +8,7 @@ variables:
   POSTGRES_DB: mytestdb
   POSTGRES_USER: mytestuser
   POSTGRES_PASSWORD: mytestpassword
-  DOCKER_HOST: tcp://dind:2375
+  DOCKER_HOST: tcp://docker:2375
 
 # https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
 
