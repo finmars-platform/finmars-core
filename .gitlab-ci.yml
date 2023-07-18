@@ -20,6 +20,7 @@ Test:
   services:
     - postgres:latest
     - rabbitmq:latest
+
   before_script:
     - |
       apt-get update && apt-get install -y --no-install-recommends \
@@ -36,7 +37,9 @@ Test:
     - mkdir /var/log/finmars
     - mkdir /var/log/finmars/backend
   script:
-    - DB_HOST=postgres DB_NAME=test_finmars DB_USER=test_finmars_user DB_PASSWORD=test_finmars_password python manage.py test
+    - DB_HOST=postgres DB_NAME=test_finmars DB_USER=test_finmars_user DB_PASSWORD=test_finmars_password \
+      RABBITMQ_HOST=rabbitmq RABBITMQ_USER=guest RABBITMQ_PASSWORD=quest RABBITMQ_PORT=5672 \
+      python manage.py test
 
 Build:
   stage: build
