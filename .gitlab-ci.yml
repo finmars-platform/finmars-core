@@ -3,9 +3,6 @@ stages:
   - build
   - release
 
-services:
-  - docker:20.10.7-dind
-
 variables:
   POSTGRES_DB: test_finmars
   POSTGRES_USER: test_finmars_user
@@ -58,6 +55,8 @@ Test:
 
 Build:
   stage: build
+  services:
+    - docker:20.10.7-dind
   script:
     # fetches the latest image (not failing if image is not found)
 #    - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
@@ -72,6 +71,8 @@ Release latest:
     # We do not need GitLab to clone the source code.
     GIT_STRATEGY: none
   stage: release
+  services:
+    - docker:20.10.7-dind
   only:
     # Only "master" should be tagged "latest"
     - master
@@ -90,6 +91,8 @@ Release version:
     # Again, we do not need the source code here. Just playing with Docker.
     GIT_STRATEGY: none
   stage: release
+  services:
+    - docker:20.10.7-dind
   only:
     # We want this job to be run on tags only.
     - tags
