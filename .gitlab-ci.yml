@@ -1,5 +1,3 @@
-image: python:3.10-bullseye  # adjust the Python version as necessary
-
 stages:
   - test
   - build
@@ -28,6 +26,7 @@ build_test_db:
 
 Test:
   stage: test
+  image: python:3.10-bullseye  # adjust the Python version as necessary
   script:
     - python manage.py test
   before_script:
