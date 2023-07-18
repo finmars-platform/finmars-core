@@ -252,6 +252,7 @@ class TransactionReportBuilderSql:
                             res = res + "'"
 
                             currency_expression = 't.settlement_currency_id IN (%s)' % res
+                            # TODO add or for transaction_currency_id
 
                         _l.info('result %s' % result)
 
