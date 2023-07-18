@@ -90,7 +90,7 @@ Release latest:
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
     # Then we tag it "latest"
     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME $CI_REGISTRY_IMAGE:latest
-    # Annnd we push it.
+    # And we push it.
     - docker push $CI_REGISTRY_IMAGE:latest
 
 Release version:
