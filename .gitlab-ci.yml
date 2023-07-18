@@ -11,6 +11,9 @@ variables:
   POSTGRES_USER: test_finmars_user
   POSTGRES_PASSWORD: test_finmars_password
 
+  RABBITMQ_DEFAULT_USER: test_finmars_user
+  RABBITMQ_DEFAULT_PASS: test_finmars_password
+
 # https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
 
 
@@ -28,9 +31,6 @@ Test:
     DB_USER: test_finmars_user
     DB_PASSWORD: test_finmars_password
     DB_PORT: 5432
-
-    RABBITMQ_DEFAULT_USER: test_finmars_user
-    RABBITMQ_DEFAULT_PASS: test_finmars_password
 
     RABBITMQ_HOST: rabbitmq
     RABBITMQ_USER: test_finmars_user
@@ -53,9 +53,6 @@ Test:
     - mkdir /var/log/finmars
     - mkdir /var/log/finmars/backend
   script:
-#    - DB_HOST=postgres DB_NAME=test_finmars DB_USER=test_finmars_user
-#    DB_PASSWORD=test_finmars_password RABBITMQ_HOST=rabbitmq RABBITMQ_USER=guest
-#    RABBITMQ_PASSWORD=quest RABBITMQ_PORT=5672
     - python manage.py test
 
 
