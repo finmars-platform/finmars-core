@@ -19,6 +19,7 @@ Test:
   image: python:3.10-bullseye  # adjust the Python version as necessary
   services:
     - postgres:latest
+    - rabbitmq:latest
   before_script:
     - |
       apt-get update && apt-get install -y --no-install-recommends \
