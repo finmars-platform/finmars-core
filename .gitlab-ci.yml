@@ -5,10 +5,12 @@ stages:
   - build
   - release
 
-image: docker:20
-services:
-  - name: docker:dind
-    alias: thedockerhost
+default:
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  before_script:
+    - docker info
 
 
 variables:
@@ -19,7 +21,21 @@ variables:
   RABBITMQ_DEFAULT_USER: test_finmars_user
   RABBITMQ_DEFAULT_PASS: test_finmars_password
 
-  DOCKER_HOST: tcp://thedockerhost:2375
+  # When using dind service, you must instruct docker to talk with the
+  # daemon started inside of the service. The daemon is available with
+  # a network connection instead of the default /var/run/docker.sock socket.
+  #
+  # The 'docker' hostname is the alias of the service container as described at
+  # https://docs.gitlab.com/ee/ci/docker/using_docker_images.html#accessing-the-services
+  #
+  # If you're using GitLab Runner 12.7 or earlier with the Kubernetes executor and Kubernetes 1.6 or earlier,
+  # the variable must be set to tcp://localhost:2375 because of how the
+  # Kubernetes executor connects services to the job container
+  # DOCKER_HOST: tcp://localhost:2375
+  #
+  DOCKER_HOST: tcp://docker:2375
+  #
+  # This instructs Docker not to start over TLS.
   DOCKER_TLS_CERTDIR: ""
 
 
