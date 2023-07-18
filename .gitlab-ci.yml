@@ -62,6 +62,11 @@ Build:
   stage: build
   before_script:
     - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
+    # to debug runner
+    - df
+    - cat /etc/resolv.conf
+    - cat /etc/hosts
+
   script:
     # fetches the latest image (not failing if image is not found)
     - docker pull $CI_REGISTRY_IMAGE:latest || true
