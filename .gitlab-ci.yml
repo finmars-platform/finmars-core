@@ -11,7 +11,6 @@ variables:
   DB_NAME: mytestdb
   DB_USER: mytestuser
   DB_PASSWORD: mytestpassword
-  DB_HOST: postgres
 
 # https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
 
@@ -43,7 +42,7 @@ Test:
     - mkdir /var/log/finmars
     - mkdir /var/log/finmars/backend
   script:
-    - python manage.py test
+    - DB_HOST=postgres python manage.py test
 
 Build:
   stage: build
