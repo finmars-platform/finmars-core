@@ -55,7 +55,7 @@ Test:
 
 Build:
   stage: build
-  services:
+  image:
     - docker:stable-dind
   before_script:
     - docker info
