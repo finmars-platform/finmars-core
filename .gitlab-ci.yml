@@ -18,8 +18,8 @@ variables:
 build_test_db:
   image: postgres
   script:
-    - export PGPASSWORD=$POSTGRES_PASSWORD
-    - psql -h "postgres" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT 'OK' AS status;"
+    - export PGPASSWORD=$DB_PASSWORD
+    - psql -h "postgres" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 'OK' AS status;"
 
 Test:
   stage: test
