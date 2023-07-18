@@ -11,6 +11,7 @@ variables:
   DB_NAME: mytestdb
   DB_USER: mytestuser
   DB_PASSWORD: mytestpassword
+  DB_HOST: postgres
 
 # https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
 
