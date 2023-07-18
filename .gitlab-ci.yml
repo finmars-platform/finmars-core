@@ -14,21 +14,11 @@ variables:
 # https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
 
 
-build_test_db:
-  image: postgres
-  services:
-    - postgres:latest
-  script:
-    - export PGPASSWORD=$DB_PASSWORD
-    - psql -h "postgres" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 'OK' AS status;"
-
 Test:
   stage: test
   image: python:3.10-bullseye  # adjust the Python version as necessary
   services:
     - postgres:latest
-  needs:
-    - [ "build_test_db" ]
   before_script:
     - |
       apt-get update && apt-get install -y --no-install-recommends \
