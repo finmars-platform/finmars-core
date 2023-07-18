@@ -5,7 +5,6 @@ stages:
 
 services:
   - docker:20.10.7-dind
-  - postgres:latest
 
 variables:
   DB_NAME: mytestdb
@@ -17,13 +16,17 @@ variables:
 
 build_test_db:
   image: postgres
+  services:
+    - postgres:latest
   script:
     - export PGPASSWORD=$DB_PASSWORD
-    - psql  -U "$DB_USER" -d "$DB_NAME" -c "SELECT 'OK' AS status;"
+    - psql -h "postgres" -U "$DB_USER" -d "$DB_NAME" -c "SELECT 'OK' AS status;"
 
 Test:
   stage: test
   image: python:3.10-bullseye  # adjust the Python version as necessary
+  services:
+    - postgres:latest
   needs:
     - [ "build_test_db" ]
   before_script:
