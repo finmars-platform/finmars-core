@@ -4,16 +4,13 @@ stages:
   - release
 
 services:
-  - docker:dind
+  - docker:20.10.7-dind
   - postgres:latest
 
 variables:
   POSTGRES_DB: mytestdb
   POSTGRES_USER: mytestuser
   POSTGRES_PASSWORD: mytestpassword
-  DOCKER_HOST: tcp://docker:2375
-  DOCKER_DRIVER: overlay2
-  CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_BUILD_REF_SLUG
 
 # https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
 
@@ -27,8 +24,8 @@ build_test_db:
 Test:
   stage: test
   image: python:3.10-bullseye  # adjust the Python version as necessary
-  script:
-    - python manage.py test
+  needs:
+    - [ "build_test_db" ]
   before_script:
     - |
       apt-get update && apt-get install -y --no-install-recommends \
@@ -42,8 +39,9 @@ Test:
     - python -m pip install --upgrade pip
     - pip install uwsgi
     - pip install -r requirements.txt
-  needs:
-    - [ "build_test_db" ]
+    - mkdir /var/log/finmars/backend
+  script:
+    - python manage.py test
 
 Build:
   stage: build
