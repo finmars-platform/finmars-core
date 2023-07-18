@@ -1,3 +1,5 @@
+# https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
+
 stages:
   - test
   - build
@@ -14,9 +16,6 @@ variables:
 image: docker:latest
 services:
   - docker:dind
-
-
-# https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
 
 
 Test:
@@ -61,11 +60,12 @@ Test:
 Build:
   stage: build
   before_script:
-    - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
     # to debug runner
     - df
     - cat /etc/resolv.conf
     - cat /etc/hosts
+    #
+    - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
 
   script:
     # fetches the latest image (not failing if image is not found)
