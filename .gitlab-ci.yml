@@ -1,7 +1,7 @@
 image: python:3.10-bullseye  # adjust the Python version as necessary
 
 services:
-  - docker:20.10.8-dind
+  - docker:dind
   - postgres:latest
 
 variables:
@@ -9,20 +9,15 @@ variables:
   POSTGRES_USER: mytestuser
   POSTGRES_PASSWORD: mytestpassword
   DOCKER_HOST: tcp://docker:2375
+  DOCKER_DRIVER: overlay2
+  CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_BUILD_REF_SLUG
 
 # https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
 
 stages:
-  - build
   - test
-  - push
-
-before_script:
-  - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
-  - python -m venv venv
-  - source venv/bin/activate
-  - pip install -r requirements.txt
-  - python manage.py migrate
+  - build
+  - release
 
 Test:
   stage: test
@@ -33,20 +28,22 @@ Build:
   stage: build
   script:
     # fetches the latest image (not failing if image is not found)
+    - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
     - docker pull $CI_REGISTRY_IMAGE:latest || true
     - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME .
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
 
-Push latest:
+Release latest:
   variables:
     # We are just playing with Docker here.
     # We do not need GitLab to clone the source code.
     GIT_STRATEGY: none
-  stage: push
+  stage: release
   only:
     # Only "master" should be tagged "latest"
     - master
   script:
+    - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
     # Because we have no guarantee that this job will be picked up by the same runner
     # that built the image in the previous step, we pull it again locally
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
@@ -55,15 +52,16 @@ Push latest:
     # Annnd we push it.
     - docker push $CI_REGISTRY_IMAGE:latest
 
-Push tag:
+Release version:
   variables:
     # Again, we do not need the source code here. Just playing with Docker.
     GIT_STRATEGY: none
-  stage: push
+  stage: release
   only:
     # We want this job to be run on tags only.
     - tags
   script:
+    - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
