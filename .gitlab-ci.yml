@@ -1,5 +1,10 @@
 image: python:3.10-bullseye  # adjust the Python version as necessary
 
+stages:
+  - test
+  - build
+  - release
+
 services:
   - docker:dind
   - postgres:latest
@@ -14,15 +19,32 @@ variables:
 
 # https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
 
-stages:
-  - test
-  - build
-  - release
+
+build_test_db:
+  image: postgres
+  script:
+    - export PGPASSWORD=$POSTGRES_PASSWORD
+    - psql -h "postgres" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT 'OK' AS status;"
 
 Test:
   stage: test
   script:
     - python manage.py test
+  before_script:
+    - |
+      apt-get update && apt-get install -y --no-install-recommends \
+      gcc \
+      musl-dev \
+      python3-dev \
+      libpq-dev \
+      libgnutls28-dev \
+      git \
+      && rm -rf /var/lib/apt/lists/*
+    - python -m pip install --upgrade pip
+    - pip install uwsgi
+    - pip install -r requirements.txt
+  needs:
+    - [ "build_test_db" ]
 
 Build:
   stage: build
