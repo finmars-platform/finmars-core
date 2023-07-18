@@ -240,9 +240,10 @@ USD = "USD"
 
 
 class DbInitializer:
-    def get_or_create_master_user(self) -> MasterUser:
+    @staticmethod
+    def get_or_create_master_user() -> MasterUser:
         master_user = MasterUser.objects.filter(
-            name=MASTER_USER
+            base_api_url=settings.BASE_API_URL,
         ).first() or MasterUser.objects.create_master_user(
             name=MASTER_USER,
             journal_status="disabled",
