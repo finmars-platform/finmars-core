@@ -17,9 +17,11 @@ variables:
 Test:
   stage: test
   image: python:3.10-bullseye  # adjust the Python version as necessary
+
   services:
     - postgres:latest
     - rabbitmq:latest
+
   variables:
     DB_HOST: postgres
     DB_NAME: test_finmars
@@ -27,9 +29,12 @@ Test:
     DB_PASSWORD: test_finmars_password
     DB_PORT: 5432
 
+    RABBITMQ_DEFAULT_USER: test_finmars_user
+    RABBITMQ_DEFAULT_PASS: test_finmars_password
+
     RABBITMQ_HOST: rabbitmq
-    RABBITMQ_USER: guest
-    RABBITMQ_PASSWORD: quest
+    RABBITMQ_USER: test_finmars_user
+    RABBITMQ_PASSWORD: test_finmars_password
     RABBITMQ_PORT: 5672
 
   before_script:
