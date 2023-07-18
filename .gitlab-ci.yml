@@ -8,9 +8,9 @@ services:
   - postgres:latest
 
 variables:
-  POSTGRES_DB: mytestdb
-  POSTGRES_USER: mytestuser
-  POSTGRES_PASSWORD: mytestpassword
+  DB_NAME: mytestdb
+  DB_USER: mytestuser
+  DB_PASSWORD: mytestpassword
 
 # https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
 
