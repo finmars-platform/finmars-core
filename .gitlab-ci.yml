@@ -13,9 +13,9 @@ variables:
   RABBITMQ_DEFAULT_USER: test_finmars_user
   RABBITMQ_DEFAULT_PASS: test_finmars_password
 
-image: docker:latest
+image: docker:20
 services:
-  - docker:dind
+  - docker:20.10.7-dind
 
 
 Test:
