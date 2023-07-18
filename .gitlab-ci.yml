@@ -61,7 +61,7 @@ Test:
 Build:
   stage: build
   before_script:
-    - docker info
+#    - docker info
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD registry.finmars.com
   script:
     # fetches the latest image (not failing if image is not found)
