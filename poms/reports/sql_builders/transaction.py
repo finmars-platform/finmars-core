@@ -260,7 +260,7 @@ class TransactionReportBuilderSql:
                             res = "'" + "\',\'".join(currencies_ids)
                             res = res + "'"
 
-                            transaction_currency_expression = 't.transaction_currency_expression IN (%s)' % res
+                            transaction_currency_expression = 't.transaction_currency_id IN (%s)' % res
                             # TODO add or for transaction_currency_id
 
                         _l.info('result %s' % result)
