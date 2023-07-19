@@ -245,26 +245,35 @@ class TransactionReportBuilderSql:
 
                         _l.info('currencies_ids %s' % currencies_ids)
 
-                        currency_expression = ''
+                        settlement_currency_expression = ''
+                        transaction_currency_expression = ''
 
                         if currencies_ids:
                             res = "'" + "\',\'".join(currencies_ids)
                             res = res + "'"
 
-                            currency_expression = 't.settlement_currency_id IN (%s)' % res
+                            settlement_currency_expression = 't.settlement_currency_id IN (%s)' % res
+                            # TODO add or for transaction_currency_id
+
+
+                        if currencies_ids:
+                            res = "'" + "\',\'".join(currencies_ids)
+                            res = res + "'"
+
+                            transaction_currency_expression = 't.transaction_currency_expression IN (%s)' % res
                             # TODO add or for transaction_currency_id
 
                         _l.info('result %s' % result)
 
-                        if instrument_expression and currency_expression:
+                        if instrument_expression and (settlement_currency_expression and transaction_currency_expression):
 
-                            result = result + 'and (%s or %s)' % (instrument_expression, currency_expression)
+                            result = result + 'and (%s or %s or %s)' % (instrument_expression, settlement_currency_expression, transaction_currency_expression)
 
-                        elif instrument_expression and not currency_expression:
+                        elif instrument_expression and not (settlement_currency_expression and transaction_currency_expression):
                             result = result + 'and %s' % instrument_expression
 
-                        elif not instrument_expression and currency_expression:
-                            result = result + 'and %s' % currency_expression
+                        elif not instrument_expression and (settlement_currency_expression and transaction_currency_expression):
+                            result = result + 'and (%s or %s)' % (settlement_currency_expression, transaction_currency_expression)
 
         except Exception as e:
 
