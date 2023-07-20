@@ -369,7 +369,7 @@ class TransactionImportProcess(object):
     def get_rule_value_for_item(self, item):
 
         try:
-            return formula.safe_eval(self.scheme.rule_expr, names=item.inputs)
+            return formula.safe_eval(self.scheme.rule_expr, names=item.inputs, context=self.context)
         except Exception as e:
 
             _l.info('TransactionImportProcess.Task %s. get_rule_value_for_item Exception %s' % (self.task, e))
@@ -812,10 +812,7 @@ class TransactionImportProcess(object):
 
                     conversion_item.conversion_inputs[scheme_input.name] = formula.safe_eval(scheme_input.name_expr,
                                                                                              names=names,
-                                                                                             context={
-                                                                                                 "master_user": self.master_user,
-                                                                                                 "member": self.member
-                                                                                             })
+                                                                                             context=self.context)
                 except Exception as e:
 
                     conversion_item.conversion_inputs[scheme_input.name] = None
@@ -881,6 +878,7 @@ class TransactionImportProcess(object):
                     value = formula.safe_eval(scheme_calculated_input.name_expr, names=names,
                                               context={"master_user": self.master_user,
                                                        "member": self.member,
+                                                       "request": self.proxy_request,
                                                        "transaction_import": {
                                                            "items": self.preprocessed_items
                                                        }})
