@@ -432,11 +432,11 @@ def recalculate_user_fields(self, task_id):
 
         task.verbose_result = f"Recalculated {len(complex_transactions)} complex transactions"
 
-        task.task_status = CeleryTask.STATUS_DONE
+        task.status = CeleryTask.STATUS_DONE
         task.save()
 
     except Exception as e:
-        task.task_status = CeleryTask.STATUS_ERROR
+        task.status = CeleryTask.STATUS_ERROR
         task.error_message = str(e)
         task.save()
         _l.error(f"recalculate_user_fields: {repr(e)}\n{traceback.format_exc()}")
