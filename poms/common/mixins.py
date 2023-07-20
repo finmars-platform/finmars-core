@@ -34,6 +34,7 @@ class ListEvModelMixin(ListModelMixin):
 
     pass
 
+
 # noinspection PyUnresolvedReferences
 class DestroyModelMixinExt(DestroyModelMixin):
     def destroy(self, request, *args, **kwargs):
@@ -68,8 +69,8 @@ class DestroyModelFakeMixin(DestroyModelMixinExt):
 
     def perform_destroy(self, instance):
         _l.info(
-            f"{self.__class__.__name__}.perform_destroy instance.user_code="
-            f"{instance.user_code}"
+            f"{self.__class__.__name__}.perform_destroy instance="
+            f"{instance.__class__.__name__}"
         )
 
         if hasattr(instance, "is_deleted") and hasattr(instance, "fake_delete"):
@@ -88,6 +89,98 @@ class UpdateModelMixinExt(UpdateModelMixin):
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
         return response
+
+
+class DestroySystemicModelMixin(DestroyModelMixinExt):
+    def perform_destroy(self, instance):
+        if hasattr(instance, "is_systemic") and instance.is_systemic:
+            raise MethodNotAllowed(
+                "DELETE",
+                detail='Method "DELETE" not allowed. Can not delete entity with is_systemic == true',
+            )
+        else:
+            super(DestroySystemicModelMixin, self).perform_destroy(instance)
+
+
+# noinspection PyUnresolvedReferences
+class BulkDestroyModelMixin(DestroyModelMixin):
+    @action(detail=False, methods=["post"], url_path="bulk-delete")
+    def bulk_delete(self, request):
+        data = request.data
+
+        from poms.celery_tasks.models import CeleryTask
+
+        queryset = self.filter_queryset(self.get_queryset())
+
+        content_type = ContentType.objects.get_for_model(queryset.model)
+        content_type_key = f"{content_type.app_label}.{content_type.model}"
+
+        options_object = {"content_type": content_type_key, "ids": data["ids"]}
+
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            options_object=options_object,
+            verbose_name="Bulk Delete",
+            type="bulk_delete",
+        )
+
+        from poms_app import celery_app
+
+        celery_app.send_task(
+            "celery_tasks.bulk_delete",
+            kwargs={"task_id": celery_task.id},
+            queue="backend-delete-queue",
+        )
+
+        # queryset = self.filter_queryset(self.get_queryset())
+        # # is_fake = bool(request.query_params.get('is_fake'))
+        #
+        # _l.info('bulk_delete %s' % data['ids'])
+        #
+        #
+        # try:
+        #     if queryset.model._meta.get_field('is_deleted'):
+        #
+        #         # _l.info('bulk delete %s'  % queryset.model._meta.get_field('is_deleted'))
+        #
+        #         queryset = queryset.filter(id__in=data['ids'])
+        #
+        #         for instance in queryset:
+        #             # try:
+        #             #     self.check_object_permissions(request, instance)
+        #             # except PermissionDenied:
+        #             #     raise
+        #             self.perform_destroy(instance)
+        # except Exception as e:
+        #
+        #         # mostly for prices
+        #
+        #         queryset.filter(id__in=data['ids']).delete()
+
+        # for pk in data['ids']:
+        #
+        #     try:
+        #         instance = queryset.get(pk=pk)
+        #
+        #         try:
+        #             self.check_object_permissions(request, instance)
+        #         except PermissionDenied:
+        #             raise
+        #         self.perform_destroy(instance)
+        #
+        #     except ObjectDoesNotExist:
+        #         print("object does not exist")
+
+        # if not is_fake:
+        #     for instance in queryset:
+        #         try:
+        #             self.check_object_permissions(request, instance)
+        #         except PermissionDenied:
+        #             raise
+        #         self.perform_destroy(instance)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class BulkCreateModelMixin(CreateModelMixin):
@@ -236,87 +329,6 @@ class BulkSaveModelMixin(CreateModelMixin, UpdateModelMixin):
     #         return Response(list(ret_serializer.data), status=status.HTTP_200_OK)
 
 
-# noinspection PyUnresolvedReferences
-class BulkDestroyModelMixin(DestroyModelMixin):
-    @action(detail=False, methods=["post"], url_path="bulk-delete")
-    def bulk_delete(self, request):
-        data = request.data
-
-        from poms.celery_tasks.models import CeleryTask
-
-        queryset = self.filter_queryset(self.get_queryset())
-
-        content_type = ContentType.objects.get_for_model(queryset.model)
-        content_type_key = f"{content_type.app_label}.{content_type.model}"
-
-        options_object = {"content_type": content_type_key, "ids": data["ids"]}
-
-        celery_task = CeleryTask.objects.create(
-            master_user=request.user.master_user,
-            member=request.user.member,
-            options_object=options_object,
-            verbose_name="Bulk Delete",
-            type="bulk_delete",
-        )
-
-        from poms_app import celery_app
-
-        celery_app.send_task(
-            "celery_tasks.bulk_delete",
-            kwargs={"task_id": celery_task.id},
-            queue="backend-delete-queue",
-        )
-
-        # queryset = self.filter_queryset(self.get_queryset())
-        # # is_fake = bool(request.query_params.get('is_fake'))
-        #
-        # _l.info('bulk_delete %s' % data['ids'])
-        #
-        #
-        # try:
-        #     if queryset.model._meta.get_field('is_deleted'):
-        #
-        #         # _l.info('bulk delete %s'  % queryset.model._meta.get_field('is_deleted'))
-        #
-        #         queryset = queryset.filter(id__in=data['ids'])
-        #
-        #         for instance in queryset:
-        #             # try:
-        #             #     self.check_object_permissions(request, instance)
-        #             # except PermissionDenied:
-        #             #     raise
-        #             self.perform_destroy(instance)
-        # except Exception as e:
-        #
-        #         # mostly for prices
-        #
-        #         queryset.filter(id__in=data['ids']).delete()
-
-        # for pk in data['ids']:
-        #
-        #     try:
-        #         instance = queryset.get(pk=pk)
-        #
-        #         try:
-        #             self.check_object_permissions(request, instance)
-        #         except PermissionDenied:
-        #             raise
-        #         self.perform_destroy(instance)
-        #
-        #     except ObjectDoesNotExist:
-        #         print("object does not exist")
-
-        # if not is_fake:
-        #     for instance in queryset:
-        #         try:
-        #             self.check_object_permissions(request, instance)
-        #         except PermissionDenied:
-        #             raise
-        #         self.perform_destroy(instance)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
 # BulkSaveModelMixin have some problem with permissions
 class BulkModelMixin(BulkCreateModelMixin, BulkUpdateModelMixin, BulkDestroyModelMixin):
     pass
@@ -334,14 +346,3 @@ class BulkModelMixin(BulkCreateModelMixin, BulkUpdateModelMixin, BulkDestroyMode
     #         return self.bulk_delete(request)
     #
     #     raise MethodNotAllowed(request.method)
-
-
-class DestroySystemicModelMixin(DestroyModelMixinExt):
-    def perform_destroy(self, instance):
-        if hasattr(instance, "is_systemic") and instance.is_systemic:
-            raise MethodNotAllowed(
-                "DELETE",
-                detail='Method "DELETE" not allowed. Can not delete entity with is_systemic == true',
-            )
-        else:
-            super(DestroySystemicModelMixin, self).perform_destroy(instance)

@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('instruments', '0006_alter_instrument_country'),
+        ("instruments", "0006_alter_instrument_country"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='pricehistory',
-            name='factor',
-            field=models.FloatField(default=1.0, verbose_name='factor'),
+            model_name="pricehistory",
+            name="factor",
+            field=models.FloatField(default=1.0, verbose_name="factor"),
         ),
     ]

@@ -1,15 +1,12 @@
-from __future__ import unicode_literals
-
-from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeOrPrimaryKeyRelatedField
+from poms.common.fields import UserCodeOrPrimaryKeyRelatedField
 from poms.currencies.models import Currency
-from poms.users.filters import OwnerByMasterUserFilter
 
 
-class CurrencyDefault(object):
+class CurrencyDefault:
     requires_context = True
 
     def set_context(self, serializer_field):
-        request = serializer_field.context['request']
+        request = serializer_field.context["request"]
         self._master_user = request.user.master_user
 
     def __call__(self, serializer_field):
@@ -17,12 +14,11 @@ class CurrencyDefault(object):
         return self._master_user.currency
 
 
-# TODO, refactor later, get rid of this field
-class SystemCurrencyDefault(object):
+class SystemCurrencyDefault:
     requires_context = True
 
     def set_context(self, serializer_field):
-        request = serializer_field.context['request']
+        request = serializer_field.context["request"]
         self._master_user = request.user.master_user
 
     def __call__(self, serializer_field):
@@ -37,7 +33,3 @@ class SystemCurrencyDefault(object):
 
 class CurrencyField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Currency.objects
-    # Possibly Deprecated
-    # filter_backends = UserCodeOrPrimaryKeyRelatedField.filter_backends + [
-    #     OwnerByMasterUserFilter,
-    # ]

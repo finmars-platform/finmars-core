@@ -30,11 +30,31 @@ class CounterpartyGroup(NamedModel, FakeDeletableModel):
         Returns attributes that front end uses
         """
         return [
-            {"key": "name", "name": "Name", "value_type": 10},
-            {"key": "short_name", "name": "Short name", "value_type": 10},
-            {"key": "notes", "name": "Notes", "value_type": 10},
-            {"key": "user_code", "name": "User code", "value_type": 10},
-            {"key": "public_name", "name": "Public name", "value_type": 10},
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+            },
         ]
 
     @property
@@ -70,11 +90,12 @@ class Counterparty(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMod
         on_delete=models.SET_NULL,
     )
     is_valid_for_all_portfolios = models.BooleanField(
-        default=True, verbose_name=gettext_lazy("is valid for all portfolios")
+        default=True,
+        verbose_name=gettext_lazy("is valid for all portfolios"),
     )
-
     attributes = GenericRelation(
-        GenericAttribute, verbose_name=gettext_lazy("attributes")
+        GenericAttribute,
+        verbose_name=gettext_lazy("attributes"),
     )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
@@ -121,7 +142,11 @@ class Counterparty(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMod
                 "value_content_type": "counterparties.counterpartygroup",
                 "code": "user_code",
             },
-            {"key": "portfolios", "name": "Portfolios", "value_type": "mc_field"},
+            {
+                "key": "portfolios",
+                "name": "Portfolios",
+                "value_type": "mc_field",
+            },
         ]
 
     @property
@@ -155,11 +180,31 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
         Returns attributes that front end uses
         """
         return [
-            {"key": "name", "name": "Name", "value_type": 10},
-            {"key": "short_name", "name": "Short name", "value_type": 10},
-            {"key": "notes", "name": "Notes", "value_type": 10},
-            {"key": "user_code", "name": "User code", "value_type": 10},
-            {"key": "public_name", "name": "Public name", "value_type": 10},
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+            },
         ]
 
     @property
@@ -174,7 +219,8 @@ class ResponsibleGroup(NamedModel, FakeDeletableModel):
 # noinspection PyUnresolvedReferences
 class Responsible(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     """
-    One of Core Finmars entities, real world meaning is to indicate who is executing/initiator of Transaction
+    One of Core Finmars entities, real world meaning is to indicate
+    who is executing/initiator of Transaction
     """
 
     master_user = models.ForeignKey(
@@ -192,11 +238,12 @@ class Responsible(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMode
         on_delete=models.SET_NULL,
     )
     is_valid_for_all_portfolios = models.BooleanField(
-        default=True, verbose_name=gettext_lazy("is valid for all portfolios")
+        default=True,
+        verbose_name=gettext_lazy("is valid for all portfolios"),
     )
-
     attributes = GenericRelation(
-        GenericAttribute, verbose_name=gettext_lazy("attributes")
+        GenericAttribute,
+        verbose_name=gettext_lazy("attributes"),
     )
 
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
@@ -204,7 +251,6 @@ class Responsible(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMode
         verbose_name_plural = gettext_lazy("responsibles")
         ordering = ["user_code"]
         permissions = [
-            # ('view_responsible', 'Can view responsible'),
             ("manage_responsible", "Can manage responsible"),
         ]
 
@@ -235,7 +281,11 @@ class Responsible(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedMode
                 "value_type": 10,
                 "allow_null": True,
             },
-            {"key": "notes", "name": "Notes", "value_type": 10},
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+            },
             {
                 "key": "group",
                 "name": "Group",

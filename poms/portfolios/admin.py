@@ -33,30 +33,11 @@ class PortfolioAdmin(AbstractModelAdmin):
         "transaction_types",
     ]
     inlines = [
-        # AbstractAttributeInline,
         GenericAttributeInline,
-        # UserObjectPermissionInline,
-        # GroupObjectPermissionInline,
     ]
 
 
 admin.site.register(Portfolio, PortfolioAdmin)
-
-
-#
-# class PortfolioAttributeTypeAdmin(AbstractAttributeTypeAdmin):
-#     inlines = [
-#         AbstractAttributeTypeClassifierInline,
-#         AbstractAttributeTypeOptionInline,
-#         GenericObjectPermissionInline,
-#         # UserObjectPermissionInline,
-#         # GroupObjectPermissionInline,
-#     ]
-#
-#
-# admin.site.register(PortfolioAttributeType, PortfolioAttributeTypeAdmin)
-#
-# admin.site.register(PortfolioClassifier, ClassifierAdmin)
 
 
 class PortfolioRegisterAdmin(AbstractModelAdmin):

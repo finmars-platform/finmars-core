@@ -6,15 +6,15 @@ import math
 from datetime import timedelta
 from http import HTTPStatus
 
-import pandas as pd
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 from django.views.generic.dates import timezone_today
 from rest_framework.views import exception_handler
 
+import pandas as pd
 from poms_app import settings
 
-_l = logging.getLogger('poms.common')
+_l = logging.getLogger("poms.common")
 
 
 def force_qs_evaluation(qs):
@@ -22,27 +22,24 @@ def force_qs_evaluation(qs):
 
     pass
 
-    # for item in qs:
-    #     pass
-
 
 def db_class_check_data(model, verbosity, using):
     from django.db import IntegrityError, ProgrammingError
 
     try:
-        exists = set(model.objects.using(using).values_list('pk', flat=True))
+        exists = set(model.objects.using(using).values_list("pk", flat=True))
     except ProgrammingError:
         return
     if verbosity >= 2:
-        print('existed transaction classes -> %s' % exists)
+        print("existed transaction classes -> %s" % exists)
     for id, code, name in model.CLASSES:
         if id not in exists:
             if verbosity >= 2:
-                print('create %s class -> %s:%s' % (model._meta.verbose_name, id, name))
+                print("create %s class -> %s:%s" % (model._meta.verbose_name, id, name))
             try:
-                model.objects.using(using).create(pk=id, user_code=code,
-                                                  short_name=name,
-                                                  name=name, description=name)
+                model.objects.using(using).create(
+                    pk=id, user_code=code, short_name=name, name=name, description=name
+                )
             except (IntegrityError, ProgrammingError):
                 pass
         else:
@@ -76,7 +73,6 @@ except AttributeError:
     except ImportError:
         numpy = None
 
-
         def isclose(a, b, rel_tol=1e-09, abs_tol=0.0):
             # TODO: maybe incorrect!
             return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
@@ -84,13 +80,6 @@ except AttributeError:
 
 def iszero(v):
     return isclose(v, 0.0)
-
-
-# def safe_div(a, b, default=0.0):
-#     try:
-#         return a / b
-#     except (ZeroDivisionError, TypeError):
-#         return default
 
 
 class sfloat(float):
@@ -138,27 +127,25 @@ class sfloat(float):
 
 
 def add_view_and_manage_permissions():
-    from django.contrib.contenttypes.models import ContentType
     from django.contrib.auth.models import Permission
+    from django.contrib.contenttypes.models import ContentType
 
     existed = {(p.content_type_id, p.codename) for p in Permission.objects.all()}
     for content_type in ContentType.objects.all():
         codename = "view_%s" % content_type.model
         if (content_type.id, codename) not in existed:
             Permission.objects.update_or_create(
-                content_type=content_type, codename=codename,
-                defaults={
-                    'name': 'Can view %s' % content_type.name
-                }
+                content_type=content_type,
+                codename=codename,
+                defaults={"name": "Can view %s" % content_type.name},
             )
 
         codename = "manage_%s" % content_type.model
         if (content_type.id, codename) not in existed:
             Permission.objects.update_or_create(
-                content_type=content_type, codename=codename,
-                defaults={
-                    'name': 'Can manage %s' % content_type.name
-                }
+                content_type=content_type,
+                codename=codename,
+                defaults={"name": "Can manage %s" % content_type.name},
             )
 
 
@@ -171,7 +158,6 @@ def delete_keys_from_dict(dict_del, the_keys):
     if type(the_keys) is not set:
         the_keys = set(the_keys)
     for k, v in dict_del.items():
-
         if k in the_keys:
             del dict_del[k]
 
@@ -191,7 +177,6 @@ def recursive_callback(dict, callback, prop="children"):
 
 
 class MemorySavingQuerysetIterator(object):
-
     def __init__(self, queryset, max_obj_num=1000):
         self._base_queryset = queryset
         self._generator = self._setup()
@@ -202,7 +187,9 @@ class MemorySavingQuerysetIterator(object):
             # By making a copy of of the queryset and using that to actually access
             # the objects we ensure that there are only `max_obj_num` objects in
             # memory at any given time
-            smaller_queryset = copy.deepcopy(self._base_queryset)[i:i + self.max_obj_num]
+            smaller_queryset = copy.deepcopy(self._base_queryset)[
+                i : i + self.max_obj_num
+            ]
             # logger.debug('Grabbing next %s objects from DB' % self.max_obj_num)
             for obj in smaller_queryset.iterator():
                 yield obj
@@ -238,11 +225,11 @@ def format_float_to_2(val):
     except ValueError:
         return val
 
-    return float(format(round(val, 2), '.2f').rstrip("0").rstrip('.'))
+    return float(format(round(val, 2), ".2f").rstrip("0").rstrip("."))
 
 
 def get_content_type_by_name(name):
-    pieces = name.split('.')
+    pieces = name.split(".")
     app_label_title = pieces[0]
     model_title = pieces[1]
 
@@ -256,14 +243,14 @@ def is_business_day(date):
 
 
 def get_last_business_day(date, to_string=False):
-    '''
+    """
     Returns the previous business day of the given date.
     :param date:
     :param to_string:
     :return:
-    '''
+    """
 
-    format = '%Y-%m-%d'
+    format = "%Y-%m-%d"
 
     if not isinstance(date, datetime.date):
         date = datetime.datetime.strptime(date, format).date()
@@ -287,7 +274,7 @@ def last_day_of_month(any_day):
 
 def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
     result = []
-    format = '%Y-%m-%d'
+    format = "%Y-%m-%d"
 
     if not isinstance(date_from, datetime.date):
         date_from = datetime.datetime.strptime(date_from, format).date()
@@ -309,7 +296,7 @@ def get_list_of_dates_between_two_dates(date_from, date_to, to_string=False):
 
 def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=False):
     result = []
-    format = '%Y-%m-%d'
+    format = "%Y-%m-%d"
 
     if not isinstance(date_from, datetime.date):
         date_from = datetime.datetime.strptime(date_from, format).date()
@@ -323,7 +310,6 @@ def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=Fa
         day = date_from + timedelta(days=i)
 
         if is_business_day(day):
-
             if to_string:
                 result.append(str(day))
             else:
@@ -334,7 +320,7 @@ def get_list_of_business_days_between_two_dates(date_from, date_to, to_string=Fa
 
 def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
     result = []
-    format = '%Y-%m-%d'
+    format = "%Y-%m-%d"
 
     if not isinstance(date_from, datetime.date):
         date_from = datetime.datetime.strptime(date_from, format).date()
@@ -354,7 +340,6 @@ def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
         day = date_from + timedelta(days=i)
 
         if day.day == 1:
-
             if to_string:
                 result.append(str(day))
             else:
@@ -364,15 +349,15 @@ def get_list_of_months_between_two_dates(date_from, date_to, to_string=False):
 
 
 def convert_name_to_key(name):
-    return name.strip().lower().replace(' ', '_')
+    return name.strip().lower().replace(" ", "_")
 
 
 def check_if_last_day_of_month(to_date):
-    '''
+    """
     Check if date is last day of month
     :param to_date:
     :return: bool
-    '''
+    """
     delta = datetime.timedelta(days=1)
     next_day = to_date + delta
     if to_date.month != next_day.month:
@@ -381,73 +366,76 @@ def check_if_last_day_of_month(to_date):
 
 
 def get_first_transaction(portfolio_instance):
-    '''
+    """
     Get first transaction of portfolio
-    :param portfolio_id:
+    :param portfolio_instance:
     :return: Transaction
-    '''
+    """
     from poms.transactions.models import Transaction
-    transaction = Transaction.objects.filter(portfolio=portfolio_instance).order_by('accounting_date')[0]
+
+    transaction = Transaction.objects.filter(portfolio=portfolio_instance).order_by(
+        "accounting_date"
+    )[0]
     return transaction
 
 
 def last_business_day_in_month(year: int, month: int, to_string=False):
-    '''
+    """
     Get last business day of month
     :param year:
     :param month:
     :param to_string:
     :return: date or string
-    '''
+    """
     day = max(calendar.monthcalendar(year, month)[-1:][0][:5])
 
     d = datetime.datetime(year, month, day).date()
 
     if to_string:
-        return d.strftime('%Y-%m-%d')
+        return d.strftime("%Y-%m-%d")
 
     return d
 
 
 def get_last_bdays_of_months_between_two_dates(date_from, date_to, to_string=False):
-    '''
+    """
     Get last business day of each month between two dates
     :param date_from:
     :param date_to:
     :param to_string:
     :return: list of dates or strings
-    '''
+    """
     months = get_list_of_months_between_two_dates(date_from, date_to)
     end_of_months = []
 
     if not isinstance(date_to, datetime.date):
-        d_date_to = datetime.datetime.strptime(date_to, '%Y-%m-%d').date()
+        d_date_to = datetime.datetime.strptime(date_to, "%Y-%m-%d").date()
     else:
         d_date_to = date_to
 
     for month in months:
-
         # _l.info(month)
         # _l.info(d_date_to)
 
         if last_business_day_in_month(month.year, month.month) > d_date_to:
-
             if to_string:
-                end_of_months.append(d_date_to.strftime('%Y-%m-%d'))
+                end_of_months.append(d_date_to.strftime("%Y-%m-%d"))
             else:
                 end_of_months.append(d_date_to)
         else:
-            end_of_months.append(last_business_day_in_month(month.year, month.month, to_string))
+            end_of_months.append(
+                last_business_day_in_month(month.year, month.month, to_string)
+            )
 
     return end_of_months
 
 
 def str_to_date(d):
-    '''
+    """
     Convert string to date
     :param d:
     :return:
-    '''
+    """
     if not isinstance(d, datetime.date):
         d = datetime.datetime.strptime(d, "%Y-%m-%d").date()
 
@@ -455,11 +443,11 @@ def str_to_date(d):
 
 
 def get_closest_bday_of_yesterday(to_string=False):
-    '''
+    """
     Get the closest business day of yesterday
     :param to_string:
     :return: date or string
-    '''
+    """
     yesterday = datetime.date.today() - timedelta(days=1)
     return get_last_business_day(yesterday, to_string=to_string)
 
@@ -477,12 +465,12 @@ def finmars_exception_handler(exc, context):
 
         error_payload = {
             "error": {
-                "url": context['request'].build_absolute_uri(),
+                "url": context["request"].build_absolute_uri(),
                 "status_code": 0,
                 "message": "",
                 "details": [],
-                "datetime": str(datetime.datetime.strftime(now(), '%Y-%m-%d %H:%M:%S')),
-                "workspace_id": settings.BASE_API_URL
+                "datetime": str(datetime.datetime.strftime(now(), "%Y-%m-%d %H:%M:%S")),
+                "workspace_id": settings.BASE_API_URL,
             }
         }
         error = error_payload["error"]
@@ -496,129 +484,136 @@ def finmars_exception_handler(exc, context):
 
 
 def get_serializer(content_type_key):
-    '''
+    """
     Returns serializer for given content type key.
     :param content_type_key:
     :return: serializer class
-    '''
+    """
 
-    from poms.instruments.serializers import InstrumentSerializer, InstrumentTypeSerializer, PricingPolicySerializer
-
-    from poms.accounts.serializers import AccountSerializer
-    from poms.accounts.serializers import AccountTypeSerializer
-    from poms.portfolios.serializers import PortfolioSerializer
-    from poms.instruments.serializers import PriceHistorySerializer
-    from poms.currencies.serializers import CurrencyHistorySerializer
-    from poms.counterparties.serializers import CounterpartySerializer
-    from poms.counterparties.serializers import ResponsibleSerializer
-    from poms.strategies.serializers import Strategy1Serializer
-    from poms.strategies.serializers import Strategy2Serializer
-
-    from poms.transactions.serializers import TransactionTypeSerializer, TransactionTypeGroupSerializer
+    from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer
+    from poms.counterparties.serializers import (
+        CounterpartySerializer,
+        ResponsibleSerializer,
+    )
     from poms.csv_import.serializers import CsvImportSchemeSerializer
-
-    from poms.integrations.serializers import ComplexTransactionImportSchemeSerializer, \
-        InstrumentDownloadSchemeSerializer
-    from poms.procedures.serializers import PricingProcedureSerializer
-    from poms.procedures.serializers import ExpressionProcedureSerializer
-    from poms.procedures.serializers import RequestDataFileProcedureSerializer
-    from poms.schedules.serializers import ScheduleSerializer
-
+    from poms.currencies.serializers import CurrencyHistorySerializer
+    from poms.iam.serializers import (
+        AccessPolicySerializer,
+        GroupSerializer,
+        RoleSerializer,
+    )
+    from poms.instruments.serializers import (
+        InstrumentSerializer,
+        InstrumentTypeSerializer,
+        PriceHistorySerializer,
+        PricingPolicySerializer,
+    )
+    from poms.integrations.serializers import (
+        ComplexTransactionImportSchemeSerializer,
+        InstrumentDownloadSchemeSerializer,
+    )
     from poms.obj_attrs.serializers import GenericAttributeTypeSerializer
-    from poms.ui.serializers import DashboardLayoutSerializer
-    from poms.ui.serializers import ListLayoutSerializer
-    from poms.ui.serializers import ContextMenuLayoutSerializer
-    from poms.ui.serializers import ComplexTransactionUserFieldSerializer
-    from poms.ui.serializers import TransactionUserFieldSerializer
-    from poms.ui.serializers import InstrumentUserFieldSerializer
-
-    from poms.pricing.serializers import InstrumentPricingSchemeSerializer, CurrencyPricingSchemeSerializer
-
-    from poms.iam.serializers import GroupSerializer
-    from poms.iam.serializers import RoleSerializer
-    from poms.iam.serializers import AccessPolicySerializer
-
+    from poms.portfolios.serializers import PortfolioSerializer
+    from poms.pricing.serializers import (
+        CurrencyPricingSchemeSerializer,
+        InstrumentPricingSchemeSerializer,
+    )
+    from poms.procedures.serializers import (
+        ExpressionProcedureSerializer,
+        PricingProcedureSerializer,
+        RequestDataFileProcedureSerializer,
+    )
     from poms.reference_tables.serializers import ReferenceTableSerializer
-    from poms.ui.serializers import EditLayoutSerializer
-    from poms.ui.serializers import MemberLayoutSerializer
+    from poms.schedules.serializers import ScheduleSerializer
+    from poms.strategies.serializers import Strategy1Serializer, Strategy2Serializer
+    from poms.transactions.serializers import (
+        TransactionTypeGroupSerializer,
+        TransactionTypeSerializer,
+    )
+    from poms.ui.serializers import (
+        ComplexTransactionUserFieldSerializer,
+        ContextMenuLayoutSerializer,
+        DashboardLayoutSerializer,
+        EditLayoutSerializer,
+        InstrumentUserFieldSerializer,
+        ListLayoutSerializer,
+        MemberLayoutSerializer,
+        TransactionUserFieldSerializer,
+    )
+
     serializer_map = {
-
-        'transactions.transactiontype': TransactionTypeSerializer,
-        'transactions.transactiontypegroup': TransactionTypeGroupSerializer,
-        'instruments.instrument': InstrumentSerializer,
-        'instruments.instrumenttype': InstrumentTypeSerializer,
-        'instruments.pricingpolicy': PricingPolicySerializer,
-
-        'accounts.account': AccountSerializer,
-        'accounts.accounttype': AccountTypeSerializer,
-        'portfolios.portfolio': PortfolioSerializer,
-        'instruments.pricehistory': PriceHistorySerializer,
-        'currencies.currencyhistory': CurrencyHistorySerializer,
-        'counterparties.counterparty': CounterpartySerializer,
-        'counterparties.responsible': ResponsibleSerializer,
-        'strategies.strategy1': Strategy1Serializer,
-        'strategies.strategy2': Strategy2Serializer,
-        'strategies.strategy3': Strategy2Serializer,
-
-        'csv_import.csvimportscheme': CsvImportSchemeSerializer,
-        'integrations.complextransactionimportscheme': ComplexTransactionImportSchemeSerializer,
-        'integrations.instrumentdownloadscheme': InstrumentDownloadSchemeSerializer,
-        'procedures.pricingprocedure': PricingProcedureSerializer,
-        'procedures.expressionprocedure': ExpressionProcedureSerializer,
-        'procedures.requestdatafileprocedure': RequestDataFileProcedureSerializer,
-        'schedules.schedule': ScheduleSerializer,
-        'obj_attrs.genericattributetype': GenericAttributeTypeSerializer,
-
-        'ui.dashboardlayout': DashboardLayoutSerializer,
-        'ui.memberlayout': MemberLayoutSerializer,
-        'ui.listlayout': ListLayoutSerializer,
-        'ui.editlayout': EditLayoutSerializer,
-        'ui.contextmenulayout': ContextMenuLayoutSerializer,
-        'ui.complextransactionuserfield': ComplexTransactionUserFieldSerializer,
-        'ui.transactionuserfield': TransactionUserFieldSerializer,
-        'ui.instrumentuserfield': InstrumentUserFieldSerializer,
-
-        'pricing.instrumentpricingscheme': InstrumentPricingSchemeSerializer,
-        'pricing.currencypricingscheme': CurrencyPricingSchemeSerializer,
-
-        'iam.group': GroupSerializer,
-        'iam.role': RoleSerializer,
-        'iam.accesspolicy': AccessPolicySerializer,
-
-        'reference_tables.referencetable': ReferenceTableSerializer,
-
+        "transactions.transactiontype": TransactionTypeSerializer,
+        "transactions.transactiontypegroup": TransactionTypeGroupSerializer,
+        "instruments.instrument": InstrumentSerializer,
+        "instruments.instrumenttype": InstrumentTypeSerializer,
+        "instruments.pricingpolicy": PricingPolicySerializer,
+        "accounts.account": AccountSerializer,
+        "accounts.accounttype": AccountTypeSerializer,
+        "portfolios.portfolio": PortfolioSerializer,
+        "instruments.pricehistory": PriceHistorySerializer,
+        "currencies.currencyhistory": CurrencyHistorySerializer,
+        "counterparties.counterparty": CounterpartySerializer,
+        "counterparties.responsible": ResponsibleSerializer,
+        "strategies.strategy1": Strategy1Serializer,
+        "strategies.strategy2": Strategy2Serializer,
+        "strategies.strategy3": Strategy2Serializer,
+        "csv_import.csvimportscheme": CsvImportSchemeSerializer,
+        "integrations.complextransactionimportscheme": ComplexTransactionImportSchemeSerializer,
+        "integrations.instrumentdownloadscheme": InstrumentDownloadSchemeSerializer,
+        "procedures.pricingprocedure": PricingProcedureSerializer,
+        "procedures.expressionprocedure": ExpressionProcedureSerializer,
+        "procedures.requestdatafileprocedure": RequestDataFileProcedureSerializer,
+        "schedules.schedule": ScheduleSerializer,
+        "obj_attrs.genericattributetype": GenericAttributeTypeSerializer,
+        "ui.dashboardlayout": DashboardLayoutSerializer,
+        "ui.memberlayout": MemberLayoutSerializer,
+        "ui.listlayout": ListLayoutSerializer,
+        "ui.editlayout": EditLayoutSerializer,
+        "ui.contextmenulayout": ContextMenuLayoutSerializer,
+        "ui.complextransactionuserfield": ComplexTransactionUserFieldSerializer,
+        "ui.transactionuserfield": TransactionUserFieldSerializer,
+        "ui.instrumentuserfield": InstrumentUserFieldSerializer,
+        "pricing.instrumentpricingscheme": InstrumentPricingSchemeSerializer,
+        "pricing.currencypricingscheme": CurrencyPricingSchemeSerializer,
+        "iam.group": GroupSerializer,
+        "iam.role": RoleSerializer,
+        "iam.accesspolicy": AccessPolicySerializer,
+        "reference_tables.referencetable": ReferenceTableSerializer,
     }
 
     return serializer_map[content_type_key]
 
 
 def get_list_of_entity_attributes(content_type_key):
-    '''
+    """
     Returns a list of attributes for a given entity type.
     :param content_type_key:
     :return: list of attributes
-    '''
+    """
+    from poms.obj_attrs.models import GenericAttributeType
 
     content_type = get_content_type_by_name(content_type_key)
     result = []
-    from poms.obj_attrs.models import GenericAttributeType
+
     attribute_types = GenericAttributeType.objects.filter(content_type=content_type)
 
     for attribute_type in attribute_types:
-        result.append({
-            "name": attribute_type.name,
-            "key": "attributes." + attribute_type.user_code,
-            "value_type": attribute_type.value_type,
-            "tooltip": attribute_type.tooltip,
-            "can_recalculate": attribute_type.can_recalculate
-        })
+        result.append(
+            {
+                "name": attribute_type.name,
+                "key": "attributes." + attribute_type.user_code,
+                "value_type": attribute_type.value_type,
+                "tooltip": attribute_type.tooltip,
+                "can_recalculate": attribute_type.can_recalculate,
+            }
+        )
 
     return result
 
 
 def compare_versions(version1, version2):
-    v1_parts = version1.split('.')
-    v2_parts = version2.split('.')
+    v1_parts = version1.split(".")
+    v2_parts = version2.split(".")
 
     for v1_part, v2_part in zip(v1_parts, v2_parts):
         v1_number = int(v1_part)

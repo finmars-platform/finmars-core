@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('instruments', '0003_initial'),
+        ("instruments", "0003_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='pricehistory',
-            name='is_temporary_price',
-            field=models.BooleanField(default=False, verbose_name='is temporary price'),
+            model_name="pricehistory",
+            name="is_temporary_price",
+            field=models.BooleanField(default=False, verbose_name="is temporary price"),
         ),
     ]

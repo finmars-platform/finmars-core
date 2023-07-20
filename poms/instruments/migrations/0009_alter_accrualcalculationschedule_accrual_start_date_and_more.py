@@ -4,19 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('instruments', '0008_alter_pricehistory_index_together'),
+        ("instruments", "0008_alter_pricehistory_index_together"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='accrualcalculationschedule',
-            name='accrual_start_date',
-            field=models.CharField(blank=True, db_index=True, max_length=255, null=True, verbose_name='accrual start date'),
+            model_name="accrualcalculationschedule",
+            name="accrual_start_date",
+            field=models.CharField(
+                blank=True,
+                db_index=True,
+                max_length=255,
+                null=True,
+                verbose_name="accrual start date",
+            ),
         ),
         migrations.AlterIndexTogether(
-            name='accrualcalculationschedule',
-            index_together={('instrument', 'accrual_start_date')},
+            name="accrualcalculationschedule",
+            index_together={("instrument", "accrual_start_date")},
         ),
     ]

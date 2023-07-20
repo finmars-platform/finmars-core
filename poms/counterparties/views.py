@@ -35,7 +35,6 @@ from poms.users.filters import OwnerByMasterUserFilter
 class CounterpartyAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Counterparty
     target_model_serializer = CounterpartySerializer
-
     permission_classes = GenericAttributeTypeViewSet.permission_classes + []
 
 
@@ -71,7 +70,7 @@ class CounterpartyGroupViewSet(AbstractModelViewSet):
     ]
 
     def perform_destroy(self, instance):
-        super(CounterpartyGroupViewSet, self).perform_destroy(instance)
+        super().perform_destroy(instance)
 
         items_qs = Counterparty.objects.filter(
             master_user=instance.master_user, group=instance
@@ -156,15 +155,31 @@ class CounterpartyViewSet(AbstractModelViewSet):
     @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
         items = [
-            {"key": "name", "name": "Name", "value_type": 10},
-            {"key": "short_name", "name": "Short name", "value_type": 10},
-            {"key": "user_code", "name": "User code", "value_type": 10},
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
             {
                 "key": "public_name",
                 "name": "Public name",
                 "value_type": 10,
             },
-            {"key": "notes", "name": "Notes", "value_type": 10},
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+            },
             {
                 "key": "group",
                 "name": "Group",
@@ -173,12 +188,21 @@ class CounterpartyViewSet(AbstractModelViewSet):
                 "value_content_type": "counterparties.counterpartygroup",
                 "code": "user_code",
             },
-            {"key": "portfolios", "name": "Portfolios", "value_type": "mc_field"},
+            {
+                "key": "portfolios",
+                "name": "Portfolios",
+                "value_type": "mc_field",
+            },
         ]
 
         items += get_list_of_entity_attributes("counterparties.counterparty")
 
-        result = {"count": len(items), "next": None, "previous": None, "results": items}
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items,
+        }
 
         return Response(result)
 
@@ -222,7 +246,7 @@ class ResponsibleGroupViewSet(AbstractModelViewSet):
     ]
 
     def perform_destroy(self, instance):
-        super(ResponsibleGroupViewSet, self).perform_destroy(instance)
+        super().perform_destroy(instance)
 
         items_qs = Responsible.objects.filter(
             master_user=instance.master_user, group=instance
@@ -256,11 +280,6 @@ class ResponsibleViewSet(AbstractModelViewSet):
         "portfolios",
         get_attributes_prefetch(),
     )
-    # prefetch_permissions_for = (
-    #     ('group', ResponsibleGroup),
-    #     ('portfolios', Portfolio),
-    #     ('attributes__attribute_type', ResponsibleAttributeType)
-    # )
     serializer_class = ResponsibleSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
@@ -297,15 +316,31 @@ class ResponsibleViewSet(AbstractModelViewSet):
     @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
         items = [
-            {"key": "name", "name": "Name", "value_type": 10},
-            {"key": "short_name", "name": "Short name", "value_type": 10},
-            {"key": "user_code", "name": "User code", "value_type": 10},
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
             {
                 "key": "public_name",
                 "name": "Public name",
                 "value_type": 10,
             },
-            {"key": "notes", "name": "Notes", "value_type": 10},
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+            },
             {
                 "key": "group",
                 "name": "Group",
@@ -326,6 +361,11 @@ class ResponsibleViewSet(AbstractModelViewSet):
 
         items += get_list_of_entity_attributes("counterparties.responsible")
 
-        result = {"count": len(items), "next": None, "previous": None, "results": items}
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items,
+        }
 
         return Response(result)

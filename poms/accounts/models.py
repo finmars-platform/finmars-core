@@ -39,7 +39,6 @@ class AccountType(
         blank=True,
         verbose_name=gettext_lazy("transaction details expr"),
     )
-
     attributes = GenericRelation(
         GenericAttribute,
         verbose_name=gettext_lazy("attributes"),
@@ -58,7 +57,12 @@ class AccountType(
         Returns attributes that front end uses
         """
         return [
-            {"key": "name", "name": "Name", "value_type": 10, "allow_null": True},
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+                "allow_null": True,
+            },
             {
                 "key": "short_name",
                 "name": "Short name",
@@ -81,7 +85,12 @@ class AccountType(
                 "value_type": 10,
                 "allow_null": True,
             },
-            {"key": "notes", "name": "Notes", "value_type": 10, "allow_null": True},
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+                "allow_null": True,
+            },
             {
                 "key": "show_transaction_details",
                 "name": "Show transaction details",
@@ -118,9 +127,9 @@ class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
         verbose_name=gettext_lazy("account type"),
     )
     is_valid_for_all_portfolios = models.BooleanField(
-        default=True, verbose_name=gettext_lazy("is valid for all portfolios")
+        default=True,
+        verbose_name=gettext_lazy("is valid for all portfolios"),
     )
-
     attributes = GenericRelation(
         GenericAttribute, verbose_name=gettext_lazy("attributes")
     )
@@ -138,11 +147,31 @@ class Account(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
         Returns attributes that front end uses
         """
         return [
-            {"key": "name", "name": "Name", "value_type": 10},
-            {"key": "short_name", "name": "Short name", "value_type": 10},
-            {"key": "user_code", "name": "User code", "value_type": 10},
-            {"key": "public_name", "name": "Public name", "value_type": 10},
-            {"key": "notes", "name": "Notes", "value_type": 10},
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+            },
+            {
+                "key": "short_name",
+                "name": "Short name",
+                "value_type": 10,
+            },
+            {
+                "key": "user_code",
+                "name": "User code",
+                "value_type": 10,
+            },
+            {
+                "key": "public_name",
+                "name": "Public name",
+                "value_type": 10,
+            },
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+            },
             {
                 "key": "type",
                 "name": "Type",

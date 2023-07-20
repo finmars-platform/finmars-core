@@ -1237,8 +1237,6 @@ class InstrumentSerializer(
 
         self.calculate_prices_accrued_price(instance, False)
 
-        # self.rebuild_event_schedules(instance, False)
-
         # needed to update data about accrual_calculation_schedules and event_schedules
         instance.refresh_from_db()
 
@@ -1248,8 +1246,6 @@ class InstrumentSerializer(
         policies = PricingPolicy.objects.filter(master_user=instance.master_user)
 
         ids = set()
-
-        # print("creating default policies")
 
         for policy in policies:
             try:
@@ -1268,13 +1264,9 @@ class InstrumentSerializer(
                     )
                     set_instrument_pricing_scheme_parameters(o, parameters)
 
-                # print('o.pricing_scheme %s' % o.pricing_scheme)
-
                 o.save()
 
                 ids.add(o.id)
-
-        # print("update existing policies %s " % len(pricing_policies))
 
         if pricing_policies:
             for item in pricing_policies:
@@ -1317,8 +1309,6 @@ class InstrumentSerializer(
 
                     except Exception as e:
                         _l.info(f"Can't Find  Pricing Policy {repr(e)}")
-
-        # print('ids %s' % ids)
 
         if len(ids):
             InstrumentPricingPolicy.objects.filter(instrument=instance).exclude(
@@ -1495,16 +1485,14 @@ class InstrumentEvalSerializer(ModelWithUserCodeSerializer):
             "has_linked_with_portfolio",
             "pricing_currency",
             "accrued_currency",
-
-            'price_multiplier',
-            'accrued_multiplier',
-            'default_price',
-            'default_accrued',
-
-            'user_text_1',
-            'user_text_2',
-            'user_text_3',
-            'reference_for_pricing'
+            "price_multiplier",
+            "accrued_multiplier",
+            "default_price",
+            "default_accrued",
+            "user_text_1",
+            "user_text_2",
+            "user_text_3",
+            "reference_for_pricing",
         ]
 
         read_only_fields = fields
@@ -1615,20 +1603,6 @@ class AccrualCalculationScheduleSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
-        # TODO check it later
-        # periodicity = attrs['periodicity']
-        # if periodicity:
-        #     periodicity_n = attrs.get('periodicity_n', 0)
-        #     try:
-        #         periodicity.to_timedelta(n=periodicity_n)
-        #     except ValueError:
-        #         v = serializers.MinValueValidator(1)
-        #         try:
-        #             v(periodicity_n)
-        #         except serializers.ValidationError as e:
-        #             raise ValidationError({'periodicity_n': [str(e)]})
-        #         except serializers.DjangoValidationError as e:
-        #             raise ValidationError({'periodicity_n': e.messages})
         return attrs
 
 
@@ -1742,20 +1716,6 @@ class EventScheduleSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, attrs):
-        # TODO check it later
-        # periodicity = attrs['periodicity']
-        # if periodicity:
-        #     periodicity_n = attrs.get('periodicity_n', 0)
-        #     try:
-        #         periodicity.to_timedelta(n=periodicity_n)
-        #     except ValueError:
-        #         v = serializers.MinValueValidator(1)
-        #         try:
-        #             v(periodicity_n)
-        #         except serializers.ValidationError as e:
-        #             raise ValidationError({'periodicity_n': [str(e)]})
-        #         except serializers.DjangoValidationError as e:
-        #             raise ValidationError({'periodicity_n': e.messages})
         return attrs
 
     # def get_display_name(self, obj):
@@ -1796,8 +1756,8 @@ class PriceHistorySerializer(ModelMetaSerializer):
     )
     principal_price = FloatEvalField()
     accrued_price = FloatEvalField()
-
     procedure_modified_datetime = ReadOnlyField()
+    ytm = ReadOnlyField()
 
     class Meta:
         model = PriceHistory
@@ -1820,9 +1780,6 @@ class PriceHistorySerializer(ModelMetaSerializer):
             "ytm",
         ]
 
-    def __init__(self, *args, **kwargs):
-        super(PriceHistorySerializer, self).__init__(*args, **kwargs)
-
     @staticmethod
     def create_price_history_error(instance):
         history_item = PriceHistoryError()
@@ -1838,8 +1795,7 @@ class PriceHistorySerializer(ModelMetaSerializer):
         return history_item
 
     def create(self, validated_data):
-        instance = super(PriceHistorySerializer, self).create(validated_data)
-
+        instance = super().create(validated_data)
         instance.procedure_modified_datetime = now()
         instance.save()
 
@@ -1879,7 +1835,7 @@ class PriceHistorySerializer(ModelMetaSerializer):
         if not instance.created:
             instance.created = now()
 
-        instance = super(PriceHistorySerializer, self).update(instance, validated_data)
+        instance = super().update(instance, validated_data)
         instance.procedure_modified_datetime = now()
         instance.save()
 
