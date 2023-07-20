@@ -8,6 +8,7 @@ import re
 import traceback
 import uuid
 
+import pandas as pd
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
@@ -567,6 +568,21 @@ def _universal_parse_date(date_string):
 
     return dt.strftime("%Y-%m-%d")
 
+
+def _get_quarter(date):
+    date = _parse_date(date)
+
+    quarter = pd.Timestamp(date).quarter
+
+    return quarter
+
+def _get_year(date):
+    date = _parse_date(date)
+    return date.year
+
+def _get_month(date):
+    date = _parse_date(date)
+    return date.month
 
 def _universal_parse_country(value):
     result = None
@@ -3954,6 +3970,9 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def(
         "get_list_of_dates_between_two_dates", _get_list_of_dates_between_two_dates
     ),
+    SimpleEval2Def("get_quarter", _get_quarter),
+    SimpleEval2Def("get_year", _get_year),
+    SimpleEval2Def("get_month", _get_month),
     SimpleEval2Def("parse_date", _parse_date),
     SimpleEval2Def("universal_parse_date", _universal_parse_date),
     SimpleEval2Def("universal_parse_country", _universal_parse_country),
