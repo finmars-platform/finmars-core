@@ -1177,10 +1177,7 @@ class SimpleImportProcess(object):
                     ] = formula.safe_eval(
                         scheme_input.name_expr,
                         names=names,
-                        context={
-                            "master_user": self.master_user,
-                            "member": self.member,
-                        },
+                        context=self.context
                     )
                 except Exception as e:
                     conversion_item.conversion_inputs[scheme_input.name] = None
@@ -1246,6 +1243,7 @@ class SimpleImportProcess(object):
                         context={
                             "master_user": self.master_user,
                             "member": self.member,
+                            "request": self.proxy_request,
                             "transaction_import": {"items": self.preprocessed_items},
                         },
                     )
