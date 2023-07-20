@@ -22,9 +22,6 @@ from poms.users.utils import get_master_user_from_context, get_member_from_conte
 
 
 def set_currency_pricing_scheme_parameters(pricing_policy, parameters):
-    # print('pricing_policy %s ' % pricing_policy)
-    # print('parameters %s ' % parameters)
-
     if parameters:
         if hasattr(parameters, "data"):
             pricing_policy.data = parameters.data
@@ -61,9 +58,9 @@ class CurrencySerializer(
         ]
 
     def __init__(self, *args, **kwargs):
-        super(CurrencySerializer, self).__init__(*args, **kwargs)
-
         from poms.pricing.serializers import CurrencyPricingPolicySerializer
+
+        super().__init__(*args, **kwargs)
 
         self.fields["pricing_policies"] = CurrencyPricingPolicySerializer(
             allow_null=True, many=True, required=False
@@ -87,100 +84,66 @@ class CurrencySerializer(
 
         return instance
 
+    @staticmethod
+    def _update_currency_pricing_policy(item, cpp):
+        cpp.pricing_scheme = item["pricing_scheme"]
+        cpp.default_value = item["default_value"]
+        cpp.attribute_key = item["attribute_key"]
+        cpp.data = item["data"] if "data" in item else None
+        cpp.notes = item["notes"]
+        cpp.save()
+
     def save_pricing_policies(self, instance, pricing_policies):
         policies = PricingPolicy.objects.filter(master_user=instance.master_user)
 
         ids = set()
 
-        # print("creating default policies")
-
         for policy in policies:
             try:
-                o = CurrencyPricingPolicy.objects.get(
+                cpp = CurrencyPricingPolicy.objects.get(
                     currency=instance, pricing_policy=policy
                 )
 
             except CurrencyPricingPolicy.DoesNotExist:
-                o = CurrencyPricingPolicy(currency=instance, pricing_policy=policy)
-
-                # print('policy.default_instrument_pricing_scheme %s' % policy.default_currency_pricing_scheme)
+                cpp = CurrencyPricingPolicy(currency=instance, pricing_policy=policy)
 
                 if policy.default_currency_pricing_scheme:
-                    o.pricing_scheme = policy.default_currency_pricing_scheme
+                    cpp.pricing_scheme = policy.default_currency_pricing_scheme
 
                     parameters = policy.default_currency_pricing_scheme.get_parameters()
-                    set_currency_pricing_scheme_parameters(o, parameters)
+                    set_currency_pricing_scheme_parameters(cpp, parameters)
 
-                # print('o.pricing_scheme %s' % o.pricing_scheme)
-
-                o.save()
-
-                ids.add(o.id)
-
-        # print("update existing policies %s " % len(pricing_policies))
+                cpp.save()
+                ids.add(cpp.id)
 
         if pricing_policies:
             for item in pricing_policies:
-                print(f"item {item}")
-
                 try:
                     oid = item.get("id", None)
-
                     ids.add(oid)
 
-                    o = CurrencyPricingPolicy.objects.get(
+                    cpp = CurrencyPricingPolicy.objects.get(
                         currency_id=instance.id, id=oid
                     )
-
-                    o.pricing_scheme = item["pricing_scheme"]
-                    o.default_value = item["default_value"]
-                    o.attribute_key = item["attribute_key"]
-
-                    if "data" in item:
-                        o.data = item["data"]
-                    else:
-                        o.data = None
-
-                    o.notes = item["notes"]
-
-                    o.save()
+                    self._update_currency_pricing_policy(item, cpp)
 
                 except CurrencyPricingPolicy.DoesNotExist as e:
                     try:
-                        # print("Id is not Provided. Trying to lookup.")
-                        #
-                        # print('instance id %s' % instance)
-                        # print('pricing scheme %s' % item['pricing_scheme'])
-
-                        o = CurrencyPricingPolicy.objects.get(
+                        cpp = CurrencyPricingPolicy.objects.get(
                             currency_id=instance.id,
                             pricing_policy=item["pricing_policy"],
                         )
+                        self._update_currency_pricing_policy(item, cpp)
 
-                        o.pricing_scheme = item["pricing_scheme"]
-                        o.default_value = item["default_value"]
-                        o.attribute_key = item["attribute_key"]
-
-                        if "data" in item:
-                            o.data = item["data"]
-                        else:
-                            o.data = None
-
-                        o.notes = item["notes"]
-
-                        o.save()
-
-                        ids.add(o.id)
+                        ids.add(cpp.id)
 
                     except Exception as e:
                         print(f"Can't Find  Pricing Policy {e}")
 
-        # print('ids %s' % ids)
-
         if len(ids):
-            CurrencyPricingPolicy.objects.filter(currency=instance).exclude(
-                id__in=ids
-            ).delete()
+            CurrencyPricingPolicy.objects.filter(
+                currency=instance,
+            ).exclude(id__in=ids).delete()
 
 
 class CurrencyLightSerializer(ModelWithUserCodeSerializer):
@@ -238,7 +201,7 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
     def __init__(self, *args, **kwargs):
         from poms.instruments.serializers import PricingPolicyViewSerializer
 
-        super(CurrencyHistorySerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.fields["pricing_policy_object"] = PricingPolicyViewSerializer(
             source="pricing_policy", read_only=True
@@ -251,7 +214,6 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
         instance.save()
 
         history_item = CurrencyHistoryError()
-
         history_item.created = now()
         history_item.master_user = instance.currency.master_user
         history_item.currency = instance.currency
@@ -280,6 +242,18 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
 
         return instance
 
+    @staticmethod
+    def _create_currency_history_error(instance):
+        result = CurrencyHistoryError()
+        result.status = CurrencyHistoryError.STATUS_CREATED
+        result.master_user = instance.currency.master_user
+        result.currency = instance.currency
+        result.fx_rate = instance.fx_rate
+        result.date = instance.date
+        result.pricing_policy = instance.pricing_policy
+
+        return result
+
     def update(self, instance, validated_data):
         instance = super(CurrencyHistorySerializer, self).update(
             instance, validated_data
@@ -295,18 +269,10 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
                 date=instance.date,
                 pricing_policy=instance.pricing_policy,
             )[0]
-
             history_item.status = CurrencyHistoryError.STATUS_OVERWRITTEN
 
         except (CurrencyHistoryError.DoesNotExist, IndexError):
-            history_item = CurrencyHistoryError()
-
-            history_item.status = CurrencyHistoryError.STATUS_CREATED
-            history_item.master_user = instance.currency.master_user
-            history_item.currency = instance.currency
-            history_item.fx_rate = instance.fx_rate
-            history_item.date = instance.date
-            history_item.pricing_policy = instance.pricing_policy
+            history_item = self._create_currency_history_error(instance)
 
         history_item.save()
 
@@ -319,11 +285,13 @@ class CurrencyHistorySerializer(ModelMetaSerializer, ModelWithTimeStampSerialize
             section="prices",
             type="warning",
             title="Edit FX rate (manual)",
-            description=instance.currency.user_code
-            + " "
-            + str(instance.date)
-            + " "
-            + str(instance.fx_rate),
+            description=(
+                instance.currency.user_code
+                + " "
+                + str(instance.date)
+                + " "
+                + str(instance.fx_rate)
+            ),
         )
 
         return instance
@@ -357,7 +325,8 @@ class CurrencyDatabaseSearchRequestSerializer(serializers.Serializer):
     code = serializers.CharField(required=False)
     numeric_code = serializers.CharField(required=False)
 
-    def _filter_list(self, items: List[Dict], key: str, value: str) -> List[Dict]:
+    @staticmethod
+    def _filter_list(items: List[Dict], key: str, value: str) -> List[Dict]:
         if key and value and items:
             value_lower = value.lower()
             return list(filter(lambda x: value_lower in x[key].lower(), items))

@@ -1,8 +1,15 @@
 from modeltranslation.translator import translator
 
 from poms.common.translation import AbstractClassModelOptions
-from poms.instruments.models import InstrumentClass, DailyPricingModel, AccrualCalculationModel, PaymentSizeDetail, \
-    Periodicity, CostMethod, PricingCondition
+from poms.instruments.models import (
+    AccrualCalculationModel,
+    CostMethod,
+    DailyPricingModel,
+    InstrumentClass,
+    PaymentSizeDetail,
+    Periodicity,
+    PricingCondition,
+)
 
 translator.register(InstrumentClass, AbstractClassModelOptions)
 translator.register(DailyPricingModel, AbstractClassModelOptions)

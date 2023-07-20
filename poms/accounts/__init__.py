@@ -1,5 +1,3 @@
 """Accounts"""
 
-from __future__ import unicode_literals
-
-default_app_config = 'poms.accounts.apps.AccountsConfig'
+default_app_config = "poms.accounts.apps.AccountsConfig"

@@ -4,25 +4,30 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('instruments', '0010_instrumenttype_configuration_code'),
+        ("instruments", "0010_instrumenttype_configuration_code"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='instrument',
-            name='user_code',
-            field=models.CharField(blank=True, max_length=1024, null=True, verbose_name='user code'),
+            model_name="instrument",
+            name="user_code",
+            field=models.CharField(
+                blank=True, max_length=1024, null=True, verbose_name="user code"
+            ),
         ),
         migrations.AlterField(
-            model_name='instrumenttype',
-            name='user_code',
-            field=models.CharField(blank=True, max_length=1024, null=True, verbose_name='user code'),
+            model_name="instrumenttype",
+            name="user_code",
+            field=models.CharField(
+                blank=True, max_length=1024, null=True, verbose_name="user code"
+            ),
         ),
         migrations.AlterField(
-            model_name='pricingpolicy',
-            name='user_code',
-            field=models.CharField(blank=True, max_length=1024, null=True, verbose_name='user code'),
+            model_name="pricingpolicy",
+            name="user_code",
+            field=models.CharField(
+                blank=True, max_length=1024, null=True, verbose_name="user code"
+            ),
         ),
     ]

@@ -60,8 +60,6 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
             instance, validated_data
         )
 
-        # _l.info('attributes %s' % attributes)
-
         self.create_attributes_if_not_exists(instance)
 
         if attributes:
@@ -91,13 +89,9 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                 )
 
             except Exception as e:
-                _l.debug("create_attributes_if_not_exists.exception %s" % e)
-                _l.info(
-                    "Creating empty attribute %s for %s" % (attribute_type, instance.id)
-                )
-                _l.info(
-                    "Creating empty attribute %s for %s" % (attribute_type, instance)
-                )
+                _l.debug(f"create_attributes_if_not_exists.exception {e}")
+                _l.info(f"Creating empty attribute {attribute_type} for {instance.id}")
+                _l.info(f"Creating empty attribute {attribute_type} for {instance}")
 
                 attributes_to_create.append(
                     GenericAttribute(
@@ -109,7 +103,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
         if len(attributes_to_create):
             GenericAttribute.objects.bulk_create(attributes_to_create)
-            _l.info("attributes_to_create %s " % len(attributes_to_create))
+            _l.info(f"attributes_to_create {len(attributes_to_create)} ")
 
     def recursive_calculation(
         self, attribute_types, executed_expressions, eval_data, current_index, limit
@@ -120,7 +114,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                     executed_expressions[attribute_type.user_code] = safe_eval(
                         attribute_type.expr, names={"this": eval_data}, context={}
                     )
-                except (ExpressionEvalError, TypeError, Exception, KeyError):
+                except (ExpressionEvalError, Exception):
                     executed_expressions[
                         attribute_type.user_code
                     ] = "Invalid Expression"
@@ -145,18 +139,14 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
             if attribute_type.value_type == 10:
                 attributes_converted[attribute_type.user_code] = attr.value_string
 
-            if attribute_type.value_type == 20:
+            elif attribute_type.value_type == 20:
                 attributes_converted[attribute_type.user_code] = attr.value_float
 
-            if attribute_type.value_type == 30:
-                if attr.classifier:
-                    attributes_converted[
-                        attribute_type.user_code
-                    ] = attr.classifier.name
-                else:
-                    attributes_converted[attribute_type.user_code] = None
-
-            if attribute_type.value_type == 40:
+            elif attribute_type.value_type == 30:
+                attributes_converted[attribute_type.user_code] = (
+                    attr.classifier.name if attr.classifier else None
+                )
+            elif attribute_type.value_type == 40:
                 attributes_converted[attribute_type.user_code] = attr.value_date
 
         return attributes_converted
@@ -298,9 +288,7 @@ class GenericClassifierRecursiveField(serializers.Serializer):
 
 class GenericClassifierListSerializer(serializers.ListSerializer):
     def get_attribute(self, instance):
-        tree = get_cached_trees(instance.classifiers.all())
-
-        return tree
+        return get_cached_trees(instance.classifiers.all())
 
 
 class GenericClassifierSerializer(serializers.ModelSerializer):
@@ -350,7 +338,6 @@ class GenericClassifierNodeSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-        # print('Create classifier node')
 
         return GenericClassifier(**validated_data)
 
@@ -393,7 +380,6 @@ class GenericAttributeTypeOptionIsHiddenField(serializers.BooleanField):
         return False
 
 
-# class GenericAttributeTypeSerializer(ModelWithObjectPermissionSerializer, ModelWithUserCodeSerializer):
 class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
     is_hidden = GenericAttributeTypeOptionIsHiddenField()
@@ -440,14 +426,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
         ]
 
     def __init__(self, *args, **kwargs):
-        # show_classifiers = kwargs.pop('show_classifiers', False)
-        # read_only_value_type = kwargs.pop('read_only_value_type', False)
         super(GenericAttributeTypeSerializer, self).__init__(*args, **kwargs)
-        # if not show_classifiers:
-        #     self.fields.pop('classifiers', None)
-        #     self.fields.pop('classifiers_flat', None)
-        # if read_only_value_type:
-        #     self.fields['value_type'].read_only = True
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -554,8 +533,6 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
             o = GenericClassifier()
             is_new_node = True
 
-        # print('o %s', o)
-
         try:
             self.delete_matched_classifier_node_mapping(instance, o)
 
@@ -568,11 +545,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
             o.save()
 
             prev_sibling = o.get_previous_sibling()
-            prev_sibling_id = None
-
-            if prev_sibling is not None:
-                prev_sibling_id = prev_sibling.id
-
+            prev_sibling_id = prev_sibling.id if prev_sibling is not None else None
             if prev_sibling_id != previous_node_id:
                 if previous_node_id is not None:
                     # instance may contain old data after previous saves, update it
@@ -588,8 +561,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
             self.create_classifier_node_mapping(instance, o)
 
         except IntegrityError as e:
-            _l.error("Error save_classifier %s " % e)
-            # raise ValidationError("non unique user_code")
+            _l.error(f"Error save_classifier {e} ")
 
         processed.add(o.id)
         prev_node = None
@@ -727,15 +699,6 @@ class GenericAttributeListSerializer(serializers.ListSerializer):
             return instance.attributes
         master_user = get_master_user_from_context(self.context)
         attribute_type_qs = GenericAttributeType.objects.filter(master_user=master_user)
-        # return instance.attributes.filter(attribute_type__in=attribute_type_qs)
-
-        # Probably deprecated 2023-03-10
-        # from poms.reports.builders.transaction_item import TransactionReportItem
-        # from poms.transactions.models import Transaction
-        # if isinstance(instance, TransactionReportItem):
-        #     content_type = ContentType.objects.get_for_model(Transaction)
-        # else:
-        #     content_type = ContentType.objects.get_for_model(instance)
 
         content_type = ContentType.objects.get_for_model(instance)
 
@@ -792,22 +755,6 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
         if isinstance(parent, ListSerializer):
             parent = parent.parent
         owner_model_content_type = ContentType.objects.get_for_model(parent.Meta.model)
-        # root_model_content_type = ContentType.objects.get_for_model(self.root.Meta.model)
-
-        # attribute_type = attrs['attribute_type']
-        # if attribute_type.content_type_id != owner_model_content_type.id:
-        #     # raise ValidationError({
-        #     #     'attribute_type':
-        #     # })
-        #     self.fields['attribute_type'].fail('does_not_exist', pk_value=attribute_type.id)
-
-        # classifier = attrs.get('classifier', None)
-        # if attribute_type.value_type == GenericAttributeType.CLASSIFIER and classifier:
-        #     if attribute_type.id != classifier.attribute_type_id:
-        #         # raise ValidationError(
-        #         #     {'classifier': gettext_lazy('Invalid pk "%(pk)s" - object does not exist.') % {
-        #         #         'pk': classifier.id}})
-        #         self.fields['classifier'].fail('does_not_exist', pk_value=classifier.id)
 
         return attrs
 
@@ -819,8 +766,6 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
                 for c in l:
                     self._attribute_type_classifiers[c.id] = c
                 get_cached_trees(l)
-
-            # print('_attribute_type_classifiers %s' % self._attribute_type_classifiers)
 
             if instance.classifier_id in self._attribute_type_classifiers:
                 instance.classifier = self._attribute_type_classifiers[
@@ -856,18 +801,6 @@ class GenericAttributeOnlySerializer(serializers.ModelSerializer):
         self._attribute_type_classifiers = {}
 
     def to_representation(self, instance):
-        # if instance.classifier_id:
-        #     # classifiers must be already loaded through prefetch_related()
-        #     if instance.attribute_type_id not in self._attribute_type_classifiers:
-        #         l = list(instance.attribute_type.classifiers.all())
-        #         for c in l:
-        #             self._attribute_type_classifiers[c.id] = c
-        #         get_cached_trees(l)
-        #
-        #     # print('_attribute_type_classifiers %s' % self._attribute_type_classifiers)
-        #
-        #     instance.classifier = self._attribute_type_classifiers[instance.classifier_id]
-
         return super(GenericAttributeOnlySerializer, self).to_representation(instance)
 
 
@@ -904,7 +837,7 @@ class RecalculateAttributes:
         self.stats_file_report = stats_file_report
 
     def __str__(self):
-        return "%s" % (getattr(self.master_user, "name", None))
+        return f'{getattr(self.master_user, "name", None)}'
 
 
 class RecalculateAttributesSerializer(serializers.Serializer):
@@ -913,7 +846,6 @@ class RecalculateAttributesSerializer(serializers.Serializer):
 
     master_user = MasterUserField()
     member = HiddenMemberField()
-    # attribute_type_id = serializers.IntegerField(allow_null=True, required=False)
 
     processed_rows = serializers.ReadOnlyField()
     total_rows = serializers.ReadOnlyField()

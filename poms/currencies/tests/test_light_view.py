@@ -1,7 +1,7 @@
 from django.conf import settings
 
-from poms.currencies.models import Currency
 from poms.common.common_base_test import BaseTestCase
+from poms.currencies.models import Currency
 
 
 class CompanyViewTestCase(BaseTestCase):
@@ -9,7 +9,6 @@ class CompanyViewTestCase(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.url = f"/{settings.BASE_API_URL}/api/v1/currencies/currency/light/"
-
 
     @BaseTestCase.cases(
         ("name", "name"),

@@ -1,30 +1,31 @@
-from __future__ import unicode_literals
-
 import django_filters
 from django_filters.rest_framework import FilterSet
-from rest_framework.settings import api_settings
 from rest_framework.decorators import action
+from rest_framework.response import Response
+
 from poms.accounts.models import Account, AccountType
-from poms.accounts.serializers import AccountSerializer, AccountTypeSerializer, AccountLightSerializer
-from poms.common.filters import CharFilter, NoOpFilter, \
-    GroupsAttributeFilter, AttributeFilter, EntitySpecificFilter
-from poms.common.pagination import CustomPaginationMixin
+from poms.accounts.serializers import (
+    AccountLightSerializer,
+    AccountSerializer,
+    AccountTypeSerializer,
+)
+from poms.common.filters import (
+    AttributeFilter,
+    CharFilter,
+    EntitySpecificFilter,
+    GroupsAttributeFilter,
+    NoOpFilter,
+)
 from poms.common.utils import get_list_of_entity_attributes
 from poms.common.views import AbstractModelViewSet
-from poms.obj_attrs.models import GenericAttributeType
 from poms.obj_attrs.utils import get_attributes_prefetch
 from poms.obj_attrs.views import GenericAttributeTypeViewSet, GenericClassifierViewSet
-from poms.portfolios.models import Portfolio
 from poms.users.filters import OwnerByMasterUserFilter
-from rest_framework.response import Response
-from drf_yasg.utils import swagger_auto_schema
+
 
 class AccountTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = AccountType
-
-    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
-
-    ]
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + []
 
 
 class AccountTypeFilterSet(FilterSet):
@@ -42,10 +43,7 @@ class AccountTypeFilterSet(FilterSet):
 
 
 class AccountTypeViewSet(AbstractModelViewSet):
-
-    queryset = AccountType.objects.select_related(
-        'master_user'
-    ).prefetch_related(
+    queryset = AccountType.objects.select_related("master_user").prefetch_related(
         get_attributes_prefetch(),
     )
     serializer_class = AccountTypeSerializer
@@ -53,16 +51,19 @@ class AccountTypeViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
         AttributeFilter,
         GroupsAttributeFilter,
-        EntitySpecificFilter
+        EntitySpecificFilter,
     ]
     filter_class = AccountTypeFilterSet
     ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name', 'show_transaction_details'
+        "user_code",
+        "name",
+        "short_name",
+        "public_name",
+        "show_transaction_details",
     ]
 
-    @action(detail=False, methods=['get'], url_path='attributes')
+    @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
-
         items = [
             {
                 "key": "name",
@@ -97,43 +98,16 @@ class AccountTypeViewSet(AbstractModelViewSet):
             {
                 "key": "transaction_details_expr",
                 "name": "Transaction details expr",
-                "value_type": 10
-            }
+                "value_type": 10,
+            },
         ]
 
-        items = items + get_list_of_entity_attributes('accounts.accounttype')
+        items += get_list_of_entity_attributes("accounts.accounttype")
 
-        result = {
-            "count": len(items),
-            "next": None,
-            "previous": None,
-            "results": items
-        }
+        result = {"count": len(items), "next": None, "previous": None, "results": items}
 
         return Response(result)
 
-    # @swagger_auto_schema(operation_id="Account Type List")
-    # def list(self, request, *args, **kwargs):
-    #     return super().list(request, *args, **kwargs)
-    # @swagger_auto_schema(operation_id="Account Type Retrieve")
-    # def retrieve(self, request, *args, **kwargs):
-    #     return super().retrieve(request, *args, **kwargs)
-    #
-    # @swagger_auto_schema(operation_id="Account Type Create")
-    # def create(self, request, *args, **kwargs):
-    #     return super().create(request, *args, **kwargs)
-    #
-    # @swagger_auto_schema(operation_id="Account Type Update")
-    # def update(self, request, *args, **kwargs):
-    #     return super().update(request, *args, **kwargs)
-    #
-    # @swagger_auto_schema(operation_id="Account Type Partial Update")
-    # def partial_update(self, request, *args, **kwargs):
-    #     return super().partial_update(request, *args, **kwargs)
-    #
-    # @swagger_auto_schema(operation_id="Account Type Delete")
-    # def destroy(self, request, *args, **kwargs):
-    #     return super().destroy(request, *args, **kwargs)
 
 class AccountTypeEvFilterSet(FilterSet):
     id = NoOpFilter()
@@ -152,10 +126,7 @@ class AccountTypeEvFilterSet(FilterSet):
 class AccountAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = Account
     target_model_serializer = AccountSerializer
-
-    permission_classes = GenericAttributeTypeViewSet.permission_classes + [
-
-    ]
+    permission_classes = GenericAttributeTypeViewSet.permission_classes + []
 
 
 class AccountClassifierViewSet(GenericClassifierViewSet):
@@ -180,58 +151,56 @@ class AccountFilterSet(FilterSet):
 
 class AccountViewSet(AbstractModelViewSet):
     queryset = Account.objects.select_related(
-        'master_user',
-        'type',
+        "master_user",
+        "type",
     ).prefetch_related(
-        'portfolios',
-        # Prefetch('attributes', queryset=AccountAttribute.objects.select_related(
-        #     'attribute_type', 'classifier'
-        # ).prefetch_related(
-        #     'attribute_type__options'
-        # )),
+        "portfolios",
         get_attributes_prefetch(),
     )
-    # prefetch_permissions_for = (
-    #     ('type', AccountType),
-    #     ('portfolios', Portfolio),
-    #     ('attributes__attribute_type', AccountAttributeType),
-    # )
     serializer_class = AccountSerializer
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
         GroupsAttributeFilter,
-        AttributeFilter
+        AttributeFilter,
     ]
     filter_class = AccountFilterSet
     ordering_fields = [
-        'user_code', 'name', 'short_name', 'public_name', 'is_valid_for_all_portfolios',
-        'type', 'type__user_code', 'type__name', 'type__short_name', 'type__public_name',
+        "user_code",
+        "name",
+        "short_name",
+        "public_name",
+        "is_valid_for_all_portfolios",
+        "type",
+        "type__user_code",
+        "type__name",
+        "type__short_name",
+        "type__public_name",
     ]
 
-    @action(detail=False, methods=['get'], url_path='light', serializer_class=AccountLightSerializer)
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="light",
+        serializer_class=AccountLightSerializer,
+    )
     def list_light(self, request, *args, **kwargs):
-
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
 
-        result = self.get_paginated_response(serializer.data)
+        return self.get_paginated_response(serializer.data)
 
-        return result
-
-    @action(detail=False, methods=['get'], url_path='attributes')
+    @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
+        items = Account.get_system_attrs()
 
-        items = Account.system_attrs()
-
-        items = items + get_list_of_entity_attributes('accounts.account')
+        items += get_list_of_entity_attributes("accounts.account")
 
         result = {
             "count": len(items),
             "next": None,
             "previous": None,
-            "results": items
+            "results": items,
         }
 
         return Response(result)
-
