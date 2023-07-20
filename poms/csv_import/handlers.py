@@ -1301,7 +1301,8 @@ class SimpleImportProcess(object):
                                 ]
 
                         if attribute_type.value_type == GenericAttributeType.NUMBER:
-                            if item.final_inputs[entity_field.attribute_user_code]:
+
+                            if item.final_inputs[entity_field.attribute_user_code] or item.final_inputs[entity_field.attribute_user_code] == 0:
                                 attribute["value_float"] = item.final_inputs[
                                     entity_field.attribute_user_code
                                 ]
