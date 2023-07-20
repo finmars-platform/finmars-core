@@ -4,15 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('instruments', '0011_alter_instrument_user_code_and_more'),
+        ("instruments", "0011_alter_instrument_user_code_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='pricingpolicy',
-            name='configuration_code',
-            field=models.CharField(default='com.finmars.local', max_length=255, verbose_name='Configuration Code'),
+            model_name="pricingpolicy",
+            name="configuration_code",
+            field=models.CharField(
+                default="com.finmars.local",
+                max_length=255,
+                verbose_name="Configuration Code",
+            ),
         ),
     ]

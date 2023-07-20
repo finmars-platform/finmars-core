@@ -59,7 +59,6 @@ class CounterpartySerializer(
     portfolios_object = serializers.PrimaryKeyRelatedField(
         source="portfolios", many=True, read_only=True
     )
-    # attributes = CounterpartyAttributeSerializer(many=True, required=False, allow_null=True)
 
     class Meta:
         model = Counterparty
@@ -79,13 +78,12 @@ class CounterpartySerializer(
             "portfolios",
             "portfolios_object",
             "is_enabled"
-            # 'attributes',
         ]
 
     def __init__(self, *args, **kwargs):
         from poms.portfolios.serializers import PortfolioViewSerializer
 
-        super(CounterpartySerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields["portfolios_object"] = PortfolioViewSerializer(
             source="portfolios",
             many=True,
@@ -127,11 +125,6 @@ class CounterpartyViewSerializer(ModelWithUserCodeSerializer):
             "public_name",
         ]
 
-        def to_representation(self, instance):
-
-            result = super(CounterpartyViewSerializer, self).to_representation(instance)
-
-            return result
 
 class ResponsibleGroupSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
@@ -178,7 +171,6 @@ class ResponsibleSerializer(
         many=True,
         read_only=True,
     )
-    # attributes = ResponsibleAttributeSerializer(many=True, required=False, allow_null=True)
 
     class Meta:
         model = Responsible
@@ -197,15 +189,13 @@ class ResponsibleSerializer(
             "is_deleted",
             "portfolios",
             "portfolios_object",
-            "is_enabled"
-            # 'attributes'
+            "is_enabled",
         ]
 
     def __init__(self, *args, **kwargs):
-        super(ResponsibleSerializer, self).__init__(*args, **kwargs)
-
         from poms.portfolios.serializers import PortfolioViewSerializer
 
+        super().__init__(*args, **kwargs)
         self.fields["portfolios_object"] = PortfolioViewSerializer(
             source="portfolios",
             many=True,
@@ -278,7 +268,6 @@ class ResponsibleEvalSerializer(
 ):
     master_user = MasterUserField()
     group = ResponsibleGroupField()
-    # attributes = ResponsibleAttributeSerializer(many=True, required=False, allow_null=True)
 
     class Meta:
         model = Responsible
@@ -295,7 +284,6 @@ class ResponsibleEvalSerializer(
             "is_valid_for_all_portfolios",
             "is_deleted",
             "is_enabled"
-            # 'attributes'
         ]
 
         read_only_fields = fields

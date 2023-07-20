@@ -1,16 +1,12 @@
-from __future__ import unicode_literals
-
 import logging
 
 from django.db.models import Q
 from rest_framework.filters import BaseFilterBackend
 
-from poms.accounts.models import Account
 from poms.instruments.models import Instrument, InstrumentType
 from poms.obj_attrs.models import GenericAttributeType
-from poms.portfolios.models import Portfolio
 
-_l = logging.getLogger('poms.instruments')
+_l = logging.getLogger("poms.instruments")
 
 
 class OwnerByInstrumentFilter(BaseFilterBackend):
@@ -27,27 +23,23 @@ class OwnerByPermissionedInstrumentFilter(BaseFilterBackend):
 
 class OwnerByInstrumentTypeFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        instrument_types = InstrumentType.objects.filter(master_user=request.user.master_user)
+        instrument_types = InstrumentType.objects.filter(
+            master_user=request.user.master_user
+        )
         return queryset.filter(instrument_type__in=instrument_types)
 
 
 class OwnerByInstrumentAttributeTypeFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
-        instrument_attribute_types = GenericAttributeType.objects.filter(master_user=request.user.master_user)
+        instrument_attribute_types = GenericAttributeType.objects.filter(
+            master_user=request.user.master_user
+        )
         return queryset.filter(attribute_type__in=instrument_attribute_types)
 
 
 class PriceHistoryObjectPermissionFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
         return queryset
-
-
-# class InstrumentTypeFilter(ModelWithPermissionMultipleChoiceFilter):
-#     model = InstrumentType
-#
-#
-# class InstrumentFilter(ModelWithPermissionMultipleChoiceFilter):
-#     model = Instrument
 
 
 class GeneratedEventPermissionFilter(BaseFilterBackend):
@@ -57,11 +49,10 @@ class GeneratedEventPermissionFilter(BaseFilterBackend):
 
 class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
     def filter_queryset(self, request, queryset, view):
+        query = request.query_params.get("query", "")
+        instrument_type = request.query_params.get("instrument_type", "")
 
-        query = request.query_params.get('query', '')
-        instrument_type = request.query_params.get('instrument_type', '')
-
-        pieces = query.split(' ')
+        pieces = query.split(" ")
 
         options = Q()
 
@@ -82,15 +73,14 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
             short_name_q.add(Q(short_name__icontains=piece), Q.AND)
 
         for piece in pieces:
-            reference_for_pricing_q.add(Q(reference_for_pricing__icontains=piece), Q.AND)
-
-        # for piece in pieces:
-        #     instrument_type_name.add(Q(instrument_type__name__icontains=piece), Q.OR)
+            reference_for_pricing_q.add(
+                Q(reference_for_pricing__icontains=piece), Q.AND
+            )
 
         for piece in pieces:
-            instrument_type_user_code.add(Q(instrument_type__user_code__icontains=piece), Q.AND)
-
-        # _l.info('query %s' % query)
+            instrument_type_user_code.add(
+                Q(instrument_type__user_code__icontains=piece), Q.AND
+            )
 
         options.add(Q(name__icontains=query), Q.OR)
         options.add(Q(user_code__icontains=query), Q.OR)
@@ -100,7 +90,6 @@ class InstrumentSelectSpecialQueryFilter(BaseFilterBackend):
         options.add(user_code_q, Q.OR)
         options.add(short_name_q, Q.OR)
         options.add(reference_for_pricing_q, Q.OR)
-        # options.add(instrument_type_name, Q.AND)
         options.add(instrument_type_user_code, Q.OR)
 
         if instrument_type:

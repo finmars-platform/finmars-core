@@ -1,35 +1,30 @@
-from __future__ import unicode_literals
-
-from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeOrPrimaryKeyRelatedField
-from poms.counterparties.models import Counterparty, Responsible, CounterpartyGroup, ResponsibleGroup
+from poms.common.fields import UserCodeOrPrimaryKeyRelatedField
+from poms.counterparties.models import (
+    Counterparty,
+    CounterpartyGroup,
+    Responsible,
+    ResponsibleGroup,
+)
 from poms.users.filters import OwnerByMasterUserFilter
-
-
-# class CounterpartyAttributeTypeField(PrimaryKeyRelatedFilteredField):
-#     queryset = CounterpartyAttributeType.objects
-#     filter_backends = [
-#         OwnerByMasterUserFilter,
-#         ObjectPermissionBackend,
-#     ]
-#
-#
-# class CounterpartyClassifierField(AttributeClassifierBaseField):
-#     queryset = CounterpartyClassifier.objects
 
 
 class CounterpartyGroupDefault(object):
     requires_context = True
 
     def set_context(self, serializer_field):
-        request = serializer_field.context['request']
-        from poms.users.models import MasterUser
         from poms_app import settings
+
+        from poms.users.models import MasterUser
+
         self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
     def __call__(self, serializer_field):
-        self.set_context(serializer_field)
         from poms.users.models import EcosystemDefault
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        self.set_context(serializer_field)
+        self.ecosystem_defaults = EcosystemDefault.objects.get(
+            master_user=self._master_user
+        )
 
         return self.ecosystem_defaults.counterparty_group
 
@@ -45,15 +40,19 @@ class CounterpartyDefault(object):
     requires_context = True
 
     def set_context(self, serializer_field):
-        request = serializer_field.context['request']
-        from poms.users.models import MasterUser
         from poms_app import settings
+
+        from poms.users.models import MasterUser
+
         self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
         from poms.users.models import EcosystemDefault
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        self.ecosystem_defaults = EcosystemDefault.objects.get(
+            master_user=self._master_user
+        )
 
         return self.ecosystem_defaults.counterparty
 
@@ -65,31 +64,23 @@ class CounterpartyField(UserCodeOrPrimaryKeyRelatedField):
     ]
 
 
-# class ResponsibleAttributeTypeField(PrimaryKeyRelatedFilteredField):
-#     queryset = ResponsibleAttributeType.objects
-#     filter_backends = [
-#         OwnerByMasterUserFilter,
-#         ObjectPermissionBackend,
-#     ]
-#
-#
-# class ResponsibleClassifierField(AttributeClassifierBaseField):
-#     queryset = ResponsibleClassifier.objects
-
-
 class ResponsibleGroupDefault(object):
     requires_context = True
 
     def set_context(self, serializer_field):
-        request = serializer_field.context['request']
-        from poms.users.models import MasterUser
         from poms_app import settings
+
+        from poms.users.models import MasterUser
+
         self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
     def __call__(self, serializer_field):
         self.set_context(serializer_field)
         from poms.users.models import EcosystemDefault
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        self.ecosystem_defaults = EcosystemDefault.objects.get(
+            master_user=self._master_user
+        )
 
         return self.ecosystem_defaults.responsible_group
 
@@ -105,15 +96,19 @@ class ResponsibleDefault(object):
     requires_context = True
 
     def set_context(self, serializer_field):
-        request = serializer_field.context['request']
-        from poms.users.models import MasterUser
         from poms_app import settings
+
+        from poms.users.models import MasterUser
+
         self._master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
     def __call__(self, serializer_field):
-        self.set_context(serializer_field)
         from poms.users.models import EcosystemDefault
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self._master_user)
+
+        self.set_context(serializer_field)
+        self.ecosystem_defaults = EcosystemDefault.objects.get(
+            master_user=self._master_user
+        )
 
         return self.ecosystem_defaults.responsible
 

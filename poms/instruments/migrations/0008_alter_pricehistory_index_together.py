@@ -4,14 +4,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('instruments', '0007_pricehistory_factor'),
+        ("instruments", "0007_pricehistory_factor"),
     ]
 
     operations = [
         migrations.AlterIndexTogether(
-            name='pricehistory',
-            index_together={('instrument', 'pricing_policy', 'date')},
+            name="pricehistory",
+            index_together={("instrument", "pricing_policy", "date")},
         ),
     ]

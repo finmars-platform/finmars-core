@@ -4,101 +4,323 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Counterparty',
+            name="Counterparty",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('user_code', models.CharField(blank=True, max_length=255, null=True, verbose_name='user code')),
-                ('name', models.CharField(max_length=255, verbose_name='name')),
-                ('short_name', models.TextField(blank=True, null=True, verbose_name='short name')),
-                ('public_name', models.CharField(blank=True, help_text='used if user does not have permissions to view object', max_length=255, null=True, verbose_name='public name')),
-                ('notes', models.TextField(blank=True, null=True, verbose_name='notes')),
-                ('is_enabled', models.BooleanField(db_index=True, default=True, verbose_name='is enabled')),
-                ('created', models.DateTimeField(auto_now_add=True, db_index=True, null=True, verbose_name='created')),
-                ('modified', models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified')),
-                ('is_deleted', models.BooleanField(db_index=True, default=False, verbose_name='is deleted')),
-                ('deleted_user_code', models.CharField(blank=True, max_length=255, null=True, verbose_name='deleted user code')),
-                ('is_valid_for_all_portfolios', models.BooleanField(default=True, verbose_name='is valid for all portfolios')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "user_code",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="user code"
+                    ),
+                ),
+                ("name", models.CharField(max_length=255, verbose_name="name")),
+                (
+                    "short_name",
+                    models.TextField(blank=True, null=True, verbose_name="short name"),
+                ),
+                (
+                    "public_name",
+                    models.CharField(
+                        blank=True,
+                        help_text="used if user does not have permissions to view object",
+                        max_length=255,
+                        null=True,
+                        verbose_name="public name",
+                    ),
+                ),
+                (
+                    "notes",
+                    models.TextField(blank=True, null=True, verbose_name="notes"),
+                ),
+                (
+                    "is_enabled",
+                    models.BooleanField(
+                        db_index=True, default=True, verbose_name="is enabled"
+                    ),
+                ),
+                (
+                    "created",
+                    models.DateTimeField(
+                        auto_now_add=True,
+                        db_index=True,
+                        null=True,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    models.DateTimeField(
+                        auto_now=True, db_index=True, verbose_name="modified"
+                    ),
+                ),
+                (
+                    "is_deleted",
+                    models.BooleanField(
+                        db_index=True, default=False, verbose_name="is deleted"
+                    ),
+                ),
+                (
+                    "deleted_user_code",
+                    models.CharField(
+                        blank=True,
+                        max_length=255,
+                        null=True,
+                        verbose_name="deleted user code",
+                    ),
+                ),
+                (
+                    "is_valid_for_all_portfolios",
+                    models.BooleanField(
+                        default=True, verbose_name="is valid for all portfolios"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'counterparty',
-                'verbose_name_plural': 'counterparties',
-                'ordering': ['user_code'],
-                'permissions': [('manage_counterparty', 'Can manage counterparty')],
-                'abstract': False,
+                "verbose_name": "counterparty",
+                "verbose_name_plural": "counterparties",
+                "ordering": ["user_code"],
+                "permissions": [("manage_counterparty", "Can manage counterparty")],
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='CounterpartyGroup',
+            name="CounterpartyGroup",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('user_code', models.CharField(blank=True, max_length=255, null=True, verbose_name='user code')),
-                ('name', models.CharField(max_length=255, verbose_name='name')),
-                ('short_name', models.TextField(blank=True, null=True, verbose_name='short name')),
-                ('public_name', models.CharField(blank=True, help_text='used if user does not have permissions to view object', max_length=255, null=True, verbose_name='public name')),
-                ('notes', models.TextField(blank=True, null=True, verbose_name='notes')),
-                ('is_enabled', models.BooleanField(db_index=True, default=True, verbose_name='is enabled')),
-                ('is_deleted', models.BooleanField(db_index=True, default=False, verbose_name='is deleted')),
-                ('deleted_user_code', models.CharField(blank=True, max_length=255, null=True, verbose_name='deleted user code')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "user_code",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="user code"
+                    ),
+                ),
+                ("name", models.CharField(max_length=255, verbose_name="name")),
+                (
+                    "short_name",
+                    models.TextField(blank=True, null=True, verbose_name="short name"),
+                ),
+                (
+                    "public_name",
+                    models.CharField(
+                        blank=True,
+                        help_text="used if user does not have permissions to view object",
+                        max_length=255,
+                        null=True,
+                        verbose_name="public name",
+                    ),
+                ),
+                (
+                    "notes",
+                    models.TextField(blank=True, null=True, verbose_name="notes"),
+                ),
+                (
+                    "is_enabled",
+                    models.BooleanField(
+                        db_index=True, default=True, verbose_name="is enabled"
+                    ),
+                ),
+                (
+                    "is_deleted",
+                    models.BooleanField(
+                        db_index=True, default=False, verbose_name="is deleted"
+                    ),
+                ),
+                (
+                    "deleted_user_code",
+                    models.CharField(
+                        blank=True,
+                        max_length=255,
+                        null=True,
+                        verbose_name="deleted user code",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'counterparty group',
-                'verbose_name_plural': 'counterparty groups',
-                'ordering': ['user_code'],
-                'permissions': [('manage_counterpartygroup', 'Can manage counterparty group')],
-                'abstract': False,
+                "verbose_name": "counterparty group",
+                "verbose_name_plural": "counterparty groups",
+                "ordering": ["user_code"],
+                "permissions": [
+                    ("manage_counterpartygroup", "Can manage counterparty group")
+                ],
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='Responsible',
+            name="Responsible",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('user_code', models.CharField(blank=True, max_length=255, null=True, verbose_name='user code')),
-                ('name', models.CharField(max_length=255, verbose_name='name')),
-                ('short_name', models.TextField(blank=True, null=True, verbose_name='short name')),
-                ('public_name', models.CharField(blank=True, help_text='used if user does not have permissions to view object', max_length=255, null=True, verbose_name='public name')),
-                ('notes', models.TextField(blank=True, null=True, verbose_name='notes')),
-                ('is_enabled', models.BooleanField(db_index=True, default=True, verbose_name='is enabled')),
-                ('created', models.DateTimeField(auto_now_add=True, db_index=True, null=True, verbose_name='created')),
-                ('modified', models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified')),
-                ('is_deleted', models.BooleanField(db_index=True, default=False, verbose_name='is deleted')),
-                ('deleted_user_code', models.CharField(blank=True, max_length=255, null=True, verbose_name='deleted user code')),
-                ('is_valid_for_all_portfolios', models.BooleanField(default=True, verbose_name='is valid for all portfolios')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "user_code",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="user code"
+                    ),
+                ),
+                ("name", models.CharField(max_length=255, verbose_name="name")),
+                (
+                    "short_name",
+                    models.TextField(blank=True, null=True, verbose_name="short name"),
+                ),
+                (
+                    "public_name",
+                    models.CharField(
+                        blank=True,
+                        help_text="used if user does not have permissions to view object",
+                        max_length=255,
+                        null=True,
+                        verbose_name="public name",
+                    ),
+                ),
+                (
+                    "notes",
+                    models.TextField(blank=True, null=True, verbose_name="notes"),
+                ),
+                (
+                    "is_enabled",
+                    models.BooleanField(
+                        db_index=True, default=True, verbose_name="is enabled"
+                    ),
+                ),
+                (
+                    "created",
+                    models.DateTimeField(
+                        auto_now_add=True,
+                        db_index=True,
+                        null=True,
+                        verbose_name="created",
+                    ),
+                ),
+                (
+                    "modified",
+                    models.DateTimeField(
+                        auto_now=True, db_index=True, verbose_name="modified"
+                    ),
+                ),
+                (
+                    "is_deleted",
+                    models.BooleanField(
+                        db_index=True, default=False, verbose_name="is deleted"
+                    ),
+                ),
+                (
+                    "deleted_user_code",
+                    models.CharField(
+                        blank=True,
+                        max_length=255,
+                        null=True,
+                        verbose_name="deleted user code",
+                    ),
+                ),
+                (
+                    "is_valid_for_all_portfolios",
+                    models.BooleanField(
+                        default=True, verbose_name="is valid for all portfolios"
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'responsible',
-                'verbose_name_plural': 'responsibles',
-                'ordering': ['user_code'],
-                'permissions': [('manage_responsible', 'Can manage responsible')],
-                'abstract': False,
+                "verbose_name": "responsible",
+                "verbose_name_plural": "responsibles",
+                "ordering": ["user_code"],
+                "permissions": [("manage_responsible", "Can manage responsible")],
+                "abstract": False,
             },
         ),
         migrations.CreateModel(
-            name='ResponsibleGroup',
+            name="ResponsibleGroup",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('user_code', models.CharField(blank=True, max_length=255, null=True, verbose_name='user code')),
-                ('name', models.CharField(max_length=255, verbose_name='name')),
-                ('short_name', models.TextField(blank=True, null=True, verbose_name='short name')),
-                ('public_name', models.CharField(blank=True, help_text='used if user does not have permissions to view object', max_length=255, null=True, verbose_name='public name')),
-                ('notes', models.TextField(blank=True, null=True, verbose_name='notes')),
-                ('is_enabled', models.BooleanField(db_index=True, default=True, verbose_name='is enabled')),
-                ('is_deleted', models.BooleanField(db_index=True, default=False, verbose_name='is deleted')),
-                ('deleted_user_code', models.CharField(blank=True, max_length=255, null=True, verbose_name='deleted user code')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                (
+                    "user_code",
+                    models.CharField(
+                        blank=True, max_length=255, null=True, verbose_name="user code"
+                    ),
+                ),
+                ("name", models.CharField(max_length=255, verbose_name="name")),
+                (
+                    "short_name",
+                    models.TextField(blank=True, null=True, verbose_name="short name"),
+                ),
+                (
+                    "public_name",
+                    models.CharField(
+                        blank=True,
+                        help_text="used if user does not have permissions to view object",
+                        max_length=255,
+                        null=True,
+                        verbose_name="public name",
+                    ),
+                ),
+                (
+                    "notes",
+                    models.TextField(blank=True, null=True, verbose_name="notes"),
+                ),
+                (
+                    "is_enabled",
+                    models.BooleanField(
+                        db_index=True, default=True, verbose_name="is enabled"
+                    ),
+                ),
+                (
+                    "is_deleted",
+                    models.BooleanField(
+                        db_index=True, default=False, verbose_name="is deleted"
+                    ),
+                ),
+                (
+                    "deleted_user_code",
+                    models.CharField(
+                        blank=True,
+                        max_length=255,
+                        null=True,
+                        verbose_name="deleted user code",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'responsible group',
-                'verbose_name_plural': 'responsible groups',
-                'ordering': ['user_code'],
-                'permissions': [('manage_responsiblegroup', 'Can manage responsible group')],
-                'abstract': False,
+                "verbose_name": "responsible group",
+                "verbose_name_plural": "responsible groups",
+                "ordering": ["user_code"],
+                "permissions": [
+                    ("manage_responsiblegroup", "Can manage responsible group")
+                ],
+                "abstract": False,
             },
         ),
     ]

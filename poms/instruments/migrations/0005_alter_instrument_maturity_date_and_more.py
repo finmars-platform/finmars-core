@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('instruments', '0004_pricehistory_is_temporary_price'),
+        ("instruments", "0004_pricehistory_is_temporary_price"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='instrument',
-            name='maturity_date',
-            field=models.DateField(null=True, verbose_name='maturity date'),
+            model_name="instrument",
+            name="maturity_date",
+            field=models.DateField(null=True, verbose_name="maturity date"),
         ),
         migrations.AlterField(
-            model_name='instrumenttype',
-            name='maturity_date',
-            field=models.DateField(null=True, verbose_name='maturity date'),
+            model_name="instrumenttype",
+            name="maturity_date",
+            field=models.DateField(null=True, verbose_name="maturity date"),
         ),
     ]

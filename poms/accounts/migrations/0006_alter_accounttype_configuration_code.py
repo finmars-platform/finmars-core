@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0005_alter_account_deleted_user_code_and_more'),
+        ("accounts", "0005_alter_account_deleted_user_code_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='accounttype',
-            name='configuration_code',
-            field=models.CharField(max_length=255, verbose_name='Configuration Code'),
+            model_name="accounttype",
+            name="configuration_code",
+            field=models.CharField(max_length=255, verbose_name="Configuration Code"),
         ),
     ]

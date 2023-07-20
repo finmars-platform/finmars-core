@@ -9,7 +9,7 @@ from django.db import models
 from django.utils.functional import SimpleLazyObject
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import NamedModel, FakeDeletableModel, DataTimeStampedModel
+from poms.common.models import DataTimeStampedModel, FakeDeletableModel, NamedModel
 from poms.common.utils import date_now
 from poms.common.wrapper_models import NamedModelAutoMapping
 from poms.obj_attrs.models import GenericAttribute
@@ -69,7 +69,6 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
         verbose_name = gettext_lazy("currency")
         verbose_name_plural = gettext_lazy("currencies")
         permissions = [
-            # ('view_currency', 'Can view currency'),
             ("manage_currency", "Can manage currency"),
         ]
 
@@ -109,7 +108,11 @@ class Currency(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
                 "name": "Reference for pricing",
                 "value_type": 10,
             },
-            {"key": "default_fx_rate", "name": "Default FX rate", "value_type": 20},
+            {
+                "key": "default_fx_rate",
+                "name": "Default FX rate",
+                "value_type": 20,
+            },
             {
                 "key": "pricing_condition",
                 "name": "Pricing Condition",
@@ -128,7 +131,6 @@ class CurrencyHistory(DataTimeStampedModel):
 
     Example of currency history (ecosystem_default.currency = USD)
     EUR 2023-01-01 1.07
-
     """
 
     currency = models.ForeignKey(
@@ -145,12 +147,18 @@ class CurrencyHistory(DataTimeStampedModel):
         verbose_name=gettext_lazy("pricing policy"),
     )
     date = models.DateField(
-        db_index=True, default=date_now, verbose_name=gettext_lazy("date")
+        db_index=True,
+        default=date_now,
+        verbose_name=gettext_lazy("date"),
     )
-    fx_rate = models.FloatField(default=1, verbose_name=gettext_lazy("fx rate"))
-
+    fx_rate = models.FloatField(
+        default=1,
+        verbose_name=gettext_lazy("fx rate"),
+    )
     procedure_modified_datetime = models.DateTimeField(
-        null=True, blank=True, verbose_name=gettext_lazy("procedure_modified_datetime")
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("procedure_modified_datetime"),
     )
 
     class Meta:

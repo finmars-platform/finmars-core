@@ -5,41 +5,41 @@ import poms.counterparties.views as counterparties
 router = routers.DefaultRouter()
 
 router.register(
-    r"counterparty-attribute-type",
+    "counterparty-attribute-type",
     counterparties.CounterpartyAttributeTypeViewSet,
     "CounterpartyAttributeType",
 )
 router.register(
-    r"counterparty-classifier",
+    "counterparty-classifier",
     counterparties.CounterpartyClassifierViewSet,
     "counterpartyclassifier",
 )
 router.register(
-    r"counterparty-group",
+    "counterparty-group",
     counterparties.CounterpartyGroupViewSet,
 )
 router.register(
-    r"counterparty",
+    "counterparty",
     counterparties.CounterpartyViewSet,
     "counterparty",
 )
 router.register(
-    r"responsible-attribute-type",
+    "responsible-attribute-type",
     counterparties.ResponsibleAttributeTypeViewSet,
     "ResponsibleAttributeType",
 )
 router.register(
-    r"responsible-classifier",
+    "responsible-classifier",
     counterparties.ResponsibleClassifierViewSet,
     "responsibleclassifier",
 )
 router.register(
-    r"responsible-group",
+    "responsible-group",
     counterparties.ResponsibleGroupViewSet,
     "ResponsibleGroup",
 )
 router.register(
-    r"responsible",
+    "responsible",
     counterparties.ResponsibleViewSet,
     "Responsible",
 )
