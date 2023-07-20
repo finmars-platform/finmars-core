@@ -35,7 +35,7 @@ class FinmarsVault():
         headers = self.get_headers()
 
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
             _l.info(f'Vault get health successfully')
         except Exception as e:
@@ -49,7 +49,7 @@ class FinmarsVault():
         headers = self.get_headers()
 
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
             _l.info(f'Vault get status successfully')
         except Exception as e:
@@ -68,7 +68,7 @@ class FinmarsVault():
         }
 
         try:
-            response = requests.post(url, json=data, headers=headers)
+            response = requests.post(url, json=data, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
             _l.info(f'Vault inited successfully')
         except Exception as e:
@@ -82,7 +82,7 @@ class FinmarsVault():
         headers = self.get_headers()
 
         try:
-            response = requests.post(url, headers=headers)
+            response = requests.post(url, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
             _l.info(f'Vault sealed successfully')
         except Exception as e:
@@ -98,7 +98,7 @@ class FinmarsVault():
         }
 
         try:
-            response = requests.post(url, json=data, headers=headers)
+            response = requests.post(url, json=data, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
             _l.info(f'Vault sealed successfully')
         except Exception as e:
@@ -109,7 +109,7 @@ class FinmarsVault():
     def get_list_engines(self, ):
         url = f"{self.vault_host}/v1/sys/mounts"
         headers = self.get_headers()
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, verify=settings.VERIFY_SSL)
 
         response_json = response.json()
 
@@ -143,7 +143,7 @@ class FinmarsVault():
         }
 
         try:
-            response = requests.post(url, json=payload, headers=headers)
+            response = requests.post(url, json=payload, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
             _l.info(f'Secret engine {engine_name} created successfully')
         except Exception as e:
@@ -155,7 +155,7 @@ class FinmarsVault():
         url = f"{self.vault_host}/v1/sys/mounts/{engine_name}"
         headers = self.get_headers()
         try:
-            response = requests.delete(url, headers=headers)
+            response = requests.delete(url, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
             _l.info(f'Secret engine {engine_name} deleted successfully')
         except Exception as e:
@@ -164,7 +164,7 @@ class FinmarsVault():
     def get_list_secrets(self, engine_name):
         url = f"{self.vault_host}/v1/{engine_name}/metadata/?list=true"
         headers = self.get_headers()
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, verify=settings.VERIFY_SSL)
         return response.json()
 
     def create_secret(self, engine_name, secret_path, secret_data):
@@ -179,7 +179,7 @@ class FinmarsVault():
         }
 
         try:
-            response = requests.post(url, headers=headers, json=data)
+            response = requests.post(url, headers=headers, json=data, verify=settings.VERIFY_SSL)
             response.raise_for_status()
             _l.info(f'Secret {secret_path} created successfully')
         except Exception as e:
@@ -189,7 +189,7 @@ class FinmarsVault():
     def get_secret_metadata(self, engine_name, secret_path):
         url = f"{self.vault_host}/v1/{engine_name}/metadata/{secret_path}"
         headers = self.get_headers()
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, verify=settings.VERIFY_SSL)
         return response.json()
 
     def get_latest_version(self, engine_name, secret_path):
@@ -203,7 +203,7 @@ class FinmarsVault():
     def get_secret(self, engine_name, secret_path, version=1):
         url = f"{self.vault_host}/v1/{engine_name}/data/{secret_path}?version={version}"
         headers = self.get_headers()
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, verify=settings.VERIFY_SSL)
         return response.json()
 
     def update_secret(self, engine_name, secret_path, secret_data, version):
@@ -218,7 +218,7 @@ class FinmarsVault():
         }
 
         try:
-            response = requests.put(url, headers=headers, json=data)
+            response = requests.put(url, headers=headers, json=data, verify=settings.VERIFY_SSL)
             response.raise_for_status()
             _l.info(f'Secret {secret_path} updated successfully')
         except Exception as e:
@@ -229,7 +229,7 @@ class FinmarsVault():
         headers = self.get_headers()
 
         try:
-            response = requests.delete(url, headers=headers)
+            response = requests.delete(url, headers=headers, verify=settings.VERIFY_SSL)
             response.raise_for_status()
             _l.info(f'Secret {secret_path} deleted successfully')
         except Exception as e:
