@@ -2802,41 +2802,6 @@ class ComplexTransactionSimpleSerializer(ModelWithAttributesSerializer):
         return instance
 
 
-class ComplexTransactionEvalSerializer(ComplexTransactionSerializer):
-    def __init__(self, *args, **kwargs):
-        super(ComplexTransactionEvalSerializer, self).__init__(*args, **kwargs)
-        self.fields.pop('text', None)
-
-    class Meta(ComplexTransactionSerializer.Meta):
-        model = ComplexTransaction
-        fields = [
-            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'transactions', 'master_user',
-
-            'transaction_unique_code',
-
-            'is_locked', 'is_canceled', 'error_code', 'is_deleted',
-
-            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
-            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
-
-            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
-            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
-
-            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
-            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
-
-            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
-            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
-
-            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
-            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
-
-            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
-
-        ]
-
-        read_only_fields = fields
-
 
 class ComplexTransactionViewSerializer(ComplexTransactionMixin, serializers.ModelSerializer):
     # text = serializers.SerializerMethodField()
@@ -4002,6 +3967,45 @@ class TransactionEvalSerializer(serializers.ModelSerializer):
         self.fields['linked_instrument'] = InstrumentEvalSerializer(read_only=True)
         self.fields['allocation_balance'] = InstrumentEvalSerializer(read_only=True)
         self.fields['allocation_pl'] = InstrumentEvalSerializer(read_only=True)
+
+
+class ComplexTransactionEvalSerializer(ComplexTransactionSerializer):
+
+    transactions = TransactionEvalSerializer(many=True, read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        super(ComplexTransactionEvalSerializer, self).__init__(*args, **kwargs)
+        self.fields.pop('text', None)
+
+    class Meta(ComplexTransactionSerializer.Meta):
+        model = ComplexTransaction
+        fields = [
+            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'transactions', 'master_user',
+
+            'transaction_unique_code',
+
+            'is_locked', 'is_canceled', 'error_code', 'is_deleted',
+
+            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
+            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
+
+            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
+            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
+
+            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
+            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
+
+            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
+            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
+
+            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
+            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
+
+            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
+
+        ]
+
+        read_only_fields = fields
 
 
 class ComplexTransactionDeleteSerializer(serializers.ModelSerializer):

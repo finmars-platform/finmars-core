@@ -999,6 +999,21 @@ def _set_complex_transaction_user_field(evaluator, field, value):
 
 _set_complex_transaction_user_field.evaluator = True
 
+def _get_complex_transaction(evaluator, identifier):
+
+    context = evaluator.context
+    from poms.transactions.models import ComplexTransaction
+
+    try:
+        result = ComplexTransaction.objects.get(transaction_unique_code=identifier)
+    except Exception as e:
+        result = ComplexTransaction.objects.get(code=identifier)
+
+
+    return result
+
+
+_get_complex_transaction.evaluator = True
 
 def _get_relation_by_user_code(evaluator, content_type, user_code):
     try:
@@ -4007,6 +4022,7 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def(
         "set_complex_transaction_form_data", _set_complex_transaction_form_data
     ),
+    SimpleEval2Def("get_complex_transaction", _get_complex_transaction),
     SimpleEval2Def("get_relation_by_user_code", _get_relation_by_user_code),
     SimpleEval2Def("get_instruments", _get_instruments),
     SimpleEval2Def("get_currencies", _get_currencies),
