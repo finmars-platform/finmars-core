@@ -936,6 +936,9 @@ class TransactionImportProcess(object):
 
         for item in self.items:
 
+            item.processed_rule_scenarios = []
+            item.booked_transactions = []
+
             try:
 
                 _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ========' % (
@@ -962,9 +965,6 @@ class TransactionImportProcess(object):
                         continue
 
                 rule_value = self.get_rule_value_for_item(item)
-
-                item.processed_rule_scenarios = []
-                item.booked_transactions = []
 
                 _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ======== %s ' % (
                     self.task, str(item.row_number), str(self.result.total_rows), rule_value))
