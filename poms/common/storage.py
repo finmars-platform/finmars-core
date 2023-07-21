@@ -337,6 +337,10 @@ class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
             os.makedirs(os.path.dirname(local_path), exist_ok=True)
             self.bucket.download_file(obj.key, local_path)
 
+            # Download the blob to the local file
+            with open(local_path, "wb") as local_file, self.open(obj.key) as download_stream:
+                local_file.write(download_stream.read())
+
     def download_directory_as_zip(self, directory_path):
 
         _l.info("S3 download zip")
