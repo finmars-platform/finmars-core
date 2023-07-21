@@ -1111,7 +1111,8 @@ class TransactionImportProcess(object):
             if item.status == 'error':
                 error_count = error_count + 1
 
-            booked_count = booked_count + len(item.booked_transactions)
+            if item.booked_transactions:
+                booked_count = booked_count + len(item.booked_transactions)
 
         result = 'Processed %s rows and successfully booked %s transactions. Error rows %s' % (
             len(self.items), booked_count, error_count)

@@ -554,7 +554,7 @@ def _parse_date(date_string, format=None):
     return result
 
 
-def _universal_parse_date(date_string):
+def _universal_parse_date(date_string, **kwargs):
     # from dateutil.parser import parse
     # dt = parse('Mon Feb 15 2010')
     # print(dt)
@@ -564,7 +564,7 @@ def _universal_parse_date(date_string):
 
     from dateutil.parser import parse
 
-    dt = parse(date_string)
+    dt = parse(date_string, **kwargs)
 
     return dt.strftime("%Y-%m-%d")
 
@@ -740,6 +740,8 @@ def _parse_number(a):
 def _join(data, separator):
     return separator.join(data)
 
+def _strip(data):
+    return data.strip()
 
 def _reverse(items):
     if isinstance(items, str):
@@ -3993,6 +3995,7 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("format_number", _format_number),
     SimpleEval2Def("parse_number", _parse_number),
     SimpleEval2Def("join", _join),
+    SimpleEval2Def("strip", _strip),
     SimpleEval2Def("reverse", _reverse),
     SimpleEval2Def("split", _split),
     SimpleEval2Def("simple_price", _simple_price),
