@@ -883,7 +883,16 @@ class InstrumentViewSet(AbstractModelViewSet):
         serializer_class=serializers.Serializer,
     )
     def generate_events(self, request):
-        ret = generate_events.apply_async()
+
+        from poms.celery_tasks.models import CeleryTask
+        celery_task = CeleryTask.objects.create(
+            master_user=request.user.master_user,
+            member=request.user.member,
+            verbose_name="Generate Events",
+            type="generate_events",
+        )
+
+        ret = generate_events.apply_async(kwargs={"task_id": celery_task.id})
         return Response(
             {
                 "success": True,

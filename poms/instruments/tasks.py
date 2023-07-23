@@ -426,20 +426,24 @@ def only_generate_events_at_date_for_single_instrument(
 
 
 @shared_task(name="instruments.generate_events", bind=True)
-def generate_events(self):
+def generate_events(self, task_id):
     from poms.celery_tasks.models import CeleryTask
 
     master_user = MasterUser.objects.all()[0]  # TODO get by base_api_url
 
     # member = Member.objects.get(master_user=master_user, is_owner=True)
-    finmars_bot = Member.objects.get(username="finmars_bot")
+    # finmars_bot = Member.objects.get(username="finmars_bot")
 
-    celery_task = CeleryTask.objects.create(
-        master_user=master_user,
-        member=finmars_bot,
-        verbose_name="Generate Events",
-        type="generate_events",
-    )
+    celery_task = CeleryTask.objects.get(id=task_id)
+    celery_task.celery_task_id = self.request.id
+    celery_task.save()
+
+    # celery_task = CeleryTask.objects.create(
+    #     master_user=master_user,
+    #     member=finmars_bot,
+    #     verbose_name="Generate Events",
+    #     type="generate_events",
+    # )
 
     try:
         _l.debug("generate_events0: master_user=%s", master_user.id)
