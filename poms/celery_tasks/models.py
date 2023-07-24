@@ -234,7 +234,7 @@ class CeleryTask(TimeStampedModel):
         #   description
         # }
 
-        _l.info(f"{log} update_progress {progress}")
+        # _l.debug(f"{log} update_progress {progress}")
 
         self.progress_object = progress
 

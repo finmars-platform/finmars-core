@@ -104,7 +104,7 @@ class KeycloakAuthentication(TokenAuthentication):
         try:
             user = User.objects.get(username=userinfo['preferred_username'])
         except Exception as e:
-            _l.error("User not found %s" % e)
+            # _l.error("User not found %s" % e)
             try:
                 user = User.objects.create_user(username=userinfo['preferred_username'],
                                                 password=generate_random_string(12))
@@ -120,7 +120,7 @@ class KeycloakAuthentication(TokenAuthentication):
                     user = User.objects.get(username=userinfo['preferred_username'])
 
                 except Exception as e:
-                    _l.error("Error create new user %s" % e)
+                    # _l.error("Error create new user %s" % e)
                     raise exceptions.AuthenticationFailed(e)
 
         return user, key

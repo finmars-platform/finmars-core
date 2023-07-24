@@ -100,7 +100,7 @@ class TransactionTypeProcess(object):
                  record_execution_log=True,
                  linked_import_task=None):  # if book from import
 
-        _l.info('==== TransactionTypeProcess INIT ====')
+        _l.debug('==== TransactionTypeProcess INIT ====')
 
         self.transaction_type = transaction_type
 
@@ -120,7 +120,7 @@ class TransactionTypeProcess(object):
         if self.clear_execution_log:
             self.complex_transaction.execution_log = ''
 
-        # _l.info("EXECUTION LOG %s" % self.complex_transaction.execution_log)
+        # _l.debug("EXECUTION LOG %s" % self.complex_transaction.execution_log)
 
         self.record_execution_progress('Booking Complex Transaction')
         self.record_execution_progress('Start %s ' % date_now())
@@ -161,8 +161,8 @@ class TransactionTypeProcess(object):
         if complex_transaction and not complex_transaction_status:
             self.complex_transaction_status = complex_transaction.status_id
 
-        # _l.info('complex_transaction_status %s' % complex_transaction_status)
-        # _l.info('self.complex_transaction.status %s' % self.complex_transaction.status_id)
+        # _l.debug('complex_transaction_status %s' % complex_transaction_status)
+        # _l.debug('self.complex_transaction.status %s' % self.complex_transaction.status_id)
 
         # if complex_transaction_date is not None:
         #     self.complex_transaction.date = complex_transaction_date
@@ -226,9 +226,9 @@ class TransactionTypeProcess(object):
 
     def execute_action_condition(self, action):
 
-        # _l.info('execute_action_condition.action.order %s' % action.order)
-        # _l.info('execute_action_condition.action.condition_expr')
-        # _l.info(action.condition_expr)
+        # _l.debug('execute_action_condition.action.order %s' % action.order)
+        # _l.debug('execute_action_condition.action.condition_expr')
+        # _l.debug(action.condition_expr)
         # _l.debug('execute_action_condition.action.condition_expr values')
         # _l.debug(self.values)
 
@@ -295,7 +295,7 @@ class TransactionTypeProcess(object):
                 elif issubclass(model_class, NotificationClass):
                     return NotificationClass.objects.get(user_code=value)
             except Exception:
-                _l.info("Could not find default value relation %s " % value)
+                _l.debug("Could not find default value relation %s " % value)
                 return None
 
         def _get_val_by_model_cls_for_complex_transaction_input(master_user, obj, model_class):
@@ -481,7 +481,7 @@ class TransactionTypeProcess(object):
 
                 if self.execute_action_condition(action_instrument):
 
-                    _l.info('book_create_instruments init. Action %s' % action.order)
+                    _l.debug('book_create_instruments init. Action %s' % action.order)
 
                     # Calculate user code value
                     errors = {}
@@ -504,7 +504,7 @@ class TransactionTypeProcess(object):
                         except Instrument.DoesNotExist:
                             exist = False
 
-                    _l.info('action_instrument.rebook_reaction %s ' % action_instrument.rebook_reaction)
+                    _l.debug('action_instrument.rebook_reaction %s ' % action_instrument.rebook_reaction)
 
                     if not exist and isinstance(user_code,
                                                 str) and action_instrument.rebook_reaction == RebookReactionChoice.TRY_DOWNLOAD_IF_ERROR_CREATE_DEFAULT and pass_download == False:
@@ -524,7 +524,7 @@ class TransactionTypeProcess(object):
 
                             self.values['phantom_instrument_%s' % order] = instrument
 
-                            _l.info("Download instrument from provider. Success")
+                            _l.debug("Download instrument from provider. Success")
 
                         except Exception as e:
 
@@ -600,7 +600,7 @@ class TransactionTypeProcess(object):
 
                             object_data['instrument_type'] = instrument.instrument_type.id
 
-                            # _l.info('set rel instrument.instrument_type %s' % instrument.instrument_type.id)
+                            # _l.debug('set rel instrument.instrument_type %s' % instrument.instrument_type.id)
 
                             from poms.csv_import.handlers import set_defaults_from_instrument_type
                             set_defaults_from_instrument_type(object_data, instrument.instrument_type,
@@ -1383,9 +1383,9 @@ class TransactionTypeProcess(object):
 
                 except (ValueError, TypeError, IntegrityError, formula.InvalidExpression) as e:
 
-                    # _l.info("Execute command execute_command.expr %s " % execute_command.expr)
-                    # _l.info("Execute command execute_command.names %s " % names)
-                    # _l.info("Execute command error %s " % e)
+                    # _l.debug("Execute command execute_command.expr %s " % execute_command.expr)
+                    # _l.debug("Execute command execute_command.names %s " % names)
+                    # _l.debug("Execute command error %s " % e)
 
                     self._add_err_msg(errors, 'non_field_errors',
                                       gettext_lazy(
@@ -2000,8 +2000,8 @@ class TransactionTypeProcess(object):
         except Exception as e:
 
             # _l.error('execute_uniqueness_expression.e %s ' % e)
-            # _l.info('execute_uniqueness_expression.names %s' % names)
-            # _l.info('execute_uniqueness_expression.names %s' % traceback.format_exc())
+            # _l.debug('execute_uniqueness_expression.names %s' % names)
+            # _l.debug('execute_uniqueness_expression.names %s' % traceback.format_exc())
 
             self.complex_transaction.transaction_unique_code = None
 
@@ -2065,7 +2065,7 @@ class TransactionTypeProcess(object):
             except Exception as e:
                 exist = None
 
-            _l.info('execute_uniqueness_expression.uniqueness_reaction %s' % self.uniqueness_reaction)
+            _l.debug('execute_uniqueness_expression.uniqueness_reaction %s' % self.uniqueness_reaction)
 
             if self.uniqueness_reaction == 1 and exist and self.complex_transaction.transaction_unique_code:
 
@@ -2129,7 +2129,7 @@ class TransactionTypeProcess(object):
 
             from celery import Celery
 
-            # _l.info("TransactionTypeProcess.run_procedures_after_book. execution_context %s" % self.execution_context)
+            # _l.debug("TransactionTypeProcess.run_procedures_after_book. execution_context %s" % self.execution_context)
 
             from poms.portfolios.tasks import calculate_portfolio_register_record, \
                 calculate_portfolio_register_price_history
@@ -2145,7 +2145,7 @@ class TransactionTypeProcess(object):
                 # app.send_task('calculate_portfolio_register_record', [])
                 # app.send_task('calculate_portfolio_register_nav', [])
 
-                # _l.info(
+                # _l.debug(
                 #     "TransactionTypeProcess.run_procedures_after_book. recalculate prices %s" % self.complex_transaction.status)
 
                 if self.complex_transaction.status_id == ComplexTransaction.PRODUCTION:
@@ -2164,7 +2164,7 @@ class TransactionTypeProcess(object):
                         if _date_from < date_from:
                             date_from = _date_from
 
-                    # _l.info("TransactionTypeProcess.run_procedures_after_book. recalculating from %s" % date_from)
+                    # _l.debug("TransactionTypeProcess.run_procedures_after_book. recalculating from %s" % date_from)
 
                     # TODO trigger recalc after manual book properly
                     # calculate_portfolio_register_record.apply_async(link=[
@@ -2297,7 +2297,7 @@ class TransactionTypeProcess(object):
         '''
         execute_uniqueness_expression_st = time.perf_counter()
         self.execute_uniqueness_expression()
-        _l.info('TransactionTypeProcess: execute_uniqueness_expression done: %s',
+        _l.debug('TransactionTypeProcess: execute_uniqueness_expression done: %s',
                 "{:3.3f}".format(time.perf_counter() - execute_uniqueness_expression_st))
 
         '''
@@ -2333,16 +2333,16 @@ class TransactionTypeProcess(object):
             if count > 0:
                 raise Exception("Transaction Unique Code must be unique")
 
-        _l.info(
+        _l.debug(
             'self.complex_transaction.transaction_unique_code %s' % self.complex_transaction.transaction_unique_code)
-        _l.info('self.complex_transaction.id %s' % self.complex_transaction.id)
-        _l.info('self.complex_transaction.code %s' % self.complex_transaction.code)
+        _l.debug('self.complex_transaction.id %s' % self.complex_transaction.id)
+        _l.debug('self.complex_transaction.code %s' % self.complex_transaction.code)
 
         self.complex_transaction.save()  # save executed text and date expression
         self._context['complex_transaction'] = self.complex_transaction
 
         self._save_inputs()
-        _l.info('TransactionTypeProcess: create_complex_transaction done: %s',
+        _l.debug('TransactionTypeProcess: create_complex_transaction done: %s',
                 "{:3.3f}".format(time.perf_counter() - create_complex_transaction_st))
 
         '''
@@ -2351,7 +2351,7 @@ class TransactionTypeProcess(object):
         book_execute_commands_st = time.perf_counter()
         self._context['values'] = self.values
         self.book_execute_commands(actions)
-        _l.info('TransactionTypeProcess: book_execute_commands done: %s',
+        _l.debug('TransactionTypeProcess: book_execute_commands done: %s',
                 "{:3.3f}".format(time.perf_counter() - book_execute_commands_st))
 
         '''
@@ -2359,12 +2359,12 @@ class TransactionTypeProcess(object):
         '''
         delete_old_transactions_st = time.perf_counter()
         self.complex_transaction.transactions.all().delete()
-        _l.info('TransactionTypeProcess: delete_old_transactions done: %s',
+        _l.debug('TransactionTypeProcess: delete_old_transactions done: %s',
                 "{:3.3f}".format(time.perf_counter() - delete_old_transactions_st))
 
         book_create_transactions_st = time.perf_counter()
         self.book_create_transactions(actions, master_user, instrument_map)
-        _l.info('TransactionTypeProcess: book_create_transactions_st done: %s',
+        _l.debug('TransactionTypeProcess: book_create_transactions_st done: %s',
                 "{:3.3f}".format(time.perf_counter() - book_create_transactions_st))
 
         is_canceled = False
@@ -2389,7 +2389,7 @@ class TransactionTypeProcess(object):
         '''
         execute_complex_transaction_main_expressions_st = time.perf_counter()
         self.execute_complex_transaction_main_expressions()
-        _l.info('TransactionTypeProcess: execute_complex_transaction_main_expressions done: %s',
+        _l.debug('TransactionTypeProcess: execute_complex_transaction_main_expressions done: %s',
                 "{:3.3f}".format(time.perf_counter() - execute_complex_transaction_main_expressions_st))
 
         '''
@@ -2397,10 +2397,10 @@ class TransactionTypeProcess(object):
         '''
         execute_user_fields_expressions_st = time.perf_counter()
         self.execute_user_fields_expressions()
-        _l.info('TransactionTypeProcess: execute_user_fields_expressions done: %s',
+        _l.debug('TransactionTypeProcess: execute_user_fields_expressions done: %s',
                 "{:3.3f}".format(time.perf_counter() - execute_user_fields_expressions_st))
 
-        # _l.info("LOG %s" % self.complex_transaction.execution_log)
+        # _l.debug("LOG %s" % self.complex_transaction.execution_log)
         # self.assign_permissions_to_complex_transaction()
 
         self.run_procedures_after_book()
@@ -2417,7 +2417,7 @@ class TransactionTypeProcess(object):
         if not self.has_errors:
             self.complex_transaction.save()  # save executed text and date expression
 
-        _l.info('TransactionTypeProcess: process done: %s',
+        _l.debug('TransactionTypeProcess: process done: %s',
                 "{:3.3f}".format(time.perf_counter() - process_st))
 
         _l.debug('self.value_errors %s' % self.value_errors)
@@ -2554,8 +2554,8 @@ class TransactionTypeProcess(object):
             # convert to id
             if model:
 
-                # _l.info('_set_rel model %s ' % model)
-                # _l.info('_set_rel value %s ' % user_code)
+                # _l.debug('_set_rel model %s ' % model)
+                # _l.debug('_set_rel value %s ' % user_code)
 
                 try:
                     if model._meta.get_field('master_user'):
@@ -2565,11 +2565,11 @@ class TransactionTypeProcess(object):
                     try:
                         value = model.objects.get(user_code=user_code)
                     except Exception as e:
-                        _l.info("User code for default value is not found %s" % e)
+                        _l.debug("User code for default value is not found %s" % e)
         else:
             from_input = getattr(source, '%s_input' % source_attr_name)
             if from_input:
-                # _l.info('_set_rel values %s ' % values)
+                # _l.debug('_set_rel values %s ' % values)
 
                 value = values[from_input.name]
         if not value:

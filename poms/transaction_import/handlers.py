@@ -263,7 +263,7 @@ class TransactionImportProcess(object):
 
         file_report = FileReport()
 
-        _l.info('TransactionImportProcess.generate_file_report uploading file')
+        # _l.info('TransactionImportProcess.generate_file_report uploading file')
 
         file_report.upload_file(file_name=file_name, text=result, master_user=self.master_user)
         file_report.master_user = self.master_user
@@ -275,8 +275,8 @@ class TransactionImportProcess(object):
 
         file_report.save()
 
-        _l.info('TransactionImportProcess.file_report %s' % file_report)
-        _l.info('TransactionImportProcess.file_report %s' % file_report.file_url)
+        # _l.info('TransactionImportProcess.file_report %s' % file_report)
+        # _l.info('TransactionImportProcess.file_report %s' % file_report.file_url)
 
         return file_report
 
@@ -297,7 +297,7 @@ class TransactionImportProcess(object):
 
         _l.info('TransactionImportProcess.generate_json_report uploading file')
 
-        _l.info('Uploading result len %s' % len(result))
+        # _l.info('Uploading result len %s' % len(result))
 
         file_report.upload_file(file_name=file_name, text=json.dumps(result, indent=4, default=str),
                                 master_user=self.master_user)
@@ -310,8 +310,8 @@ class TransactionImportProcess(object):
 
         file_report.save()
 
-        _l.info('TransactionImportProcess.json_report %s' % file_report)
-        _l.info('TransactionImportProcess.json_report %s' % file_report.file_url)
+        # _l.info('TransactionImportProcess.json_report %s' % file_report)
+        # _l.info('TransactionImportProcess.json_report %s' % file_report.file_url)
 
         return file_report
 
@@ -683,8 +683,8 @@ class TransactionImportProcess(object):
 
                         os.link(tmpf.name, tmpf.name + '.xlsx')
 
-                        _l.info('self.file_path %s' % self.file_path)
-                        _l.info('tmpf.name %s' % tmpf.name)
+                        # _l.info('self.file_path %s' % self.file_path)
+                        # _l.info('tmpf.name %s' % tmpf.name)
 
                         wb = load_workbook(filename=tmpf.name + '.xlsx')
 
@@ -984,19 +984,19 @@ class TransactionImportProcess(object):
                                 if selector_value.value == rule_value:
 
                                     # sid = transaction.savepoint()
-                                    _l.info("Create checkpoint for %s" % index)
+                                    # _l.info("Create checkpoint for %s" % index)
 
                                     found = True
                                     try:
 
                                         self.book(item, rule_scenario)
 
-                                        _l.info("Savepoint commit for %s" % index)
+                                        # _l.info("Savepoint commit for %s" % index)
                                         # _l.error("Could not book error scenario %s" % e)
                                         # transaction.savepoint_commit(sid)
 
                                     except BookSkipException:
-                                        _l.info("BookSkipException")
+                                        # _l.info("BookSkipException")
                                         # transaction.savepoint_rollback(sid)
                                         continue
 
@@ -1005,12 +1005,12 @@ class TransactionImportProcess(object):
 
                                         try:
                                             self.book(item, self.error_rule_scenario, error=e)
-                                            _l.info("Error Handler Savepoint commit for %s" % index)
+                                            # _l.info("Error Handler Savepoint commit for %s" % index)
                                             # transaction.savepoint_commit(sid)
 
                                         except Exception as e:  # any exception will work on error scenario
                                             _l.error("Could not book error scenario %s" % e)
-                                            _l.info("Error Handler Savepoint rollback for %s" % index)
+                                            # _l.info("Error Handler Savepoint rollback for %s" % index)
                                             # transaction.savepoint_rollback(sid)
                         else:
                             ''' For case when its actually skip mode'''
@@ -1024,7 +1024,7 @@ class TransactionImportProcess(object):
                     if not found:
 
                         # sid = transaction.savepoint()
-                        _l.info("Create checkpoint for %s" % index)
+                        # _l.info("Create checkpoint for %s" % index)
 
                         item.status = 'skip'
                         item.message = 'Selector %s does not match anything in scheme' % rule_value
