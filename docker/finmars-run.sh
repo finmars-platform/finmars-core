@@ -6,8 +6,8 @@ else
     echo "finmars.internal CA certificate file does not exist"
 fi
 
-if [ -f /etc/ssl/certs/private-ca-certificate/ca.crt ]; then
-    cat /etc/ssl/certs/private-ca-certificate/ca.crt >> /usr/local/share/ca-certificates/private-ca-certificates.crt
+if [ -f /etc/ssl/certs/private-ca-certificate/tls.crt ]; then
+    cat /etc/ssl/certs/private-ca-certificate/tls.crt >> /usr/local/share/ca-certificates/private-ca-certificates.crt
 else
     echo "Private CA certificate file does not exist"
 fi
