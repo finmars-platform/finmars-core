@@ -53,27 +53,31 @@ class BootstrapConfig(AppConfig):
         :return:
         '''
 
-        # Need to wait to ensure celery workers are available
-        i = celery_app.control.inspect()
+        if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
+            _l.info("Bootstrap is not inited. Probably Test or Migration context")
+        else:
 
-        while not i.stats():
-            _l.info('Waiting for Celery worker(s)...')
-            time.sleep(5)
+            # Need to wait to ensure celery workers are available
+            i = celery_app.control.inspect()
 
-        _l.info('Celery worker(s) are now available.')
+            while not i.stats():
+                _l.info('Waiting for Celery worker(s)...')
+                time.sleep(5)
 
-        self.create_local_configuration()
-        self.bootstrap_celery()
-        self.add_view_and_manage_permissions()
-        self.load_master_user_data()
-        self.create_finmars_bot()
-        self.sync_users_at_authorizer_service()
-        self.create_member_layouts()
-        self.load_init_configuration()
-        self.create_base_folders()
-        self.register_at_authorizer_service()
+            _l.info('Celery worker(s) are now available.')
 
-        self.create_iam_access_policies_templates()
+            self.create_local_configuration()
+            self.bootstrap_celery()
+            self.add_view_and_manage_permissions()
+            self.load_master_user_data()
+            self.create_finmars_bot()
+            self.sync_users_at_authorizer_service()
+            self.create_member_layouts()
+            self.load_init_configuration()
+            self.create_base_folders()
+            self.register_at_authorizer_service()
+
+            self.create_iam_access_policies_templates()
 
     def create_finmars_bot(self):
 
