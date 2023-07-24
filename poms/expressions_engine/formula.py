@@ -782,8 +782,8 @@ def get_model_data(
 
 
 def _get_supported_models_serializer_class():
-    from poms.accounts.models import Account
-    from poms.accounts.serializers import AccountEvalSerializer
+    from poms.accounts.models import Account, AccountType
+    from poms.accounts.serializers import AccountEvalSerializer, AccountTypeEvalSerializer
     from poms.counterparties.models import Counterparty, Responsible
     from poms.counterparties.serializers import (
         CounterpartyEvalSerializer,
@@ -831,6 +831,7 @@ def _get_supported_models_serializer_class():
 
     return {
         Account: AccountEvalSerializer,
+        AccountType: AccountTypeEvalSerializer,
         Counterparty: CounterpartyEvalSerializer,
         Responsible: ResponsibleEvalSerializer,
         Instrument: InstrumentEvalSerializer,

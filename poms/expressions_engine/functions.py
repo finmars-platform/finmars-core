@@ -2804,7 +2804,7 @@ def _get_default_portfolio(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.portfolio_id
+        return item.portfolio
 
     except Exception as e:
         print("get_default_portfolio error %s" % e)
@@ -2827,7 +2827,7 @@ def _get_default_instrument(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.instrument_id
+        return item.instrument
 
     except Exception as e:
         print("get_default_instrument error %s" % e)
@@ -2850,7 +2850,7 @@ def _get_default_account(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.account_id
+        return item.account
 
     except Exception as e:
         print("get_default_account error %s" % e)
@@ -2873,7 +2873,7 @@ def _get_default_currency(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.currency_id
+        return item.currency
 
     except Exception as e:
         print("get_default_currency error %s" % e)
@@ -2896,7 +2896,7 @@ def _get_default_transaction_type(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.transaction_type_id
+        return item.transaction_type
 
     except Exception as e:
         print("get_default_transaction_type error %s" % e)
@@ -2919,7 +2919,7 @@ def _get_default_instrument_type(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.instrument_type_id
+        return item.instrument_type
 
     except Exception as e:
         print("get_default_instrument_type error %s" % e)
@@ -2942,7 +2942,7 @@ def _get_default_account_type(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.account_type_id
+        return item.account_type
 
     except Exception as e:
         print("get_default_account_type error %s" % e)
@@ -2965,7 +2965,7 @@ def _get_default_pricing_policy(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.pricing_policy_id
+        return item.pricing_policy
 
     except Exception as e:
         print("get_default_pricing_policy error %s" % e)
@@ -2988,7 +2988,7 @@ def _get_default_responsible(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.responsible_id
+        return item.responsible
 
     except Exception as e:
         print("get_default_responsible error %s" % e)
@@ -3011,7 +3011,7 @@ def _get_default_counterparty(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.counterparty_id
+        return item.counterparty
 
     except Exception as e:
         print("get_default_counterparty error %s" % e)
@@ -3034,7 +3034,7 @@ def _get_default_strategy1(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.strategy1_id
+        return item.strategy1
 
     except Exception as e:
         print("get_default_strategy1 error %s" % e)
@@ -3057,7 +3057,7 @@ def _get_default_strategy2(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.strategy2_id
+        return item.strategy2
 
     except Exception as e:
         print("get_default_strategy2 error %s" % e)
@@ -3080,7 +3080,7 @@ def _get_default_strategy3(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.strategy3_id
+        return item.strategy3
 
     except Exception as e:
         print("get_default_strategy3 error %s" % e)

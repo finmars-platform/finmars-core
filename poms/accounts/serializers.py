@@ -131,6 +131,21 @@ class AccountViewSerializer(ModelWithUserCodeSerializer):
         ]
 
 
+class AccountTypeEvalSerializer(ModelWithUserCodeSerializer):
+
+    class Meta:
+        model = AccountType
+        fields = [
+            "id",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
+        ]
+
+        read_only_fields = fields
+
+
 class AccountEvalSerializer(ModelWithUserCodeSerializer):
     type = AccountTypeField()
 
