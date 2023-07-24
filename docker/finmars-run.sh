@@ -61,6 +61,9 @@ supervisord
 #supervisorctl start worker2
 #supervisorctl start celerybeat
 
+python manage.py clear_celery
+python manage.py download_init_configuration
+
 timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "[${timestamp}] Create admin user"
 
