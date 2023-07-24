@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import json
 import logging
 import sys
+import time
 import traceback
 
 import requests
@@ -10,6 +11,9 @@ from django.apps import AppConfig
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
+
+from poms_app.celery import app as celery_app
+
 
 from poms_app import settings
 
@@ -48,6 +52,15 @@ class BootstrapConfig(AppConfig):
         :param kwargs:
         :return:
         '''
+
+        # Need to wait to ensure celery workers are available
+        i = celery_app.control.inspect()
+
+        while not i.stats():
+            _l.info('Waiting for Celery worker(s)...')
+            time.sleep(5)
+
+        _l.info('Celery worker(s) are now available.')
 
         self.create_local_configuration()
         self.bootstrap_celery()
