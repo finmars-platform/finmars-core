@@ -513,6 +513,18 @@ try:
 except (ValueError, TypeError):
     CELERY_WORKER_CONCURRENCY = 1
 
+# CELERY_ACKS_LATE: If this is True, the task messages will be acknowledged after the task has been executed, not just before, which is the default behavior.
+# This means the tasks can be recovered when a worker crashes, as the tasks won't be removed from the queue until they are completed.
+# However, keep in mind that this could lead to tasks being executed multiple times if the worker crashes during execution, so ensure that your tasks are idempotent.
+CELERY_ACKS_LATE = True
+
+# CELERY_TASK_REJECT_ON_WORKER_LOST: If this is True, when the worker of a task is lost (e.g., crashes), the task will be returned back to the queue,
+# so it can be picked up by another worker.
+# This increases the resiliency of the system as the tasks are not lost, they are retried.
+# But, it can also increase the load on the system as tasks could potentially be executed multiple times in the event of frequent worker failures.
+# Make sure your tasks are safe to be retried in such cases (idempotent).
+CELERY_TASK_REJECT_ON_WORKER_LOST = False # Make tasks rejected
+
 # ===================
 # = Django Storages =
 # ===================
