@@ -1,5 +1,11 @@
 #!/bin/sh
 
+if [ -f /etc/ssl/certs/ca-certificate/ca.crt ]; then
+    cat /etc/ssl/certs/ca-certificate/ca.crt >> /etc/ssl/certs/ca-certificates.crt
+else
+    echo "CA certificate file does not exist"
+fi
+
 timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "[${timestamp}] Finmars initialization"
 
