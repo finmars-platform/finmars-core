@@ -1,10 +1,18 @@
 #!/bin/sh
 
-if [ -f /etc/ssl/certs/ca-certificate/ca.crt ]; then
-    cat /etc/ssl/certs/ca-certificate/ca.crt >> /etc/ssl/certs/ca-certificates.crt
+if [ -f /etc/ssl/certs/finmars-internal-ca-certificate/ca.crt ]; then
+    cat /etc/ssl/certs/finmars-internal-ca-certificate/ca.crt >> /usr/local/share/ca-certificates/finmars-internal-ca-certificates.crt
 else
-    echo "CA certificate file does not exist"
+    echo "finmars.internal CA certificate file does not exist"
 fi
+
+if [ -f /etc/ssl/certs/private-ca-certificate/ca.crt ]; then
+    cat /etc/ssl/certs/private-ca-certificate/ca.crt >> /usr/local/share/ca-certificates/private-ca-certificates.crt
+else
+    echo "Private CA certificate file does not exist"
+fi
+
+update-ca-certificates # update ca certs
 
 timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "[${timestamp}] Finmars initialization"
