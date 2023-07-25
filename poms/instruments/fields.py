@@ -58,10 +58,6 @@ class InstrumentDefault(object):
 
 class InstrumentField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Instrument.objects
-    # Probably Deprecated
-    # filter_backends = [
-    #     OwnerByMasterUserFilter,
-    # ]
 
 
 class CountryField(UserCodeOrPrimaryKeyRelatedField):
@@ -87,18 +83,10 @@ class RegisterField(UserCodeOrPrimaryKeyRelatedField):
 
 class BundleField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PortfolioBundle.objects
-    # Probably Deprecated
-    # filter_backends = [
-    #     OwnerByMasterUserFilter
-    # ]
 
 
 class PricingPolicyField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PricingPolicy.objects
-    # Possibly Deprecated
-    # filter_backends = UserCodeOrPrimaryKeyRelatedField.filter_backends + [
-    #     OwnerByMasterUserFilter,
-    # ]
 
 
 class CostMethodField(PrimaryKeyRelatedFilteredField):

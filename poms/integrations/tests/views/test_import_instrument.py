@@ -125,7 +125,7 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
                         "maturity_price": 100.0,
                         "maturity_date": date.today(),
                         "country": {
-                            "code": "USA",
+                            "alpha_3": "USA",
                         },
                     },
                 ],
@@ -163,6 +163,11 @@ class ImportInstrumentDatabaseViewSetTest(BaseTestCase):
         self.assertIsNone(response_json["errors"])
 
         self.assertIsNotNone(CeleryTask.objects.get(pk=response_json["task"]))
+        instrument = Instrument.objects.filter(pk=response_json["result_id"]).first()
+        self.assertIsNotNone(instrument)
+        self.assertIsNotNone(instrument.country)
+        self.assertEqual(instrument.country.alpha_3, "USA")
+
         self.assertIsNotNone(Instrument.objects.get(pk=response_json["result_id"]))
 
     @mock.patch("poms.integrations.database_client.DatabaseService.get_monad")

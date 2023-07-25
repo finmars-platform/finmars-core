@@ -4,15 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0020_transactiontypeactiontransaction_is_canceled'),
+        ("transactions", "0020_transactiontypeactiontransaction_is_canceled"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='transactiontype',
-            name='configuration_code',
-            field=models.CharField(default='com.finmars.local', max_length=255, verbose_name='Configuration Code'),
+            model_name="transactiontype",
+            name="configuration_code",
+            field=models.CharField(
+                default="com.finmars.local",
+                max_length=255,
+                verbose_name="Configuration Code",
+            ),
         ),
     ]

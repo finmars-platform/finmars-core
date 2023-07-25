@@ -36,14 +36,14 @@ _l = logging.getLogger("poms.obj_attrs")
 
 class ModelWithAttributesSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
-        super(ModelWithAttributesSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields["attributes"] = GenericAttributeSerializer(
             many=True, required=False, allow_null=True
         )
 
     def create(self, validated_data):
         attributes = validated_data.pop("attributes", [])
-        instance = super(ModelWithAttributesSerializer, self).create(validated_data)
+        instance = super().create(validated_data)
 
         self.create_attributes_if_not_exists(instance)
 
@@ -56,9 +56,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         attributes = validated_data.pop("attributes", [])
 
-        instance = super(ModelWithAttributesSerializer, self).update(
-            instance, validated_data
-        )
+        instance = super().update(instance, validated_data)
 
         self.create_attributes_if_not_exists(instance)
 
@@ -162,7 +160,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
             content_type=content_type, object_id=instance.id
         )
 
-        data = super(ModelWithAttributesSerializer, self).to_representation(instance)
+        data = super().to_representation(instance)
 
         data["attributes"] = self.get_attributes_as_obj(attrs_qs)
 
@@ -185,7 +183,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                             attr.attribute_type.user_code
                         ]
 
-                if attr.attribute_type.value_type == GenericAttributeType.NUMBER:
+                elif attr.attribute_type.value_type == GenericAttributeType.NUMBER:
                     if (
                         executed_expressions[attr.attribute_type.user_code]
                         == "Invalid Expression"
@@ -196,7 +194,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                             attr.attribute_type.user_code
                         ]
 
-                if attr.attribute_type.value_type == GenericAttributeType.DATE:
+                elif attr.attribute_type.value_type == GenericAttributeType.DATE:
                     if (
                         executed_expressions[attr.attribute_type.user_code]
                         == "Invalid Expression"
@@ -207,7 +205,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                             attr.attribute_type.user_code
                         ]
 
-                if attr.attribute_type.value_type == GenericAttributeType.CLASSIFIER:
+                elif attr.attribute_type.value_type == GenericAttributeType.CLASSIFIER:
                     if (
                         executed_expressions[attr.attribute_type.user_code]
                         == "Invalid Expression"
@@ -262,7 +260,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
 
 class ModelWithAttributesOnlySerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
-        super(ModelWithAttributesOnlySerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields["attributes"] = GenericAttributeOnlySerializer(
             many=True, required=False, allow_null=True
         )
@@ -338,7 +336,6 @@ class GenericClassifierNodeSerializer(serializers.ModelSerializer):
         ]
 
     def create(self, validated_data):
-
         return GenericClassifier(**validated_data)
 
 
@@ -358,21 +355,19 @@ class GenericClassifierViewSerializer(serializers.ModelSerializer):
         ]
 
     def to_representation(self, instance):
-        return super(GenericClassifierViewSerializer, self).to_representation(instance)
+        return super().to_representation(instance)
 
 
 class GenericAttributeTypeOptionIsHiddenField(serializers.BooleanField):
     def __init__(self, **kwargs):
         kwargs["required"] = False
         kwargs["default"] = False
-        # kwargs['allow_null'] = True
-        super(GenericAttributeTypeOptionIsHiddenField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def get_attribute(self, obj):
         return obj
 
     def to_representation(self, value):
-        # some "optimization" to use preloaded data through prefetch_related
         member = get_member_from_context(self.context)
         for o in value.options.all():
             if o.member_id == member.id:
@@ -426,7 +421,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
         ]
 
     def __init__(self, *args, **kwargs):
-        super(GenericAttributeTypeSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -437,7 +432,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
         return representation
 
     def validate(self, attrs):
-        attrs = super(GenericAttributeTypeSerializer, self).validate(attrs)
+        attrs = super().validate(attrs)
         classifiers = attrs.get("classifiers", None)
         if classifiers:
             self._validate_classifiers(classifiers, id_set=set(), user_code_set=set())
@@ -462,7 +457,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
         member = get_member_from_context(self.context)
         is_hidden = validated_data.pop("is_hidden", False)
         classifiers = validated_data.pop("classifiers", None)
-        instance = super(GenericAttributeTypeSerializer, self).create(validated_data)
+        instance = super().create(validated_data)
         instance.options.create(member=member, is_hidden=is_hidden)
         self.save_classifiers(instance, classifiers)
 
@@ -477,9 +472,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
         member = get_member_from_context(self.context)
         is_hidden = validated_data.pop("is_hidden", None)
         classifiers = validated_data.pop("classifiers", None)
-        instance = super(GenericAttributeTypeSerializer, self).update(
-            instance, validated_data
-        )
+        instance = super().update(instance, validated_data)
 
         if is_hidden:
             instance.options.update_or_create(
@@ -515,7 +508,6 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
     def save_classifier(
         self, instance, node, parent, processed, prev_node_instance=None
     ):
-        is_new_node = False
         previous_node_id = None
 
         if prev_node_instance is not None and hasattr(
@@ -528,17 +520,16 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
                 o = instance.classifiers.get(pk=node["id"])
             except ObjectDoesNotExist:
                 o = GenericClassifier()
-                is_new_node = True
         else:
             o = GenericClassifier()
-            is_new_node = True
 
+        children = node.pop("get_children", node.pop("children", []))
         try:
             self.delete_matched_classifier_node_mapping(instance, o)
 
             o.parent = parent
             o.attribute_type = instance
-            children = node.pop("get_children", node.pop("children", []))
+
             for k, v in node.items():
                 setattr(o, k, v)
 
@@ -556,12 +547,10 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
                 else:
                     o.move_to(parent, "first-child")
 
-            # if  and o.id == prev_sibling.id:
-
             self.create_classifier_node_mapping(instance, o)
 
         except IntegrityError as e:
-            _l.error(f"Error save_classifier {e} ")
+            _l.error(f"Error save_classifier {repr(e)}")
 
         processed.add(o.id)
         prev_node = None
@@ -583,8 +572,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
                 attribute_type=instance,
                 value=node.name,
             )
-
-        if instance.content_type.model == "account":
+        elif instance.content_type.model == "account":
             AccountClassifierMapping.objects.create(
                 master_user=master_user,
                 content_object=node,
@@ -592,7 +580,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
                 attribute_type=instance,
                 value=node.name,
             )
-        if instance.content_type.model == "counterparty":
+        elif instance.content_type.model == "counterparty":
             CounterpartyClassifierMapping.objects.create(
                 master_user=master_user,
                 content_object=node,
@@ -600,7 +588,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
                 attribute_type=instance,
                 value=node.name,
             )
-        if instance.content_type.model == "responsible":
+        elif instance.content_type.model == "responsible":
             ResponsibleClassifierMapping.objects.create(
                 master_user=master_user,
                 content_object=node,
@@ -608,8 +596,7 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
                 attribute_type=instance,
                 value=node.name,
             )
-
-        if instance.content_type.model == "instrument":
+        elif instance.content_type.model == "instrument":
             InstrumentClassifierMapping.objects.create(
                 master_user=master_user,
                 content_object=node,
@@ -623,21 +610,19 @@ class GenericAttributeTypeSerializer(ModelWithUserCodeSerializer, ModelMetaSeria
             PortfolioClassifierMapping.objects.filter(
                 attribute_type=instance, value=node.name
             ).delete()
-
-        if instance.content_type.model == "account":
+        elif instance.content_type.model == "account":
             AccountClassifierMapping.objects.filter(
                 attribute_type=instance, value=node.name
             ).delete()
-        if instance.content_type.model == "counterparty":
+        elif instance.content_type.model == "counterparty":
             CounterpartyClassifierMapping.objects.filter(
                 attribute_type=instance, value=node.name
             ).delete()
-        if instance.content_type.model == "responsible":
+        elif instance.content_type.model == "responsible":
             ResponsibleClassifierMapping.objects.filter(
                 attribute_type=instance, value=node.name
             ).delete()
-
-        if instance.content_type.model == "instrument":
+        elif instance.content_type.model == "instrument":
             InstrumentClassifierMapping.objects.filter(
                 attribute_type=instance, value=node.name
             ).delete()
@@ -711,9 +696,7 @@ class GenericAttributeListSerializer(serializers.ListSerializer):
 
 class GenericAttributeViewListSerializer(serializers.ListSerializer):
     def get_attribute(self, instance):
-        objects = super(GenericAttributeViewListSerializer, self).get_attribute(
-            instance
-        )
+        objects = super().get_attribute(instance)
         objects = objects.all() if isinstance(objects, models.Manager) else objects
         member = get_member_from_context(self.context)
         return objects
@@ -745,11 +728,11 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
         ]
 
     def __init__(self, *args, **kwargs):
-        super(GenericAttributeSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._attribute_type_classifiers = {}
 
     def validate(self, attrs):
-        attrs = super(GenericAttributeSerializer, self).validate(attrs)
+        attrs = super().validate(attrs)
 
         parent = self.parent
         if isinstance(parent, ListSerializer):
@@ -772,7 +755,7 @@ class GenericAttributeSerializer(serializers.ModelSerializer):
                     instance.classifier_id
                 ]
 
-        return super(GenericAttributeSerializer, self).to_representation(instance)
+        return super().to_representation(instance)
 
 
 class GenericAttributeOnlySerializer(serializers.ModelSerializer):
@@ -797,11 +780,11 @@ class GenericAttributeOnlySerializer(serializers.ModelSerializer):
         ]
 
     def __init__(self, *args, **kwargs):
-        super(GenericAttributeOnlySerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._attribute_type_classifiers = {}
 
     def to_representation(self, instance):
-        return super(GenericAttributeOnlySerializer, self).to_representation(instance)
+        return super().to_representation(instance)
 
 
 class RecalculateAttributes:

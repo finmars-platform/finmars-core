@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0019_alter_transaction_user_number_1_and_more'),
+        ("transactions", "0019_alter_transaction_user_number_1_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='transactiontypeactiontransaction',
-            name='is_canceled',
-            field=models.CharField(blank=True, max_length=4096, null=True, verbose_name='is canceled'),
+            model_name="transactiontypeactiontransaction",
+            name="is_canceled",
+            field=models.CharField(
+                blank=True, max_length=4096, null=True, verbose_name="is canceled"
+            ),
         ),
     ]

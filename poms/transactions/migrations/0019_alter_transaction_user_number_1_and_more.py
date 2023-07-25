@@ -4,25 +4,33 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0018_alter_transactiontypeactiontransaction_user_date_1_and_more'),
+        (
+            "transactions",
+            "0018_alter_transactiontypeactiontransaction_user_date_1_and_more",
+        ),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='transaction',
-            name='user_number_1',
-            field=models.FloatField(default=0.0, null=True, verbose_name='user_number_1'),
+            model_name="transaction",
+            name="user_number_1",
+            field=models.FloatField(
+                default=0.0, null=True, verbose_name="user_number_1"
+            ),
         ),
         migrations.AlterField(
-            model_name='transaction',
-            name='user_number_2',
-            field=models.FloatField(default=0.0, null=True, verbose_name='user_number_2'),
+            model_name="transaction",
+            name="user_number_2",
+            field=models.FloatField(
+                default=0.0, null=True, verbose_name="user_number_2"
+            ),
         ),
         migrations.AlterField(
-            model_name='transaction',
-            name='user_number_3',
-            field=models.FloatField(default=0.0, null=True, verbose_name='user_number_3'),
+            model_name="transaction",
+            name="user_number_3",
+            field=models.FloatField(
+                default=0.0, null=True, verbose_name="user_number_3"
+            ),
         ),
     ]

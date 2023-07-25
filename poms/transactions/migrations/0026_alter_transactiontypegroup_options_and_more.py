@@ -4,24 +4,31 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0025_transactiontypegroup_configuration_code'),
+        ("transactions", "0025_transactiontypegroup_configuration_code"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='transactiontypegroup',
-            options={'ordering': ['user_code'], 'verbose_name': 'transaction type group', 'verbose_name_plural': 'transaction type groups'},
+            name="transactiontypegroup",
+            options={
+                "ordering": ["user_code"],
+                "verbose_name": "transaction type group",
+                "verbose_name_plural": "transaction type groups",
+            },
         ),
         migrations.AddField(
-            model_name='transactiontypegroup',
-            name='created',
-            field=models.DateTimeField(auto_now_add=True, db_index=True, null=True, verbose_name='created'),
+            model_name="transactiontypegroup",
+            name="created",
+            field=models.DateTimeField(
+                auto_now_add=True, db_index=True, null=True, verbose_name="created"
+            ),
         ),
         migrations.AddField(
-            model_name='transactiontypegroup',
-            name='modified',
-            field=models.DateTimeField(auto_now=True, db_index=True, verbose_name='modified'),
+            model_name="transactiontypegroup",
+            name="modified",
+            field=models.DateTimeField(
+                auto_now=True, db_index=True, verbose_name="modified"
+            ),
         ),
     ]
