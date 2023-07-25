@@ -87,6 +87,7 @@ class BalanceReportBuilderSql:
 
         try:
 
+            st = time.perf_counter()
 
             celery_task = CeleryTask.objects.get(id=task_id)
 
@@ -1931,6 +1932,8 @@ class BalanceReportBuilderSql:
                                 updated_result.append(new_exposure_item)
 
                 _l.debug('build balance result %s ' % len(result))
+
+                _l.info('single build done: %s' % (time.perf_counter() - st))
 
                 celery_task.status = CeleryTask.STATUS_DONE
                 celery_task.save()

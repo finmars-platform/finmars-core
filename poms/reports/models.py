@@ -1286,7 +1286,7 @@ class ReportInstanceModel():
         from poms.portfolios.models import Portfolio
         from poms.strategies.models import Strategy1, Strategy2, Strategy3
 
-        _l.info('ReportInstanceModel.kwargs %s' % kwargs)
+        # _l.info('ReportInstanceModel.kwargs %s' % kwargs)
 
         self.report_date = datetime.strptime(kwargs['report_date'], "%Y-%m-%d")
         self.report_currency = Currency.objects.get(id=kwargs['report_currency_id'])
