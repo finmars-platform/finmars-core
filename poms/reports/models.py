@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import logging
 import math
 import time
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from django.db import models
 from django.utils.translation import gettext_lazy
@@ -1273,3 +1273,40 @@ class ReportSummary():
                     position_return = position_return + item['position_return']
 
         return position_return
+
+
+
+
+class ReportInstanceModel():
+
+    def __init__(self, **kwargs):
+
+        from poms.currencies.models import Currency
+        from poms.accounts.models import Account
+        from poms.portfolios.models import Portfolio
+        from poms.strategies.models import Strategy1, Strategy2, Strategy3
+
+        _l.info('ReportInstanceModel.kwargs %s' % kwargs)
+
+        self.report_date = datetime.strptime(kwargs['report_date'], "%Y-%m-%d")
+        self.report_currency = Currency.objects.get(id=kwargs['report_currency_id'])
+        self.pricing_policy = PricingPolicy.objects.get(id=kwargs['pricing_policy_id'])
+        self.cost_method = CostMethod.objects.get(id=kwargs['cost_method_id'])
+
+        self.portfolios = Portfolio.objects.filter(id__in=kwargs['portfolios_ids'])
+
+        self.accounts = Account.objects.filter(id__in=kwargs['accounts_ids'])
+
+        self.strategies1 = Strategy1.objects.filter(id__in=kwargs['strategies1_ids'])
+        self.strategies2 = Strategy2.objects.filter(id__in=kwargs['strategies2_ids'])
+        self.strategies3 = Strategy3.objects.filter(id__in=kwargs['strategies3_ids'])
+
+        self.show_balance_exposure_details = kwargs['show_balance_exposure_details']
+
+        self.portfolio_mode = kwargs['portfolio_mode']
+        self.account_mode = kwargs['account_mode']
+        self.strategy1_mode = kwargs['strategy1_mode']
+        self.strategy2_mode = kwargs['strategy2_mode']
+        self.strategy3_mode = kwargs['strategy3_mode']
+        self.allocation_mode = kwargs['allocation_mode']
+
