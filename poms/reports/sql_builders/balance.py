@@ -1932,10 +1932,10 @@ class BalanceReportBuilderSql:
 
                 _l.debug('build balance result %s ' % len(result))
 
-                return updated_result
+                celery_task.status = CeleryTask.STATUS_DONE
+                celery_task.save()
 
-            celery_task.status = CeleryTask.STATUS_DONE
-            celery_task.save()
+                return updated_result
 
         except Exception as e:
             celery_task.status = CeleryTask.STATUS_ERROR
