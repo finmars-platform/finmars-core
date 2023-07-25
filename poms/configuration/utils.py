@@ -110,7 +110,7 @@ def save_serialized_entity(content_type, configuration_code, source_directory, c
 
     dash = configuration_code + ':' + '-'
 
-    filtered_objects = model.objects.filter(configuration_code=configuration_code).exclude(user_code=dash)
+    filtered_objects = model.objects.filter(configuration_code=configuration_code, is_deleted=False).exclude(user_code=dash)
 
     SerializerClass = get_serializer(content_type)
 
