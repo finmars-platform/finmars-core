@@ -4,20 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0007_transaction_is_deleted'),
+        ("transactions", "0007_transaction_is_deleted"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='transaction',
-            name='notes',
-            field=models.TextField(blank=True, db_index=True, null=True, verbose_name='notes'),
+            model_name="transaction",
+            name="notes",
+            field=models.TextField(
+                blank=True, db_index=True, null=True, verbose_name="notes"
+            ),
         ),
         migrations.AlterField(
-            model_name='transaction',
-            name='transaction_code',
-            field=models.IntegerField(db_index=True, default=0, verbose_name='transaction code'),
+            model_name="transaction",
+            name="transaction_code",
+            field=models.IntegerField(
+                db_index=True, default=0, verbose_name="transaction code"
+            ),
         ),
     ]

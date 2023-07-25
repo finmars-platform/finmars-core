@@ -417,14 +417,14 @@ def handler_instrument_object(
     else:
         object_data["maturity_date"] = None
 
-    try:
-        if "country" in source_data:
-            country = Country.objects.get(alpha_2=source_data["country"]["code"])
 
+    if "country" in source_data and source_data["country"].get("alpha_3"):
+        try:
+            country = Country.objects.get(alpha_3=source_data["country"]["alpha_3"])
             object_data["country"] = country.id
 
-    except Exception as e:
-        _l.error(f"{func} Could not set country {repr(e)}")
+        except Country.DoesNotExist:
+            _l.error(f"{func} no such country {source_data['country']['alpha_3']}")
 
     try:
         if "sector" in source_data:

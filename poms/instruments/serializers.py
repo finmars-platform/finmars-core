@@ -1014,19 +1014,7 @@ class InstrumentSerializer(
     pricing_condition_object = PricingConditionSerializer(
         source="pricing_condition", read_only=True
     )
-    # price_download_scheme = PriceDownloadSchemeField(allow_null=True, required=False)
-    # price_download_scheme_object = serializers.PrimaryKeyRelatedField(source='price_download_scheme', read_only=True)
-
-    # manual_pricing_formulas = serializers.PrimaryKeyRelatedField(many=True, required=False, allow_null=True,
-    #                                                              read_only=True)
-    # accrual_calculation_schedules = serializers.PrimaryKeyRelatedField(many=True, required=False, allow_null=True,
-    #                                                                    read_only=True)
-    # factor_schedules = serializers.PrimaryKeyRelatedField(many=True, required=False, allow_null=True, read_only=True)
-    # event_schedules = serializers.PrimaryKeyRelatedField(many=True, required=False, allow_null=True, read_only=True)
-
     country_object = CountrySerializer(source="country", read_only=True)
-
-    # attributes = InstrumentAttributeSerializer(many=True, required=False, allow_null=True)
 
     class Meta:
         model = Instrument

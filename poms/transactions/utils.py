@@ -1,11 +1,6 @@
-import logging
-from datetime import date
-
-from django.conf import settings
-
-from poms.common.utils import isclose
-
-_l = logging.getLogger('poms.transactions')
+# import logging
+#
+# _l = logging.getLogger("poms.transactions")
 
 # DEPRECATED
 # def calc_cash_for_contract_for_difference(transaction, instrument, portfolio, account, member,

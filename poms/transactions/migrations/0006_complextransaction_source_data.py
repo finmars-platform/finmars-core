@@ -4,15 +4,17 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0005_complextransaction_deleted_transaction_unique_code_and_more'),
+        (
+            "transactions",
+            "0005_complextransaction_deleted_transaction_unique_code_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='complextransaction',
-            name='source_data',
-            field=models.TextField(blank=True, null=True, verbose_name='source data'),
+            model_name="complextransaction",
+            name="source_data",
+            field=models.TextField(blank=True, null=True, verbose_name="source data"),
         ),
     ]

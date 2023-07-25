@@ -4,60 +4,71 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0014_rename_comment_transaction_user_text_1'),
+        ("transactions", "0014_rename_comment_transaction_user_text_1"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='transactiontypeactiontransaction',
-            old_name='comment',
-            new_name='user_text_1',
+            model_name="transactiontypeactiontransaction",
+            old_name="comment",
+            new_name="user_text_1",
         ),
         migrations.AddField(
-            model_name='transaction',
-            name='user_date_1',
-            field=models.DateField(blank=True, db_index=True, null=True, verbose_name='user date 1'),
+            model_name="transaction",
+            name="user_date_1",
+            field=models.DateField(
+                blank=True, db_index=True, null=True, verbose_name="user date 1"
+            ),
         ),
         migrations.AddField(
-            model_name='transaction',
-            name='user_date_2',
-            field=models.DateField(blank=True, db_index=True, null=True, verbose_name='user date 2'),
+            model_name="transaction",
+            name="user_date_2",
+            field=models.DateField(
+                blank=True, db_index=True, null=True, verbose_name="user date 2"
+            ),
         ),
         migrations.AddField(
-            model_name='transaction',
-            name='user_date_3',
-            field=models.DateField(blank=True, db_index=True, null=True, verbose_name='user date 3'),
+            model_name="transaction",
+            name="user_date_3",
+            field=models.DateField(
+                blank=True, db_index=True, null=True, verbose_name="user date 3"
+            ),
         ),
         migrations.AddField(
-            model_name='transaction',
-            name='user_number_1',
-            field=models.FloatField(default=0.0, verbose_name='user_number_1'),
+            model_name="transaction",
+            name="user_number_1",
+            field=models.FloatField(default=0.0, verbose_name="user_number_1"),
         ),
         migrations.AddField(
-            model_name='transaction',
-            name='user_number_2',
-            field=models.FloatField(default=0.0, verbose_name='user_number_2'),
+            model_name="transaction",
+            name="user_number_2",
+            field=models.FloatField(default=0.0, verbose_name="user_number_2"),
         ),
         migrations.AddField(
-            model_name='transaction',
-            name='user_number_3',
-            field=models.FloatField(default=0.0, verbose_name='user_number_3'),
+            model_name="transaction",
+            name="user_number_3",
+            field=models.FloatField(default=0.0, verbose_name="user_number_3"),
         ),
         migrations.AddField(
-            model_name='transaction',
-            name='user_text_2',
-            field=models.TextField(blank=True, db_index=True, null=True, verbose_name='user_text_2'),
+            model_name="transaction",
+            name="user_text_2",
+            field=models.TextField(
+                blank=True, db_index=True, null=True, verbose_name="user_text_2"
+            ),
         ),
         migrations.AddField(
-            model_name='transaction',
-            name='user_text_3',
-            field=models.TextField(blank=True, db_index=True, null=True, verbose_name='user_text_3'),
+            model_name="transaction",
+            name="user_text_3",
+            field=models.TextField(
+                blank=True, db_index=True, null=True, verbose_name="user_text_3"
+            ),
         ),
         migrations.AlterField(
-            model_name='transaction',
-            name='user_text_1',
-            field=models.TextField(blank=True, db_index=True, null=True, verbose_name='user_text_1'),
+            model_name="transaction",
+            name="user_text_1",
+            field=models.TextField(
+                blank=True, db_index=True, null=True, verbose_name="user_text_1"
+            ),
         ),
     ]

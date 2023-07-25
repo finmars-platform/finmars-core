@@ -4,15 +4,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0024_alter_eventtohandle_name_alter_eventtohandle_notes_and_more'),
+        (
+            "transactions",
+            "0024_alter_eventtohandle_name_alter_eventtohandle_notes_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='transactiontypegroup',
-            name='configuration_code',
-            field=models.CharField(default='com.finmars.local', max_length=255, verbose_name='Configuration Code'),
+            model_name="transactiontypegroup",
+            name="configuration_code",
+            field=models.CharField(
+                default="com.finmars.local",
+                max_length=255,
+                verbose_name="Configuration Code",
+            ),
         ),
     ]

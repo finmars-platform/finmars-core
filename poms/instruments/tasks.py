@@ -25,7 +25,6 @@ _l = logging.getLogger("poms.instruments")
 def calculate_prices_accrued_price(
     master_user=None, begin_date=None, end_date=None, instruments=None
 ):
-
     instruments_qs = Instrument.objects.all()
     if master_user:
         instruments_qs = instruments_qs.filter(master_user=master_user)
@@ -66,10 +65,10 @@ def get_calculated_parameter_by_name_from_event(event_schedule, name, instrument
                             if attr.attribute_type.value_type == 10:
                                 result = attr.value_string
 
-                            if attr.attribute_type.value_type == 20:
+                            elif attr.attribute_type.value_type == 20:
                                 result = attr.value_float
 
-                            if attr.attribute_type.value_type == 40:
+                            elif attr.attribute_type.value_type == 40:
                                 result = attr.value_date
 
                 else:
@@ -107,8 +106,6 @@ def only_generate_events_at_date(self, master_user_id, date):
 
         _l.info("generate_events0: master_user=%s", master_user.id)
 
-        opened_instrument_items = []
-
         instance = Report(
             master_user=master_user,
             allocation_mode=Report.MODE_IGNORE,
@@ -118,12 +115,12 @@ def only_generate_events_at_date(self, master_user_id, date):
         builder = BalanceReportBuilderSql(instance=instance)
         instance = builder.build_balance()
 
-        for i in instance.items:
-            if i["item_type"] == ReportItem.TYPE_INSTRUMENT and not isclose(
-                i["position_size"], 0.0
-            ):
-                opened_instrument_items.append(i)
-
+        opened_instrument_items = [
+            item
+            for item in instance.items
+            if item["item_type"] == ReportItem.TYPE_INSTRUMENT
+            and not isclose(item["position_size"], 0.0)
+        ]
         if not opened_instrument_items:
             return
 
@@ -142,7 +139,7 @@ def only_generate_events_at_date(self, master_user_id, date):
         )
 
         if not event_schedule_qs.exists():
-            _l.info("event schedules not found. Date %s" % date)
+            _l.info(f"event schedules not found. Date {date}")
             return
 
         result = []
@@ -225,7 +222,7 @@ def only_generate_events_at_date(self, master_user_id, date):
                         _l.info("generated event already exist")
                         continue
 
-                    _l.info("event_schedule %s" % event_schedule)
+                    _l.info(f"event_schedule {event_schedule}")
 
                     parameters = fill_parameters_from_instrument(
                         event_schedule, instrument
@@ -249,8 +246,10 @@ def only_generate_events_at_date(self, master_user_id, date):
                     generated_event.save()
 
     except Exception as e:
-        _l.info("only_generate_events_at_date exception occurred %s" % e)
-        _l.info(traceback.format_exc())
+        _l.info(
+            f"only_generate_events_at_date exception occurred {e}\n "
+            f"{traceback.format_exc()}"
+        )
 
 
 @shared_task(
@@ -268,8 +267,6 @@ def only_generate_events_at_date_for_single_instrument(
             (master_user.id, instrument),
         )
 
-        opened_instrument_items = []
-
         instance = Report(
             master_user=master_user,
             allocation_mode=Report.MODE_IGNORE,
@@ -279,14 +276,16 @@ def only_generate_events_at_date_for_single_instrument(
         builder = BalanceReportBuilderSql(instance=instance)
         instance = builder.build_balance()
 
-        for i in instance.items:
-            if i["item_type"] == ReportItem.TYPE_INSTRUMENT and not isclose(
-                i["position_size"], 0.0
-            ):
-                if i["instrument_id"] == instrument.id:
-                    opened_instrument_items.append(i)
-
-        _l.info("opened_instrument_items len %s" % len(opened_instrument_items))
+        opened_instrument_items = [
+            item
+            for item in instance.items
+            if (
+                item["item_type"] == ReportItem.TYPE_INSTRUMENT
+                and not isclose(item["position_size"], 0.0)
+                and item["instrument_id"] == instrument.id
+            )
+        ]
+        _l.info(f"opened_instrument_items len {len(opened_instrument_items)}")
 
         if not opened_instrument_items:
             return
@@ -300,15 +299,13 @@ def only_generate_events_at_date_for_single_instrument(
                 "actions",
             )
             .filter(
-                # effective_date__lte=(date - F("notify_in_n_days")),
-                # final_date__gte=date,
                 instrument_id__in={i["instrument_id"] for i in opened_instrument_items}
             )
             .order_by("instrument__master_user__id", "instrument__id")
         )
 
         if not event_schedule_qs.exists():
-            _l.debug("event schedules not found. Date %s" % date)
+            _l.debug(f"event schedules not found. Date {date}")
             return
 
         result = []
@@ -327,11 +324,10 @@ def only_generate_events_at_date_for_single_instrument(
                 result.append(event_schedule)
 
         event_schedules_cache = defaultdict(list)
-        # for event_schedule in event_schedule_qs:
         for event_schedule in result:
             event_schedules_cache[event_schedule.instrument_id].append(event_schedule)
 
-        _l.info("event_schedules_cache %s" % event_schedules_cache)
+        _l.info(f"event_schedules_cache {event_schedules_cache}")
 
         for item in opened_instrument_items:
             portfolio = item["portfolio_id"]
@@ -394,7 +390,7 @@ def only_generate_events_at_date_for_single_instrument(
                         _l.debug("generated event already exist")
                         continue
 
-                    print("event_schedule %s" % event_schedule)
+                    print(f"event_schedule {event_schedule}")
 
                     parameters = fill_parameters_from_instrument(
                         event_schedule, instrument
@@ -419,8 +415,7 @@ def only_generate_events_at_date_for_single_instrument(
 
     except Exception as e:
         _l.info(
-            "only_generate_events_at_date_for_single_instrument exception occurred %s"
-            % e
+            f"only_generate_events_at_date_for_single_instrument exception occurred {e}"
         )
         _l.info(traceback.format_exc())
 
@@ -446,9 +441,7 @@ def generate_events(self, task_id):
     # )
 
     try:
-        _l.debug("generate_events0: master_user=%s", master_user.id)
-
-        opened_instrument_items = []
+        _l.debug(f"generate_events0: master_user={master_user.id}")
 
         now = date_now()
 
@@ -459,12 +452,12 @@ def generate_events(self, task_id):
         builder = BalanceReportBuilderSql(instance=instance)
         instance = builder.build_balance()
 
-        for i in instance.items:
-            if i["item_type"] == ReportItem.TYPE_INSTRUMENT and not isclose(
-                i["position_size"], 0.0
-            ):
-                opened_instrument_items.append(i)
-
+        opened_instrument_items = [
+            item
+            for item in instance.items
+            if item["item_type"] == ReportItem.TYPE_INSTRUMENT
+            and not isclose(item["position_size"], 0.0)
+        ]
         if not opened_instrument_items:
             return
 
@@ -572,7 +565,7 @@ def generate_events(self, task_id):
                         _l.debug("generated event already exist")
                         continue
 
-                    print("event_schedule %s" % event_schedule)
+                    print(f"event_schedule {event_schedule}")
 
                     parameters = fill_parameters_from_instrument(
                         event_schedule, instrument
@@ -613,7 +606,7 @@ def generate_events(self, task_id):
                     generated_events_count = generated_events_count + 1
 
         celery_task.result_object = result_object
-        celery_task.verbose_result = "Events generated: %s" % generated_events_count
+        celery_task.verbose_result = f"Events generated: {generated_events_count}"
         celery_task.status = CeleryTask.STATUS_DONE
         celery_task.save()
 
@@ -628,14 +621,11 @@ def generate_events(self, task_id):
             description=str(e),
         )
 
-        celery_task.error_message = "Error %s. Traceback %s" % (
-            e,
-            traceback.format_exc(),
-        )
+        celery_task.error_message = f"Error {e}. Traceback {traceback.format_exc()}"
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.save()
 
-        _l.info("generate_events0 exception occurred %s" % e)
+        _l.info(f"generate_events0 exception occurred {e}")
         _l.info(traceback.format_exc())
 
 
@@ -644,9 +634,7 @@ def generate_events_do_not_inform_apply_default(self):
     try:
         master_user = MasterUser.objects.all()[0]
 
-        _l.debug("generate_events0: master_user=%s", master_user.id)
-
-        opened_instrument_items = []
+        _l.debug(f"generate_events0: master_user={master_user.id}")
 
         now = date_now()
 
@@ -657,13 +645,13 @@ def generate_events_do_not_inform_apply_default(self):
         builder = BalanceReportBuilderSql(instance=instance)
         instance = builder.build_balance()
 
-        for i in instance.items:
-            if i["item_type"] == ReportItem.TYPE_INSTRUMENT and not isclose(
-                i["position_size"], 0.0
-            ):
-                opened_instrument_items.append(i)
-
-        _l.info("opened_instrument_items len %s" % len(opened_instrument_items))
+        opened_instrument_items = [
+            item
+            for item in instance.items
+            if item["item_type"] == ReportItem.TYPE_INSTRUMENT
+            and not isclose(item["position_size"], 0.0)
+        ]
+        _l.info(f"opened_instrument_items len {len(opened_instrument_items)}")
 
         if not opened_instrument_items:
             return
@@ -747,20 +735,18 @@ def generate_events_do_not_inform_apply_default(self):
                     notification_date,
                 ) = event_schedule.check_date(now)
 
-                is_apply_default = (
-                    event_schedule.notification_class
-                    == NotificationClass.APPLY_DEF_ON_EDATE
-                    or event_schedule.notification_class
-                    == NotificationClass.APPLY_DEF_ON_NDATE
+                is_apply_default = event_schedule.notification_class in (
+                    NotificationClass.APPLY_DEF_ON_EDATE,
+                    NotificationClass.APPLY_DEF_ON_NDATE,
                 )
 
-                _l.debug("is_complies=%s", is_complies)
+                _l.debug(f"is_complies={is_complies}")
+
                 if is_complies and is_apply_default:
                     ge_dup_qs = GeneratedEvent.objects.filter(
                         master_user=master_user,
                         event_schedule=event_schedule,
                         effective_date=effective_date,
-                        # notification_date=notification_date,
                         instrument=instrument,
                         portfolio=portfolio,
                         account=account,
@@ -773,7 +759,7 @@ def generate_events_do_not_inform_apply_default(self):
                         _l.debug("generated event already exist")
                         continue
 
-                    print("event_schedule %s" % event_schedule)
+                    print(f"event_schedule {event_schedule}")
 
                     parameters = fill_parameters_from_instrument(
                         event_schedule, instrument
@@ -799,8 +785,9 @@ def generate_events_do_not_inform_apply_default(self):
         process_events.apply_async()
 
     except Exception as e:
-        _l.info("generate_events exception occurred %s" % e)
-        _l.info(traceback.format_exc())
+        _l.info(
+            f"generate_events exception occurred {repr(e)}\n {traceback.format_exc()}"
+        )
 
 
 @shared_task(name="instruments.process_events", bind=True)
@@ -964,7 +951,7 @@ def process_events(self):
             ):
                 gevent.save()
 
-        celery_task.verbose_result = "Events Processed: %s" % processed_count
+        celery_task.verbose_result = f"Events Processed: {processed_count}"
         celery_task.status = CeleryTask.STATUS_DONE
         celery_task.save()
 
@@ -974,14 +961,12 @@ def process_events(self):
             action_status="required",
             type="warning",
             title="Process Events Failed.",
-            description=str(e),
+            description=repr(e),
         )
 
-        _l.error("process_events0 exception occurred %s" % e)
-        _l.error(traceback.format_exc())
-        celery_task.error_message = "Error %s. Traceback %s" % (
-            e,
-            traceback.format_exc(),
-        )
+        err_msg = f"process_events0 exception {repr(e)}\n {traceback.format_exc()}"
+        _l.error(err_msg)
+
+        celery_task.error_message = err_msg
         celery_task.status = CeleryTask.STATUS_ERROR
         celery_task.save()

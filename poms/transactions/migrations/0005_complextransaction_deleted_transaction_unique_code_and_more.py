@@ -4,20 +4,26 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0004_alter_complextransaction_linked_import_task'),
+        ("transactions", "0004_alter_complextransaction_linked_import_task"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='complextransaction',
-            name='deleted_transaction_unique_code',
-            field=models.CharField(blank=True, max_length=255, null=True, verbose_name='deleted transaction unique code'),
+            model_name="complextransaction",
+            name="deleted_transaction_unique_code",
+            field=models.CharField(
+                blank=True,
+                max_length=255,
+                null=True,
+                verbose_name="deleted transaction unique code",
+            ),
         ),
         migrations.AddField(
-            model_name='complextransaction',
-            name='is_deleted',
-            field=models.BooleanField(db_index=True, default=False, verbose_name='is deleted'),
+            model_name="complextransaction",
+            name="is_deleted",
+            field=models.BooleanField(
+                db_index=True, default=False, verbose_name="is deleted"
+            ),
         ),
     ]

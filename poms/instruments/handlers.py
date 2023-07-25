@@ -49,7 +49,8 @@ class GeneratedEventProcess(TransactionTypeProcess):
             )
 
             _l.info(
-                f"generated_event data {generated_event.data} action {action} action.button_position {action.button_position}"
+                f"generated_event data {generated_event.data} action {action} "
+                f"action.button_position {action.button_position}"
             )
 
             if generated_event.data and (

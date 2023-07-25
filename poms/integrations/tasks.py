@@ -320,9 +320,6 @@ def download_instrument(
             )
             task.options_object = options
             task.save()
-            # transaction.on_commit(
-            #     lambda: download_instrument_async.apply_async(
-            #     kwargs={'task_id': task.id}, countdown=1))
             transaction.on_commit(
                 lambda: download_instrument_async.apply_async(
                     kwargs={"task_id": task.id}
@@ -862,15 +859,6 @@ def download_currency_cbond(currency_code=None, master_user=None, member=None):
 
             try:
                 currency = create_currency_from_callback_data(data, master_user, member)
-
-                # if 'items' in data['data']:
-                #
-                #     for item in data['data']['items']:
-                #         currency = create_currency_cbond(item, master_user, member)
-                #
-                # else:
-                #
-                #     currency = create_currency_cbond(data['data'], master_user, member)
 
                 result = {"currency_id": currency.pk}
                 task.result_object = result
@@ -1890,8 +1878,6 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
                 description=f"User {celery_task.member.username} Transaction Import Finished",
                 attachments=[result_object["stats_file_report"]],
             )
-
-        # TODO Generate File Report Here
 
         celery_task.result_object = result_object
 
