@@ -95,7 +95,7 @@ class BalanceReportBuilderSql:
 
             instance = ReportInstanceModel(**report_settings)
 
-            _l.info('report_settings %s' % report_settings)
+            # _l.info('report_settings %s' % report_settings)
 
             with connection.cursor() as cursor:
 
