@@ -1,5 +1,4 @@
-from __future__ import unicode_literals
-
+import contextlib
 import datetime
 import logging
 import time
@@ -11,46 +10,100 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty
 
-from poms.accounts.fields import AccountField, AccountDefault
+from poms.accounts.fields import AccountDefault, AccountField
 from poms.accounts.models import Account
-from poms.expressions_engine import formula
 from poms.common.fields import ExpressionField
 from poms.common.models import EXPRESSION_FIELD_LENGTH
-from poms.common.serializers import PomsClassSerializer, ModelWithUserCodeSerializer, ModelWithTimeStampSerializer, \
-    ModelMetaSerializer
-from poms.counterparties.fields import ResponsibleField, CounterpartyField, ResponsibleDefault, CounterpartyDefault
+from poms.common.serializers import (
+    ModelMetaSerializer,
+    ModelWithTimeStampSerializer,
+    ModelWithUserCodeSerializer,
+    PomsClassSerializer,
+)
+from poms.counterparties.fields import (
+    CounterpartyDefault,
+    CounterpartyField,
+    ResponsibleDefault,
+    ResponsibleField,
+)
 from poms.counterparties.models import Counterparty, Responsible
-from poms.currencies.fields import CurrencyField, CurrencyDefault, SystemCurrencyDefault
+from poms.currencies.fields import CurrencyDefault, CurrencyField, SystemCurrencyDefault
 from poms.currencies.models import Currency
-from poms.instruments.fields import InstrumentField, InstrumentTypeField, InstrumentDefault, PricingPolicyField, \
-    AccrualCalculationModelField, PeriodicityField, NotificationClassField, EventClassField, EventScheduleField
-from poms.instruments.models import Instrument, InstrumentType, DailyPricingModel, PaymentSizeDetail, PricingPolicy, \
-    Periodicity, AccrualCalculationModel, EventSchedule
+from poms.expressions_engine import formula
+from poms.instruments.fields import (
+    AccrualCalculationModelField,
+    EventClassField,
+    EventScheduleField,
+    InstrumentDefault,
+    InstrumentField,
+    InstrumentTypeField,
+    NotificationClassField,
+    PeriodicityField,
+    PricingPolicyField,
+)
+from poms.instruments.models import (
+    AccrualCalculationModel,
+    DailyPricingModel,
+    EventSchedule,
+    Instrument,
+    InstrumentType,
+    PaymentSizeDetail,
+    Periodicity,
+    PricingPolicy,
+)
 from poms.integrations.fields import PriceDownloadSchemeField
 from poms.integrations.models import PriceDownloadScheme
 from poms.obj_attrs.serializers import ModelWithAttributesSerializer
-from poms.portfolios.fields import PortfolioField, PortfolioDefault
+from poms.portfolios.fields import PortfolioDefault, PortfolioField
 from poms.portfolios.models import Portfolio
 from poms.reconciliation.models import TransactionTypeReconField
-from poms.reconciliation.serializers import TransactionTypeReconFieldSerializer, \
-    ReconciliationComplexTransactionFieldSerializer
-from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field, Strategy1Default, Strategy2Default, \
-    Strategy3Default
+from poms.reconciliation.serializers import (
+    ReconciliationComplexTransactionFieldSerializer,
+    TransactionTypeReconFieldSerializer,
+)
+from poms.strategies.fields import (
+    Strategy1Default,
+    Strategy1Field,
+    Strategy2Default,
+    Strategy2Field,
+    Strategy3Default,
+    Strategy3Field,
+)
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
-from poms.transactions.fields import TransactionTypeInputContentTypeField, \
-    TransactionTypeGroupField, ReadOnlyContentTypeField, TransactionTypeInputField
+from poms.transactions.fields import (
+    ReadOnlyContentTypeField,
+    TransactionTypeGroupField,
+    TransactionTypeInputContentTypeField,
+    TransactionTypeInputField,
+)
 from poms.transactions.handlers import TransactionTypeProcess
-from poms.transactions.models import TransactionClass, Transaction, TransactionType, TransactionTypeAction, \
-    TransactionTypeActionTransaction, TransactionTypeActionInstrument, TransactionTypeInput, TransactionTypeGroup, \
-    ComplexTransaction, EventClass, NotificationClass, TransactionTypeActionInstrumentFactorSchedule, \
-    TransactionTypeActionInstrumentManualPricingFormula, \
-    TransactionTypeActionInstrumentAccrualCalculationSchedules, TransactionTypeActionInstrumentEventSchedule, \
-    TransactionTypeActionInstrumentEventScheduleAction, TransactionTypeActionExecuteCommand, \
-    TransactionTypeInputSettings, ComplexTransactionStatus, TransactionTypeContextParameter, ComplexTransactionInput
-from poms.users.fields import MasterUserField, HiddenMemberField
+from poms.transactions.models import (
+    ComplexTransaction,
+    ComplexTransactionInput,
+    ComplexTransactionStatus,
+    EventClass,
+    NotificationClass,
+    Transaction,
+    TransactionClass,
+    TransactionType,
+    TransactionTypeAction,
+    TransactionTypeActionExecuteCommand,
+    TransactionTypeActionInstrument,
+    TransactionTypeActionInstrumentAccrualCalculationSchedules,
+    TransactionTypeActionInstrumentEventSchedule,
+    TransactionTypeActionInstrumentEventScheduleAction,
+    TransactionTypeActionInstrumentFactorSchedule,
+    TransactionTypeActionInstrumentManualPricingFormula,
+    TransactionTypeActionTransaction,
+    TransactionTypeContextParameter,
+    TransactionTypeGroup,
+    TransactionTypeInput,
+    TransactionTypeInputSettings,
+)
+from poms.users.fields import HiddenMemberField, MasterUserField
 from poms.users.utils import get_member_from_context
 
-_l = logging.getLogger('poms.transactions')
+_l = logging.getLogger("poms.transactions")
 
 
 class EventClassSerializer(PomsClassSerializer):
@@ -73,16 +126,22 @@ class ComplexTransactionStatusSerializer(PomsClassSerializer):
         model = ComplexTransactionStatus
 
 
-class TransactionTypeGroupSerializer(ModelWithUserCodeSerializer,
-                                     ModelMetaSerializer):
+class TransactionTypeGroupSerializer(ModelWithUserCodeSerializer, ModelMetaSerializer):
     master_user = MasterUserField()
 
     class Meta:
         model = TransactionTypeGroup
         fields = [
-            'id', 'master_user', 'user_code', 'configuration_code',
-            'name', 'short_name', 'public_name', 'notes', 'is_deleted',
-            'is_enabled'
+            "id",
+            "master_user",
+            "user_code",
+            "configuration_code",
+            "name",
+            "short_name",
+            "public_name",
+            "notes",
+            "is_deleted",
+            "is_enabled",
         ]
 
 
@@ -90,13 +149,19 @@ class TransactionTypeGroupViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = TransactionTypeGroup
         fields = [
-            'id', 'user_code', 'name', 'short_name', 'public_name', 'notes', 'is_deleted',
+            "id",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
+            "notes",
+            "is_deleted",
         ]
 
 
 class TransactionInputField(serializers.CharField):
     def __init__(self, **kwargs):
-        super(TransactionInputField, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
     def to_representation(self, value):
         return value.name if value else None
@@ -107,7 +172,9 @@ class TransactionTypeActionInstrumentPhantomField(serializers.IntegerField):
         return value.order if value else None
 
 
-class TransactionTypeActionInstrumentEventSchedulePhantomField(serializers.IntegerField):
+class TransactionTypeActionInstrumentEventSchedulePhantomField(
+    serializers.IntegerField
+):
     def to_representation(self, value):
         return value.order if value else None
 
@@ -115,184 +182,210 @@ class TransactionTypeActionInstrumentEventSchedulePhantomField(serializers.Integ
 class TransactionTypeContextParameterSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransactionTypeContextParameter
-        fields = ['user_code', 'name', 'value_type', 'order']
+        fields = ["user_code", "name", "value_type", "order"]
 
 
 class TransactionTypeInputSettingsSerializer(serializers.ModelSerializer):
-    linked_inputs_names = serializers.CharField(required=False, allow_null=True, allow_blank=True)
-    recalc_on_change_linked_inputs = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    linked_inputs_names = serializers.CharField(
+        required=False, allow_null=True, allow_blank=True
+    )
+    recalc_on_change_linked_inputs = serializers.CharField(
+        required=False, allow_null=True, allow_blank=True
+    )
 
     def __init__(self, **kwargs):
-        kwargs['required'] = False
-        kwargs['default'] = False
-        # kwargs['allow_null'] = True
-        super(TransactionTypeInputSettingsSerializer, self).__init__(**kwargs)
+        kwargs["required"] = False
+        kwargs["default"] = False
+        super().__init__(**kwargs)
 
     class Meta:
         model = TransactionTypeInputSettings
-        fields = ['linked_inputs_names', 'recalc_on_change_linked_inputs']
+        fields = ["linked_inputs_names", "recalc_on_change_linked_inputs"]
 
 
 class TransactionTypeInputSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
-    name = serializers.CharField(max_length=255, allow_null=False, allow_blank=False,
-                                 validators=[
-                                     RegexValidator(regex='\A[a-zA-Z_][a-zA-Z0-9_]*\Z'),
-                                 ])
-    content_type = TransactionTypeInputContentTypeField(required=False, allow_null=True, allow_empty=True)
+    id = serializers.IntegerField(
+        read_only=False,
+        required=False,
+        allow_null=True,
+    )
+    name = serializers.CharField(
+        max_length=255,
+        allow_null=False,
+        allow_blank=False,
+        validators=[
+            RegexValidator(regex="\A[a-zA-Z_][a-zA-Z0-9_]*\Z"),
+        ],
+    )
+    content_type = TransactionTypeInputContentTypeField(
+        required=False,
+        allow_null=True,
+        allow_empty=True,
+    )
     can_recalculate = serializers.BooleanField(read_only=True)
-    value_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,
-                                 default='')
-    is_fill_from_context = serializers.BooleanField(default=False, initial=False, required=False)
-    value = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True,
-                            default='')
-
-    settings = TransactionTypeInputSettingsSerializer(allow_null=True, required=False)
-
-    button_data = serializers.JSONField(allow_null=True, required=False)
+    value_expr = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        default="",
+    )
+    is_fill_from_context = serializers.BooleanField(
+        default=False,
+        initial=False,
+        required=False,
+    )
+    value = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+        default="",
+    )
+    settings = TransactionTypeInputSettingsSerializer(
+        allow_null=True,
+        required=False,
+    )
+    button_data = serializers.JSONField(
+        allow_null=True,
+        required=False,
+    )
 
     class Meta:
         model = TransactionTypeInput
         fields = [
-            'id', 'name', 'verbose_name', 'value_type', 'reference_table', 'content_type', 'order', 'can_recalculate',
-            'value_expr',
-
-            'tooltip',
-
-            'is_fill_from_context', 'context_property', 'value',
-
-            'settings',
-
-            'button_data'
-
+            "id",
+            "name",
+            "verbose_name",
+            "value_type",
+            "reference_table",
+            "content_type",
+            "order",
+            "can_recalculate",
+            "value_expr",
+            "tooltip",
+            "is_fill_from_context",
+            "context_property",
+            "value",
+            "settings",
+            "button_data",
         ]
-        read_only_fields = ['order']
+        read_only_fields = ["order"]
 
     def __init__(self, *args, **kwargs):
-        super(TransactionTypeInputSerializer, self).__init__(*args, **kwargs)
-
         from poms.accounts.serializers import AccountViewSerializer
-        from poms.instruments.serializers import InstrumentTypeViewSerializer, InstrumentViewSerializer, \
-            DailyPricingModelSerializer, \
-            PaymentSizeDetailSerializer, PricingPolicySerializer
+        from poms.counterparties.serializers import (
+            CounterpartyViewSerializer,
+            ResponsibleViewSerializer,
+        )
         from poms.currencies.serializers import CurrencyViewSerializer
-        from poms.counterparties.serializers import CounterpartyViewSerializer, ResponsibleViewSerializer
+        from poms.instruments.serializers import (
+            AccrualCalculationModelSerializer,
+            DailyPricingModelSerializer,
+            InstrumentTypeViewSerializer,
+            InstrumentViewSerializer,
+            PaymentSizeDetailSerializer,
+            PeriodicitySerializer,
+            PricingPolicySerializer,
+        )
         from poms.portfolios.serializers import PortfolioViewSerializer
-        from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, \
-            Strategy3ViewSerializer
+        from poms.strategies.serializers import (
+            Strategy1ViewSerializer,
+            Strategy2ViewSerializer,
+            Strategy3ViewSerializer,
+        )
 
-        from poms.instruments.serializers import PeriodicitySerializer
-        from poms.instruments.serializers import AccrualCalculationModelSerializer
+        super().__init__(*args, **kwargs)
 
-        self.fields['account_object'] = AccountViewSerializer(source='account', read_only=True)
-
-        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
-        self.fields['instrument_type_object'] = InstrumentTypeViewSerializer(source='instrument_type', read_only=True)
-        self.fields['daily_pricing_model_object'] = DailyPricingModelSerializer(source='daily_pricing_model',
-                                                                                read_only=True)
-        self.fields['payment_size_detail_object'] = PaymentSizeDetailSerializer(source='payment_size_detail',
-                                                                                read_only=True)
-
-        self.fields['currency_object'] = CurrencyViewSerializer(source='currency', read_only=True)
-
-        self.fields['counterparty_object'] = CounterpartyViewSerializer(source='counterparty', read_only=True)
-        self.fields['responsible_object'] = ResponsibleViewSerializer(source='responsible', read_only=True)
-
-        self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
-
-        self.fields['strategy1_object'] = Strategy1ViewSerializer(source='strategy1', read_only=True)
-        self.fields['strategy2_object'] = Strategy2ViewSerializer(source='strategy2', read_only=True)
-        self.fields['strategy3_object'] = Strategy3ViewSerializer(source='strategy3', read_only=True)
-
-        self.fields['pricing_policy_object'] = PricingPolicySerializer(source="pricing_policy", read_only=True)
-
-        self.fields['periodicity_object'] = PeriodicitySerializer(source="periodicity", read_only=True)
-
-        self.fields['accrual_calculation_model_object'] = AccrualCalculationModelSerializer(
-            source="accrual_calculation_model",
-            read_only=True)
+        self.fields["account_object"] = AccountViewSerializer(
+            source="account", read_only=True
+        )
+        self.fields["instrument_object"] = InstrumentViewSerializer(
+            source="instrument", read_only=True
+        )
+        self.fields["instrument_type_object"] = InstrumentTypeViewSerializer(
+            source="instrument_type", read_only=True
+        )
+        self.fields["daily_pricing_model_object"] = DailyPricingModelSerializer(
+            source="daily_pricing_model", read_only=True
+        )
+        self.fields["payment_size_detail_object"] = PaymentSizeDetailSerializer(
+            source="payment_size_detail", read_only=True
+        )
+        self.fields["currency_object"] = CurrencyViewSerializer(
+            source="currency", read_only=True
+        )
+        self.fields["counterparty_object"] = CounterpartyViewSerializer(
+            source="counterparty", read_only=True
+        )
+        self.fields["responsible_object"] = ResponsibleViewSerializer(
+            source="responsible", read_only=True
+        )
+        self.fields["portfolio_object"] = PortfolioViewSerializer(
+            source="portfolio", read_only=True
+        )
+        self.fields["strategy1_object"] = Strategy1ViewSerializer(
+            source="strategy1", read_only=True
+        )
+        self.fields["strategy2_object"] = Strategy2ViewSerializer(
+            source="strategy2", read_only=True
+        )
+        self.fields["strategy3_object"] = Strategy3ViewSerializer(
+            source="strategy3", read_only=True
+        )
+        self.fields["pricing_policy_object"] = PricingPolicySerializer(
+            source="pricing_policy", read_only=True
+        )
+        self.fields["periodicity_object"] = PeriodicitySerializer(
+            source="periodicity", read_only=True
+        )
+        self.fields[
+            "accrual_calculation_model_object"
+        ] = AccrualCalculationModelSerializer(
+            source="accrual_calculation_model", read_only=True
+        )
 
     def validate(self, data):
-        value_type = data['value_type']
-        # if value_type == TransactionTypeInput.RELATION:
-        #     content_type = data.get('content_type', None)
-        #     if content_type is None:
-        #         self.content_type.fail('required')
-        #     else:
-        #         model_class = content_type.model_class()
-        #         if issubclass(model_class, Account):
-        #             target_attr = 'account'
-        #         elif issubclass(model_class, Currency):
-        #             target_attr = 'currency'
-        #         elif issubclass(model_class, Instrument):
-        #             target_attr = 'instrument'
-        #         elif issubclass(model_class, InstrumentType):
-        #             target_attr = 'instrument_type'
-        #         elif issubclass(model_class, Counterparty):
-        #             target_attr = 'counterparty'
-        #         elif issubclass(model_class, Responsible):
-        #             target_attr = 'responsible'
-        #         elif issubclass(model_class, Strategy1):
-        #             target_attr = 'strategy1'
-        #         elif issubclass(model_class, Strategy2):
-        #             target_attr = 'strategy2'
-        #         elif issubclass(model_class, Strategy3):
-        #             target_attr = 'strategy3'
-        #         elif issubclass(model_class, DailyPricingModel):
-        #             target_attr = 'daily_pricing_model'
-        #         elif issubclass(model_class, PaymentSizeDetail):
-        #             target_attr = 'payment_size_detail'
-        #         elif issubclass(model_class, Portfolio):
-        #             target_attr = 'portfolio'
-        #         elif issubclass(model_class, PricingPolicy):
-        #             target_attr = 'pricing_policy'
-        #         elif issubclass(model_class, Periodicity):
-        #             target_attr = 'periodicity'
-        #         elif issubclass(model_class, AccrualCalculationModel):
-        #             target_attr = 'accrual_calculation_model'
-        #         elif issubclass(model_class, EventClass):
-        #             target_attr = 'event_class'
-        #         elif issubclass(model_class, NotificationClass):
-        #             target_attr = 'notification_class'
-        #         else:
-        #             raise ValidationError('Unknown content_type')
-        #
-        #         attrs = ['account', 'instrument_type', 'instrument', 'currency', 'counterparty', 'responsible',
-        #                  'portfolio', 'strategy1', 'strategy2', 'strategy3', 'daily_pricing_model',
-        #                  'payment_size_detail', 'pricing_policy', 'periodicity',
-        #                  'accrual_calculation_model']
-        #
-        #         for attr in attrs:
-        #             if attr != target_attr:
-        #                 data[attr] = None
         return data
 
     def create(self, validated_data):
-        instance = super(TransactionTypeInputSerializer, self).create(validated_data)
-
-        return instance
+        return super().create(validated_data)
 
     def update(self, instance, validated_data):
-        instance = super(TransactionTypeInputSerializer, self).update(instance, validated_data)
+        instance = super().update(instance, validated_data)
 
         return instance
 
 
 class TransactionTypeInputViewOnlySerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=False, required=False, allow_null=True)
-    name = serializers.CharField(max_length=255, allow_null=False, allow_blank=False,
-                                 validators=[
-                                     RegexValidator(regex='\A[a-zA-Z_][a-zA-Z0-9_]*\Z'),
-                                 ])
-    content_type = TransactionTypeInputContentTypeField(required=False, allow_null=True, allow_empty=True)
+    name = serializers.CharField(
+        max_length=255,
+        allow_null=False,
+        allow_blank=False,
+        validators=[
+            RegexValidator(regex="\A[a-zA-Z_][a-zA-Z0-9_]*\Z"),
+        ],
+    )
+    content_type = TransactionTypeInputContentTypeField(
+        required=False,
+        allow_null=True,
+        allow_empty=True,
+    )
 
     class Meta:
         model = TransactionTypeInput
         fields = [
-            'id', 'name', 'verbose_name', 'value_type', 'content_type', 'order',
-            'tooltip', 'reference_table'
+            "id",
+            "name",
+            "verbose_name",
+            "value_type",
+            "content_type",
+            "order",
+            "tooltip",
+            "reference_table",
         ]
-        read_only_fields = ['order']
+        read_only_fields = ["order"]
 
 
 class TransactionTypeInputViewSerializer(serializers.ModelSerializer):
@@ -301,734 +394,1242 @@ class TransactionTypeInputViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransactionTypeInput
         fields = [
-            'id', 'name', 'verbose_name', 'value_type', 'content_type', 'order',
+            "id",
+            "name",
+            "verbose_name",
+            "value_type",
+            "content_type",
+            "order",
         ]
         read_only_fields = fields
 
 
 class TransactionTypeActionInstrumentSerializer(serializers.ModelSerializer):
-    user_code = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-    name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-    public_name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-    short_name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-    notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-
-    instrument_type_input = TransactionInputField(required=False, allow_null=True)
-    pricing_currency_input = TransactionInputField(required=False, allow_null=True)
-    price_multiplier = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="1.0")
-    accrued_currency_input = TransactionInputField(required=False, allow_null=True)
-    accrued_multiplier = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="1.0")
-    default_price = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    default_accrued = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    user_text_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-    user_text_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-    user_text_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-
-    reference_for_pricing = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                            default='')
-    payment_size_detail_input = TransactionInputField(required=False, allow_null=True)
-
-    maturity_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
-    maturity_price = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
+    user_code = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    name = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    public_name = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    short_name = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    notes = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    instrument_type_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    pricing_currency_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    price_multiplier = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="1.0",
+    )
+    accrued_currency_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    accrued_multiplier = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="1.0",
+    )
+    default_price = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
+    default_accrued = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
+    user_text_1 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    user_text_2 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    user_text_3 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    reference_for_pricing = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    payment_size_detail_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    maturity_date = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    maturity_price = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
 
     class Meta:
         model = TransactionTypeActionInstrument
         fields = [
-            'user_code', 'name', 'public_name', 'short_name', 'notes',
-            'instrument_type',
-            'instrument_type_input',
-            'pricing_currency',
-            'pricing_currency_input',
-            'price_multiplier',
-            'accrued_currency',
-            'accrued_currency_input',
-            'accrued_multiplier',
-            'payment_size_detail',
-            'payment_size_detail_input',
-            'pricing_condition',
-            'pricing_condition_input',
-            'default_price',
-            'default_accrued',
-            'user_text_1',
-            'user_text_2',
-            'user_text_3',
-            'reference_for_pricing',
-            'maturity_date',
-            'maturity_price',
-
-            'action_notes'
-
+            "user_code",
+            "name",
+            "public_name",
+            "short_name",
+            "notes",
+            "instrument_type",
+            "instrument_type_input",
+            "pricing_currency",
+            "pricing_currency_input",
+            "price_multiplier",
+            "accrued_currency",
+            "accrued_currency_input",
+            "accrued_multiplier",
+            "payment_size_detail",
+            "payment_size_detail_input",
+            "pricing_condition",
+            "pricing_condition_input",
+            "default_price",
+            "default_accrued",
+            "user_text_1",
+            "user_text_2",
+            "user_text_3",
+            "reference_for_pricing",
+            "maturity_date",
+            "maturity_price",
+            "action_notes",
         ]
 
     def __init__(self, *args, **kwargs):
-        super(TransactionTypeActionInstrumentSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
-
         result = None
         field_instance = None
 
         try:
             if key in data and data[key]:
-
                 try:
-                    if Model._meta.get_field('master_user'):
-                        field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
-                except Exception as e:
+                    if Model._meta.get_field("master_user"):
+                        field_instance = Model.objects.get(
+                            master_user=master_user, user_code=data[key]
+                        )
+                except Exception:
                     field_instance = Model.objects.get(user_code=data[key])
 
                 result = Serializer(instance=field_instance, context=self.context).data
-        except Exception as e:
-
+        except Exception:
             result = None
 
         return result
 
     def to_representation(self, instance):
-
-        from poms.instruments.models import InstrumentType, PaymentSizeDetail, PricingCondition
         from poms.currencies.models import Currency
-
-        from poms.instruments.serializers import InstrumentTypeViewSerializer, PaymentSizeDetailSerializer, \
-            PricingConditionSerializer
         from poms.currencies.serializers import CurrencyViewSerializer
+        from poms.instruments.models import (
+            InstrumentType,
+            PaymentSizeDetail,
+            PricingCondition,
+        )
+        from poms.instruments.serializers import (
+            InstrumentTypeViewSerializer,
+            PaymentSizeDetailSerializer,
+            PricingConditionSerializer,
+        )
 
-        data = super(TransactionTypeActionInstrumentSerializer, self).to_representation(instance)
+        representation = super().to_representation(instance)
 
         master_user = instance.transaction_type.master_user
 
-        data['instrument_type_object'] = self.lookup_for_relation_object(master_user, data, 'instrument_type',
-                                                                         InstrumentType,
-                                                                         InstrumentTypeViewSerializer)
-        data['pricing_currency_object'] = self.lookup_for_relation_object(master_user, data, 'pricing_currency',
-                                                                          Currency, CurrencyViewSerializer)
-        data['accrued_currency_object'] = self.lookup_for_relation_object(master_user, data, 'accrued_currency',
-                                                                          Currency, CurrencyViewSerializer)
+        representation["instrument_type_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "instrument_type",
+            InstrumentType,
+            InstrumentTypeViewSerializer,
+        )
+        representation["pricing_currency_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "pricing_currency",
+            Currency,
+            CurrencyViewSerializer,
+        )
+        representation["accrued_currency_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "accrued_currency",
+            Currency,
+            CurrencyViewSerializer,
+        )
+        representation["payment_size_detail_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "payment_size_detail",
+            PaymentSizeDetail,
+            PaymentSizeDetailSerializer,
+        )
+        representation["pricing_condition_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "pricing_condition",
+            PricingCondition,
+            PricingConditionSerializer,
+        )
 
-        data['payment_size_detail_object'] = self.lookup_for_relation_object(master_user, data, 'payment_size_detail',
-                                                                             PaymentSizeDetail,
-                                                                             PaymentSizeDetailSerializer)
-        data['pricing_condition_object'] = self.lookup_for_relation_object(master_user, data, 'pricing_condition',
-                                                                           PricingCondition,
-                                                                           PricingConditionSerializer)
-
-        return data
+        return representation
 
 
 class TransactionTypeActionTransactionSerializer(serializers.ModelSerializer):
-    instrument_input = TransactionInputField(required=False, allow_null=True)
-    instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
-    transaction_currency_input = TransactionInputField(required=False, allow_null=True)
-    position_size_with_sign = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    settlement_currency_input = TransactionInputField(required=False, allow_null=True)
-    cash_consideration = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    principal_with_sign = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    carry_with_sign = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    overheads_with_sign = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    portfolio_input = TransactionInputField(required=False, allow_null=True)
-    account_position_input = TransactionInputField(required=False, allow_null=True)
-    account_cash_input = TransactionInputField(required=False, allow_null=True)
-    account_interim_input = TransactionInputField(required=False, allow_null=True)
-    accounting_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="now()")
-    cash_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="now()")
-    strategy1_position_input = TransactionInputField(required=False, allow_null=True)
-    strategy1_cash_input = TransactionInputField(required=False, allow_null=True)
-    strategy2_position_input = TransactionInputField(required=False, allow_null=True)
-    strategy2_cash_input = TransactionInputField(required=False, allow_null=True)
-    strategy3_position_input = TransactionInputField(required=False, allow_null=True)
-    strategy3_cash_input = TransactionInputField(required=False, allow_null=True)
-    responsible_input = TransactionInputField(required=False, allow_null=True)
-    counterparty_input = TransactionInputField(required=False, allow_null=True)
-    linked_instrument_input = TransactionInputField(required=False, allow_null=True)
-    linked_instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
-    allocation_balance_input = TransactionInputField(required=False, allow_null=True)
-    allocation_balance_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
-    allocation_pl_input = TransactionInputField(required=False, allow_null=True)
-    allocation_pl_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
-
-    reference_fx_rate = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    factor = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    trade_price = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    position_amount = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    principal_amount = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    carry_amount = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    overheads = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-
-    notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-    user_text_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-    user_text_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-    user_text_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-
-    user_number_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-    user_number_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-    user_number_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-
-    user_date_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-    user_date_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
-    user_date_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True, default='')
+    instrument_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    instrument_phantom = TransactionTypeActionInstrumentPhantomField(
+        required=False,
+        allow_null=True,
+    )
+    transaction_currency_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    position_size_with_sign = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
+    settlement_currency_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    cash_consideration = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
+    principal_with_sign = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
+    carry_with_sign = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
+    overheads_with_sign = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
+    portfolio_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    account_position_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    account_cash_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    account_interim_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    accounting_date = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="now()",
+    )
+    cash_date = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="now()",
+    )
+    strategy1_position_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    strategy1_cash_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    strategy2_position_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    strategy2_cash_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    strategy3_position_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    strategy3_cash_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    responsible_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    counterparty_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    linked_instrument_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    linked_instrument_phantom = TransactionTypeActionInstrumentPhantomField(
+        required=False,
+        allow_null=True,
+    )
+    allocation_balance_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    allocation_balance_phantom = TransactionTypeActionInstrumentPhantomField(
+        required=False,
+        allow_null=True,
+    )
+    allocation_pl_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    allocation_pl_phantom = TransactionTypeActionInstrumentPhantomField(
+        required=False,
+        allow_null=True,
+    )
+    reference_fx_rate = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
+    factor = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
+    trade_price = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
+    position_amount = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
+    principal_amount = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
+    carry_amount = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
+    overheads = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
+    notes = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    user_text_1 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    user_text_2 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    user_text_3 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    user_number_1 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    user_number_2 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    user_number_3 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    user_date_1 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    user_date_2 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
+    user_date_3 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        default="",
+    )
 
     class Meta:
         model = TransactionTypeActionTransaction
         fields = [
-            'transaction_class',
-            'instrument',
-            'instrument_input',
-            'instrument_phantom',
-            'transaction_currency',
-            'transaction_currency_input',
-            'position_size_with_sign',
-            'settlement_currency',
-            'settlement_currency_input',
-            'cash_consideration',
-            'principal_with_sign',
-            'carry_with_sign',
-            'overheads_with_sign',
-            'reference_fx_rate',
-            'portfolio',
-            'portfolio_input',
-            'account_position',
-            'account_position_input',
-            'account_cash',
-            'account_cash_input',
-            'account_interim',
-            'account_interim_input',
-            'accounting_date',
-            'cash_date',
-            'strategy1_position',
-            'strategy1_position_input',
-            'strategy1_cash',
-            'strategy1_cash_input',
-            'strategy2_position',
-            'strategy2_position_input',
-            'strategy2_cash',
-            'strategy2_cash_input',
-            'strategy3_position',
-            'strategy3_position_input',
-            'strategy3_cash',
-            'strategy3_cash_input',
-            'linked_instrument',
-            'linked_instrument_input',
-            'linked_instrument_phantom',
-            'allocation_balance',
-            'allocation_balance_input',
-            'allocation_balance_phantom',
-            'allocation_pl',
-            'allocation_pl_input',
-            'allocation_pl_phantom',
-            'responsible',
-            'responsible_input',
-            'counterparty',
-            'counterparty_input',
-            'factor',
-            'trade_price',
-            'position_amount',
-            'principal_amount',
-            'carry_amount',
-            'overheads',
-            'notes',
-            'user_text_1',
-            'user_text_2',
-            'user_text_3',
-
-            'user_number_1',
-            'user_number_2',
-            'user_number_3',
-
-            'user_date_1',
-            'user_date_2',
-            'user_date_3',
-
-            'action_notes',
-
-            'is_canceled'
+            "transaction_class",
+            "instrument",
+            "instrument_input",
+            "instrument_phantom",
+            "transaction_currency",
+            "transaction_currency_input",
+            "position_size_with_sign",
+            "settlement_currency",
+            "settlement_currency_input",
+            "cash_consideration",
+            "principal_with_sign",
+            "carry_with_sign",
+            "overheads_with_sign",
+            "reference_fx_rate",
+            "portfolio",
+            "portfolio_input",
+            "account_position",
+            "account_position_input",
+            "account_cash",
+            "account_cash_input",
+            "account_interim",
+            "account_interim_input",
+            "accounting_date",
+            "cash_date",
+            "strategy1_position",
+            "strategy1_position_input",
+            "strategy1_cash",
+            "strategy1_cash_input",
+            "strategy2_position",
+            "strategy2_position_input",
+            "strategy2_cash",
+            "strategy2_cash_input",
+            "strategy3_position",
+            "strategy3_position_input",
+            "strategy3_cash",
+            "strategy3_cash_input",
+            "linked_instrument",
+            "linked_instrument_input",
+            "linked_instrument_phantom",
+            "allocation_balance",
+            "allocation_balance_input",
+            "allocation_balance_phantom",
+            "allocation_pl",
+            "allocation_pl_input",
+            "allocation_pl_phantom",
+            "responsible",
+            "responsible_input",
+            "counterparty",
+            "counterparty_input",
+            "factor",
+            "trade_price",
+            "position_amount",
+            "principal_amount",
+            "carry_amount",
+            "overheads",
+            "notes",
+            "user_text_1",
+            "user_text_2",
+            "user_text_3",
+            "user_number_1",
+            "user_number_2",
+            "user_number_3",
+            "user_date_1",
+            "user_date_2",
+            "user_date_3",
+            "action_notes",
+            "is_canceled",
         ]
 
     def __init__(self, *args, **kwargs):
-        super(TransactionTypeActionTransactionSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-        self.fields['transaction_class_object'] = TransactionClassSerializer(source='transaction_class', read_only=True)
-
-        # self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
-        # self.fields['transaction_currency_object'] = CurrencyViewSerializer(source='transaction_currency',
-        #                                                                     read_only=True)
-        # self.fields['settlement_currency_object'] = CurrencyViewSerializer(source='settlement_currency', read_only=True)
-        #
-        # self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio_id', read_only=True)
-
-        # self.fields['account_position_object'] = AccountViewSerializer(source='account_position', read_only=True)
-        # self.fields['account_cash_object'] = AccountViewSerializer(source='account_cash', read_only=True)
-        # self.fields['account_interim_object'] = AccountViewSerializer(source='account_interim', read_only=True)
-        #
-        # self.fields['strategy1_position_object'] = Strategy1ViewSerializer(source='strategy1_position', read_only=True)
-        # self.fields['strategy1_cash_object'] = Strategy1ViewSerializer(source='strategy1_cash', read_only=True)
-        # self.fields['strategy2_position_object'] = Strategy2ViewSerializer(source='strategy2_position', read_only=True)
-        # self.fields['strategy2_cash_object'] = Strategy2ViewSerializer(source='strategy2_cash', read_only=True)
-        # self.fields['strategy3_position_object'] = Strategy3ViewSerializer(source='strategy3_position', read_only=True)
-        # self.fields['strategy3_cash_object'] = Strategy3ViewSerializer(source='strategy3_cash', read_only=True)
-        #
-        # self.fields['responsible_object'] = ResponsibleViewSerializer(source='responsible', read_only=True)
-        # self.fields['counterparty_object'] = CounterpartyViewSerializer(source='counterparty', read_only=True)
-        #
-        # self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
-        # self.fields['allocation_balance_object'] = InstrumentViewSerializer(source='allocation_balance', read_only=True)
-        # self.fields['allocation_pl_object'] = InstrumentViewSerializer(source='allocation_pl', read_only=True)
+        self.fields["transaction_class_object"] = TransactionClassSerializer(
+            source="transaction_class", read_only=True
+        )
 
     def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
-
         result = None
         field_instance = None
 
         try:
             if key in data and data[key]:
-
                 try:
-                    if Model._meta.get_field('master_user'):
-                        field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
-                except Exception as e:
+                    if Model._meta.get_field("master_user"):
+                        field_instance = Model.objects.get(
+                            master_user=master_user, user_code=data[key]
+                        )
+                except Exception:
                     field_instance = Model.objects.get(user_code=data[key])
 
                 result = Serializer(instance=field_instance, context=self.context).data
-        except Exception as e:
-
+        except Exception:
             result = None
 
         return result
 
     def to_representation(self, instance):
-
-        from poms.portfolios.models import Portfolio
-        from poms.instruments.models import Instrument
-        from poms.currencies.models import Currency
         from poms.accounts.models import Account
-        from poms.strategies.models import Strategy1, Strategy2, \
-            Strategy3
-        from poms.counterparties.models import Responsible, Counterparty
-
-        from poms.portfolios.serializers import PortfolioViewSerializer
-        from poms.instruments.serializers import InstrumentViewSerializer
-        from poms.currencies.serializers import CurrencyViewSerializer
         from poms.accounts.serializers import AccountViewSerializer
-        from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, \
-            Strategy3ViewSerializer
-        from poms.counterparties.serializers import ResponsibleViewSerializer, CounterpartyViewSerializer
+        from poms.counterparties.models import Counterparty, Responsible
+        from poms.counterparties.serializers import (
+            CounterpartyViewSerializer,
+            ResponsibleViewSerializer,
+        )
+        from poms.currencies.models import Currency
+        from poms.currencies.serializers import CurrencyViewSerializer
+        from poms.instruments.models import Instrument
+        from poms.instruments.serializers import InstrumentViewSerializer
+        from poms.portfolios.models import Portfolio
+        from poms.portfolios.serializers import PortfolioViewSerializer
+        from poms.strategies.models import Strategy1, Strategy2, Strategy3
+        from poms.strategies.serializers import (
+            Strategy1ViewSerializer,
+            Strategy2ViewSerializer,
+            Strategy3ViewSerializer,
+        )
 
-        data = super(TransactionTypeActionTransactionSerializer, self).to_representation(instance)
+        representation = super().to_representation(instance)
 
         master_user = instance.transaction_type.master_user
 
-        data['instrument_object'] = self.lookup_for_relation_object(master_user, data, 'instrument', Instrument,
-                                                                    InstrumentViewSerializer)
-        data['transaction_currency_object'] = self.lookup_for_relation_object(master_user, data, 'transaction_currency',
-                                                                              Currency, CurrencyViewSerializer)
-        data['settlement_currency_object'] = self.lookup_for_relation_object(master_user, data, 'settlement_currency',
-                                                                             Currency, CurrencyViewSerializer)
+        representation["instrument_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "instrument",
+            Instrument,
+            InstrumentViewSerializer,
+        )
+        representation["transaction_currency_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "transaction_currency",
+            Currency,
+            CurrencyViewSerializer,
+        )
+        representation["settlement_currency_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "settlement_currency",
+            Currency,
+            CurrencyViewSerializer,
+        )
+        representation["portfolio_object"] = self.lookup_for_relation_object(
+            master_user, representation, "portfolio", Portfolio, PortfolioViewSerializer
+        )
+        representation["account_position_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "account_position",
+            Account,
+            AccountViewSerializer,
+        )
+        representation["account_cash_object"] = self.lookup_for_relation_object(
+            master_user, representation, "account_cash", Account, AccountViewSerializer
+        )
+        representation["account_interim_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "account_interim",
+            Account,
+            AccountViewSerializer,
+        )
+        representation["strategy1_position_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "strategy1_position",
+            Strategy1,
+            Strategy1ViewSerializer,
+        )
+        representation["strategy1_cash_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "strategy1_cash",
+            Strategy1,
+            Strategy1ViewSerializer,
+        )
+        representation["strategy2_position_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "strategy2_position",
+            Strategy2,
+            Strategy2ViewSerializer,
+        )
+        representation["strategy2_cash_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "strategy2_cash",
+            Strategy2,
+            Strategy2ViewSerializer,
+        )
+        representation["strategy3_position_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "strategy3_position",
+            Strategy3,
+            Strategy3ViewSerializer,
+        )
+        representation["strategy3_cash_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "strategy3_cash",
+            Strategy3,
+            Strategy3ViewSerializer,
+        )
+        representation["responsible_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "responsible",
+            Responsible,
+            ResponsibleViewSerializer,
+        )
+        representation["counterparty_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "counterparty",
+            Counterparty,
+            CounterpartyViewSerializer,
+        )
+        representation["linked_instrument_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "linked_instrument",
+            Instrument,
+            InstrumentViewSerializer,
+        )
+        representation["allocation_balance_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "allocation_balance",
+            Instrument,
+            InstrumentViewSerializer,
+        )
+        representation["allocation_pl_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "allocation_pl",
+            Instrument,
+            InstrumentViewSerializer,
+        )
 
-        data['portfolio_object'] = self.lookup_for_relation_object(master_user, data, 'portfolio', Portfolio,
-                                                                   PortfolioViewSerializer)
-
-        data['account_position_object'] = self.lookup_for_relation_object(master_user, data, 'account_position',
-                                                                          Account, AccountViewSerializer)
-        data['account_cash_object'] = self.lookup_for_relation_object(master_user, data, 'account_cash', Account,
-                                                                      AccountViewSerializer)
-        data['account_interim_object'] = self.lookup_for_relation_object(master_user, data, 'account_interim', Account,
-                                                                         AccountViewSerializer)
-
-        data['strategy1_position_object'] = self.lookup_for_relation_object(master_user, data, 'strategy1_position',
-                                                                            Strategy1, Strategy1ViewSerializer)
-        data['strategy1_cash_object'] = self.lookup_for_relation_object(master_user, data, 'strategy1_cash', Strategy1,
-                                                                        Strategy1ViewSerializer)
-        data['strategy2_position_object'] = self.lookup_for_relation_object(master_user, data, 'strategy2_position',
-                                                                            Strategy2, Strategy2ViewSerializer)
-        data['strategy2_cash_object'] = self.lookup_for_relation_object(master_user, data, 'strategy2_cash', Strategy2,
-                                                                        Strategy2ViewSerializer)
-        data['strategy3_position_object'] = self.lookup_for_relation_object(master_user, data, 'strategy3_position',
-                                                                            Strategy3, Strategy3ViewSerializer)
-        data['strategy3_cash_object'] = self.lookup_for_relation_object(master_user, data, 'strategy3_cash', Strategy3,
-                                                                        Strategy3ViewSerializer)
-
-        data['responsible_object'] = self.lookup_for_relation_object(master_user, data, 'responsible', Responsible,
-                                                                     ResponsibleViewSerializer)
-        data['counterparty_object'] = self.lookup_for_relation_object(master_user, data, 'counterparty', Counterparty,
-                                                                      CounterpartyViewSerializer)
-
-        data['linked_instrument_object'] = self.lookup_for_relation_object(master_user, data, 'linked_instrument',
-                                                                           Instrument, InstrumentViewSerializer)
-        data['allocation_balance_object'] = self.lookup_for_relation_object(master_user, data, 'allocation_balance',
-                                                                            Instrument, InstrumentViewSerializer)
-        data['allocation_pl_object'] = self.lookup_for_relation_object(master_user, data, 'allocation_pl', Instrument,
-                                                                       InstrumentViewSerializer)
-
-        return data
+        return representation
 
 
-class TransactionTypeActionInstrumentFactorScheduleSerializer(serializers.ModelSerializer):
-    instrument_input = TransactionInputField(required=False, allow_null=True)
-    instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
-
-    effective_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
-    factor_value = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
+class TransactionTypeActionInstrumentFactorScheduleSerializer(
+    serializers.ModelSerializer
+):
+    instrument_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    instrument_phantom = TransactionTypeActionInstrumentPhantomField(
+        required=False,
+        allow_null=True,
+    )
+    effective_date = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    factor_value = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
 
     class Meta:
         model = TransactionTypeActionInstrumentFactorSchedule
         fields = [
-            'instrument',
-            'instrument_input',
-            'instrument_phantom',
-
-            'effective_date',
-            'factor_value'
+            "instrument",
+            "instrument_input",
+            "instrument_phantom",
+            "effective_date",
+            "factor_value",
         ]
 
     def __init__(self, *args, **kwargs):
-        super(TransactionTypeActionInstrumentFactorScheduleSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
-
         result = None
         field_instance = None
 
         try:
             if key in data and data[key]:
-
                 try:
-                    if Model._meta.get_field('master_user'):
-                        field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
-                except Exception as e:
+                    if Model._meta.get_field("master_user"):
+                        field_instance = Model.objects.get(
+                            master_user=master_user, user_code=data[key]
+                        )
+                except Exception:
                     field_instance = Model.objects.get(user_code=data[key])
 
                 result = Serializer(instance=field_instance, context=self.context).data
-        except Exception as e:
-
+        except Exception:
             result = None
 
         return result
 
     def to_representation(self, instance):
-
         from poms.instruments.models import Instrument
-
         from poms.instruments.serializers import InstrumentViewSerializer
 
-        data = super(TransactionTypeActionInstrumentFactorScheduleSerializer, self).to_representation(instance)
+        representation = super().to_representation(instance)
 
         master_user = instance.transaction_type.master_user
 
-        data['instrument_object'] = self.lookup_for_relation_object(master_user, data, 'instrument', Instrument,
-                                                                    InstrumentViewSerializer)
+        representation["instrument_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "instrument",
+            Instrument,
+            InstrumentViewSerializer,
+        )
 
-        return data
+        return representation
 
 
 # DEPRECATED
-class TransactionTypeActionInstrumentManualPricingFormulaSerializer(serializers.ModelSerializer):
-    instrument_input = TransactionInputField(required=False, allow_null=True)
-    instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
-
-    pricing_policy = PricingPolicyField(required=False, allow_null=True)
-    pricing_policy_input = TransactionInputField(required=False, allow_null=True)
-
-    expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False)
-    notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="", allow_null=True,
-                            allow_blank=True)
+class TransactionTypeActionInstrumentManualPricingFormulaSerializer(
+    serializers.ModelSerializer
+):
+    instrument_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    instrument_phantom = TransactionTypeActionInstrumentPhantomField(
+        required=False,
+        allow_null=True,
+    )
+    pricing_policy = PricingPolicyField(
+        required=False,
+        allow_null=True,
+    )
+    pricing_policy_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    expr = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+    )
+    notes = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="",
+        allow_null=True,
+        allow_blank=True,
+    )
 
     class Meta:
         model = TransactionTypeActionInstrumentFactorSchedule
         fields = [
-            'instrument',
-            'instrument_input',
-            'instrument_phantom',
-
-            'pricing_policy',
-            'pricing_policy_input',
-
-            'expr',
-            'notes'
+            "instrument",
+            "instrument_input",
+            "instrument_phantom",
+            "pricing_policy",
+            "pricing_policy_input",
+            "expr",
+            "notes",
         ]
 
     def __init__(self, *args, **kwargs):
-        super(TransactionTypeActionInstrumentManualPricingFormulaSerializer, self).__init__(*args, **kwargs)
-
         from poms.instruments.serializers import PricingPolicySerializer
 
-        self.fields['pricing_policy_object'] = PricingPolicySerializer(source='pricing_policy', read_only=True)
+        super().__init__(*args, **kwargs)
+
+        self.fields["pricing_policy_object"] = PricingPolicySerializer(
+            source="pricing_policy", read_only=True
+        )
 
 
-class TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(serializers.ModelSerializer):
-    instrument_input = TransactionInputField(required=False, allow_null=True)
-    instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
-
-    accrual_calculation_model_input = TransactionInputField(required=False, allow_null=True)
-
-    periodicity_input = TransactionInputField(required=False, allow_null=True)
-
-    accrual_start_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
-    first_payment_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
-    accrual_size = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, default="0.0")
-    periodicity_n = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
-    notes = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_null=True, allow_blank=True)
+class TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(
+    serializers.ModelSerializer
+):
+    instrument_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    instrument_phantom = TransactionTypeActionInstrumentPhantomField(
+        required=False,
+        allow_null=True,
+    )
+    accrual_calculation_model_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    periodicity_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    accrual_start_date = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    first_payment_date = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    accrual_size = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        default="0.0",
+    )
+    periodicity_n = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    notes = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
 
     class Meta:
         model = TransactionTypeActionInstrumentAccrualCalculationSchedules
         fields = [
-            'instrument',
-            'instrument_input',
-            'instrument_phantom',
-
-            'accrual_calculation_model',
-            'accrual_calculation_model_input',
-
-            'periodicity',
-            'periodicity_input',
-
-            'accrual_start_date',
-            'first_payment_date',
-            'accrual_size',
-            'periodicity_n',
-            'notes'
+            "instrument",
+            "instrument_input",
+            "instrument_phantom",
+            "accrual_calculation_model",
+            "accrual_calculation_model_input",
+            "periodicity",
+            "periodicity_input",
+            "accrual_start_date",
+            "first_payment_date",
+            "accrual_size",
+            "periodicity_n",
+            "notes",
         ]
 
     def __init__(self, *args, **kwargs):
-        super(TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer, self).__init__(*args, **kwargs)
-
-        # self.fields['periodicity_object'] = PeriodicitySerializer(source='periodicity', read_only=True)
-        # self.fields['accrual_calculation_model_object'] = AccrualCalculationModelSerializer(
-        #     source='accrual_calculation_model', read_only=True)
+        super().__init__(*args, **kwargs)
 
     def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
-
         result = None
         field_instance = None
 
         try:
             if key in data and data[key]:
-
                 try:
-                    if Model._meta.get_field('master_user'):
-                        field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
-                except Exception as e:
+                    if Model._meta.get_field("master_user"):
+                        field_instance = Model.objects.get(
+                            master_user=master_user, user_code=data[key]
+                        )
+                except Exception:
                     field_instance = Model.objects.get(user_code=data[key])
 
                 result = Serializer(instance=field_instance, context=self.context).data
-        except Exception as e:
-
+        except Exception:
             result = None
 
         return result
 
     def to_representation(self, instance):
+        from poms.instruments.models import AccrualCalculationModel, Periodicity
+        from poms.instruments.serializers import (
+            AccrualCalculationModelSerializer,
+            InstrumentViewSerializer,
+            PeriodicitySerializer,
+        )
 
-        from poms.instruments.models import Periodicity, AccrualCalculationModel
-
-        from poms.instruments.serializers import PeriodicitySerializer, AccrualCalculationModelSerializer
-
-        data = super(TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer, self).to_representation(
-            instance)
+        representation = super().to_representation(instance)
 
         master_user = instance.transaction_type.master_user
 
-        from poms.instruments.serializers import InstrumentViewSerializer
-        data['instrument_object'] = self.lookup_for_relation_object(master_user, data, 'instrument', Instrument,
-                                                                    InstrumentViewSerializer)
+        representation["instrument_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "instrument",
+            Instrument,
+            InstrumentViewSerializer,
+        )
+        representation["periodicity_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "periodicity",
+            Periodicity,
+            PeriodicitySerializer,
+        )
+        representation[
+            "accrual_calculation_model_object"
+        ] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "accrual_calculation_model",
+            AccrualCalculationModel,
+            AccrualCalculationModelSerializer,
+        )
 
-        data['periodicity_object'] = self.lookup_for_relation_object(master_user, data, 'periodicity', Periodicity,
-                                                                     PeriodicitySerializer)
-
-        data['accrual_calculation_model_object'] = self.lookup_for_relation_object(master_user, data,
-                                                                                   'accrual_calculation_model',
-                                                                                   AccrualCalculationModel,
-                                                                                   AccrualCalculationModelSerializer)
-
-        return data
+        return representation
 
 
-class TransactionTypeActionInstrumentEventScheduleSerializer(serializers.ModelSerializer):
-    instrument_input = TransactionInputField(required=False, allow_null=True)
-    instrument_phantom = TransactionTypeActionInstrumentPhantomField(required=False, allow_null=True)
-
-    periodicity_input = TransactionInputField(required=False, allow_null=True)
-
-    notification_class_input = TransactionInputField(required=False, allow_null=True)
-
-    event_class_input = TransactionInputField(required=False, allow_null=True)
-
-    effective_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
-    final_date = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
-    notify_in_n_days = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
-    is_auto_generated = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
-    periodicity_n = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
-    name = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
-    description = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+class TransactionTypeActionInstrumentEventScheduleSerializer(
+    serializers.ModelSerializer
+):
+    instrument_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    instrument_phantom = TransactionTypeActionInstrumentPhantomField(
+        required=False,
+        allow_null=True,
+    )
+    periodicity_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    notification_class_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    event_class_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    effective_date = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    final_date = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    notify_in_n_days = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    is_auto_generated = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    periodicity_n = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    name = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    description = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
 
     class Meta:
         model = TransactionTypeActionInstrumentEventSchedule
         fields = [
-            'instrument',
-            'instrument_input',
-            'instrument_phantom',
-
-            'periodicity',
-            'periodicity_input',
-
-            'notification_class',
-            'notification_class_input',
-
-            'event_class',
-            'event_class_input',
-
-            'effective_date',
-            'final_date',
-            'notify_in_n_days',
-            'is_auto_generated',
-            'periodicity_n',
-            'name',
-            'description'
+            "instrument",
+            "instrument_input",
+            "instrument_phantom",
+            "periodicity",
+            "periodicity_input",
+            "notification_class",
+            "notification_class_input",
+            "event_class",
+            "event_class_input",
+            "effective_date",
+            "final_date",
+            "notify_in_n_days",
+            "is_auto_generated",
+            "periodicity_n",
+            "name",
+            "description",
         ]
 
     def __init__(self, *args, **kwargs):
-        super(TransactionTypeActionInstrumentEventScheduleSerializer, self).__init__(*args, **kwargs)
-
-        # self.fields['periodicity_object'] = PeriodicitySerializer(source='periodicity', read_only=True)
-        # self.fields['notification_class_object'] = NotificationClassSerializer(source='notification_class',
-        #                                                                        read_only=True)
-        # self.fields['event_class_object'] = EventClassSerializer(source='event_class', read_only=True)
+        super().__init__(*args, **kwargs)
 
     def lookup_for_relation_object(self, master_user, data, key, Model, Serializer):
-
         result = None
         field_instance = None
 
         try:
             if key in data and data[key]:
-
                 try:
-                    if Model._meta.get_field('master_user'):
-                        field_instance = Model.objects.get(master_user=master_user, user_code=data[key])
-                except Exception as e:
+                    if Model._meta.get_field("master_user"):
+                        field_instance = Model.objects.get(
+                            master_user=master_user, user_code=data[key]
+                        )
+                except Exception:
                     field_instance = Model.objects.get(user_code=data[key])
 
                 result = Serializer(instance=field_instance, context=self.context).data
-        except Exception as e:
-
+        except Exception:
             result = None
 
         return result
 
     def to_representation(self, instance):
-
         from poms.instruments.models import Periodicity
+        from poms.instruments.serializers import (
+            InstrumentViewSerializer,
+            PeriodicitySerializer,
+        )
 
-        from poms.instruments.serializers import PeriodicitySerializer
-
-        data = super(TransactionTypeActionInstrumentEventScheduleSerializer, self).to_representation(instance)
+        representation = super().to_representation(instance)
 
         master_user = instance.transaction_type.master_user
 
-        from poms.instruments.serializers import InstrumentViewSerializer
-        data['instrument_object'] = self.lookup_for_relation_object(master_user, data, 'instrument', Instrument,
-                                                                    InstrumentViewSerializer)
+        representation["instrument_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "instrument",
+            Instrument,
+            InstrumentViewSerializer,
+        )
+        representation["periodicity_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "periodicity",
+            Periodicity,
+            PeriodicitySerializer,
+        )
+        representation["notification_class_object"] = self.lookup_for_relation_object(
+            master_user,
+            representation,
+            "notification_class",
+            NotificationClass,
+            NotificationClassSerializer,
+        )
+        representation["event_class_object"] = self.lookup_for_relation_object(
+            master_user, representation, "event_class", EventClass, EventClassSerializer
+        )
 
-        data['periodicity_object'] = self.lookup_for_relation_object(master_user, data, 'periodicity', Periodicity,
-                                                                     PeriodicitySerializer)
-
-        data['notification_class_object'] = self.lookup_for_relation_object(master_user, data, 'notification_class',
-                                                                            NotificationClass,
-                                                                            NotificationClassSerializer)
-
-        data['event_class_object'] = self.lookup_for_relation_object(master_user, data, 'event_class', EventClass,
-                                                                     EventClassSerializer)
-
-        return data
+        return representation
 
 
-class TransactionTypeActionInstrumentEventScheduleActionSerializer(serializers.ModelSerializer):
-    event_schedule = EventScheduleField(required=False, allow_null=True)
-    event_schedule_input = TransactionInputField(required=False, allow_null=True)
-    event_schedule_phantom = TransactionTypeActionInstrumentEventSchedulePhantomField(required=False, allow_null=True)
-
-    transaction_type_from_instrument_type = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False,
-                                                            allow_blank=True)
-
-    is_book_automatic = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
-    is_sent_to_pending = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
-
-    button_position = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
-
-    text = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+class TransactionTypeActionInstrumentEventScheduleActionSerializer(
+    serializers.ModelSerializer
+):
+    event_schedule = EventScheduleField(
+        required=False,
+        allow_null=True,
+    )
+    event_schedule_input = TransactionInputField(
+        required=False,
+        allow_null=True,
+    )
+    event_schedule_phantom = TransactionTypeActionInstrumentEventSchedulePhantomField(
+        required=False,
+        allow_null=True,
+    )
+    transaction_type_from_instrument_type = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    is_book_automatic = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    is_sent_to_pending = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    button_position = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
+    text = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
 
     class Meta:
         model = TransactionTypeActionInstrumentEventScheduleAction
         fields = [
-            'event_schedule',
-            'event_schedule_input',
-            'event_schedule_phantom',
-
-            'transaction_type_from_instrument_type',
-
-            'is_book_automatic',
-            'is_sent_to_pending',
-
-            'button_position',
-
-            'text'
+            "event_schedule",
+            "event_schedule_input",
+            "event_schedule_phantom",
+            "transaction_type_from_instrument_type",
+            "is_book_automatic",
+            "is_sent_to_pending",
+            "button_position",
+            "text",
         ]
 
     def __init__(self, *args, **kwargs):
-        super(TransactionTypeActionInstrumentEventScheduleActionSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class TransactionTypeActionExecuteCommandSerializer(serializers.ModelSerializer):
-    expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True)
+    expr = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+    )
 
     class Meta:
         model = TransactionTypeActionExecuteCommand
-        fields = [
-            'expr'
-        ]
+        fields = ["expr"]
 
 
 class TransactionTypeActionSerializer(serializers.ModelSerializer):
-    id = serializers.IntegerField(required=False, allow_null=True)
-
-    rebook_reaction = serializers.IntegerField(required=False, allow_null=True)
-
-    condition_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-
-    transaction = TransactionTypeActionTransactionSerializer(source='transactiontypeactiontransaction', required=False,
-                                                             allow_null=True)
-    instrument = TransactionTypeActionInstrumentSerializer(source='transactiontypeactioninstrument', required=False,
-                                                           allow_null=True)
-
-    instrument_factor_schedule = TransactionTypeActionInstrumentFactorScheduleSerializer(
-        source='transactiontypeactioninstrumentfactorschedule', required=False,
-        allow_null=True)
-
-    instrument_manual_pricing_formula = TransactionTypeActionInstrumentManualPricingFormulaSerializer(
-        source='transactiontypeactioninstrumentmanualpricingformula', required=False,
-        allow_null=True)
-
-    instrument_accrual_calculation_schedules = TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(
-        source='transactiontypeactioninstrumentaccrualcalculationschedules', required=False, allow_null=True
+    id = serializers.IntegerField(
+        required=False,
+        allow_null=True,
     )
-
+    rebook_reaction = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+    )
+    condition_expr = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    transaction = TransactionTypeActionTransactionSerializer(
+        source="transactiontypeactiontransaction",
+        required=False,
+        allow_null=True,
+    )
+    instrument = TransactionTypeActionInstrumentSerializer(
+        source="transactiontypeactioninstrument",
+        required=False,
+        allow_null=True,
+    )
+    instrument_factor_schedule = (
+        TransactionTypeActionInstrumentFactorScheduleSerializer(
+            source="transactiontypeactioninstrumentfactorschedule",
+            required=False,
+            allow_null=True,
+        )
+    )
+    instrument_manual_pricing_formula = (
+        TransactionTypeActionInstrumentManualPricingFormulaSerializer(
+            source="transactiontypeactioninstrumentmanualpricingformula",
+            required=False,
+            allow_null=True,
+        )
+    )
+    instrument_accrual_calculation_schedules = (
+        TransactionTypeActionInstrumentAccrualCalculationSchedulesSerializer(
+            source="transactiontypeactioninstrumentaccrualcalculationschedules",
+            required=False,
+            allow_null=True,
+        )
+    )
     instrument_event_schedule = TransactionTypeActionInstrumentEventScheduleSerializer(
-        source='transactiontypeactioninstrumenteventschedule', required=False, allow_null=True
+        source="transactiontypeactioninstrumenteventschedule",
+        required=False,
+        allow_null=True,
     )
-
-    instrument_event_schedule_action = TransactionTypeActionInstrumentEventScheduleActionSerializer(
-        source='transactiontypeactioninstrumenteventscheduleaction', required=False, allow_null=True
+    instrument_event_schedule_action = (
+        TransactionTypeActionInstrumentEventScheduleActionSerializer(
+            source="transactiontypeactioninstrumenteventscheduleaction",
+            required=False,
+            allow_null=True,
+        )
     )
-
     execute_command = TransactionTypeActionExecuteCommandSerializer(
-        source='transactiontypeactionexecutecommand', required=False,
-        allow_null=True)
+        source="transactiontypeactionexecutecommand",
+        required=False,
+        allow_null=True,
+    )
 
     class Meta:
         model = TransactionTypeAction
-        fields = ['id', 'order', 'rebook_reaction', 'condition_expr', 'action_notes', 'transaction', 'instrument',
-                  'instrument_factor_schedule',
-                  'instrument_manual_pricing_formula', 'instrument_accrual_calculation_schedules',
-                  'instrument_event_schedule', 'instrument_event_schedule_action', 'execute_command']
+        fields = [
+            "id",
+            "order",
+            "rebook_reaction",
+            "condition_expr",
+            "action_notes",
+            "transaction",
+            "instrument",
+            "instrument_factor_schedule",
+            "instrument_manual_pricing_formula",
+            "instrument_accrual_calculation_schedules",
+            "instrument_event_schedule",
+            "instrument_event_schedule_action",
+            "execute_command",
+        ]
 
     def validate(self, attrs):
         # TODO: transaction or instrument present
@@ -1037,457 +1638,1208 @@ class TransactionTypeActionSerializer(serializers.ModelSerializer):
 
 class TransactionTypeLightSerializer(ModelWithUserCodeSerializer):
     master_user = MasterUserField()
-    group = TransactionTypeGroupField(required=False, allow_null=False)
-    date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                allow_null=True, default='now()')
-    display_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-
-    transaction_unique_code_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                                   allow_null=True, default='')
-
-    user_text_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_4 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_5 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_6 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_7 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_8 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_9 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_10 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-
-    user_text_11 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_12 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_13 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_14 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_15 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_16 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_17 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_18 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-
-    user_text_21 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_22 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_23 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_24 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_25 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_26 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_27 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_28 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_29 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_30 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-
-    user_number_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_4 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_5 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_6 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_7 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_8 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_9 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_10 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-
-    user_number_11 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_12 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_13 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_14 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_15 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_16 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_17 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_18 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-
-    user_date_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_date_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_date_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_date_4 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_date_5 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-
-    instrument_types = InstrumentTypeField(required=False, allow_null=True, many=True)
-    portfolios = PortfolioField(required=False, allow_null=True, many=True)
-
-    # group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
+    group = TransactionTypeGroupField(
+        required=False,
+        allow_null=False,
+    )
+    date_expr = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="now()",
+    )
+    display_expr = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    transaction_unique_code_expr = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_1 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_2 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_3 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_4 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_5 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_6 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_7 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_8 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_9 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_10 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_11 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_12 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_13 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_14 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_15 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_16 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_17 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_18 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_19 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_20 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_21 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_22 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_23 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_24 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_25 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_26 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_27 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_28 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_29 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_30 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_1 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_2 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_3 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_4 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_5 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_6 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_7 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_8 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_9 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_10 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_11 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_12 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_13 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_14 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_15 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_16 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_17 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_18 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_19 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_20 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_date_1 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_date_2 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_date_3 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_date_4 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_date_5 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    instrument_types = InstrumentTypeField(
+        required=False,
+        allow_null=True,
+        many=True,
+    )
+    portfolios = PortfolioField(
+        required=False,
+        allow_null=True,
+        many=True,
+    )
 
     def __init__(self, *args, **kwargs):
-        super(TransactionTypeLightSerializer, self).__init__(*args, **kwargs)
-
         from poms.instruments.serializers import InstrumentTypeViewSerializer
         from poms.portfolios.serializers import PortfolioViewSerializer
 
-        self.fields['instrument_types_object'] = InstrumentTypeViewSerializer(source='instrument_types', many=True,
-                                                                              read_only=True)
-        self.fields['portfolios_object'] = PortfolioViewSerializer(source='portfolios', many=True, read_only=True)
+        super().__init__(*args, **kwargs)
+
+        self.fields["instrument_types_object"] = InstrumentTypeViewSerializer(
+            source="instrument_types", many=True, read_only=True
+        )
+        self.fields["portfolios_object"] = PortfolioViewSerializer(
+            source="portfolios", many=True, read_only=True
+        )
 
     def to_representation(self, instance):
-
-        ret = super(TransactionTypeLightSerializer, self).to_representation(instance)
+        representation = super().to_representation(instance)
 
         try:
+            instance = TransactionTypeGroup.objects.get(id=representation["group"])
 
-            instance = TransactionTypeGroup.objects.get(
-                id=ret['group'])
-
-            s = TransactionTypeGroupViewSerializer(instance=instance, read_only=True,
-                                                   context=self.context)
-            ret['group_object'] = s.data
+            s = TransactionTypeGroupViewSerializer(
+                instance=instance, read_only=True, context=self.context
+            )
+            representation["group_object"] = s.data
         except Exception as e:
+            _l.error(f"Error in to_representation: {repr(e)} {traceback.format_exc()}")
 
-            _l.error('Error in to_representation: %s' % e)
-            _l.error('Error in to_representation traceback: %s' % traceback.format_exc())
+            representation["group_object"] = None
 
-            ret['group_object'] = None
-
-        return ret
+        return representation
 
     class Meta:
         model = TransactionType
         fields = [
-            'id', 'master_user', 'group',
-            'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'date_expr', 'display_expr',
-            'transaction_unique_code_expr',
-            'transaction_unique_code_options',
-
-            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
-            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
-
-            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
-            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
-
-            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
-            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
-
-            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
-            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
-
-            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
-            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
-
-            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
-
-            'is_valid_for_all_portfolios', 'is_valid_for_all_instruments', 'is_deleted',
-
-            'instrument_types', 'portfolios',
+            "id",
+            "master_user",
+            "group",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
+            "notes",
+            "date_expr",
+            "display_expr",
+            "transaction_unique_code_expr",
+            "transaction_unique_code_options",
+            "user_text_1",
+            "user_text_2",
+            "user_text_3",
+            "user_text_4",
+            "user_text_5",
+            "user_text_6",
+            "user_text_7",
+            "user_text_8",
+            "user_text_9",
+            "user_text_10",
+            "user_text_11",
+            "user_text_12",
+            "user_text_13",
+            "user_text_14",
+            "user_text_15",
+            "user_text_16",
+            "user_text_17",
+            "user_text_18",
+            "user_text_19",
+            "user_text_20",
+            "user_text_21",
+            "user_text_22",
+            "user_text_23",
+            "user_text_24",
+            "user_text_25",
+            "user_text_26",
+            "user_text_27",
+            "user_text_28",
+            "user_text_29",
+            "user_text_30",
+            "user_number_1",
+            "user_number_2",
+            "user_number_3",
+            "user_number_4",
+            "user_number_5",
+            "user_number_6",
+            "user_number_7",
+            "user_number_8",
+            "user_number_9",
+            "user_number_10",
+            "user_number_11",
+            "user_number_12",
+            "user_number_13",
+            "user_number_14",
+            "user_number_15",
+            "user_number_16",
+            "user_number_17",
+            "user_number_18",
+            "user_number_19",
+            "user_number_20",
+            "user_date_1",
+            "user_date_2",
+            "user_date_3",
+            "user_date_4",
+            "user_date_5",
+            "is_valid_for_all_portfolios",
+            "is_valid_for_all_instruments",
+            "is_deleted",
+            "instrument_types",
+            "portfolios",
             # 'group_object',
-
-            'configuration_code'
+            "configuration_code",
         ]
 
 
 class TransactionTypeLightSerializerWithInputs(TransactionTypeLightSerializer):
-    inputs = TransactionTypeInputSerializer(required=False, many=True)
-
-    context_parameters = TransactionTypeContextParameterSerializer(required=False, many=True)
+    inputs = TransactionTypeInputSerializer(
+        required=False,
+        many=True,
+    )
+    context_parameters = TransactionTypeContextParameterSerializer(
+        required=False,
+        many=True,
+    )
 
     class Meta(TransactionTypeLightSerializer.Meta):
         model = TransactionType
         fields = [
-            'id', 'master_user', 'group',
-
-            'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'date_expr', 'display_expr',
-
-            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
-            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
-
-            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
-            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
-
-            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
-            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
-
-            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
-            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
-
-            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
-            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
-
-            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
-
-            'is_valid_for_all_portfolios', 'is_valid_for_all_instruments', 'is_deleted',
-
-            'instrument_types', 'portfolios',
-            'group_object', 'inputs',
-
-            'context_parameters_notes',
-            'context_parameters'
+            "id",
+            "master_user",
+            "group",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
+            "notes",
+            "date_expr",
+            "display_expr",
+            "user_text_1",
+            "user_text_2",
+            "user_text_3",
+            "user_text_4",
+            "user_text_5",
+            "user_text_6",
+            "user_text_7",
+            "user_text_8",
+            "user_text_9",
+            "user_text_10",
+            "user_text_11",
+            "user_text_12",
+            "user_text_13",
+            "user_text_14",
+            "user_text_15",
+            "user_text_16",
+            "user_text_17",
+            "user_text_18",
+            "user_text_19",
+            "user_text_20",
+            "user_text_21",
+            "user_text_22",
+            "user_text_23",
+            "user_text_24",
+            "user_text_25",
+            "user_text_26",
+            "user_text_27",
+            "user_text_28",
+            "user_text_29",
+            "user_text_30",
+            "user_number_1",
+            "user_number_2",
+            "user_number_3",
+            "user_number_4",
+            "user_number_5",
+            "user_number_6",
+            "user_number_7",
+            "user_number_8",
+            "user_number_9",
+            "user_number_10",
+            "user_number_11",
+            "user_number_12",
+            "user_number_13",
+            "user_number_14",
+            "user_number_15",
+            "user_number_16",
+            "user_number_17",
+            "user_number_18",
+            "user_number_19",
+            "user_number_20",
+            "user_date_1",
+            "user_date_2",
+            "user_date_3",
+            "user_date_4",
+            "user_date_5",
+            "is_valid_for_all_portfolios",
+            "is_valid_for_all_instruments",
+            "is_deleted",
+            "instrument_types",
+            "portfolios",
+            "group_object",
+            "inputs",
+            "context_parameters_notes",
+            "context_parameters",
         ]
 
 
-class TransactionTypeSerializer(ModelWithUserCodeSerializer,
-                                ModelWithAttributesSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer):
+class TransactionTypeSerializer(
+    ModelWithUserCodeSerializer,
+    ModelWithAttributesSerializer,
+    ModelWithTimeStampSerializer,
+    ModelMetaSerializer,
+):
     master_user = MasterUserField()
-    group = TransactionTypeGroupField(required=False, allow_null=False)
-    date_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                allow_null=True, default='now()')
-    display_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
+    group = TransactionTypeGroupField(
+        required=False,
+        allow_null=False,
+    )
+    date_expr = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="now()",
+    )
+    display_expr = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    transaction_unique_code_expr = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_1 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_2 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_3 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_4 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_5 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_6 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_7 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_8 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_9 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_10 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_11 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_12 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_13 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_14 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_15 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_16 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_17 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_18 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_19 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_20 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
 
-    transaction_unique_code_expr = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                                   allow_null=True, default='')
+    user_text_21 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_22 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_23 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_24 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_25 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_26 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_27 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_28 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_29 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_text_30 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
 
-    user_text_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_4 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_5 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_6 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_7 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_8 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_9 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_text_10 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-
-    user_text_11 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_12 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_13 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_14 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_15 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_16 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_17 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_18 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-
-    user_text_21 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_22 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_23 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_24 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_25 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_26 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_27 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_28 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_29 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-    user_text_30 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                   allow_null=True, default='')
-
-    user_number_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_4 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_5 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_6 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_7 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_8 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_9 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                    allow_null=True, default='')
-    user_number_10 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-
-    user_number_11 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_12 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_13 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_14 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_15 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_16 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_17 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_18 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_19 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-    user_number_20 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                     allow_null=True, default='')
-
-    user_date_1 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_date_2 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_date_3 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_date_4 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-    user_date_5 = ExpressionField(max_length=EXPRESSION_FIELD_LENGTH, required=False, allow_blank=True,
-                                  allow_null=True, default='')
-
-    instrument_types = InstrumentTypeField(required=False, allow_null=True, many=True)
-    portfolios = PortfolioField(required=False, allow_null=True, many=True)
-    inputs = TransactionTypeInputSerializer(required=False, many=True)
-    recon_fields = TransactionTypeReconFieldSerializer(required=False, many=True)
-    context_parameters = TransactionTypeContextParameterSerializer(required=False, many=True)
-    actions = TransactionTypeActionSerializer(required=False, many=True, read_only=False)
-    book_transaction_layout = serializers.JSONField(required=False, allow_null=True)
-
-    # group_object = TransactionTypeGroupViewSerializer(source='group', read_only=True)
-
-    visibility_status = serializers.ChoiceField(default=TransactionType.SHOW_PARAMETERS,
-                                                initial=TransactionType.SHOW_PARAMETERS,
-                                                required=False, choices=TransactionType.VISIBILITY_STATUS_CHOICES)
-
-    type = serializers.ChoiceField(default=TransactionType.TYPE_DEFAULT, initial=TransactionType.TYPE_DEFAULT,
-                                   required=False, choices=TransactionType.TYPE_CHOICES)
-
-    # instrument_types_object = serializers.PrimaryKeyRelatedField(source='instrument_types', many=True, read_only=True)
-    # portfolios_object = serializers.PrimaryKeyRelatedField(source='portfolios', many=True, read_only=True)
+    user_number_1 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_2 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_3 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_4 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_5 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_6 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_7 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_8 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_9 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_10 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_11 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_12 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_13 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_14 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_15 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_16 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_17 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_18 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_19 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_number_20 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_date_1 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_date_2 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_date_3 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_date_4 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    user_date_5 = ExpressionField(
+        max_length=EXPRESSION_FIELD_LENGTH,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        default="",
+    )
+    instrument_types = InstrumentTypeField(
+        required=False,
+        allow_null=True,
+        many=True,
+    )
+    portfolios = PortfolioField(
+        required=False,
+        allow_null=True,
+        many=True,
+    )
+    inputs = TransactionTypeInputSerializer(
+        required=False,
+        many=True,
+    )
+    recon_fields = TransactionTypeReconFieldSerializer(
+        required=False,
+        many=True,
+    )
+    context_parameters = TransactionTypeContextParameterSerializer(
+        required=False,
+        many=True,
+    )
+    actions = TransactionTypeActionSerializer(
+        required=False,
+        many=True,
+        read_only=False,
+    )
+    book_transaction_layout = serializers.JSONField(
+        required=False,
+        allow_null=True,
+    )
+    visibility_status = serializers.ChoiceField(
+        default=TransactionType.SHOW_PARAMETERS,
+        initial=TransactionType.SHOW_PARAMETERS,
+        required=False,
+        choices=TransactionType.VISIBILITY_STATUS_CHOICES,
+    )
+    type = serializers.ChoiceField(
+        default=TransactionType.TYPE_DEFAULT,
+        initial=TransactionType.TYPE_DEFAULT,
+        required=False,
+        choices=TransactionType.TYPE_CHOICES,
+    )
 
     def __init__(self, *args, **kwargs):
-        super(TransactionTypeSerializer, self).__init__(*args, **kwargs)
-
         from poms.instruments.serializers import InstrumentTypeViewSerializer
         from poms.portfolios.serializers import PortfolioViewSerializer
 
-        self.fields['instrument_types_object'] = InstrumentTypeViewSerializer(source='instrument_types', many=True,
-                                                                              read_only=True)
-        self.fields['portfolios_object'] = PortfolioViewSerializer(source='portfolios', many=True, read_only=True)
+        super().__init__(*args, **kwargs)
+
+        self.fields["instrument_types_object"] = InstrumentTypeViewSerializer(
+            source="instrument_types", many=True, read_only=True
+        )
+        self.fields["portfolios_object"] = PortfolioViewSerializer(
+            source="portfolios", many=True, read_only=True
+        )
 
     def to_representation(self, instance):
-
-        ret = super(TransactionTypeSerializer, self).to_representation(instance)
+        representation = super().to_representation(instance)
 
         try:
-
-            # _l.info('ret: %s' % ret['group'])
-
             instance = TransactionTypeGroup.objects.get(
-                id=ret['group']) # should be already converted to id
+                id=representation["group"]
+            )  # should be already converted to id
 
-            s = TransactionTypeGroupViewSerializer(instance=instance, read_only=True,
-                                                   context=self.context)
-            ret['group_object'] = s.data
+            s = TransactionTypeGroupViewSerializer(
+                instance=instance, read_only=True, context=self.context
+            )
+            representation["group_object"] = s.data
         except Exception as e:
+            _l.error(f"Error in to_representation error: {e} {traceback.format_exc()}")
 
-            _l.error('Error in to_representation error: %s' % e)
-            _l.error('Error in to_representation traceback: %s' % traceback.format_exc())
+            representation["group_object"] = None
 
-            ret['group_object'] = None
-
-        return ret
+        return representation
 
     class Meta:
         model = TransactionType
         fields = [
-            'id', 'master_user', 'group',
-            'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'date_expr', 'display_expr', 'visibility_status', 'type',
-            'transaction_unique_code_expr',
-            'transaction_unique_code_options',
-
-            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
-            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
-
-            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
-            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
-
-            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
-            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
-
-            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
-            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
-
-            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
-            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
-
-            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
-
-            'is_valid_for_all_portfolios', 'is_valid_for_all_instruments', 'is_deleted',
-            'book_transaction_layout',
-            'instrument_types', 'portfolios',
-            'inputs', 'actions', 'recon_fields', 'context_parameters', 'context_parameters_notes',
+            "id",
+            "master_user",
+            "group",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
+            "notes",
+            "date_expr",
+            "display_expr",
+            "visibility_status",
+            "type",
+            "transaction_unique_code_expr",
+            "transaction_unique_code_options",
+            "user_text_1",
+            "user_text_2",
+            "user_text_3",
+            "user_text_4",
+            "user_text_5",
+            "user_text_6",
+            "user_text_7",
+            "user_text_8",
+            "user_text_9",
+            "user_text_10",
+            "user_text_11",
+            "user_text_12",
+            "user_text_13",
+            "user_text_14",
+            "user_text_15",
+            "user_text_16",
+            "user_text_17",
+            "user_text_18",
+            "user_text_19",
+            "user_text_20",
+            "user_text_21",
+            "user_text_22",
+            "user_text_23",
+            "user_text_24",
+            "user_text_25",
+            "user_text_26",
+            "user_text_27",
+            "user_text_28",
+            "user_text_29",
+            "user_text_30",
+            "user_number_1",
+            "user_number_2",
+            "user_number_3",
+            "user_number_4",
+            "user_number_5",
+            "user_number_6",
+            "user_number_7",
+            "user_number_8",
+            "user_number_9",
+            "user_number_10",
+            "user_number_11",
+            "user_number_12",
+            "user_number_13",
+            "user_number_14",
+            "user_number_15",
+            "user_number_16",
+            "user_number_17",
+            "user_number_18",
+            "user_number_19",
+            "user_number_20",
+            "user_date_1",
+            "user_date_2",
+            "user_date_3",
+            "user_date_4",
+            "user_date_5",
+            "is_valid_for_all_portfolios",
+            "is_valid_for_all_instruments",
+            "is_deleted",
+            "book_transaction_layout",
+            "instrument_types",
+            "portfolios",
+            "inputs",
+            "actions",
+            "recon_fields",
+            "context_parameters",
+            "context_parameters_notes",
             # 'group_object',
-
-            'is_enabled',
-            'configuration_code'
+            "is_enabled",
+            "configuration_code",
         ]
 
     def validate(self, attrs):
@@ -1495,14 +2847,12 @@ class TransactionTypeSerializer(ModelWithUserCodeSerializer,
         return attrs
 
     def create(self, validated_data):
+        inputs = validated_data.pop("inputs", empty)
+        actions = validated_data.pop("actions", empty)
+        recon_fields = validated_data.pop("recon_fields", empty)
+        context_parameters = validated_data.pop("context_parameters", empty)
+        instance = super().create(validated_data)
 
-        st = time.perf_counter()
-
-        inputs = validated_data.pop('inputs', empty)
-        actions = validated_data.pop('actions', empty)
-        recon_fields = validated_data.pop('recon_fields', empty)
-        context_parameters = validated_data.pop('context_parameters', empty)
-        instance = super(TransactionTypeSerializer, self).create(validated_data)
         if inputs is not empty:
             inputs = self.save_inputs(instance, inputs)
         if actions is not empty:
@@ -1512,18 +2862,15 @@ class TransactionTypeSerializer(ModelWithUserCodeSerializer,
         if context_parameters is not empty:
             self.save_context_parameters(instance, context_parameters)
 
-        # print('Transaction Type Serializer create %s' % (time.perf_counter() - st))
-
         return instance
 
     def update(self, instance, validated_data):
-        inputs = validated_data.pop('inputs', empty)
-        actions = validated_data.pop('actions', empty)
-        recon_fields = validated_data.pop('recon_fields', empty)
-        context_parameters = validated_data.pop('context_parameters', empty)
-        instance = super(TransactionTypeSerializer, self).update(instance, validated_data)
+        inputs = validated_data.pop("inputs", empty)
+        actions = validated_data.pop("actions", empty)
+        recon_fields = validated_data.pop("recon_fields", empty)
+        context_parameters = validated_data.pop("context_parameters", empty)
 
-        # print('actions %s' % actions)
+        instance = super().update(instance, validated_data)
 
         if inputs is not empty:
             inputs = self.save_inputs(instance, inputs)
@@ -1532,7 +2879,9 @@ class TransactionTypeSerializer(ModelWithUserCodeSerializer,
         if recon_fields is not empty:
             recon_fields = self.save_recon_fields(instance, recon_fields)
         if context_parameters is not empty:
-            context_parameters = self.save_context_parameters(instance, context_parameters)
+            context_parameters = self.save_context_parameters(
+                instance, context_parameters
+            )
 
         if inputs is not empty:
             instance.inputs.exclude(id__in=[i.id for i in inputs]).delete()
@@ -1541,7 +2890,9 @@ class TransactionTypeSerializer(ModelWithUserCodeSerializer,
         if recon_fields is not empty:
             instance.recon_fields.exclude(id__in=[a.id for a in recon_fields]).delete()
         if context_parameters is not empty:
-            instance.context_parameters.exclude(id__in=[a.id for a in context_parameters]).delete()
+            instance.context_parameters.exclude(
+                id__in=[a.id for a in context_parameters]
+            ).delete()
 
         return instance
 
@@ -1549,18 +2900,15 @@ class TransactionTypeSerializer(ModelWithUserCodeSerializer,
         cur_inputs = {i.id: i for i in instance.inputs.all()}
         new_inputs = []
 
-        # print('save_inputs ')
-
-        # print('instance %s' % instance)
-
         for order, inp_data in enumerate(inputs_data):
-            # name = inp_data['name']
-            pk = inp_data.pop('id', None)
+            pk = inp_data.pop("id", None)
             inp = cur_inputs.pop(pk, None)
-            settings_data = inp_data.pop('settings', None)
+            settings_data = inp_data.pop("settings", None)
             if inp is None:
                 try:
-                    inp = TransactionTypeInput.objects.get(transaction_type=instance, name=inp_data['name'])
+                    inp = TransactionTypeInput.objects.get(
+                        transaction_type=instance, name=inp_data["name"]
+                    )
                 except TransactionTypeInput.DoesNotExist:
                     inp = TransactionTypeInput(transaction_type=instance)
 
@@ -1570,28 +2918,31 @@ class TransactionTypeSerializer(ModelWithUserCodeSerializer,
             inp.save()
 
             if settings_data:
-
-                # print('inp.settings %s' % inp.settings)
-
                 if inp.settings:
+                    if "linked_inputs_names" in settings_data:
+                        inp.settings.linked_inputs_names = settings_data[
+                            "linked_inputs_names"
+                        ]
 
-                    if 'linked_inputs_names' in settings_data:
-                        inp.settings.linked_inputs_names = settings_data['linked_inputs_names']
-
-                    if 'recalc_on_change_linked_inputs' in settings_data:
-                        inp.settings.recalc_on_change_linked_inputs = settings_data['recalc_on_change_linked_inputs']
+                    if "recalc_on_change_linked_inputs" in settings_data:
+                        inp.settings.recalc_on_change_linked_inputs = settings_data[
+                            "recalc_on_change_linked_inputs"
+                        ]
 
                     inp.settings.save()
 
                 else:
+                    item = TransactionTypeInputSettings.objects.create(
+                        transaction_type_input=inp
+                    )
 
-                    item = TransactionTypeInputSettings.objects.create(transaction_type_input=inp)
+                    if "linked_inputs_names" in settings_data:
+                        item.linked_inputs_names = settings_data["linked_inputs_names"]
 
-                    if 'linked_inputs_names' in settings_data:
-                        item.linked_inputs_names = settings_data['linked_inputs_names']
-
-                    if 'recalc_on_change_linked_inputs' in settings_data:
-                        item.recalc_on_change_linked_inputs = settings_data['recalc_on_change_linked_inputs']
+                    if "recalc_on_change_linked_inputs" in settings_data:
+                        item.recalc_on_change_linked_inputs = settings_data[
+                            "recalc_on_change_linked_inputs"
+                        ]
 
                     item.save()
 
@@ -1606,16 +2957,15 @@ class TransactionTypeSerializer(ModelWithUserCodeSerializer,
         cur_recon_fields = {i.id: i for i in instance.recon_fields.all()}
         new_recon_fields = []
 
-        # print('instance %s' % instance)
-
         for order, rec_field_data in enumerate(recon_fields_data):
-            # name = inp_data['name']
-            pk = rec_field_data.pop('id', None)
+            pk = rec_field_data.pop("id", None)
             recon_field = cur_recon_fields.pop(pk, None)
             if recon_field is None:
                 try:
-                    recon_field = TransactionTypeReconField.objects.get(transaction_type=instance,
-                                                                        reference_name=rec_field_data['reference_name'])
+                    recon_field = TransactionTypeReconField.objects.get(
+                        transaction_type=instance,
+                        reference_name=rec_field_data["reference_name"],
+                    )
                 except TransactionTypeReconField.DoesNotExist:
                     recon_field = TransactionTypeReconField(transaction_type=instance)
 
@@ -1629,24 +2979,21 @@ class TransactionTypeSerializer(ModelWithUserCodeSerializer,
         cur_context_parameters = {i.id: i for i in instance.context_parameters.all()}
         new_context_parameters = []
 
-        # print('instance %s' % instance)
-
         for order, context_parameter_field_data in enumerate(context_parameters_data):
-            # name = inp_data['name']
-            pk = context_parameter_field_data.pop('id', None)
+            pk = context_parameter_field_data.pop("id", None)
             context_parameter = cur_context_parameters.pop(pk, None)
             if context_parameter is None:
                 try:
-                    context_parameter = TransactionTypeContextParameter.objects.get(transaction_type=instance,
-                                                                                    order=context_parameter_field_data[
-                                                                                        'order'],
-                                                                                    user_code=
-                                                                                    context_parameter_field_data[
-                                                                                        'user_code'],
-                                                                                    name=context_parameter_field_data[
-                                                                                        'name'])
+                    context_parameter = TransactionTypeContextParameter.objects.get(
+                        transaction_type=instance,
+                        order=context_parameter_field_data["order"],
+                        user_code=context_parameter_field_data["user_code"],
+                        name=context_parameter_field_data["name"],
+                    )
                 except TransactionTypeContextParameter.DoesNotExist:
-                    context_parameter = TransactionTypeContextParameter(transaction_type=instance)
+                    context_parameter = TransactionTypeContextParameter(
+                        transaction_type=instance
+                    )
 
             for attr, value in context_parameter_field_data.items():
                 setattr(context_parameter, attr, value)
@@ -1654,370 +3001,437 @@ class TransactionTypeSerializer(ModelWithUserCodeSerializer,
             new_context_parameters.append(context_parameter)
         return new_context_parameters
 
-    def save_actions_instrument(self, instance, inputs, actions, existed_actions, actions_data):
-
+    def save_actions_instrument(
+        self, instance, inputs, actions, existed_actions, actions_data
+    ):
         for order, action_data in enumerate(actions_data):
-            pk = action_data.pop('id', None)
+            pk = action_data.pop("id", None)
             action = existed_actions.get(pk, None)
 
-            action_instrument_data = action_data.get('instrument', action_data.get('transactiontypeactioninstrument'))
+            action_instrument_data = action_data.get(
+                "instrument", action_data.get("transactiontypeactioninstrument")
+            )
             if action_instrument_data:
                 for attr, value in action_instrument_data.items():
-                    if attr.endswith('_input') and value:
+                    if attr.endswith("_input") and value:
                         try:
                             action_instrument_data[attr] = inputs[value]
-                        except KeyError:
-                            raise ValidationError('Invalid input "%s"' % value)
+                        except KeyError as e:
+                            raise ValidationError(f'Invalid input "{value}"') from e
 
                 action_instrument = None
                 if action:
-                    try:
+                    with contextlib.suppress(ObjectDoesNotExist):
                         action_instrument = action.transactiontypeactioninstrument
-                    except ObjectDoesNotExist:
-                        pass
+
                 if action_instrument is None:
-                    action_instrument = TransactionTypeActionInstrument(transaction_type=instance)
+                    action_instrument = TransactionTypeActionInstrument(
+                        transaction_type=instance
+                    )
 
                 for attr, value in action_instrument_data.items():
                     setattr(action_instrument, attr, value)
 
                 action_instrument.order = order
-                action_instrument.rebook_reaction = action_data.get('rebook_reaction',
-                                                                    action_instrument.rebook_reaction)
-
-                action_instrument.action_notes = action_data.get('action_notes', action_instrument.action_notes)
-                action_instrument.condition_expr = action_data.get('condition_expr', action_instrument.condition_expr)
-
+                action_instrument.rebook_reaction = action_data.get(
+                    "rebook_reaction", action_instrument.rebook_reaction
+                )
+                action_instrument.action_notes = action_data.get(
+                    "action_notes", action_instrument.action_notes
+                )
+                action_instrument.condition_expr = action_data.get(
+                    "condition_expr", action_instrument.condition_expr
+                )
                 action_instrument.save()
                 actions[order] = action_instrument
 
-    def save_actions_transaction(self, instance, inputs, actions, existed_actions, actions_data):
-
+    def save_actions_transaction(
+        self, instance, inputs, actions, existed_actions, actions_data
+    ):
         for order, action_data in enumerate(actions_data):
-            pk = action_data.pop('id', None)
+            pk = action_data.pop("id", None)
             action = existed_actions.get(pk, None)
-            action_transaction_data = action_data.get('transaction',
-                                                      action_data.get('transactiontypeactiontransaction'))
+            action_transaction_data = action_data.get(
+                "transaction", action_data.get("transactiontypeactiontransaction")
+            )
 
             if action_transaction_data:
                 for attr, value in action_transaction_data.items():
-                    if attr.endswith('_input') and value:
+                    if attr.endswith("_input") and value:
                         try:
                             action_transaction_data[attr] = inputs[value]
-                        except KeyError:
-                            raise ValidationError('Invalid input "%s"' % value)
-                    if attr == 'instrument_phantom' and value is not None:
+                        except KeyError as e:
+                            raise ValidationError(f'Invalid input "{value}"') from e
+                    if attr == "instrument_phantom" and value is not None:
                         try:
                             action_transaction_data[attr] = actions[value]
-                        except IndexError:
-                            raise ValidationError('Invalid action order "%s"' % value)
+                        except IndexError as exc:
+                            raise ValidationError(
+                                f'Invalid action order "{value}"'
+                            ) from exc
 
-                    if attr == 'linked_instrument_phantom' and value is not None:
+                    if attr == "linked_instrument_phantom" and value is not None:
                         try:
                             action_transaction_data[attr] = actions[value]
-                        except IndexError:
-                            raise ValidationError('Invalid action order "%s"' % value)
+                        except IndexError as err:
+                            raise ValidationError(
+                                f'Invalid action order "{value}"'
+                            ) from err
 
-                    if attr == 'allocation_balance_phantom' and value is not None:
+                    if attr == "allocation_balance_phantom" and value is not None:
                         try:
                             action_transaction_data[attr] = actions[value]
-                        except IndexError:
-                            raise ValidationError('Invalid action order "%s"' % value)
+                        except IndexError as err:
+                            raise ValidationError(
+                                f'Invalid action order "{value}"'
+                            ) from err
 
-                    if attr == 'allocation_pl_phantom' and value is not None:
+                    if attr == "allocation_pl_phantom" and value is not None:
                         try:
                             action_transaction_data[attr] = actions[value]
-                        except IndexError:
-                            raise ValidationError('Invalid action order "%s"' % value)
+                        except IndexError as err:
+                            raise ValidationError(
+                                f'Invalid action order "{value}"'
+                            ) from err
 
                 action_transaction = None
                 if action:
-                    try:
+                    with contextlib.suppress(ObjectDoesNotExist):
                         action_transaction = action.transactiontypeactiontransaction
-                    except ObjectDoesNotExist:
-                        pass
+
                 if action_transaction is None:
-                    action_transaction = TransactionTypeActionTransaction(transaction_type=instance)
+                    action_transaction = TransactionTypeActionTransaction(
+                        transaction_type=instance
+                    )
 
                 for attr, value in action_transaction_data.items():
                     setattr(action_transaction, attr, value)
 
                 action_transaction.order = order
-                action_transaction.rebook_reaction = action_data.get('rebook_reaction',
-                                                                     action_transaction.rebook_reaction)
-                action_transaction.action_notes = action_data.get('action_notes', action_transaction.action_notes)
-                action_transaction.condition_expr = action_data.get('condition_expr', action_transaction.condition_expr)
-
+                action_transaction.rebook_reaction = action_data.get(
+                    "rebook_reaction", action_transaction.rebook_reaction
+                )
+                action_transaction.action_notes = action_data.get(
+                    "action_notes", action_transaction.action_notes
+                )
+                action_transaction.condition_expr = action_data.get(
+                    "condition_expr", action_transaction.condition_expr
+                )
                 action_transaction.save()
                 actions[order] = action_transaction
 
-    def save_actions_instrument_factor_schedule(self, instance, inputs, actions, existed_actions, actions_data):
-
+    def save_actions_instrument_factor_schedule(
+        self, instance, inputs, actions, existed_actions, actions_data
+    ):
         for order, action_data in enumerate(actions_data):
-            pk = action_data.pop('id', None)
+            pk = action_data.pop("id", None)
             action = existed_actions.get(pk, None)
 
-            item_data = action_data.get('instrument_factor_schedule', action_data.get(
-                'transactiontypeactioninstrumentfactorschedule'))
+            item_data = action_data.get(
+                "instrument_factor_schedule",
+                action_data.get("transactiontypeactioninstrumentfactorschedule"),
+            )
             if item_data:
                 for attr, value in item_data.items():
-                    if attr.endswith('_input') and value:
+                    if attr.endswith("_input") and value:
                         try:
                             item_data[attr] = inputs[value]
-                        except KeyError:
-                            raise ValidationError('Invalid input "%s"' % value)
+                        except KeyError as e:
+                            raise ValidationError(f'Invalid input "{value}"') from e
 
-                    if attr == 'instrument_phantom' and value is not None:
+                    if attr == "instrument_phantom" and value is not None:
                         try:
                             item_data[attr] = actions[value]
-                        except IndexError:
-                            raise ValidationError('Invalid action order "%s"' % value)
+                        except IndexError as exc:
+                            raise ValidationError(
+                                f'Invalid action order "{value}"'
+                            ) from exc
 
                 item = None
                 if action:
-                    try:
+                    with contextlib.suppress(ObjectDoesNotExist):
                         item = action.transactiontypeactioninstrumentfactorschedule
-                    except ObjectDoesNotExist:
-                        pass
+
                 if item is None:
                     item = TransactionTypeActionInstrumentFactorSchedule(
-                        transaction_type=instance)
+                        transaction_type=instance
+                    )
 
                 for attr, value in item_data.items():
                     setattr(item, attr, value)
 
                 item.order = order
-                item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
-                item.action_notes = action_data.get('action_notes',
-                                                    item.action_notes)
-                item.condition_expr = action_data.get('condition_expr', item.condition_expr)
+                item.rebook_reaction = action_data.get(
+                    "rebook_reaction", item.rebook_reaction
+                )
+                item.action_notes = action_data.get("action_notes", item.action_notes)
+                item.condition_expr = action_data.get(
+                    "condition_expr", item.condition_expr
+                )
 
                 item.save()
                 actions[order] = item
 
-    def save_actions_execute_command(self, instance, inputs, actions, existed_actions, actions_data):
-
+    def save_actions_execute_command(
+        self, instance, inputs, actions, existed_actions, actions_data
+    ):
         for order, action_data in enumerate(actions_data):
-            pk = action_data.pop('id', None)
+            pk = action_data.pop("id", None)
             action = existed_actions.get(pk, None)
 
-            item_data = action_data.get('execute_command', action_data.get(
-                'transactiontypeactionexecutecommand'))
+            item_data = action_data.get(
+                "execute_command",
+                action_data.get("transactiontypeactionexecutecommand"),
+            )
             if item_data:
-
                 item = None
                 if action:
-                    try:
+                    with contextlib.suppress(ObjectDoesNotExist):
                         item = action.transactiontypeactionexecutecommand
-                    except ObjectDoesNotExist:
-                        pass
+
                 if item is None:
                     item = TransactionTypeActionExecuteCommand(
-                        transaction_type=instance)
+                        transaction_type=instance
+                    )
 
                 for attr, value in item_data.items():
                     setattr(item, attr, value)
 
                 item.order = order
-                item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
-                item.action_notes = action_data.get('action_notes',
-                                                    item.action_notes)
-                item.condition_expr = action_data.get('condition_expr', item.condition_expr)
+                item.rebook_reaction = action_data.get(
+                    "rebook_reaction", item.rebook_reaction
+                )
+                item.action_notes = action_data.get("action_notes", item.action_notes)
+                item.condition_expr = action_data.get(
+                    "condition_expr", item.condition_expr
+                )
 
                 item.save()
                 actions[order] = item
 
-    def save_actions_instrument_manual_pricing_formula(self, instance, inputs, actions, existed_actions, actions_data):
-
+    def save_actions_instrument_manual_pricing_formula(
+        self, instance, inputs, actions, existed_actions, actions_data
+    ):
         for order, action_data in enumerate(actions_data):
-            pk = action_data.pop('id', None)
+            pk = action_data.pop("id", None)
             action = existed_actions.get(pk, None)
 
-            item_data = action_data.get('instrument_manual_pricing_formula',
-                                        action_data.get(
-                                            'transactiontypeactioninstrumentmanualpricingformula'))
+            item_data = action_data.get(
+                "instrument_manual_pricing_formula",
+                action_data.get("transactiontypeactioninstrumentmanualpricingformula"),
+            )
             if item_data:
                 for attr, value in item_data.items():
-                    if attr.endswith('_input') and value:
+                    if attr.endswith("_input") and value:
                         try:
                             item_data[attr] = inputs[value]
-                        except KeyError:
-                            raise ValidationError('Invalid input "%s"' % value)
+                        except KeyError as e:
+                            raise ValidationError(f'Invalid input "{value}"') from e
 
-                    if attr == 'instrument_phantom' and value is not None:
+                    if attr == "instrument_phantom" and value is not None:
                         try:
                             item_data[attr] = actions[value]
-                        except IndexError:
-                            raise ValidationError('Invalid action order "%s"' % value)
+                        except IndexError as exc:
+                            raise ValidationError(
+                                f'Invalid action order "{value}"'
+                            ) from exc
 
                 item = None
                 if action:
-                    try:
-                        item = action.transactiontypeactioninstrumentmanualpricingformula
-                    except ObjectDoesNotExist:
-                        pass
+                    with contextlib.suppress(ObjectDoesNotExist):
+                        item = (
+                            action.transactiontypeactioninstrumentmanualpricingformula
+                        )
+
                 if item is None:
                     item = TransactionTypeActionInstrumentManualPricingFormula(
-                        transaction_type=instance)
+                        transaction_type=instance
+                    )
 
                 for attr, value in item_data.items():
                     setattr(item, attr, value)
 
                 item.order = order
-                item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
-                item.action_notes = action_data.get('action_notes',
-                                                    item.action_notes)
-                item.condition_expr = action_data.get('condition_expr', item.condition_expr)
+                item.rebook_reaction = action_data.get(
+                    "rebook_reaction", item.rebook_reaction
+                )
+                item.action_notes = action_data.get("action_notes", item.action_notes)
+                item.condition_expr = action_data.get(
+                    "condition_expr", item.condition_expr
+                )
 
                 item.save()
                 actions[order] = item
 
-    def save_actions_instrument_accrual_calculation_schedule(self, instance, inputs, actions, existed_actions,
-                                                             actions_data):
-
+    def save_actions_instrument_accrual_calculation_schedule(
+        self, instance, inputs, actions, existed_actions, actions_data
+    ):
         for order, action_data in enumerate(actions_data):
-            pk = action_data.pop('id', None)
+            pk = action_data.pop("id", None)
             action = existed_actions.get(pk, None)
 
-            item_data = action_data.get('instrument_accrual_calculation_schedules',
-                                        action_data.get(
-                                            'transactiontypeactioninstrumentaccrualcalculationschedules'))
+            item_data = action_data.get(
+                "instrument_accrual_calculation_schedules",
+                action_data.get(
+                    "transactiontypeactioninstrumentaccrualcalculationschedules"
+                ),
+            )
             if item_data:
                 for attr, value in item_data.items():
-                    if attr.endswith('_input') and value:
+                    if attr.endswith("_input") and value:
                         try:
                             item_data[attr] = inputs[value]
-                        except KeyError:
-                            raise ValidationError('Invalid input "%s"' % value)
+                        except KeyError as e:
+                            raise ValidationError(f'Invalid input "{value}"') from e
 
-                    if attr == 'instrument_phantom' and value is not None:
+                    if attr == "instrument_phantom" and value is not None:
                         try:
                             item_data[attr] = actions[value]
-                        except IndexError:
-                            raise ValidationError('Invalid action order "%s"' % value)
+                        except IndexError as exc:
+                            raise ValidationError(
+                                f'Invalid action order "{value}"'
+                            ) from exc
 
                 item = None
                 if action:
-                    try:
-                        item = action.transactiontypeactioninstrumentaccrualcalculationschedules
-                    except ObjectDoesNotExist:
-                        pass
+                    with contextlib.suppress(ObjectDoesNotExist):
+                        item = (
+                            action.transactiontypeactioninstrumentaccrualcalculationschedules
+                        )
+
                 if item is None:
                     item = TransactionTypeActionInstrumentAccrualCalculationSchedules(
-                        transaction_type=instance)
+                        transaction_type=instance
+                    )
 
                 for attr, value in item_data.items():
                     setattr(item, attr, value)
 
                 item.order = order
-                item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
-                item.action_notes = action_data.get('action_notes',
-                                                    item.action_notes)
-                item.condition_expr = action_data.get('condition_expr', item.condition_expr)
+                item.rebook_reaction = action_data.get(
+                    "rebook_reaction", item.rebook_reaction
+                )
+                item.action_notes = action_data.get("action_notes", item.action_notes)
+                item.condition_expr = action_data.get(
+                    "condition_expr", item.condition_expr
+                )
 
                 item.save()
                 actions[order] = item
 
-    def save_actions_instrument_event_schedule(self, instance, inputs, actions, existed_actions,
-                                               actions_data):
-
+    def save_actions_instrument_event_schedule(
+        self, instance, inputs, actions, existed_actions, actions_data
+    ):
         for order, action_data in enumerate(actions_data):
-            pk = action_data.pop('id', None)
+            pk = action_data.pop("id", None)
             action = existed_actions.get(pk, None)
 
-            item_data = action_data.get('instrument_event_schedule',
-                                        action_data.get(
-                                            'transactiontypeactioninstrumenteventschedule'))
+            item_data = action_data.get(
+                "instrument_event_schedule",
+                action_data.get("transactiontypeactioninstrumenteventschedule"),
+            )
             if item_data:
                 for attr, value in item_data.items():
-                    if attr.endswith('_input') and value:
+                    if attr.endswith("_input") and value:
                         try:
                             item_data[attr] = inputs[value]
-                        except KeyError:
-                            raise ValidationError('Invalid input "%s"' % value)
+                        except KeyError as e:
+                            raise ValidationError(f'Invalid input "{value}"') from e
 
-                    if attr == 'instrument_phantom' and value is not None:
+                    if attr == "instrument_phantom" and value is not None:
                         try:
                             item_data[attr] = actions[value]
-                        except IndexError:
-                            raise ValidationError('Invalid action order "%s"' % value)
+                        except IndexError as exc:
+                            raise ValidationError(
+                                f'Invalid action order "{value}"'
+                            ) from exc
 
                 item = None
                 if action:
-                    try:
+                    with contextlib.suppress(ObjectDoesNotExist):
                         item = action.transactiontypeactioninstrumenteventschedule
-                    except ObjectDoesNotExist:
-                        pass
+
                 if item is None:
                     item = TransactionTypeActionInstrumentEventSchedule(
-                        transaction_type=instance)
+                        transaction_type=instance
+                    )
 
                 for attr, value in item_data.items():
                     setattr(item, attr, value)
 
                 item.order = order
-                item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
-                item.action_notes = action_data.get('action_notes', item.action_notes)
-                item.condition_expr = action_data.get('condition_expr', item.condition_expr)
+                item.rebook_reaction = action_data.get(
+                    "rebook_reaction", item.rebook_reaction
+                )
+                item.action_notes = action_data.get("action_notes", item.action_notes)
+                item.condition_expr = action_data.get(
+                    "condition_expr", item.condition_expr
+                )
 
                 item.save()
                 actions[order] = item
 
-    def save_actions_instrument_event_schedule_action(self, instance, inputs, actions, existed_actions,
-                                                      actions_data):
-
+    def save_actions_instrument_event_schedule_action(
+        self, instance, inputs, actions, existed_actions, actions_data
+    ):
         for order, action_data in enumerate(actions_data):
-            pk = action_data.pop('id', None)
+            pk = action_data.pop("id", None)
             action = existed_actions.get(pk, None)
 
-            item_data = action_data.get('instrument_event_schedule_action',
-                                        action_data.get(
-                                            'transactiontypeactioninstrumenteventscheduleaction'))
+            item_data = action_data.get(
+                "instrument_event_schedule_action",
+                action_data.get("transactiontypeactioninstrumenteventscheduleaction"),
+            )
             if item_data:
                 for attr, value in item_data.items():
-                    if attr.endswith('_input') and value:
+                    if attr.endswith("_input") and value:
                         try:
                             item_data[attr] = inputs[value]
                         except KeyError:
-                            raise ValidationError('Invalid input "%s"' % value)
+                            raise ValidationError(f'Invalid input "{value}"')
 
-                    if attr == 'event_schedule_phantom' and value is not None:
+                    if attr == "event_schedule_phantom" and value is not None:
                         try:
                             item_data[attr] = actions[value]
                         except IndexError:
-                            raise ValidationError('Invalid action order "%s"' % value)
+                            raise ValidationError(f'Invalid action order "{value}"')
 
                 item = None
                 if action:
-                    try:
+                    with contextlib.suppress(ObjectDoesNotExist):
                         item = action.transactiontypeactioninstrumenteventscheduleaction
-                    except ObjectDoesNotExist:
-                        pass
+
                 if item is None:
                     item = TransactionTypeActionInstrumentEventScheduleAction(
-                        transaction_type=instance)
+                        transaction_type=instance
+                    )
 
                 for attr, value in item_data.items():
                     setattr(item, attr, value)
 
                 item.order = order
-                item.rebook_reaction = action_data.get('rebook_reaction', item.rebook_reaction)
-                item.action_notes = action_data.get('action_notes', item.action_notes)
-                item.condition_expr = action_data.get('condition_expr', item.condition_expr)
+                item.rebook_reaction = action_data.get(
+                    "rebook_reaction", item.rebook_reaction
+                )
+                item.action_notes = action_data.get("action_notes", item.action_notes)
+                item.condition_expr = action_data.get(
+                    "condition_expr", item.condition_expr
+                )
 
                 item.save()
                 actions[order] = item
 
     def save_actions(self, instance, actions_data, inputs):
         actions_qs = instance.actions.select_related(
-            'transactiontypeactioninstrument',
-            'transactiontypeactiontransaction',
-            'transactiontypeactioninstrumentfactorschedule',
-            'transactiontypeactioninstrumentmanualpricingformula',
-            'transactiontypeactioninstrumentaccrualcalculationschedules',
-            'transactiontypeactioninstrumenteventschedule',
-            'transactiontypeactioninstrumenteventscheduleaction',
-            'transactiontypeactionexecutecommand').order_by('order', 'id')
+            "transactiontypeactioninstrument",
+            "transactiontypeactiontransaction",
+            "transactiontypeactioninstrumentfactorschedule",
+            "transactiontypeactioninstrumentmanualpricingformula",
+            "transactiontypeactioninstrumentaccrualcalculationschedules",
+            "transactiontypeactioninstrumenteventschedule",
+            "transactiontypeactioninstrumenteventscheduleaction",
+            "transactiontypeactionexecutecommand",
+        ).order_by("order", "id")
         existed_actions = {a.id: a for a in actions_qs}
 
         if inputs is None or inputs is empty:
@@ -2025,24 +3439,39 @@ class TransactionTypeSerializer(ModelWithUserCodeSerializer,
         else:
             inputs = {i.name: i for i in inputs}
 
-        actions = [None for a in actions_data]
+        actions = [None for _ in actions_data]
 
-        self.save_actions_instrument(instance, inputs, actions, existed_actions, actions_data)
+        self.save_actions_instrument(
+            instance, inputs, actions, existed_actions, actions_data
+        )
 
-        self.save_actions_transaction(instance, inputs, actions, existed_actions, actions_data)
+        self.save_actions_transaction(
+            instance, inputs, actions, existed_actions, actions_data
+        )
 
-        self.save_actions_instrument_factor_schedule(instance, inputs, actions, existed_actions, actions_data)
+        self.save_actions_instrument_factor_schedule(
+            instance, inputs, actions, existed_actions, actions_data
+        )
 
-        self.save_actions_instrument_manual_pricing_formula(instance, inputs, actions, existed_actions, actions_data)
+        self.save_actions_instrument_manual_pricing_formula(
+            instance, inputs, actions, existed_actions, actions_data
+        )
 
-        self.save_actions_instrument_accrual_calculation_schedule(instance, inputs, actions, existed_actions,
-                                                                  actions_data)
+        self.save_actions_instrument_accrual_calculation_schedule(
+            instance, inputs, actions, existed_actions, actions_data
+        )
 
-        self.save_actions_instrument_event_schedule(instance, inputs, actions, existed_actions, actions_data)
+        self.save_actions_instrument_event_schedule(
+            instance, inputs, actions, existed_actions, actions_data
+        )
 
-        self.save_actions_instrument_event_schedule_action(instance, inputs, actions, existed_actions, actions_data)
+        self.save_actions_instrument_event_schedule_action(
+            instance, inputs, actions, existed_actions, actions_data
+        )
 
-        self.save_actions_execute_command(instance, inputs, actions, existed_actions, actions_data)
+        self.save_actions_execute_command(
+            instance, inputs, actions, existed_actions, actions_data
+        )
 
         return actions
 
@@ -2054,50 +3483,92 @@ class TransactionTypeViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = TransactionType
         fields = [
-            'id', 'group', 'user_code', 'name', 'short_name', 'public_name', 'notes',
-            'is_valid_for_all_portfolios', 'is_valid_for_all_instruments', 'is_deleted',
-            'transaction_unique_code_expr',
-            'transaction_unique_code_options',
-
-            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
-            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
-
-            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
-            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
-
-            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
-            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
-
-            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
-            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
-
-            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
-            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
-
-            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
-
+            "id",
+            "group",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
+            "notes",
+            "is_valid_for_all_portfolios",
+            "is_valid_for_all_instruments",
+            "is_deleted",
+            "transaction_unique_code_expr",
+            "transaction_unique_code_options",
+            "user_text_1",
+            "user_text_2",
+            "user_text_3",
+            "user_text_4",
+            "user_text_5",
+            "user_text_6",
+            "user_text_7",
+            "user_text_8",
+            "user_text_9",
+            "user_text_10",
+            "user_text_11",
+            "user_text_12",
+            "user_text_13",
+            "user_text_14",
+            "user_text_15",
+            "user_text_16",
+            "user_text_17",
+            "user_text_18",
+            "user_text_19",
+            "user_text_20",
+            "user_text_21",
+            "user_text_22",
+            "user_text_23",
+            "user_text_24",
+            "user_text_25",
+            "user_text_26",
+            "user_text_27",
+            "user_text_28",
+            "user_text_29",
+            "user_text_30",
+            "user_number_1",
+            "user_number_2",
+            "user_number_3",
+            "user_number_4",
+            "user_number_5",
+            "user_number_6",
+            "user_number_7",
+            "user_number_8",
+            "user_number_9",
+            "user_number_10",
+            "user_number_11",
+            "user_number_12",
+            "user_number_13",
+            "user_number_14",
+            "user_number_15",
+            "user_number_16",
+            "user_number_17",
+            "user_number_18",
+            "user_number_19",
+            "user_number_20",
+            "user_date_1",
+            "user_date_2",
+            "user_date_3",
+            "user_date_4",
+            "user_date_5",
         ]
 
     def to_representation(self, instance):
-
-        ret = super(TransactionTypeViewSerializer, self).to_representation(instance)
+        representation = super().to_representation(instance)
 
         try:
+            instance = TransactionTypeGroup.objects.get(id=representation["group"])
 
-            instance = TransactionTypeGroup.objects.get(
-                id=ret['group'])
-
-            s = TransactionTypeGroupViewSerializer(instance=instance, read_only=True,
-                                                   context=self.context)
-            ret['group_object'] = s.data
+            s = TransactionTypeGroupViewSerializer(
+                instance=instance, read_only=True, context=self.context
+            )
+            representation["group_object"] = s.data
         except TransactionTypeGroup.DoesNotExist as e:
+            _l.error(f"Error in to_representation: {repr(e)} {traceback.format_exc()}")
 
-            # _l.error('Error in to_representation: %s' % e)
-            # _l.error('Error in to_representation traceback: %s' % traceback.format_exc())
+            representation["group_object"] = None
 
-            ret['group_object'] = None
+        return representation
 
-        return ret
 
 class TransactionTypeViewOnlySerializer(ModelWithUserCodeSerializer):
     inputs = TransactionTypeInputViewOnlySerializer(required=False, many=True)
@@ -2105,11 +3576,15 @@ class TransactionTypeViewOnlySerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = TransactionType
         fields = [
-            'id', 'master_user', 'group',
-
-            'user_code', 'name', 'short_name', 'public_name', 'notes',
-
-            'inputs',
+            "id",
+            "master_user",
+            "group",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
+            "notes",
+            "inputs",
         ]
 
 
@@ -2117,7 +3592,7 @@ class TransactionSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = [
-            'id',
+            "id",
         ]
 
 
@@ -2126,7 +3601,9 @@ class TransactionSerializer(serializers.ModelSerializer):
     complex_transaction = serializers.PrimaryKeyRelatedField(read_only=True)
     complex_transaction_order = serializers.IntegerField(read_only=True)
     instrument = InstrumentField(required=False, allow_null=True)
-    transaction_currency = CurrencyField(default=CurrencyDefault(), required=False, allow_null=True)
+    transaction_currency = CurrencyField(
+        default=CurrencyDefault(), required=False, allow_null=True
+    )
     settlement_currency = CurrencyField(default=SystemCurrencyDefault())
     portfolio = PortfolioField(default=PortfolioDefault())
     account_cash = AccountField(default=AccountDefault())
@@ -2144,154 +3621,153 @@ class TransactionSerializer(serializers.ModelSerializer):
     allocation_balance = InstrumentField(default=InstrumentDefault())
     allocation_pl = InstrumentField(default=InstrumentDefault())
 
-    # transaction_class_object = TransactionClassSerializer(source='transaction_class', read_only=True)
-    # transaction_currency_object = serializers.PrimaryKeyRelatedField(source='transaction_currency', read_only=True)
-    # linked_instrument_object = serializers.PrimaryKeyRelatedField(source='instrument', read_only=True)
-    # instrument_object = serializers.PrimaryKeyRelatedField(source='instrument', read_only=True)
-    # settlement_currency_object = serializers.PrimaryKeyRelatedField(source='settlement_currency', read_only=True)
-    # portfolio_object = serializers.PrimaryKeyRelatedField(source='portfolio', read_only=True)
-    # account_cash_object = serializers.PrimaryKeyRelatedField(source='account_cash', read_only=True)
-    # account_position_object = serializers.PrimaryKeyRelatedField(source='account_position', read_only=True)
-    # account_interim_object = serializers.PrimaryKeyRelatedField(source='account_interim', read_only=True)
-    # strategy1_position_object = serializers.PrimaryKeyRelatedField(source='strategy1_position', read_only=True)
-    # strategy1_cash_object = serializers.PrimaryKeyRelatedField(source='strategy1_cash', read_only=True)
-    # strategy2_position_object = serializers.PrimaryKeyRelatedField(source='strategy2_position', read_only=True)
-    # strategy2_cash_object = serializers.PrimaryKeyRelatedField(source='strategy2_cash', read_only=True)
-    # strategy3_position_object = serializers.PrimaryKeyRelatedField(source='strategy3_position', read_only=True)
-    # strategy3_cash_object = serializers.PrimaryKeyRelatedField(source='strategy3_cash', read_only=True)
-    # responsible_object = serializers.PrimaryKeyRelatedField(source='responsible', read_only=True)
-    # counterparty_object = serializers.PrimaryKeyRelatedField(source='counterparty', read_only=True)
-
-    # attributes = TransactionAttributeSerializer(many=True, required=False, allow_null=True)
-
     class Meta:
         model = Transaction
         fields = [
-            'id',
-            'master_user',
-            'transaction_code',
-            'complex_transaction',
-            'complex_transaction_order',
-            'transaction_class',
-            'instrument',
-            'transaction_currency',
-            'position_size_with_sign',
-            'settlement_currency',
-            'cash_consideration',
-            'principal_with_sign',
-            'carry_with_sign',
-            'overheads_with_sign',
-            'reference_fx_rate',
-
-            'accounting_date',
-            'cash_date',
-            'transaction_date',
-
-            'portfolio',
-            'account_cash',
-            'account_position',
-            'account_interim',
-            'strategy1_position',
-            'strategy1_cash',
-            'strategy2_position',
-            'strategy2_cash',
-            'strategy3_position',
-            'strategy3_cash',
-
-            'responsible',
-            'counterparty',
-            'linked_instrument',
-            'allocation_balance',
-            'allocation_pl',
-
+            "id",
+            "master_user",
+            "transaction_code",
+            "complex_transaction",
+            "complex_transaction_order",
+            "transaction_class",
+            "instrument",
+            "transaction_currency",
+            "position_size_with_sign",
+            "settlement_currency",
+            "cash_consideration",
+            "principal_with_sign",
+            "carry_with_sign",
+            "overheads_with_sign",
+            "reference_fx_rate",
+            "accounting_date",
+            "cash_date",
+            "transaction_date",
+            "portfolio",
+            "account_cash",
+            "account_position",
+            "account_interim",
+            "strategy1_position",
+            "strategy1_cash",
+            "strategy2_position",
+            "strategy2_cash",
+            "strategy3_position",
+            "strategy3_cash",
+            "responsible",
+            "counterparty",
+            "linked_instrument",
+            "allocation_balance",
+            "allocation_pl",
             # 'is_locked',
-            'is_canceled',
-            'is_deleted',
-
-            'error_code',
-
-            'factor',
-            'trade_price',
-            'position_amount',
-            'principal_amount',
-            'carry_amount',
-            'overheads',
-            'ytm_at_cost',
-            'notes',
-
-            'user_text_1',
-            'user_text_2',
-            'user_text_3',
-
-            'user_number_1',
-            'user_number_2',
-            'user_number_3',
-
-            'user_date_1',
-            'user_date_2',
-            'user_date_3',
-
-            # 'transaction_class_object',
-            # 'transaction_currency_object',
-            # 'linked_instrument_object',
-            # 'instrument_object',
-            # 'settlement_currency_object',
-            # 'portfolio_object',
-            # 'account_cash_object',
-            # 'account_position_object',
-            # 'account_interim_object',
-            # 'strategy1_position_object',
-            # 'strategy1_cash_object',
-            # 'strategy2_position_object',
-            # 'strategy2_cash_object',
-            # 'strategy3_position_object',
-            # 'strategy3_cash_object',
-            # 'responsible_object',
-            # 'counterparty_object',
+            "is_canceled",
+            "is_deleted",
+            "error_code",
+            "factor",
+            "trade_price",
+            "position_amount",
+            "principal_amount",
+            "carry_amount",
+            "overheads",
+            "ytm_at_cost",
+            "notes",
+            "user_text_1",
+            "user_text_2",
+            "user_text_3",
+            "user_number_1",
+            "user_number_2",
+            "user_number_3",
+            "user_date_1",
+            "user_date_2",
+            "user_date_3",
         ]
 
     def __init__(self, *args, **kwargs):
-        skip_complex_transaction = kwargs.pop('skip_complex_transaction', False)
-        super(TransactionSerializer, self).__init__(*args, **kwargs)
+        skip_complex_transaction = kwargs.pop("skip_complex_transaction", False)
+        super().__init__(*args, **kwargs)
 
+        from poms.accounts.serializers import AccountViewSerializer
+        from poms.counterparties.serializers import (
+            CounterpartyViewSerializer,
+            ResponsibleViewSerializer,
+        )
         from poms.currencies.serializers import CurrencyViewSerializer
         from poms.instruments.serializers import InstrumentViewSerializer
         from poms.portfolios.serializers import PortfolioViewSerializer
-        from poms.accounts.serializers import AccountViewSerializer
-        from poms.strategies.serializers import Strategy1ViewSerializer, Strategy2ViewSerializer, \
-            Strategy3ViewSerializer
-        from poms.counterparties.serializers import ResponsibleViewSerializer, CounterpartyViewSerializer
+        from poms.strategies.serializers import (
+            Strategy1ViewSerializer,
+            Strategy2ViewSerializer,
+            Strategy3ViewSerializer,
+        )
 
-        self.fields['transaction_class_object'] = TransactionClassSerializer(source='transaction_class', read_only=True)
+        self.fields["transaction_class_object"] = TransactionClassSerializer(
+            source="transaction_class", read_only=True
+        )
 
         if not skip_complex_transaction:
-            self.fields['complex_transaction_object'] = ComplexTransactionViewSerializer(source='complex_transaction',
-                                                                                         read_only=True)
+            self.fields[
+                "complex_transaction_object"
+            ] = ComplexTransactionViewSerializer(
+                source="complex_transaction", read_only=True
+            )
 
-        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
-        self.fields['transaction_currency_object'] = CurrencyViewSerializer(source='transaction_currency',
-                                                                            read_only=True)
-        self.fields['settlement_currency_object'] = CurrencyViewSerializer(source='settlement_currency', read_only=True)
+        self.fields["instrument_object"] = InstrumentViewSerializer(
+            source="instrument", read_only=True
+        )
+        self.fields["transaction_currency_object"] = CurrencyViewSerializer(
+            source="transaction_currency", read_only=True
+        )
+        self.fields["settlement_currency_object"] = CurrencyViewSerializer(
+            source="settlement_currency", read_only=True
+        )
 
-        self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
+        self.fields["portfolio_object"] = PortfolioViewSerializer(
+            source="portfolio", read_only=True
+        )
 
-        self.fields['account_position_object'] = AccountViewSerializer(source='account_position', read_only=True)
-        self.fields['account_cash_object'] = AccountViewSerializer(source='account_cash', read_only=True)
-        self.fields['account_interim_object'] = AccountViewSerializer(source='account_interim', read_only=True)
+        self.fields["account_position_object"] = AccountViewSerializer(
+            source="account_position", read_only=True
+        )
+        self.fields["account_cash_object"] = AccountViewSerializer(
+            source="account_cash", read_only=True
+        )
+        self.fields["account_interim_object"] = AccountViewSerializer(
+            source="account_interim", read_only=True
+        )
 
-        self.fields['strategy1_position_object'] = Strategy1ViewSerializer(source='strategy1_position', read_only=True)
-        self.fields['strategy1_cash_object'] = Strategy1ViewSerializer(source='strategy1_cash', read_only=True)
-        self.fields['strategy2_position_object'] = Strategy2ViewSerializer(source='strategy2_position', read_only=True)
-        self.fields['strategy2_cash_object'] = Strategy2ViewSerializer(source='strategy2_cash', read_only=True)
-        self.fields['strategy3_position_object'] = Strategy3ViewSerializer(source='strategy3_position', read_only=True)
-        self.fields['strategy3_cash_object'] = Strategy3ViewSerializer(source='strategy3_cash', read_only=True)
+        self.fields["strategy1_position_object"] = Strategy1ViewSerializer(
+            source="strategy1_position", read_only=True
+        )
+        self.fields["strategy1_cash_object"] = Strategy1ViewSerializer(
+            source="strategy1_cash", read_only=True
+        )
+        self.fields["strategy2_position_object"] = Strategy2ViewSerializer(
+            source="strategy2_position", read_only=True
+        )
+        self.fields["strategy2_cash_object"] = Strategy2ViewSerializer(
+            source="strategy2_cash", read_only=True
+        )
+        self.fields["strategy3_position_object"] = Strategy3ViewSerializer(
+            source="strategy3_position", read_only=True
+        )
+        self.fields["strategy3_cash_object"] = Strategy3ViewSerializer(
+            source="strategy3_cash", read_only=True
+        )
 
-        self.fields['responsible_object'] = ResponsibleViewSerializer(source='responsible', read_only=True)
-        self.fields['counterparty_object'] = CounterpartyViewSerializer(source='counterparty', read_only=True)
+        self.fields["responsible_object"] = ResponsibleViewSerializer(
+            source="responsible", read_only=True
+        )
+        self.fields["counterparty_object"] = CounterpartyViewSerializer(
+            source="counterparty", read_only=True
+        )
 
-        self.fields['linked_instrument_object'] = InstrumentViewSerializer(source='linked_instrument', read_only=True)
-        self.fields['allocation_balance_object'] = InstrumentViewSerializer(source='allocation_balance', read_only=True)
-        self.fields['allocation_pl_object'] = InstrumentViewSerializer(source='allocation_pl', read_only=True)
+        self.fields["linked_instrument_object"] = InstrumentViewSerializer(
+            source="linked_instrument", read_only=True
+        )
+        self.fields["allocation_balance_object"] = InstrumentViewSerializer(
+            source="allocation_balance", read_only=True
+        )
+        self.fields["allocation_pl_object"] = InstrumentViewSerializer(
+            source="allocation_pl", read_only=True
+        )
 
 
 # TODO check permissions?
@@ -2308,53 +3784,71 @@ class TransactionViewOnlySerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = [
-            'id',
-            'master_user',
-            'transaction_code',
-            'complex_transaction',
-            'complex_transaction_order',
-            'transaction_class',
-            'instrument',
-            'settlement_currency',
-            'portfolio',
-            'account_position'
+            "id",
+            "master_user",
+            "transaction_code",
+            "complex_transaction",
+            "complex_transaction_order",
+            "transaction_class",
+            "instrument",
+            "settlement_currency",
+            "portfolio",
+            "account_position",
         ]
 
     def __init__(self, *args, **kwargs):
-        skip_complex_transaction = kwargs.pop('skip_complex_transaction', False)
-        super(TransactionViewOnlySerializer, self).__init__(*args, **kwargs)
-
+        from poms.accounts.serializers import AccountViewSerializer
         from poms.currencies.serializers import CurrencyViewSerializer
         from poms.instruments.serializers import InstrumentViewSerializer
         from poms.portfolios.serializers import PortfolioViewSerializer
-        from poms.accounts.serializers import AccountViewSerializer
 
-        self.fields['transaction_class_object'] = TransactionClassSerializer(source='transaction_class', read_only=True)
+        skip_complex_transaction = kwargs.pop("skip_complex_transaction", False)
+        super().__init__(*args, **kwargs)
 
-        self.fields['instrument_object'] = InstrumentViewSerializer(source='instrument', read_only=True)
-        self.fields['settlement_currency_object'] = CurrencyViewSerializer(source='settlement_currency', read_only=True)
+        self.fields["transaction_class_object"] = TransactionClassSerializer(
+            source="transaction_class", read_only=True
+        )
 
-        self.fields['portfolio_object'] = PortfolioViewSerializer(source='portfolio', read_only=True)
+        self.fields["instrument_object"] = InstrumentViewSerializer(
+            source="instrument", read_only=True
+        )
+        self.fields["settlement_currency_object"] = CurrencyViewSerializer(
+            source="settlement_currency", read_only=True
+        )
 
-        self.fields['account_position_object'] = AccountViewSerializer(source='account_position', read_only=True)
+        self.fields["portfolio_object"] = PortfolioViewSerializer(
+            source="portfolio", read_only=True
+        )
+
+        self.fields["account_position_object"] = AccountViewSerializer(
+            source="account_position", read_only=True
+        )
 
 
 class InstrumentSimpleViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Instrument
         fields = [
-            'id', 'user_code', 'name', 'short_name', 'public_name'
+            "id",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
         ]
 
     def __init__(self, *args, **kwargs):
-        super(InstrumentSimpleViewSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class AccountSimpleViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = Account
         fields = [
-            'id', 'user_code', 'name', 'short_name', 'public_name',
+            "id",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
         ]
 
 
@@ -2362,7 +3856,11 @@ class ResponsibleSimpleViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = Responsible
         fields = [
-            'id', 'user_code', 'name', 'short_name', 'public_name',
+            "id",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
         ]
 
 
@@ -2370,7 +3868,11 @@ class CounterpartySimpleViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = Counterparty
         fields = [
-            'id', 'user_code', 'name', 'short_name', 'public_name',
+            "id",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
         ]
 
 
@@ -2378,7 +3880,12 @@ class Strategy1SimpleViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = Strategy1
         fields = [
-            'id', 'user_code', 'name', 'short_name', 'public_name', 'is_deleted',
+            "id",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
+            "is_deleted",
         ]
 
 
@@ -2386,7 +3893,12 @@ class Strategy2SimpleViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = Strategy2
         fields = [
-            'id', 'user_code', 'name', 'short_name', 'public_name', 'is_deleted',
+            "id",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
+            "is_deleted",
         ]
 
 
@@ -2394,672 +3906,543 @@ class Strategy3SimpleViewSerializer(ModelWithUserCodeSerializer):
     class Meta:
         model = Strategy3
         fields = [
-            'id', 'user_code', 'name', 'short_name', 'public_name', 'is_deleted',
+            "id",
+            "user_code",
+            "name",
+            "short_name",
+            "public_name",
+            "is_deleted",
         ]
 
 
 class TransactionTextRenderSerializer(TransactionSerializer):
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('skip_complex_transaction', True)
-        super(TransactionTextRenderSerializer, self).__init__(*args, **kwargs)
+        kwargs.setdefault("skip_complex_transaction", True)
+        super().__init__(*args, **kwargs)
 
     class Meta(TransactionSerializer.Meta):
         fields = [
-            'id',
-            'master_user',
-            'transaction_code',
-            'complex_transaction',
-            'complex_transaction_order',
-            'transaction_class',
-            'instrument',
-            'transaction_currency',
-            'position_size_with_sign',
-            'settlement_currency',
-            'cash_consideration',
-            'principal_with_sign',
-            'carry_with_sign',
-            'overheads_with_sign',
-            'reference_fx_rate',
-
-            'accounting_date',
-            'cash_date',
-            'transaction_date',
-
-            'portfolio',
-            'account_cash',
-            'account_position',
-            'account_interim',
-            'strategy1_position',
-            'strategy1_cash',
-            'strategy2_position',
-            'strategy2_cash',
-            'strategy3_position',
-            'strategy3_cash',
-
-            'responsible',
-            'counterparty',
-            'linked_instrument',
-            'allocation_balance',
-            'allocation_pl',
-
+            "id",
+            "master_user",
+            "transaction_code",
+            "complex_transaction",
+            "complex_transaction_order",
+            "transaction_class",
+            "instrument",
+            "transaction_currency",
+            "position_size_with_sign",
+            "settlement_currency",
+            "cash_consideration",
+            "principal_with_sign",
+            "carry_with_sign",
+            "overheads_with_sign",
+            "reference_fx_rate",
+            "accounting_date",
+            "cash_date",
+            "transaction_date",
+            "portfolio",
+            "account_cash",
+            "account_position",
+            "account_interim",
+            "strategy1_position",
+            "strategy1_cash",
+            "strategy2_position",
+            "strategy2_cash",
+            "strategy3_position",
+            "strategy3_cash",
+            "responsible",
+            "counterparty",
+            "linked_instrument",
+            "allocation_balance",
+            "allocation_pl",
             # 'is_locked',
-            'is_canceled',
+            "is_canceled",
             # 'is_deleted',
-
-            'error_code',
-
-            'factor',
-            'trade_price',
-            'position_amount',
-            'principal_amount',
-            'carry_amount',
-            'overheads',
-            'ytm_at_cost',
-            'notes',
-
+            "error_code",
+            "factor",
+            "trade_price",
+            "position_amount",
+            "principal_amount",
+            "carry_amount",
+            "overheads",
+            "ytm_at_cost",
+            "notes",
         ]
 
         read_only_fields = fields
 
 
+# noinspection PyUnresolvedReferences
 class ComplexTransactionMixin:
-    # def __init__(self, *args, **kwargs):
-    #     super(ComplexTransactionMixin, self).__init__(*args, **kwargs)
-    #     self.fields['transactions_object2'] = TransactionSerializer(source='transactions', many=True, read_only=True)
-
-    # def get_text(self, obj):
-    #     if hasattr(obj, '_fake_transactions'):
-    #         transactions = obj._fake_transactions
-    #     else:
-    #         transactions = obj.transactions.all()
-    #
-    #     try:
-    #         return obj._cached_text
-    #     except AttributeError:
-    #         if obj.transaction_type_id is None:
-    #             obj._cached_text = ''
-    #         else:
-    #             if obj.transaction_type.display_expr:
-    #                 names = {
-    #                     'complex_transaction': {
-    #                         'code': obj.code,
-    #                         'date': obj.date,
-    #                     },
-    #                     # 'transactions': formula.get_model_data(transactions, TransactionTextRenderSerializer, many=True,
-    #                     #                                        context=self.context),
-    #                     'transactions': transactions,
-    #                 }
-    #                 try:
-    #                     obj._cached_text = formula.safe_eval(obj.transaction_type.display_expr, names=names,
-    #                                                          context=self.context)
-    #                 except formula.InvalidExpression:
-    #                     obj._cached_text = '<InvalidExpression>'
-    #             else:
-    #                 obj._cached_text = ''
-    #         return obj._cached_text
 
     def get_text(self, obj):
         return None
 
     def to_representation(self, instance):
-        data = super(ComplexTransactionMixin, self).to_representation(instance)
-        if 'text' in self.fields:
+        representation = super().to_representation(instance)
+        if "text" in self.fields:
             if instance.transaction_type.display_expr:
-                ctrn = formula.value_prepare(data)
-                trns = ctrn.get('transactions', None)
+                ctrn = formula.value_prepare(representation)
+                trns = ctrn.get("transactions", None)
                 names = {
-                    'complex_transaction': ctrn,
-                    'transactions': trns,
+                    "complex_transaction": ctrn,
+                    "transactions": trns,
                 }
                 try:
-                    instance._cached_text = formula.safe_eval(instance.transaction_type.display_expr, names=names,
-                                                              context=self.context)
+                    instance._cached_text = formula.safe_eval(
+                        instance.transaction_type.display_expr,
+                        names=names,
+                        context=self.context,
+                    )
                 except formula.InvalidExpression:
-                    instance._cached_text = '<InvalidExpression>'
+                    instance._cached_text = "<InvalidExpression>"
             else:
-                instance._cached_text = ''
-            data['text'] = instance._cached_text
-        return data
+                instance._cached_text = ""
+            representation["text"] = instance._cached_text
+        return representation
 
 
 class ComplexTransactionInputSerializer(serializers.ModelSerializer):
     transaction_type_input = TransactionTypeInputField()
-    transaction_type_input_object = TransactionTypeInputSerializer(source='transaction_type_input')
-
+    transaction_type_input_object = TransactionTypeInputSerializer(
+        source="transaction_type_input"
+    )
     value_type = serializers.SerializerMethodField(read_only=True)
     content_type = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ComplexTransactionInput
         fields = [
-            'transaction_type_input',
-            'transaction_type_input_object',
-            'content_type',
-            'value_type',
-            'value_string',
-            'value_float',
-            'value_date',
-            'value_relation',
+            "transaction_type_input",
+            "transaction_type_input_object",
+            "content_type",
+            "value_type",
+            "value_string",
+            "value_float",
+            "value_date",
+            "value_relation",
         ]
 
     def get_value_type(self, instance):
         return instance.transaction_type_input.value_type
 
     def get_content_type(self, instance):
-        if instance.transaction_type_input.content_type:
-            return instance.transaction_type_input.content_type.app_label + '.' + instance.transaction_type_input.content_type.model
-        return None
+        return (
+            f"{instance.transaction_type_input.content_type.app_label}.{instance.transaction_type_input.content_type.model}"
+            if instance.transaction_type_input.content_type
+            else None
+        )
 
 
-class ComplexTransactionSerializer(ModelWithAttributesSerializer,
-                                   ModelWithTimeStampSerializer, ModelMetaSerializer):
-    # text = serializers.SerializerMethodField()
+def remove_user_fields_from_representation(data: dict) -> dict:
+    for i in range(1, 31):
+        data.pop(f"user_text_{i}", None)
+
+    for i in range(1, 21):
+        data.pop(f"user_number_{i}", None)
+
+    for i in range(1, 6):
+        data.pop(f"user_date_{i}", None)
+
+    return data
+
+
+class ComplexTransactionSerializer(
+    ModelWithAttributesSerializer, ModelWithTimeStampSerializer, ModelMetaSerializer
+):
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
     transactions = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
-
-    recon_fields = ReconciliationComplexTransactionFieldSerializer(required=False, many=True)
+    recon_fields = ReconciliationComplexTransactionFieldSerializer(
+        required=False, many=True
+    )
     source = serializers.JSONField(read_only=True, allow_null=True)
-
     inputs = ComplexTransactionInputSerializer(many=True)
 
     def __init__(self, *args, **kwargs):
-        super(ComplexTransactionSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(
-            source='transaction_type', read_only=True)
-
-        self.fields['transactions_object'] = TransactionSerializer(
-            source='transactions', many=True, read_only=True)
+        self.fields["transaction_type_object"] = TransactionTypeViewSerializer(
+            source="transaction_type", read_only=True
+        )
+        self.fields["transactions_object"] = TransactionSerializer(
+            source="transactions", many=True, read_only=True
+        )
 
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'transactions', 'master_user',
-
-            'transaction_unique_code',
-
-            'is_locked', 'is_canceled', 'error_code', 'is_deleted',
-
-            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
-            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
-
-            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
-            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
-
-            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
-            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
-
-            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
-            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
-
-            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
-            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
-
-            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
-
-            'recon_fields',
-
-            'execution_log', 'source', 'inputs'
-
+            "id",
+            "date",
+            "status",
+            "code",
+            "text",
+            "transaction_type",
+            "transactions",
+            "master_user",
+            "transaction_unique_code",
+            "is_locked",
+            "is_canceled",
+            "error_code",
+            "is_deleted",
+            "user_text_1",
+            "user_text_2",
+            "user_text_3",
+            "user_text_4",
+            "user_text_5",
+            "user_text_6",
+            "user_text_7",
+            "user_text_8",
+            "user_text_9",
+            "user_text_10",
+            "user_text_11",
+            "user_text_12",
+            "user_text_13",
+            "user_text_14",
+            "user_text_15",
+            "user_text_16",
+            "user_text_17",
+            "user_text_18",
+            "user_text_19",
+            "user_text_20",
+            "user_text_21",
+            "user_text_22",
+            "user_text_23",
+            "user_text_24",
+            "user_text_25",
+            "user_text_26",
+            "user_text_27",
+            "user_text_28",
+            "user_text_29",
+            "user_text_30",
+            "user_number_1",
+            "user_number_2",
+            "user_number_3",
+            "user_number_4",
+            "user_number_5",
+            "user_number_6",
+            "user_number_7",
+            "user_number_8",
+            "user_number_9",
+            "user_number_10",
+            "user_number_11",
+            "user_number_12",
+            "user_number_13",
+            "user_number_14",
+            "user_number_15",
+            "user_number_16",
+            "user_number_17",
+            "user_number_18",
+            "user_number_19",
+            "user_number_20",
+            "user_date_1",
+            "user_date_2",
+            "user_date_3",
+            "user_date_4",
+            "user_date_5",
+            "recon_fields",
+            "execution_log",
+            "source",
+            "inputs",
         ]
 
     def to_representation(self, instance):
-
-        st = time.perf_counter()
-
-        data = super(ComplexTransactionSerializer, self).to_representation(instance)
-
-        # print('instance.visibility_status %s' % instance.visibility_status)
-
-        hide_parameters = False
-
         member = get_member_from_context(self.context)
+        hide_parameters = not member.is_admin and not member.is_owner
 
-        if member.is_admin or member.is_owner:
-            hide_parameters = False
-
+        representation = super().to_representation(instance)
         if hide_parameters:
-            data.pop('user_text_1')
-            data.pop('user_text_2')
-            data.pop('user_text_3')
-            data.pop('user_text_4')
-            data.pop('user_text_5')
-            data.pop('user_text_6')
-            data.pop('user_text_7')
-            data.pop('user_text_8')
-            data.pop('user_text_9')
-            data.pop('user_text_10')
-            data.pop('user_text_11')
-            data.pop('user_text_12')
-            data.pop('user_text_13')
-            data.pop('user_text_14')
-            data.pop('user_text_15')
-            data.pop('user_text_16')
-            data.pop('user_text_17')
-            data.pop('user_text_18')
-            data.pop('user_text_19')
-            data.pop('user_text_20')
-            data.pop('user_text_21')
-            data.pop('user_text_22')
-            data.pop('user_text_23')
-            data.pop('user_text_24')
-            data.pop('user_text_25')
-            data.pop('user_text_26')
-            data.pop('user_text_27')
-            data.pop('user_text_28')
-            data.pop('user_text_29')
-            data.pop('user_text_30')
+            remove_user_fields_from_representation(representation)
 
-            data.pop('user_number_1')
-            data.pop('user_number_2')
-            data.pop('user_number_3')
-            data.pop('user_number_4')
-            data.pop('user_number_5')
-            data.pop('user_number_6')
-            data.pop('user_number_7')
-            data.pop('user_number_8')
-            data.pop('user_number_9')
-            data.pop('user_number_10')
-            data.pop('user_number_11')
-            data.pop('user_number_12')
-            data.pop('user_number_13')
-            data.pop('user_number_14')
-            data.pop('user_number_15')
-            data.pop('user_number_16')
-            data.pop('user_number_17')
-            data.pop('user_number_18')
-            data.pop('user_number_19')
-            data.pop('user_number_20')
-
-            data.pop('user_date_1')
-            data.pop('user_date_2')
-            data.pop('user_date_3')
-            data.pop('user_date_4')
-            data.pop('user_date_5')
-
-        # print('TransactionTypeComplexTransactionSerializer visibility status done: %s' % (time.perf_counter() - st))
-
-        return data
-
-    # def update(self, instance, validated_data):
-    #
-    #     print("HERE UPATE EXECUTE?")
-    #
-    #     data = super(ComplexTransactionSerializer, self).to_representation(instance)
-    #
-    #     transaction_type_process_instance = TransactionTypeProcess(transaction_type=instance.transaction_type,
-    #                                                                complex_transaction=instance,
-    #                                                                context=self.context)
-    #
-    #     if instance.transaction_type.display_expr:
-    #         ctrn = formula.value_prepare(data)
-    #         trns = ctrn.get('transactions', None)
-    #
-    #         names = {
-    #             'complex_transaction': ctrn,
-    #             'transactions': trns,
-    #         }
-    #
-    #         for key, value in transaction_type_process_instance.values.items():
-    #             names[key] = value
-    #
-    #         try:
-    #             validated_data['text'] = formula.safe_eval(instance.transaction_type.display_expr, names=names,
-    #                                                        context=self.context)
-    #         except formula.InvalidExpression:
-    #             validated_data['text'] = '<InvalidExpression>'
-    #
-    #     if instance.transaction_type.date_expr:
-    #         ctrn = formula.value_prepare(data)
-    #         trns = ctrn.get('transactions', None)
-    #
-    #         names = {
-    #             'complex_transaction': ctrn,
-    #             'transactions': trns,
-    #         }
-    #
-    #         for key, value in transaction_type_process_instance.values.items():
-    #             names[key] = value
-    #
-    #         try:
-    #             validated_data['date'] = formula.safe_eval(instance.transaction_type.date_expr, names=names,
-    #                                                        context=self.context)
-    #         except formula.InvalidExpression:
-    #
-    #             validated_data['date'] = date_now()
-    #
-    #     instance = super(ComplexTransactionSerializer, self).update(instance, validated_data)
-    #
-    #     return instance
+        return representation
 
 
 class ComplexTransactionSimpleSerializer(ModelWithAttributesSerializer):
     class Meta:
         model = ComplexTransaction
-        fields = [
-            'id', 'is_locked', 'is_canceled', 'status', 'is_deleted'
-        ]
+        fields = ["id", "is_locked", "is_canceled", "status", "is_deleted"]
 
-    def update_base_transactions_permissions(self, instance, complex_transaction_permissions):
-
-        # print('update_base_transactions_permissions complex_transaction_permissions %s ' % complex_transaction_permissions)
-
+    def update_base_transactions_permissions(
+        self, instance, complex_transaction_permissions
+    ):
         view_permissions = []
 
         for perm in complex_transaction_permissions:
-
             values = list(perm.values())
 
-            group = values[0]
-            member = values[1]
             permission = values[2]
-
-            # if 'view' in permission.codename:
-            if 'change' in permission.codename:  # TODO we imply that if we can CHANGE, then we can also view it
-
+            if "change" in permission.codename:
+                group = values[0]
                 if group:
-                    view_permissions.append({
-                        'member': None,
-                        'group': group.id,
-                        'permission': 'view_transaction'
-                    })
+                    view_permissions.append(
+                        {
+                            "member": None,
+                            "group": group.id,
+                            "permission": "view_transaction",
+                        }
+                    )
 
         transactions = Transaction.objects.filter(complex_transaction__id=instance.id)
 
         for transaction in transactions:
-            serializer = TransactionSimpleSerializer(instance=transaction,
-                                                     data={'object_permissions': view_permissions},
-                                                     context=self.context)
+            serializer = TransactionSimpleSerializer(
+                instance=transaction,
+                data={"object_permissions": view_permissions},
+                context=self.context,
+            )
 
             serializer.is_valid(raise_exception=True)
 
             serializer.save()
 
-        pass
-
     def update(self, instance, validated_data):
-        print('here? %s' % validated_data)
-        # print('instance? %s' % instance)
+        print(f"here? {validated_data}")
 
         transactions = Transaction.objects.filter(complex_transaction=instance.id)
 
         for transaction in transactions:
-
-            if 'is_locked' in validated_data:
-                transaction.is_locked = validated_data['is_locked']
+            if "is_locked" in validated_data:
+                transaction.is_locked = validated_data["is_locked"]
                 transaction.save()
 
-            if 'is_canceled' in validated_data:
-                transaction.is_canceled = validated_data['is_canceled']
+            if "is_canceled" in validated_data:
+                transaction.is_canceled = validated_data["is_canceled"]
                 transaction.save()
 
-        if 'object_permissions' in validated_data:
-            self.update_base_transactions_permissions(instance, validated_data['object_permissions'])
+        if "object_permissions" in validated_data:
+            self.update_base_transactions_permissions(
+                instance, validated_data["object_permissions"]
+            )
 
-        instance = super(ComplexTransactionSimpleSerializer, self).update(instance, validated_data)
+        instance = super().update(instance, validated_data)
 
         return instance
 
 
-
-class ComplexTransactionViewSerializer(ComplexTransactionMixin, serializers.ModelSerializer):
-    # text = serializers.SerializerMethodField()
+class ComplexTransactionViewSerializer(
+    ComplexTransactionMixin, serializers.ModelSerializer
+):
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'transaction_unique_code'
+            "id",
+            "date",
+            "status",
+            "code",
+            "text",
+            "transaction_type",
+            "transaction_unique_code",
         ]
 
     def __init__(self, *args, **kwargs):
-        super(ComplexTransactionViewSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(
-            source='transaction_type', read_only=True)
-
-        self.fields['transactions_object'] = TransactionSerializer(
-            source='transactions', many=True, read_only=True, skip_complex_transaction=True)
+        self.fields["transaction_type_object"] = TransactionTypeViewSerializer(
+            source="transaction_type", read_only=True
+        )
+        self.fields["transactions_object"] = TransactionSerializer(
+            source="transactions",
+            many=True,
+            read_only=True,
+            skip_complex_transaction=True,
+        )
 
     def to_representation(self, instance):
-        data = super(ComplexTransactionViewSerializer, self).to_representation(instance)
-        data.pop('transactions_object', None)
+        data = super().to_representation(instance)
+        data.pop("transactions_object", None)
         return data
 
 
 class ComplexTransactionLightSerializer(ModelWithAttributesSerializer):
-    # text = serializers.SerializerMethodField()
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
 
     def __init__(self, *args, **kwargs):
-        super(ComplexTransactionLightSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(
-            source='transaction_type', read_only=True)
+        self.fields["transaction_type_object"] = TransactionTypeViewSerializer(
+            source="transaction_type", read_only=True
+        )
 
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'master_user',
-
-            'visibility_status', 'is_locked', 'is_canceled', 'is_deleted', 'transaction_unique_code',
-
-            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
-            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
-
-            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
-            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
-
-            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
-            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
-
-            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
-            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
-
-            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
-            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
-
-            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
-
+            "id",
+            "date",
+            "status",
+            "code",
+            "text",
+            "transaction_type",
+            "master_user",
+            "visibility_status",
+            "is_locked",
+            "is_canceled",
+            "is_deleted",
+            "transaction_unique_code",
+            "user_text_1",
+            "user_text_2",
+            "user_text_3",
+            "user_text_4",
+            "user_text_5",
+            "user_text_6",
+            "user_text_7",
+            "user_text_8",
+            "user_text_9",
+            "user_text_10",
+            "user_text_11",
+            "user_text_12",
+            "user_text_13",
+            "user_text_14",
+            "user_text_15",
+            "user_text_16",
+            "user_text_17",
+            "user_text_18",
+            "user_text_19",
+            "user_text_20",
+            "user_text_21",
+            "user_text_22",
+            "user_text_23",
+            "user_text_24",
+            "user_text_25",
+            "user_text_26",
+            "user_text_27",
+            "user_text_28",
+            "user_text_29",
+            "user_text_30",
+            "user_number_1",
+            "user_number_2",
+            "user_number_3",
+            "user_number_4",
+            "user_number_5",
+            "user_number_6",
+            "user_number_7",
+            "user_number_8",
+            "user_number_9",
+            "user_number_10",
+            "user_number_11",
+            "user_number_12",
+            "user_number_13",
+            "user_number_14",
+            "user_number_15",
+            "user_number_16",
+            "user_number_17",
+            "user_number_18",
+            "user_number_19",
+            "user_number_20",
+            "user_date_1",
+            "user_date_2",
+            "user_date_3",
+            "user_date_4",
+            "user_date_5",
         ]
 
     def to_representation(self, instance):
-
-        st = time.perf_counter()
-
-        data = super(ComplexTransactionLightSerializer, self).to_representation(instance)
-
-        # print('instance.visibility_status %s' % instance.visibility_status)
-
-        hide_parameters = False
+        representation = super().to_representation(instance)
 
         member = get_member_from_context(self.context)
 
-        if member.is_admin or member.is_owner:
-            hide_parameters = False
-
+        hide_parameters = not member.is_admin and not member.is_owner
         if hide_parameters:
-            data.pop('user_text_1')
-            data.pop('user_text_2')
-            data.pop('user_text_3')
-            data.pop('user_text_4')
-            data.pop('user_text_5')
-            data.pop('user_text_6')
-            data.pop('user_text_7')
-            data.pop('user_text_8')
-            data.pop('user_text_9')
-            data.pop('user_text_10')
-            data.pop('user_text_11')
-            data.pop('user_text_12')
-            data.pop('user_text_13')
-            data.pop('user_text_14')
-            data.pop('user_text_15')
-            data.pop('user_text_16')
-            data.pop('user_text_17')
-            data.pop('user_text_18')
-            data.pop('user_text_19')
-            data.pop('user_text_20')
-            data.pop('user_text_21')
-            data.pop('user_text_22')
-            data.pop('user_text_23')
-            data.pop('user_text_24')
-            data.pop('user_text_25')
-            data.pop('user_text_26')
-            data.pop('user_text_27')
-            data.pop('user_text_28')
-            data.pop('user_text_29')
-            data.pop('user_text_30')
+            remove_user_fields_from_representation(representation)
 
-            data.pop('user_number_1')
-            data.pop('user_number_2')
-            data.pop('user_number_3')
-            data.pop('user_number_4')
-            data.pop('user_number_5')
-            data.pop('user_number_6')
-            data.pop('user_number_7')
-            data.pop('user_number_8')
-            data.pop('user_number_9')
-            data.pop('user_number_10')
-            data.pop('user_number_11')
-            data.pop('user_number_12')
-            data.pop('user_number_13')
-            data.pop('user_number_14')
-            data.pop('user_number_15')
-            data.pop('user_number_16')
-            data.pop('user_number_17')
-            data.pop('user_number_18')
-            data.pop('user_number_19')
-            data.pop('user_number_20')
-
-            data.pop('user_date_1')
-            data.pop('user_date_2')
-            data.pop('user_date_3')
-            data.pop('user_date_4')
-            data.pop('user_date_5')
-
-        # print('ComplexTransactionLightSerializer visibility status done: %s' % (time.perf_counter() - st))
-
-        return data
+        return representation
 
 
 class ComplexTransactionEvItemSerializer(ModelWithAttributesSerializer):
-    # text = serializers.SerializerMethodField()
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
 
     def __init__(self, *args, **kwargs):
-        super(ComplexTransactionEvItemSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(
-            source='transaction_type', read_only=True)
+        self.fields["transaction_type_object"] = TransactionTypeViewSerializer(
+            source="transaction_type", read_only=True
+        )
 
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'master_user',
-
-            'visibility_status', 'is_locked', 'is_canceled', 'is_deleted', 'transaction_unique_code',
-
-            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
-            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
-
-            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
-            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
-
-            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
-            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
-
-            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
-            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
-
-            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
-            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
-
-            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
-
+            "id",
+            "date",
+            "status",
+            "code",
+            "text",
+            "transaction_type",
+            "master_user",
+            "visibility_status",
+            "is_locked",
+            "is_canceled",
+            "is_deleted",
+            "transaction_unique_code",
+            "user_text_1",
+            "user_text_2",
+            "user_text_3",
+            "user_text_4",
+            "user_text_5",
+            "user_text_6",
+            "user_text_7",
+            "user_text_8",
+            "user_text_9",
+            "user_text_10",
+            "user_text_11",
+            "user_text_12",
+            "user_text_13",
+            "user_text_14",
+            "user_text_15",
+            "user_text_16",
+            "user_text_17",
+            "user_text_18",
+            "user_text_19",
+            "user_text_20",
+            "user_text_21",
+            "user_text_22",
+            "user_text_23",
+            "user_text_24",
+            "user_text_25",
+            "user_text_26",
+            "user_text_27",
+            "user_text_28",
+            "user_text_29",
+            "user_text_30",
+            "user_number_1",
+            "user_number_2",
+            "user_number_3",
+            "user_number_4",
+            "user_number_5",
+            "user_number_6",
+            "user_number_7",
+            "user_number_8",
+            "user_number_9",
+            "user_number_10",
+            "user_number_11",
+            "user_number_12",
+            "user_number_13",
+            "user_number_14",
+            "user_number_15",
+            "user_number_16",
+            "user_number_17",
+            "user_number_18",
+            "user_number_19",
+            "user_number_20",
+            "user_date_1",
+            "user_date_2",
+            "user_date_3",
+            "user_date_4",
+            "user_date_5",
         ]
 
     def to_representation(self, instance):
-
-        st = time.perf_counter()
-
-        data = super(ComplexTransactionEvItemSerializer, self).to_representation(instance)
-
-        # print('instance.visibility_status %s' % instance.visibility_status)
-
-        hide_parameters = False
+        representation = super().to_representation(instance)
 
         member = get_member_from_context(self.context)
 
-        if member.is_admin or member.is_owner:
-            hide_parameters = False
-
+        hide_parameters = not member.is_admin and not member.is_owner
         if hide_parameters:
-            data.pop('user_text_1')
-            data.pop('user_text_2')
-            data.pop('user_text_3')
-            data.pop('user_text_4')
-            data.pop('user_text_5')
-            data.pop('user_text_6')
-            data.pop('user_text_7')
-            data.pop('user_text_8')
-            data.pop('user_text_9')
-            data.pop('user_text_10')
-            data.pop('user_text_11')
-            data.pop('user_text_12')
-            data.pop('user_text_13')
-            data.pop('user_text_14')
-            data.pop('user_text_15')
-            data.pop('user_text_16')
-            data.pop('user_text_17')
-            data.pop('user_text_18')
-            data.pop('user_text_19')
-            data.pop('user_text_20')
-            data.pop('user_text_21')
-            data.pop('user_text_22')
-            data.pop('user_text_23')
-            data.pop('user_text_24')
-            data.pop('user_text_25')
-            data.pop('user_text_26')
-            data.pop('user_text_27')
-            data.pop('user_text_28')
-            data.pop('user_text_29')
-            data.pop('user_text_30')
+            remove_user_fields_from_representation(representation)
 
-            data.pop('user_number_1')
-            data.pop('user_number_2')
-            data.pop('user_number_3')
-            data.pop('user_number_4')
-            data.pop('user_number_5')
-            data.pop('user_number_6')
-            data.pop('user_number_7')
-            data.pop('user_number_8')
-            data.pop('user_number_9')
-            data.pop('user_number_10')
-            data.pop('user_number_11')
-            data.pop('user_number_12')
-            data.pop('user_number_13')
-            data.pop('user_number_14')
-            data.pop('user_number_15')
-            data.pop('user_number_16')
-            data.pop('user_number_17')
-            data.pop('user_number_18')
-            data.pop('user_number_19')
-            data.pop('user_number_20')
-
-            data.pop('user_date_1')
-            data.pop('user_date_2')
-            data.pop('user_date_3')
-            data.pop('user_date_4')
-            data.pop('user_date_5')
-
-        # print('ComplexTransactionLightSerializer visibility status done: %s' % (time.perf_counter() - st))
-
-        return data
-
-
+        return representation
 
 
 # TransactionType processing -------------------------------------------------------------------------------------------
@@ -3067,170 +4450,278 @@ class ComplexTransactionEvItemSerializer(ModelWithAttributesSerializer):
 
 class TransactionTypeProcessValuesSerializer(serializers.Serializer):
     def __init__(self, **kwargs):
-        super(TransactionTypeProcessValuesSerializer, self).__init__(**kwargs)
+        from poms.accounts.serializers import AccountViewSerializer
+        from poms.counterparties.serializers import (
+            CounterpartyViewSerializer,
+            ResponsibleViewSerializer,
+        )
+        from poms.currencies.serializers import CurrencyViewSerializer
+        from poms.instruments.serializers import (
+            DailyPricingModelSerializer,
+            EventScheduleSerializer,
+            InstrumentTypeViewSerializer,
+            InstrumentViewSerializer,
+            PaymentSizeDetailSerializer,
+            PricingPolicyViewSerializer,
+        )
+        from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
+        from poms.portfolios.serializers import PortfolioViewSerializer
+        from poms.strategies.serializers import (
+            Strategy1ViewSerializer,
+            Strategy2ViewSerializer,
+            Strategy3ViewSerializer,
+        )
+
+        super().__init__(**kwargs)
 
         _st = time.perf_counter()
 
-        from poms.accounts.serializers import AccountViewSerializer
-        from poms.currencies.serializers import CurrencyViewSerializer
-        from poms.instruments.serializers import InstrumentViewSerializer
-        from poms.instruments.serializers import InstrumentTypeViewSerializer
-        from poms.counterparties.serializers import CounterpartyViewSerializer
-        from poms.counterparties.serializers import ResponsibleViewSerializer
-        from poms.strategies.serializers import Strategy1ViewSerializer
-        from poms.strategies.serializers import Strategy2ViewSerializer
-        from poms.strategies.serializers import Strategy3ViewSerializer
-        from poms.instruments.serializers import DailyPricingModelSerializer
-        from poms.instruments.serializers import PaymentSizeDetailSerializer
-        from poms.portfolios.serializers import PortfolioViewSerializer
-        from poms.integrations.serializers import PriceDownloadSchemeViewSerializer
-        from poms.instruments.serializers import PricingPolicyViewSerializer
-        from poms.instruments.serializers import EventScheduleSerializer
-
-        # now = timezone.now().date()
-        # master_user = get_master_user_from_context(self.context)
-
         for i in self.instance.inputs:
             name = i.name
-            name_object = '%s_object' % name
+            name_object = f"{name}_object"
             field = None
             field_object = None
 
-            if i.value_type == TransactionTypeInput.STRING or i.value_type == TransactionTypeInput.SELECTOR:
-                # field = serializers.CharField(required=True, label=i.name, help_text=i.verbose_name)
-                field = serializers.CharField(required=False, allow_blank=True, allow_null=True,
-                                              label=i.name, help_text=i.verbose_name)
+            if i.value_type in (
+                TransactionTypeInput.STRING,
+                TransactionTypeInput.SELECTOR,
+            ):
+                field = serializers.CharField(
+                    required=False,
+                    allow_blank=True,
+                    allow_null=True,
+                    label=i.name,
+                    help_text=i.verbose_name,
+                )
 
             elif i.value_type == TransactionTypeInput.NUMBER:
-                field = serializers.FloatField(required=False, allow_null=True,
-                                               label=i.name, help_text=i.verbose_name)
+                field = serializers.FloatField(
+                    required=False,
+                    allow_null=True,
+                    label=i.name,
+                    help_text=i.verbose_name,
+                )
 
             elif i.value_type == TransactionTypeInput.DATE:
-                field = serializers.DateField(required=False, allow_null=True,
-                                              label=i.name, help_text=i.verbose_name)
-
+                field = serializers.DateField(
+                    required=False,
+                    allow_null=True,
+                    label=i.name,
+                    help_text=i.verbose_name,
+                )
 
             elif i.value_type == TransactionTypeInput.RELATION:
-
-                # field = serializers.CharField(required=False, allow_blank=True, allow_null=True,
-                #                           label=i.name, help_text=i.verbose_name)
-
                 model_class = i.content_type.model_class()
 
-                # print('model_class %s' % model_class)
-
                 if issubclass(model_class, Account):
-                    field = AccountField(required=False, allow_null=True,
-                                         label=i.name, help_text=i.verbose_name)
+                    field = AccountField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
                     field_object = AccountViewSerializer(source=name, read_only=True)
 
                 elif issubclass(model_class, Currency):
-                    field = CurrencyField(required=False, allow_null=True,
-                                          label=i.name, help_text=i.verbose_name)
+                    field = CurrencyField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
                     field_object = CurrencyViewSerializer(source=name, read_only=True)
 
                 elif issubclass(model_class, Instrument):
-                    field = InstrumentField(required=False, allow_null=True,
-                                            label=i.name, help_text=i.verbose_name)
+                    field = InstrumentField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
                     field_object = InstrumentViewSerializer(source=name, read_only=True)
 
                 elif issubclass(model_class, InstrumentType):
-                    field = InstrumentTypeField(required=False, allow_null=True,
-                                                label=i.name, help_text=i.verbose_name)
-                    field_object = InstrumentTypeViewSerializer(source=name, read_only=True)
+                    field = InstrumentTypeField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
+                    field_object = InstrumentTypeViewSerializer(
+                        source=name, read_only=True
+                    )
 
                 elif issubclass(model_class, Counterparty):
-                    field = CounterpartyField(required=False, allow_null=True,
-                                              label=i.name, help_text=i.verbose_name)
-                    field_object = CounterpartyViewSerializer(source=name, read_only=True)
+                    field = CounterpartyField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
+                    field_object = CounterpartyViewSerializer(
+                        source=name, read_only=True
+                    )
 
                 elif issubclass(model_class, Responsible):
-                    field = ResponsibleField(required=False, allow_null=True,
-                                             label=i.name, help_text=i.verbose_name)
-                    field_object = ResponsibleViewSerializer(source=name, read_only=True)
+                    field = ResponsibleField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
+                    field_object = ResponsibleViewSerializer(
+                        source=name, read_only=True
+                    )
 
                 elif issubclass(model_class, Strategy1):
-                    field = Strategy1Field(required=False, allow_null=True,
-                                           label=i.name, help_text=i.verbose_name)
+                    field = Strategy1Field(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
                     field_object = Strategy1ViewSerializer(source=name, read_only=True)
 
                 elif issubclass(model_class, Strategy2):
-                    field = Strategy2Field(required=False, allow_null=True,
-                                           label=i.name, help_text=i.verbose_name)
+                    field = Strategy2Field(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
                     field_object = Strategy2ViewSerializer(source=name, read_only=True)
 
                 elif issubclass(model_class, Strategy3):
-                    field = Strategy3Field(required=False, allow_null=True,
-                                           label=i.name, help_text=i.verbose_name)
+                    field = Strategy3Field(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
                     field_object = Strategy3ViewSerializer(source=name, read_only=True)
 
                 elif issubclass(model_class, DailyPricingModel):
-                    field = serializers.PrimaryKeyRelatedField(queryset=DailyPricingModel.objects,
-                                                               required=False, allow_null=True,
-                                                               label=i.name, help_text=i.verbose_name)
-                    field_object = DailyPricingModelSerializer(source=name, read_only=True)
+                    field = serializers.PrimaryKeyRelatedField(
+                        queryset=DailyPricingModel.objects,
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
+                    field_object = DailyPricingModelSerializer(
+                        source=name, read_only=True
+                    )
 
                 elif issubclass(model_class, PaymentSizeDetail):
-                    field = serializers.PrimaryKeyRelatedField(queryset=PaymentSizeDetail.objects,
-                                                               required=False, allow_null=True,
-                                                               label=i.name, help_text=i.verbose_name)
-                    field_object = PaymentSizeDetailSerializer(source=name, read_only=True)
+                    field = serializers.PrimaryKeyRelatedField(
+                        queryset=PaymentSizeDetail.objects,
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
+                    field_object = PaymentSizeDetailSerializer(
+                        source=name, read_only=True
+                    )
 
                 elif issubclass(model_class, Portfolio):
-                    field = PortfolioField(required=False, allow_null=True,
-                                           label=i.name, help_text=i.verbose_name)
+                    field = PortfolioField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
                     field_object = PortfolioViewSerializer(source=name, read_only=True)
 
                 elif issubclass(model_class, PriceDownloadScheme):
-                    field = PriceDownloadSchemeField(required=False, allow_null=True,
-                                                     label=i.name, help_text=i.verbose_name)
-                    field_object = PriceDownloadSchemeViewSerializer(source=name, read_only=True)
+                    field = PriceDownloadSchemeField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
+                    field_object = PriceDownloadSchemeViewSerializer(
+                        source=name, read_only=True
+                    )
 
                 elif issubclass(model_class, PricingPolicy):
-                    field = PricingPolicyField(required=False, allow_null=True,
-                                               label=i.name, help_text=i.verbose_name)
-                    field_object = PricingPolicyViewSerializer(source=name, read_only=True)
+                    field = PricingPolicyField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
+                    field_object = PricingPolicyViewSerializer(
+                        source=name, read_only=True
+                    )
 
                 elif issubclass(model_class, Periodicity):
-                    field = PeriodicityField(required=False, allow_null=True,
-                                             label=i.name, help_text=i.verbose_name)
+                    field = PeriodicityField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
                     from poms.instruments.serializers import PeriodicitySerializer
+
                     field_object = PeriodicitySerializer(source=name, read_only=True)
 
                 elif issubclass(model_class, AccrualCalculationModel):
-                    field = AccrualCalculationModelField(required=False, allow_null=True,
-                                                         label=i.name, help_text=i.verbose_name)
-                    from poms.instruments.serializers import AccrualCalculationModelSerializer
-                    field_object = AccrualCalculationModelSerializer(source=name, read_only=True)
+                    field = AccrualCalculationModelField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
+                    from poms.instruments.serializers import (
+                        AccrualCalculationModelSerializer,
+                    )
+
+                    field_object = AccrualCalculationModelSerializer(
+                        source=name, read_only=True
+                    )
 
                 elif issubclass(model_class, EventClass):
-                    field = EventClassField(required=False, allow_null=True,
-                                            label=i.name, help_text=i.verbose_name)
+                    field = EventClassField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
                     field_object = EventClassSerializer(source=name, read_only=True)
 
                 elif issubclass(model_class, NotificationClass):
-                    field = NotificationClassField(required=False, allow_null=True,
-                                                   label=i.name, help_text=i.verbose_name)
-                    field_object = NotificationClassSerializer(source=name, read_only=True)
+                    field = NotificationClassField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
+                    field_object = NotificationClassSerializer(
+                        source=name, read_only=True
+                    )
 
                 elif issubclass(model_class, EventSchedule):
-                    field = EventScheduleField(required=False, allow_null=True,
-                                               label=i.name, help_text=i.verbose_name)
+                    field = EventScheduleField(
+                        required=False,
+                        allow_null=True,
+                        label=i.name,
+                        help_text=i.verbose_name,
+                    )
                     field_object = EventScheduleSerializer(source=name, read_only=True)
-
 
             elif i.value_type == TransactionTypeInput.BUTTON:
                 field = serializers.JSONField(allow_null=True, required=False)
 
-            if field:
-                self.fields[name] = field
-                if field_object:
-                    self.fields[name_object] = field_object
-            else:
-                raise RuntimeError('Unknown value type %s' % i.value_type)
+            if not field:
+                raise RuntimeError(f"Unknown value type {i.value_type}")
+
+            self.fields[name] = field
+            if field_object:
+                self.fields[name_object] = field_object
 
         result_time = "{:3.3f}".format(time.perf_counter() - _st)
-        _l.info('TransactionTypeProcessValuesSerializer serialize %s' % result_time)
+        _l.info(f"TransactionTypeProcessValuesSerializer serialize {result_time}")
 
 
 class PhantomInstrumentField(InstrumentField):
@@ -3238,202 +4729,229 @@ class PhantomInstrumentField(InstrumentField):
         pk = data
         if self.pk_field is not None:
             pk = self.pk_field.to_internal_value(data)
-        if pk and pk < 0:
-            return Instrument(id=pk)
-        return super(PhantomInstrumentField, self).to_internal_value(data)
+
+        return Instrument(id=pk) if pk and pk < 0 else super().to_internal_value(data)
 
 
 class PhantomTransactionSerializer(TransactionSerializer):
     def __init__(self, **kwargs):
-        super(PhantomTransactionSerializer, self).__init__(**kwargs)
-        self.fields['instrument'] = PhantomInstrumentField(required=False)
-        self.fields.pop('attributes')
+        super().__init__(**kwargs)
+        self.fields["instrument"] = PhantomInstrumentField(required=False)
+        self.fields.pop("attributes")
 
 
 class TransactionTypeComplexTransactionSerializer(ModelWithAttributesSerializer):
-    # text = serializers.SerializerMethodField()
     master_user = MasterUserField()
     transaction_type = serializers.PrimaryKeyRelatedField(read_only=True)
     transactions = serializers.PrimaryKeyRelatedField(read_only=True, many=True)
-
     date = serializers.DateField(required=False, allow_null=True)
-    code = serializers.IntegerField(default=0, initial=0, min_value=0, required=False, allow_null=True)
-
-    visibility_status = serializers.ChoiceField(default=ComplexTransaction.SHOW_PARAMETERS,
-                                                initial=ComplexTransaction.SHOW_PARAMETERS,
-                                                required=False, choices=ComplexTransaction.VISIBILITY_STATUS_CHOICES)
-
-    recon_fields = ReconciliationComplexTransactionFieldSerializer(read_only=True, many=True)
-
+    code = serializers.IntegerField(
+        default=0,
+        initial=0,
+        min_value=0,
+        required=False,
+        allow_null=True,
+    )
+    visibility_status = serializers.ChoiceField(
+        default=ComplexTransaction.SHOW_PARAMETERS,
+        initial=ComplexTransaction.SHOW_PARAMETERS,
+        required=False,
+        choices=ComplexTransaction.VISIBILITY_STATUS_CHOICES,
+    )
+    recon_fields = ReconciliationComplexTransactionFieldSerializer(
+        read_only=True,
+        many=True,
+    )
     source = serializers.JSONField(read_only=True)
 
     def __init__(self, *args, **kwargs):
-        super(TransactionTypeComplexTransactionSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-        self.fields['transaction_type_object'] = TransactionTypeViewSerializer(
-            source='transaction_type', read_only=True)
-
-        self.fields['transactions_object'] = TransactionSerializer(
-            source='transactions', many=True, read_only=True)
+        self.fields["transaction_type_object"] = TransactionTypeViewSerializer(
+            source="transaction_type", read_only=True
+        )
+        self.fields["transactions_object"] = TransactionSerializer(
+            source="transactions", many=True, read_only=True
+        )
 
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'transactions', 'master_user',
-
-            'is_locked', 'is_canceled', 'is_deleted',
-            'error_code', 'visibility_status', 'transaction_unique_code',
-
-            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
-            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
-
-            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
-            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
-
-            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
-            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
-
-            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
-            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
-
-            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
-            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
-
-            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
-
-            'recon_fields',
-
-            'execution_log', 'source'
-
+            "id",
+            "date",
+            "status",
+            "code",
+            "text",
+            "transaction_type",
+            "transactions",
+            "master_user",
+            "is_locked",
+            "is_canceled",
+            "is_deleted",
+            "error_code",
+            "visibility_status",
+            "transaction_unique_code",
+            "user_text_1",
+            "user_text_2",
+            "user_text_3",
+            "user_text_4",
+            "user_text_5",
+            "user_text_6",
+            "user_text_7",
+            "user_text_8",
+            "user_text_9",
+            "user_text_10",
+            "user_text_11",
+            "user_text_12",
+            "user_text_13",
+            "user_text_14",
+            "user_text_15",
+            "user_text_16",
+            "user_text_17",
+            "user_text_18",
+            "user_text_19",
+            "user_text_20",
+            "user_text_21",
+            "user_text_22",
+            "user_text_23",
+            "user_text_24",
+            "user_text_25",
+            "user_text_26",
+            "user_text_27",
+            "user_text_28",
+            "user_text_29",
+            "user_text_30",
+            "user_number_1",
+            "user_number_2",
+            "user_number_3",
+            "user_number_4",
+            "user_number_5",
+            "user_number_6",
+            "user_number_7",
+            "user_number_8",
+            "user_number_9",
+            "user_number_10",
+            "user_number_11",
+            "user_number_12",
+            "user_number_13",
+            "user_number_14",
+            "user_number_15",
+            "user_number_16",
+            "user_number_17",
+            "user_number_18",
+            "user_number_19",
+            "user_number_20",
+            "user_date_1",
+            "user_date_2",
+            "user_date_3",
+            "user_date_4",
+            "user_date_5",
+            "recon_fields",
+            "execution_log",
+            "source",
         ]
 
     def to_representation(self, instance):
-
-        st = time.perf_counter()
-
-        data = super(TransactionTypeComplexTransactionSerializer, self).to_representation(instance)
-
-        # print('instance.visibility_status %s' % instance.visibility_status)
-
-        hide_parameters = False
+        representation = super().to_representation(instance)
 
         member = get_member_from_context(self.context)
 
-        if member.is_admin or member.is_owner:
-            hide_parameters = False
-
+        hide_parameters = not member.is_admin and not member.is_owner
         if hide_parameters:
-            # data.pop('date')
-            # data.pop('text')
+            remove_user_fields_from_representation(representation)
 
-            data.pop('user_text_1')
-            data.pop('user_text_2')
-            data.pop('user_text_3')
-            data.pop('user_text_4')
-            data.pop('user_text_5')
-            data.pop('user_text_6')
-            data.pop('user_text_7')
-            data.pop('user_text_8')
-            data.pop('user_text_9')
-            data.pop('user_text_10')
-            data.pop('user_text_11')
-            data.pop('user_text_12')
-            data.pop('user_text_13')
-            data.pop('user_text_14')
-            data.pop('user_text_15')
-            data.pop('user_text_16')
-            data.pop('user_text_17')
-            data.pop('user_text_18')
-            data.pop('user_text_19')
-            data.pop('user_text_20')
-            data.pop('user_text_21')
-            data.pop('user_text_22')
-            data.pop('user_text_23')
-            data.pop('user_text_24')
-            data.pop('user_text_25')
-            data.pop('user_text_26')
-            data.pop('user_text_27')
-            data.pop('user_text_28')
-            data.pop('user_text_29')
-            data.pop('user_text_30')
-
-            data.pop('user_number_1')
-            data.pop('user_number_2')
-            data.pop('user_number_3')
-            data.pop('user_number_4')
-            data.pop('user_number_5')
-            data.pop('user_number_6')
-            data.pop('user_number_7')
-            data.pop('user_number_8')
-            data.pop('user_number_9')
-            data.pop('user_number_10')
-            data.pop('user_number_11')
-            data.pop('user_number_12')
-            data.pop('user_number_13')
-            data.pop('user_number_14')
-            data.pop('user_number_15')
-            data.pop('user_number_16')
-            data.pop('user_number_17')
-            data.pop('user_number_18')
-            data.pop('user_number_19')
-            data.pop('user_number_20')
-
-            data.pop('user_date_1')
-            data.pop('user_date_2')
-            data.pop('user_date_3')
-            data.pop('user_date_4')
-            data.pop('user_date_5')
-
-        # print('TransactionTypeComplexTransactionSerializer visibility status done: %s' % (time.perf_counter() - st))
-
-        return data
+        return representation
 
 
-class ComplexTransactionViewOnlyComplexTransactionSerializer(serializers.ModelSerializer):
+class ComplexTransactionViewOnlyComplexTransactionSerializer(
+    serializers.ModelSerializer
+):
     source = serializers.JSONField(read_only=True)
 
     def __init__(self, *args, **kwargs):
-        super(ComplexTransactionViewOnlyComplexTransactionSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
-        # self.fields['transaction_type_object'] = TransactionTypeViewSerializer(
-        #     source='transaction_type', read_only=True)
-
-        self.fields['transactions_object'] = TransactionViewOnlySerializer(
-            source='transactions', many=True, read_only=True)
+        self.fields["transactions_object"] = TransactionViewOnlySerializer(
+            source="transactions", many=True, read_only=True
+        )
 
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'transactions', 'master_user',
-
-            'is_locked', 'is_canceled', 'error_code', 'visibility_status',
-
-            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
-            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
-
-            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
-            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
-
-            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
-            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
-
-            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
-            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
-
-            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
-            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
-
-            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
-
-            'execution_log', 'source'
-
+            "id",
+            "date",
+            "status",
+            "code",
+            "text",
+            "transaction_type",
+            "transactions",
+            "master_user",
+            "is_locked",
+            "is_canceled",
+            "error_code",
+            "visibility_status",
+            "user_text_1",
+            "user_text_2",
+            "user_text_3",
+            "user_text_4",
+            "user_text_5",
+            "user_text_6",
+            "user_text_7",
+            "user_text_8",
+            "user_text_9",
+            "user_text_10",
+            "user_text_11",
+            "user_text_12",
+            "user_text_13",
+            "user_text_14",
+            "user_text_15",
+            "user_text_16",
+            "user_text_17",
+            "user_text_18",
+            "user_text_19",
+            "user_text_20",
+            "user_text_21",
+            "user_text_22",
+            "user_text_23",
+            "user_text_24",
+            "user_text_25",
+            "user_text_26",
+            "user_text_27",
+            "user_text_28",
+            "user_text_29",
+            "user_text_30",
+            "user_number_1",
+            "user_number_2",
+            "user_number_3",
+            "user_number_4",
+            "user_number_5",
+            "user_number_6",
+            "user_number_7",
+            "user_number_8",
+            "user_number_9",
+            "user_number_10",
+            "user_number_11",
+            "user_number_12",
+            "user_number_13",
+            "user_number_14",
+            "user_number_15",
+            "user_number_16",
+            "user_number_17",
+            "user_number_18",
+            "user_number_19",
+            "user_number_20",
+            "user_date_1",
+            "user_date_2",
+            "user_date_3",
+            "user_date_4",
+            "user_date_5",
+            "execution_log",
+            "source",
         ]
 
 
 class ComplexTransactionViewOnly(object):
-
     def __init__(self, complex_transaction, transaction_type):
-
         _st = time.perf_counter()
 
         self.complex_transaction = complex_transaction
@@ -3446,47 +4964,77 @@ class ComplexTransactionViewOnly(object):
         for ci in self.complex_transaction.inputs.all():
             i = ci.transaction_type_input
             value = None
-            if i.value_type == TransactionTypeInput.STRING or i.value_type == TransactionTypeInput.SELECTOR:
+            if i.value_type in (
+                TransactionTypeInput.STRING,
+                TransactionTypeInput.SELECTOR,
+            ):
                 value = ci.value_string
             elif i.value_type == TransactionTypeInput.NUMBER:
                 value = ci.value_float
             elif i.value_type == TransactionTypeInput.DATE:
                 value = ci.value_date
             elif i.value_type == TransactionTypeInput.RELATION:
-                value = self._get_val_by_model_cls_for_complex_transaction_input(self.complex_transaction.master_user,
-                                                                                 ci, i.content_type.model_class())
+                value = self._get_val_by_model_cls_for_complex_transaction_input(
+                    self.complex_transaction.master_user,
+                    ci,
+                    i.content_type.model_class(),
+                )
             if value is not None:
                 self.values[i.name] = value
 
         result_time = "{:3.3f}".format(time.perf_counter() - _st)
-        _l.debug('ComplexTransactionViewOnly.init %s' % result_time)
+        _l.debug(f"ComplexTransactionViewOnly.init {result_time}")
 
-    def _get_val_by_model_cls_for_complex_transaction_input(self, master_user, obj, model_class):
+    def _get_val_by_model_cls_for_complex_transaction_input(
+        self, master_user, obj, model_class
+    ):
         try:
             if issubclass(model_class, Account):
-                return Account.objects.get(master_user=master_user, user_code=obj.value_relation)
+                return Account.objects.get(
+                    master_user=master_user, user_code=obj.value_relation
+                )
             elif issubclass(model_class, Currency):
-                return Currency.objects.get(master_user=master_user, user_code=obj.value_relation)
+                return Currency.objects.get(
+                    master_user=master_user, user_code=obj.value_relation
+                )
             elif issubclass(model_class, Instrument):
-                return Instrument.objects.get(master_user=master_user, user_code=obj.value_relation)
+                return Instrument.objects.get(
+                    master_user=master_user, user_code=obj.value_relation
+                )
             elif issubclass(model_class, InstrumentType):
-                return InstrumentType.objects.get(master_user=master_user, user_code=obj.value_relation)
+                return InstrumentType.objects.get(
+                    master_user=master_user, user_code=obj.value_relation
+                )
             elif issubclass(model_class, Counterparty):
-                return Counterparty.objects.get(master_user=master_user, user_code=obj.value_relation)
+                return Counterparty.objects.get(
+                    master_user=master_user, user_code=obj.value_relation
+                )
             elif issubclass(model_class, Responsible):
-                return Responsible.objects.get(master_user=master_user, user_code=obj.value_relation)
+                return Responsible.objects.get(
+                    master_user=master_user, user_code=obj.value_relation
+                )
             elif issubclass(model_class, Strategy1):
-                return Strategy1.objects.get(master_user=master_user, user_code=obj.value_relation)
+                return Strategy1.objects.get(
+                    master_user=master_user, user_code=obj.value_relation
+                )
             elif issubclass(model_class, Strategy2):
-                return Strategy2.objects.get(master_user=master_user, user_code=obj.value_relation)
+                return Strategy2.objects.get(
+                    master_user=master_user, user_code=obj.value_relation
+                )
             elif issubclass(model_class, Strategy3):
-                return Strategy3.objects.get(master_user=master_user, user_code=obj.value_relation)
+                return Strategy3.objects.get(
+                    master_user=master_user, user_code=obj.value_relation
+                )
             elif issubclass(model_class, PaymentSizeDetail):
                 return PaymentSizeDetail.objects.get(user_code=obj.value_relation)
             elif issubclass(model_class, Portfolio):
-                return Portfolio.objects.get(master_user=master_user, user_code=obj.value_relation)
+                return Portfolio.objects.get(
+                    master_user=master_user, user_code=obj.value_relation
+                )
             elif issubclass(model_class, PricingPolicy):
-                return PricingPolicy.objects.get(master_user=master_user, user_code=obj.value_relation)
+                return PricingPolicy.objects.get(
+                    master_user=master_user, user_code=obj.value_relation
+                )
             elif issubclass(model_class, Periodicity):
                 return Periodicity.objects.get(user_code=obj.value_relation)
             elif issubclass(model_class, AccrualCalculationModel):
@@ -3495,185 +5043,137 @@ class ComplexTransactionViewOnly(object):
                 return EventClass.objects.get(user_code=obj.value_relation)
             elif issubclass(model_class, NotificationClass):
                 return NotificationClass.objects.get(user_code=obj.value_relation)
+
         except Exception:
-            _l.info("Could not find default value relation %s " % obj.value_relation)
+            _l.info(f"Could not find default value relation {obj.value_relation} ")
             return None
 
 
 class ComplexTransactionViewOnlySerializer(serializers.Serializer):
     def __init__(self, **kwargs):
-        kwargs['context'] = context = kwargs.get('context', {}) or {}
-        super(ComplexTransactionViewOnlySerializer, self).__init__(**kwargs)
-        context['instance'] = self.instance
+        kwargs["context"] = context = kwargs.get("context", {}) or {}
+        super().__init__(**kwargs)
+        context["instance"] = self.instance
 
-        self.fields['transaction_type'] = serializers.PrimaryKeyRelatedField(read_only=True)
-        self.fields['transaction_type_object'] = TransactionTypeViewOnlySerializer(source='transaction_type',
-                                                                                   read_only=True)
-        self.fields['book_transaction_layout'] = serializers.SerializerMethodField()
-
-        self.fields['complex_transaction_status'] = serializers.ChoiceField(
+        self.fields["transaction_type"] = serializers.PrimaryKeyRelatedField(
+            read_only=True
+        )
+        self.fields["transaction_type_object"] = TransactionTypeViewOnlySerializer(
+            source="transaction_type", read_only=True
+        )
+        self.fields["book_transaction_layout"] = serializers.SerializerMethodField()
+        self.fields["complex_transaction_status"] = serializers.ChoiceField(
             required=False,
             allow_null=True,
             initial=ComplexTransaction.PRODUCTION,
             default=ComplexTransaction.PRODUCTION,
             choices=(
-                (ComplexTransaction.PRODUCTION, 'Production'),
-                (ComplexTransaction.PENDING, 'Pending'),
-                (ComplexTransaction.IGNORE, 'Ignore'),
-            )
+                (ComplexTransaction.PRODUCTION, "Production"),
+                (ComplexTransaction.PENDING, "Pending"),
+                (ComplexTransaction.IGNORE, "Ignore"),
+            ),
         )
-
-        self.fields['complex_transaction'] = ComplexTransactionViewOnlyComplexTransactionSerializer(
-            read_only=False, required=False, allow_null=True)
-
-        self.fields['values'] = TransactionTypeProcessValuesSerializer(instance=self.instance, required=False)
+        self.fields[
+            "complex_transaction"
+        ] = ComplexTransactionViewOnlyComplexTransactionSerializer(
+            read_only=False, required=False, allow_null=True
+        )
+        self.fields["values"] = TransactionTypeProcessValuesSerializer(
+            instance=self.instance, required=False
+        )
 
     def get_book_transaction_layout(self, obj):
         return obj.transaction_type.book_transaction_layout
-
-    # def get_complex_transaction(self, obj):
-    #     return {
-    #         "transaction_type": obj.transaction_type.id
-    #     }
 
 
 class TransactionTypeProcessSerializer(serializers.Serializer):
     def __init__(self, **kwargs):
         from poms.instruments.serializers import InstrumentSerializer
 
-        kwargs['context'] = context = kwargs.get('context', {}) or {}
-        super(TransactionTypeProcessSerializer, self).__init__(**kwargs)
-        context['instance'] = self.instance
+        kwargs["context"] = context = kwargs.get("context", {}) or {}
+        super().__init__(**kwargs)
 
-        self.fields['transaction_type'] = serializers.PrimaryKeyRelatedField(read_only=True)
-        # self.fields['calculate'] = serializers.BooleanField(default=False, required=False)
-        # self.fields['store'] = serializers.BooleanField(default=False, required=False)
+        context["instance"] = self.instance
 
-        # self.fields['expressions'] = serializers.DictField(
-        #     child=serializers.CharField(allow_null=False, allow_blank=False), allow_null=True, required=False)
-        # self.fields['expressions_error'] = serializers.ReadOnlyField()
-        # self.fields['expressions_result'] = serializers.ReadOnlyField()
-
-        self.fields['complex_transaction_status'] = serializers.ChoiceField(
+        self.fields["transaction_type"] = serializers.PrimaryKeyRelatedField(
+            read_only=True
+        )
+        self.fields["complex_transaction_status"] = serializers.ChoiceField(
             required=False,
             allow_null=True,
             initial=ComplexTransaction.PRODUCTION,
             default=ComplexTransaction.PRODUCTION,
             choices=(
-                (ComplexTransaction.PRODUCTION, 'Production'),
-                (ComplexTransaction.PENDING, 'Pending'),
-                (ComplexTransaction.IGNORE, 'Ignore'),
-            )
+                (ComplexTransaction.PRODUCTION, "Production"),
+                (ComplexTransaction.PENDING, "Pending"),
+                (ComplexTransaction.IGNORE, "Ignore"),
+            ),
         )
-
-        self.fields['process_mode'] = serializers.ChoiceField(
+        self.fields["process_mode"] = serializers.ChoiceField(
             required=False,
             allow_null=True,
             initial=TransactionTypeProcess.MODE_BOOK,
             default=TransactionTypeProcess.MODE_BOOK,
             choices=(
-                (TransactionTypeProcess.MODE_BOOK, 'Book'),
-                (TransactionTypeProcess.MODE_RECALCULATE, 'Recalculate fields values'),
-                (TransactionTypeProcess.MODE_REBOOK, 'Rebook'),
-            )
+                (TransactionTypeProcess.MODE_BOOK, "Book"),
+                (TransactionTypeProcess.MODE_RECALCULATE, "Recalculate fields values"),
+                (TransactionTypeProcess.MODE_REBOOK, "Rebook"),
+            ),
         )
 
         if self.instance:
-            # _l.info('instance=self.instance %s ' % self.instance.values)
-
-            self.fields['values'] = TransactionTypeProcessValuesSerializer(instance=self.instance, required=False)
+            self.fields["values"] = TransactionTypeProcessValuesSerializer(
+                instance=self.instance, required=False
+            )
 
         if self.instance:
-            # recalculate_inputs = [(i.name, i.verbose_name) for i in self.instance.inputs if i.can_recalculate]
-            recalculate_inputs = [(i.name, i.verbose_name) for i in self.instance.inputs]
-            self.fields['recalculate_inputs'] = serializers.MultipleChoiceField(required=False, allow_null=True,
-                                                                                choices=recalculate_inputs)
+            recalculate_inputs = [
+                (i.name, i.verbose_name) for i in self.instance.inputs
+            ]
+            self.fields["recalculate_inputs"] = serializers.MultipleChoiceField(
+                required=False, allow_null=True, choices=recalculate_inputs
+            )
         else:
-            self.fields['recalculate_inputs'] = serializers.MultipleChoiceField(required=False, allow_null=True,
-                                                                                choices=[])
+            self.fields["recalculate_inputs"] = serializers.MultipleChoiceField(
+                required=False, allow_null=True, choices=[]
+            )
 
-        self.fields['has_errors'] = serializers.BooleanField(read_only=True)
-        self.fields['value_errors'] = serializers.ReadOnlyField()
-        self.fields['instruments_errors'] = serializers.ReadOnlyField()
-        self.fields['complex_transaction_errors'] = serializers.ReadOnlyField()
-        self.fields['transactions_errors'] = serializers.ReadOnlyField()
-        self.fields['general_errors'] = serializers.ReadOnlyField()
-        self.fields['instruments'] = InstrumentSerializer(many=True, read_only=True, required=False, allow_null=True)
+        self.fields["has_errors"] = serializers.BooleanField(read_only=True)
+        self.fields["value_errors"] = serializers.ReadOnlyField()
+        self.fields["instruments_errors"] = serializers.ReadOnlyField()
+        self.fields["complex_transaction_errors"] = serializers.ReadOnlyField()
+        self.fields["transactions_errors"] = serializers.ReadOnlyField()
+        self.fields["general_errors"] = serializers.ReadOnlyField()
+        self.fields["instruments"] = InstrumentSerializer(
+            many=True, read_only=True, required=False, allow_null=True
+        )
+        self.fields[
+            "complex_transaction"
+        ] = TransactionTypeComplexTransactionSerializer(
+            read_only=False, required=False, allow_null=True
+        )
+        self.fields["transaction_type_object"] = TransactionTypeSerializer(
+            source="transaction_type", read_only=True
+        )
 
-        self.fields['complex_transaction'] = TransactionTypeComplexTransactionSerializer(
-            read_only=False, required=False, allow_null=True)
-
-        # TODO, refactor some serializer bullshit
-        # if self.instance.complex_transaction.id:
-        #     self.fields['complex_transaction'] = TransactionTypeComplexTransactionSerializer(
-        #         read_only=False, required=False, allow_null=True)
-        # else:
-        #     self.fields['complex_transaction'] = serializers.SerializerMethodField()
-        # self.fields['transactions'] = PhantomTransactionSerializer(many=True, required=False, allow_null=True)
-
-        self.fields['transaction_type_object'] = TransactionTypeSerializer(source='transaction_type', read_only=True)
-
-        self.fields['book_transaction_layout'] = serializers.SerializerMethodField()
+        self.fields["book_transaction_layout"] = serializers.SerializerMethodField()
 
     def validate(self, attrs):
-        # if attrs['process_mode'] == TransactionTypeProcess.MODE_BOOK:
-        #     values = attrs['values']
-        #     fvalues = self.fields['values']
-        #     errors = {}
-        #     for k, v in values.items():
-        #         if v is None or v == '':
-        #             try:
-        #
-        #                 if fvalues.fields[k].label != 'notes':
-        #
-        #                     if not 'context_' in fvalues.fields[k].label:
-        #
-        #                         fvalues.fields[k].fail('required')
-        #
-        #             except ValidationError as e:
-        #                 errors[k] = e.detail
-        #     if errors:
-        #         raise ValidationError({'values': errors})
         return attrs
 
     def get_book_transaction_layout(self, obj):
         return obj.transaction_type.book_transaction_layout
 
-    # def get_complex_transaction(self, obj):
-    #     return {
-    #         "transaction_type": obj.transaction_type.id
-    #     }
-
     def create(self, validated_data):
         return validated_data
 
     def update(self, instance, validated_data):
-
         for key, value in validated_data.items():
-            if key not in ['complex_transaction', ]:
+            if key not in [
+                "complex_transaction",
+            ]:
                 setattr(instance, key, value)
         instance.value_errors = []
-
-        # if instance.is_book:
-        # ctrn_values = validated_data.get('complex_transaction', None)
-        # if ctrn_values:
-        #     ctrn_ser = ComplexTransactionSerializer(instance=instance.complex_transaction, context=self.context)
-        #     ctrn_values = ctrn_values.copy()
-        #
-        #     is_date_was_empty = False
-        #     if not ctrn_values.get('date', None):
-        #         ctrn_values['date'] = datetime.date.min
-        #         is_date_was_empty = True
-        #
-        #     if instance.complex_transaction:
-        #         ctrn = ctrn_ser.update(ctrn_ser.instance, ctrn_values)
-        #     else:
-        #         ctrn = ctrn_ser.create(ctrn_values)
-        #
-        #     if is_date_was_empty:
-        #         ctrn.date = None
-        #
-        #     instance.complex_transaction = ctrn
 
         _l.info("==== PROCESS REBOOK ====")
         instance.process()
@@ -3682,60 +5182,70 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
 
 
 class TransactionTypeRecalculateSerializer(serializers.Serializer):
-
     def __init__(self, **kwargs):
         st = time.perf_counter()
 
-        kwargs['context'] = context = kwargs.get('context', {}) or {}
-        super(TransactionTypeRecalculateSerializer, self).__init__(**kwargs)
-        context['instance'] = self.instance
+        kwargs["context"] = context = kwargs.get("context", {}) or {}
+        super().__init__(**kwargs)
+        context["instance"] = self.instance
 
-        self.fields['transaction_type'] = serializers.PrimaryKeyRelatedField(read_only=True)
+        self.fields["transaction_type"] = serializers.PrimaryKeyRelatedField(
+            read_only=True
+        )
 
-        self.fields['process_mode'] = serializers.ChoiceField(
+        self.fields["process_mode"] = serializers.ChoiceField(
             required=False,
             allow_null=True,
             initial=TransactionTypeProcess.MODE_BOOK,
             default=TransactionTypeProcess.MODE_BOOK,
             choices=(
-                (TransactionTypeProcess.MODE_BOOK, 'Book'),
-                (TransactionTypeProcess.MODE_RECALCULATE, 'Recalculate fields values'),
-                (TransactionTypeProcess.MODE_REBOOK, 'Rebook'),
-            )
+                (TransactionTypeProcess.MODE_BOOK, "Book"),
+                (TransactionTypeProcess.MODE_RECALCULATE, "Recalculate fields values"),
+                (TransactionTypeProcess.MODE_REBOOK, "Rebook"),
+            ),
         )
 
         if self.instance:
-            self.fields['values'] = TransactionTypeProcessValuesSerializer(instance=self.instance, required=False)
+            self.fields["values"] = TransactionTypeProcessValuesSerializer(
+                instance=self.instance, required=False
+            )
 
         if self.instance:
-            # recalculate_inputs = [(i.name, i.verbose_name) for i in self.instance.inputs if i.can_recalculate]
-            recalculate_inputs = [(i.name, i.verbose_name) for i in self.instance.inputs]
-            self.fields['recalculate_inputs'] = serializers.MultipleChoiceField(required=False, allow_null=True,
-                                                                                choices=recalculate_inputs)
+            recalculate_inputs = [
+                (i.name, i.verbose_name) for i in self.instance.inputs
+            ]
+            self.fields["recalculate_inputs"] = serializers.MultipleChoiceField(
+                required=False, allow_null=True, choices=recalculate_inputs
+            )
         else:
-            self.fields['recalculate_inputs'] = serializers.MultipleChoiceField(required=False, allow_null=True,
-                                                                                choices=[])
+            self.fields["recalculate_inputs"] = serializers.MultipleChoiceField(
+                required=False, allow_null=True, choices=[]
+            )
 
-        self.fields['complex_transaction'] = serializers.PrimaryKeyRelatedField(read_only=True)
+        self.fields["complex_transaction"] = serializers.PrimaryKeyRelatedField(
+            read_only=True
+        )
 
-        _l.debug('TransactionTypeRecalculateSerializer init done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug(
+            "TransactionTypeRecalculateSerializer init done: %s",
+            "{:3.3f}".format(time.perf_counter() - st),
+        )
 
     def validate(self, attrs):
-        if attrs['process_mode'] == TransactionTypeProcess.MODE_BOOK:
-            values = attrs['values']
-            fvalues = self.fields['values']
+        if attrs["process_mode"] == TransactionTypeProcess.MODE_BOOK:
+            values = attrs["values"]
+            fvalues = self.fields["values"]
             errors = {}
             for k, v in values.items():
-                if v is None or v == '':
+                if v is None or v == "":
                     try:
-
-                        if fvalues.fields[k].label != 'notes':
-                            fvalues.fields[k].fail('required')
+                        if fvalues.fields[k].label != "notes":
+                            fvalues.fields[k].fail("required")
 
                     except ValidationError as e:
                         errors[k] = e.detail
             if errors:
-                raise ValidationError({'values': errors})
+                raise ValidationError({"values": errors})
         return attrs
 
     def get_book_transaction_layout(self, obj):
@@ -3745,51 +5255,64 @@ class TransactionTypeRecalculateSerializer(serializers.Serializer):
         return validated_data
 
     def update(self, instance, validated_data):
-
         st = time.perf_counter()
 
         for key, value in validated_data.items():
-            if key not in ['complex_transaction', ]:
+            if key not in [
+                "complex_transaction",
+            ]:
                 setattr(instance, key, value)
         instance.value_errors = []
 
-        ctrn_values = validated_data.get('complex_transaction', None)
+        ctrn_values = validated_data.get("complex_transaction", None)
         if ctrn_values:
-            ctrn_ser = ComplexTransactionSerializer(instance=instance.complex_transaction, context=self.context)
-            ctrn_values = ctrn_values.copy()
-
-            is_date_was_empty = False
-            if not ctrn_values.get('date', None):
-                ctrn_values['date'] = datetime.date.min
-                is_date_was_empty = True
-
-            if instance.complex_transaction:
-                ctrn = ctrn_ser.update(ctrn_ser.instance, ctrn_values)
-            else:
-                ctrn = ctrn_ser.create(ctrn_values)
-
-            if is_date_was_empty:
-                ctrn.date = None
-
-            instance.complex_transaction = ctrn
+            instance.complex_transaction = self._create_complex_transaction(
+                instance,
+                ctrn_values,
+            )
 
         instance.process()
 
-        _l.debug('TransactionTypeRecalculateSerializer done: %s', "{:3.3f}".format(time.perf_counter() - st))
+        _l.debug(
+            "TransactionTypeRecalculateSerializer done: %s",
+            "{:3.3f}".format(time.perf_counter() - st),
+        )
 
         return instance
 
-    def to_representation(self, instance):
+    def _create_complex_transaction(self, instance, ctrn_values) -> ComplexTransaction:
+        ctrn_ser = ComplexTransactionSerializer(
+            instance=instance.complex_transaction, context=self.context
+        )
+        ctrn_values = ctrn_values.copy()
 
+        is_date_was_empty = False
+        if not ctrn_values.get("date", None):
+            ctrn_values["date"] = datetime.date.min
+            is_date_was_empty = True
+
+        ctrn = (
+            ctrn_ser.update(ctrn_ser.instance, ctrn_values)
+            if instance.complex_transaction
+            else ctrn_ser.create(ctrn_values)
+        )
+        if is_date_was_empty:
+            ctrn.date = None
+
+        return ctrn
+
+    def to_representation(self, instance):
         st = time.perf_counter()
 
-        res = super(TransactionTypeRecalculateSerializer, self).to_representation(instance)
+        representation = super().to_representation(instance)
 
         result_st = time.perf_counter() - st
 
-        _l.debug('TransactionTypeRecalculateSerializer to representation done %s' % result_st)
+        _l.debug(
+            f"TransactionTypeRecalculateSerializer to representation done {result_st}"
+        )
 
-        return res
+        return representation
 
 
 class RecalculatePermission:
@@ -3828,9 +5351,19 @@ class RecalculatePermissionComplexTransactionSerializer(serializers.Serializer):
 
 
 class RecalculateUserFields:
-    def __init__(self, task_id=None, task_status=None, master_user=None, member=None, transaction_type_id=None,
-                 key=None,
-                 total_rows=None, processed_rows=None, stats_file_report=None, stats=None):
+    def __init__(
+        self,
+        task_id=None,
+        task_status=None,
+        master_user=None,
+        member=None,
+        transaction_type_id=None,
+        key=None,
+        total_rows=None,
+        processed_rows=None,
+        stats_file_report=None,
+        stats=None,
+    ):
         self.task_id = task_id
         self.task_status = task_status
 
@@ -3847,7 +5380,7 @@ class RecalculateUserFields:
         self.stats_file_report = stats_file_report
 
     def __str__(self):
-        return '%s' % (getattr(self.master_user, 'name', None))
+        return f'{getattr(self.master_user, "name", None)}'
 
 
 class RecalculateUserFieldsSerializer(serializers.Serializer):
@@ -3873,136 +5406,177 @@ class TransactionEvalSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = [
-            'id',
-            'master_user',
-            'transaction_code',
-            'complex_transaction',
-            'complex_transaction_order',
-            'transaction_class',
-            'instrument',
-            'transaction_currency',
-            'position_size_with_sign',
-            'settlement_currency',
-            'cash_consideration',
-            'principal_with_sign',
-            'carry_with_sign',
-            'overheads_with_sign',
-            'reference_fx_rate',
-
-            'accounting_date',
-            'cash_date',
-            'transaction_date',
-
-            'portfolio',
-            'account_cash',
-            'account_position',
-            'account_interim',
-            'strategy1_position',
-            'strategy1_cash',
-            'strategy2_position',
-            'strategy2_cash',
-            'strategy3_position',
-            'strategy3_cash',
-
-            'responsible',
-            'counterparty',
-            'linked_instrument',
-            'allocation_balance',
-            'allocation_pl',
-
-            'is_canceled',
-
-            'error_code',
-
-            'factor',
-            'trade_price',
-            'position_amount',
-            'principal_amount',
-            'carry_amount',
-            'overheads',
-            'ytm_at_cost',
-            'notes',
-
+            "id",
+            "master_user",
+            "transaction_code",
+            "complex_transaction",
+            "complex_transaction_order",
+            "transaction_class",
+            "instrument",
+            "transaction_currency",
+            "position_size_with_sign",
+            "settlement_currency",
+            "cash_consideration",
+            "principal_with_sign",
+            "carry_with_sign",
+            "overheads_with_sign",
+            "reference_fx_rate",
+            "accounting_date",
+            "cash_date",
+            "transaction_date",
+            "portfolio",
+            "account_cash",
+            "account_position",
+            "account_interim",
+            "strategy1_position",
+            "strategy1_cash",
+            "strategy2_position",
+            "strategy2_cash",
+            "strategy3_position",
+            "strategy3_cash",
+            "responsible",
+            "counterparty",
+            "linked_instrument",
+            "allocation_balance",
+            "allocation_pl",
+            "is_canceled",
+            "error_code",
+            "factor",
+            "trade_price",
+            "position_amount",
+            "principal_amount",
+            "carry_amount",
+            "overheads",
+            "ytm_at_cost",
+            "notes",
         ]
 
         read_only_fields = fields
 
     def __init__(self, *args, **kwargs):
-        skip_complex_transaction = kwargs.pop('skip_complex_transaction', False)
-        super(TransactionEvalSerializer, self).__init__(*args, **kwargs)
-
+        from poms.accounts.serializers import AccountEvalSerializer
+        from poms.counterparties.serializers import (
+            CounterpartyEvalSerializer,
+            ResponsibleEvalSerializer,
+        )
+        from poms.currencies.serializers import CurrencyEvalSerializer
         from poms.instruments.serializers import InstrumentEvalSerializer
         from poms.portfolios.serializers import PortfolioEvalSerializer
-        from poms.accounts.serializers import AccountEvalSerializer
-        from poms.currencies.serializers import CurrencyEvalSerializer
-        from poms.strategies.serializers import Strategy1EvalSerializer, Strategy2EvalSerializer, \
-            Strategy3EvalSerializer
+        from poms.strategies.serializers import (
+            Strategy1EvalSerializer,
+            Strategy2EvalSerializer,
+            Strategy3EvalSerializer,
+        )
 
-        from poms.counterparties.serializers import ResponsibleEvalSerializer
-        from poms.counterparties.serializers import CounterpartyEvalSerializer
+        skip_complex_transaction = kwargs.pop("skip_complex_transaction", False)
+        super().__init__(*args, **kwargs)
 
-        self.fields['portfolio'] = PortfolioEvalSerializer(read_only=True)
+        self.fields["portfolio"] = PortfolioEvalSerializer(read_only=True)
 
-        self.fields['transaction_currency'] = CurrencyEvalSerializer(read_only=True)
-        self.fields['settlement_currency'] = CurrencyEvalSerializer(read_only=True)
+        self.fields["transaction_currency"] = CurrencyEvalSerializer(read_only=True)
+        self.fields["settlement_currency"] = CurrencyEvalSerializer(read_only=True)
 
-        self.fields['responsible'] = ResponsibleEvalSerializer(read_only=True)
+        self.fields["responsible"] = ResponsibleEvalSerializer(read_only=True)
 
-        self.fields['counterparty'] = CounterpartyEvalSerializer(read_only=True)
+        self.fields["counterparty"] = CounterpartyEvalSerializer(read_only=True)
 
-        self.fields['account_cash'] = AccountEvalSerializer(read_only=True)
-        self.fields['account_position'] = AccountEvalSerializer(read_only=True)
-        self.fields['account_interim'] = AccountEvalSerializer(read_only=True)
+        self.fields["account_cash"] = AccountEvalSerializer(read_only=True)
+        self.fields["account_position"] = AccountEvalSerializer(read_only=True)
+        self.fields["account_interim"] = AccountEvalSerializer(read_only=True)
 
-        self.fields['strategy1_position'] = Strategy1EvalSerializer(read_only=True)
-        self.fields['strategy1_cash'] = Strategy1EvalSerializer(read_only=True)
+        self.fields["strategy1_position"] = Strategy1EvalSerializer(read_only=True)
+        self.fields["strategy1_cash"] = Strategy1EvalSerializer(read_only=True)
 
-        self.fields['strategy2_position'] = Strategy2EvalSerializer(read_only=True)
-        self.fields['strategy2_cash'] = Strategy2EvalSerializer(read_only=True)
+        self.fields["strategy2_position"] = Strategy2EvalSerializer(read_only=True)
+        self.fields["strategy2_cash"] = Strategy2EvalSerializer(read_only=True)
 
-        self.fields['strategy3_position'] = Strategy3EvalSerializer(read_only=True)
-        self.fields['strategy3_cash'] = Strategy3EvalSerializer(read_only=True)
+        self.fields["strategy3_position"] = Strategy3EvalSerializer(read_only=True)
+        self.fields["strategy3_cash"] = Strategy3EvalSerializer(read_only=True)
 
-        self.fields['instrument'] = InstrumentEvalSerializer(read_only=True)
-        self.fields['linked_instrument'] = InstrumentEvalSerializer(read_only=True)
-        self.fields['allocation_balance'] = InstrumentEvalSerializer(read_only=True)
-        self.fields['allocation_pl'] = InstrumentEvalSerializer(read_only=True)
+        self.fields["instrument"] = InstrumentEvalSerializer(read_only=True)
+        self.fields["linked_instrument"] = InstrumentEvalSerializer(read_only=True)
+        self.fields["allocation_balance"] = InstrumentEvalSerializer(read_only=True)
+        self.fields["allocation_pl"] = InstrumentEvalSerializer(read_only=True)
 
 
 class ComplexTransactionEvalSerializer(ComplexTransactionSerializer):
-
     transactions = TransactionEvalSerializer(many=True, read_only=True)
 
     def __init__(self, *args, **kwargs):
-        super(ComplexTransactionEvalSerializer, self).__init__(*args, **kwargs)
-        self.fields.pop('text', None)
+        super().__init__(*args, **kwargs)
+        self.fields.pop("text", None)
 
     class Meta(ComplexTransactionSerializer.Meta):
         model = ComplexTransaction
         fields = [
-            'id', 'date', 'status', 'code', 'text', 'transaction_type', 'transactions', 'master_user',
-
-            'transaction_unique_code',
-
-            'is_locked', 'is_canceled', 'error_code', 'is_deleted',
-
-            'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
-            'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
-
-            'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
-            'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
-
-            'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
-            'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
-
-            'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
-            'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
-
-            'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
-            'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
-
-            'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5',
-
+            "id",
+            "date",
+            "status",
+            "code",
+            "text",
+            "transaction_type",
+            "transactions",
+            "master_user",
+            "transaction_unique_code",
+            "is_locked",
+            "is_canceled",
+            "error_code",
+            "is_deleted",
+            "user_text_1",
+            "user_text_2",
+            "user_text_3",
+            "user_text_4",
+            "user_text_5",
+            "user_text_6",
+            "user_text_7",
+            "user_text_8",
+            "user_text_9",
+            "user_text_10",
+            "user_text_11",
+            "user_text_12",
+            "user_text_13",
+            "user_text_14",
+            "user_text_15",
+            "user_text_16",
+            "user_text_17",
+            "user_text_18",
+            "user_text_19",
+            "user_text_20",
+            "user_text_21",
+            "user_text_22",
+            "user_text_23",
+            "user_text_24",
+            "user_text_25",
+            "user_text_26",
+            "user_text_27",
+            "user_text_28",
+            "user_text_29",
+            "user_text_30",
+            "user_number_1",
+            "user_number_2",
+            "user_number_3",
+            "user_number_4",
+            "user_number_5",
+            "user_number_6",
+            "user_number_7",
+            "user_number_8",
+            "user_number_9",
+            "user_number_10",
+            "user_number_11",
+            "user_number_12",
+            "user_number_13",
+            "user_number_14",
+            "user_number_15",
+            "user_number_16",
+            "user_number_17",
+            "user_number_18",
+            "user_number_19",
+            "user_number_20",
+            "user_date_1",
+            "user_date_2",
+            "user_date_3",
+            "user_date_4",
+            "user_date_5",
         ]
 
         read_only_fields = fields
@@ -4012,17 +5586,17 @@ class ComplexTransactionDeleteSerializer(serializers.ModelSerializer):
     class Meta:
         model = ComplexTransaction
         fields = [
-            'id',
-            'code',
-            'transaction_unique_code',
-            'deleted_transaction_unique_code',
-            'modified',
-            'text',
-            'user_text_1',
-            'user_text_2',
-            'user_text_3',
-            'user_text_4',
-            'user_text_5',
+            "id",
+            "code",
+            "transaction_unique_code",
+            "deleted_transaction_unique_code",
+            "modified",
+            "text",
+            "user_text_1",
+            "user_text_2",
+            "user_text_3",
+            "user_text_4",
+            "user_text_5",
         ]
 
         read_only_fields = fields

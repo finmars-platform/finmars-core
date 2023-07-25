@@ -1,8 +1,14 @@
 from modeltranslation.translator import translator
 
 from poms.common.translation import AbstractClassModelOptions
-from poms.transactions.models import TransactionClass, ActionClass, EventClass, NotificationClass, PeriodicityGroup, \
-    ComplexTransactionStatus
+from poms.transactions.models import (
+    ActionClass,
+    ComplexTransactionStatus,
+    EventClass,
+    NotificationClass,
+    PeriodicityGroup,
+    TransactionClass,
+)
 
 translator.register(TransactionClass, AbstractClassModelOptions)
 translator.register(ActionClass, AbstractClassModelOptions)

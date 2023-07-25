@@ -4,55 +4,75 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0015_rename_comment_transactiontypeactiontransaction_user_text_1_and_more'),
+        (
+            "transactions",
+            "0015_rename_comment_transactiontypeactiontransaction_user_text_1_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='transactiontypeactiontransaction',
-            name='user_date_1',
-            field=models.CharField(blank=True, default='', max_length=4096, verbose_name='user_date_1'),
+            model_name="transactiontypeactiontransaction",
+            name="user_date_1",
+            field=models.CharField(
+                blank=True, default="", max_length=4096, verbose_name="user_date_1"
+            ),
         ),
         migrations.AddField(
-            model_name='transactiontypeactiontransaction',
-            name='user_date_2',
-            field=models.CharField(blank=True, default='', max_length=4096, verbose_name='user_date_2'),
+            model_name="transactiontypeactiontransaction",
+            name="user_date_2",
+            field=models.CharField(
+                blank=True, default="", max_length=4096, verbose_name="user_date_2"
+            ),
         ),
         migrations.AddField(
-            model_name='transactiontypeactiontransaction',
-            name='user_date_3',
-            field=models.CharField(blank=True, default='', max_length=4096, verbose_name='user_date_3'),
+            model_name="transactiontypeactiontransaction",
+            name="user_date_3",
+            field=models.CharField(
+                blank=True, default="", max_length=4096, verbose_name="user_date_3"
+            ),
         ),
         migrations.AddField(
-            model_name='transactiontypeactiontransaction',
-            name='user_number_1',
-            field=models.CharField(blank=True, default='', max_length=4096, verbose_name='user_number_1'),
+            model_name="transactiontypeactiontransaction",
+            name="user_number_1",
+            field=models.CharField(
+                blank=True, default="", max_length=4096, verbose_name="user_number_1"
+            ),
         ),
         migrations.AddField(
-            model_name='transactiontypeactiontransaction',
-            name='user_number_2',
-            field=models.CharField(blank=True, default='', max_length=4096, verbose_name='user_number_2'),
+            model_name="transactiontypeactiontransaction",
+            name="user_number_2",
+            field=models.CharField(
+                blank=True, default="", max_length=4096, verbose_name="user_number_2"
+            ),
         ),
         migrations.AddField(
-            model_name='transactiontypeactiontransaction',
-            name='user_number_3',
-            field=models.CharField(blank=True, default='', max_length=4096, verbose_name='user_number_3'),
+            model_name="transactiontypeactiontransaction",
+            name="user_number_3",
+            field=models.CharField(
+                blank=True, default="", max_length=4096, verbose_name="user_number_3"
+            ),
         ),
         migrations.AddField(
-            model_name='transactiontypeactiontransaction',
-            name='user_text_2',
-            field=models.CharField(blank=True, default='', max_length=4096, verbose_name='user_text_2'),
+            model_name="transactiontypeactiontransaction",
+            name="user_text_2",
+            field=models.CharField(
+                blank=True, default="", max_length=4096, verbose_name="user_text_2"
+            ),
         ),
         migrations.AddField(
-            model_name='transactiontypeactiontransaction',
-            name='user_text_3',
-            field=models.CharField(blank=True, default='', max_length=4096, verbose_name='user_text_3'),
+            model_name="transactiontypeactiontransaction",
+            name="user_text_3",
+            field=models.CharField(
+                blank=True, default="", max_length=4096, verbose_name="user_text_3"
+            ),
         ),
         migrations.AlterField(
-            model_name='transactiontypeactiontransaction',
-            name='user_text_1',
-            field=models.CharField(blank=True, default='', max_length=4096, verbose_name='user_text_1'),
+            model_name="transactiontypeactiontransaction",
+            name="user_text_1",
+            field=models.CharField(
+                blank=True, default="", max_length=4096, verbose_name="user_text_1"
+            ),
         ),
     ]

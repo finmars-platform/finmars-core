@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0026_alter_transactiontypegroup_options_and_more'),
+        ("transactions", "0026_alter_transactiontypegroup_options_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='transactiontype',
-            name='configuration_code',
-            field=models.CharField(max_length=255, verbose_name='Configuration Code'),
+            model_name="transactiontype",
+            name="configuration_code",
+            field=models.CharField(max_length=255, verbose_name="Configuration Code"),
         ),
         migrations.AlterField(
-            model_name='transactiontypegroup',
-            name='configuration_code',
-            field=models.CharField(max_length=255, verbose_name='Configuration Code'),
+            model_name="transactiontypegroup",
+            name="configuration_code",
+            field=models.CharField(max_length=255, verbose_name="Configuration Code"),
         ),
     ]

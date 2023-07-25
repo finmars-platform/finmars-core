@@ -4,15 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0016_transactiontypeactiontransaction_user_date_1_and_more'),
+        ("transactions", "0016_transactiontypeactiontransaction_user_date_1_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='transactiontype',
-            name='transaction_unique_code_options',
-            field=models.PositiveSmallIntegerField(choices=[(1, 'Skip'), (2, 'Book without Unique Code'), (3, 'Overwrite'), (4, 'Treat As Error')], default=2, verbose_name='transaction unique code options'),
+            model_name="transactiontype",
+            name="transaction_unique_code_options",
+            field=models.PositiveSmallIntegerField(
+                choices=[
+                    (1, "Skip"),
+                    (2, "Book without Unique Code"),
+                    (3, "Overwrite"),
+                    (4, "Treat As Error"),
+                ],
+                default=2,
+                verbose_name="transaction unique code options",
+            ),
         ),
     ]

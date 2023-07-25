@@ -47,7 +47,7 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                         "maturity_price": 100.0,
                         "maturity": date.today(),
                         "country": {
-                            "code": "USA",
+                            "alpha_3": "USA",
                         },
                     },
                 ],
@@ -69,12 +69,14 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
         self.assertEqual(response_json["status"], "ok", response_json)
         self.assertNotIn("message", response_json)
 
-        self.assertIsNotNone(Instrument.objects.filter(user_code=instrument_code).first())
+        instrument = Instrument.objects.filter(user_code=instrument_code).first()
+        self.assertIsNotNone(instrument)
+        self.assertIsNotNone(instrument.country)
+        self.assertEqual(instrument.country.alpha_3, "USA")
+
         self.assertIsNotNone(Currency.objects.filter(user_code=currency_code).first())
 
         self.task.refresh_from_db()
-
-        print("task.error_message=", self.task.error_message)
 
         self.assertEqual(self.task.status, CeleryTask.STATUS_DONE)
 
@@ -99,9 +101,9 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
                         },
                         "maturity_price": 100.0,
                         "maturity_date": date.today(),
-                        # "country": {
-                        #     "code": "USA",
-                        # },
+                        "country": {
+                            "alpha_3": "USA",
+                        },
                         "factor_schedules": [
                             {"effective_date": "2023-08-08", "factor_value": 1.0},
                             {"effective_date": "2024-02-08", "factor_value": 9.0},
@@ -146,6 +148,8 @@ class CallbackInstrumentViewSetTest(CallbackSetTestMixin, BaseTestCase):
 
         instrument = Instrument.objects.filter(user_code=instrument_code).first()
         self.assertIsNotNone(instrument)
+        self.assertIsNotNone(instrument.country)
+        self.assertEqual(instrument.country.alpha_3, "USA")
 
         self.assertEqual(len(instrument.factor_schedules.all()), 3)
         self.assertEqual(len(instrument.accrual_calculation_schedules.all()), 1)

@@ -4,20 +4,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0021_alter_complextransaction_code_and_more'),
+        ("transactions", "0021_alter_complextransaction_code_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='complextransaction',
-            name='code',
-            field=models.IntegerField(db_index=True, unique=True, verbose_name='code'),
+            model_name="complextransaction",
+            name="code",
+            field=models.IntegerField(db_index=True, unique=True, verbose_name="code"),
         ),
         migrations.AlterField(
-            model_name='transaction',
-            name='transaction_code',
-            field=models.IntegerField(db_index=True, unique=True, verbose_name='transaction code'),
+            model_name="transaction",
+            name="transaction_code",
+            field=models.IntegerField(
+                db_index=True, unique=True, verbose_name="transaction code"
+            ),
         ),
     ]

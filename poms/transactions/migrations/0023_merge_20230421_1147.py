@@ -4,11 +4,9 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0022_alter_complextransaction_code_and_more'),
-        ('transactions', '0022_alter_eventtohandle_user_code_and_more'),
+        ("transactions", "0022_alter_complextransaction_code_and_more"),
+        ("transactions", "0022_alter_eventtohandle_user_code_and_more"),
     ]
 
-    operations = [
-    ]
+    operations = []

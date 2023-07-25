@@ -4,25 +4,32 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0008_alter_transaction_notes_and_more'),
+        ("transactions", "0008_alter_transaction_notes_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='complextransaction',
-            name='code',
-            field=models.IntegerField(db_index=True, default=0, verbose_name='code'),
+            model_name="complextransaction",
+            name="code",
+            field=models.IntegerField(db_index=True, default=0, verbose_name="code"),
         ),
         migrations.AlterField(
-            model_name='complextransaction',
-            name='text',
-            field=models.TextField(blank=True, db_index=True, null=True, verbose_name='text'),
+            model_name="complextransaction",
+            name="text",
+            field=models.TextField(
+                blank=True, db_index=True, null=True, verbose_name="text"
+            ),
         ),
         migrations.AlterField(
-            model_name='complextransaction',
-            name='transaction_unique_code',
-            field=models.CharField(blank=True, db_index=True, max_length=255, null=True, verbose_name='transaction unique code'),
+            model_name="complextransaction",
+            name="transaction_unique_code",
+            field=models.CharField(
+                blank=True,
+                db_index=True,
+                max_length=255,
+                null=True,
+                verbose_name="transaction unique code",
+            ),
         ),
     ]

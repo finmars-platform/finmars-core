@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0012_transaction_comment'),
+        ("transactions", "0012_transaction_comment"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='transactiontypeactiontransaction',
-            name='comment',
-            field=models.CharField(blank=True, default='', max_length=4096, verbose_name='comment'),
+            model_name="transactiontypeactiontransaction",
+            name="comment",
+            field=models.CharField(
+                blank=True, default="", max_length=4096, verbose_name="comment"
+            ),
         ),
     ]

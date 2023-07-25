@@ -606,7 +606,6 @@ class PricingPolicy(NamedModel, DataTimeStampedModel, ConfigurationModel):
         verbose_name_plural = gettext_lazy("pricing policies")
         unique_together = [["master_user", "user_code"]]
         ordering = ["user_code"]
-
         base_manager_name = "objects"
 
 
@@ -1281,6 +1280,7 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
         return str(self.effective_date)
 
 
+# noinspection PyUnresolvedReferences
 class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     DIRECT_POSITION = 1
     FACTOR_ADJUSTED_POSITION = 2
@@ -1698,78 +1698,73 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 accrual_next = None
 
             if instrument_class.has_regular_event:
-                if instrument_type.regular_event:
-                    e = EventSchedule()
-                    e.instrument = self
-                    e.accrual_calculation_schedule = accrual
-                    e.is_auto_generated = True
-                    e.name = event_schedule_config.name
-                    e.description = event_schedule_config.description
-                    e.event_class_id = EventClass.REGULAR
-                    e.notification_class_id = notification_class_id
-                    e.effective_date = accrual.first_payment_date
-                    e.notify_in_n_days = event_schedule_config.notify_in_n_days
-                    e.periodicity = accrual.periodicity
-                    e.periodicity_n = accrual.periodicity_n
-                    e.final_date = (
-                        accrual_next.accrual_start_date
-                        if accrual_next
-                        else self.maturity_date
-                    )
-                    a = EventScheduleAction()
-                    a.text = event_schedule_config.action_text
-                    if instrument_type.regular_event:
-                        a.transaction_type = instrument_type.regular_event.user_code
-                    a.is_sent_to_pending = (
-                        event_schedule_config.action_is_sent_to_pending
-                    )
-                    a.is_book_automatic = event_schedule_config.action_is_book_automatic
-                    a.button_position = 1
-
-                    eold = events_by_accrual.get(accrual.id)
-                    self._event_save(processed, e, a, eold)
-                else:
+                if not instrument_type.regular_event:
                     raise ValueError(
-                        'Field regular event in instrument type "%s" must be set'
-                        % instrument_type
+                        f'Field regular event in instrument type "{instrument_type}" '
+                        f"must be set"
                     )
 
-        if instrument_class.has_one_off_event:
-            if instrument_type.one_off_event:
                 e = EventSchedule()
                 e.instrument = self
+                e.accrual_calculation_schedule = accrual
                 e.is_auto_generated = True
                 e.name = event_schedule_config.name
                 e.description = event_schedule_config.description
-                e.event_class_id = EventClass.ONE_OFF
+                e.event_class_id = EventClass.REGULAR
                 e.notification_class_id = notification_class_id
-                e.effective_date = self.maturity_date
+                e.effective_date = accrual.first_payment_date
                 e.notify_in_n_days = event_schedule_config.notify_in_n_days
-                e.final_date = self.maturity_date
+                e.periodicity = accrual.periodicity
+                e.periodicity_n = accrual.periodicity_n
+                e.final_date = (
+                    accrual_next.accrual_start_date
+                    if accrual_next
+                    else self.maturity_date
+                )
                 a = EventScheduleAction()
                 a.text = event_schedule_config.action_text
-                if instrument_type.one_off_event:
-                    a.transaction_type = instrument_type.one_off_event.user_code
+                a.transaction_type = instrument_type.regular_event.user_code
                 a.is_sent_to_pending = event_schedule_config.action_is_sent_to_pending
                 a.is_book_automatic = event_schedule_config.action_is_book_automatic
                 a.button_position = 1
 
-                eold = None
-                for e0 in events:
-                    if (
-                        e0.is_auto_generated
-                        and e0.event_class_id == EventClass.ONE_OFF
-                        and e0.accrual_calculation_schedule_id is None
-                        and e0.factor_schedule_id is None
-                    ):
-                        eold = e0
-                        break
+                eold = events_by_accrual.get(accrual.id)
                 self._event_save(processed, e, a, eold)
-            else:
+        if instrument_class.has_one_off_event:
+            if not instrument_type.one_off_event:
                 raise ValueError(
-                    'Field one-off event in instrument type "%s" must be set'
-                    % instrument_type
+                    f'Field one-off event in instrument type "{instrument_type}" '
+                    f"must be set"
                 )
+
+            e = EventSchedule()
+            e.instrument = self
+            e.is_auto_generated = True
+            e.name = event_schedule_config.name
+            e.description = event_schedule_config.description
+            e.event_class_id = EventClass.ONE_OFF
+            e.notification_class_id = notification_class_id
+            e.effective_date = self.maturity_date
+            e.notify_in_n_days = event_schedule_config.notify_in_n_days
+            e.final_date = self.maturity_date
+            a = EventScheduleAction()
+            a.text = event_schedule_config.action_text
+            a.transaction_type = instrument_type.one_off_event.user_code
+            a.is_sent_to_pending = event_schedule_config.action_is_sent_to_pending
+            a.is_book_automatic = event_schedule_config.action_is_book_automatic
+            a.button_position = 1
+
+            eold = None
+            for e0 in events:
+                if (
+                    e0.is_auto_generated
+                    and e0.event_class_id == EventClass.ONE_OFF
+                    and e0.accrual_calculation_schedule_id is None
+                    and e0.factor_schedule_id is None
+                ):
+                    eold = e0
+                    break
+            self._event_save(processed, e, a, eold)
 
         # process factors
         factors = list(self.factor_schedules.all())
@@ -2004,13 +1999,10 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
     def get_coupon(self, cpn_date, with_maturity=False, factor=False):
         _l.info(f"get_coupon self.maturity_date {self.maturity_date}")
 
-        if cpn_date == self.maturity_date:
-            if with_maturity:
-                return self.maturity_price, True
-            else:
-                return 0.0, False
+        if cpn_date == self.maturity_date and with_maturity:
+            return self.maturity_price, True
 
-        elif cpn_date > self.maturity_date:
+        elif cpn_date == self.maturity_date or cpn_date > self.maturity_date:
             return 0.0, False
 
         accruals = self.get_accrual_calculation_schedules_all()
@@ -2091,7 +2083,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             accrual_end_date_d = accrual.accrual_end_date
 
             prev_d = accrual_start_date_d
-            for i in range(0, 3652058):
+            for i in range(3652058):
                 stop = False
                 if i == 0:
                     d = first_payment_date_d
@@ -2122,10 +2114,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 prev_d = d
 
         if with_maturity:
-            if factor:
-                val_or_factor = 1.0
-            else:
-                val_or_factor = self.maturity_price
+            val_or_factor = 1.0 if factor else self.maturity_price
             res.append((self.maturity_date, val_or_factor))
 
         return res
@@ -2141,9 +2130,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         for f in factors:
             if f.effective_date < fdate:
                 res = f
-        if res:
-            return res.factor_value
-        return 1.0
+
+        return res.factor_value if res else 1.0
 
     def generate_instrument_system_attributes(self):
         from django.contrib.contenttypes.models import ContentType
@@ -2158,13 +2146,13 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         for ipp in instrument_pricing_policies:
             pp = ipp.pricing_policy
 
-            user_code_scheme = "pricing_policy_scheme_" + pp.user_code
-            user_code_parameter = "pricing_policy_parameter_" + pp.user_code
-            user_code_notes = "pricing_policy_notes_" + pp.user_code
+            user_code_scheme = f"pricing_policy_scheme_{pp.user_code}"
+            user_code_parameter = f"pricing_policy_parameter_{pp.user_code}"
+            user_code_notes = f"pricing_policy_notes_{pp.user_code}"
 
-            name_scheme = "Pricing Policy Scheme: " + pp.user_code
-            name_parameter = "Pricing Policy Parameter: " + pp.user_code
-            name_notes = "Pricing Policy Notes: " + pp.user_code
+            name_scheme = f"Pricing Policy Scheme: {pp.user_code}"
+            name_parameter = f"Pricing Policy Parameter: {pp.user_code}"
+            name_notes = f"Pricing Policy Notes: {pp.user_code}"
 
             attr_type_scheme = None
             attr_type_parameter = None
@@ -2277,17 +2265,17 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                         if type.value_type == 10:
                             attr_parameter.value_string = attr.value_string
 
-                        if type.value_type == 20:
+                        elif type.value_type == 20:
                             attr_parameter.value_string = str(attr.value_float)
 
-                        if type.value_type == 30:
+                        elif type.value_type == 30:
                             attr_parameter.value_string = attr.classifier.name
 
-                        if type.value_type == 40:
+                        elif type.value_type == 40:
                             attr_parameter.value_string = attr.value_date
 
                     except Exception as e:
-                        _l.info("Could not get attribute value=%s " % e)
+                        _l.info(f"Could not get attribute value={e} ")
 
                 else:
                     attr_parameter.value_string = str(
@@ -2315,11 +2303,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                         content_type=content_type,
                     )
 
-            if ipp.notes:
-                attr_notes.value_string = ipp.notes
-            else:
-                attr_notes.value_string = ""
-
+            attr_notes.value_string = ipp.notes or ""
             _l.info(f"attr_notes={attr_notes.value_string}")
 
             attr_notes.save()
@@ -2333,8 +2317,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             self.generate_instrument_system_attributes()
 
         except Exception as error:
-            _l.error("Instrument save error %s" % error)
-            _l.error("Instrument save traceback %s" % traceback.format_exc())
+            _l.error(f"Instrument save error {error}\n {traceback.format_exc()}")
 
 
 # DEPRECTATED (25.05.2020) delete soon
@@ -2404,7 +2387,6 @@ class AccrualCalculationSchedule(models.Model):
         default=SystemValueType.DATE,
         verbose_name=gettext_lazy("first payment date value type"),
     )
-    # TODO: is %
     accrual_size = models.CharField(
         max_length=255,
         null=True,
@@ -2453,7 +2435,7 @@ class AccrualCalculationSchedule(models.Model):
                 self.accrual_start_date = parse(self.accrual_start_date).strftime(
                     DATE_FORMAT
                 )
-            except Exception as e:
+            except Exception:
                 self.accrual_start_date = None
 
         if self.first_payment_date:
@@ -2464,7 +2446,7 @@ class AccrualCalculationSchedule(models.Model):
             except Exception:
                 self.first_payment_date = None
 
-        super(AccrualCalculationSchedule, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = gettext_lazy("accrual calculation schedule")
@@ -2553,11 +2535,9 @@ class PriceHistory(DataTimeStampedModel):
         ordering = ["date"]
 
     def __str__(self):
-        return "%s - %s;%s @%s" % (
-            self.instrument.user_code,
-            self.principal_price,
-            self.accrued_price,
-            self.date,
+        return (
+            f"{self.instrument.user_code} - {self.principal_price};"
+            f"{self.accrued_price} @{self.date}"
         )
 
     def get_instr_ytm_data_d0_v0(self, dt):
@@ -2646,11 +2626,11 @@ class PriceHistory(DataTimeStampedModel):
                 / (self.principal_price * self.instrument.price_multiplier)
             )
         except Exception as e:
-            _l.error("get_instr_ytm_x0 %s" % e)
+            _l.error(f"get_instr_ytm_x0 {repr(e)}")
             return 0
 
     def calculate_ytm(self, dt):
-        _l.debug("Calculating ytm for %s for %s" % (self.instrument.name, self.date))
+        _l.debug(f"Calculating ytm for {self.instrument.name} for {self.date}")
 
         if (
             self.instrument.maturity_date is None
@@ -2677,11 +2657,7 @@ class PriceHistory(DataTimeStampedModel):
         data = self.get_instr_ytm_data(dt)
         _l.debug("get_instr_ytm: data=%s", data)
 
-        if data:
-            ytm = f_xirr(data, x0=x0)
-        else:
-            ytm = 0.0
-
+        ytm = f_xirr(data, x0=x0) if data else 0.0
         return ytm
 
     def calculate_duration(self, dt):
@@ -2696,12 +2672,7 @@ class PriceHistory(DataTimeStampedModel):
 
             return duration
         data = self.get_instr_ytm_data(dt)
-        if data:
-            duration = f_duration(data, ytm=self.ytm)
-        else:
-            duration = 0
-
-        return duration
+        return f_duration(data, ytm=self.ytm) if data else 0
 
     def save(self, *args, **kwargs):
         # TODO make readable exception if currency history is missing
@@ -2887,12 +2858,12 @@ class EventSchedule(models.Model):
 
     @property
     def data(self):
-        if self.json_data:
-            try:
-                return json.loads(self.json_data)
-            except (ValueError, TypeError):
-                return None
-        else:
+        if not self.json_data:
+            return None
+
+        try:
+            return json.loads(self.json_data)
+        except (ValueError, TypeError):
             return None
 
     @data.setter
@@ -2908,7 +2879,7 @@ class EventSchedule(models.Model):
         ordering = ["effective_date"]
 
     def __str__(self):
-        return "#%s/#%s" % (self.id, self.instrument_id)
+        return f"#{self.id}/#{self.instrument_id}"
 
     @cached_property
     def all_dates(self):
@@ -2928,7 +2899,7 @@ class EventSchedule(models.Model):
             add_date(edate)
 
         elif self.event_class_id == EventClass.REGULAR:
-            for i in range(0, 3652058):
+            for i in range(3652058):
                 stop = False
                 try:
                     effective_date = edate + self.periodicity.to_timedelta(
@@ -3011,12 +2982,12 @@ class EventScheduleAction(models.Model):
 
     @property
     def data(self):
-        if self.json_data:
-            try:
-                return json.loads(self.json_data)
-            except (ValueError, TypeError):
-                return None
-        else:
+        if not self.json_data:
+            return None
+
+        try:
+            return json.loads(self.json_data)
+        except (ValueError, TypeError):
             return None
 
     @data.setter
@@ -3197,12 +3168,11 @@ class GeneratedEvent(models.Model):
 
     @property
     def data(self):
-        if self.json_data:
-            try:
-                return json.loads(self.json_data)
-            except (ValueError, TypeError):
-                return None
-        else:
+        if not self.json_data:
+            return None
+        try:
+            return json.loads(self.json_data)
+        except (ValueError, TypeError):
             return None
 
     @data.setter
@@ -3218,7 +3188,7 @@ class GeneratedEvent(models.Model):
         ordering = ["effective_date"]
 
     def __str__(self):
-        return "Event #%s" % self.id
+        return f"Event #{self.id}"
 
     def processed(
         self, member, action, complex_transaction, status=BOOKED_SYSTEM_DEFAULT
@@ -3235,50 +3205,51 @@ class GeneratedEvent(models.Model):
         self.complex_transaction = complex_transaction
 
     def is_notify_on_effective_date(self, now=None):
-        if not self.effective_date_notified:
-            now = now or date_now()
-            notification_class = self.event_schedule.notification_class
+        if self.effective_date_notified:
+            return False
 
-            print("self event %s " % self)
-            print("self.event_schedule %s " % self.event_schedule)
-            print("self.now %s " % now)
-            print("self.effective_date %s " % self.effective_date)
-            print(
-                "self.notification_class.is_notify_on_effective_date %s "
-                % notification_class.is_notify_on_effective_date
-            )
+        now = now or date_now()
+        notification_class = self.event_schedule.notification_class
 
-            return (
-                self.effective_date == now
-                and notification_class.is_notify_on_effective_date
-            )
-        return False
+        print(f"self event {self} ")
+        print(f"self.event_schedule {self.event_schedule} ")
+        print(f"self.now {now} ")
+        print(f"self.effective_date {self.effective_date} ")
+        print(
+            f"self.notification_class.is_notify_on_effective_date {notification_class.is_notify_on_effective_date} "
+        )
+
+        return (
+            self.effective_date == now
+            and notification_class.is_notify_on_effective_date
+        )
 
     def is_notify_on_notification_date(self, now=None):
-        if not self.effective_date_notified:
-            now = now or date_now()
+        if self.effective_date_notified:
+            return False
 
-            notification_class = self.event_schedule.notification_class
+        now = now or date_now()
 
-            print("self event %s " % self)
-            print("self.event_schedule %s " % self.event_schedule)
-            print("self.now %s " % now)
-            print("self.notification_date %s " % self.notification_date)
-            print(
-                "self.notification_class.is_notify_on_notification_date %s "
-                % notification_class.is_notify_on_notification_date
-            )
+        notification_class = self.event_schedule.notification_class
 
-            return (
-                self.notification_date == now
-                and notification_class.is_notify_on_notification_date
-            )
-        return False
+        print(f"self event {self} ")
+        print(f"self.event_schedule {self.event_schedule} ")
+        print(f"self.now {now} ")
+        print(f"self.notification_date {self.notification_date} ")
+        print(
+            f"self.notification_class.is_notify_on_notification_date {notification_class.is_notify_on_notification_date} "
+        )
+
+        return (
+            self.notification_date == now
+            and notification_class.is_notify_on_notification_date
+        )
 
     def is_notify_on_date(self, now=None):
-        return self.is_notify_on_effective_date(
-            now
-        ) or self.is_notify_on_notification_date(now)
+        return bool(
+            self.is_notify_on_effective_date(now)
+            or self.is_notify_on_notification_date(now)
+        )
 
     def is_apply_default_on_effective_date(self, now=None):
         if self.status == GeneratedEvent.NEW:
@@ -3288,6 +3259,7 @@ class GeneratedEvent(models.Model):
                 self.effective_date == now
                 and notification_class.is_apply_default_on_effective_date
             )
+
         return False
 
     def is_apply_default_on_notification_date(self, now=None):
@@ -3298,12 +3270,14 @@ class GeneratedEvent(models.Model):
                 self.notification_date == now
                 and notification_class.is_apply_default_on_notification_date
             )
+
         return False
 
     def is_apply_default_on_date(self, now=None):
-        return self.is_apply_default_on_effective_date(
-            now
-        ) or self.is_apply_default_on_notification_date(now)
+        return bool(
+            self.is_apply_default_on_effective_date(now)
+            or self.is_apply_default_on_notification_date(now)
+        )
 
     def is_need_reaction_on_effective_date(self, now=None):
         if self.status == GeneratedEvent.NEW:
@@ -3313,6 +3287,7 @@ class GeneratedEvent(models.Model):
                 self.effective_date == now
                 and notification_class.is_need_reaction_on_effective_date
             )
+
         return False
 
     def is_need_reaction_on_notification_date(self, now=None):
@@ -3323,19 +3298,22 @@ class GeneratedEvent(models.Model):
                 self.notification_date == now
                 and notification_class.is_need_reaction_on_notification_date
             )
+
         return False
 
     def is_need_reaction_on_date(self, now=None):
-        return self.is_need_reaction_on_effective_date(
-            now
-        ) or self.is_need_reaction_on_notification_date(now)
+        return bool(
+            self.is_need_reaction_on_effective_date(now)
+            or self.is_need_reaction_on_notification_date(now)
+        )
 
     def get_default_action(self, actions=None):
         if actions is None:
             actions = self.event_schedule.actions.all()
-        for a in actions:
-            if a.is_book_automatic:
-                return a
+        for action in actions:
+            if action.is_book_automatic:
+                return action
+
         return None
 
     def generate_text(self, exr, names=None, context=None):
@@ -3355,11 +3333,11 @@ class GeneratedEvent(models.Model):
         )
         try:
             return formula.safe_eval(exr, names=names, context=context)
-        except formula.InvalidExpression as e:
+        except formula.InvalidExpression:
             return "<InvalidExpression>"
 
     def save(self, *args, **kwargs):
-        super(GeneratedEvent, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
         try:
             if self.status == GeneratedEvent.NEW:
@@ -3374,7 +3352,7 @@ class GeneratedEvent(models.Model):
                     linked_event=self,
                 )
         except Exception as e:
-            _l.error("Could not send system message on generating event %s" % e)
+            _l.error(f"Could not send system message on generating event {repr(e)}")
 
 
 class EventScheduleConfig(models.Model):

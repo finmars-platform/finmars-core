@@ -31,8 +31,16 @@ from poms.obj_attrs.admin import GenericAttributeInline
 
 class CountryAdmin(AbstractModelAdmin):
     model = Country
-    list_display = ["id", "name", "region_code"]
-    search_fields = ["id", "name", "region_code"]
+    list_display = [
+        "id",
+        "name",
+        "region_code",
+    ]
+    search_fields = [
+        "id",
+        "name",
+        "region_code",
+    ]
 
 
 class PricingPolicyAdmin(AbstractModelAdmin):
@@ -45,7 +53,11 @@ class PricingPolicyAdmin(AbstractModelAdmin):
         "name",
     ]
     list_select_related = ["master_user"]
-    search_fields = ["id", "user_code", "name"]
+    search_fields = [
+        "id",
+        "user_code",
+        "name",
+    ]
     raw_id_fields = ["master_user"]
 
 
@@ -60,7 +72,10 @@ class InstrumentTypeAdmin(AbstractModelAdmin):
         "instrument_class",
         "is_deleted",
     ]
-    list_select_related = ["master_user", "instrument_class"]
+    list_select_related = [
+        "master_user",
+        "instrument_class",
+    ]
     list_filter = [
         "instrument_class",
         "is_deleted",
@@ -148,14 +163,17 @@ class InstrumentAdmin(AbstractModelAdmin):
         EventScheduleInline,
         GenericAttributeInline,
     ]
-    actions = ["calculate_prices_accrued_price", "rebuild_event_schedules"]
+    actions = [
+        "calculate_prices_accrued_price",
+        "rebuild_event_schedules",
+    ]
 
     def rebuild_event_schedules(self, request, queryset):
         for instr in queryset:
             try:
                 instr.rebuild_event_schedules()
             except ValueError as e:
-                messages.error(request, "%s: %s" % (instr, e))
+                messages.error(request, f"{instr}: {e}")
 
     rebuild_event_schedules.short_description = "Rebuild event schedules"
 
@@ -170,10 +188,26 @@ class InstrumentAdmin(AbstractModelAdmin):
 class ManualPricingFormulaAdmin(AbstractModelAdmin):
     model = AccrualCalculationSchedule
     master_user_path = "instrument__master_user"
-    list_display = ["id", "master_user", "instrument", "pricing_policy"]
-    list_select_related = ["instrument", "instrument__master_user", "pricing_policy"]
-    search_fields = ["instrument__id", "instrument__user_code", "instrument__name"]
-    raw_id_fields = ["instrument", "pricing_policy"]
+    list_display = [
+        "id",
+        "master_user",
+        "instrument",
+        "pricing_policy",
+    ]
+    list_select_related = [
+        "instrument",
+        "instrument__master_user",
+        "pricing_policy",
+    ]
+    search_fields = [
+        "instrument__id",
+        "instrument__user_code",
+        "instrument__name",
+    ]
+    raw_id_fields = [
+        "instrument",
+        "pricing_policy",
+    ]
 
     def master_user(self, obj):
         return obj.instrument.master_user
@@ -199,8 +233,15 @@ class AccrualCalculationScheduleAdmin(AbstractModelAdmin):
         "accrual_calculation_model",
         "periodicity",
     ]
-    list_filter = ["accrual_calculation_model", "periodicity"]
-    search_fields = ["instrument__id", "instrument__user_code", "instrument__name"]
+    list_filter = [
+        "accrual_calculation_model",
+        "periodicity",
+    ]
+    search_fields = [
+        "instrument__id",
+        "instrument__user_code",
+        "instrument__name",
+    ]
     raw_id_fields = ["instrument"]
 
     def master_user(self, obj):
@@ -212,10 +253,23 @@ class AccrualCalculationScheduleAdmin(AbstractModelAdmin):
 class InstrumentFactorScheduleAdmin(AbstractModelAdmin):
     model = InstrumentFactorSchedule
     master_user_path = "instrument__master_user"
-    list_display = ["id", "master_user", "instrument", "effective_date", "factor_value"]
-    list_select_related = ["instrument", "instrument__master_user"]
+    list_display = [
+        "id",
+        "master_user",
+        "instrument",
+        "effective_date",
+        "factor_value",
+    ]
+    list_select_related = [
+        "instrument",
+        "instrument__master_user",
+    ]
     list_filter = ["effective_date"]
-    search_fields = ["instrument__id", "instrument__user_code", "instrument__name"]
+    search_fields = [
+        "instrument__id",
+        "instrument__user_code",
+        "instrument__name",
+    ]
     raw_id_fields = ["instrument"]
 
     def master_user(self, obj):
@@ -285,9 +339,7 @@ class EventScheduleAdmin(AbstractModelAdmin):
     master_user.admin_order_field = "instrument__master_user"
 
     def _actions(self, obj):
-        n = []
-        for a in obj.actions.all():
-            n.append(a.transaction_type.name)
+        n = [a.transaction_type.name for a in obj.actions.all()]
         return ", ".join(n)
 
     _actions.short_description = gettext_lazy("Actions")

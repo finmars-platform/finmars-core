@@ -162,6 +162,14 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         return decorator
 
     @classmethod
+    def random_percent(cls) -> float:
+        return random.random()
+
+    @classmethod
+    def random_float(cls, _min: int = 1, _max: int = 10000) -> float:
+        return random.random() * random.randint(_min, _max)
+
+    @classmethod
     def random_int(cls, _min: int = 1, _max: int = 10000) -> int:
         return random.randint(_min, _max)
 
@@ -176,7 +184,7 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         return f"{cls.random_string(5)}@{cls.random_string(3)}.{cls.random_string(2)}"
 
     @classmethod
-    def random_future_date(cls, interval=30) -> date:
+    def random_future_date(cls, interval=365) -> date:
         days = cls.random_int(1, interval)
         return datetime.now().date() + timedelta(days=days)
 

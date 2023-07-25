@@ -1,3 +1,4 @@
+import contextlib
 import datetime
 import logging
 import traceback
@@ -217,9 +218,7 @@ class PricingPolicyViewSet(AbstractModelViewSet):
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
 
-        result = self.get_paginated_response(serializer.data)
-
-        return result
+        return self.get_paginated_response(serializer.data)
 
 
 class InstrumentTypeAttributeTypeViewSet(GenericAttributeTypeViewSet):
@@ -286,9 +285,7 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
 
-        result = self.get_paginated_response(serializer.data)
-
-        return result
+        return self.get_paginated_response(serializer.data)
 
     @action(
         detail=True,
@@ -501,9 +498,14 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
             },
         ]
 
-        items = items + get_list_of_entity_attributes("instruments.instrumenttype")
+        items += get_list_of_entity_attributes("instruments.instrumenttype")
 
-        result = {"count": len(items), "next": None, "previous": None, "results": items}
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items,
+        }
 
         return Response(result)
 
@@ -522,8 +524,7 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
             instrument_type=instrument_type, master_user=request.user.master_user
         )
 
-        _l.info("request.data %s " % request.data)
-        _l.info("instruments affected %s" % len(instruments))
+        _l.info(f"request.data {request.data} instruments affected {len(instruments)}")
 
         from poms.pricing.models import InstrumentPricingPolicy
 
@@ -540,18 +541,22 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
                     policy.attribute_key = request.data.get("attribute_key", None)
                     policy.save()
 
-                    _l.info("Policy %s updated" % policy)
+                    _l.info(f"Policy {policy} updated")
 
                 else:
-                    _l.info("Nothing changed for %s" % policy)
+                    _l.info(f"Nothing changed for {policy}")
+
             except Exception as e:
-                _l.error("Policy %s is not found for instrument %s" % e)
                 _l.error(
-                    "Policy %s is not found for instrument %s" % traceback.format_exc()
+                    f"Policy is not found for instrument, due to {repr(e)}\n "
+                    f"{traceback.format_exc()}"
                 )
 
         return Response(
-            {"status": "ok", "data": {"instruments_affected": len(instruments)}}
+            {
+                "status": "ok",
+                "data": {"instruments_affected": len(instruments)},
+            }
         )
 
 
@@ -680,9 +685,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
 
-        result = self.get_paginated_response(serializer.data)
-
-        return result
+        return self.get_paginated_response(serializer.data)
 
     @action(detail=False, methods=["get"], url_path="attributes")
     def list_attributes(self, request, *args, **kwargs):
@@ -839,7 +842,7 @@ class InstrumentViewSet(AbstractModelViewSet):
             },
         ]
 
-        items = items + get_list_of_entity_attributes("instruments.instrument")
+        items += get_list_of_entity_attributes("instruments.instrument")
 
         result = {"count": len(items), "next": None, "previous": None, "results": items}
 
@@ -855,10 +858,9 @@ class InstrumentViewSet(AbstractModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
         processed = 0
         for instance in queryset:
-            try:
+            with contextlib.suppress(ValueError):
                 instance.rebuild_event_schedules()
-            except ValueError as e:
-                pass
+
             processed += 1
         return Response({"processed": processed})
 
@@ -870,10 +872,9 @@ class InstrumentViewSet(AbstractModelViewSet):
     )
     def rebuild_events(self, request, pk):
         instance = self.get_object()
-        try:
+        with contextlib.suppress(ValueError):
             instance.rebuild_event_schedules()
-        except ValueError as e:
-            pass
+
         return Response({"processed": 1})
 
     @action(
@@ -922,7 +923,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         serializer_class=serializers.Serializer,
     )
     def generate_events_range(self, request):
-        print("request.data %s " % request.data)
+        print(f"request.data {request.data} ")
 
         date_from_string = request.data.get("effective_date_0", None)
         date_to_string = request.data.get("effective_date_1", None)
@@ -940,8 +941,6 @@ class InstrumentViewSet(AbstractModelViewSet):
 
         tasks_ids = []
 
-        # print('dates %s' % dates)
-
         for dte in dates:
             res = only_generate_events_at_date.apply_async(
                 kwargs={"master_user_id": request.user.master_user.id, "date": dte}
@@ -957,7 +956,7 @@ class InstrumentViewSet(AbstractModelViewSet):
         serializer_class=serializers.Serializer,
     )
     def generate_events_range_for_single_instrument(self, request):
-        print("request.data %s " % request.data)
+        print(f"request.data {request.data} ")
 
         date_from_string = request.data.get("effective_date_0", None)
         date_to_string = request.data.get("effective_date_1", None)
@@ -978,8 +977,8 @@ class InstrumentViewSet(AbstractModelViewSet):
                 master_user=request.user.master_user, id=instrument_id
             )
 
-        except Instrument.DoesNotExist:
-            raise ValidationError("Instrument is not found")
+        except Instrument.DoesNotExist as e:
+            raise ValidationError("Instrument is not found") from e
 
         dates = [
             date_from + datetime.timedelta(days=i)
@@ -988,7 +987,7 @@ class InstrumentViewSet(AbstractModelViewSet):
 
         tasks_ids = []
 
-        print("dates %s" % dates)
+        print(f"dates {dates}")
 
         for dte in dates:
             res = only_generate_events_at_date_for_single_instrument.apply_async(
@@ -1056,7 +1055,7 @@ class InstrumentExternalAPIViewSet(APIView):
             model="instrument", app_label="instruments"
         )
 
-        _l.info("request.data %s" % request.data)
+        _l.info(f"request.data {request.data}")
 
         instrument_data = {}
 
@@ -1074,11 +1073,14 @@ class InstrumentExternalAPIViewSet(APIView):
 
         try:
             instrument_type = InstrumentType.objects.get(
-                master_user=master_user, user_code=instrument_data["instrument_type"]
+                master_user=master_user,
+                user_code=instrument_data["instrument_type"],
             )
 
-        except Exception as e:
-            _l.info("Instrument Type is not found %s" % e)
+        except InstrumentType.DoesNotExist as e:
+            err_msg = f"Unknown InstrumentType.user_code={instrument_data['instrument_type']}"
+            _l.error(err_msg)
+            raise ValidationError(err_msg) from e
 
         object_data = handler_instrument_object(
             instrument_data,
@@ -1095,11 +1097,11 @@ class InstrumentExternalAPIViewSet(APIView):
         if is_valid:
             serializer.save()
         else:
-            _l.info("InstrumentExternalAPIViewSet error", serializer.errors)
+            err_msg = f"InstrumentExternalAPIViewSet serializer.errors={serializer.errors}"
+            _l.error(err_msg)
+            raise ValidationError(err_msg)
 
-        _l.info(request.data)
-
-        _l.info("Instrument created")
+        _l.info(f"Instrument created with request.data={request.data}")
 
         return Response({"ok"})
 
@@ -1113,60 +1115,43 @@ class InstrumentFDBCreateFromCallbackViewSet(APIView):
         return Response({"ok"})
 
     def post(self, request):
+        from poms.celery_tasks.models import CeleryTask
         from poms.integrations.tasks import (
             create_currency_from_callback_data,
             create_instrument_cbond,
         )
 
         try:
-            _l.info("InstrumentFDBCreateFromCallbackViewSet.data %s" % request.data)
             _l.info(
-                "InstrumentFDBCreateFromCallbackViewSet.request_id %s"
-                % request.data["request_id"]
+                f"InstrumentFDBCreateFromCallbackViewSet.data {request.data} "
+                f"request_id {request.data['request_id']}"
             )
-
-            from poms.celery_tasks.models import CeleryTask
 
             task = CeleryTask.objects.get(id=request.data["request_id"])
 
-            context = {"request": request, "master_user": task.master_user}
-
             data = request.data
-
-            result_instrument = None
-            instrument_code = data["isin"]
 
             if "instruments" in data:
                 if "currencies" in data:
                     for item in data["currencies"]:
                         if item:
-                            currency = create_currency_from_callback_data(
+                            create_currency_from_callback_data(
                                 item, task.master_user, task.member
                             )
 
                 for item in data["instruments"]:
-                    instrument = create_instrument_cbond(
-                        item, task.master_user, task.member
-                    )
-
-                    if instrument.user_code == instrument_code:
-                        result_instrument = instrument
+                    create_instrument_cbond(item, task.master_user, task.member)
 
             elif "items" in data["data"]:
                 for item in data["data"]["items"]:
-                    instrument = create_instrument_cbond(
-                        item, task.master_user, task.member
-                    )
+                    create_instrument_cbond(item, task.master_user, task.member)
 
-                    if instrument.user_code == instrument_code:
-                        result_instrument = instrument
-
-            _l.info("Instrument created")
+            _l.info("Instrument(s) created")
 
             return Response({"status": "ok"})
 
         except Exception as e:
-            _l.info("InstrumentFDBCreateFromCallbackViewSet error %s" % e)
+            _l.info(f"InstrumentFDBCreateFromCallbackViewSet error {repr(e)}")
 
             return Response({"status": "error"})
 
@@ -1222,11 +1207,9 @@ class InstrumentDatabaseSearchViewSet(APIView):
             instrument_type = request.query_params.get("instrument_type", "")
             page = request.query_params.get("page", 1)
 
-            headers["Authorization"] = "Bearer %s" % token
+            headers["Authorization"] = f"Bearer {token}"
 
-            result = {}
-
-            _l.info("headers %s" % headers)
+            _l.info(f"headers {headers}")
 
             url = str(settings.CBONDS_BROKER_URL) + "instr/find/name/%s?page=%s" % (
                 name,
@@ -1236,7 +1219,7 @@ class InstrumentDatabaseSearchViewSet(APIView):
             if instrument_type:
                 url = url + "&instrument_type=" + str(instrument_type)
 
-            _l.info("Requesting URL %s" % url)
+            _l.info(f"Requesting URL {url}")
 
             response = None
 
@@ -1245,21 +1228,18 @@ class InstrumentDatabaseSearchViewSet(APIView):
                     url=url, headers=headers, verify=settings.VERIFY_SSL
                 )
             except Exception as e:
-                _l.info("Request error %s" % e)
-                result = {}
+                _l.info(f"Request error {repr(e)}")
 
             try:
                 result = response.json()
+
             except Exception as e:
                 if response:
-                    _l.info("response %s" % response.text)
-                    _l.info("Response parse error %s" % e)
+                    _l.info(f"Response error {repr(e)} text={response.text}")
                 result = {}
 
         else:
-            name = request.query_params.get("name", "")
             size = request.query_params.get("size", 40)
-            page = request.query_params.get("page", 1)
 
             if settings.FINMARS_DATABASE_URL:
                 headers = {
@@ -1286,11 +1266,10 @@ class InstrumentDatabaseSearchViewSet(APIView):
                     + name
                 )
 
-                headers["Authorization"] = "Bearer " + get_access_token(request)
+                headers["Authorization"] = f"Bearer {get_access_token(request)}"
 
                 _l.info(
-                    "InstrumentDatabaseSearchViewSet.requesting url %s"
-                    % instruments_url
+                    f"InstrumentDatabaseSearchViewSet.requesting url {instruments_url}"
                 )
 
                 response = requests.get(
@@ -1474,7 +1453,12 @@ class PriceHistoryViewSet(AbstractModelViewSet):
             },
         ]
 
-        result = {"count": len(items), "next": None, "previous": None, "results": items}
+        result = {
+            "count": len(items),
+            "next": None,
+            "previous": None,
+            "results": items,
+        }
 
         return Response(result)
 
@@ -1605,10 +1589,9 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
 
         action = None
         if action_pk:
-            try:
+            with contextlib.suppress(ObjectDoesNotExist):
                 action = generated_event.event_schedule.actions.get(pk=action_pk)
-            except ObjectDoesNotExist:
-                pass
+
         if action is None:
             raise ValidationError('Require "action" query parameter')
 
@@ -1633,9 +1616,10 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
 
-                print("generated_event.id %s " % generated_event.id)
-                print("status %s " % status)
-                print("instance.has_errors %s " % instance.has_errors)
+                print(
+                    f"generated_event.id {generated_event.id} status {status} "
+                    f"instance.has_errors {instance.has_errors}"
+                )
 
                 if not instance.has_errors:
                     generated_event.processed(
@@ -1644,8 +1628,6 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
                         instance.complex_transaction,
                         status,
                     )
-                    generated_event.save()
-
                 else:
                     generated_event.status = GeneratedEvent.ERROR
                     generated_event.status_date = timezone.now()
@@ -1666,7 +1648,7 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
                         GeneratedEvent.ERROR,
                     )
 
-                    generated_event.save()
+                generated_event.save()
 
                 return Response(serializer.data)
             finally:
@@ -1699,10 +1681,9 @@ class GeneratedEventViewSet(UpdateModelMixinExt, AbstractReadOnlyModelViewSet):
 
         action = None
         if action_pk:
-            try:
+            with contextlib.suppress(ObjectDoesNotExist):
                 action = generated_event.event_schedule.actions.get(pk=action_pk)
-            except ObjectDoesNotExist:
-                pass
+
         if action is None:
             raise ValidationError('Require "action" query parameter')
 
@@ -1745,10 +1726,9 @@ class EventScheduleConfigViewSet(AbstractModelViewSet):
         try:
             return self.request.user.master_user.instrument_event_schedule_config
         except ObjectDoesNotExist:
-            obj = EventScheduleConfig.create_default(
+            return EventScheduleConfig.create_default(
                 master_user=self.request.user.master_user
             )
-            return obj
 
     def destroy(self, request, *args, **kwargs):
         raise MethodNotAllowed(method=request.method)
