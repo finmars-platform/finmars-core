@@ -69,6 +69,22 @@ export DJANGO_SETTINGS_MODULE=poms_app.settings
 export C_FORCE_ROOT='true'
 
 echo "[${timestamp}] Start celery"
+
+#!/bin/bash
+
+: "${WORKERS:=2}"
+
+if [ "$WORKERS" = "2" ]
+then
+    cp /etc/supervisor/conf.d/celery_2_workers.conf /etc/supervisor/conf.d/celery.conf
+elif [ "$WORKERS" = "4" ]
+then
+    cp /etc/supervisor/conf.d/celery_4_workers.conf /etc/supervisor/conf.d/celery.conf
+else
+    echo "Invalid number of workers specified"
+    exit 1
+fi
+
 supervisord
 
 #supervisorctl start worker1
