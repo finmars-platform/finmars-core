@@ -829,6 +829,10 @@ def _get_supported_models_serializer_class():
     from poms.users.models import Member
     from poms.users.serializers import MemberSerializer
 
+    from poms.instruments.models import PriceHistory
+    from poms.currencies.models import CurrencyHistory
+    from poms.instruments.serializers import PriceHistorySerializer
+    from poms.currencies.serializers import CurrencyHistorySerializer
     return {
         Account: AccountEvalSerializer,
         AccountType: AccountTypeEvalSerializer,
@@ -843,6 +847,8 @@ def _get_supported_models_serializer_class():
         Strategy3: Strategy3EvalSerializer,
         DailyPricingModel: DailyPricingModelSerializer,
         PaymentSizeDetail: PaymentSizeDetailSerializer,
+        PriceHistory: PriceHistorySerializer,
+        CurrencyHistory: CurrencyHistorySerializer,
         Periodicity: PeriodicitySerializer,
         PriceDownloadScheme: PriceDownloadSchemeSerializer,
         # Transaction: TransactionTextRenderSerializer,
