@@ -41,7 +41,7 @@ class ModelWithTimeStampSerializer(serializers.ModelSerializer):
     modified = serializers.ReadOnlyField()
 
     def __init__(self, *args, **kwargs):
-        super(ModelWithTimeStampSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def validate(self, data):
         if (
@@ -56,7 +56,7 @@ class ModelWithTimeStampSerializer(serializers.ModelSerializer):
 
 class ModelWithUserCodeSerializer(ModelMetaSerializer, IamProtectedSerializer):
     def __init__(self, *args, **kwargs):
-        super(ModelWithUserCodeSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.fields["user_code"] = UserCodeField()
         self.fields["deleted_user_code"] = UserCodeField(read_only=True)
 
@@ -64,7 +64,7 @@ class ModelWithUserCodeSerializer(ModelMetaSerializer, IamProtectedSerializer):
         return super().to_internal_value(data)
 
     def create(self, validated_data):
-        instance = super(ModelWithUserCodeSerializer, self).create(validated_data)
+        instance = super().create(validated_data)
 
         member = get_member_from_context(self.context)
         master_user = get_master_user_from_context(self.context)
@@ -83,9 +83,7 @@ class ModelWithUserCodeSerializer(ModelMetaSerializer, IamProtectedSerializer):
         return instance
 
     def update(self, instance, validated_data):
-        instance = super(ModelWithUserCodeSerializer, self).update(
-            instance, validated_data
-        )
+        instance = super().update(instance, validated_data)
 
         member = get_member_from_context(self.context)
         master_user = get_master_user_from_context(self.context)

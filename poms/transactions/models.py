@@ -386,7 +386,12 @@ class TransactionTypeGroup(
         Returns attributes that front end uses
         """
         return [
-            {"key": "name", "name": "Name", "value_type": 10, "allow_null": True},
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+                "allow_null": True,
+            },
             {
                 "key": "short_name",
                 "name": "Short name",
@@ -409,7 +414,12 @@ class TransactionTypeGroup(
                 "value_type": 10,
                 "allow_null": True,
             },
-            {"key": "notes", "name": "Notes", "value_type": 10, "allow_null": True},
+            {
+                "key": "notes",
+                "name": "Notes",
+                "value_type": 10,
+                "allow_null": True,
+            },
             {
                 "key": "show_transaction_details",
                 "name": "Show transaction details",
@@ -1194,7 +1204,6 @@ class TransactionTypeInputSettings(models.Model):
         related_name="settings_old",
         verbose_name=gettext_lazy("transaction type input"),
     )
-
     linked_inputs_names = models.TextField(
         blank=True,
         default="",
@@ -2779,7 +2788,6 @@ class ComplexTransaction(DataTimeStampedModel):
         return str(self.code)
 
     def save(self, *args, **kwargs):
-
         if self.code is None or self.code == 0:
             self.code = FakeSequence.next_value(
                 self.transaction_type.master_user, "complex_transaction", d=100

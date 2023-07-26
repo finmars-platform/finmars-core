@@ -402,10 +402,10 @@ class TransactionTypeViewSet(AbstractModelViewSet):
         )
 
         # context_notification_date = request.query_params.get(
-        #     "context_notification_date", None
+        #     "context_notification_date"
         # )
-        # context_final_date = request.query_params.get("context_final_date", None)
-        # context_maturity_date = request.query_params.get("context_maturity_date", None)
+        # context_final_date = request.query_params.get("context_final_date")
+        # context_maturity_date = request.query_params.get("context_maturity_date")
 
         context_report_date = request.query_params.get("context_report_date", None)
         context_report_start_date = request.query_params.get(
@@ -560,9 +560,9 @@ class TransactionTypeViewSet(AbstractModelViewSet):
     def book(self, request, pk=None):
         with transaction.atomic():
             # Some Inputs can choose from which context variable it will take value
-            context_values = self.get_context_for_book(request)
             # But by default Context Variables overwrites default value
-            # default_values = self.get_context_for_book(request)
+
+            context_values = self.get_context_for_book(request)
 
             print(f"context_values={context_values}  pk={pk}")
 
@@ -582,6 +582,7 @@ class TransactionTypeViewSet(AbstractModelViewSet):
                 serializer = self.get_serializer(instance=instance)
                 return Response(serializer.data)
             else:
+                # PUT method
                 complex_transaction_status = request.data["complex_transaction_status"]
 
                 uniqueness_reaction = request.data.get("uniqueness_reaction", None)
@@ -731,8 +732,8 @@ class TransactionTypeViewSet(AbstractModelViewSet):
 
         deserializer = RecalculateUserFieldsSerializer(instance=instance)
 
-        # TODO import-like status check chain someday
-        # TODO Right now is not important because status showed at Active Processes page
+        # import-like status check chain someday, now is not important
+        # because status showed at Active Processes page
         return Response(deserializer.data, status=status.HTTP_200_OK)
 
 
@@ -1206,9 +1207,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
     ]
 
     def create(self, request, *args, **kwargs):
-        raise ValidationError(
-            "Not allowed! To create complex transaction use 'book' action"
-        )
+        raise ValidationError("Not allowed!")
 
     @action(
         detail=False,
@@ -1395,7 +1394,7 @@ class ComplexTransactionViewSet(AbstractModelViewSet):
                             instance.instruments_errors,
                         ]
 
-                        return Response(errors)  # TODO add 400 status code
+                        return Response(errors, status=400)
 
                     else:
                         transaction.savepoint_commit(savepoint)
