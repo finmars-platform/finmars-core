@@ -93,7 +93,7 @@ class BalanceReportBuilderSql:
 
             report_settings = celery_task.options_object
 
-            instance = ReportInstanceModel(**report_settings)
+            instance = ReportInstanceModel(**report_settings, master_user=celery_task.master_user)
 
             # _l.info('report_settings %s' % report_settings)
 
@@ -1958,7 +1958,7 @@ class BalanceReportBuilderSql:
                     master_user=self.instance.master_user,
                     member=self.instance.member,
                     verbose_name="Balance Report",
-                    type="calculate_report",
+                    type="calculate_balance_report",
                     options_object={
                         "report_date": self.instance.report_date,
                         "portfolios_ids": [portfolio.id],
@@ -1987,7 +1987,7 @@ class BalanceReportBuilderSql:
                 master_user=self.instance.master_user,
                 member=self.instance.member,
                 verbose_name="Balance Report",
-                type="calculate_report",
+                type="calculate_balance_report",
                 options_object={
                     "report_date": self.instance.report_date,
                     "portfolios_ids": [instance.id for instance in self.instance.portfolios],

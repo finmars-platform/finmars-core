@@ -3,17 +3,22 @@ import os
 import time
 from datetime import date, timedelta
 
+
+from celery import shared_task, group
+from django.conf import settings
+
 from django.conf import settings
 from django.db import connection
 
 from poms.accounts.models import Account, AccountType
+from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_closest_bday_of_yesterday, get_last_business_day
 from poms.currencies.models import Currency
 from poms.iam.utils import get_allowed_queryset
 from poms.instruments.models import Instrument, CostMethod, InstrumentType
 from poms.portfolios.models import Portfolio
 from poms.reports.common import Report
-from poms.reports.models import PLReportCustomField
+from poms.reports.models import PLReportCustomField, ReportInstanceModel
 from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
     get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
     get_position_consolidation_for_select, dictfetchall, get_transaction_date_filter_for_initial_position_sql_string
@@ -89,7 +94,7 @@ class PLReportBuilderSql:
         _l.info('self.instance.report_date %s' % self.instance.report_date)
         _l.info('self.instance.pl_first_date %s' % self.instance.pl_first_date)
 
-        self.build_positions()
+        self.parallel_build()
 
         self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
 
@@ -104,29 +109,29 @@ class PLReportBuilderSql:
         self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
 
         return self.instance
-
-    def get_final_consolidation_columns(self):
+    @staticmethod
+    def get_final_consolidation_columns(instance):
 
         result = []
 
         # (q2.instrument_id) as instrument_id,
 
-        if self.instance.portfolio_mode == Report.MODE_INDEPENDENT:
+        if instance.portfolio_mode == Report.MODE_INDEPENDENT:
             result.append("(q2.portfolio_id) as portfolio_id")
 
-        if self.instance.account_mode == Report.MODE_INDEPENDENT:
+        if instance.account_mode == Report.MODE_INDEPENDENT:
             result.append("(q2.account_position_id) as account_position_id")
 
-        if self.instance.strategy1_mode == Report.MODE_INDEPENDENT:
+        if instance.strategy1_mode == Report.MODE_INDEPENDENT:
             result.append("(q2.strategy1_position_id) as strategy1_position_id")
 
-        if self.instance.strategy2_mode == Report.MODE_INDEPENDENT:
+        if instance.strategy2_mode == Report.MODE_INDEPENDENT:
             result.append("(q2.strategy2_position_id) as strategy2_position_id")
 
-        if self.instance.strategy3_mode == Report.MODE_INDEPENDENT:
+        if instance.strategy3_mode == Report.MODE_INDEPENDENT:
             result.append("(q2.strategy3_position_id) as strategy3_position_id")
 
-        if self.instance.allocation_mode == Report.MODE_INDEPENDENT:
+        if instance.allocation_mode == Report.MODE_INDEPENDENT:
             result.append("(q2.allocation_pl_id) as allocation_pl_id")
 
         resultString = ''
@@ -135,24 +140,24 @@ class PLReportBuilderSql:
             resultString = ", ".join(result) + ', '
 
         return resultString
-
-    def get_final_consolidation_where_filters_columns(self):
+    @staticmethod
+    def get_final_consolidation_where_filters_columns(instance):
 
         result = []
 
-        if self.instance.portfolio_mode == Report.MODE_INDEPENDENT:
+        if instance.portfolio_mode == Report.MODE_INDEPENDENT:
             result.append("q2.portfolio_id = q1.portfolio_id")
 
-        if self.instance.account_mode == Report.MODE_INDEPENDENT:
+        if instance.account_mode == Report.MODE_INDEPENDENT:
             result.append("q2.account_position_id = q1.account_position_id")
 
-        if self.instance.strategy1_mode == Report.MODE_INDEPENDENT:
+        if instance.strategy1_mode == Report.MODE_INDEPENDENT:
             result.append("q2.strategy1_position_id = q1.strategy1_position_id")
 
-        if self.instance.strategy2_mode == Report.MODE_INDEPENDENT:
+        if instance.strategy2_mode == Report.MODE_INDEPENDENT:
             result.append("q2.strategy2_position_id = q1.strategy2_position_id")
 
-        if self.instance.strategy3_mode == Report.MODE_INDEPENDENT:
+        if instance.strategy3_mode == Report.MODE_INDEPENDENT:
             result.append("q2.strategy3_position_id = q1.strategy3_position_id")
 
         resultString = ''
@@ -3005,32 +3010,34 @@ class PLReportBuilderSql:
             """
 
         return query
+    @staticmethod
+    def get_query_for_first_date(instance):
 
-    def get_query_for_first_date(self):
+        ecosystem_defaults = EcosystemDefault.objects.get(master_user=instance.master_user)
 
-        report_fx_rate = get_report_fx_rate(self.instance, self.instance.pl_first_date)
+        report_fx_rate = get_report_fx_rate(instance, instance.pl_first_date)
 
         _l.debug('report_fx_rate %s' % report_fx_rate)
 
-        transaction_filter_sql_string = get_transaction_filter_sql_string(self.instance)
+        transaction_filter_sql_string = get_transaction_filter_sql_string(instance)
         transaction_date_filter_for_initial_position_sql_string = get_transaction_date_filter_for_initial_position_sql_string(
-            self.instance.report_date, has_where=bool(len(transaction_filter_sql_string)))
+            instance.report_date, has_where=bool(len(transaction_filter_sql_string)))
         fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
-            self.instance)
+            instance)
         transactions_all_with_multipliers_where_expression = get_where_expression_for_position_consolidation(
-            self.instance,
+            instance,
             prefix="tt_w_m.", prefix_second="t_o.")
-        consolidation_columns = get_position_consolidation_for_select(self.instance)
-        tt_consolidation_columns = get_position_consolidation_for_select(self.instance, prefix="tt.")
-        tt_in1_consolidation_columns = get_position_consolidation_for_select(self.instance, prefix="tt_in1.")
+        consolidation_columns = get_position_consolidation_for_select(instance)
+        tt_consolidation_columns = get_position_consolidation_for_select(instance, prefix="tt.")
+        tt_in1_consolidation_columns = get_position_consolidation_for_select(instance, prefix="tt_in1.")
 
-        query = self.get_source_query(cost_method=self.instance.cost_method.id)
+        query = PLReportBuilderSql.get_source_query(cost_method=instance.cost_method.id)
 
-        query = query.format(report_date=self.instance.pl_first_date,
-                             master_user_id=self.instance.master_user.id,
-                             default_currency_id=self.ecosystem_defaults.currency_id,
-                             report_currency_id=self.instance.report_currency.id,
-                             pricing_policy_id=self.instance.pricing_policy.id,
+        query = query.format(report_date=instance.pl_first_date,
+                             master_user_id=instance.master_user.id,
+                             default_currency_id=ecosystem_defaults.currency_id,
+                             report_currency_id=instance.report_currency.id,
+                             pricing_policy_id=instance.pricing_policy.id,
                              report_fx_rate=report_fx_rate,
                              transaction_filter_sql_string=transaction_filter_sql_string,
                              transaction_date_filter_for_initial_position_sql_string=transaction_date_filter_for_initial_position_sql_string,
@@ -3040,38 +3047,40 @@ class PLReportBuilderSql:
                              tt_in1_consolidation_columns=tt_in1_consolidation_columns,
                              transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
                              filter_query_for_balance_in_multipliers_table='',
-                             bday_yesterday_of_report_date=self.bday_yesterday_of_report_date
+                             bday_yesterday_of_report_date=instance.bday_yesterday_of_report_date
                              )
 
         return query
 
-    def get_query_for_second_date(self):
+    @staticmethod
+    def get_query_for_second_date(instance):
 
-        report_fx_rate = get_report_fx_rate(self.instance, self.instance.report_date)
+        report_fx_rate = get_report_fx_rate(instance, instance.report_date)
+        ecosystem_defaults = EcosystemDefault.objects.get(master_user=instance.master_user)
 
         _l.debug('report_fx_rate %s' % report_fx_rate)
 
-        transaction_filter_sql_string = get_transaction_filter_sql_string(self.instance)
+        transaction_filter_sql_string = get_transaction_filter_sql_string(instance)
         transaction_date_filter_for_initial_position_sql_string = get_transaction_date_filter_for_initial_position_sql_string(
-            self.instance.report_date, has_where=bool(len(transaction_filter_sql_string)))
+            instance.report_date, has_where=bool(len(transaction_filter_sql_string)))
         fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
-            self.instance)
+            instance)
         transactions_all_with_multipliers_where_expression = get_where_expression_for_position_consolidation(
-            self.instance,
+            instance,
             prefix="tt_w_m.", prefix_second="t_o.")
-        consolidation_columns = get_position_consolidation_for_select(self.instance)
-        tt_consolidation_columns = get_position_consolidation_for_select(self.instance,
+        consolidation_columns = get_position_consolidation_for_select(instance)
+        tt_consolidation_columns = get_position_consolidation_for_select(instance,
                                                                          prefix="tt.")
 
-        tt_in1_consolidation_columns = get_position_consolidation_for_select(self.instance, prefix="tt_in1.")
+        tt_in1_consolidation_columns = get_position_consolidation_for_select(instance, prefix="tt_in1.")
 
-        query = self.get_source_query(cost_method=self.instance.cost_method.id)
+        query = PLReportBuilderSql.get_source_query(cost_method=instance.cost_method.id)
 
-        query = query.format(report_date=self.instance.report_date,
-                             master_user_id=self.instance.master_user.id,
-                             default_currency_id=self.ecosystem_defaults.currency_id,
-                             report_currency_id=self.instance.report_currency.id,
-                             pricing_policy_id=self.instance.pricing_policy.id,
+        query = query.format(report_date=instance.report_date,
+                             master_user_id=instance.master_user.id,
+                             default_currency_id=ecosystem_defaults.currency_id,
+                             report_currency_id=instance.report_currency.id,
+                             pricing_policy_id=instance.pricing_policy.id,
                              report_fx_rate=report_fx_rate,
                              transaction_filter_sql_string=transaction_filter_sql_string,
                              transaction_date_filter_for_initial_position_sql_string=transaction_date_filter_for_initial_position_sql_string,
@@ -3081,569 +3090,682 @@ class PLReportBuilderSql:
                              tt_in1_consolidation_columns=tt_in1_consolidation_columns,
                              transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
                              filter_query_for_balance_in_multipliers_table='',
-                             bday_yesterday_of_report_date=self.bday_yesterday_of_report_date
+                             bday_yesterday_of_report_date=instance.bday_yesterday_of_report_date
                              )
 
         return query
 
-    def build_positions(self):
+    @shared_task(name='reports.build_pl_report', bind=True)
+    def build(self, task_id):
 
-        _l.debug("build positions ")
-
-        with connection.cursor() as cursor:
-
-            query_1 = self.get_query_for_first_date()
-            query_2 = self.get_query_for_second_date()
+        try:
 
             st = time.perf_counter()
 
-            # q1 - pl first date
-            # q2 - report date
-            # language=PostgreSQL
-            query = """select 
-                            
-                            (q2.name) as name,
-                            (q2.short_name) as short_name,
-                            (q2.user_code) as user_code,
-                            (q2.item_type) as item_type,
-                            
-                            -- add optional account_position, strategy1 position etc
-                            
-                            (q2.instrument_id) as instrument_id,
-                            (q2.currency_id) as currency_id,
-                            (q2.co_directional_exposure_currency_id) as co_directional_exposure_currency_id,
-                            
-                            {final_consolidation_columns}
-                            
-                            (q2.position_size) as position_size, -- ?
-                            (q2.nominal_position_size) as nominal_position_size,
-                            
-                            (q2.position_return) as position_return,
-                            (q2.position_return_loc) as position_return_loc,
-                            (q2.net_position_return) as net_position_return,
-                            (q2.net_position_return_loc) as net_position_return_loc,
-                            
-                            (q2.net_cost_price) as net_cost_price,
-                            (q2.net_cost_price_loc) as net_cost_price_loc,
-                            
-                            (q2.gross_cost_price) as gross_cost_price,
-                            (q2.gross_cost_price_loc) as gross_cost_price_loc,
-                            
-                            (q2.principal_invested) as principal_invested,
-                            (q2.principal_invested_loc) as principal_invested_loc,
-                            
-                            (q2.amount_invested) as amount_invested,
-                            (q2.amount_invested_loc) as amount_invested_loc,
+            celery_task = CeleryTask.objects.get(id=task_id)
+
+            report_settings = celery_task.options_object
+
+            instance = ReportInstanceModel(**report_settings, master_user=celery_task.master_user)
+
+            with connection.cursor() as cursor:
+
+                query_1 = PLReportBuilderSql.get_query_for_first_date(instance)
+                query_2 = PLReportBuilderSql.get_query_for_second_date(instance)
+
+                ecosystem_defaults = EcosystemDefault.objects.get(master_user=celery_task.master_user)
+
+                st = time.perf_counter()
+
+                # q1 - pl first date
+                # q2 - report date
+                # language=PostgreSQL
+                query = """select 
                                 
-                            (q2.time_invested) as time_invested,
-                            
-                            (q2.pricing_currency_id) as pricing_currency_id,
-                            (q2.instrument_pricing_currency_fx_rate) as instrument_pricing_currency_fx_rate,
-                            (q2.instrument_accrued_currency_fx_rate) as instrument_accrued_currency_fx_rate,
-                            
-                            (q2.instrument_principal_price) as instrument_principal_price,
-                            (q2.instrument_accrued_price) as instrument_accrued_price,
-                            (q2.instrument_factor) as instrument_factor,
-                            (q2.instrument_ytm) as instrument_ytm,
-                            (q2.daily_price_change) as daily_price_change,
-                            
-                            
-                            (q2.ytm) as ytm,
-                            (q2.modified_duration) as modified_duration,
-                            (q2.ytm_at_cost) as ytm_at_cost,
-                            (q2.return_annually) as return_annually,
-                            
-                            (q2.market_value) as market_value,
-                            (q2.exposure) as exposure,
-                            
-                            (q2.market_value_loc) as market_value_loc,
-                            (q2.exposure_loc) as exposure_loc,
-                            
-                            (q2.item_type) as item_type,
-                            (q2.item_type_name) as item_type_name,
-                            
-                            (q2.principal_opened - coalesce(q1.principal_opened, 0)) as principal_opened,
-                            (q2.carry_opened - coalesce(q1.carry_opened, 0)) as carry_opened,
-                            (q2.overheads_opened - coalesce(q1.overheads_opened, 0)) as overheads_opened,
-                            (q2.total_opened - coalesce(q1.total_opened, 0)) as total_opened,
-                            
-                            (q2.principal_closed - coalesce(q1.principal_closed, 0)) as principal_closed,
-                            (q2.carry_closed - coalesce(q1.carry_closed, 0)) as carry_closed,
-                            (q2.overheads_closed - coalesce(q1.overheads_closed, 0)) as overheads_closed,
-                            (q2.total_closed - coalesce(q1.total_closed, 0)) as total_closed,
-                            
-                            (q2.principal_fx_opened - coalesce(q1.principal_fx_opened, 0)) as principal_fx_opened,
-                            (q2.carry_fx_opened - coalesce(q1.carry_fx_opened, 0)) as carry_fx_opened,
-                            (q2.overheads_fx_opened - coalesce(q1.overheads_fx_opened, 0)) as overheads_fx_opened,
-                            (q2.total_fx_opened - coalesce(q1.total_fx_opened, 0)) as total_fx_opened,
-                            
-                            (q2.principal_fx_closed - coalesce(q1.principal_fx_closed, 0)) as principal_fx_closed,
-                            (q2.carry_fx_closed - coalesce(q1.carry_fx_closed, 0)) as carry_fx_closed,
-                            (q2.overheads_fx_closed - coalesce(q1.overheads_fx_closed, 0)) as overheads_fx_closed,
-                            (q2.total_fx_closed - coalesce(q1.total_fx_closed, 0)) as total_fx_closed,
-                            
-                            (q2.principal_fixed_opened - coalesce(q1.principal_fixed_opened, 0)) as principal_fixed_opened,
-                            (q2.carry_fixed_opened - coalesce(q1.carry_fixed_opened, 0)) as carry_fixed_opened,
-                            (q2.overheads_fixed_opened - coalesce(q1.overheads_fixed_opened, 0)) as overheads_fixed_opened,
-                            (q2.total_fixed_opened - coalesce(q1.total_fixed_opened, 0)) as total_fixed_opened,
-                            
-                            (q2.principal_fixed_closed - coalesce(q1.principal_fixed_closed, 0)) as principal_fixed_closed,
-                            (q2.carry_fixed_closed - coalesce(q1.carry_fixed_closed, 0)) as carry_fixed_closed,
-                            (q2.overheads_fixed_closed - coalesce(q1.overheads_fixed_closed, 0)) as overheads_fixed_closed,
-                            (q2.total_fixed_closed - coalesce(q1.total_fixed_closed, 0)) as total_fixed_closed,
-                            
-                            -- loc
-                            
-                            (q2.principal_opened_loc - coalesce(q1.principal_opened_loc, 0)) as principal_opened_loc,
-                            (q2.carry_opened_loc - coalesce(q1.carry_opened_loc, 0)) as carry_opened_loc,
-                            (q2.overheads_opened_loc - coalesce(q1.overheads_opened_loc, 0)) as overheads_opened_loc,
-                            (q2.total_opened_loc - coalesce(q1.total_opened_loc, 0)) as total_opened_loc,
-                            
-                            (q2.principal_closed_loc - coalesce(q1.principal_closed_loc, 0)) as principal_closed_loc,
-                            (q2.carry_closed_loc - coalesce(q1.carry_closed_loc, 0)) as carry_closed_loc,
-                            (q2.overheads_closed_loc - coalesce(q1.overheads_closed_loc, 0)) as overheads_closed_loc,
-                            (q2.total_closed_loc - coalesce(q1.total_closed_loc, 0)) as total_closed_loc,
-                            
-                            (q2.principal_fx_opened_loc - coalesce(q1.principal_fx_opened_loc, 0)) as principal_fx_opened_loc,
-                            (q2.carry_fx_opened_loc - coalesce(q1.carry_fx_opened_loc, 0)) as carry_fx_opened_loc,
-                            (q2.overheads_fx_opened_loc - coalesce(q1.overheads_fx_opened_loc, 0)) as overheads_fx_opened_loc,
-                            (q2.total_fx_opened_loc - coalesce(q1.total_fx_opened_loc, 0)) as total_fx_opened_loc,
-                            
-                            (q2.principal_fx_closed_loc - coalesce(q1.principal_fx_closed_loc, 0)) as principal_fx_closed_loc,
-                            (q2.carry_fx_closed_loc - coalesce(q1.carry_fx_closed_loc, 0)) as carry_fx_closed_loc,
-                            (q2.overheads_fx_closed_loc - coalesce(q1.overheads_fx_closed_loc, 0)) as overheads_fx_closed_loc,
-                            (q2.total_fx_closed_loc - coalesce(q1.total_fx_closed_loc, 0)) as total_fx_closed_loc,
-                            
-                            (q2.principal_fixed_opened_loc - coalesce(q1.principal_fixed_opened_loc, 0)) as principal_fixed_opened_loc,
-                            (q2.carry_fixed_opened_loc - coalesce(q1.carry_fixed_opened_loc, 0)) as carry_fixed_opened_loc,
-                            (q2.overheads_fixed_opened_loc - coalesce(q1.overheads_fixed_opened_loc, 0)) as overheads_fixed_opened_loc,
-                            (q2.total_fixed_opened_loc - coalesce(q1.total_fixed_opened_loc, 0)) as total_fixed_opened_loc,
-                            
-                            (q2.principal_fixed_closed_loc - coalesce(q1.principal_fixed_closed_loc, 0)) as principal_fixed_closed_loc,
-                            (q2.carry_fixed_closed_loc - coalesce(q1.carry_fixed_closed_loc, 0)) as carry_fixed_closed_loc,
-                            (q2.overheads_fixed_closed_loc - coalesce(q1.overheads_fixed_closed_loc, 0)) as overheads_fixed_closed_loc,
-                            (q2.total_fixed_closed_loc - coalesce(q1.total_fixed_closed_loc, 0)) as total_fixed_closed_loc,
-                            
-                            (q2.mismatch - coalesce(q1.mismatch, 0)) as mismatch
+                                (q2.name) as name,
+                                (q2.short_name) as short_name,
+                                (q2.user_code) as user_code,
+                                (q2.item_type) as item_type,
                                 
-                       from ({query_report_date}) as q2 
-                       left join ({query_first_date}) as q1 on q1.name = q2.name and q1.item_type = q2.item_type and q1.instrument_id = q2.instrument_id {final_consolidation_where_filters}"""
+                                -- add optional account_position, strategy1 position etc
+                                
+                                (q2.instrument_id) as instrument_id,
+                                (q2.currency_id) as currency_id,
+                                (q2.co_directional_exposure_currency_id) as co_directional_exposure_currency_id,
+                                
+                                {final_consolidation_columns}
+                                
+                                (q2.position_size) as position_size, -- ?
+                                (q2.nominal_position_size) as nominal_position_size,
+                                
+                                (q2.position_return) as position_return,
+                                (q2.position_return_loc) as position_return_loc,
+                                (q2.net_position_return) as net_position_return,
+                                (q2.net_position_return_loc) as net_position_return_loc,
+                                
+                                (q2.net_cost_price) as net_cost_price,
+                                (q2.net_cost_price_loc) as net_cost_price_loc,
+                                
+                                (q2.gross_cost_price) as gross_cost_price,
+                                (q2.gross_cost_price_loc) as gross_cost_price_loc,
+                                
+                                (q2.principal_invested) as principal_invested,
+                                (q2.principal_invested_loc) as principal_invested_loc,
+                                
+                                (q2.amount_invested) as amount_invested,
+                                (q2.amount_invested_loc) as amount_invested_loc,
+                                    
+                                (q2.time_invested) as time_invested,
+                                
+                                (q2.pricing_currency_id) as pricing_currency_id,
+                                (q2.instrument_pricing_currency_fx_rate) as instrument_pricing_currency_fx_rate,
+                                (q2.instrument_accrued_currency_fx_rate) as instrument_accrued_currency_fx_rate,
+                                
+                                (q2.instrument_principal_price) as instrument_principal_price,
+                                (q2.instrument_accrued_price) as instrument_accrued_price,
+                                (q2.instrument_factor) as instrument_factor,
+                                (q2.instrument_ytm) as instrument_ytm,
+                                (q2.daily_price_change) as daily_price_change,
+                                
+                                
+                                (q2.ytm) as ytm,
+                                (q2.modified_duration) as modified_duration,
+                                (q2.ytm_at_cost) as ytm_at_cost,
+                                (q2.return_annually) as return_annually,
+                                
+                                (q2.market_value) as market_value,
+                                (q2.exposure) as exposure,
+                                
+                                (q2.market_value_loc) as market_value_loc,
+                                (q2.exposure_loc) as exposure_loc,
+                                
+                                (q2.item_type) as item_type,
+                                (q2.item_type_name) as item_type_name,
+                                
+                                (q2.principal_opened - coalesce(q1.principal_opened, 0)) as principal_opened,
+                                (q2.carry_opened - coalesce(q1.carry_opened, 0)) as carry_opened,
+                                (q2.overheads_opened - coalesce(q1.overheads_opened, 0)) as overheads_opened,
+                                (q2.total_opened - coalesce(q1.total_opened, 0)) as total_opened,
+                                
+                                (q2.principal_closed - coalesce(q1.principal_closed, 0)) as principal_closed,
+                                (q2.carry_closed - coalesce(q1.carry_closed, 0)) as carry_closed,
+                                (q2.overheads_closed - coalesce(q1.overheads_closed, 0)) as overheads_closed,
+                                (q2.total_closed - coalesce(q1.total_closed, 0)) as total_closed,
+                                
+                                (q2.principal_fx_opened - coalesce(q1.principal_fx_opened, 0)) as principal_fx_opened,
+                                (q2.carry_fx_opened - coalesce(q1.carry_fx_opened, 0)) as carry_fx_opened,
+                                (q2.overheads_fx_opened - coalesce(q1.overheads_fx_opened, 0)) as overheads_fx_opened,
+                                (q2.total_fx_opened - coalesce(q1.total_fx_opened, 0)) as total_fx_opened,
+                                
+                                (q2.principal_fx_closed - coalesce(q1.principal_fx_closed, 0)) as principal_fx_closed,
+                                (q2.carry_fx_closed - coalesce(q1.carry_fx_closed, 0)) as carry_fx_closed,
+                                (q2.overheads_fx_closed - coalesce(q1.overheads_fx_closed, 0)) as overheads_fx_closed,
+                                (q2.total_fx_closed - coalesce(q1.total_fx_closed, 0)) as total_fx_closed,
+                                
+                                (q2.principal_fixed_opened - coalesce(q1.principal_fixed_opened, 0)) as principal_fixed_opened,
+                                (q2.carry_fixed_opened - coalesce(q1.carry_fixed_opened, 0)) as carry_fixed_opened,
+                                (q2.overheads_fixed_opened - coalesce(q1.overheads_fixed_opened, 0)) as overheads_fixed_opened,
+                                (q2.total_fixed_opened - coalesce(q1.total_fixed_opened, 0)) as total_fixed_opened,
+                                
+                                (q2.principal_fixed_closed - coalesce(q1.principal_fixed_closed, 0)) as principal_fixed_closed,
+                                (q2.carry_fixed_closed - coalesce(q1.carry_fixed_closed, 0)) as carry_fixed_closed,
+                                (q2.overheads_fixed_closed - coalesce(q1.overheads_fixed_closed, 0)) as overheads_fixed_closed,
+                                (q2.total_fixed_closed - coalesce(q1.total_fixed_closed, 0)) as total_fixed_closed,
+                                
+                                -- loc
+                                
+                                (q2.principal_opened_loc - coalesce(q1.principal_opened_loc, 0)) as principal_opened_loc,
+                                (q2.carry_opened_loc - coalesce(q1.carry_opened_loc, 0)) as carry_opened_loc,
+                                (q2.overheads_opened_loc - coalesce(q1.overheads_opened_loc, 0)) as overheads_opened_loc,
+                                (q2.total_opened_loc - coalesce(q1.total_opened_loc, 0)) as total_opened_loc,
+                                
+                                (q2.principal_closed_loc - coalesce(q1.principal_closed_loc, 0)) as principal_closed_loc,
+                                (q2.carry_closed_loc - coalesce(q1.carry_closed_loc, 0)) as carry_closed_loc,
+                                (q2.overheads_closed_loc - coalesce(q1.overheads_closed_loc, 0)) as overheads_closed_loc,
+                                (q2.total_closed_loc - coalesce(q1.total_closed_loc, 0)) as total_closed_loc,
+                                
+                                (q2.principal_fx_opened_loc - coalesce(q1.principal_fx_opened_loc, 0)) as principal_fx_opened_loc,
+                                (q2.carry_fx_opened_loc - coalesce(q1.carry_fx_opened_loc, 0)) as carry_fx_opened_loc,
+                                (q2.overheads_fx_opened_loc - coalesce(q1.overheads_fx_opened_loc, 0)) as overheads_fx_opened_loc,
+                                (q2.total_fx_opened_loc - coalesce(q1.total_fx_opened_loc, 0)) as total_fx_opened_loc,
+                                
+                                (q2.principal_fx_closed_loc - coalesce(q1.principal_fx_closed_loc, 0)) as principal_fx_closed_loc,
+                                (q2.carry_fx_closed_loc - coalesce(q1.carry_fx_closed_loc, 0)) as carry_fx_closed_loc,
+                                (q2.overheads_fx_closed_loc - coalesce(q1.overheads_fx_closed_loc, 0)) as overheads_fx_closed_loc,
+                                (q2.total_fx_closed_loc - coalesce(q1.total_fx_closed_loc, 0)) as total_fx_closed_loc,
+                                
+                                (q2.principal_fixed_opened_loc - coalesce(q1.principal_fixed_opened_loc, 0)) as principal_fixed_opened_loc,
+                                (q2.carry_fixed_opened_loc - coalesce(q1.carry_fixed_opened_loc, 0)) as carry_fixed_opened_loc,
+                                (q2.overheads_fixed_opened_loc - coalesce(q1.overheads_fixed_opened_loc, 0)) as overheads_fixed_opened_loc,
+                                (q2.total_fixed_opened_loc - coalesce(q1.total_fixed_opened_loc, 0)) as total_fixed_opened_loc,
+                                
+                                (q2.principal_fixed_closed_loc - coalesce(q1.principal_fixed_closed_loc, 0)) as principal_fixed_closed_loc,
+                                (q2.carry_fixed_closed_loc - coalesce(q1.carry_fixed_closed_loc, 0)) as carry_fixed_closed_loc,
+                                (q2.overheads_fixed_closed_loc - coalesce(q1.overheads_fixed_closed_loc, 0)) as overheads_fixed_closed_loc,
+                                (q2.total_fixed_closed_loc - coalesce(q1.total_fixed_closed_loc, 0)) as total_fixed_closed_loc,
+                                
+                                (q2.mismatch - coalesce(q1.mismatch, 0)) as mismatch
+                                    
+                           from ({query_report_date}) as q2 
+                           left join ({query_first_date}) as q1 on q1.name = q2.name and q1.item_type = q2.item_type and q1.instrument_id = q2.instrument_id {final_consolidation_where_filters}"""
 
-            query = query.format(query_first_date=query_1,
-                                 query_report_date=query_2,
-                                 final_consolidation_columns=self.get_final_consolidation_columns(),
-                                 final_consolidation_where_filters=self.get_final_consolidation_where_filters_columns()
-                                 )
+                query = query.format(query_first_date=query_1,
+                                     query_report_date=query_2,
+                                     final_consolidation_columns=PLReportBuilderSql.get_final_consolidation_columns(instance),
+                                     final_consolidation_where_filters=PLReportBuilderSql.get_final_consolidation_where_filters_columns(instance)
+                                     )
 
-            if settings.SERVER_TYPE == 'local':
-                with open(os.path.join(settings.BASE_DIR, 'query_result_before_execution_pl.txt'), 'w') as the_file:
-                    the_file.write(query)
+                if settings.SERVER_TYPE == 'local':
+                    with open(os.path.join(settings.BASE_DIR, 'query_result_before_execution_pl.txt'), 'w') as the_file:
+                        the_file.write(query)
 
-            cursor.execute(query)
+                cursor.execute(query)
 
-            _l.debug('PL report query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
+                _l.debug('PL report query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
-            query_str = str(cursor.query, 'utf-8')
+                query_str = str(cursor.query, 'utf-8')
 
-            if settings.SERVER_TYPE == 'local':
-                with open(os.path.join(settings.BASE_DIR, '/tmp/query_result_pl.txt'), 'w') as the_file:
-                    the_file.write(query_str)
+                if settings.SERVER_TYPE == 'local':
+                    with open(os.path.join(settings.BASE_DIR, '/tmp/query_result_pl.txt'), 'w') as the_file:
+                        the_file.write(query_str)
 
-            result_tmp_raw = dictfetchall(cursor)
-            result_tmp = []
-            result = []
+                result_tmp_raw = dictfetchall(cursor)
+                result_tmp = []
+                result = []
 
-            ITEM_TYPE_INSTRUMENT = 1
-            ITEM_TYPE_FX_VARIATIONS = 3
-            ITEM_TYPE_FX_TRADES = 4
-            ITEM_TYPE_TRANSACTION_PL = 5
-            ITEM_TYPE_MISMATCH = 6
+                ITEM_TYPE_INSTRUMENT = 1
+                ITEM_TYPE_FX_VARIATIONS = 3
+                ITEM_TYPE_FX_TRADES = 4
+                ITEM_TYPE_TRANSACTION_PL = 5
+                ITEM_TYPE_MISMATCH = 6
 
-            for item in result_tmp_raw:
+                for item in result_tmp_raw:
 
-                item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
-                item['nominal_position_size'] = round(item['nominal_position_size'], settings.ROUND_NDIGITS)
+                    item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
+                    item['nominal_position_size'] = round(item['nominal_position_size'], settings.ROUND_NDIGITS)
 
-                if item['item_type'] == ITEM_TYPE_MISMATCH:
-                    if item['position_size'] and item['total_opened']:
-                        if item['instrument_id'] != self.ecosystem_defaults.instrument_id:
-                            result_tmp.append(item)
-                else:
-                    result_tmp.append(item)
-
-            for item in result_tmp:
-
-                # result_item_opened = item.copy()
-                result_item_opened = {}
-
-                result_item_opened['name'] = item['name']
-                result_item_opened['short_name'] = item['short_name']
-                result_item_opened['user_code'] = item['user_code']
-                result_item_opened['item_type'] = item['item_type']
-                result_item_opened['item_type_name'] = item['item_type_name']
-
-                result_item_opened['market_value'] = item['market_value']
-                result_item_opened['exposure'] = item['exposure']
-
-                result_item_opened['market_value_loc'] = item['market_value_loc']
-                result_item_opened['exposure_loc'] = item['exposure_loc']
-
-                result_item_opened['ytm'] = item['ytm']
-                result_item_opened['ytm_at_cost'] = item['ytm_at_cost']
-                result_item_opened['modified_duration'] = item['modified_duration']
-                result_item_opened['time_invested'] = item['time_invested']
-
-                result_item_opened['amount_invested'] = item['amount_invested']
-                result_item_opened['amount_invested_loc'] = item['amount_invested_loc']
-
-                result_item_opened['principal_invested'] = item['principal_invested']
-                result_item_opened['principal_invested_loc'] = item['principal_invested_loc']
-
-                result_item_opened['gross_cost_price'] = item['gross_cost_price']
-                result_item_opened['gross_cost_price_loc'] = item['gross_cost_price_loc']
-
-                result_item_opened['net_cost_price'] = item['net_cost_price']
-                result_item_opened['net_cost_price_loc'] = item['net_cost_price_loc']
-
-                result_item_opened['position_return'] = item['position_return']
-                result_item_opened['position_return_loc'] = item['position_return_loc']
-
-                result_item_opened['net_position_return'] = item['net_position_return']
-                result_item_opened['net_position_return_loc'] = item['net_position_return_loc']
-
-                result_item_opened['position_size'] = item['position_size']
-                result_item_opened['nominal_position_size'] = item['nominal_position_size']
-
-                result_item_opened['mismatch'] = item['mismatch']
-
-                result_item_opened['instrument_id'] = item['instrument_id']
-
-                if "portfolio_id" not in item:
-                    result_item_opened['portfolio_id'] = self.ecosystem_defaults.portfolio_id
-                else:
-                    result_item_opened['portfolio_id'] = item['portfolio_id']
-
-                if "account_position_id" not in item:
-                    result_item_opened['account_position_id'] = self.ecosystem_defaults.account_id
-                else:
-                    result_item_opened['account_position_id'] = item['account_position_id']
-
-                if "strategy1_position_id" not in item:
-                    result_item_opened['strategy1_position_id'] = self.ecosystem_defaults.strategy1_id
-                else:
-                    result_item_opened['strategy1_position_id'] = item['strategy1_position_id']
-
-                if "strategy2_position_id" not in item:
-                    result_item_opened['strategy2_position_id'] = self.ecosystem_defaults.strategy2_id
-                else:
-                    result_item_opened['strategy2_position_id'] = item['strategy2_position_id']
-
-                if "strategy3_position_id" not in item:
-                    result_item_opened['strategy3_position_id'] = self.ecosystem_defaults.strategy3_id
-                else:
-                    result_item_opened['strategy3_position_id'] = item['strategy3_position_id']
-
-                if 'allocation_pl_id' in item:
-                    if item['allocation_pl_id'] == self.ecosystem_defaults.instrument_id or \
-                            item['allocation_pl_id'] == None or item['allocation_pl_id'] == -1:
-
-                        if item['instrument_id'] != None and item['instrument_id'] != -1:
-                            result_item_opened['allocation_pl_id'] = item['instrument_id']
-                        else:
-                            # convert None to '-'
-                            result_item_opened['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
+                    if item['item_type'] == ITEM_TYPE_MISMATCH:
+                        if item['position_size'] and item['total_opened']:
+                            if item['instrument_id'] != ecosystem_defaults.instrument_id:
+                                result_tmp.append(item)
                     else:
-                        # TODO do not remove that, its really important
-                        result_item_opened['allocation_pl_id'] = item['allocation_pl_id']
-                else:
-                    result_item_opened['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
+                        result_tmp.append(item)
 
-                if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT:
-                    result_item_opened["item_group"] = 10
-                    result_item_opened["item_group_code"] = "OPENED"
-                    result_item_opened["item_group_name"] = "Opened"
+                for item in result_tmp:
 
-                if result_item_opened['item_type'] == ITEM_TYPE_FX_VARIATIONS:
-                    result_item_opened["item_group"] = 11
-                    result_item_opened["item_group_code"] = "FX_VARIATIONS"
-                    result_item_opened["item_group_name"] = "FX Variations"
+                    # result_item_opened = item.copy()
+                    result_item_opened = {}
 
-                if result_item_opened['item_type'] == ITEM_TYPE_FX_TRADES:
-                    result_item_opened["item_group"] = 12
-                    result_item_opened["item_group_code"] = "FX_TRADES"
-                    result_item_opened["item_group_name"] = "FX Trades"
+                    result_item_opened['name'] = item['name']
+                    result_item_opened['short_name'] = item['short_name']
+                    result_item_opened['user_code'] = item['user_code']
+                    result_item_opened['item_type'] = item['item_type']
+                    result_item_opened['item_type_name'] = item['item_type_name']
 
-                if result_item_opened['item_type'] == ITEM_TYPE_TRANSACTION_PL:
-                    result_item_opened["item_group"] = 13
-                    result_item_opened["item_group_code"] = "OTHER"
-                    result_item_opened["item_group_name"] = "Other"
+                    result_item_opened['market_value'] = item['market_value']
+                    result_item_opened['exposure'] = item['exposure']
 
-                if result_item_opened['item_type'] == ITEM_TYPE_MISMATCH:
-                    result_item_opened["item_group"] = 14
-                    result_item_opened["item_group_code"] = "MISMATCH"
-                    result_item_opened["item_group_name"] = "Mismatch"
+                    result_item_opened['market_value_loc'] = item['market_value_loc']
+                    result_item_opened['exposure_loc'] = item['exposure_loc']
 
-                result_item_opened["exposure_currency_id"] = item["co_directional_exposure_currency_id"]
-                result_item_opened["pricing_currency_id"] = item["pricing_currency_id"]
-                result_item_opened["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
-                result_item_opened["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
-                result_item_opened["instrument_principal_price"] = item["instrument_principal_price"]
-                result_item_opened["instrument_accrued_price"] = item["instrument_accrued_price"]
-                result_item_opened["instrument_factor"] = item["instrument_factor"]
-                result_item_opened["instrument_ytm"] = item["instrument_ytm"]
-                result_item_opened["daily_price_change"] = item["daily_price_change"]
+                    result_item_opened['ytm'] = item['ytm']
+                    result_item_opened['ytm_at_cost'] = item['ytm_at_cost']
+                    result_item_opened['modified_duration'] = item['modified_duration']
+                    result_item_opened['time_invested'] = item['time_invested']
 
-                result_item_opened["principal"] = item["principal_opened"]
-                result_item_opened["carry"] = item["carry_opened"]
-                result_item_opened["overheads"] = item["overheads_opened"]
-                result_item_opened["total"] = item["total_opened"]
+                    result_item_opened['amount_invested'] = item['amount_invested']
+                    result_item_opened['amount_invested_loc'] = item['amount_invested_loc']
 
-                result_item_opened["principal_fx"] = item["principal_fx_opened"]
-                result_item_opened["carry_fx"] = item["carry_fx_opened"]
-                result_item_opened["overheads_fx"] = item["overheads_fx_opened"]
-                result_item_opened["total_fx"] = item["total_fx_opened"]
+                    result_item_opened['principal_invested'] = item['principal_invested']
+                    result_item_opened['principal_invested_loc'] = item['principal_invested_loc']
 
-                result_item_opened["principal_fixed"] = item["principal_fixed_opened"]
-                result_item_opened["carry_fixed"] = item["carry_fixed_opened"]
-                result_item_opened["overheads_fixed"] = item["overheads_fixed_opened"]
-                result_item_opened["total_fixed"] = item["total_fixed_opened"]
+                    result_item_opened['gross_cost_price'] = item['gross_cost_price']
+                    result_item_opened['gross_cost_price_loc'] = item['gross_cost_price_loc']
 
-                # loc
+                    result_item_opened['net_cost_price'] = item['net_cost_price']
+                    result_item_opened['net_cost_price_loc'] = item['net_cost_price_loc']
 
-                result_item_opened["principal_loc"] = item["principal_opened_loc"]
-                result_item_opened["carry_loc"] = item["carry_opened_loc"]
-                result_item_opened["overheads_loc"] = item["overheads_opened_loc"]
-                result_item_opened["total_loc"] = item["total_opened_loc"]
+                    result_item_opened['position_return'] = item['position_return']
+                    result_item_opened['position_return_loc'] = item['position_return_loc']
 
-                result_item_opened["principal_fx_loc"] = item["principal_fx_opened_loc"]
-                result_item_opened["carry_fx_loc"] = item["carry_fx_opened_loc"]
-                result_item_opened["overheads_fx_loc"] = item["overheads_fx_opened_loc"]
-                result_item_opened["total_fx_loc"] = item["total_fx_opened_loc"]
+                    result_item_opened['net_position_return'] = item['net_position_return']
+                    result_item_opened['net_position_return_loc'] = item['net_position_return_loc']
 
-                result_item_opened["principal_fixed_loc"] = item["principal_fixed_opened_loc"]
-                result_item_opened["carry_fixed_loc"] = item["carry_fixed_opened_loc"]
-                result_item_opened["overheads_fixed_loc"] = item["overheads_fixed_opened_loc"]
-                result_item_opened["total_fixed_loc"] = item["total_fixed_opened_loc"]
+                    result_item_opened['position_size'] = item['position_size']
+                    result_item_opened['nominal_position_size'] = item['nominal_position_size']
 
-                #  CLOSED POSITIONS BELOW
+                    result_item_opened['mismatch'] = item['mismatch']
 
-                # TODO make it more readable
-
-                has_opened_value = False
-
-                if item["principal_opened"] is not None and item["principal_opened"] != 0:
-                    has_opened_value = True
-
-                if item["carry_opened"] is not None and item["carry_opened"] != 0:
-                    has_opened_value = True
-
-                if item["overheads_opened"] is not None and item["overheads_opened"] != 0:
-                    has_opened_value = True
-
-                has_closed_value = False
-
-                if item["principal_closed"] is not None and item["principal_closed"] != 0:
-                    has_closed_value = True
-
-                if item["carry_closed"] is not None and item["carry_closed"] != 0:
-                    has_closed_value = True
-
-                if item["overheads_closed"] is not None and item["overheads_closed"] != 0:
-                    has_closed_value = True
-
-                if result_item_opened['item_type'] == ITEM_TYPE_FX_VARIATIONS and has_opened_value:
-                    result.append(result_item_opened)
-
-                if result_item_opened['item_type'] == ITEM_TYPE_FX_TRADES and has_opened_value:
-                    result.append(result_item_opened)
-
-                if result_item_opened['item_type'] == ITEM_TYPE_TRANSACTION_PL and has_opened_value:
-                    result.append(result_item_opened)
-
-                if result_item_opened['item_type'] == ITEM_TYPE_MISMATCH:
-                    result.append(result_item_opened)
-
-                if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and item["position_size"] != 0:
-                    result.append(result_item_opened)
-
-                if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and has_closed_value:
-
-                    # result_item_closed = item.copy()
-                    # result_item_closed = copy.deepcopy(item)
-
-                    result_item_closed = {}
-
-                    # result_item_closed['item_type'] = ITEM_INSTRUMENT
-                    # result_item_closed['item_type_code'] = "INSTR"
-                    # result_item_closed['item_type_name'] = "Instrument"
-
-                    result_item_closed['name'] = item['name']
-                    result_item_closed['short_name'] = item['short_name']
-                    result_item_closed['user_code'] = item['user_code']
-                    result_item_closed['item_type'] = item['item_type']
-                    result_item_closed['item_type_name'] = item['item_type_name']
-
-                    result_item_closed['market_value'] = 0
-                    result_item_closed['exposure'] = item['exposure']
-
-                    result_item_closed['market_value_loc'] = 0
-                    result_item_closed['exposure_loc'] = item['exposure_loc']
-
-                    result_item_closed['ytm'] = item['ytm']
-                    result_item_closed['ytm_at_cost'] = item['ytm_at_cost']
-                    result_item_closed['modified_duration'] = item['modified_duration']
-                    result_item_closed['time_invested'] = item['time_invested']
-
-                    result_item_closed['amount_invested'] = item['amount_invested']
-                    result_item_closed['amount_invested_loc'] = item['amount_invested_loc']
-
-                    result_item_closed['principal_invested'] = item['principal_invested']
-                    result_item_closed['principal_invested_loc'] = item['principal_invested_loc']
-
-                    result_item_closed['gross_cost_price'] = item['gross_cost_price']
-                    result_item_closed['gross_cost_price_loc'] = item['gross_cost_price_loc']
-
-                    result_item_closed['net_cost_price'] = item['net_cost_price']
-                    result_item_closed['net_cost_price_loc'] = item['net_cost_price_loc']
-
-                    result_item_closed['position_return'] = item['position_return']
-                    result_item_closed['position_return_loc'] = item['position_return_loc']
-
-                    result_item_closed['net_position_return'] = item['net_position_return']
-                    result_item_closed['net_position_return_loc'] = item['net_position_return_loc']
-
-                    result_item_closed['position_size'] = item['position_size']
-                    result_item_closed['mismatch'] = item['mismatch']
-
-                    result_item_closed['exposure'] = item['exposure']
-                    result_item_closed['ytm'] = item['ytm']
-                    result_item_closed['ytm_at_cost'] = item['ytm_at_cost']
-                    result_item_closed['modified_duration'] = item['modified_duration']
-                    result_item_closed['time_invested'] = item['time_invested']
-
-                    result_item_closed['amount_invested'] = item['amount_invested']
-                    result_item_closed['amount_invested_loc'] = item['amount_invested_loc']
-
-                    result_item_closed['principal_invested'] = item['principal_invested']
-                    result_item_closed['principal_invested_loc'] = item['principal_invested_loc']
-
-                    result_item_closed['gross_cost_price'] = item['gross_cost_price']
-                    result_item_closed['gross_cost_price_loc'] = item['gross_cost_price_loc']
-
-                    result_item_closed['net_cost_price'] = item['net_cost_price']
-                    result_item_closed['net_cost_price_loc'] = item['net_cost_price_loc']
-
-                    result_item_closed['position_size'] = item['position_size']
-                    result_item_closed['mismatch'] = item['mismatch']
-
-                    result_item_closed['instrument_id'] = item['instrument_id']
+                    result_item_opened['instrument_id'] = item['instrument_id']
 
                     if "portfolio_id" not in item:
-                        result_item_closed['portfolio_id'] = self.ecosystem_defaults.portfolio_id
+                        result_item_opened['portfolio_id'] = ecosystem_defaults.portfolio_id
                     else:
-                        result_item_closed['portfolio_id'] = item['portfolio_id']
+                        result_item_opened['portfolio_id'] = item['portfolio_id']
 
                     if "account_position_id" not in item:
-                        result_item_closed['account_position_id'] = self.ecosystem_defaults.account_id
+                        result_item_opened['account_position_id'] = ecosystem_defaults.account_id
                     else:
-                        result_item_closed['account_position_id'] = item['account_position_id']
+                        result_item_opened['account_position_id'] = item['account_position_id']
 
                     if "strategy1_position_id" not in item:
-                        result_item_closed['strategy1_position_id'] = self.ecosystem_defaults.strategy1_id
+                        result_item_opened['strategy1_position_id'] = ecosystem_defaults.strategy1_id
                     else:
-                        result_item_closed['strategy1_position_id'] = item['strategy1_position_id']
+                        result_item_opened['strategy1_position_id'] = item['strategy1_position_id']
 
                     if "strategy2_position_id" not in item:
-                        result_item_closed['strategy2_position_id'] = self.ecosystem_defaults.strategy2_id
+                        result_item_opened['strategy2_position_id'] = ecosystem_defaults.strategy2_id
                     else:
-                        result_item_closed['strategy2_position_id'] = item['strategy2_position_id']
+                        result_item_opened['strategy2_position_id'] = item['strategy2_position_id']
 
                     if "strategy3_position_id" not in item:
-                        result_item_closed['strategy3_position_id'] = self.ecosystem_defaults.strategy3_id
+                        result_item_opened['strategy3_position_id'] = ecosystem_defaults.strategy3_id
                     else:
-                        result_item_closed['strategy3_position_id'] = item['strategy3_position_id']
-
-                    # if "allocation_pl_id" not in item:
-                    #     result_item_closed['allocation_pl_id'] = None
-                    # else:
-                    #     result_item_closed['allocation_pl_id'] = item['instrument_id']
+                        result_item_opened['strategy3_position_id'] = item['strategy3_position_id']
 
                     if 'allocation_pl_id' in item:
-
-                        if item['allocation_pl_id'] == self.ecosystem_defaults.instrument_id or item['allocation_pl_id'] == None or item['allocation_pl_id'] == -1:
+                        if item['allocation_pl_id'] == ecosystem_defaults.instrument_id or \
+                                item['allocation_pl_id'] == None or item['allocation_pl_id'] == -1:
 
                             if item['instrument_id'] != None and item['instrument_id'] != -1:
-
-                                result_item_closed['allocation_pl_id'] = item['instrument_id']
-
+                                result_item_opened['allocation_pl_id'] = item['instrument_id']
                             else:
-
                                 # convert None to '-'
-                                result_item_closed['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
-
+                                result_item_opened['allocation_pl_id'] = ecosystem_defaults.instrument_id
                         else:
                             # TODO do not remove that, its really important
-                            result_item_closed['allocation_pl_id'] = item['allocation_pl_id']
+                            result_item_opened['allocation_pl_id'] = item['allocation_pl_id']
                     else:
-                        result_item_closed['allocation_pl_id'] = self.ecosystem_defaults.instrument_id
+                        result_item_opened['allocation_pl_id'] = ecosystem_defaults.instrument_id
 
+                    if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT:
+                        result_item_opened["item_group"] = 10
+                        result_item_opened["item_group_code"] = "OPENED"
+                        result_item_opened["item_group_name"] = "Opened"
 
-                    result_item_closed["item_group"] = 11
-                    result_item_closed["item_group_code"] = "CLOSED"
-                    result_item_closed["item_group_name"] = "Closed"
+                    if result_item_opened['item_type'] == ITEM_TYPE_FX_VARIATIONS:
+                        result_item_opened["item_group"] = 11
+                        result_item_opened["item_group_code"] = "FX_VARIATIONS"
+                        result_item_opened["item_group_name"] = "FX Variations"
 
-                    result_item_closed["exposure_currency_id"] = item["co_directional_exposure_currency_id"]
-                    result_item_closed["pricing_currency_id"] = item["pricing_currency_id"]
-                    result_item_closed["instrument_pricing_currency_fx_rate"] = item[
-                        "instrument_pricing_currency_fx_rate"]
-                    result_item_closed["instrument_accrued_currency_fx_rate"] = item[
-                        "instrument_accrued_currency_fx_rate"]
-                    result_item_closed["instrument_principal_price"] = item["instrument_principal_price"]
-                    result_item_closed["instrument_accrued_price"] = item["instrument_accrued_price"]
-                    result_item_closed["instrument_factor"] = item["instrument_factor"]
-                    result_item_closed["instrument_ytm"] = item["instrument_ytm"]
-                    result_item_closed["daily_price_change"] = item["daily_price_change"]
+                    if result_item_opened['item_type'] == ITEM_TYPE_FX_TRADES:
+                        result_item_opened["item_group"] = 12
+                        result_item_opened["item_group_code"] = "FX_TRADES"
+                        result_item_opened["item_group_name"] = "FX Trades"
 
-                    result_item_closed["position_size"] = 0
-                    result_item_closed["nominal_position_size"] = 0
+                    if result_item_opened['item_type'] == ITEM_TYPE_TRANSACTION_PL:
+                        result_item_opened["item_group"] = 13
+                        result_item_opened["item_group_code"] = "OTHER"
+                        result_item_opened["item_group_name"] = "Other"
 
-                    result_item_closed["principal"] = item["principal_closed"]
-                    result_item_closed["carry"] = item["carry_closed"]
-                    result_item_closed["overheads"] = item["overheads_closed"]
-                    result_item_closed["total"] = item["total_closed"]
+                    if result_item_opened['item_type'] == ITEM_TYPE_MISMATCH:
+                        result_item_opened["item_group"] = 14
+                        result_item_opened["item_group_code"] = "MISMATCH"
+                        result_item_opened["item_group_name"] = "Mismatch"
 
-                    result_item_closed["principal_fx"] = item["principal_fx_closed"]
-                    result_item_closed["carry_fx"] = item["carry_fx_closed"]
-                    result_item_closed["overheads_fx"] = item["overheads_fx_closed"]
-                    result_item_closed["total_fx"] = item["total_fx_closed"]
+                    result_item_opened["exposure_currency_id"] = item["co_directional_exposure_currency_id"]
+                    result_item_opened["pricing_currency_id"] = item["pricing_currency_id"]
+                    result_item_opened["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
+                    result_item_opened["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
+                    result_item_opened["instrument_principal_price"] = item["instrument_principal_price"]
+                    result_item_opened["instrument_accrued_price"] = item["instrument_accrued_price"]
+                    result_item_opened["instrument_factor"] = item["instrument_factor"]
+                    result_item_opened["instrument_ytm"] = item["instrument_ytm"]
+                    result_item_opened["daily_price_change"] = item["daily_price_change"]
 
-                    result_item_closed["principal_fixed"] = item["principal_fixed_closed"]
-                    result_item_closed["carry_fixed"] = item["carry_fixed_closed"]
-                    result_item_closed["overheads_fixed"] = item["overheads_fixed_closed"]
-                    result_item_closed["total_fixed"] = item["total_fixed_closed"]
+                    result_item_opened["principal"] = item["principal_opened"]
+                    result_item_opened["carry"] = item["carry_opened"]
+                    result_item_opened["overheads"] = item["overheads_opened"]
+                    result_item_opened["total"] = item["total_opened"]
+
+                    result_item_opened["principal_fx"] = item["principal_fx_opened"]
+                    result_item_opened["carry_fx"] = item["carry_fx_opened"]
+                    result_item_opened["overheads_fx"] = item["overheads_fx_opened"]
+                    result_item_opened["total_fx"] = item["total_fx_opened"]
+
+                    result_item_opened["principal_fixed"] = item["principal_fixed_opened"]
+                    result_item_opened["carry_fixed"] = item["carry_fixed_opened"]
+                    result_item_opened["overheads_fixed"] = item["overheads_fixed_opened"]
+                    result_item_opened["total_fixed"] = item["total_fixed_opened"]
 
                     # loc
 
-                    result_item_closed["principal_loc"] = item["principal_closed_loc"]
-                    result_item_closed["carry_loc"] = item["carry_closed_loc"]
-                    result_item_closed["overheads_loc"] = item["overheads_closed_loc"]
-                    result_item_closed["total_loc"] = item["total_closed_loc"]
+                    result_item_opened["principal_loc"] = item["principal_opened_loc"]
+                    result_item_opened["carry_loc"] = item["carry_opened_loc"]
+                    result_item_opened["overheads_loc"] = item["overheads_opened_loc"]
+                    result_item_opened["total_loc"] = item["total_opened_loc"]
 
-                    result_item_closed["principal_fx_loc"] = item["principal_fx_closed_loc"]
-                    result_item_closed["carry_fx_loc"] = item["carry_fx_closed_loc"]
-                    result_item_closed["overheads_fx_loc"] = item["overheads_fx_closed_loc"]
-                    result_item_closed["total_fx_loc"] = item["total_fx_closed_loc"]
+                    result_item_opened["principal_fx_loc"] = item["principal_fx_opened_loc"]
+                    result_item_opened["carry_fx_loc"] = item["carry_fx_opened_loc"]
+                    result_item_opened["overheads_fx_loc"] = item["overheads_fx_opened_loc"]
+                    result_item_opened["total_fx_loc"] = item["total_fx_opened_loc"]
 
-                    result_item_closed["principal_fixed_loc"] = item["principal_fixed_closed_loc"]
-                    result_item_closed["carry_fixed_loc"] = item["carry_fixed_closed_loc"]
-                    result_item_closed["overheads_fixed_loc"] = item["overheads_fixed_closed_loc"]
-                    result_item_closed["total_fixed_loc"] = item["total_fixed_closed_loc"]
+                    result_item_opened["principal_fixed_loc"] = item["principal_fixed_opened_loc"]
+                    result_item_opened["carry_fixed_loc"] = item["carry_fixed_opened_loc"]
+                    result_item_opened["overheads_fixed_loc"] = item["overheads_fixed_opened_loc"]
+                    result_item_opened["total_fixed_loc"] = item["total_fixed_opened_loc"]
 
-                    result.append(result_item_closed)
+                    #  CLOSED POSITIONS BELOW
 
-            _l.debug('build position result %s ' % len(result))
+                    # TODO make it more readable
 
-            self.instance.items = self.instance.items + result
+                    has_opened_value = False
+
+                    if item["principal_opened"] is not None and item["principal_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["carry_opened"] is not None and item["carry_opened"] != 0:
+                        has_opened_value = True
+
+                    if item["overheads_opened"] is not None and item["overheads_opened"] != 0:
+                        has_opened_value = True
+
+                    has_closed_value = False
+
+                    if item["principal_closed"] is not None and item["principal_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["carry_closed"] is not None and item["carry_closed"] != 0:
+                        has_closed_value = True
+
+                    if item["overheads_closed"] is not None and item["overheads_closed"] != 0:
+                        has_closed_value = True
+
+                    if result_item_opened['item_type'] == ITEM_TYPE_FX_VARIATIONS and has_opened_value:
+                        result.append(result_item_opened)
+
+                    if result_item_opened['item_type'] == ITEM_TYPE_FX_TRADES and has_opened_value:
+                        result.append(result_item_opened)
+
+                    if result_item_opened['item_type'] == ITEM_TYPE_TRANSACTION_PL and has_opened_value:
+                        result.append(result_item_opened)
+
+                    if result_item_opened['item_type'] == ITEM_TYPE_MISMATCH:
+                        result.append(result_item_opened)
+
+                    if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and item["position_size"] != 0:
+                        result.append(result_item_opened)
+
+                    if result_item_opened['item_type'] == ITEM_TYPE_INSTRUMENT and has_closed_value:
+
+                        # result_item_closed = item.copy()
+                        # result_item_closed = copy.deepcopy(item)
+
+                        result_item_closed = {}
+
+                        # result_item_closed['item_type'] = ITEM_INSTRUMENT
+                        # result_item_closed['item_type_code'] = "INSTR"
+                        # result_item_closed['item_type_name'] = "Instrument"
+
+                        result_item_closed['name'] = item['name']
+                        result_item_closed['short_name'] = item['short_name']
+                        result_item_closed['user_code'] = item['user_code']
+                        result_item_closed['item_type'] = item['item_type']
+                        result_item_closed['item_type_name'] = item['item_type_name']
+
+                        result_item_closed['market_value'] = 0
+                        result_item_closed['exposure'] = item['exposure']
+
+                        result_item_closed['market_value_loc'] = 0
+                        result_item_closed['exposure_loc'] = item['exposure_loc']
+
+                        result_item_closed['ytm'] = item['ytm']
+                        result_item_closed['ytm_at_cost'] = item['ytm_at_cost']
+                        result_item_closed['modified_duration'] = item['modified_duration']
+                        result_item_closed['time_invested'] = item['time_invested']
+
+                        result_item_closed['amount_invested'] = item['amount_invested']
+                        result_item_closed['amount_invested_loc'] = item['amount_invested_loc']
+
+                        result_item_closed['principal_invested'] = item['principal_invested']
+                        result_item_closed['principal_invested_loc'] = item['principal_invested_loc']
+
+                        result_item_closed['gross_cost_price'] = item['gross_cost_price']
+                        result_item_closed['gross_cost_price_loc'] = item['gross_cost_price_loc']
+
+                        result_item_closed['net_cost_price'] = item['net_cost_price']
+                        result_item_closed['net_cost_price_loc'] = item['net_cost_price_loc']
+
+                        result_item_closed['position_return'] = item['position_return']
+                        result_item_closed['position_return_loc'] = item['position_return_loc']
+
+                        result_item_closed['net_position_return'] = item['net_position_return']
+                        result_item_closed['net_position_return_loc'] = item['net_position_return_loc']
+
+                        result_item_closed['position_size'] = item['position_size']
+                        result_item_closed['mismatch'] = item['mismatch']
+
+                        result_item_closed['exposure'] = item['exposure']
+                        result_item_closed['ytm'] = item['ytm']
+                        result_item_closed['ytm_at_cost'] = item['ytm_at_cost']
+                        result_item_closed['modified_duration'] = item['modified_duration']
+                        result_item_closed['time_invested'] = item['time_invested']
+
+                        result_item_closed['amount_invested'] = item['amount_invested']
+                        result_item_closed['amount_invested_loc'] = item['amount_invested_loc']
+
+                        result_item_closed['principal_invested'] = item['principal_invested']
+                        result_item_closed['principal_invested_loc'] = item['principal_invested_loc']
+
+                        result_item_closed['gross_cost_price'] = item['gross_cost_price']
+                        result_item_closed['gross_cost_price_loc'] = item['gross_cost_price_loc']
+
+                        result_item_closed['net_cost_price'] = item['net_cost_price']
+                        result_item_closed['net_cost_price_loc'] = item['net_cost_price_loc']
+
+                        result_item_closed['position_size'] = item['position_size']
+                        result_item_closed['mismatch'] = item['mismatch']
+
+                        result_item_closed['instrument_id'] = item['instrument_id']
+
+                        if "portfolio_id" not in item:
+                            result_item_closed['portfolio_id'] = ecosystem_defaults.portfolio_id
+                        else:
+                            result_item_closed['portfolio_id'] = item['portfolio_id']
+
+                        if "account_position_id" not in item:
+                            result_item_closed['account_position_id'] = ecosystem_defaults.account_id
+                        else:
+                            result_item_closed['account_position_id'] = item['account_position_id']
+
+                        if "strategy1_position_id" not in item:
+                            result_item_closed['strategy1_position_id'] = ecosystem_defaults.strategy1_id
+                        else:
+                            result_item_closed['strategy1_position_id'] = item['strategy1_position_id']
+
+                        if "strategy2_position_id" not in item:
+                            result_item_closed['strategy2_position_id'] = ecosystem_defaults.strategy2_id
+                        else:
+                            result_item_closed['strategy2_position_id'] = item['strategy2_position_id']
+
+                        if "strategy3_position_id" not in item:
+                            result_item_closed['strategy3_position_id'] = ecosystem_defaults.strategy3_id
+                        else:
+                            result_item_closed['strategy3_position_id'] = item['strategy3_position_id']
+
+                        # if "allocation_pl_id" not in item:
+                        #     result_item_closed['allocation_pl_id'] = None
+                        # else:
+                        #     result_item_closed['allocation_pl_id'] = item['instrument_id']
+
+                        if 'allocation_pl_id' in item:
+
+                            if item['allocation_pl_id'] == ecosystem_defaults.instrument_id or item['allocation_pl_id'] == None or item['allocation_pl_id'] == -1:
+
+                                if item['instrument_id'] != None and item['instrument_id'] != -1:
+
+                                    result_item_closed['allocation_pl_id'] = item['instrument_id']
+
+                                else:
+
+                                    # convert None to '-'
+                                    result_item_closed['allocation_pl_id'] = ecosystem_defaults.instrument_id
+
+                            else:
+                                # TODO do not remove that, its really important
+                                result_item_closed['allocation_pl_id'] = item['allocation_pl_id']
+                        else:
+                            result_item_closed['allocation_pl_id'] = ecosystem_defaults.instrument_id
+
+
+                        result_item_closed["item_group"] = 11
+                        result_item_closed["item_group_code"] = "CLOSED"
+                        result_item_closed["item_group_name"] = "Closed"
+
+                        result_item_closed["exposure_currency_id"] = item["co_directional_exposure_currency_id"]
+                        result_item_closed["pricing_currency_id"] = item["pricing_currency_id"]
+                        result_item_closed["instrument_pricing_currency_fx_rate"] = item[
+                            "instrument_pricing_currency_fx_rate"]
+                        result_item_closed["instrument_accrued_currency_fx_rate"] = item[
+                            "instrument_accrued_currency_fx_rate"]
+                        result_item_closed["instrument_principal_price"] = item["instrument_principal_price"]
+                        result_item_closed["instrument_accrued_price"] = item["instrument_accrued_price"]
+                        result_item_closed["instrument_factor"] = item["instrument_factor"]
+                        result_item_closed["instrument_ytm"] = item["instrument_ytm"]
+                        result_item_closed["daily_price_change"] = item["daily_price_change"]
+
+                        result_item_closed["position_size"] = 0
+                        result_item_closed["nominal_position_size"] = 0
+
+                        result_item_closed["principal"] = item["principal_closed"]
+                        result_item_closed["carry"] = item["carry_closed"]
+                        result_item_closed["overheads"] = item["overheads_closed"]
+                        result_item_closed["total"] = item["total_closed"]
+
+                        result_item_closed["principal_fx"] = item["principal_fx_closed"]
+                        result_item_closed["carry_fx"] = item["carry_fx_closed"]
+                        result_item_closed["overheads_fx"] = item["overheads_fx_closed"]
+                        result_item_closed["total_fx"] = item["total_fx_closed"]
+
+                        result_item_closed["principal_fixed"] = item["principal_fixed_closed"]
+                        result_item_closed["carry_fixed"] = item["carry_fixed_closed"]
+                        result_item_closed["overheads_fixed"] = item["overheads_fixed_closed"]
+                        result_item_closed["total_fixed"] = item["total_fixed_closed"]
+
+                        # loc
+
+                        result_item_closed["principal_loc"] = item["principal_closed_loc"]
+                        result_item_closed["carry_loc"] = item["carry_closed_loc"]
+                        result_item_closed["overheads_loc"] = item["overheads_closed_loc"]
+                        result_item_closed["total_loc"] = item["total_closed_loc"]
+
+                        result_item_closed["principal_fx_loc"] = item["principal_fx_closed_loc"]
+                        result_item_closed["carry_fx_loc"] = item["carry_fx_closed_loc"]
+                        result_item_closed["overheads_fx_loc"] = item["overheads_fx_closed_loc"]
+                        result_item_closed["total_fx_loc"] = item["total_fx_closed_loc"]
+
+                        result_item_closed["principal_fixed_loc"] = item["principal_fixed_closed_loc"]
+                        result_item_closed["carry_fixed_loc"] = item["carry_fixed_closed_loc"]
+                        result_item_closed["overheads_fixed_loc"] = item["overheads_fixed_closed_loc"]
+                        result_item_closed["total_fixed_loc"] = item["total_fixed_closed_loc"]
+
+                        result.append(result_item_closed)
+
+                _l.debug('build position result %s ' % len(result))
+
+                _l.info('single build done: %s' % (time.perf_counter() - st))
+
+                celery_task.status = CeleryTask.STATUS_DONE
+                celery_task.save()
+
+                return result
+
+        except Exception as e:
+            celery_task.status = CeleryTask.STATUS_ERROR
+            celery_task.save()
+            raise e
+
+    def parallel_build(self):
+
+        st = time.perf_counter()
+
+        tasks = []
+
+        if self.instance.portfolio_mode == Report.MODE_INDEPENDENT:
+
+            for portfolio in self.instance.portfolios:
+                task = CeleryTask.objects.create(
+                    master_user=self.instance.master_user,
+                    member=self.instance.member,
+                    verbose_name="PL Report",
+                    type="calculate_pl_report",
+                    options_object={
+                        "report_date": self.instance.report_date,
+                        "pl_first_date": self.instance.pl_first_date,
+                        "bday_yesterday_of_report_date": self.bday_yesterday_of_report_date,
+                        "portfolios_ids": [portfolio.id],
+                        "accounts_ids": [instance.id for instance in self.instance.accounts],
+                        "strategies1_ids": [instance.id for instance in self.instance.strategies1],
+                        "strategies2_ids": [instance.id for instance in self.instance.strategies2],
+                        "strategies3_ids": [instance.id for instance in self.instance.strategies3],
+                        "report_currency_id": self.instance.report_currency.id,
+                        "pricing_policy_id": self.instance.pricing_policy.id,
+                        "cost_method_id": self.instance.cost_method.id,
+                        "show_balance_exposure_details": self.instance.show_balance_exposure_details,
+                        "portfolio_mode": self.instance.portfolio_mode,
+                        "account_mode": self.instance.account_mode,
+                        "strategy1_mode": self.instance.strategy1_mode,
+                        "strategy2_mode": self.instance.strategy2_mode,
+                        "strategy3_mode": self.instance.strategy3_mode,
+                        "allocation_mode": self.instance.allocation_mode
+                    }
+                )
+
+                tasks.append(task)
+
+        else:
+
+            task = CeleryTask.objects.create(
+                master_user=self.instance.master_user,
+                member=self.instance.member,
+                verbose_name="PL Report",
+                type="calculate_pl_report",
+                options_object={
+                    "report_date": self.instance.report_date,
+                    "pl_first_date": self.instance.pl_first_date,
+                    "bday_yesterday_of_report_date": self.bday_yesterday_of_report_date,
+                    "portfolios_ids": [instance.id for instance in self.instance.portfolios],
+                    "accounts_ids": [instance.id for instance in self.instance.accounts],
+                    "strategies1_ids": [instance.id for instance in self.instance.strategies1],
+                    "strategies2_ids": [instance.id for instance in self.instance.strategies2],
+                    "strategies3_ids": [instance.id for instance in self.instance.strategies3],
+                    "report_currency_id": self.instance.report_currency.id,
+                    "pricing_policy_id": self.instance.pricing_policy.id,
+                    "cost_method_id": self.instance.cost_method.id,
+                    "show_balance_exposure_details": self.instance.show_balance_exposure_details,
+                    "portfolio_mode": self.instance.portfolio_mode,
+                    "account_mode": self.instance.account_mode,
+                    "strategy1_mode": self.instance.strategy1_mode,
+                    "strategy2_mode": self.instance.strategy2_mode,
+                    "strategy3_mode": self.instance.strategy3_mode,
+                    "allocation_mode": self.instance.allocation_mode
+                }
+            )
+
+            tasks.append(task)
+
+
+        _l.info("Going to run %s tasks" % len(tasks))
+
+        # Run the group of tasks
+        job = group(self.build.s(task.id) for task in tasks)
+
+        group_result = job.apply_async()
+        # Wait for all tasks to finish and get their results
+        group_result.join()
+
+        # Retrieve results
+        all_dicts = []
+        for result in group_result.results:
+            # Each result is an AsyncResult instance.
+            # You can get the result of the task with its .result property.
+            all_dicts.extend(result.result)
+
+        # 'all_dicts' is now a list of all dicts returned by the tasks
+        self.instance.items = all_dicts
+
+        _l.info('parallel_build done: %s',
+                "{:3.3f}".format(time.perf_counter() - st))
 
     def get_cash_consolidation_for_select(self):
 

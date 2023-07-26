@@ -1289,6 +1289,14 @@ class ReportInstanceModel():
         # _l.info('ReportInstanceModel.kwargs %s' % kwargs)
 
         self.report_date = datetime.strptime(kwargs['report_date'], "%Y-%m-%d")
+
+        if kwargs.get('pl_first_date', None):
+            self.pl_first_date = datetime.strptime(kwargs['pl_first_date'], "%Y-%m-%d")
+
+        if kwargs.get('bday_yesterday_of_report_date', None):
+            self.bday_yesterday_of_report_date = datetime.strptime(kwargs['bday_yesterday_of_report_date'], "%Y-%m-%d")
+
+
         self.report_currency = Currency.objects.get(id=kwargs['report_currency_id'])
         self.pricing_policy = PricingPolicy.objects.get(id=kwargs['pricing_policy_id'])
         self.cost_method = CostMethod.objects.get(id=kwargs['cost_method_id'])
@@ -1309,4 +1317,6 @@ class ReportInstanceModel():
         self.strategy2_mode = kwargs['strategy2_mode']
         self.strategy3_mode = kwargs['strategy3_mode']
         self.allocation_mode = kwargs['allocation_mode']
+
+        self.master_user = kwargs['master_user']
 
