@@ -1647,6 +1647,168 @@ def _get_price_history_accrued_price(
 _get_price_history_accrued_price.evaluator = True
 
 
+def _get_price_history(
+        evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0
+):
+    from poms.instruments.models import PriceHistory, PricingPolicy
+    from poms.users.utils import get_master_user_from_context
+
+    try:
+        days_to_look_back = int(days_to_look_back)
+    except TypeError:
+        raise ExpressionEvalError("Invalid Days To Look Back Value")
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    # TODO need master user check, security hole
+
+    date = _parse_date(date)
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    master_user = get_master_user_from_context(context)
+
+    pricing_policy_pk = None
+
+    if isinstance(pricing_policy, dict):
+        pricing_policy_pk = int(pricing_policy["id"])
+
+    elif isinstance(pricing_policy, (int, float)):
+        pricing_policy_pk = int(pricing_policy)
+
+    elif isinstance(pricing_policy, str):
+        pricing_policy_pk = PricingPolicy.objects.get(
+            master_user=master_user, user_code=pricing_policy
+        ).id
+
+    # print('formula pk %s' % pk)
+
+    if pricing_policy_pk is None:
+        raise ExpressionEvalError("Invalid Pricing Policy")
+
+    if days_to_look_back == 0:
+        try:
+            result = PriceHistory.objects.get(
+                date=date, instrument=instrument, pricing_policy_id=pricing_policy_pk
+            )
+
+            return result
+
+        except PriceHistory.DoesNotExist:
+            return None
+
+    else:
+        date_from = None
+        date_to = None
+
+        if days_to_look_back < 0:
+            date_to = date
+            date_from = date - datetime.timedelta(days=abs(days_to_look_back))
+
+        else:
+            date_from = date
+            date_to = date + datetime.timedelta(days=abs(days_to_look_back))
+
+        print("_get_price_history_accrued_price date_from %s" % date_from)
+        print("_get_price_history_accrued_price date_to %s" % date_to)
+
+        prices = PriceHistory.objects.filter(
+            date__gte=date_from,
+            date_lte=date_to,
+            instrument=instrument,
+            pricing_policy_id=pricing_policy_pk,
+        ).order_by("-date")
+
+        if len(prices):
+            return prices[0]
+        else:
+            return None
+
+
+_get_price_history.evaluator = True
+
+
+def _get_factor_from_price(
+        evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0
+):
+    from poms.instruments.models import PriceHistory, PricingPolicy
+    from poms.users.utils import get_master_user_from_context
+
+    try:
+        days_to_look_back = int(days_to_look_back)
+    except TypeError:
+        raise ExpressionEvalError("Invalid Days To Look Back Value")
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    # TODO need master user check, security hole
+
+    date = _parse_date(date)
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    master_user = get_master_user_from_context(context)
+
+    pricing_policy_pk = None
+
+    if isinstance(pricing_policy, dict):
+        pricing_policy_pk = int(pricing_policy["id"])
+
+    elif isinstance(pricing_policy, (int, float)):
+        pricing_policy_pk = int(pricing_policy)
+
+    elif isinstance(pricing_policy, str):
+        pricing_policy_pk = PricingPolicy.objects.get(
+            master_user=master_user, user_code=pricing_policy
+        ).id
+
+    # print('formula pk %s' % pk)
+
+    if pricing_policy_pk is None:
+        raise ExpressionEvalError("Invalid Pricing Policy")
+
+    if days_to_look_back == 0:
+        try:
+            result = PriceHistory.objects.get(
+                date=date, instrument=instrument, pricing_policy_id=pricing_policy_pk
+            )
+
+            return result.factor
+
+        except PriceHistory.DoesNotExist:
+            return 1
+
+    else:
+        date_from = None
+        date_to = None
+
+        if days_to_look_back < 0:
+            date_to = date
+            date_from = date - datetime.timedelta(days=abs(days_to_look_back))
+
+        else:
+            date_from = date
+            date_to = date + datetime.timedelta(days=abs(days_to_look_back))
+
+        print("_get_price_history_accrued_price date_from %s" % date_from)
+        print("_get_price_history_accrued_price date_to %s" % date_to)
+
+        prices = PriceHistory.objects.filter(
+            date__gte=date_from,
+            date_lte=date_to,
+            instrument=instrument,
+            pricing_policy_id=pricing_policy_pk,
+        ).order_by("-date")
+
+        if len(prices):
+            return prices[0].factor
+        else:
+            return 1
+
+
+_get_factor_from_price.evaluator = True
+
+
 def _get_next_coupon_date(evaluator, date, instrument):
     from poms.users.utils import get_master_user_from_context
 
@@ -4017,9 +4179,11 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("get_fx_rate", _get_fx_rate),
     SimpleEval2Def("get_principal_price", _get_price_history_principal_price),
     SimpleEval2Def("get_accrued_price", _get_price_history_accrued_price),
+    SimpleEval2Def("get_price", _get_price_history),
     SimpleEval2Def("get_next_coupon_date", _get_next_coupon_date),
     SimpleEval2Def("get_factor_schedule", _get_factor_schedule),
     SimpleEval2Def("get_factor", _get_factor_schedule),
+    SimpleEval2Def("get_factor_from_price", _get_factor_from_price),
     SimpleEval2Def("add_factor_schedule", _add_factor_schedule),
     SimpleEval2Def("add_accrual_schedule", _add_accrual_schedule),
     SimpleEval2Def("delete_accrual_schedules", _delete_accrual_schedules),
