@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.db import connection, models
 from django.test import TestCase
 from rest_framework.test import APIClient
@@ -12,6 +13,7 @@ from poms.accounts.models import Account
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, InstrumentClass, InstrumentType
+from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.portfolios.models import Portfolio, PortfolioRegister
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import (
@@ -191,6 +193,32 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
     @classmethod
     def random_choice(cls, choices: list):
         return random.choice(choices)
+
+    def create_attribute_type(self) -> GenericAttributeType:
+        self.attribute_type = GenericAttributeType.objects.create(
+            master_user=self.master_user,
+            content_type=ContentType.objects.first(),
+            user_code=self.random_string(5),
+            short_name=self.random_string(2),
+            value_type=GenericAttributeType.NUMBER,
+            kind=GenericAttributeType.USER,
+            tooltip=self.random_string(),
+            favorites=self.random_string(),
+            prefix=self.random_string(3),
+            expr=self.random_string(),
+        )
+        return self.attribute_type
+
+    def create_attribute(self) -> GenericAttribute:
+        self.attribute = GenericAttribute.objects.create(
+            attribute_type=self.create_attribute_type(),
+            content_type=ContentType.objects.last(),
+            object_id=self.random_int(),
+            value_string=self.random_string(),
+            value_float=self.random_int(),
+            value_date=date.today(),
+        )
+        return self.attribute
 
     def init_test_case(self):
         self.client = APIClient()
