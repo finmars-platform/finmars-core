@@ -1,12 +1,9 @@
 from copy import deepcopy
-from datetime import date
 
 from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
 
 from poms.common.common_base_test import BaseTestCase
 from poms.counterparties.models import Counterparty, CounterpartyGroup
-from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 
 EXPECTED_COUNTERPARTY = {
     "id": 3,
@@ -76,32 +73,6 @@ class CounterpartyViewSetTest(BaseTestCase):
         self.init_test_case()
         self.url = f"/{settings.BASE_API_URL}/api/v1/counterparties/counterparty/"
         self.counterparty = None
-
-    def create_attribute_type(self) -> GenericAttributeType:
-        self.attribute_type = GenericAttributeType.objects.create(
-            master_user=self.master_user,
-            content_type=ContentType.objects.first(),
-            user_code=self.random_string(5),
-            short_name=self.random_string(2),
-            value_type=GenericAttributeType.NUMBER,
-            kind=GenericAttributeType.USER,
-            tooltip=self.random_string(),
-            favorites=self.random_string(),
-            prefix=self.random_string(3),
-            expr=self.random_string(),
-        )
-        return self.attribute_type
-
-    def create_attribute(self) -> GenericAttribute:
-        self.attribute = GenericAttribute.objects.create(
-            attribute_type=self.create_attribute_type(),
-            content_type=ContentType.objects.last(),
-            object_id=self.random_int(),
-            value_string=self.random_string(),
-            value_float=self.random_int(),
-            value_date=date.today(),
-        )
-        return self.attribute
 
     def create_counterparty_group(self) -> CREATE_DATA:
         return CounterpartyGroup.objects.create(

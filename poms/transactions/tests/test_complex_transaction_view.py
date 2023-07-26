@@ -1,10 +1,10 @@
-from copy import deepcopy
 from datetime import date
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 
 from poms.common.common_base_test import BaseTestCase
+from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.transactions.models import (
     ComplexTransaction,
     ComplexTransactionInput,
@@ -13,9 +13,6 @@ from poms.transactions.models import (
     TransactionTypeGroup,
     TransactionTypeInput,
 )
-
-
-from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 
 EXPECTED_COMPLEX_TRANSACTION = {
     "id": 1,
@@ -214,49 +211,12 @@ EXPECTED_COMPLEX_TRANSACTION = {
     },
 }
 
-CREATE_DATA = {
-    "date": "2023-07-30",
-    "code": 1273645,
-    "transaction_unique_code": "7165347157",
-    "transaction_type": 0,
-    "visibility_status": ComplexTransaction.HIDE_PARAMETERS,
-    "user_text_1": "iqyweiquyei",
-    "user_number_1": "27364",
-    "user_date_1": "2025-03-03",
-}
-
 
 class InstrumentViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
         self.url = f"/{settings.BASE_API_URL}/api/v1/transactions/complex-transaction/"
-
-    def create_attribute_type(self) -> GenericAttributeType:
-        self.attribute_type = GenericAttributeType.objects.create(
-            master_user=self.master_user,
-            content_type=ContentType.objects.first(),
-            user_code=self.random_string(5),
-            short_name=self.random_string(2),
-            value_type=GenericAttributeType.NUMBER,
-            kind=GenericAttributeType.USER,
-            tooltip=self.random_string(),
-            favorites=self.random_string(),
-            prefix=self.random_string(3),
-            expr=self.random_string(),
-        )
-        return self.attribute_type
-
-    def create_attribute(self) -> GenericAttribute:
-        self.attribute = GenericAttribute.objects.create(
-            attribute_type=self.create_attribute_type(),
-            content_type=ContentType.objects.last(),
-            object_id=self.random_int(),
-            value_string=self.random_string(),
-            value_float=self.random_int(),
-            value_date=date.today(),
-        )
-        return self.attribute
 
     @staticmethod
     def get_complex_transaction_status(model_id=ComplexTransaction.PENDING):
@@ -326,26 +286,6 @@ class InstrumentViewSetTest(BaseTestCase):
             transaction_type=transaction_type,
             name=self.random_string(),
         )
-
-    def prepare_data_for_create(self) -> dict:
-        create_data = deepcopy(CREATE_DATA)
-        create_data["attributes"] = []
-        transaction_type = self.create_transaction_type()
-        create_data["transaction_type"] = transaction_type.id
-        transaction_type_input = self.create_transaction_type_input(transaction_type)
-        create_data["inputs"] = [
-            {
-                "transaction_type_input": transaction_type_input.id,
-                "transaction_type_input_object": {
-                    "transaction_type": transaction_type.id,
-                    "name": transaction_type_input.name,
-                    "tooltip": self.random_string(),
-                    "settings": None,
-                    "content_type": None,
-                },
-            }
-        ]
-        return create_data
 
     def test__check_api_url(self):
         response = self.client.get(path=self.url)
@@ -435,45 +375,34 @@ class InstrumentViewSetTest(BaseTestCase):
         )
 
     def test__create(self):
-        create_data = self.prepare_data_for_create()
-
-        response = self.client.post(path=self.url, format="json", data=create_data)
+        response = self.client.post(path=self.url, format="json", data={})
         self.assertEqual(response.status_code, 400, response.content)
 
-    # def test__update_patch(self):
-    #     create_data = self.prepare_data_for_create()
-    #
-    #     response = self.client.post(path=self.url, format="json", data=create_data)
-    #     self.assertEqual(response.status_code, 201, response.content)
-    #     response_json = response.json()
-    #
-    #     transaction_id = response_json["id"]
-    #     new_user_text_1 = self.random_string()
-    #     update_data = {"user_text_1": new_user_text_1}
-    #     response = self.client.patch(
-    #         path=f"{self.url}{transaction_id}/", format="json", data=update_data
-    #     )
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     response = self.client.get(path=f"{self.url}{transaction_id}/")
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #     response_json = response.json()
-    #     self.assertEqual(response_json["user_text_1"], new_user_text_1)
-    #
-    # def test__delete(self):
-    #     create_data = self.prepare_data_for_create()
-    #
-    #     response = self.client.post(path=self.url, format="json", data=create_data)
-    #     self.assertEqual(response.status_code, 201, response.content)
-    #     response_json = response.json()
-    #
-    #     transaction_id = response_json["id"]
-    #
-    #     response = self.client.delete(path=f"{self.url}{transaction_id}/")
-    #     self.assertEqual(response.status_code, 204, response.content)
-    #
-    #     response = self.client.get(path=f"{self.url}{transaction_id}/")
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #     response_json = response.json()
-    #
-    #     self.assertTrue(response_json["is_deleted"])
+    def test__update_patch(self):
+        complex_transaction = self.create_complex_transaction()
+        transaction_id = complex_transaction.id
+
+        new_code = self.random_int()
+        update_data = {"code": new_code}
+        response = self.client.patch(
+            path=f"{self.url}{transaction_id}/", format="json", data=update_data
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response = self.client.get(path=f"{self.url}{transaction_id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["code"], new_code)
+
+    def test__delete(self):
+        complex_transaction = self.create_complex_transaction()
+        transaction_id = complex_transaction.id
+
+        response = self.client.delete(path=f"{self.url}{transaction_id}/")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        response = self.client.get(path=f"{self.url}{transaction_id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+
+        self.assertTrue(response_json["is_deleted"])
