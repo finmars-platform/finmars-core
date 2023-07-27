@@ -1477,8 +1477,8 @@ class PLReportBuilderSql:
                                 SUM(carry_opened * stl_cur_fx / rep_cur_fx)                    as carry_opened,
                                 SUM(overheads_opened * stl_cur_fx / rep_cur_fx)                as overheads_opened,
                                 
-                                SUM(amount_principal_with_sign_invested)      as amount_principal_with_sign_invested,
-                                SUM(amount_carry_with_sign_invested)      as amount_carry_with_sign_invested,
+                                SUM(amount_principal_with_sign_invested * stl_cur_fx / rep_cur_fx)      as amount_principal_with_sign_invested,
+                                SUM(amount_carry_with_sign_invested * stl_cur_fx / rep_cur_fx)      as amount_carry_with_sign_invested,
                                 
                                 SUM(time_invested)                                                      as time_invested_sum,
                                 
