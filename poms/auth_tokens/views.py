@@ -178,9 +178,6 @@ class CreateUser(APIView):
         return self.serializer_class(*args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-        # TODO Refactor to more sophisticated user creation system
-        # In current implementation there is no way to set IAM policies for invited user before he accepts invite
-
         member = Member.objects.get(username="finmars_bot")
         master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
@@ -198,6 +195,10 @@ class CreateUser(APIView):
 
         username = serializer.validated_data['username']
         email = serializer.validated_data['email']
+
+        roles = serializer.validated_data('roles', '')
+        groups = serializer.validated_data('groups', '')
+        is_admin = serializer.validated_data.get('is_admin', False)
 
         _l.info('Create user validated data %s' % serializer.validated_data)
 
@@ -228,11 +229,21 @@ class CreateUser(APIView):
             member = Member.objects.create(user=user, username=user.username, master_user=master_user)
             member.save()
 
-            # member.is_admin = True
+            roles = roles.split(',')
+            groups = groups.split(',')
+
+            from poms.iam.models import Role, Group
+            roles_instances = Role.objects.filter(user_code__in=roles)
+            groups_instances = Group.objects.filter(user_code__in=groups)
+
+            member.iam_roles.set(roles_instances)
+            member.iam_groups.set(groups_instances)
+
+            member.is_admin = is_admin
             member.save()
 
         except Exception as e:
-            _l.info("Could not create member Error %s" % e)
+            _l.error("Could not create member Error %s" % e)
 
         return Response({'status': 'ok'})
 
