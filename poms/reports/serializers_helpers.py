@@ -377,6 +377,11 @@ def serialize_balance_report_item(item):
     result["net_position_return"] = item["net_position_return"]
     result["net_position_return_loc"] = item["net_position_return_loc"]
 
+    result["position_return_fixed"] = item["position_return_fixed"]
+    result["position_return_fixed_loc"] = item["position_return_fixed_loc"]
+    result["net_position_return_fixed"] = item["net_position_return_fixed"]
+    result["net_position_return_fixed_loc"] = item["net_position_return_fixed_loc"]
+
     result["net_cost_price"] = item["net_cost_price"]
     result["net_cost_price_loc"] = item["net_cost_price_loc"]
     result["gross_cost_price"] = item["gross_cost_price"]
@@ -526,6 +531,11 @@ def serialize_pl_report_item(item):
     result["position_return_loc"] = item["position_return_loc"]
     result["net_position_return"] = item["net_position_return"]
     result["net_position_return_loc"] = item["net_position_return_loc"]
+
+    result["position_return_fixed"] = item["position_return_fixed"]
+    result["position_return_fixed_loc"] = item["position_return_fixed_loc"]
+    result["net_position_return_fixed"] = item["net_position_return_fixed"]
+    result["net_position_return_fixed_loc"] = item["net_position_return_fixed_loc"]
 
     result["net_cost_price"] = item["net_cost_price"]
     result["net_cost_price_loc"] = item["net_cost_price_loc"]

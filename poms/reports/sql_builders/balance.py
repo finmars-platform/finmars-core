@@ -534,6 +534,12 @@ class BalanceReportBuilderSql:
                         position_return_loc,
                         net_position_return,
                         net_position_return_loc,
+                        
+                        position_return_fixed,
+                        position_return_fixed_loc,
+                        net_position_return_fixed,
+                        net_position_return_fixed_loc,
+                        
                         time_invested,
                         
                         ytm,
@@ -700,6 +706,12 @@ class BalanceReportBuilderSql:
                             (0) as position_return_loc,
                             (0) as net_position_return,
                             (0) as net_position_return_loc,
+                            
+                            (0) as position_return_fixed,
+                            (0) as position_return_fixed_loc,
+                            (0) as net_position_return_fixed,
+                            (0) as net_position_return_fixed_loc,
+                            
                             (0) as time_invested,
                             
                             (0) as ytm,
@@ -941,6 +953,12 @@ class BalanceReportBuilderSql:
                         position_return_loc,
                         net_position_return,
                         net_position_return_loc,
+                        
+                        position_return_fixed,
+                        position_return_fixed_loc,
+                        net_position_return_fixed,
+                        net_position_return_fixed_loc,
+                        
                         time_invested,
                         
                         ytm,
@@ -1106,6 +1124,12 @@ class BalanceReportBuilderSql:
                             position_return_loc,
                             net_position_return,
                             net_position_return_loc,
+                            
+                            position_return_fixed,
+                            position_return_fixed_loc,
+                            net_position_return_fixed,
+                            net_position_return_fixed_loc,
+                            
                             time_invested,
                             
                             ytm,
@@ -1527,6 +1551,12 @@ class BalanceReportBuilderSql:
                                     position_return_loc,
                                     net_position_return,
                                     net_position_return_loc,
+                                    
+                                    position_return_fixed,
+                                    position_return_fixed_loc,
+                                    net_position_return_fixed,
+                                    net_position_return_fixed_loc,
+                                    
                                     time_invested,
                                     
                                     ytm,
@@ -1756,6 +1786,12 @@ class BalanceReportBuilderSql:
                     result_item["net_position_return"] = item["net_position_return"]
                     result_item["net_position_return_loc"] = item["net_position_return_loc"]
 
+                    result_item["position_return_fixed"] = item["position_return_fixed"]
+                    result_item["position_return_fixed_loc"] = item["position_return_fixed_loc"]
+                    result_item["net_position_return_fixed"] = item["net_position_return_fixed"]
+                    result_item["net_position_return_fixed_loc"] = item["net_position_return_fixed_loc"]
+
+
                     result_item["net_cost_price"] = item["net_cost_price"]
                     result_item["net_cost_price_loc"] = item["net_cost_price_loc"]
                     result_item["gross_cost_price"] = item["gross_cost_price"]
@@ -1924,6 +1960,11 @@ class BalanceReportBuilderSql:
                                 new_exposure_item["position_return_loc"] = None
                                 new_exposure_item["net_position_return"] = None
                                 new_exposure_item["net_position_return_loc"] = None
+
+                                new_exposure_item["position_return_fixed"] = None
+                                new_exposure_item["position_return_fixed_loc"] = None
+                                new_exposure_item["net_position_return_fixed"] = None
+                                new_exposure_item["net_position_return_fixed_loc"] = None
 
                                 new_exposure_item["net_cost_price"] = None
                                 new_exposure_item["net_cost_price_loc"] = None

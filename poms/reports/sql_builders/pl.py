@@ -754,7 +754,10 @@ class PLReportBuilderSql:
             net_position_return,
             net_position_return_loc,
             
-            -- todo add fixed return
+            position_return_fixed,
+            position_return_fixed_loc,
+            net_position_return_fixed,
+            net_position_return_fixed_loc,
             
             net_cost_price,
             net_cost_price_loc,
@@ -884,6 +887,11 @@ class PLReportBuilderSql:
             net_position_return,
             net_position_return_loc,
             
+            position_return_fixed,
+            position_return_fixed_loc,
+            net_position_return_fixed,
+            net_position_return_fixed_loc,
+            
             net_cost_price,
             net_cost_price_loc,
             principal_cost_price_loc,
@@ -1012,6 +1020,11 @@ class PLReportBuilderSql:
                     position_return_loc,
                     net_position_return,
                     net_position_return_loc,
+                    
+                    position_return_fixed,
+                    position_return_fixed_loc,
+                    net_position_return_fixed,
+                    net_position_return_fixed_loc,
                     
                     net_cost_price,
                     net_cost_price_loc,
@@ -1794,7 +1807,10 @@ class PLReportBuilderSql:
             net_position_return,
             net_position_return_loc,
             
-            -- todo add fixed return
+            position_return_fixed,
+            position_return_fixed_loc,
+            net_position_return_fixed,
+            net_position_return_fixed_loc,
             
             net_cost_price,
             net_cost_price_loc,
@@ -1924,6 +1940,11 @@ class PLReportBuilderSql:
                 (0) as position_return_loc,
                 (0) as net_position_return,
                 (0) as net_position_return_loc,
+                
+                (0) as position_return_fixed,
+                (0) as position_return_fixed_loc,
+                (0) as net_position_return_fixed,
+                (0) as net_position_return_fixed_loc,
                 
                 (0) as net_cost_price,
                 (0) as net_cost_price_loc,
@@ -2164,7 +2185,10 @@ class PLReportBuilderSql:
             net_position_return,
             net_position_return_loc,
             
-            -- todo add fixed return
+            position_return_fixed,
+            position_return_fixed_loc,
+            net_position_return_fixed,
+            net_position_return_fixed_loc,
             
             net_cost_price,
             net_cost_price_loc,
@@ -2295,6 +2319,12 @@ class PLReportBuilderSql:
                 (0) as position_return_loc,
                 (0) as net_position_return,
                 (0) as net_position_return_loc,
+                
+                (0) as position_return_fixed,
+                (0) as position_return_fixed_loc,
+                (0) as net_position_return_fixed,
+                (0) as net_position_return_fixed_loc,
+            
                 
                 (0) as net_cost_price,
                 (0) as net_cost_price_loc,
@@ -2494,7 +2524,10 @@ class PLReportBuilderSql:
             net_position_return,
             net_position_return_loc,
             
-            -- todo add fixed return
+            position_return_fixed,
+            position_return_fixed_loc,
+            net_position_return_fixed,
+            net_position_return_fixed_loc,
             
             net_cost_price,
             net_cost_price_loc,
@@ -2624,6 +2657,11 @@ class PLReportBuilderSql:
                 (0) as position_return_loc,
                 (0) as net_position_return,
                 (0) as net_position_return_loc,
+                
+                (0) as position_return_fixed,
+                (0) as position_return_fixed_loc,
+                (0) as net_position_return_fixed,
+                (0) as net_position_return_fixed_loc,
                 
                 (0) as net_cost_price,
                 (0) as net_cost_price_loc,
@@ -2820,7 +2858,10 @@ class PLReportBuilderSql:
             net_position_return,
             net_position_return_loc,
             
-            -- todo add fixed return
+            position_return_fixed,
+            position_return_fixed_loc,
+            net_position_return_fixed,
+            net_position_return_fixed_loc,
             
             net_cost_price,
             net_cost_price_loc,
@@ -2950,6 +2991,11 @@ class PLReportBuilderSql:
                 (0) as position_return_loc,
                 (0) as net_position_return,
                 (0) as net_position_return_loc,
+                
+                (0) as position_return_fixed,
+                (0) as position_return_fixed_loc,
+                (0) as net_position_return_fixed,
+                (0) as net_position_return_fixed_loc,
                 
                 (0) as net_cost_price,
                 (0) as net_cost_price_loc,
@@ -3276,6 +3322,11 @@ class PLReportBuilderSql:
                                 (q2.net_position_return) as net_position_return,
                                 (q2.net_position_return_loc) as net_position_return_loc,
                                 
+                                (q2.position_return_fixed) as position_return_fixed,
+                                (q2.position_return_fixed_loc) as position_return_fixed_loc,
+                                (q2.net_position_return_fixed) as net_position_return_fixed,
+                                (q2.net_position_return_fixed_loc) as net_position_return_fixed_loc,
+                                
                                 (q2.net_cost_price) as net_cost_price,
                                 (q2.net_cost_price_loc) as net_cost_price_loc,
                                 
@@ -3476,6 +3527,12 @@ class PLReportBuilderSql:
 
                     result_item_opened['net_position_return'] = item['net_position_return']
                     result_item_opened['net_position_return_loc'] = item['net_position_return_loc']
+
+                    result_item_opened['position_return_fixed'] = item['position_return_fixed']
+                    result_item_opened['position_return_fixed_loc'] = item['position_return_fixed_loc']
+
+                    result_item_opened['net_position_return_fixed'] = item['net_position_return_fixed']
+                    result_item_opened['net_position_return_fixed_loc'] = item['net_position_return_fixed_loc']
 
                     result_item_opened['position_size'] = item['position_size']
                     result_item_opened['nominal_position_size'] = item['nominal_position_size']
@@ -3683,6 +3740,12 @@ class PLReportBuilderSql:
 
                         result_item_closed['net_position_return'] = item['net_position_return']
                         result_item_closed['net_position_return_loc'] = item['net_position_return_loc']
+
+                        result_item_closed['position_return_fixed'] = item['position_return_fixed']
+                        result_item_closed['position_return_fixed_loc'] = item['position_return_fixed_loc']
+
+                        result_item_closed['net_position_return_fixed'] = item['net_position_return_fixed']
+                        result_item_closed['net_position_return_fixed_loc'] = item['net_position_return_fixed_loc']
 
                         result_item_closed['position_size'] = item['position_size']
                         result_item_closed['mismatch'] = item['mismatch']
