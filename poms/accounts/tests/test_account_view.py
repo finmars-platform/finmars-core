@@ -2,7 +2,7 @@ from copy import deepcopy
 
 from django.conf import settings
 
-from poms.accounts.models import Account, AccountType
+from poms.accounts.models import AccountType
 from poms.common.common_base_test import BaseTestCase
 
 
@@ -65,28 +65,6 @@ class AccountViewSetTest(BaseTestCase):
         self.attribute = None
         self.account_type = None
 
-    def create_account_type(self) -> AccountType:
-        self.account_type = AccountType.objects.create(
-            master_user=self.master_user,
-            user_code=self.random_string(),
-            short_name=self.random_string(3),
-            transaction_details_expr=self.random_string(),
-        )
-        self.account_type.attributes.set([self.create_attribute()])
-        self.account_type.save()
-        return self.account_type
-
-    def create_account(self) -> Account:
-        self.account = Account.objects.create(
-            master_user=self.master_user,
-            type=self.create_account_type(),
-            user_code=self.random_string(),
-            short_name=self.random_string(3),
-        )
-        self.account.attributes.set([self.create_attribute()])
-        self.account.save()
-        return self.account
-
     def prepare_data_for_create(self) -> dict:
         account_type = self.create_account_type()
         create_data = deepcopy(CREATE_DATA)
@@ -100,8 +78,6 @@ class AccountViewSetTest(BaseTestCase):
         self.assertEqual(response.status_code, 200, response.content)
 
         response_json = response.json()
-
-        print(response_json)
 
         self.assertGreater(response_json["count"], 0)  # default accounts in DB
         default_account = response_json["results"][0]
