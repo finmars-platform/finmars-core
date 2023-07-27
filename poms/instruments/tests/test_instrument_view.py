@@ -1,26 +1,9 @@
 from copy import deepcopy
-from datetime import date
 
 from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
-from poms.common.constants import SystemValueType
-from poms.currencies.models import Currency
-from poms.instruments.models import (
-    AccrualCalculationModel,
-    AccrualCalculationSchedule,
-    Country,
-    DailyPricingModel,
-    ExposureCalculationModel,
-    Instrument,
-    InstrumentFactorSchedule,
-    InstrumentType,
-    LongUnderlyingExposure,
-    PaymentSizeDetail,
-    Periodicity,
-    PricingCondition,
-    ShortUnderlyingExposure,
-)
+from poms.instruments.models import Instrument
 
 EXPECTED_INSTRUMENT = {
     "id": 22,
@@ -262,105 +245,7 @@ class InstrumentViewSetTest(BaseTestCase):
         self.pricing_policy = None
         self.instrument = Instrument.objects.first()
 
-    @staticmethod
-    def get_instrument_type(instrument_type: str = "bond") -> InstrumentType:
-        return InstrumentType.objects.get(user_code__contains=instrument_type)
 
-    @staticmethod
-    def get_currency(user_code: str = "EUR") -> InstrumentType:
-        return Currency.objects.get(user_code=user_code)
-
-    @staticmethod
-    def get_pricing_condition(model_id=PricingCondition.NO_VALUATION):
-        return PricingCondition.objects.get(id=model_id)
-
-    @staticmethod
-    def get_exposure_calculation(model_id=ExposureCalculationModel.MARKET_VALUE):
-        return ExposureCalculationModel.objects.get(id=model_id)
-
-    @staticmethod
-    def get_payment_size(model_id=PaymentSizeDetail.PERCENT):
-        return PaymentSizeDetail.objects.get(id=model_id)
-
-    @staticmethod
-    def get_daily_pricing(model_id=DailyPricingModel.DEFAULT):
-        return DailyPricingModel.objects.get(id=model_id)
-
-    @staticmethod
-    def get_long_under_exp(model_id=LongUnderlyingExposure.ZERO):
-        return LongUnderlyingExposure.objects.get(id=model_id)
-
-    @staticmethod
-    def get_short_under_exp(model_id=ShortUnderlyingExposure.ZERO):
-        return ShortUnderlyingExposure.objects.get(id=model_id)
-
-    @staticmethod
-    def get_country(name="Italy"):
-        return Country.objects.get(name=name)
-
-    @staticmethod
-    def get_accrual_calculation_model(model_id=AccrualCalculationModel.ACT_ACT):
-        return AccrualCalculationModel.objects.get(id=model_id)
-
-    @staticmethod
-    def get_periodicity(model_id=Periodicity.N_DAY):
-        return Periodicity.objects.get(id=model_id)
-
-    def create_accrual(self, instrument: Instrument) -> AccrualCalculationSchedule:
-        return AccrualCalculationSchedule.objects.create(
-            instrument=instrument,
-            accrual_start_date=date.today(),
-            accrual_start_date_value_type=SystemValueType.DATE,
-            first_payment_date=self.random_future_date(),
-            first_payment_date_value_type=SystemValueType.DATE,
-            accrual_size=self.random_percent(),
-            accrual_calculation_model=self.get_accrual_calculation_model(),
-            periodicity=self.get_periodicity(),
-            periodicity_n="30",
-            periodicity_n_value_type=SystemValueType.NUMBER,
-        )
-
-    def create_factor(self, instrument: Instrument) -> InstrumentFactorSchedule:
-        return InstrumentFactorSchedule.objects.create(
-            instrument=instrument,
-            effective_date=self.random_future_date(),
-            factor_value=self.random_percent(),
-        )
-
-    def create_instrument(
-        self,
-        instrument_type: str = "bond",
-        currency_code: str = "EUR",
-    ) -> Instrument:
-        currency = self.get_currency(user_code=currency_code)
-        self.instrument = Instrument.objects.create(
-            # mandatory fields
-            master_user=self.master_user,
-            instrument_type=self.get_instrument_type(instrument_type),
-            pricing_currency=currency,
-            accrued_currency=currency,
-            name=self.random_string(11),
-            # optional fields
-            short_name=self.random_string(3),
-            user_code=self.random_string(),
-            user_text_1=self.random_string(),
-            user_text_2=self.random_string(),
-            user_text_3=self.random_string(),
-            daily_pricing_model=self.get_daily_pricing(),
-            pricing_condition=self.get_pricing_condition(),
-            exposure_calculation_model=self.get_exposure_calculation(),
-            payment_size_detail=self.get_payment_size(),
-            long_underlying_exposure=self.get_long_under_exp(),
-            short_underlying_exposure=self.get_short_under_exp(),
-            co_directional_exposure_currency=currency,
-            country=self.get_country(),
-        )
-        self.instrument.attributes.set([self.create_attribute()])
-        self.instrument.save()
-        self.create_accrual(self.instrument)
-        self.create_factor(self.instrument)
-
-        return self.instrument
 
     def prepare_data_for_create(self) -> dict:
         create_data = deepcopy(CREATE_DATA)

@@ -182,7 +182,12 @@ class TransactionTypeActionInstrumentEventSchedulePhantomField(
 class TransactionTypeContextParameterSerializer(serializers.ModelSerializer):
     class Meta:
         model = TransactionTypeContextParameter
-        fields = ["user_code", "name", "value_type", "order"]
+        fields = [
+            "user_code",
+            "name",
+            "value_type",
+            "order",
+        ]
 
 
 class TransactionTypeInputSettingsSerializer(serializers.ModelSerializer):
@@ -200,7 +205,10 @@ class TransactionTypeInputSettingsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TransactionTypeInputSettings
-        fields = ["linked_inputs_names", "recalc_on_change_linked_inputs"]
+        fields = [
+            "linked_inputs_names",
+            "recalc_on_change_linked_inputs",
+        ]
 
 
 class TransactionTypeInputSerializer(serializers.ModelSerializer):
@@ -2164,7 +2172,6 @@ class TransactionTypeLightSerializer(ModelWithUserCodeSerializer):
             "is_deleted",
             "instrument_types",
             "portfolios",
-            # 'group_object',
             "configuration_code",
         ]
 
@@ -2179,7 +2186,7 @@ class TransactionTypeLightSerializerWithInputs(TransactionTypeLightSerializer):
         many=True,
     )
 
-    class Meta(TransactionTypeLightSerializer.Meta):
+    class Meta:
         model = TransactionType
         fields = [
             "id",
@@ -2252,7 +2259,6 @@ class TransactionTypeLightSerializerWithInputs(TransactionTypeLightSerializer):
             "is_deleted",
             "instrument_types",
             "portfolios",
-            "group_object",
             "inputs",
             "context_parameters_notes",
             "context_parameters",
@@ -3974,7 +3980,6 @@ class TransactionTextRenderSerializer(TransactionSerializer):
 
 # noinspection PyUnresolvedReferences
 class ComplexTransactionMixin:
-
     def get_text(self, obj):
         return None
 
@@ -5169,10 +5174,9 @@ class TransactionTypeProcessSerializer(serializers.Serializer):
 
     def update(self, instance, validated_data):
         for key, value in validated_data.items():
-            if key not in [
-                "complex_transaction",
-            ]:
+            if key != "complex_transaction":
                 setattr(instance, key, value)
+
         instance.value_errors = []
 
         _l.info("==== PROCESS REBOOK ====")
