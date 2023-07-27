@@ -394,11 +394,15 @@ class TransactionTypeViewSet(AbstractModelViewSet):
         if context_position_size:
             try:
                 context_position_size = float(context_position_size)
-            except Exception as e:
+            except Exception:
                 context_position_size = None
 
         context_effective_date = request.query_params.get(
             "context_effective_date", None
+        )
+        context_report_date = request.query_params.get("context_report_date", None)
+        context_report_start_date = request.query_params.get(
+            "context_report_start_date", None
         )
 
         # context_notification_date = request.query_params.get(
@@ -406,11 +410,6 @@ class TransactionTypeViewSet(AbstractModelViewSet):
         # )
         # context_final_date = request.query_params.get("context_final_date")
         # context_maturity_date = request.query_params.get("context_maturity_date")
-
-        context_report_date = request.query_params.get("context_report_date", None)
-        context_report_start_date = request.query_params.get(
-            "context_report_start_date", None
-        )
 
         if pricing_policy_id:  # could be user_code
             try:
@@ -603,8 +602,8 @@ class TransactionTypeViewSet(AbstractModelViewSet):
                     )
                     serializer.is_valid(raise_exception=True)
                     serializer.save()
-
                     return Response(serializer.data)
+
                 finally:
                     if instance.has_errors:
                         transaction.set_rollback(True)
@@ -652,8 +651,6 @@ class TransactionTypeViewSet(AbstractModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def recalculate(self, request, pk=None):
-        st = time.perf_counter()
-
         complex_transaction_status = ComplexTransaction.PRODUCTION
 
         transaction_type = TransactionType.objects.get(pk=pk)
