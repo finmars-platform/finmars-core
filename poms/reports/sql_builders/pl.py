@@ -1398,13 +1398,13 @@ class PLReportBuilderSql:
                             -- вроде, не используется
                             case
                                 when position_size_opened <> 0
-                                then -((principal_opened + overheads_opened) / position_size_opened / i.price_multiplier)
+                                then -((principal_opened) / position_size_opened / i.price_multiplier)
                                 else 0
                             end as net_cost_price,
                             -- испольщуется только эта
                             case
                                 when position_size_opened <> 0
-                                then -((principal_opened + overheads_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
+                                then -((principal_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
                                 else 0
                             end as net_cost_price_loc,
                             
@@ -1412,19 +1412,19 @@ class PLReportBuilderSql:
                                 when position_size_opened <> 0
                                     then -((principal_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
                                 else 0
-                            end as principal_cost_price_loc,
+                            end as principal_cost_price_loc, -- wtf?
                             
                             
                             -- вроде, не используется
                             case
                                 when position_size_opened <> 0
-                                then -((principal_opened) / position_size_opened / i.price_multiplier)
+                                then -((principal_opened + overheads_opened) / position_size_opened / i.price_multiplier)
                                 else 0
                             end as gross_cost_price,
                             -- испольщуется только эта
                             case
                                 when position_size_opened <> 0
-                                then -((principal_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
+                                then -((principal_opened + overheads_opened) / position_size_opened * rep_cur_fx / i.prc_cur_fx / i.price_multiplier)
                                 else 0
                             end as gross_cost_price_loc,
                             
