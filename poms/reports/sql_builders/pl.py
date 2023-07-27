@@ -754,6 +754,8 @@ class PLReportBuilderSql:
             net_position_return,
             net_position_return_loc,
             
+            -- todo add fixed return
+            
             net_cost_price,
             net_cost_price_loc,
             principal_cost_price_loc,
@@ -766,6 +768,12 @@ class PLReportBuilderSql:
             
             amount_invested,
             amount_invested_loc,
+            
+            principal_invested_fixed,
+            principal_invested_fixed_loc,
+            
+            amount_invested_fixed,
+            amount_invested_fixed_loc,
                 
             time_invested,
             
@@ -773,6 +781,7 @@ class PLReportBuilderSql:
             modified_duration,
             ytm_at_cost,
             return_annually,
+            return_annually_fixed,
             
             market_value,
             exposure,
@@ -887,6 +896,12 @@ class PLReportBuilderSql:
             
             amount_invested,
             amount_invested_loc,
+            
+            principal_invested_fixed,
+            principal_invested_fixed_loc,
+            
+            amount_invested_fixed,
+            amount_invested_fixed_loc,
                 
             time_invested,
             
@@ -894,6 +909,7 @@ class PLReportBuilderSql:
             modified_duration,
             ytm_at_cost,
             return_annually,
+            return_annually_fixed,
             
             
             market_value,
@@ -1009,6 +1025,12 @@ class PLReportBuilderSql:
                     
                     amount_invested,
                     amount_invested_loc,
+                    
+                    principal_invested_fixed,
+                    principal_invested_fixed_loc,
+                    
+                    amount_invested_fixed,
+                    amount_invested_fixed_loc,
                         
                     time_invested,
                     
@@ -1022,6 +1044,12 @@ class PLReportBuilderSql:
                         then (position_return / time_invested)
                         else 0
                     end as return_annually,
+                    
+                    case
+                        when time_invested != 0
+                        then (position_return_fixed / time_invested)
+                        else 0
+                    end as return_annually_fixed,
                     
                     market_value,
                     exposure,
@@ -1186,30 +1214,54 @@ class PLReportBuilderSql:
                         principal_fixed_closed * cross_loc_prc_fx as principal_fixed_closed_loc,
                         carry_fixed_closed * cross_loc_prc_fx as carry_fixed_closed_loc,
                         overheads_fixed_closed * cross_loc_prc_fx as overheads_fixed_closed_loc,
-    
+                        
                         case
-                            when principal_fixed_opened != 0
-                            then (((mv_principal+principal_opened) + (mv_carry+carry_opened)) / -principal_fixed_opened)
+                            when amount_invested != 0
+                            then (((mv_principal+principal_opened) + (mv_carry+carry_opened)) / -amount_invested) -- check for minus
                             else 0
                         end as position_return,
                         
                         case
-                            when principal_fixed_opened != 0
-                            then ((((mv_principal+principal_opened) + (mv_carry+carry_opened)) / -principal_fixed_opened) * cross_loc_prc_fx)
+                            when amount_invested_fixed != 0
+                            then ((((mv_principal+principal_opened) + (mv_carry+carry_opened)) / -amount_invested) * cross_loc_prc_fx)
                             else 0
                         end as position_return_loc,
                         
                         case
-                            when principal_fixed_opened != 0
-                            then (((mv_principal+principal_opened) + (mv_carry+carry_opened) + overheads_opened) / -principal_fixed_opened)
+                            when amount_invested != 0
+                            then (((mv_principal+principal_opened) + (mv_carry+carry_opened) + overheads_opened) / -amount_invested) -- check for minus
                             else 0
                         end as net_position_return,
                         
                         case
-                            when principal_fixed_opened != 0
-                            then ((((mv_principal+principal_opened) + (mv_carry+carry_opened) + overheads_opened) / -principal_fixed_opened) * cross_loc_prc_fx)
+                            when amount_invested != 0
+                            then ((((mv_principal+principal_opened) + (mv_carry+carry_opened) + overheads_opened) / -amount_invested) * cross_loc_prc_fx)
                             else 0
-                        end as net_position_return_loc,
+                        end as net_position_return_loc, -- probably not needed
+    
+                        case
+                            when amount_invested_fixed != 0
+                            then (((mv_principal+principal_fixed_opened) + (mv_carry+carry_fixed_opened)) / -amount_invested_fixed) -- check for minus
+                            else 0
+                        end as position_return_fixed,
+                        
+                        case
+                            when amount_invested_fixed != 0
+                            then ((((mv_principal+principal_fixed_opened) + (mv_carry+carry_fixed_opened)) / -amount_invested_fixed) * cross_loc_prc_fx)
+                            else 0
+                        end as position_return_fixed_loc,
+                        
+                        case
+                            when amount_invested_fixed != 0
+                            then (((mv_principal+principal_fixed_opened) + (mv_carry+carry_fixed_opened) + overheads_fixed_opened) / -amount_invested_fixed) -- check for minus
+                            else 0
+                        end as net_position_return_fixed,
+                        
+                        case
+                            when amount_invested_fixed != 0
+                            then ((((mv_principal+principal_fixed_opened) + (mv_carry+carry_fixed_opened) + overheads_fixed_opened) / -amount_invested_fixed) * cross_loc_prc_fx)
+                            else 0
+                        end as net_position_return_fixed_loc, -- probably not needed
         
                         -- will be taken from balance
                         -- mv_carry+mv_principal as market_value,
@@ -1235,7 +1287,13 @@ class PLReportBuilderSql:
                         principal_invested * cross_loc_prc_fx as principal_invested_loc,
                         
                         amount_invested,
-                        amount_invested * cross_loc_prc_fx as amount_invested_loc
+                        amount_invested * cross_loc_prc_fx as amount_invested_loc,
+                        
+                        principal_invested_fixed,
+                        principal_invested_fixed * cross_loc_prc_fx as principal_invested_fixed_loc,
+                        
+                        amount_invested_fixed,
+                        amount_invested_fixed * cross_loc_prc_fx as amount_invested_fixed_loc
                         
                 from (
                         select 
@@ -1368,9 +1426,13 @@ class PLReportBuilderSql:
                                 (position_size_opened * coalesce(i.cur_accr_price, 0) * i.accrued_multiplier * i.accr_cur_fx  / rep_cur_fx) as mv_carry,
         
                             -- (i.accrual_size * i.accrued_multiplier  / (i.cur_price * i.price_multiplier) ) as ytm,
-                    
+                            
                             (amount_principal_with_sign_invested) as principal_invested,
-                            (amount_principal_with_sign_invested + amount_carry_with_sign_invested) as amount_invested
+                            (amount_principal_with_sign_invested + amount_carry_with_sign_invested) as amount_invested,
+                    
+                            (amount_principal_with_sign_invested_fixed) as principal_invested_fixed,
+                            (amount_principal_with_sign_invested_fixed + amount_carry_with_sign_invested_fixed) as amount_invested_fixed
+                            
     
                     
                         from (
@@ -1402,6 +1464,9 @@ class PLReportBuilderSql:
                                 SUM(carry_opened * stl_cur_fx / rep_cur_fx)                    as carry_opened,
                                 SUM(overheads_opened * stl_cur_fx / rep_cur_fx)                as overheads_opened,
                                 
+                                SUM(amount_principal_with_sign_invested)      as amount_principal_with_sign_invested,
+                                SUM(amount_carry_with_sign_invested)      as amount_carry_with_sign_invested,
+                                
                                 SUM(time_invested)                                                      as time_invested_sum,
                                 
                                 --SUM(principal_with_sign_invested * stlch.fx_rate * trnch.fx_rate )      as principal_with_sign_invested,
@@ -1411,13 +1476,13 @@ class PLReportBuilderSql:
                                 --SUM(principal_with_sign_invested * stl_cur_fx * trn_cur_fx )      as principal_with_sign_invested,
                                 --SUM(carry_with_sign_invested * stl_cur_fx * trn_cur_fx )          as carry_with_sign_invested,
                                 --SUM(overheads_with_sign_invested * stl_cur_fx * trn_cur_fx )      as overheads_with_sign_invested,
-
+                                -- fixed below
                                 SUM(principal_with_sign_invested)      as principal_with_sign_invested, -- possibly missing pricing fx multiply 
                                 SUM(carry_with_sign_invested)          as carry_with_sign_invested,
                                 SUM(overheads_with_sign_invested)      as overheads_with_sign_invested,
                                 
-                                SUM(amount_principal_with_sign_invested)      as amount_principal_with_sign_invested,
-                                SUM(amount_carry_with_sign_invested)      as amount_carry_with_sign_invested,
+                                SUM(amount_principal_with_sign_invested_fixed)      as amount_principal_with_sign_invested_fixed,
+                                SUM(amount_carry_with_sign_invested_fixed)      as amount_carry_with_sign_invested_fixed,
                                 
                                 SUM(principal_fixed_opened)                                             as principal_fixed_opened,
                                 SUM(carry_fixed_opened)                                                 as carry_fixed_opened,
@@ -1501,13 +1566,17 @@ class PLReportBuilderSql:
                                     
                                     SUM(overheads_with_sign * (1 - multiplier))                 as overheads_opened,
                                     
+                                    SUM(amount_principal_with_sign_invested * (1 - multiplier))        as amount_principal_with_sign_invested,
+                                    SUM(amount_carry_with_sign_invested * (1 - multiplier))            as amount_carry_with_sign_invested,
                                     
-                                    SUM(principal_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as principal_with_sign_invested,
-                                    SUM(carry_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)            as carry_with_sign_invested,
-                                    SUM(overheads_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as overheads_with_sign_invested,
+                                    -- fixed part below
+                                    SUM(principal_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as principal_with_sign_invested, -- wrong name, should be fixed
+                                    SUM(carry_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)            as carry_with_sign_invested, -- wrong name, should be fixed
+                                    SUM(overheads_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as overheads_with_sign_invested, -- wrong name, should be fixed
                                     
-                                    SUM(amount_principal_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as amount_principal_with_sign_invested,
-                                    SUM(amount_carry_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)            as amount_carry_with_sign_invested,
+                                    SUM(amount_principal_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as amount_principal_with_sign_invested_fixed,
+                                    SUM(amount_carry_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)            as amount_carry_with_sign_invested_fixed,
+                                    
                                     
                                     SUM(principal_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)        as principal_fixed_opened,
                                     SUM(carry_with_sign_invested * (1 - multiplier) * trn_hist_fx / rep_hist_fx)            as carry_fixed_opened,
@@ -1725,6 +1794,8 @@ class PLReportBuilderSql:
             net_position_return,
             net_position_return_loc,
             
+            -- todo add fixed return
+            
             net_cost_price,
             net_cost_price_loc,
             principal_cost_price_loc,
@@ -1736,7 +1807,13 @@ class PLReportBuilderSql:
             principal_invested_loc,
             
             amount_invested,
-            amount_invested_loc,        
+            amount_invested_loc,       
+            
+            principal_invested_fixed,
+            principal_invested_fixed_loc,
+            
+            amount_invested_fixed,
+            amount_invested_fixed_loc,        
                 
             time_invested,
             
@@ -1744,6 +1821,7 @@ class PLReportBuilderSql:
             modified_duration,
             ytm_at_cost,
             return_annually,
+            return_annually_fixed,
             
             market_value,
             exposure,
@@ -1859,6 +1937,12 @@ class PLReportBuilderSql:
                 
                 (0) as amount_invested,
                 (0) as amount_invested_loc,
+                
+                (0) as principal_invested_fixed,
+                (0) as principal_invested_fixed_loc,
+                
+                (0) as amount_invested_fixed,
+                (0) as amount_invested_fixed_loc,
                     
                 (0) as time_invested,
                 
@@ -1866,6 +1950,7 @@ class PLReportBuilderSql:
                 (0) as modified_duration,
                 (0) as ytm_at_cost,
                 (0) as return_annually,
+                (0) as return_annually_fixed,
                 
                 (0) as market_value,
                 (0) as exposure,
@@ -2079,6 +2164,8 @@ class PLReportBuilderSql:
             net_position_return,
             net_position_return_loc,
             
+            -- todo add fixed return
+            
             net_cost_price,
             net_cost_price_loc,
             principal_cost_price_loc,
@@ -2090,7 +2177,13 @@ class PLReportBuilderSql:
             principal_invested_loc,
             
             amount_invested,
-            amount_invested_loc,
+            amount_invested_loc,   
+            
+            principal_invested_fixed,
+            principal_invested_fixed_loc,
+            
+            amount_invested_fixed,
+            amount_invested_fixed_loc,
                 
             time_invested,
             
@@ -2098,6 +2191,7 @@ class PLReportBuilderSql:
             modified_duration,
             ytm_at_cost,
             return_annually,
+            return_annually_fixed,
             
             market_value,
             exposure,
@@ -2214,6 +2308,12 @@ class PLReportBuilderSql:
                 
                 (0) as amount_invested,
                 (0) as amount_invested_loc,
+                
+                (0) as principal_invested_fixed,
+                (0) as principal_invested_fixed_loc,
+                
+                (0) as amount_invested_fixed,
+                (0) as amount_invested_fixed_loc,
                     
                 (0) as time_invested,
                 
@@ -2221,6 +2321,7 @@ class PLReportBuilderSql:
                 (0) as modified_duration,
                 (0) as ytm_at_cost,
                 (0) as return_annually,
+                (0) as return_annually_fixed,
                 
                 (0) as market_value,
                 (0) as exposure,
@@ -2393,6 +2494,8 @@ class PLReportBuilderSql:
             net_position_return,
             net_position_return_loc,
             
+            -- todo add fixed return
+            
             net_cost_price,
             net_cost_price_loc,
             principal_cost_price_loc,
@@ -2404,7 +2507,13 @@ class PLReportBuilderSql:
             principal_invested_loc,
             
             amount_invested,
-            amount_invested_loc,
+            amount_invested_loc,   
+            
+            principal_invested_fixed,
+            principal_invested_fixed_loc,
+            
+            amount_invested_fixed,
+            amount_invested_fixed_loc,
                 
             time_invested,
             
@@ -2412,6 +2521,7 @@ class PLReportBuilderSql:
             modified_duration,
             ytm_at_cost,
             return_annually,
+            return_annually_fixed,
             
             market_value,
             exposure,
@@ -2527,6 +2637,12 @@ class PLReportBuilderSql:
                 
                 (0) as amount_invested,
                 (0) as amount_invested_loc,
+                
+                (0) as principal_invested_fixed,
+                (0) as principal_invested_fixed_loc,
+                
+                (0) as amount_invested_fixed,
+                (0) as amount_invested_fixed_loc,
                     
                 (0) as time_invested,
                 
@@ -2534,6 +2650,7 @@ class PLReportBuilderSql:
                 (0) as modified_duration,
                 (0) as ytm_at_cost,
                 (0) as return_annually,
+                (0) as return_annually_fixed,
                 
                 (0) as market_value,
                 (0) as exposure,
@@ -2703,6 +2820,8 @@ class PLReportBuilderSql:
             net_position_return,
             net_position_return_loc,
             
+            -- todo add fixed return
+            
             net_cost_price,
             net_cost_price_loc,
             principal_cost_price_loc,
@@ -2714,7 +2833,13 @@ class PLReportBuilderSql:
             principal_invested_loc,
             
             amount_invested,
-            amount_invested_loc,
+            amount_invested_loc,   
+            
+            principal_invested_fixed,
+            principal_invested_fixed_loc,
+            
+            amount_invested_fixed,
+            amount_invested_fixed_loc,
                 
             time_invested,
             
@@ -2722,6 +2847,7 @@ class PLReportBuilderSql:
             modified_duration,
             ytm_at_cost,
             return_annually,
+            return_annually_fixed,
             
             market_value,
             exposure,
@@ -2837,6 +2963,12 @@ class PLReportBuilderSql:
                 
                 (0) as amount_invested,
                 (0) as amount_invested_loc,
+                
+                (0) as principal_invested_fixed,
+                (0) as principal_invested_fixed_loc,
+                
+                (0) as amount_invested_fixed,
+                (0) as amount_invested_fixed_loc,
                     
                 (0) as time_invested,
                 
@@ -2844,6 +2976,7 @@ class PLReportBuilderSql:
                 (0) as modified_duration,
                 (0) as ytm_at_cost,
                 (0) as return_annually,
+                (0) as return_annually_fixed,
                 
                 (0) as market_value,
                 (0) as exposure,
@@ -3154,6 +3287,12 @@ class PLReportBuilderSql:
                                 
                                 (q2.amount_invested) as amount_invested,
                                 (q2.amount_invested_loc) as amount_invested_loc,
+                                
+                                (q2.principal_invested_fixed) as principal_invested_fixed,
+                                (q2.principal_invested_fixed_loc) as principal_invested_fixed_loc,
+                                
+                                (q2.amount_invested_fixed) as amount_invested_fixed,
+                                (q2.amount_invested_fixed_loc) as amount_invested_fixed_loc,
                                     
                                 (q2.time_invested) as time_invested,
                                 
@@ -3172,6 +3311,7 @@ class PLReportBuilderSql:
                                 (q2.modified_duration) as modified_duration,
                                 (q2.ytm_at_cost) as ytm_at_cost,
                                 (q2.return_annually) as return_annually,
+                                (q2.return_annually_fixed) as return_annually_fixed,
                                 
                                 (q2.market_value) as market_value,
                                 (q2.exposure) as exposure,
@@ -3318,6 +3458,12 @@ class PLReportBuilderSql:
 
                     result_item_opened['principal_invested'] = item['principal_invested']
                     result_item_opened['principal_invested_loc'] = item['principal_invested_loc']
+
+                    result_item_opened['amount_invested_fixed'] = item['amount_invested_fixed']
+                    result_item_opened['amount_invested_fixed_loc'] = item['amount_invested_fixed_loc']
+
+                    result_item_opened['principal_invested_fixed'] = item['principal_invested_fixed']
+                    result_item_opened['principal_invested_fixed_loc'] = item['principal_invested_fixed_loc']
 
                     result_item_opened['gross_cost_price'] = item['gross_cost_price']
                     result_item_opened['gross_cost_price_loc'] = item['gross_cost_price_loc']
@@ -3520,6 +3666,12 @@ class PLReportBuilderSql:
                         result_item_closed['principal_invested'] = item['principal_invested']
                         result_item_closed['principal_invested_loc'] = item['principal_invested_loc']
 
+                        result_item_closed['amount_invested_fixed'] = item['amount_invested_fixed']
+                        result_item_closed['amount_invested_fixed_loc'] = item['amount_invested_fixed_loc']
+
+                        result_item_closed['principal_invested_fixed'] = item['principal_invested_fixed']
+                        result_item_closed['principal_invested_fixed_loc'] = item['principal_invested_fixed_loc']
+
                         result_item_closed['gross_cost_price'] = item['gross_cost_price']
                         result_item_closed['gross_cost_price_loc'] = item['gross_cost_price_loc']
 
@@ -3541,11 +3693,11 @@ class PLReportBuilderSql:
                         result_item_closed['modified_duration'] = item['modified_duration']
                         result_item_closed['time_invested'] = item['time_invested']
 
-                        result_item_closed['amount_invested'] = item['amount_invested']
-                        result_item_closed['amount_invested_loc'] = item['amount_invested_loc']
+                        result_item_closed['amount_invested_fixed'] = item['amount_invested_fixed']
+                        result_item_closed['amount_invested_fixed_loc'] = item['amount_invested_fixed_loc']
 
-                        result_item_closed['principal_invested'] = item['principal_invested']
-                        result_item_closed['principal_invested_loc'] = item['principal_invested_loc']
+                        result_item_closed['principal_invested_fixed'] = item['principal_invested_fixed']
+                        result_item_closed['principal_invested_fixed_loc'] = item['principal_invested_fixed_loc']
 
                         result_item_closed['gross_cost_price'] = item['gross_cost_price']
                         result_item_closed['gross_cost_price_loc'] = item['gross_cost_price_loc']

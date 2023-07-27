@@ -370,6 +370,7 @@ def serialize_balance_report_item(item):
     result["ytm_at_cost"] = item["ytm_at_cost"]
     result["modified_duration"] = item["modified_duration"]
     result["return_annually"] = item["return_annually"]
+    result["return_annually_fixed"] = item["return_annually_fixed"]
 
     result["position_return"] = item["position_return"]
     result["position_return_loc"] = item["position_return_loc"]
@@ -387,8 +388,15 @@ def serialize_balance_report_item(item):
     result["amount_invested"] = item["amount_invested"]
     result["amount_invested_loc"] = item["amount_invested_loc"]
 
+    result["principal_invested_fixed"] = item["principal_invested_fixed"]
+    result["principal_invested_fixed_loc"] = item["principal_invested_fixed_loc"]
+
+    result["amount_invested_fixed"] = item["amount_invested_fixed"]
+    result["amount_invested_fixed_loc"] = item["amount_invested_fixed_loc"]
+
     result["time_invested"] = item["time_invested"]
     result["return_annually"] = item["return_annually"]
+    result["return_annually_fixed"] = item["return_annually_fixed"]
 
     # performance
 
@@ -524,11 +532,11 @@ def serialize_pl_report_item(item):
     result["gross_cost_price"] = item["gross_cost_price"]
     result["gross_cost_price_loc"] = item["gross_cost_price_loc"]
 
-    result["principal_invested"] = item["principal_invested"]
-    result["principal_invested_loc"] = item["principal_invested_loc"]
+    result["principal_invested_fixed"] = item["principal_invested_fixed"]
+    result["principal_invested_fixed_loc"] = item["principal_invested_fixed_loc"]
 
-    result["amount_invested"] = item["amount_invested"]
-    result["amount_invested_loc"] = item["amount_invested_loc"]
+    result["amount_invested_fixed"] = item["amount_invested_fixed"]
+    result["amount_invested_fixed_loc"] = item["amount_invested_fixed_loc"]
 
     result["time_invested"] = item["time_invested"]
 

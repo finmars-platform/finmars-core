@@ -524,6 +524,12 @@ class BalanceReportBuilderSql:
                         amount_invested,
                         amount_invested_loc,
                         
+                        principal_invested_fixed,
+                        principal_invested_fixed_loc,
+                        
+                        amount_invested_fixed,
+                        amount_invested_fixed_loc,
+                        
                         position_return,
                         position_return_loc,
                         net_position_return,
@@ -534,6 +540,7 @@ class BalanceReportBuilderSql:
                         modified_duration,
                         ytm_at_cost,
                         return_annually,
+                        return_annually_fixed,
             
                         principal_opened,
                         carry_opened,
@@ -682,6 +689,12 @@ class BalanceReportBuilderSql:
                             
                             (0) as amount_invested,
                             (0) as amount_invested_loc,
+                            
+                            (0) as principal_invested_fixed,
+                            (0) as principal_invested_fixed_loc,
+                            
+                            (0) as amount_invested_fixed,
+                            (0) as amount_invested_fixed_loc,
                                 
                             (0) as position_return,
                             (0) as position_return_loc,
@@ -693,6 +706,7 @@ class BalanceReportBuilderSql:
                             (0) as modified_duration,
                             (0) as ytm_at_cost,
                             (0) as return_annually,
+                            (0) as return_annually_fixed,
                             
                             (0) as principal_opened,
                             (0) as carry_opened,
@@ -917,6 +931,12 @@ class BalanceReportBuilderSql:
                         amount_invested,
                         amount_invested_loc,
                         
+                        principal_invested_fixed,
+                        principal_invested_fixed_loc,
+                        
+                        amount_invested_fixed,
+                        amount_invested_fixed_loc,
+                        
                         position_return,
                         position_return_loc,
                         net_position_return,
@@ -927,6 +947,7 @@ class BalanceReportBuilderSql:
                         modified_duration,
                         ytm_at_cost,
                         return_annually,
+                        return_annually_fixed,
             
                         principal_opened,
                         carry_opened,
@@ -1075,6 +1096,12 @@ class BalanceReportBuilderSql:
                             amount_invested,
                             amount_invested_loc,
                             
+                            principal_invested_fixed,
+                            principal_invested_fixed_loc,
+                            
+                            amount_invested_fixed,
+                            amount_invested_fixed_loc,
+                            
                             position_return,
                             position_return_loc,
                             net_position_return,
@@ -1085,6 +1112,7 @@ class BalanceReportBuilderSql:
                             modified_duration,
                             ytm_at_cost,
                             return_annually,
+                            return_annually_fixed,
                 
                             principal_opened,
                             carry_opened,
@@ -1489,6 +1517,12 @@ class BalanceReportBuilderSql:
                                     amount_invested,
                                     amount_invested_loc,
                                     
+                                    principal_invested_fixed,
+                                    principal_invested_fixed_loc,
+                                    
+                                    amount_invested_fixed,
+                                    amount_invested_fixed_loc,
+                                    
                                     position_return,
                                     position_return_loc,
                                     net_position_return,
@@ -1499,6 +1533,7 @@ class BalanceReportBuilderSql:
                                     modified_duration,
                                     ytm_at_cost,
                                     return_annually,
+                                    return_annually_fixed,
                         
                                     principal_opened,
                                     carry_opened,
@@ -1714,6 +1749,7 @@ class BalanceReportBuilderSql:
                     result_item["ytm_at_cost"] = item["ytm_at_cost"]
                     result_item["modified_duration"] = item["modified_duration"]
                     result_item["return_annually"] = item["return_annually"]
+                    result_item["return_annually_fixed"] = item["return_annually_fixed"]
 
                     result_item["position_return"] = item["position_return"]
                     result_item["position_return_loc"] = item["position_return_loc"]
@@ -1731,8 +1767,15 @@ class BalanceReportBuilderSql:
                     result_item["amount_invested"] = item["amount_invested"]
                     result_item["amount_invested_loc"] = item["amount_invested_loc"]
 
+                    result_item["principal_invested_fixed"] = item["principal_invested_fixed"]
+                    result_item["principal_invested_fixed_loc"] = item["principal_invested_fixed_loc"]
+
+                    result_item["amount_invested_fixed"] = item["amount_invested_fixed"]
+                    result_item["amount_invested_fixed_loc"] = item["amount_invested_fixed_loc"]
+
                     result_item["time_invested"] = item["time_invested"]
                     result_item["return_annually"] = item["return_annually"]
+                    result_item["return_annually_fixed"] = item["return_annually_fixed"]
 
                     # performance
 
@@ -1875,6 +1918,7 @@ class BalanceReportBuilderSql:
                                 new_exposure_item["ytm_at_cost"] = None
                                 new_exposure_item["modified_duration"] = None
                                 new_exposure_item["return_annually"] = None
+                                new_exposure_item["return_annually_fixed"] = None
 
                                 new_exposure_item["position_return"] = None
                                 new_exposure_item["position_return_loc"] = None
@@ -1892,8 +1936,15 @@ class BalanceReportBuilderSql:
                                 new_exposure_item["amount_invested"] = None
                                 new_exposure_item["amount_invested_loc"] = None
 
+                                new_exposure_item["principal_invested_fixed"] = None
+                                new_exposure_item["principal_invested_fixed_loc"] = None
+
+                                new_exposure_item["amount_invested_fixed"] = None
+                                new_exposure_item["amount_invested_fixed_loc"] = None
+
                                 new_exposure_item["time_invested"] = None
                                 new_exposure_item["return_annually"] = None
+                                new_exposure_item["return_annually_fixed"] = None
 
                                 # performance
 
