@@ -3,7 +3,7 @@ from copy import deepcopy
 from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
-from poms.instruments.models import InstrumentType
+from poms.instruments.models import InstrumentType, InstrumentClass
 
 EXPECTED_INSTRUMENT_TYPE = {
     "id": 9,
@@ -159,28 +159,42 @@ class InstrumentTypeViewSetTest(BaseTestCase):
         response_json = response.json()
         self.assertEqual(len(response_json["results"]), 3)  # defaults
 
-    # def test__get_filters(self):  # sourcery skip: extract-duplicate-method
-    #     instrument = self.create_instrument()
-    #     response = self.client.get(path=f"{self.url}?user_code={instrument.user_code}")
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #     response_json = response.json()
-    #     self.assertEqual(response_json["count"], 1)
-    #     self.assertEqual(
-    #         response_json["results"][0]["user_code"],
-    #         instrument.user_code,
-    #     )
-    #
-    #     response = self.client.get(
-    #         path=f"{self.url}?user_text_1={instrument.user_text_1}"
-    #     )
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #     response_json = response.json()
-    #     self.assertEqual(response_json["count"], 1)
-    #     self.assertEqual(
-    #         response_json["results"][0]["user_text_1"],
-    #         instrument.user_text_1,
-    #     )
-    #
+    @BaseTestCase.cases(
+        ("user_code", "user_code"),
+        ("name", "name"),
+        ("short_name", "short_name"),
+    )
+    def test__get_filters(self, field):
+        instrument_type = self.get_instrument_type("stock")
+        response = self.client.get(
+            path=f"{self.url}?{field}={getattr(instrument_type, field)}",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 1)
+        self.assertEqual(
+            response_json["results"][0][field],
+            getattr(instrument_type, field),
+        )
+
+    @BaseTestCase.cases(
+        ("0", 0),
+        ("1", 1),
+        ("2", 2),
+    )
+    def test__get_instrument_class_filter_(self, index):
+        response = self.client.get(
+            path=f"{self.url}?instrument_class__id={InstrumentClass.GENERAL}",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["count"], 3)
+
+        self.assertEqual(
+            response_json["results"][index]["instrument_class"],
+            InstrumentClass.GENERAL,
+        )
+
     # def test__create(self):
     #     create_data = self.prepare_data_for_create()
     #
