@@ -1,0 +1,10 @@
+[run]
+branch=True
+concurrency=multiprocessing
+source=poms
+
+[report]
+ignore_errors = True
+
+[html]
+directory = coverage_html_report

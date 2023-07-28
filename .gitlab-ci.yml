@@ -76,7 +76,7 @@ Test:
     - mkdir /var/log/finmars
     - mkdir /var/log/finmars/backend
   script:
-    - python manage.py test
+    - coverage run manage.py test --parallel=4  && coverage combine && coverage report
 
 
 Build:
