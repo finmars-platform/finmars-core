@@ -1,10 +1,6 @@
-from datetime import date
-
 from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
 
 from poms.common.common_base_test import BaseTestCase
-from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.transactions.models import (
     ComplexTransaction,
     ComplexTransactionInput,
@@ -212,7 +208,7 @@ EXPECTED_COMPLEX_TRANSACTION = {
 }
 
 
-class InstrumentViewSetTest(BaseTestCase):
+class ComplexTransactionViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()

@@ -2696,17 +2696,7 @@ class TransactionTypeProcess:
         self.record_execution_progress("Calculating Description")
 
         if self.complex_transaction.transaction_type.display_expr:
-            ctrn = formula.value_prepare(self.complex_transaction)
-            trns = self.complex_transaction.transactions.all()
-
-            names = {
-                "complex_transaction": ctrn,
-                "transactions": trns,
-            }
-
-            for key, value in self.values.items():
-                names[key] = value
-
+            names = self._prepare_names()
             try:
                 self.complex_transaction.text = formula.safe_eval(
                     self.complex_transaction.transaction_type.display_expr,
@@ -2714,10 +2704,10 @@ class TransactionTypeProcess:
                     context=self._context,
                 )
             except Exception as e:
-                _l.debug(f"Cant process text {e}")
-                _l.debug(f"Cant process names {names}")
                 _l.debug(
-                    f"Cant process self.complex_transaction.transaction_type.display_expr {self.complex_transaction.transaction_type.display_expr}"
+                    f"Cant process text {repr(e)} names {names} "
+                    f"self.complex_transaction.transaction_type.display_expr "
+                    f"{self.complex_transaction.transaction_type.display_expr}"
                 )
 
                 self.complex_transaction.text = "<InvalidExpression>"
@@ -2727,17 +2717,7 @@ class TransactionTypeProcess:
         self.record_execution_progress("Calculating Date")
 
         if self.complex_transaction.transaction_type.date_expr:
-            ctrn = formula.value_prepare(self.complex_transaction)
-            trns = self.complex_transaction.transactions.all()
-
-            names = {
-                "complex_transaction": ctrn,
-                "transactions": trns,
-            }
-
-            for key, value in self.values.items():
-                names[key] = value
-
+            names = self._prepare_names()
             self.complex_transaction.date = self._now  # as default
 
             try:
@@ -2753,6 +2733,17 @@ class TransactionTypeProcess:
             self.complex_transaction.date = self._now
 
         self.record_execution_progress(f"Date: {self.complex_transaction.date}")
+
+    def _prepare_names(self):
+        names = {
+            "complex_transaction": formula.value_prepare(self.complex_transaction),
+            "transactions": self.complex_transaction.transactions.all(),
+        }
+
+        for key, value in self.values.items():
+            names[key] = value
+
+        return names
 
     def execute_uniqueness_expression(self):
         # uniqueness below
