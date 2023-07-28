@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.schemas import ManualSchema
 from rest_framework.schemas import coreapi as coreapi_schema
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from poms.auth_tokens.models import AuthToken
 from poms.auth_tokens.serializers import SetAuthTokenSerializer, CreateUserSerializer, CreateMasterUserSerializer, \
@@ -161,8 +162,9 @@ class SetAuthToken(APIView):
 
 class CreateUser(APIView):
     throttle_classes = ()
-    permission_classes = ()
+    permission_classes = (AllowAny) # TODO add more sophisticated permissions
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
+    authentication_classes = ()
     renderer_classes = (renderers.JSONRenderer,)
     serializer_class = CreateUserSerializer
 
