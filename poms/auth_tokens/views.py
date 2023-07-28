@@ -162,7 +162,7 @@ class SetAuthToken(APIView):
 
 class CreateUser(APIView):
     throttle_classes = ()
-    permission_classes = (AllowAny) # TODO add more sophisticated permissions
+    permission_classes = (AllowAny,) # TODO add more sophisticated permissions
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
     authentication_classes = ()
     renderer_classes = (renderers.JSONRenderer,)
