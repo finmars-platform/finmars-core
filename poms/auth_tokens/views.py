@@ -5,11 +5,11 @@ from django.utils import translation
 from rest_framework import parsers, renderers
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.compat import coreapi, coreschema
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.schemas import ManualSchema
 from rest_framework.schemas import coreapi as coreapi_schema
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from poms.auth_tokens.models import AuthToken
 from poms.auth_tokens.serializers import SetAuthTokenSerializer, CreateUserSerializer, CreateMasterUserSerializer, \
@@ -162,7 +162,7 @@ class SetAuthToken(APIView):
 
 class CreateUser(APIView):
     throttle_classes = ()
-    permission_classes = (AllowAny,) # TODO add more sophisticated permissions
+    permission_classes = (AllowAny,)  # TODO add more sophisticated permissions
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
     authentication_classes = ()
     renderer_classes = (renderers.JSONRenderer,)
@@ -198,9 +198,9 @@ class CreateUser(APIView):
         username = serializer.validated_data['username']
         email = serializer.validated_data['email']
 
-        roles = serializer.validated_data('roles', '')
-        groups = serializer.validated_data('groups', '')
-        is_admin = serializer.validated_data.get('is_admin', False)
+        roles = serializer.validated_data['roles']
+        groups = serializer.validated_data['groups']
+        is_admin = serializer.validated_data['is_admin']
 
         _l.info('Create user validated data %s' % serializer.validated_data)
 
