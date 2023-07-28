@@ -3,10 +3,17 @@ from copy import deepcopy
 from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
-from poms.instruments.models import Instrument
+from poms.instruments.models import InstrumentType
 
-EXPECTED_INSTRUMENT = {
-    "id": 17,
+EXPECTED_INSTRUMENT_TYPE = {
+    "id": 9,
+    "user_code": "local.poms.space00000:bond",
+    "name": "bond",
+    "short_name": "bond",
+    "public_name": "bond",
+    "notes": None,
+    "is_deleted": False,
+    "instrument_form_layouts": None,
     "instrument_class": 1,
     "instrument_class_object": {
         "id": 1,
@@ -14,11 +21,53 @@ EXPECTED_INSTRUMENT = {
         "name": "General Class",
         "description": "General Class",
     },
-    "user_code": "local.poms.space00000:stock",
-    "name": "stock",
-    "short_name": "stock",
-    "public_name": "stock",
-    "instrument_form_layouts": None,
+    "one_off_event": None,
+    "one_off_event_object": None,
+    "regular_event": None,
+    "regular_event_object": None,
+    "factor_same": None,
+    "factor_same_object": None,
+    "factor_up": None,
+    "factor_up_object": None,
+    "factor_down": None,
+    "factor_down_object": None,
+    "is_enabled": True,
+    "pricing_policies": [],
+    "has_second_exposure_currency": False,
+    "accruals": [],
+    "events": [],
+    "instrument_attributes": [],
+    "instrument_factor_schedules": [],
+    "payment_size_detail": None,
+    "payment_size_detail_object": None,
+    "accrued_currency": None,
+    "accrued_currency_object": None,
+    "accrued_multiplier": 1.0,
+    "default_accrued": 0.0,
+    "exposure_calculation_model": None,
+    "co_directional_exposure_currency": None,
+    "counter_directional_exposure_currency": None,
+    "co_directional_exposure_currency_value_type": 100,
+    "counter_directional_exposure_currency_value_type": 100,
+    "long_underlying_instrument": None,
+    "short_underlying_instrument": None,
+    "underlying_long_multiplier": 1.0,
+    "underlying_short_multiplier": 1.0,
+    "long_underlying_exposure": None,
+    "short_underlying_exposure": None,
+    "position_reporting": 1,
+    "instrument_factor_schedule_data": None,
+    "pricing_currency": None,
+    "pricing_currency_object": None,
+    "price_multiplier": 1.0,
+    "pricing_condition": None,
+    "pricing_condition_object": None,
+    "default_price": 0.0,
+    "maturity_date": None,
+    "maturity_price": 0.0,
+    "reference_for_pricing": "",
+    "configuration_code": "local.poms.space00000",
+    "attributes": [],
     "deleted_user_code": None,
     "meta": {
         "content_type": "instruments.instrumenttype",
@@ -26,7 +75,7 @@ EXPECTED_INSTRUMENT = {
         "model_name": "instrumenttype",
         "space_code": "space00000",
     },
-},
+}
 
 CREATE_DATA = {
     "user_code": "Apple",
@@ -45,8 +94,6 @@ class InstrumentTypeViewSetTest(BaseTestCase):
         super().setUp()
         self.init_test_case()
         self.url = f"/{settings.BASE_API_URL}/api/v1/instruments/instrument-type/"
-        self.pricing_policy = None
-        self.instrument = Instrument.objects.first()
 
     def prepare_data_for_create(self) -> dict:
         create_data = deepcopy(CREATE_DATA)
@@ -76,53 +123,42 @@ class InstrumentTypeViewSetTest(BaseTestCase):
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 200, response.content)
 
-    # @BaseTestCase.cases(
-    #     ("bond", "bond"),
-    #     ("stock", "stock"),
-    # )
-    # def test__retrieve(self, instrument_type):
-    #     instrument = self.create_instrument(instrument_type)
-    #     response = self.client.get(path=f"{self.url}{instrument.id}/")
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     response_json = response.json()
-    #
-    #     # check fields
-    #     self.assertEqual(response_json.keys(), EXPECTED_INSTRUMENT.keys())
-    #
-    #     # check values
-    #     self.assertEqual(response_json["short_name"], instrument.short_name)
-    #     self.assertEqual(
-    #         response_json["instrument_type"],
-    #         instrument.instrument_type.id,
-    #     )
-    #     self.assertEqual(
-    #         response_json["pricing_currency"],
-    #         instrument.pricing_currency.id,
-    #     )
-    #     self.assertEqual(
-    #         response_json["accrued_currency"],
-    #         instrument.accrued_currency.id,
-    #     )
-    #     self.assertEqual(response_json["user_text_1"], instrument.user_text_1)
-    #     self.assertEqual(response_json["user_text_2"], instrument.user_text_2)
-    #     self.assertEqual(response_json["user_text_3"], instrument.user_text_3)
-    #
-    # def test__list_attributes(self):
-    #     response = self.client.get(path=f"{self.url}attributes/")
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     response_json = response.json()
-    #     self.assertEqual(len(response_json["results"]), 34)
-    #
-    # def test__list_light(self):
-    #     self.create_instrument()
-    #     response = self.client.get(path=f"{self.url}light/")
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     response_json = response.json()
-    #     self.assertEqual(len(response_json["results"]), 4)  # default + 2 test + new
-    #
+    def test__list_defaults(self):
+        response = self.client.get(path=self.url)
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(len(response_json["results"]), 3)
+
+    def test__retrieve(self):
+        instrument_type = self.get_instrument_type("bond")
+        response = self.client.get(path=f"{self.url}{instrument_type.id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        # check fields
+        self.assertEqual(response_json.keys(), EXPECTED_INSTRUMENT_TYPE.keys())
+
+        # check values
+        self.assertEqual(response_json["short_name"], instrument_type.short_name)
+
+    def test__list_attributes(self):
+        response = self.client.get(path=f"{self.url}attributes/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+        self.assertEqual(len(response_json["results"]), 30)
+
+    def test__list_light(self):
+        self.create_instrument()
+        response = self.client.get(path=f"{self.url}light/")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+        self.assertEqual(len(response_json["results"]), 3)  # defaults
+
     # def test__get_filters(self):  # sourcery skip: extract-duplicate-method
     #     instrument = self.create_instrument()
     #     response = self.client.get(path=f"{self.url}?user_code={instrument.user_code}")
