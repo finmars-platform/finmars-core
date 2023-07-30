@@ -1,4 +1,5 @@
 from urllib import parse
+from unittest import skip
 
 from django.conf import settings
 
@@ -10,6 +11,7 @@ from poms.transactions.models import (
     TransactionTypeInput,
     TransactionTypeInputSettings,
     ComplexTransaction,
+    ComplexTransactionStatus,
 )
 from poms.transactions.tests.transaction_type_dicts import (
     TRANSACTION_TYPE_WITH_INPUTS_DICT,
@@ -20,7 +22,7 @@ from poms.transactions.tests.transaction_type_dicts import (
 DATE_FORMAT = "%Y-%m-%d"
 
 
-class InstrumentViewSetTest(BaseTestCase):
+class TransactionTypeViewSetTest(BaseTestCase):
     def setUp(self):
         super().setUp()
         self.init_test_case()
@@ -70,6 +72,32 @@ class InstrumentViewSetTest(BaseTestCase):
             value=self.random_int(),
             settings=self.create_transaction_type_settings(),
         )
+
+    @staticmethod
+    def get_complex_transaction_status(model_id=ComplexTransaction.PENDING):
+        return ComplexTransactionStatus.objects.get(id=model_id)
+
+    def create_complex_transaction(self, transaction_type) -> ComplexTransaction:
+        transaction = ComplexTransaction.objects.create(
+            # mandatory fields
+            master_user=self.master_user,
+            transaction_type=transaction_type,
+            date=self.random_future_date(),
+            status=self.get_complex_transaction_status(),
+            code=self.random_int(),
+            transaction_unique_code=str(self.random_int(1000000, 10000000)),
+            # optional fields
+            user_text_1=self.random_string(),
+            user_text_2=self.random_string(),
+            user_number_1=str(self.random_int()),
+            user_number_2=str(self.random_int()),
+            user_date_1=str(self.random_future_date()),
+            user_date_2=str(self.random_future_date()),
+        )
+        transaction.attributes.add(self.create_attribute())
+        transaction.save()
+
+        return transaction
 
     def prepare_create_data(self) -> dict:
         transaction_type_group = self.get_transaction_type_group()
@@ -219,18 +247,6 @@ class InstrumentViewSetTest(BaseTestCase):
         transaction_type = TransactionType.objects.filter(name=create_data["user_code"])
         self.assertIsNotNone(transaction_type)
 
-    def test__book_get(self):
-        transaction_type = self.create_transaction_type()
-        type_id = transaction_type.id
-
-        response = self.client.get(path=f"{self.url}{type_id}/book/", format="json")
-        self.assertEqual(response.status_code, 200, response.content)
-
-        response_json = response.json()
-
-        # check fields
-        self.assertEqual(response_json.keys(), TRANSACTION_TYPE_BOOK_DICT.keys())
-
     def prepare_context_data(self) -> dict:
         instrument = self.create_instrument()
         return {
@@ -252,6 +268,18 @@ class InstrumentViewSetTest(BaseTestCase):
             "process_mode": TransactionTypeProcess.MODE_BOOK,
         }
 
+    def test__book_get(self):
+        transaction_type = self.create_transaction_type()
+        type_id = transaction_type.id
+
+        response = self.client.get(path=f"{self.url}{type_id}/book/", format="json")
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        # check fields
+        self.assertEqual(response_json.keys(), TRANSACTION_TYPE_BOOK_DICT.keys())
+
     def test__book_put(self):
         transaction_type = self.create_transaction_type()
         type_id = transaction_type.id
@@ -270,4 +298,40 @@ class InstrumentViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        print(response_json)
+        self.assertEqual(response_json.keys(), TRANSACTION_TYPE_BOOK_DICT.keys())
+
+    @skip("'ComplexTransaction' instance needs to have a primary key value ...")
+    def test__book_pending_get(self):
+        transaction_type = self.create_transaction_type()
+        type_id = transaction_type.id
+
+        response = self.client.get(
+            path=f"{self.url}{type_id}/book-pending/",
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        # check fields
+        self.assertEqual(response_json.keys(), TRANSACTION_TYPE_BOOK_DICT.keys())
+
+    def test__book_pending_put(self):
+        transaction_type = self.create_transaction_type()
+        type_id = transaction_type.id
+
+        context_data = self.prepare_context_data()
+        query_params = parse.urlencode(context_data, doseq=False)
+
+        book_data = self.prepare_book_data()
+
+        response = self.client.put(
+            path=f"{self.url}{type_id}/book-pending/?{query_params}",
+            format="json",
+            data=book_data,
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response_json = response.json()
+
+        self.assertEqual(response_json.keys(), TRANSACTION_TYPE_BOOK_DICT.keys())
