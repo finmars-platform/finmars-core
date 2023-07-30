@@ -541,6 +541,7 @@ def get_serializer(content_type_key):
         TransactionUserFieldSerializer,
     )
 
+    from poms.integrations.serializers import MappingTableSerializer
     serializer_map = {
         "transactions.transactiontype": TransactionTypeSerializer,
         "transactions.transactiontypegroup": TransactionTypeGroupSerializer,
@@ -560,6 +561,7 @@ def get_serializer(content_type_key):
         "csv_import.csvimportscheme": CsvImportSchemeSerializer,
         "integrations.complextransactionimportscheme": ComplexTransactionImportSchemeSerializer,
         "integrations.instrumentdownloadscheme": InstrumentDownloadSchemeSerializer,
+        "integrations.mappingtable": MappingTableSerializer,
         "procedures.pricingprocedure": PricingProcedureSerializer,
         "procedures.expressionprocedure": ExpressionProcedureSerializer,
         "procedures.requestdatafileprocedure": RequestDataFileProcedureSerializer,
