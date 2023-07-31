@@ -237,6 +237,7 @@ class InstrumentTypeViewSetTest(BaseTestCase):
         response_json = response.json()
 
         instrument_type_id = response_json["id"]
+
         new_user_code = self.random_string()
         update_data = {"user_code": new_user_code}
         response = self.client.patch(
@@ -247,7 +248,9 @@ class InstrumentTypeViewSetTest(BaseTestCase):
         response = self.client.get(path=f"{self.url}{instrument_type_id}/")
         self.assertEqual(response.status_code, 200, response.content)
         response_json = response.json()
-        self.assertEqual(response_json["user_code"], new_user_code)
+        config_code, user_code = response_json["user_code"].split(":")
+        self.assertEqual(response_json["configuration_code"], config_code)
+        self.assertEqual(user_code.upper(), new_user_code)
 
     def test__delete(self):
         create_data = self.prepare_data_for_create()
