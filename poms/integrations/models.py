@@ -397,7 +397,33 @@ class PriceDownloadScheme(models.Model):
 
 # -------
 
+class MappingTable(ConfigurationModel, NamedModel):
 
+    master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
+                                    on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = gettext_lazy('mapping table')
+        verbose_name_plural = gettext_lazy('mapping tables')
+        ordering = ['name', ]
+
+
+class MappingTableKeyValue(models.Model):
+
+    mapping_table = models.ForeignKey(MappingTable, verbose_name=gettext_lazy('mapping table'), on_delete=models.CASCADE, related_name='items')
+
+    key = models.CharField(max_length=1024, blank=True, default='', verbose_name=gettext_lazy('key'))
+    value = models.CharField(max_length=1024, blank=True, default='', verbose_name=gettext_lazy('value'))
+
+    class Meta:
+        verbose_name = gettext_lazy('mapping table key value')
+        verbose_name_plural = gettext_lazy('mapping table key values')
+        unique_together = (
+            ('mapping_table', 'key', 'value')
+        )
+        ordering = ['key', ]
+
+# DEPRECATED, DELETE SOON
 class AbstractMapping(models.Model):
     master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)

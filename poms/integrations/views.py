@@ -100,7 +100,7 @@ from poms.integrations.models import (
     Strategy1Mapping,
     Strategy2Mapping,
     Strategy3Mapping,
-    TransactionFileResult,
+    TransactionFileResult, MappingTable,
 )
 from poms.integrations.serializers import (
     AccountClassifierMappingSerializer,
@@ -146,7 +146,7 @@ from poms.integrations.serializers import (
     Strategy2MappingSerializer,
     Strategy3MappingSerializer,
     TestCertificateSerializer,
-    TransactionFileResultSerializer,
+    TransactionFileResultSerializer, MappingTableSerializer,
 )
 from poms.procedures.models import RequestDataFileProcedureInstance
 from poms.system_messages.handlers import send_system_message
@@ -311,6 +311,28 @@ class PriceDownloadSchemeViewSet(AbstractModelViewSet):
         "provider__name",
     ]
     permission_classes = AbstractModelViewSet.permission_classes + []
+
+
+class MappingTableFilterSet(FilterSet):
+    id = NoOpFilter()
+    name = CharFilter()
+    user_code = CharFilter()
+
+    class Meta:
+        fields = []
+
+class MappingTableViewSet(AbstractModelViewSet):
+    queryset = MappingTable.objects.prefetch_related('items')
+    serializer_class = MappingTableSerializer
+    permission_classes = AbstractModelViewSet.permission_classes + [SuperUserOrReadOnly]
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMasterUserFilter,
+    ]
+    filter_class = MappingTableFilterSet
+    ordering_fields = [
+        "name",
+        "user_code"
+    ]
 
 
 class AbstractMappingFilterSet(FilterSet):

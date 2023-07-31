@@ -359,12 +359,12 @@ def get_record_context():
     request = get_request()
     if request:
         if isinstance(request, ProxyRequest):
-            _l.info(f'get_record_context: ProxyUser {request.user}')
+            # _l.info(f'get_record_context: ProxyUser {request.user}')
             result["master_user"] = request.user.master_user
             result["member"] = request.user.member
 
         else:
-            _l.info(f'get_record_contex: User {request.user}')
+            # _l.info(f'get_record_contex: User {request.user}')
             result["master_user"] = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
             result["member"] = Member.objects.get(user=request.user)
             result["context_url"] = request.path

@@ -1206,6 +1206,122 @@ def _get_currencies(evaluator, **kwargs):
 
 _get_currencies.evaluator = True
 
+def _get_mapping_key_by_value(evaluator, user_code, value, **kwargs):
+    try:
+
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context
+
+        master_user = get_master_user_from_context(context)
+
+        from poms.integrations.models import MappingTable
+        mapping_table = MappingTable.objects.get(
+            master_user=master_user, user_code=user_code
+        )
+
+        result = None
+
+        for item in mapping_table.items.all():
+
+            if item.value == value:
+                result = item.key
+                break
+
+        return result
+    except Exception as e:
+        _l.error("_get_mapping_key_by_value.exception %s" % e)
+        return None
+
+
+_get_mapping_key_by_value.evaluator = True
+
+def _get_mapping_value_by_key(evaluator, user_code, key, **kwargs):
+    try:
+
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context
+
+        master_user = get_master_user_from_context(context)
+
+        from poms.integrations.models import MappingTable
+        mapping_table = MappingTable.objects.get(
+            master_user=master_user, user_code=user_code
+        )
+
+        result = None
+
+        for item in mapping_table.items.all():
+
+            if item.key == key:
+                result = item.value
+                break
+
+        return result
+    except Exception as e:
+        _l.error("_get_mapping_value_by_key.exception %s" % e)
+        return None
+
+
+_get_mapping_value_by_key.evaluator = True
+
+def _get_mapping_keys(evaluator, user_code,  **kwargs):
+    try:
+
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context
+
+        master_user = get_master_user_from_context(context)
+
+        from poms.integrations.models import MappingTable
+        mapping_table = MappingTable.objects.get(
+            master_user=master_user, user_code=user_code
+        )
+
+        result = []
+
+        for item in mapping_table.items.all():
+
+            result.append(item.key)
+
+        return result
+    except Exception as e:
+        _l.error("_get_mapping_keys.exception %s" % e)
+        return None
+
+
+_get_mapping_keys.evaluator = True
+
+
+def _get_mapping_key_values(evaluator, user_code, key,  **kwargs):
+    try:
+
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context
+
+        master_user = get_master_user_from_context(context)
+
+        from poms.integrations.models import MappingTable
+        mapping_table = MappingTable.objects.get(
+            master_user=master_user, user_code=user_code
+        )
+
+        result = []
+
+        for item in mapping_table.items.all():
+
+            if item.key == key:
+
+                result.append(item.value)
+
+        return result
+    except Exception as e:
+        _l.error("_get_mapping_key_values.exception %s" % e)
+        return None
+
+
+_get_mapping_key_values.evaluator = True
+
+
 
 def _convert_to_number(
     evaluator,
@@ -4212,6 +4328,12 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("get_relation_by_user_code", _get_relation_by_user_code),
     SimpleEval2Def("get_instruments", _get_instruments),
     SimpleEval2Def("get_currencies", _get_currencies),
+
+    SimpleEval2Def("get_mapping_key_by_value", _get_mapping_key_by_value),
+    SimpleEval2Def("get_mapping_value_by_key", _get_mapping_value_by_key),
+    SimpleEval2Def("get_mapping_keys", _get_mapping_keys),
+    SimpleEval2Def("get_mapping_key_values", _get_mapping_key_values),
+
     SimpleEval2Def("get_rt_value", _get_rt_value),
     SimpleEval2Def("convert_to_number", _convert_to_number),
     SimpleEval2Def("if_null", _if_null),
