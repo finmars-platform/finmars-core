@@ -203,78 +203,66 @@ class InstrumentTypeViewSetTest(BaseTestCase):
 
         response_json = response.json()
 
-        print(response_json)
+        self.assertEqual(response_json.keys(), EXPECTED_INSTRUMENT_TYPE.keys())
 
-        # instrument_type_id = response_json["id"]
-        # instrument = InstrumentType.objects.get(id=instrument_type_id)
-        # self.assertEqual(
-        #     instrument.accrued_currency.id,
-        #     create_data["accrued_currency"],
-        # )
-        # self.assertEqual(
-        #     instrument.long_underlying_exposure.id,
-        #     create_data["long_underlying_exposure"],
-        # )
-        # self.assertEqual(
-        #     instrument.daily_pricing_model.id,
-        #     create_data["daily_pricing_model"],
-        # )
-        # self.assertEqual(
-        #     instrument.pricing_condition.id,
-        #     create_data["pricing_condition"],
-        # )
-        # self.assertEqual(
-        #     instrument.exposure_calculation_model.id,
-        #     create_data["exposure_calculation_model"],
-        # )
-        # self.assertEqual(
-        #     instrument.payment_size_detail.id,
-        #     create_data["payment_size_detail"],
-        # )
-        # self.assertEqual(
-        #     instrument.short_underlying_exposure.id,
-        #     create_data["short_underlying_exposure"],
-        # )
-        # self.assertEqual(
-        #     instrument.country.id,
-        #     create_data["country"],
-        # )
-        # self.assertFalse(response_json["is_deleted"])
+        instrument_type_id = response_json["id"]
+        instrument_type = InstrumentType.objects.get(id=instrument_type_id)
+        self.assertEqual(
+            instrument_type.accrued_currency.id,
+            create_data["accrued_currency"],
+        )
+        self.assertEqual(
+            instrument_type.pricing_currency.id,
+            create_data["pricing_currency"],
+        )
+        self.assertEqual(
+            instrument_type.short_name,
+            create_data["short_name"],
+        )
+        self.assertEqual(
+            instrument_type.configuration_code,
+            create_data["configuration_code"],
+        )
+        self.assertEqual(
+            instrument_type.instrument_class.id,
+            create_data["instrument_class"],
+        )
+        self.assertFalse(response_json["is_deleted"])
 
-    # def test__update_patch(self):
-    #     create_data = self.prepare_data_for_create()
-    #
-    #     response = self.client.post(path=self.url, format="json", data=create_data)
-    #     self.assertEqual(response.status_code, 201, response.content)
-    #     response_json = response.json()
-    #
-    #     instrument_id = response_json["id"]
-    #     new_user_text_1 = self.random_string()
-    #     update_data = {"user_text_1": new_user_text_1}
-    #     response = self.client.patch(
-    #         path=f"{self.url}{instrument_id}/", format="json", data=update_data
-    #     )
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #
-    #     response = self.client.get(path=f"{self.url}{instrument_id}/")
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #     response_json = response.json()
-    #     self.assertEqual(response_json["user_text_1"], new_user_text_1)
-    #
-    # def test__delete(self):
-    #     create_data = self.prepare_data_for_create()
-    #
-    #     response = self.client.post(path=self.url, format="json", data=create_data)
-    #     self.assertEqual(response.status_code, 201, response.content)
-    #     response_json = response.json()
-    #
-    #     instrument_id = response_json["id"]
-    #
-    #     response = self.client.delete(path=f"{self.url}{instrument_id}/")
-    #     self.assertEqual(response.status_code, 204, response.content)
-    #
-    #     response = self.client.get(path=f"{self.url}{instrument_id}/")
-    #     self.assertEqual(response.status_code, 200, response.content)
-    #     response_json = response.json()
-    #
-    #     self.assertTrue(response_json["is_deleted"])
+    def test__update_patch(self):
+        create_data = self.prepare_data_for_create()
+
+        response = self.client.post(path=self.url, format="json", data=create_data)
+        self.assertEqual(response.status_code, 201, response.content)
+        response_json = response.json()
+
+        instrument_type_id = response_json["id"]
+        new_user_code = self.random_string()
+        update_data = {"user_code": new_user_code}
+        response = self.client.patch(
+            path=f"{self.url}{instrument_type_id}/", format="json", data=update_data
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+
+        response = self.client.get(path=f"{self.url}{instrument_type_id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+        self.assertEqual(response_json["user_code"], new_user_code)
+
+    def test__delete(self):
+        create_data = self.prepare_data_for_create()
+
+        response = self.client.post(path=self.url, format="json", data=create_data)
+        self.assertEqual(response.status_code, 201, response.content)
+        response_json = response.json()
+
+        instrument_type_id = response_json["id"]
+
+        response = self.client.delete(path=f"{self.url}{instrument_type_id}/")
+        self.assertEqual(response.status_code, 204, response.content)
+
+        response = self.client.get(path=f"{self.url}{instrument_type_id}/")
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+
+        self.assertTrue(response_json["is_deleted"])
