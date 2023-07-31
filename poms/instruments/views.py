@@ -1,7 +1,6 @@
 import contextlib
 import datetime
 import logging
-import traceback
 
 import django_filters
 from django.contrib.contenttypes.models import ContentType
@@ -531,7 +530,8 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         for instrument in instruments:
             try:
                 policy = InstrumentPricingPolicy.objects.get(
-                    instrument=instrument, pricing_policy=request.data["pricing_policy"]
+                    instrument=instrument,
+                    pricing_policy=request.data["pricing_policy"],
                 )
                 if request.data["overwrite_default_parameters"]:
                     policy.pricing_scheme_id = request.data.get("pricing_scheme", None)
@@ -545,10 +545,9 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
                 else:
                     _l.info(f"update_pricing nothing changed in policy.id={policy.id}")
 
-            except Exception as e:
+            except InstrumentPricingPolicy.DoesNotExist:
                 _l.error(
-                    f"Policy is not found for instrument, due to {repr(e)}\n "
-                    f"{traceback.format_exc()}"
+                    f"Policy was not found for instrument.id={instrument.id}"
                 )
 
         return Response(
