@@ -516,8 +516,9 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def update_pricing(self, request, pk=None):
-        instrument_type = self.get_object()
+        from poms.pricing.models import InstrumentPricingPolicy
 
+        instrument_type = self.get_object()
         instruments = Instrument.objects.filter(
             instrument_type=instrument_type, master_user=request.user.master_user
         )
@@ -526,8 +527,6 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
             f"update_pricing request.data={request.data} "
             f"instruments affected={len(instruments)}"
         )
-
-        from poms.pricing.models import InstrumentPricingPolicy
 
         for instrument in instruments:
             try:
