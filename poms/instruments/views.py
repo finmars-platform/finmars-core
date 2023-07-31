@@ -518,13 +518,14 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
     def update_pricing(self, request, pk=None):
         instrument_type = self.get_object()
 
-        print("detail_route: /update-pricing: process update_pricing")
-
         instruments = Instrument.objects.filter(
             instrument_type=instrument_type, master_user=request.user.master_user
         )
 
-        _l.info(f"request.data {request.data} instruments affected {len(instruments)}")
+        _l.info(
+            f"update_pricing request.data={request.data} "
+            f"instruments affected={len(instruments)}"
+        )
 
         from poms.pricing.models import InstrumentPricingPolicy
 
@@ -533,7 +534,6 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
                 policy = InstrumentPricingPolicy.objects.get(
                     instrument=instrument, pricing_policy=request.data["pricing_policy"]
                 )
-
                 if request.data["overwrite_default_parameters"]:
                     policy.pricing_scheme_id = request.data.get("pricing_scheme", None)
                     policy.default_value = request.data.get("default_value", None)
@@ -541,10 +541,10 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
                     policy.attribute_key = request.data.get("attribute_key", None)
                     policy.save()
 
-                    _l.info(f"Policy {policy} updated")
+                    _l.info(f"update_pricing policy.id={policy.id} updated")
 
                 else:
-                    _l.info(f"Nothing changed for {policy}")
+                    _l.info(f"update_pricing nothing changed in policy.id={policy.id}")
 
             except Exception as e:
                 _l.error(

@@ -269,3 +269,21 @@ class InstrumentTypeViewSetTest(BaseTestCase):
         response_json = response.json()
 
         self.assertTrue(response_json["is_deleted"])
+
+    def test__get_update_pricing(self):
+        create_data = self.prepare_data_for_create()
+
+        response = self.client.post(path=self.url, format="json", data=create_data)
+        self.assertEqual(response.status_code, 201, response.content)
+        response_json = response.json()
+
+        instrument_type_id = response_json["id"]
+
+        response = self.client.get(
+            path=f"{self.url}{instrument_type_id}/update-pricing/"
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        response_json = response.json()
+
+        self.assertEqual(response_json["status"], "ok")
+        self.assertEqual(response_json["data"], {'instruments_affected': 0})
