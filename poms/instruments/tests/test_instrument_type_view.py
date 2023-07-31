@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
@@ -95,29 +93,31 @@ class InstrumentTypeViewSetTest(BaseTestCase):
         self.init_test_case()
         self.url = f"/{settings.BASE_API_URL}/api/v1/instruments/instrument-type/"
 
-    def prepare_data_for_create(self) -> dict:
-        create_data = deepcopy(CREATE_DATA)
-        create_data["name"] = self.random_string(11)
-        instrument_type = self.get_instrument_type()
-        create_data["instrument_type"] = instrument_type.id
-        currency = self.get_currency()
-        create_data["pricing_currency"] = currency.id
-        create_data["accrued_currency"] = currency.id
-        create_data["co_directional_exposure_currency"] = currency.id
-        create_data["counter_directional_exposure_currency"] = currency.id
-        # optional fields
-        create_data["user_code"] = self.random_string()
-        create_data["short_name"] = self.random_string(3)
-        create_data["user_text_1"] = self.random_string()
-        create_data["daily_pricing_model"] = self.get_daily_pricing().id
-        create_data["pricing_condition"] = self.get_pricing_condition().id
-        create_data["exposure_calculation_model"] = self.get_exposure_calculation().id
-        create_data["payment_size_detail"] = self.get_payment_size().id
-        create_data["long_underlying_exposure"] = self.get_long_under_exp().id
-        create_data["short_underlying_exposure"] = self.get_short_under_exp().id
-        create_data["country"] = self.get_country().id
+    @staticmethod
+    def get_instrument_class(class_id: int = InstrumentClass.DEFAULT):
+        return InstrumentClass.objects.get(id=class_id)
 
-        return create_data
+    def prepare_data_for_create(self) -> dict:
+        currency_id = self.get_currency().id
+        attribute = self.create_attribute()
+        return {
+            "user_code": self.random_string(11),
+            "name": self.random_string(11),
+            "short_name": self.random_string(3),
+            "instrument_class": self.get_instrument_class().id,
+            "configuration_code": str(self.random_int(1, 100000)),
+            "attributes": [
+                {
+                    "id": attribute.id,
+                    "attribute_type": attribute.attribute_type.id,
+                    "value_float": attribute.value_float,
+                }
+            ],
+            "accrued_currency": currency_id,
+            "pricing_currency": currency_id,
+            "default_price": 111.0,
+            "instrument_factor_schedule_data": [],
+        }
 
     def test__check_api_url(self):
         response = self.client.get(path=self.url)
@@ -195,50 +195,52 @@ class InstrumentTypeViewSetTest(BaseTestCase):
             InstrumentClass.GENERAL,
         )
 
-    # def test__create(self):
-    #     create_data = self.prepare_data_for_create()
-    #
-    #     response = self.client.post(path=self.url, format="json", data=create_data)
-    #     self.assertEqual(response.status_code, 201, response.content)
-    #
-    #     response_json = response.json()
-    #
-    #     instrument_id = response_json["id"]
-    #     instrument = Instrument.objects.get(id=instrument_id)
-    #     self.assertEqual(
-    #         instrument.accrued_currency.id,
-    #         create_data["accrued_currency"],
-    #     )
-    #     self.assertEqual(
-    #         instrument.long_underlying_exposure.id,
-    #         create_data["long_underlying_exposure"],
-    #     )
-    #     self.assertEqual(
-    #         instrument.daily_pricing_model.id,
-    #         create_data["daily_pricing_model"],
-    #     )
-    #     self.assertEqual(
-    #         instrument.pricing_condition.id,
-    #         create_data["pricing_condition"],
-    #     )
-    #     self.assertEqual(
-    #         instrument.exposure_calculation_model.id,
-    #         create_data["exposure_calculation_model"],
-    #     )
-    #     self.assertEqual(
-    #         instrument.payment_size_detail.id,
-    #         create_data["payment_size_detail"],
-    #     )
-    #     self.assertEqual(
-    #         instrument.short_underlying_exposure.id,
-    #         create_data["short_underlying_exposure"],
-    #     )
-    #     self.assertEqual(
-    #         instrument.country.id,
-    #         create_data["country"],
-    #     )
-    #     self.assertFalse(response_json["is_deleted"])
-    #
+    def test__create(self):
+        create_data = self.prepare_data_for_create()
+
+        response = self.client.post(path=self.url, format="json", data=create_data)
+        self.assertEqual(response.status_code, 201, response.content)
+
+        response_json = response.json()
+
+        print(response_json)
+
+        # instrument_type_id = response_json["id"]
+        # instrument = InstrumentType.objects.get(id=instrument_type_id)
+        # self.assertEqual(
+        #     instrument.accrued_currency.id,
+        #     create_data["accrued_currency"],
+        # )
+        # self.assertEqual(
+        #     instrument.long_underlying_exposure.id,
+        #     create_data["long_underlying_exposure"],
+        # )
+        # self.assertEqual(
+        #     instrument.daily_pricing_model.id,
+        #     create_data["daily_pricing_model"],
+        # )
+        # self.assertEqual(
+        #     instrument.pricing_condition.id,
+        #     create_data["pricing_condition"],
+        # )
+        # self.assertEqual(
+        #     instrument.exposure_calculation_model.id,
+        #     create_data["exposure_calculation_model"],
+        # )
+        # self.assertEqual(
+        #     instrument.payment_size_detail.id,
+        #     create_data["payment_size_detail"],
+        # )
+        # self.assertEqual(
+        #     instrument.short_underlying_exposure.id,
+        #     create_data["short_underlying_exposure"],
+        # )
+        # self.assertEqual(
+        #     instrument.country.id,
+        #     create_data["country"],
+        # )
+        # self.assertFalse(response_json["is_deleted"])
+
     # def test__update_patch(self):
     #     create_data = self.prepare_data_for_create()
     #
