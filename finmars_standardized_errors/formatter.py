@@ -1,24 +1,29 @@
+import datetime
 from dataclasses import asdict
 from http import HTTPStatus
 from typing import List, Union
 
-import datetime
 from django.utils.timezone import now
-
 from rest_framework import exceptions
 from rest_framework.status import is_client_error
 
 from .models import ErrorRecord
 from .settings import package_settings
-from .types import Error, ErrorResponse, ErrorType, ExceptionHandlerContext, ErrorResponseDetails
+from .types import (
+    Error,
+    ErrorResponse,
+    ErrorResponseDetails,
+    ErrorType,
+    ExceptionHandlerContext,
+)
 
 
 class ExceptionFormatter:
     def __init__(
-            self,
-            exc: exceptions.APIException,
-            context: ExceptionHandlerContext,
-            original_exc: Exception,
+        self,
+        exc: exceptions.APIException,
+        context: ExceptionHandlerContext,
+        original_exc: Exception,
     ):
         self.exc = exc
         self.context = context
@@ -43,16 +48,24 @@ class ExceptionFormatter:
         error_type = self.get_error_type()
         errors = self.get_errors()
 
-        url = str(self.context['request'].build_absolute_uri())
-        username = str(self.context['request'].user.username)
+        url = str(self.context["request"].build_absolute_uri())[:255]
+        username = str(self.context["request"].user.username)[:255]
         status_code = self.exc.status_code
         http_code_to_message = {v.value: v.description for v in HTTPStatus}
         message = http_code_to_message[status_code]
-        error_datetime = str(datetime.datetime.strftime(now(), "%Y-%m-%d %H:%M:%S"))
+        error_datetime = datetime.datetime.strftime(now(), "%Y-%m-%d %H:%M:%S")
 
-        ErrorRecord.objects.create(url=url, username=username, status_code=self.exc.status_code, message=message, details=asdict(ErrorResponseDetails(error_type, errors)))
+        ErrorRecord.objects.create(
+            url=url,
+            username=username,
+            status_code=self.exc.status_code,
+            message=message,
+            details=asdict(ErrorResponseDetails(error_type, errors)),
+        )
 
-        error_response = self.get_error_response(url, username, status_code, message, error_datetime, error_type, errors)
+        error_response = self.get_error_response(
+            url, username, status_code, message, error_datetime, error_type, errors
+        )
 
         return self.format_error_response(error_response)
 
@@ -71,18 +84,28 @@ class ExceptionFormatter:
         """
         return flatten_errors(self.exc.detail)
 
-    def get_error_response(self, url: str, username: str, status_code: int, message, error_datetime, error_type: ErrorType, errors: List[Error]):
-
+    def get_error_response(
+        self,
+        url: str,
+        username: str,
+        status_code: int,
+        message,
+        error_datetime,
+        error_type: ErrorType,
+        errors: List[Error],
+    ):
         error_response_details = ErrorResponseDetails(error_type, errors)
 
-        return ErrorResponse(url, username, status_code, message, error_datetime, error_response_details)
+        return ErrorResponse(
+            url, username, status_code, message, error_datetime, error_response_details
+        )
 
     def format_error_response(self, error_response: ErrorResponse):
-        return {'error': asdict(error_response)}
+        return {"error": asdict(error_response)}
 
 
 def flatten_errors(
-        detail: Union[list, dict, exceptions.ErrorDetail], attr=None, index=None
+    detail: Union[list, dict, exceptions.ErrorDetail], attr=None, index=None
 ) -> List[Error]:
     """
     convert this:
@@ -121,25 +144,30 @@ def flatten_errors(
 
     if not detail:
         return []
+
     elif isinstance(detail, list):
         first_item, *rest = detail
-        if not isinstance(first_item, exceptions.ErrorDetail):
-            index = 0 if index is None else index + 1
-            if attr:
-                new_attr = f"{attr}{package_settings.NESTED_FIELD_SEPARATOR}{index}"
-            else:
-                new_attr = str(index)
-            return flatten_errors(first_item, new_attr, index) + flatten_errors(
-                rest, attr, index
-            )
-        else:
+        if isinstance(first_item, exceptions.ErrorDetail):
             return flatten_errors(first_item, attr, index) + flatten_errors(
                 rest, attr, index
             )
+
+        index = 0 if index is None else index + 1
+        new_attr = (
+            f"{attr}{package_settings.NESTED_FIELD_SEPARATOR}{index}"
+            if attr
+            else str(index)
+        )
+
+        return flatten_errors(first_item, new_attr, index) + flatten_errors(
+            rest, attr, index
+        )
+
     elif isinstance(detail, dict):
         (key, value), *rest = list(detail.items())
         if attr:
             key = f"{attr}{package_settings.NESTED_FIELD_SEPARATOR}{key}"
         return flatten_errors(value, key) + flatten_errors(dict(rest), attr)
+
     else:
         return [Error(detail.code, str(detail), attr)]

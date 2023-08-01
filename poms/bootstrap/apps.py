@@ -2,6 +2,8 @@ from __future__ import unicode_literals
 
 import json
 import logging
+import sys
+import time
 import traceback
 
 import requests
@@ -9,6 +11,9 @@ from django.apps import AppConfig
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
+
+
+
 
 from poms_app import settings
 
@@ -48,14 +53,14 @@ class BootstrapConfig(AppConfig):
         :return:
         '''
 
+
+
         self.create_local_configuration()
-        self.bootstrap_celery()
         self.add_view_and_manage_permissions()
         self.load_master_user_data()
         self.create_finmars_bot()
         self.sync_users_at_authorizer_service()
         self.create_member_layouts()
-        self.load_init_configuration()
         self.create_base_folders()
         self.register_at_authorizer_service()
 
@@ -95,12 +100,14 @@ class BootstrapConfig(AppConfig):
 
     def create_iam_access_policies_templates(self):
 
-        _l.info("create_iam_access_policies_templates")
+        if not "test" in sys.argv:
 
-        from poms.iam.policy_generator import create_base_iam_access_policies_templates
-        create_base_iam_access_policies_templates()
+            _l.info("create_iam_access_policies_templates")
 
-        _l.info("create_iam_access_policies_templates done")
+            from poms.iam.policy_generator import create_base_iam_access_policies_templates
+            create_base_iam_access_policies_templates()
+
+            _l.info("create_iam_access_policies_templates done")
 
     # Probably deprecated
     def add_view_and_manage_permissions(self):
@@ -358,76 +365,6 @@ class BootstrapConfig(AppConfig):
                                                      user_code=configuration_code + ':default_member_layout')
                 _l.info("Created member layout for %s" % member.username)
 
-    def load_init_configuration(self):
-        from poms.users.models import Member, MasterUser
-        from poms.celery_tasks.models import CeleryTask
-        from poms.configuration.tasks import install_package_from_marketplace
-
-        if not settings.AUTHORIZER_URL:
-            return
-
-        try:
-            _l.info("load_init_configuration processing")
-
-            headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-
-            try:
-
-                # url = settings.AUTHORIZER_URL + '/backend-get-init-configuration/'
-                #
-                # response = requests.get(url=url, headers=headers, verify=settings.VERIFY_SSL)
-                # _l.info("load_init_configuration backend-sync-users response.status_code %s" % response.status_code)
-                # # _l.info("sync_users_at_authorizer_service backend-sync-users response.text %s" % response.text)
-                #
-                # response_data = response.json()
-                #
-                # master_user = MasterUser.objects.filter()[0]
-                # # member = Member.objects.get(master_user=master_user, is_owner=True)
-                # member = Member.objects.get(username='finmars_bot')
-                #
-                # celery_task = CeleryTask.objects.create(master_user=master_user,
-                #                                         member=member,
-                #                                         verbose_name="Inital Finmars Configuration Import",
-                #                                         type='configuration_import')
-                #
-                # options_object = {
-                #     'data': response_data['data'],
-                #     'mode': 'skip'
-                # }
-                #
-                # celery_task.options_object = options_object
-                # celery_task.save()
-                #
-                # transaction.on_commit(
-                #     lambda: configuration_import_as_json.apply_async(kwargs={'task_id': celery_task.id}))
-
-                master_user = MasterUser.objects.filter()[0]
-                # member = Member.objects.get(master_user=master_user, is_owner=True)
-                member = Member.objects.get(username='finmars_bot')
-
-                celery_task = CeleryTask.objects.create(master_user=master_user,
-                                                        member=member,
-                                                        verbose_name="Install Configuration From Marketplace",
-                                                        type='install_configuration_from_marketplace')
-
-                options_object = {
-                    'configuration_code': "com.finmars.initial",
-                    'version': "1.0.1",
-                    'is_package': True,
-                    # "access_token": get_access_token(request) TODO Implement when keycloak refactored
-                    # TODO check this later, important security thins, need to be destroyed inside task
-                }
-                celery_task.options_object = options_object
-                celery_task.save()
-
-                install_package_from_marketplace.apply_async(kwargs={'task_id': celery_task.id})
-
-            except Exception as e:
-                _l.error("Could not init configuration %s" % e)
-
-
-        except Exception as e:
-            _l.info("load_init_configuration error %s" % e)
 
     def create_base_folders(self):
         from poms.common.storage import get_storage
@@ -549,18 +486,6 @@ class BootstrapConfig(AppConfig):
         except Exception as e:
             _l.info("create_base_folders error %s" % e)
             _l.info("create_base_folders traceback %s" % traceback.format_exc())
-
-    def bootstrap_celery(self):
-
-        # WARNING Do not delete
-        # important, its inits celery listeners for global state
-        # it uses for record history in post_save post_delete signals for proper context
-        from poms_app import celery_app
-
-        from poms.common.celery import cancel_existing_tasks
-        cancel_existing_tasks(celery_app)
-        from poms.common.celery import cancel_existing_procedures
-        cancel_existing_procedures(celery_app)
 
     def create_local_configuration(self):
 

@@ -1,5 +1,19 @@
 #!/bin/sh
 
+if [ -f /etc/ssl/certs/finmars-internal-ca-certificate/ca.crt ]; then
+    cat /etc/ssl/certs/finmars-internal-ca-certificate/ca.crt >> /usr/local/share/ca-certificates/finmars-internal-ca-certificates.crt
+else
+    echo "finmars.internal CA certificate file does not exist"
+fi
+
+if [ -f /etc/ssl/certs/private-ca-certificate/tls.crt ]; then
+    cat /etc/ssl/certs/private-ca-certificate/tls.crt >> /usr/local/share/ca-certificates/private-ca-certificates.crt
+else
+    echo "Private CA certificate file does not exist"
+fi
+
+update-ca-certificates # update ca certs
+
 timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "[${timestamp}] Finmars initialization"
 
@@ -55,11 +69,30 @@ export DJANGO_SETTINGS_MODULE=poms_app.settings
 export C_FORCE_ROOT='true'
 
 echo "[${timestamp}] Start celery"
+
+#!/bin/bash
+
+: "${WORKERS:=2}"
+
+if [ "$WORKERS" = "2" ]
+then
+    cp /etc/supervisor/conf.d/celery_2_workers.conf /etc/supervisor/conf.d/celery.conf
+elif [ "$WORKERS" = "4" ]
+then
+    cp /etc/supervisor/conf.d/celery_4_workers.conf /etc/supervisor/conf.d/celery.conf
+else
+    echo "Invalid number of workers specified"
+    exit 1
+fi
+
 supervisord
 
 #supervisorctl start worker1
 #supervisorctl start worker2
 #supervisorctl start celerybeat
+
+python manage.py clear_celery
+python manage.py download_init_configuration
 
 timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 echo "[${timestamp}] Create admin user"

@@ -4,15 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0002_initial'),
+        ("accounts", "0002_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='accounttype',
-            name='configuration_code',
-            field=models.CharField(default='com.finmars.local', max_length=255, verbose_name='Configuration Code'),
+            model_name="accounttype",
+            name="configuration_code",
+            field=models.CharField(
+                default="com.finmars.local",
+                max_length=255,
+                verbose_name="Configuration Code",
+            ),
         ),
     ]

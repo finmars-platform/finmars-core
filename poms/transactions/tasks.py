@@ -1,38 +1,40 @@
-from __future__ import unicode_literals, print_function
-
 import logging
 import traceback
 
 from celery import shared_task
+from celery.utils.log import get_task_logger
 
 from poms.celery_tasks.models import CeleryTask
 from poms.expressions_engine import formula
-from poms.transactions.models import ComplexTransaction, TransactionType, TransactionTypeInput
-from poms.transactions.serializers import RecalculateUserFields
+from poms.transactions.models import (
+    ComplexTransaction,
+    TransactionType,
+    TransactionTypeInput,
+)
 
-_l = logging.getLogger('poms.transactions')
+_l = logging.getLogger("poms.transactions")
 
-from celery.utils.log import get_task_logger
 
 celery_logger = get_task_logger(__name__)
 
 
-def get_transaction_access_type(group, transaction, accounts_permissions_grouped, portfolios_permissions_grouped):
+def get_transaction_access_type(
+    group,
+    transaction,
+    accounts_permissions_grouped,
+    portfolios_permissions_grouped,
+):
     result = None
 
-    has_portfolio_access = False
-    has_account_position_access = False
-    has_account_cash_access = False
-
-    if transaction['portfolio_id'] in portfolios_permissions_grouped[group]:
-        has_portfolio_access = True
-
-    if transaction['account_position_id'] in accounts_permissions_grouped[group]:
-        has_account_position_access = True
-
-    if transaction['account_cash_id'] in accounts_permissions_grouped[group]:
-        has_account_cash_access = True
-
+    has_portfolio_access = (
+        transaction["portfolio_id"] in portfolios_permissions_grouped[group]
+    )
+    has_account_position_access = (
+        transaction["account_position_id"] in accounts_permissions_grouped[group]
+    )
+    has_account_cash_access = (
+        transaction["account_cash_id"] in accounts_permissions_grouped[group]
+    )
     if not has_portfolio_access:
         return result  # If we dont have access to portfolio, then we dont have access to transaction
 
@@ -40,18 +42,18 @@ def get_transaction_access_type(group, transaction, accounts_permissions_grouped
         return result  # If we dont have access to both accounts, then we dont have access to transaction
 
     if has_account_position_access:
-        result = 'partial_view'
+        result = "partial_view"
 
     if has_account_cash_access:
-        result = 'partial_view'
+        result = "partial_view"
 
-    if has_account_position_access and has_account_cash_access and has_portfolio_access:
-        result = 'full_view'
+    if has_account_position_access and has_account_cash_access:
+        result = "full_view"
 
     return result
 
 
-@shared_task(name='transactions.recalculate_permissions_transaction', bind=True)
+@shared_task(name="transactions.recalculate_permissions_transaction", bind=True)
 def recalculate_permissions_transaction(self, instance):
     # DEPRECATED, NEED REFACTOR
     pass
@@ -158,9 +160,9 @@ def recalculate_permissions_transaction(self, instance):
     # return instance
 
 
-@shared_task(name='transactions.recalculate_permissions_complex_transaction', bind=True)
+@shared_task(name="transactions.recalculate_permissions_complex_transaction", bind=True)
 def recalculate_permissions_complex_transaction(self, instance):
-    #DEPRECATED, NEED REFACTOR
+    # DEPRECATED, NEED REFACTOR
     pass
     # st = time.perf_counter()
     # data_st = time.perf_counter()
@@ -281,15 +283,22 @@ def get_values(complex_transaction):
     values = {}
 
     # if complex transaction already exists
-    if complex_transaction and complex_transaction.id is not None and complex_transaction.id > 0:
+    if (
+        complex_transaction
+        and complex_transaction.id is not None
+        and complex_transaction.id > 0
+    ):
         # load previous values if need
         ci_qs = complex_transaction.inputs.all().select_related(
-            'transaction_type_input', 'transaction_type_input__content_type'
+            "transaction_type_input", "transaction_type_input__content_type"
         )
         for ci in ci_qs:
             i = ci.transaction_type_input
             value = None
-            if i.value_type == TransactionTypeInput.STRING or i.value_type == TransactionTypeInput.SELECTOR:
+            if i.value_type in [
+                TransactionTypeInput.STRING,
+                TransactionTypeInput.SELECTOR,
+            ]:
                 value = ci.value_string
             elif i.value_type == TransactionTypeInput.NUMBER:
                 value = ci.value_float
@@ -304,113 +313,172 @@ def get_values(complex_transaction):
     return values
 
 
-def execute_user_fields_expressions(complex_transaction, values, context, instance):
-    _l.debug('execute_user_fields_expressions')
+def execute_user_fields_expressions(complex_transaction, values, context, target_key):
+    _l.debug("execute_user_fields_expressions")
 
     ctrn = formula.value_prepare(complex_transaction)
     trns = complex_transaction.transactions.all()
 
     names = {
-        'complex_transaction': ctrn,
-        'transactions': trns,
+        "complex_transaction": ctrn,
+        "transactions": trns,
     }
 
     for key, value in values.items():
         names[key] = value
 
     fields = [
-        'user_text_1', 'user_text_2', 'user_text_3', 'user_text_4', 'user_text_5',
-        'user_text_6', 'user_text_7', 'user_text_8', 'user_text_9', 'user_text_10',
-
-        'user_text_11', 'user_text_12', 'user_text_13', 'user_text_14', 'user_text_15',
-        'user_text_16', 'user_text_17', 'user_text_18', 'user_text_19', 'user_text_20',
-
-        'user_text_21', 'user_text_22', 'user_text_23', 'user_text_24', 'user_text_25',
-        'user_text_26', 'user_text_27', 'user_text_28', 'user_text_29', 'user_text_30',
-
-        'user_number_1', 'user_number_2', 'user_number_3', 'user_number_4', 'user_number_5',
-        'user_number_6', 'user_number_7', 'user_number_8', 'user_number_9', 'user_number_10',
-
-        'user_number_11', 'user_number_12', 'user_number_13', 'user_number_14', 'user_number_15',
-        'user_number_16', 'user_number_17', 'user_number_18', 'user_number_19', 'user_number_20',
-
-        'user_date_1', 'user_date_2', 'user_date_3', 'user_date_4', 'user_date_5'
+        "user_text_1",
+        "user_text_2",
+        "user_text_3",
+        "user_text_4",
+        "user_text_5",
+        "user_text_6",
+        "user_text_7",
+        "user_text_8",
+        "user_text_9",
+        "user_text_10",
+        "user_text_11",
+        "user_text_12",
+        "user_text_13",
+        "user_text_14",
+        "user_text_15",
+        "user_text_16",
+        "user_text_17",
+        "user_text_18",
+        "user_text_19",
+        "user_text_20",
+        "user_text_21",
+        "user_text_22",
+        "user_text_23",
+        "user_text_24",
+        "user_text_25",
+        "user_text_26",
+        "user_text_27",
+        "user_text_28",
+        "user_text_29",
+        "user_text_30",
+        "user_number_1",
+        "user_number_2",
+        "user_number_3",
+        "user_number_4",
+        "user_number_5",
+        "user_number_6",
+        "user_number_7",
+        "user_number_8",
+        "user_number_9",
+        "user_number_10",
+        "user_number_11",
+        "user_number_12",
+        "user_number_13",
+        "user_number_14",
+        "user_number_15",
+        "user_number_16",
+        "user_number_17",
+        "user_number_18",
+        "user_number_19",
+        "user_number_20",
+        "user_date_1",
+        "user_date_2",
+        "user_date_3",
+        "user_date_4",
+        "user_date_5",
     ]
 
     for field_key in fields:
+        if (target_key == field_key or not target_key) and getattr(
+            complex_transaction.transaction_type, field_key
+        ):
+            try:
+                val = formula.safe_eval(
+                    getattr(complex_transaction.transaction_type, field_key),
+                    names=names,
+                    context=context,
+                )
 
-        if instance.key == field_key or not instance.key:
+                setattr(complex_transaction, field_key, val)
 
-            # _l.debug('field_key')
-
-            if getattr(complex_transaction.transaction_type, field_key):
+            except Exception as e:
+                _l.debug(f"User Field Expression Eval error {repr(e)}")
 
                 try:
-
-                    # _l.debug('epxr %s' % getattr(self.complex_transaction.transaction_type, field_key))
-
-                    val = formula.safe_eval(
-                        getattr(complex_transaction.transaction_type, field_key), names=names,
-                        context=context)
-
-                    setattr(complex_transaction, field_key, val)
-
-                except Exception as e:
-
-                    _l.debug("User Field Expression Eval error %s" % e)
-
-                    try:
-                        setattr(complex_transaction, field_key, '<InvalidExpression>')
-                    except Exception as e:
-                        setattr(complex_transaction, field_key, None)
+                    setattr(complex_transaction, field_key, "<InvalidExpression>")
+                except Exception:
+                    setattr(complex_transaction, field_key, None)
 
 
-@shared_task(name="transactions.recalculate_user_fields")
-def recalculate_user_fields(instance_data: dict):
-    instance = RecalculateUserFields(**instance_data)
+@shared_task(name="transactions.recalculate_user_fields", bind=True)
+def recalculate_user_fields(self, task_id):
+    task = CeleryTask.objects.get(id=task_id)
+    task.celery_task_id = self.request.id
+    task.save()
+
     try:
-        _l.info(f"recalculate_user_fields: instance_data={instance_data}")
-
         transaction_type = TransactionType.objects.get(
-            id=instance.transaction_type_id,
-            master_user=instance.master_user,
+            id=task.options_object["transaction_type_id"],
+            master_user=task.master_user,
         )
 
         complex_transactions = ComplexTransaction.objects.filter(
             transaction_type=transaction_type
         )
 
-        _l.info(f"recalculate_user_fields: pk={instance.transaction_type_id}")
-
-        celery_task = CeleryTask.objects.create(
-            master_user=instance.master_user,
-            member=instance.member,
-            status="P",
-            type="complex_transaction_user_field_recalculation",
-            celery_task_id=instance.transaction_type_id,  # pk from request
-        )
-
         _l.info(
-            f"recalculate_user_fields: complex_transactions "
-            f"len={len(complex_transactions)}"
+            f"recalculate_user_fields: pk={task.options_object['transaction_type_id']} "
+            f"complex_transactions len={len(complex_transactions)}"
         )
 
-        context = {"master_user": instance.master_user, "member": instance.member}
+        task.update_progress(
+            {
+                "current": 0,
+                "total": len(complex_transactions),
+                "percent": 0,
+                "description": "Going to recalculate user fields",
+            }
+        )
+
+        index = 0
+
+        context = {"master_user": task.master_user, "member": task.member}
         for complex_transaction in complex_transactions:
             values = get_values(complex_transaction)
             execute_user_fields_expressions(
                 complex_transaction,
                 values,
                 context,
-                instance,
+                target_key=task.options_object["target_key"],
             )
             complex_transaction.save()
 
-        celery_task.task_status = "D"
-        celery_task.save()
+            task.update_progress(
+                {
+                    "current": index,
+                    "total": len(complex_transactions),
+                    "percent": int(index / len(complex_transactions) * 100),
+                    "description": f"Calculating user fields for {complex_transaction}",
+                }
+            )
+
+            index = index + 1
+
+        task.update_progress(
+            {
+                "current": len(complex_transactions),
+                "total": len(complex_transactions),
+                "percent": 100,
+                "description": "Finished recalculate user fields",
+            }
+        )
+
+        task.verbose_result = (
+            f"Recalculated {len(complex_transactions)} complex transactions"
+        )
+
+        task.status = CeleryTask.STATUS_DONE
+        task.save()
 
     except Exception as e:
+        task.status = CeleryTask.STATUS_ERROR
+        task.error_message = str(e)
+        task.save()
         _l.error(f"recalculate_user_fields: {repr(e)}\n{traceback.format_exc()}")
-
-    else:
-        return celery_task

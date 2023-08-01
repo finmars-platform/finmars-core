@@ -8,6 +8,7 @@ import re
 import traceback
 import uuid
 
+import pandas as pd
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.forms.models import model_to_dict
@@ -553,7 +554,7 @@ def _parse_date(date_string, format=None):
     return result
 
 
-def _universal_parse_date(date_string):
+def _universal_parse_date(date_string, **kwargs):
     # from dateutil.parser import parse
     # dt = parse('Mon Feb 15 2010')
     # print(dt)
@@ -563,10 +564,25 @@ def _universal_parse_date(date_string):
 
     from dateutil.parser import parse
 
-    dt = parse(date_string)
+    dt = parse(date_string, **kwargs)
 
     return dt.strftime("%Y-%m-%d")
 
+
+def _get_quarter(date):
+    date = _parse_date(date)
+
+    quarter = pd.Timestamp(date).quarter
+
+    return quarter
+
+def _get_year(date):
+    date = _parse_date(date)
+    return date.year
+
+def _get_month(date):
+    date = _parse_date(date)
+    return date.month
 
 def _universal_parse_country(value):
     result = None
@@ -724,6 +740,8 @@ def _parse_number(a):
 def _join(data, separator):
     return separator.join(data)
 
+def _strip(data):
+    return data.strip()
 
 def _reverse(items):
     if isinstance(items, str):
@@ -999,6 +1017,21 @@ def _set_complex_transaction_user_field(evaluator, field, value):
 
 _set_complex_transaction_user_field.evaluator = True
 
+def _get_complex_transaction(evaluator, identifier):
+
+    context = evaluator.context
+    from poms.transactions.models import ComplexTransaction
+
+    try:
+        result = ComplexTransaction.objects.get(transaction_unique_code=identifier)
+    except Exception as e:
+        result = ComplexTransaction.objects.get(code=identifier)
+
+
+    return result
+
+
+_get_complex_transaction.evaluator = True
 
 def _get_relation_by_user_code(evaluator, content_type, user_code):
     try:
@@ -1172,6 +1205,122 @@ def _get_currencies(evaluator, **kwargs):
 
 
 _get_currencies.evaluator = True
+
+def _get_mapping_key_by_value(evaluator, user_code, value, **kwargs):
+    try:
+
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context
+
+        master_user = get_master_user_from_context(context)
+
+        from poms.integrations.models import MappingTable
+        mapping_table = MappingTable.objects.get(
+            master_user=master_user, user_code=user_code
+        )
+
+        result = None
+
+        for item in mapping_table.items.all():
+
+            if item.value == value:
+                result = item.key
+                break
+
+        return result
+    except Exception as e:
+        _l.error("_get_mapping_key_by_value.exception %s" % e)
+        return None
+
+
+_get_mapping_key_by_value.evaluator = True
+
+def _get_mapping_value_by_key(evaluator, user_code, key, **kwargs):
+    try:
+
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context
+
+        master_user = get_master_user_from_context(context)
+
+        from poms.integrations.models import MappingTable
+        mapping_table = MappingTable.objects.get(
+            master_user=master_user, user_code=user_code
+        )
+
+        result = None
+
+        for item in mapping_table.items.all():
+
+            if item.key == key:
+                result = item.value
+                break
+
+        return result
+    except Exception as e:
+        _l.error("_get_mapping_value_by_key.exception %s" % e)
+        return None
+
+
+_get_mapping_value_by_key.evaluator = True
+
+def _get_mapping_keys(evaluator, user_code,  **kwargs):
+    try:
+
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context
+
+        master_user = get_master_user_from_context(context)
+
+        from poms.integrations.models import MappingTable
+        mapping_table = MappingTable.objects.get(
+            master_user=master_user, user_code=user_code
+        )
+
+        result = []
+
+        for item in mapping_table.items.all():
+
+            result.append(item.key)
+
+        return result
+    except Exception as e:
+        _l.error("_get_mapping_keys.exception %s" % e)
+        return None
+
+
+_get_mapping_keys.evaluator = True
+
+
+def _get_mapping_key_values(evaluator, user_code, key,  **kwargs):
+    try:
+
+        context = evaluator.context
+        from poms.users.utils import get_master_user_from_context
+
+        master_user = get_master_user_from_context(context)
+
+        from poms.integrations.models import MappingTable
+        mapping_table = MappingTable.objects.get(
+            master_user=master_user, user_code=user_code
+        )
+
+        result = []
+
+        for item in mapping_table.items.all():
+
+            if item.key == key:
+
+                result.append(item.value)
+
+        return result
+    except Exception as e:
+        _l.error("_get_mapping_key_values.exception %s" % e)
+        return None
+
+
+_get_mapping_key_values.evaluator = True
+
 
 
 def _convert_to_number(
@@ -1612,6 +1761,168 @@ def _get_price_history_accrued_price(
 
 
 _get_price_history_accrued_price.evaluator = True
+
+
+def _get_price_history(
+        evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0
+):
+    from poms.instruments.models import PriceHistory, PricingPolicy
+    from poms.users.utils import get_master_user_from_context
+
+    try:
+        days_to_look_back = int(days_to_look_back)
+    except TypeError:
+        raise ExpressionEvalError("Invalid Days To Look Back Value")
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    # TODO need master user check, security hole
+
+    date = _parse_date(date)
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    master_user = get_master_user_from_context(context)
+
+    pricing_policy_pk = None
+
+    if isinstance(pricing_policy, dict):
+        pricing_policy_pk = int(pricing_policy["id"])
+
+    elif isinstance(pricing_policy, (int, float)):
+        pricing_policy_pk = int(pricing_policy)
+
+    elif isinstance(pricing_policy, str):
+        pricing_policy_pk = PricingPolicy.objects.get(
+            master_user=master_user, user_code=pricing_policy
+        ).id
+
+    # print('formula pk %s' % pk)
+
+    if pricing_policy_pk is None:
+        raise ExpressionEvalError("Invalid Pricing Policy")
+
+    if days_to_look_back == 0:
+        try:
+            result = PriceHistory.objects.get(
+                date=date, instrument=instrument, pricing_policy_id=pricing_policy_pk
+            )
+
+            return result
+
+        except PriceHistory.DoesNotExist:
+            return None
+
+    else:
+        date_from = None
+        date_to = None
+
+        if days_to_look_back < 0:
+            date_to = date
+            date_from = date - datetime.timedelta(days=abs(days_to_look_back))
+
+        else:
+            date_from = date
+            date_to = date + datetime.timedelta(days=abs(days_to_look_back))
+
+        print("_get_price_history_accrued_price date_from %s" % date_from)
+        print("_get_price_history_accrued_price date_to %s" % date_to)
+
+        prices = PriceHistory.objects.filter(
+            date__gte=date_from,
+            date_lte=date_to,
+            instrument=instrument,
+            pricing_policy_id=pricing_policy_pk,
+        ).order_by("-date")
+
+        if len(prices):
+            return prices[0]
+        else:
+            return None
+
+
+_get_price_history.evaluator = True
+
+
+def _get_factor_from_price(
+        evaluator, date, instrument, pricing_policy, default_value=0, days_to_look_back=0
+):
+    from poms.instruments.models import PriceHistory, PricingPolicy
+    from poms.users.utils import get_master_user_from_context
+
+    try:
+        days_to_look_back = int(days_to_look_back)
+    except TypeError:
+        raise ExpressionEvalError("Invalid Days To Look Back Value")
+
+    context = evaluator.context
+    master_user = get_master_user_from_context(context)
+
+    # TODO need master user check, security hole
+
+    date = _parse_date(date)
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    master_user = get_master_user_from_context(context)
+
+    pricing_policy_pk = None
+
+    if isinstance(pricing_policy, dict):
+        pricing_policy_pk = int(pricing_policy["id"])
+
+    elif isinstance(pricing_policy, (int, float)):
+        pricing_policy_pk = int(pricing_policy)
+
+    elif isinstance(pricing_policy, str):
+        pricing_policy_pk = PricingPolicy.objects.get(
+            master_user=master_user, user_code=pricing_policy
+        ).id
+
+    # print('formula pk %s' % pk)
+
+    if pricing_policy_pk is None:
+        raise ExpressionEvalError("Invalid Pricing Policy")
+
+    if days_to_look_back == 0:
+        try:
+            result = PriceHistory.objects.get(
+                date=date, instrument=instrument, pricing_policy_id=pricing_policy_pk
+            )
+
+            return result.factor
+
+        except PriceHistory.DoesNotExist:
+            return 1
+
+    else:
+        date_from = None
+        date_to = None
+
+        if days_to_look_back < 0:
+            date_to = date
+            date_from = date - datetime.timedelta(days=abs(days_to_look_back))
+
+        else:
+            date_from = date
+            date_to = date + datetime.timedelta(days=abs(days_to_look_back))
+
+        print("_get_price_history_accrued_price date_from %s" % date_from)
+        print("_get_price_history_accrued_price date_to %s" % date_to)
+
+        prices = PriceHistory.objects.filter(
+            date__gte=date_from,
+            date_lte=date_to,
+            instrument=instrument,
+            pricing_policy_id=pricing_policy_pk,
+        ).order_by("-date")
+
+        if len(prices):
+            return prices[0].factor
+        else:
+            return 1
+
+
+_get_factor_from_price.evaluator = True
 
 
 def _get_next_coupon_date(evaluator, date, instrument):
@@ -2771,7 +3082,7 @@ def _get_default_portfolio(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.portfolio_id
+        return item.portfolio
 
     except Exception as e:
         print("get_default_portfolio error %s" % e)
@@ -2794,7 +3105,7 @@ def _get_default_instrument(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.instrument_id
+        return item.instrument
 
     except Exception as e:
         print("get_default_instrument error %s" % e)
@@ -2817,7 +3128,7 @@ def _get_default_account(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.account_id
+        return item.account
 
     except Exception as e:
         print("get_default_account error %s" % e)
@@ -2840,7 +3151,7 @@ def _get_default_currency(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.currency_id
+        return item.currency
 
     except Exception as e:
         print("get_default_currency error %s" % e)
@@ -2863,7 +3174,7 @@ def _get_default_transaction_type(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.transaction_type_id
+        return item.transaction_type
 
     except Exception as e:
         print("get_default_transaction_type error %s" % e)
@@ -2886,7 +3197,7 @@ def _get_default_instrument_type(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.instrument_type_id
+        return item.instrument_type
 
     except Exception as e:
         print("get_default_instrument_type error %s" % e)
@@ -2909,7 +3220,7 @@ def _get_default_account_type(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.account_type_id
+        return item.account_type
 
     except Exception as e:
         print("get_default_account_type error %s" % e)
@@ -2932,7 +3243,7 @@ def _get_default_pricing_policy(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.pricing_policy_id
+        return item.pricing_policy
 
     except Exception as e:
         print("get_default_pricing_policy error %s" % e)
@@ -2955,7 +3266,7 @@ def _get_default_responsible(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.responsible_id
+        return item.responsible
 
     except Exception as e:
         print("get_default_responsible error %s" % e)
@@ -2978,7 +3289,7 @@ def _get_default_counterparty(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.counterparty_id
+        return item.counterparty
 
     except Exception as e:
         print("get_default_counterparty error %s" % e)
@@ -3001,7 +3312,7 @@ def _get_default_strategy1(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.strategy1_id
+        return item.strategy1
 
     except Exception as e:
         print("get_default_strategy1 error %s" % e)
@@ -3024,7 +3335,7 @@ def _get_default_strategy2(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.strategy2_id
+        return item.strategy2
 
     except Exception as e:
         print("get_default_strategy2 error %s" % e)
@@ -3047,7 +3358,7 @@ def _get_default_strategy3(evaluator):
     try:
         item = EcosystemDefault.objects.get(master_user=master_user)
 
-        return item.strategy3_id
+        return item.strategy3
 
     except Exception as e:
         print("get_default_strategy3 error %s" % e)
@@ -3939,6 +4250,9 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def(
         "get_list_of_dates_between_two_dates", _get_list_of_dates_between_two_dates
     ),
+    SimpleEval2Def("get_quarter", _get_quarter),
+    SimpleEval2Def("get_year", _get_year),
+    SimpleEval2Def("get_month", _get_month),
     SimpleEval2Def("parse_date", _parse_date),
     SimpleEval2Def("universal_parse_date", _universal_parse_date),
     SimpleEval2Def("universal_parse_country", _universal_parse_country),
@@ -3959,6 +4273,7 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("format_number", _format_number),
     SimpleEval2Def("parse_number", _parse_number),
     SimpleEval2Def("join", _join),
+    SimpleEval2Def("strip", _strip),
     SimpleEval2Def("reverse", _reverse),
     SimpleEval2Def("split", _split),
     SimpleEval2Def("simple_price", _simple_price),
@@ -3980,9 +4295,11 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("get_fx_rate", _get_fx_rate),
     SimpleEval2Def("get_principal_price", _get_price_history_principal_price),
     SimpleEval2Def("get_accrued_price", _get_price_history_accrued_price),
+    SimpleEval2Def("get_price", _get_price_history),
     SimpleEval2Def("get_next_coupon_date", _get_next_coupon_date),
     SimpleEval2Def("get_factor_schedule", _get_factor_schedule),
     SimpleEval2Def("get_factor", _get_factor_schedule),
+    SimpleEval2Def("get_factor_from_price", _get_factor_from_price),
     SimpleEval2Def("add_factor_schedule", _add_factor_schedule),
     SimpleEval2Def("add_accrual_schedule", _add_accrual_schedule),
     SimpleEval2Def("delete_accrual_schedules", _delete_accrual_schedules),
@@ -4007,9 +4324,16 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def(
         "set_complex_transaction_form_data", _set_complex_transaction_form_data
     ),
+    SimpleEval2Def("get_complex_transaction", _get_complex_transaction),
     SimpleEval2Def("get_relation_by_user_code", _get_relation_by_user_code),
     SimpleEval2Def("get_instruments", _get_instruments),
     SimpleEval2Def("get_currencies", _get_currencies),
+
+    SimpleEval2Def("get_mapping_key_by_value", _get_mapping_key_by_value),
+    SimpleEval2Def("get_mapping_value_by_key", _get_mapping_value_by_key),
+    SimpleEval2Def("get_mapping_keys", _get_mapping_keys),
+    SimpleEval2Def("get_mapping_key_values", _get_mapping_key_values),
+
     SimpleEval2Def("get_rt_value", _get_rt_value),
     SimpleEval2Def("convert_to_number", _convert_to_number),
     SimpleEval2Def("if_null", _if_null),

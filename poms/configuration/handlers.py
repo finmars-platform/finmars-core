@@ -98,6 +98,15 @@ def export_configuration_to_directory(source_directory, configuration, master_us
 
         _l.info("Exported: integrations.complextransactionimportscheme")
 
+        _l.info("Going to export: integrations.mappingtable")
+
+        save_serialized_entity('integrations.mappingtable',
+                               configuration.configuration_code,
+                               source_directory + '/mapping-tables',
+                               context)
+
+        _l.info("Exported: integrations.mappingtable")
+
         _l.info("Going to export: integrations.instrumentdownloadscheme")
 
         save_serialized_entity('integrations.instrumentdownloadscheme',

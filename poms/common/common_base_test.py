@@ -4,14 +4,32 @@ from datetime import date, datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
 from django.db import connection, models
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from poms.accounts.models import Account
+from poms.accounts.models import Account, AccountType
+from poms.common.constants import SystemValueType
 from poms.counterparties.models import Counterparty, Responsible
 from poms.currencies.models import Currency
-from poms.instruments.models import Instrument, InstrumentClass, InstrumentType
+from poms.instruments.models import (
+    AccrualCalculationModel,
+    AccrualCalculationSchedule,
+    Country,
+    DailyPricingModel,
+    ExposureCalculationModel,
+    Instrument,
+    InstrumentClass,
+    InstrumentFactorSchedule,
+    InstrumentType,
+    LongUnderlyingExposure,
+    PaymentSizeDetail,
+    Periodicity,
+    PricingCondition,
+    ShortUnderlyingExposure,
+)
+from poms.obj_attrs.models import GenericAttribute, GenericAttributeType
 from poms.portfolios.models import Portfolio, PortfolioRegister
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.transactions.models import (
@@ -79,6 +97,7 @@ def print_patterns(patterns, namespace="rest_framework"):
             )
 
 
+# noinspection SqlNoDataSourceInspection
 def change_created_time(instance: models.Model, new_time: datetime):
     if not isinstance(new_time, datetime):
         raise ValueError(f"value {new_time} must be a datetime object!")
@@ -162,6 +181,14 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         return decorator
 
     @classmethod
+    def random_percent(cls) -> float:
+        return random.random()
+
+    @classmethod
+    def random_float(cls, _min: int = 1, _max: int = 10000) -> float:
+        return random.random() * random.randint(_min, _max)
+
+    @classmethod
     def random_int(cls, _min: int = 1, _max: int = 10000) -> int:
         return random.randint(_min, _max)
 
@@ -176,13 +203,166 @@ class BaseTestCase(TestCase, metaclass=TestMetaClass):
         return f"{cls.random_string(5)}@{cls.random_string(3)}.{cls.random_string(2)}"
 
     @classmethod
-    def random_future_date(cls, interval=30) -> date:
+    def today(cls) -> date:
+        return date.today()
+
+    @classmethod
+    def random_future_date(cls, interval=365) -> date:
         days = cls.random_int(1, interval)
-        return datetime.now().date() + timedelta(days=days)
+        return cls.today() + timedelta(days=days)
 
     @classmethod
     def random_choice(cls, choices: list):
         return random.choice(choices)
+
+    def create_attribute_type(self) -> GenericAttributeType:
+        self.attribute_type = GenericAttributeType.objects.create(
+            master_user=self.master_user,
+            content_type=ContentType.objects.first(),
+            user_code=self.random_string(5),
+            short_name=self.random_string(2),
+            value_type=GenericAttributeType.NUMBER,
+            kind=GenericAttributeType.USER,
+            tooltip=self.random_string(),
+            favorites=self.random_string(),
+            prefix=self.random_string(3),
+            expr=self.random_string(),
+        )
+        return self.attribute_type
+
+    def create_attribute(self) -> GenericAttribute:
+        self.attribute = GenericAttribute.objects.create(
+            attribute_type=self.create_attribute_type(),
+            content_type=ContentType.objects.last(),
+            object_id=self.random_int(),
+            value_string=self.random_string(),
+            value_float=self.random_int(),
+            value_date=date.today(),
+        )
+        return self.attribute
+
+    def create_account_type(self) -> AccountType:
+        self.account_type = AccountType.objects.create(
+            master_user=self.master_user,
+            user_code=self.random_string(),
+            short_name=self.random_string(3),
+            transaction_details_expr=self.random_string(),
+        )
+        self.account_type.attributes.set([self.create_attribute()])
+        self.account_type.save()
+        return self.account_type
+
+    def create_account(self) -> Account:
+        self.account = Account.objects.create(
+            master_user=self.master_user,
+            type=self.create_account_type(),
+            user_code=self.random_string(),
+            short_name=self.random_string(3),
+        )
+        self.account.attributes.set([self.create_attribute()])
+        self.account.save()
+        return self.account
+
+    @staticmethod
+    def get_instrument_type(instrument_type: str = "bond") -> InstrumentType:
+        return InstrumentType.objects.get(user_code__contains=instrument_type)
+
+    @staticmethod
+    def get_currency(user_code: str = "EUR") -> InstrumentType:
+        return Currency.objects.get(user_code=user_code)
+
+    @staticmethod
+    def get_pricing_condition(model_id=PricingCondition.NO_VALUATION):
+        return PricingCondition.objects.get(id=model_id)
+
+    @staticmethod
+    def get_exposure_calculation(model_id=ExposureCalculationModel.MARKET_VALUE):
+        return ExposureCalculationModel.objects.get(id=model_id)
+
+    @staticmethod
+    def get_payment_size(model_id=PaymentSizeDetail.PERCENT):
+        return PaymentSizeDetail.objects.get(id=model_id)
+
+    @staticmethod
+    def get_daily_pricing(model_id=DailyPricingModel.DEFAULT):
+        return DailyPricingModel.objects.get(id=model_id)
+
+    @staticmethod
+    def get_long_under_exp(model_id=LongUnderlyingExposure.ZERO):
+        return LongUnderlyingExposure.objects.get(id=model_id)
+
+    @staticmethod
+    def get_short_under_exp(model_id=ShortUnderlyingExposure.ZERO):
+        return ShortUnderlyingExposure.objects.get(id=model_id)
+
+    @staticmethod
+    def get_country(name="Italy"):
+        return Country.objects.get(name=name)
+
+    @staticmethod
+    def get_accrual_calculation_model(model_id=AccrualCalculationModel.ACT_ACT):
+        return AccrualCalculationModel.objects.get(id=model_id)
+
+    @staticmethod
+    def get_periodicity(model_id=Periodicity.N_DAY):
+        return Periodicity.objects.get(id=model_id)
+
+    def create_accrual(self, instrument: Instrument) -> AccrualCalculationSchedule:
+        return AccrualCalculationSchedule.objects.create(
+            instrument=instrument,
+            accrual_start_date=date.today(),
+            accrual_start_date_value_type=SystemValueType.DATE,
+            first_payment_date=self.random_future_date(),
+            first_payment_date_value_type=SystemValueType.DATE,
+            accrual_size=self.random_percent(),
+            accrual_calculation_model=self.get_accrual_calculation_model(),
+            periodicity=self.get_periodicity(),
+            periodicity_n="30",
+            periodicity_n_value_type=SystemValueType.NUMBER,
+        )
+
+    def create_factor(self, instrument: Instrument) -> InstrumentFactorSchedule:
+        return InstrumentFactorSchedule.objects.create(
+            instrument=instrument,
+            effective_date=self.random_future_date(),
+            factor_value=self.random_percent(),
+        )
+
+    def create_instrument(
+        self,
+        instrument_type: str = "bond",
+        currency_code: str = "EUR",
+    ) -> Instrument:
+        currency = self.get_currency(user_code=currency_code)
+        self.instrument = Instrument.objects.create(
+            # mandatory fields
+            master_user=self.master_user,
+            instrument_type=self.get_instrument_type(instrument_type),
+            pricing_currency=currency,
+            accrued_currency=currency,
+            name=self.random_string(11),
+            # optional fields
+            short_name=self.random_string(3),
+            user_code=self.random_string(),
+            user_text_1=self.random_string(),
+            user_text_2=self.random_string(),
+            user_text_3=self.random_string(),
+            daily_pricing_model=self.get_daily_pricing(),
+            pricing_condition=self.get_pricing_condition(),
+            exposure_calculation_model=self.get_exposure_calculation(),
+            payment_size_detail=self.get_payment_size(),
+            long_underlying_exposure=self.get_long_under_exp(),
+            short_underlying_exposure=self.get_short_under_exp(),
+            co_directional_exposure_currency=currency,
+            country=self.get_country(),
+        )
+        self.instrument.attributes.set([self.create_attribute()])
+        self.instrument.save()
+        if instrument_type == "bond":
+            self.create_accrual(self.instrument)
+            self.create_factor(self.instrument)
+
+        return self.instrument
 
     def init_test_case(self):
         self.client = APIClient()
@@ -240,9 +420,10 @@ USD = "USD"
 
 
 class DbInitializer:
-    def get_or_create_master_user(self) -> MasterUser:
+    @staticmethod
+    def get_or_create_master_user() -> MasterUser:
         master_user = MasterUser.objects.filter(
-            name=MASTER_USER
+            base_api_url=settings.BASE_API_URL,
         ).first() or MasterUser.objects.create_master_user(
             name=MASTER_USER,
             journal_status="disabled",

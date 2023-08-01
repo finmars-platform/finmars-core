@@ -4,20 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0003_accounttype_configuration_code'),
+        ("accounts", "0003_accounttype_configuration_code"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='account',
-            name='user_code',
-            field=models.CharField(blank=True, max_length=1024, null=True, verbose_name='user code'),
+            model_name="account",
+            name="user_code",
+            field=models.CharField(
+                blank=True, max_length=1024, null=True, verbose_name="user code"
+            ),
         ),
         migrations.AlterField(
-            model_name='accounttype',
-            name='user_code',
-            field=models.CharField(blank=True, max_length=1024, null=True, verbose_name='user code'),
+            model_name="accounttype",
+            name="user_code",
+            field=models.CharField(
+                blank=True, max_length=1024, null=True, verbose_name="user code"
+            ),
         ),
     ]

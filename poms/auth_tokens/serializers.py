@@ -16,6 +16,10 @@ class SetAuthTokenSerializer(serializers.Serializer):
 class CreateUserSerializer(serializers.Serializer):
     username = serializers.CharField(label=_("Username"))
     email = serializers.CharField(label=_("Email"), required=False, allow_blank=True)
+    roles = serializers.CharField(label=_("Roles"), required=False, allow_blank=True, default='')
+    groups = serializers.CharField(label=_("Groups"), required=False, allow_blank=True, default='')
+
+    is_admin = serializers.BooleanField(label=_("Is Admin"), required=False, default=False)
 
 
 class CreateMasterUserSerializer(serializers.Serializer):

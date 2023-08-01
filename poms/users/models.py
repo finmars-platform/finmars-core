@@ -170,10 +170,7 @@ class MasterUser(models.Model):
         verbose_name=gettext_lazy("timezone"),
         help_text="timezone to use",
     )
-
-    # TODO: what is notification_business_days
     notification_business_days = models.IntegerField(default=0)
-
     user_code_counters = ArrayField(
         models.IntegerField(null=True, blank=True),
         null=True,
@@ -532,7 +529,6 @@ class MasterUser(models.Model):
         ccys = {}
         ccy = Currency.objects.create(master_user=self, name="-", user_code="-")
         ccy_usd = None
-        # dc_reference_for_pricing = dc.get('reference_for_pricing', None)
         dc_reference_for_pricing = ""
 
         for dc in currencies_data.values():
@@ -752,7 +748,7 @@ class MasterUser(models.Model):
         FakeSequence.objects.get_or_create(master_user=self, name="transaction")
 
     def patch_currencies(
-            self, overwrite_name=False, overwrite_reference_for_pricing=False
+        self, overwrite_name=False, overwrite_reference_for_pricing=False
     ):
         from poms.currencies.models import Currency, currencies_data
 
@@ -1007,7 +1003,6 @@ class EcosystemDefault(models.Model):
         related_name="ecosystem_default_mismatch_account",
         verbose_name=gettext_lazy("mismatch account"),
     )
-
     pricing_policy = models.ForeignKey(
         "instruments.PricingPolicy",
         null=True,
@@ -1142,7 +1137,6 @@ class Member(FakeDeletableModel):
         default=False,
         verbose_name=gettext_lazy("is admin"),
     )
-
     json_data = models.TextField(
         null=True,
         blank=True,
@@ -1165,7 +1159,6 @@ class Member(FakeDeletableModel):
         else:
             self.json_data = None
 
-    # permissions = models.ManyToManyField(Permission, blank=True)
 
     class Meta(FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("member")
@@ -1174,24 +1167,28 @@ class Member(FakeDeletableModel):
         ordering = ["username"]
 
     def save(self, *args, **kwargs):
-
         instance = super(Member, self).save(*args, **kwargs)
 
         from poms.ui.models import MemberLayout
 
         from poms.configuration.utils import get_default_configuration_code
+
         configuration_code = get_default_configuration_code()
 
         try:
-            layout = MemberLayout.objects.get(member_id=self.id,
-                                              configuration_code=configuration_code,
-                                              user_code=configuration_code + ':default_member_layout')
+            layout = MemberLayout.objects.get(
+                member_id=self.id,
+                configuration_code=configuration_code,
+                user_code=f"{configuration_code}:default_member_layout",
+            )
         except Exception as e:
-            layout = MemberLayout.objects.create(member_id=self.id,
-                                                 is_default=True,
-                                                 configuration_code=configuration_code,
-                                                 name='default',
-                                                 user_code=configuration_code + ':default_member_layout')
+            layout = MemberLayout.objects.create(
+                member_id=self.id,
+                is_default=True,
+                configuration_code=configuration_code,
+                name="default",
+                user_code=f"{configuration_code}:default_member_layout",
+            )
 
         return instance
 
@@ -1228,7 +1225,6 @@ class OtpToken(models.Model):
         max_length=80,
         verbose_name=gettext_lazy("name"),
     )
-
     secret = models.CharField(
         max_length=16,
         blank=True,
@@ -1237,7 +1233,8 @@ class OtpToken(models.Model):
         verbose_name=gettext_lazy("secret"),
     )
     is_active = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is active")
+        default=False,
+        verbose_name=gettext_lazy("is active"),
     )
 
 
@@ -1258,11 +1255,10 @@ class UserProfile(models.Model):
         default=settings.TIME_ZONE,
         verbose_name=gettext_lazy("timezone"),
     )
-
     two_factor_verification = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("two factor verification"),
+        default=False,
+        verbose_name=gettext_lazy("two factor verification"),
     )
-
     active_master_user = models.ForeignKey(
         MasterUser,
         null=True,
@@ -1270,8 +1266,10 @@ class UserProfile(models.Model):
         verbose_name=gettext_lazy("master user"),
         on_delete=models.SET_NULL,
     )
-
-    user_unique_id = models.UUIDField(null=True, blank=True)
+    user_unique_id = models.UUIDField(
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         verbose_name = gettext_lazy("profile")
@@ -1283,10 +1281,19 @@ class UserProfile(models.Model):
 
 class UsercodePrefix(models.Model):
     master_user = models.ForeignKey(
-        MasterUser, verbose_name=gettext_lazy("master user"), on_delete=models.CASCADE,
+        MasterUser,
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
     )
-    value = models.CharField(max_length=80, verbose_name=gettext_lazy("prefix"), )
-    notes = models.TextField(null=True, blank=True, verbose_name=gettext_lazy("notes"), )
+    value = models.CharField(
+        max_length=80,
+        verbose_name=gettext_lazy("prefix"),
+    )
+    notes = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("notes"),
+    )
 
 
 class FakeSequence(models.Model):
@@ -1296,8 +1303,14 @@ class FakeSequence(models.Model):
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-    name = models.CharField(max_length=80, verbose_name=gettext_lazy("name"))
-    value = models.PositiveIntegerField(default=0, verbose_name=gettext_lazy("value"))
+    name = models.CharField(
+        max_length=80,
+        verbose_name=gettext_lazy("name"),
+    )
+    value = models.PositiveIntegerField(
+        default=0,
+        verbose_name=gettext_lazy("value"),
+    )
 
     class Meta:
         verbose_name = gettext_lazy("fake sequence")
@@ -1310,7 +1323,6 @@ class FakeSequence(models.Model):
 
     @classmethod
     def next_value(cls, master_user, name, d=1):
-
         seq, created = cls.objects.update_or_create(master_user=master_user, name=name)
 
         if not d:
@@ -1323,6 +1335,7 @@ class FakeSequence(models.Model):
         seq.save(update_fields=["value"])
 
         return seq.value
+
 
 # @receiver(post_save, dispatch_uid='create_profile', sender=settings.AUTH_USER_MODEL)
 # def create_profile(sender, instance=None, created=None, **kwargs):

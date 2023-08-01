@@ -39,6 +39,7 @@ from poms.pricing.models import (
 from poms.users.models import EcosystemDefault, MasterUser
 
 _l = logging.getLogger("poms.instruments")
+DATE_FORMAT = "%Y-%m-%d"
 
 
 class InstrumentClass(AbstractClassModel):
@@ -487,34 +488,62 @@ class CostMethod(AbstractClassModel):
 
 
 class Country(DataTimeStampedModel):
-    name = models.CharField(max_length=255, verbose_name=gettext_lazy("name"))
+    name = models.CharField(
+        max_length=255,
+        verbose_name=gettext_lazy("name"),
+    )
     user_code = models.CharField(
-        max_length=255, blank=True, default="", verbose_name=gettext_lazy("user code")
+        max_length=255,
+        blank=True,
+        default="",
+        verbose_name=gettext_lazy("user code"),
     )
     short_name = models.CharField(
-        max_length=255, blank=True, default="", verbose_name=gettext_lazy("short name")
+        max_length=255,
+        blank=True,
+        default="",
+        verbose_name=gettext_lazy("short name"),
     )
     description = models.TextField(
-        blank=True, default="", verbose_name=gettext_lazy("description")
+        blank=True,
+        default="",
+        verbose_name=gettext_lazy("description"),
     )
-
     alpha_2 = models.CharField(
-        max_length=255, null=True, blank=True, verbose_name=gettext_lazy("alpha 2")
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("alpha 2"),
     )
     alpha_3 = models.CharField(
-        max_length=255, null=True, blank=True, verbose_name=gettext_lazy("alpha 3")
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("alpha 3"),
     )
     country_code = models.CharField(
-        max_length=255, null=True, blank=True, verbose_name=gettext_lazy("country code")
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("country code"),
     )
     iso_3166_2 = models.CharField(
-        max_length=255, null=True, blank=True, verbose_name=gettext_lazy("iso_3166_2")
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("iso_3166_2"),
     )
     region = models.CharField(
-        max_length=255, null=True, blank=True, verbose_name=gettext_lazy("region")
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("region"),
     )
     sub_region = models.CharField(
-        max_length=255, null=True, blank=True, verbose_name=gettext_lazy("sub region")
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("sub region"),
     )
     intermediate_region = models.CharField(
         max_length=255,
@@ -523,7 +552,10 @@ class Country(DataTimeStampedModel):
         verbose_name=gettext_lazy("intermediate region"),
     )
     region_code = models.CharField(
-        max_length=255, null=True, blank=True, verbose_name=gettext_lazy("region code")
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("region code"),
     )
     sub_region_code = models.CharField(
         max_length=255,
@@ -546,7 +578,6 @@ class PricingPolicy(NamedModel, DataTimeStampedModel, ConfigurationModel):
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-
     # expr - DEPRECATED
     expr = models.CharField(
         max_length=EXPRESSION_FIELD_LENGTH,
@@ -555,7 +586,6 @@ class PricingPolicy(NamedModel, DataTimeStampedModel, ConfigurationModel):
         null=True,
         verbose_name=gettext_lazy("expression"),
     )
-
     default_instrument_pricing_scheme = models.ForeignKey(
         InstrumentPricingScheme,
         null=True,
@@ -576,13 +606,22 @@ class PricingPolicy(NamedModel, DataTimeStampedModel, ConfigurationModel):
         verbose_name_plural = gettext_lazy("pricing policies")
         unique_together = [["master_user", "user_code"]]
         ordering = ["user_code"]
-
         base_manager_name = "objects"
 
 
 class InstrumentType(
     NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel, ConfigurationModel
 ):
+    DIRECT_POSITION = 1
+    FACTOR_ADJUSTED_POSITION = 2
+    DO_NOT_SHOW = 3
+
+    VALUE_TYPES = (
+        (DIRECT_POSITION, gettext_lazy("Direct Position")),
+        (FACTOR_ADJUSTED_POSITION, gettext_lazy("Factor Adjusted Position")),
+        (DO_NOT_SHOW, gettext_lazy("Do not show")),
+    )
+
     master_user = models.ForeignKey(
         MasterUser,
         related_name="instrument_types",
@@ -612,7 +651,6 @@ class InstrumentType(
         related_name="+",
         verbose_name=gettext_lazy("regular event"),
     )
-
     factor_same = models.ForeignKey(
         "transactions.TransactionType",
         null=True,
@@ -637,19 +675,19 @@ class InstrumentType(
         related_name="+",
         verbose_name=gettext_lazy("factor down"),
     )
-
     attributes = GenericRelation(
-        GenericAttribute, verbose_name=gettext_lazy("attributes")
+        GenericAttribute,
+        verbose_name=gettext_lazy("attributes"),
     )
-
     has_second_exposure_currency = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("has second exposure currency")
+        default=False,
+        verbose_name=gettext_lazy("has second exposure currency"),
     )
-
     instrument_form_layouts = models.TextField(
-        null=True, blank=True, verbose_name=gettext_lazy("instrument form layouts")
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("instrument form layouts"),
     )
-
     payment_size_detail = models.ForeignKey(
         PaymentSizeDetail,
         on_delete=models.PROTECT,
@@ -657,7 +695,6 @@ class InstrumentType(
         blank=True,
         verbose_name=gettext_lazy("payment size detail"),
     )
-
     accrued_currency = models.ForeignKey(
         "currencies.Currency",
         null=True,
@@ -667,19 +704,18 @@ class InstrumentType(
         verbose_name=gettext_lazy("accrued currency"),
     )
     accrued_multiplier = models.FloatField(
-        default=1.0, verbose_name=gettext_lazy("accrued multiplier")
+        default=1.0,
+        verbose_name=gettext_lazy("accrued multiplier"),
     )
-
     default_accrued = models.FloatField(
-        default=0.0, verbose_name=gettext_lazy("default accrued")
+        default=0.0,
+        verbose_name=gettext_lazy("default accrued"),
     )
-
     instrument_factor_schedule_json_data = models.TextField(
         null=True,
         blank=True,
         verbose_name=gettext_lazy("instrument factor schedule json data"),
     )
-
     exposure_calculation_model = models.ForeignKey(
         ExposureCalculationModel,
         null=True,
@@ -687,29 +723,26 @@ class InstrumentType(
         verbose_name=gettext_lazy("exposure calculation model"),
         on_delete=models.SET_NULL,
     )
-
     long_underlying_instrument = models.CharField(
         max_length=255,
         null=True,
         blank=True,
         verbose_name=gettext_lazy("long underlying instrument"),
     )
-
     underlying_long_multiplier = models.FloatField(
-        default=1.0, verbose_name=gettext_lazy("underlying long multiplier")
+        default=1.0,
+        verbose_name=gettext_lazy("underlying long multiplier"),
     )
-
     short_underlying_instrument = models.CharField(
         max_length=255,
         null=True,
         blank=True,
         verbose_name=gettext_lazy("short underlying instrument"),
     )
-
     underlying_short_multiplier = models.FloatField(
-        default=1.0, verbose_name=gettext_lazy("underlying short multiplier")
+        default=1.0,
+        verbose_name=gettext_lazy("underlying short multiplier"),
     )
-
     long_underlying_exposure = models.ForeignKey(
         LongUnderlyingExposure,
         null=True,
@@ -718,7 +751,6 @@ class InstrumentType(
         verbose_name=gettext_lazy("long underlying exposure"),
         on_delete=models.SET_NULL,
     )
-
     short_underlying_exposure = models.ForeignKey(
         ShortUnderlyingExposure,
         null=True,
@@ -727,7 +759,6 @@ class InstrumentType(
         verbose_name=gettext_lazy("short underlying exposure"),
         on_delete=models.SET_NULL,
     )
-
     co_directional_exposure_currency = models.CharField(
         max_length=255,
         null=True,
@@ -739,7 +770,6 @@ class InstrumentType(
         default=SystemValueType.RELATION,
         verbose_name=gettext_lazy("co directional exposure currency value type"),
     )
-
     counter_directional_exposure_currency = models.CharField(
         max_length=255,
         null=True,
@@ -751,25 +781,17 @@ class InstrumentType(
         default=SystemValueType.RELATION,
         verbose_name=gettext_lazy("counter directional exposure currency value type"),
     )
-
     default_price = models.FloatField(
-        default=0.0, verbose_name=gettext_lazy("default price")
+        default=0.0,
+        verbose_name=gettext_lazy("default price"),
     )
     maturity_date = models.DateField(
-        null=True, verbose_name=gettext_lazy("maturity date")
+        null=True,
+        verbose_name=gettext_lazy("maturity date"),
     )
     maturity_price = models.FloatField(
-        default=0.0, verbose_name=gettext_lazy("maturity price")
-    )
-
-    DIRECT_POSITION = 1
-    FACTOR_ADJUSTED_POSITION = 2
-    DO_NOT_SHOW = 3
-
-    VALUE_TYPES = (
-        (DIRECT_POSITION, gettext_lazy("Direct Position")),
-        (FACTOR_ADJUSTED_POSITION, gettext_lazy("Factor Adjusted Position")),
-        (DO_NOT_SHOW, gettext_lazy("Do not show")),
+        default=0.0,
+        verbose_name=gettext_lazy("maturity price"),
     )
 
     pricing_currency = models.ForeignKey(
@@ -980,10 +1002,26 @@ class InstrumentType(
                 "code": "user_code",
                 "value_type": "field",
             },
-            {"key": "default_accrued", "name": "Default accrued", "value_type": 20},
-            {"key": "default_price", "name": "Default price", "value_type": 20},
-            {"key": "maturity_date", "name": "Maturity date", "value_type": 40},
-            {"key": "maturity_price", "name": "Maturity price", "value_type": 20},
+            {
+                "key": "default_accrued",
+                "name": "Default accrued",
+                "value_type": 20,
+            },
+            {
+                "key": "default_price",
+                "name": "Default price",
+                "value_type": 20,
+            },
+            {
+                "key": "maturity_date",
+                "name": "Maturity date",
+                "value_type": 40,
+            },
+            {
+                "key": "maturity_price",
+                "name": "Maturity price",
+                "value_type": 20,
+            },
         ]
 
     @property
@@ -1008,7 +1046,6 @@ class InstrumentType(
         verbose_name = gettext_lazy("instrument type")
         verbose_name_plural = gettext_lazy("instrument types")
         permissions = [
-            # ('view_instrumenttype', 'Can view instrument type'),
             ("manage_instrumenttype", "Can manage instrument type"),
         ]
 
@@ -1031,17 +1068,22 @@ class InstrumentTypeAccrual(models.Model):
         related_name="accruals",
         verbose_name=gettext_lazy("instrument type"),
     )
-
-    name = models.CharField(max_length=255, verbose_name=gettext_lazy("name"))
-
-    order = models.IntegerField(default=0, verbose_name=gettext_lazy("order"))
-
-    autogenerate = models.BooleanField(
-        default=True, verbose_name=gettext_lazy("autogenerate")
+    name = models.CharField(
+        max_length=255,
+        verbose_name=gettext_lazy("name"),
     )
-
+    order = models.IntegerField(
+        default=0,
+        verbose_name=gettext_lazy("order"),
+    )
+    autogenerate = models.BooleanField(
+        default=True,
+        verbose_name=gettext_lazy("autogenerate"),
+    )
     json_data = models.TextField(
-        null=True, blank=True, verbose_name=gettext_lazy("json data")
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("json data"),
     )
 
     class Meta:
@@ -1071,17 +1113,22 @@ class InstrumentTypeEvent(models.Model):
         related_name="events",
         verbose_name=gettext_lazy("instrument type"),
     )
-
-    name = models.CharField(max_length=255, verbose_name=gettext_lazy("name"))
-
-    order = models.IntegerField(default=0, verbose_name=gettext_lazy("order"))
-
-    autogenerate = models.BooleanField(
-        default=True, verbose_name=gettext_lazy("autogenerate")
+    name = models.CharField(
+        max_length=255,
+        verbose_name=gettext_lazy("name"),
     )
-
+    order = models.IntegerField(
+        default=0,
+        verbose_name=gettext_lazy("order"),
+    )
+    autogenerate = models.BooleanField(
+        default=True,
+        verbose_name=gettext_lazy("autogenerate"),
+    )
     json_data = models.TextField(
-        null=True, blank=True, verbose_name=gettext_lazy("json data")
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("json data"),
     )
 
     class Meta:
@@ -1123,15 +1170,15 @@ class InstrumentTypeInstrumentAttribute(models.Model):
         related_name="instrument_attributes",
         verbose_name=gettext_lazy("instrument attributes"),
     )
-
     attribute_type_user_code = models.CharField(
-        max_length=255, verbose_name=gettext_lazy("attribute type user code")
+        max_length=255,
+        verbose_name=gettext_lazy("attribute type user code"),
     )
-
     value_type = models.PositiveSmallIntegerField(
-        choices=VALUE_TYPES, default=STRING, verbose_name=gettext_lazy("value type")
+        choices=VALUE_TYPES,
+        default=STRING,
+        verbose_name=gettext_lazy("value type"),
     )
-
     value_string = models.CharField(
         db_index=True,
         max_length=255,
@@ -1140,10 +1187,16 @@ class InstrumentTypeInstrumentAttribute(models.Model):
         verbose_name=gettext_lazy("value (String)"),
     )
     value_float = models.FloatField(
-        db_index=True, null=True, blank=True, verbose_name=gettext_lazy("value (Float)")
+        db_index=True,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("value (Float)"),
     )
     value_date = models.DateField(
-        db_index=True, null=True, blank=True, verbose_name=gettext_lazy("value (Date)")
+        db_index=True,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("value (Date)"),
     )
     value_classifier = models.CharField(
         db_index=True,
@@ -1161,7 +1214,6 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
         related_name="instrument_factor_schedules",
         verbose_name=gettext_lazy("instrument attributes"),
     )
-
     effective_date = models.CharField(
         max_length=255,
         null=True,
@@ -1173,7 +1225,6 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
         default=SystemValueType.DATE,
         verbose_name=gettext_lazy("effective date"),
     )
-
     position_factor_value = models.CharField(
         max_length=255,
         null=True,
@@ -1185,7 +1236,6 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
         default=SystemValueType.DATE,
         verbose_name=gettext_lazy("position factor value value type"),
     )
-
     factor_value1 = models.CharField(
         max_length=255,
         null=True,
@@ -1197,7 +1247,6 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
         default=SystemValueType.DATE,
         verbose_name=gettext_lazy("factor value1 value type"),
     )
-
     factor_value2 = models.CharField(
         max_length=255,
         null=True,
@@ -1209,7 +1258,6 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
         default=SystemValueType.DATE,
         verbose_name=gettext_lazy("factor value2 value type"),
     )
-
     factor_value3 = models.CharField(
         max_length=255,
         null=True,
@@ -1229,9 +1277,10 @@ class InstrumentTypeInstrumentFactorSchedule(models.Model):
         )
 
     def __str__(self):
-        return f"{self.effective_date}"
+        return str(self.effective_date)
 
 
+# noinspection PyUnresolvedReferences
 class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel):
     DIRECT_POSITION = 1
     FACTOR_ADJUSTED_POSITION = 2
@@ -1288,7 +1337,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         verbose_name=gettext_lazy("payment size detail"),
     )
     default_price = models.FloatField(
-        default=0.0, verbose_name=gettext_lazy("default price")
+        default=0.0,
+        verbose_name=gettext_lazy("default price"),
     )
     default_accrued = models.FloatField(
         default=0.0,
@@ -1427,7 +1477,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         verbose_name = gettext_lazy("instrument")
         verbose_name_plural = gettext_lazy("instruments")
         permissions = [
-            # ('view_instrument', 'Can view instrument'),
             ("manage_instrument", "Can manage instrument"),
         ]
         ordering = ["user_code"]
@@ -1506,11 +1555,31 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 "code": "user_code",
                 "value_type": "field",
             },
-            {"key": "default_price", "name": "Default price", "value_type": 20},
-            {"key": "default_accrued", "name": "Default accrued", "value_type": 20},
-            {"key": "user_text_1", "name": "User text 1", "value_type": 10},
-            {"key": "user_text_2", "name": "User text 2", "value_type": 10},
-            {"key": "user_text_3", "name": "User text 3", "value_type": 10},
+            {
+                "key": "default_price",
+                "name": "Default price",
+                "value_type": 20,
+            },
+            {
+                "key": "default_accrued",
+                "name": "Default accrued",
+                "value_type": 20,
+            },
+            {
+                "key": "user_text_1",
+                "name": "User text 1",
+                "value_type": 10,
+            },
+            {
+                "key": "user_text_2",
+                "name": "User text 2",
+                "value_type": 10,
+            },
+            {
+                "key": "user_text_3",
+                "name": "User text 3",
+                "value_type": 10,
+            },
             {
                 "key": "underlying_long_multiplier",
                 "name": "Underlying long multiplier",
@@ -1591,9 +1660,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
     def rebuild_event_schedules(self):
         from poms.transactions.models import EventClass, NotificationClass
 
-        # TODO: add validate equality before process
-        # self.event_schedules.filter(is_auto_generated=True).delete()
-
         master_user = self.master_user
         instrument_type = self.instrument_type
         instrument_class = instrument_type.instrument_class
@@ -1624,7 +1690,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         }
 
         processed = []
-
         accruals = self.get_accrual_calculation_schedules_all()
         for i, accrual in enumerate(accruals):
             try:
@@ -1633,80 +1698,73 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 accrual_next = None
 
             if instrument_class.has_regular_event:
-                if instrument_type.regular_event:
-                    e = EventSchedule()
-                    e.instrument = self
-                    e.accrual_calculation_schedule = accrual
-                    e.is_auto_generated = True
-                    e.name = event_schedule_config.name
-                    e.description = event_schedule_config.description
-                    e.event_class_id = EventClass.REGULAR
-                    e.notification_class_id = notification_class_id
-                    e.effective_date = accrual.first_payment_date
-                    e.notify_in_n_days = event_schedule_config.notify_in_n_days
-                    e.periodicity = accrual.periodicity
-                    e.periodicity_n = accrual.periodicity_n
-                    e.final_date = (
-                        accrual_next.accrual_start_date
-                        if accrual_next
-                        else self.maturity_date
-                    )
-
-                    a = EventScheduleAction()
-                    a.text = event_schedule_config.action_text
-                    if instrument_type.regular_event:
-                        a.transaction_type = instrument_type.regular_event.user_code
-                    a.is_sent_to_pending = (
-                        event_schedule_config.action_is_sent_to_pending
-                    )
-                    a.is_book_automatic = event_schedule_config.action_is_book_automatic
-                    a.button_position = 1
-
-                    eold = events_by_accrual.get(accrual.id)
-                    self._event_save(processed, e, a, eold)
-                else:
+                if not instrument_type.regular_event:
                     raise ValueError(
-                        'Field regular event in instrument type "%s" must be set'
-                        % instrument_type
+                        f'Field regular event in instrument type "{instrument_type}" '
+                        f"must be set"
                     )
 
-        if instrument_class.has_one_off_event:
-            if instrument_type.one_off_event:
                 e = EventSchedule()
                 e.instrument = self
+                e.accrual_calculation_schedule = accrual
                 e.is_auto_generated = True
                 e.name = event_schedule_config.name
                 e.description = event_schedule_config.description
-                e.event_class_id = EventClass.ONE_OFF
+                e.event_class_id = EventClass.REGULAR
                 e.notification_class_id = notification_class_id
-                e.effective_date = self.maturity_date
+                e.effective_date = accrual.first_payment_date
                 e.notify_in_n_days = event_schedule_config.notify_in_n_days
-                e.final_date = self.maturity_date
-
+                e.periodicity = accrual.periodicity
+                e.periodicity_n = accrual.periodicity_n
+                e.final_date = (
+                    accrual_next.accrual_start_date
+                    if accrual_next
+                    else self.maturity_date
+                )
                 a = EventScheduleAction()
                 a.text = event_schedule_config.action_text
-                if instrument_type.one_off_event:
-                    a.transaction_type = instrument_type.one_off_event.user_code
+                a.transaction_type = instrument_type.regular_event.user_code
                 a.is_sent_to_pending = event_schedule_config.action_is_sent_to_pending
                 a.is_book_automatic = event_schedule_config.action_is_book_automatic
                 a.button_position = 1
 
-                eold = None
-                for e0 in events:
-                    if (
-                        e0.is_auto_generated
-                        and e0.event_class_id == EventClass.ONE_OFF
-                        and e0.accrual_calculation_schedule_id is None
-                        and e0.factor_schedule_id is None
-                    ):
-                        eold = e0
-                        break
+                eold = events_by_accrual.get(accrual.id)
                 self._event_save(processed, e, a, eold)
-            else:
+        if instrument_class.has_one_off_event:
+            if not instrument_type.one_off_event:
                 raise ValueError(
-                    'Field one-off event in instrument type "%s" must be set'
-                    % instrument_type
+                    f'Field one-off event in instrument type "{instrument_type}" '
+                    f"must be set"
                 )
+
+            e = EventSchedule()
+            e.instrument = self
+            e.is_auto_generated = True
+            e.name = event_schedule_config.name
+            e.description = event_schedule_config.description
+            e.event_class_id = EventClass.ONE_OFF
+            e.notification_class_id = notification_class_id
+            e.effective_date = self.maturity_date
+            e.notify_in_n_days = event_schedule_config.notify_in_n_days
+            e.final_date = self.maturity_date
+            a = EventScheduleAction()
+            a.text = event_schedule_config.action_text
+            a.transaction_type = instrument_type.one_off_event.user_code
+            a.is_sent_to_pending = event_schedule_config.action_is_sent_to_pending
+            a.is_book_automatic = event_schedule_config.action_is_book_automatic
+            a.button_position = 1
+
+            eold = None
+            for e0 in events:
+                if (
+                    e0.is_auto_generated
+                    and e0.event_class_id == EventClass.ONE_OFF
+                    and e0.accrual_calculation_schedule_id is None
+                    and e0.factor_schedule_id is None
+                ):
+                    eold = e0
+                    break
+            self._event_save(processed, e, a, eold)
 
         # process factors
         factors = list(self.factor_schedules.all())
@@ -1795,7 +1853,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             return accruals
 
         if getattr(accruals[0], "accrual_end_date", None) is not None:
-            # already configured
             return accruals
 
         # _l.info('get_accrual_calculation_schedules_all')
@@ -1803,7 +1860,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         accruals = sorted(
             accruals,
             key=lambda x: datetime.date(
-                datetime.strptime(x.accrual_start_date, "%Y-%m-%d")
+                datetime.strptime(x.accrual_start_date, DATE_FORMAT)
             ),
         )
 
@@ -1815,16 +1872,12 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 a.accrual_end_date = next_a.accrual_start_date
             a = next_a
         if a:
-            # a.accrual_end_date = self.maturity_date
-
-            # print('self.maturity_date %s ' % self.maturity_date)
             try:
                 a.accrual_end_date = self.maturity_date + timedelta(days=1)
             except Exception:
                 print(f"Overflow Error {self.maturity_date} ")
 
                 a.accrual_end_date = self.maturity_date
-                # print('a.accrual_end_date %s ' % a.accrual_end_date)
 
         return accruals
 
@@ -1838,7 +1891,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         # _l.debug('find_accrual.accruals %s' % accruals)
 
         for a in accruals:
-            if datetime.date(datetime.strptime(a.accrual_start_date, "%Y-%m-%d")) <= d:
+            if datetime.date(datetime.strptime(a.accrual_start_date, DATE_FORMAT)) <= d:
                 accrual = a
 
         return accrual
@@ -1902,7 +1955,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         from poms.common.formula_accruals import coupon_accrual_factor
 
         if not self.maturity_date or (price_date >= self.maturity_date):
-            # return self.maturity_price
             return 0.0
 
         accrual = self.find_accrual(price_date)
@@ -1920,7 +1972,6 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         from poms.common.formula_accruals import coupon_accrual_factor
 
         if price_date >= self.maturity_date:
-            # return self.maturity_price
             return 0.0
 
         accrual = self.find_accrual(price_date)
@@ -1928,10 +1979,10 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             return 0.0
 
         accrual_start_date = datetime.date(
-            datetime.strptime(accrual.accrual_start_date, "%Y-%m-%d")
+            datetime.strptime(accrual.accrual_start_date, DATE_FORMAT)
         )
         first_payment_date = datetime.date(
-            datetime.strptime(accrual.first_payment_date, "%Y-%m-%d")
+            datetime.strptime(accrual.first_payment_date, DATE_FORMAT)
         )
 
         _l.info(f"coupon_accrual_factor price_date {price_date} ")
@@ -1948,13 +1999,10 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
     def get_coupon(self, cpn_date, with_maturity=False, factor=False):
         _l.info(f"get_coupon self.maturity_date {self.maturity_date}")
 
-        if cpn_date == self.maturity_date:
-            if with_maturity:
-                return self.maturity_price, True
-            else:
-                return 0.0, False
+        if cpn_date == self.maturity_date and with_maturity:
+            return self.maturity_price, True
 
-        elif cpn_date > self.maturity_date:
+        elif cpn_date == self.maturity_date or cpn_date > self.maturity_date:
             return 0.0, False
 
         accruals = self.get_accrual_calculation_schedules_all()
@@ -1963,11 +2011,11 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
         for accrual in accruals:
             accrual_start_date = datetime.date(
-                datetime.strptime(accrual.accrual_start_date, "%Y-%m-%d")
+                datetime.strptime(accrual.accrual_start_date, DATE_FORMAT)
             )
             accrual_end_date = accrual.accrual_end_date
             first_payment_date = datetime.date(
-                datetime.strptime(accrual.first_payment_date, "%Y-%m-%d")
+                datetime.strptime(accrual.first_payment_date, DATE_FORMAT)
             )
 
             _l.info(
@@ -2026,18 +2074,16 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             if begin_date >= accrual.accrual_end_date:
                 continue
 
-            format = "%Y-%m-%d"
             accrual_start_date_d = datetime.strptime(
-                accrual.accrual_start_date, format
+                accrual.accrual_start_date, DATE_FORMAT
             ).date()
             first_payment_date_d = datetime.strptime(
-                accrual.first_payment_date, format
+                accrual.first_payment_date, DATE_FORMAT
             ).date()
-            # accrual_end_date_d = datetime.strptime(accrual.accrual_end_date, format).date() # seems date field
             accrual_end_date_d = accrual.accrual_end_date
 
             prev_d = accrual_start_date_d
-            for i in range(0, 3652058):
+            for i in range(3652058):
                 stop = False
                 if i == 0:
                     d = first_payment_date_d
@@ -2068,10 +2114,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                 prev_d = d
 
         if with_maturity:
-            if factor:
-                val_or_factor = 1.0
-            else:
-                val_or_factor = self.maturity_price
+            val_or_factor = 1.0 if factor else self.maturity_price
             res.append((self.maturity_date, val_or_factor))
 
         return res
@@ -2087,9 +2130,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         for f in factors:
             if f.effective_date < fdate:
                 res = f
-        if res:
-            return res.factor_value
-        return 1.0
+
+        return res.factor_value if res else 1.0
 
     def generate_instrument_system_attributes(self):
         from django.contrib.contenttypes.models import ContentType
@@ -2104,13 +2146,13 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         for ipp in instrument_pricing_policies:
             pp = ipp.pricing_policy
 
-            user_code_scheme = "pricing_policy_scheme_" + pp.user_code
-            user_code_parameter = "pricing_policy_parameter_" + pp.user_code
-            user_code_notes = "pricing_policy_notes_" + pp.user_code
+            user_code_scheme = f"pricing_policy_scheme_{pp.user_code}"
+            user_code_parameter = f"pricing_policy_parameter_{pp.user_code}"
+            user_code_notes = f"pricing_policy_notes_{pp.user_code}"
 
-            name_scheme = "Pricing Policy Scheme: " + pp.user_code
-            name_parameter = "Pricing Policy Parameter: " + pp.user_code
-            name_notes = "Pricing Policy Notes: " + pp.user_code
+            name_scheme = f"Pricing Policy Scheme: {pp.user_code}"
+            name_parameter = f"Pricing Policy Parameter: {pp.user_code}"
+            name_notes = f"Pricing Policy Notes: {pp.user_code}"
 
             attr_type_scheme = None
             attr_type_parameter = None
@@ -2223,17 +2265,17 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                         if type.value_type == 10:
                             attr_parameter.value_string = attr.value_string
 
-                        if type.value_type == 20:
+                        elif type.value_type == 20:
                             attr_parameter.value_string = str(attr.value_float)
 
-                        if type.value_type == 30:
+                        elif type.value_type == 30:
                             attr_parameter.value_string = attr.classifier.name
 
-                        if type.value_type == 40:
+                        elif type.value_type == 40:
                             attr_parameter.value_string = attr.value_date
 
                     except Exception as e:
-                        _l.info("Could not get attribute value=%s " % e)
+                        _l.info(f"Could not get attribute value={e} ")
 
                 else:
                     attr_parameter.value_string = str(
@@ -2261,11 +2303,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                         content_type=content_type,
                     )
 
-            if ipp.notes:
-                attr_notes.value_string = ipp.notes
-            else:
-                attr_notes.value_string = ""
-
+            attr_notes.value_string = ipp.notes or ""
             _l.info(f"attr_notes={attr_notes.value_string}")
 
             attr_notes.save()
@@ -2279,8 +2317,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             self.generate_instrument_system_attributes()
 
         except Exception as error:
-            _l.error("Instrument save error %s" % error)
-            _l.error("Instrument save traceback %s" % traceback.format_exc())
+            _l.error(f"Instrument save error {error}\n {traceback.format_exc()}")
 
 
 # DEPRECTATED (25.05.2020) delete soon
@@ -2298,9 +2335,16 @@ class ManualPricingFormula(models.Model):
         verbose_name=gettext_lazy("pricing policy"),
     )
     expr = models.CharField(
-        max_length=255, blank=True, default="", verbose_name=gettext_lazy("expression")
+        max_length=255,
+        blank=True,
+        default="",
+        verbose_name=gettext_lazy("expression"),
     )
-    notes = models.TextField(blank=True, default="", verbose_name=gettext_lazy("notes"))
+    notes = models.TextField(
+        blank=True,
+        default="",
+        verbose_name=gettext_lazy("notes"),
+    )
 
     class Meta:
         verbose_name = gettext_lazy("manual pricing formula")
@@ -2343,16 +2387,17 @@ class AccrualCalculationSchedule(models.Model):
         default=SystemValueType.DATE,
         verbose_name=gettext_lazy("first payment date value type"),
     )
-    # TODO: is %
     accrual_size = models.CharField(
-        max_length=255, null=True, blank=True, verbose_name=gettext_lazy("accrual size")
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("accrual size"),
     )
     accrual_size_value_type = models.PositiveSmallIntegerField(
         choices=SYSTEM_VALUE_TYPES,
         default=SystemValueType.NUMBER,
         verbose_name=gettext_lazy("accrual size value type"),
     )
-
     accrual_calculation_model = models.ForeignKey(
         AccrualCalculationModel,
         on_delete=models.PROTECT,
@@ -2376,8 +2421,11 @@ class AccrualCalculationSchedule(models.Model):
         default=SystemValueType.NUMBER,
         verbose_name=gettext_lazy("periodicity n value type"),
     )
-
-    notes = models.TextField(blank=True, default="", verbose_name=gettext_lazy("notes"))
+    notes = models.TextField(
+        blank=True,
+        default="",
+        verbose_name=gettext_lazy("notes"),
+    )
 
     def save(self, *args, **kwargs):
         from dateutil.parser import parse
@@ -2385,30 +2433,29 @@ class AccrualCalculationSchedule(models.Model):
         if self.accrual_start_date:
             try:
                 self.accrual_start_date = parse(self.accrual_start_date).strftime(
-                    "%Y-%m-%d"
+                    DATE_FORMAT
                 )
-            except Exception as e:
+            except Exception:
                 self.accrual_start_date = None
 
         if self.first_payment_date:
             try:
                 self.first_payment_date = parse(self.first_payment_date).strftime(
-                    "%Y-%m-%d"
+                    DATE_FORMAT
                 )
-            except Exception as e:
+            except Exception:
                 self.first_payment_date = None
 
-        super(AccrualCalculationSchedule, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = gettext_lazy("accrual calculation schedule")
         verbose_name_plural = gettext_lazy("accrual calculation schedules")
         ordering = ["accrual_start_date"]
-
         index_together = [["instrument", "accrual_start_date"]]
 
     def __str__(self):
-        return "%s" % self.accrual_start_date
+        return str(self.accrual_start_date)
 
 
 class PriceHistory(DataTimeStampedModel):
@@ -2426,34 +2473,54 @@ class PriceHistory(DataTimeStampedModel):
         verbose_name=gettext_lazy("pricing policy"),
     )
     date = models.DateField(
-        db_index=True, default=date_now, verbose_name=gettext_lazy("date")
+        db_index=True,
+        default=date_now,
+        verbose_name=gettext_lazy("date"),
     )
     principal_price = models.FloatField(
-        default=0.0, verbose_name=gettext_lazy("principal price")
+        default=0.0,
+        verbose_name=gettext_lazy("principal price"),
     )
     accrued_price = models.FloatField(
-        default=0.0, verbose_name=gettext_lazy("accrued price")
+        default=0.0,
+        verbose_name=gettext_lazy("accrued price"),
     )
-
-    long_delta = models.FloatField(default=0.0, verbose_name=gettext_lazy("long delta"))
+    long_delta = models.FloatField(
+        default=0.0,
+        verbose_name=gettext_lazy("long delta"),
+    )
     short_delta = models.FloatField(
-        default=0.0, verbose_name=gettext_lazy("short delta")
+        default=0.0,
+        verbose_name=gettext_lazy("short delta"),
     )
-
-    ytm = models.FloatField(default=0.0, verbose_name=gettext_lazy("ytm"))
-    nav = models.FloatField(default=0.0, verbose_name=gettext_lazy("nav"))
-    factor = models.FloatField(default=1.0, verbose_name=gettext_lazy("factor"))
-    cash_flow = models.FloatField(default=0.0, verbose_name=gettext_lazy("cash flow"))
+    ytm = models.FloatField(
+        default=0.0,
+        verbose_name=gettext_lazy("ytm"),
+    )
+    nav = models.FloatField(
+        default=0.0,
+        verbose_name=gettext_lazy("nav"),
+    )
+    factor = models.FloatField(
+        default=1.0,
+        verbose_name=gettext_lazy("factor"),
+    )
+    cash_flow = models.FloatField(
+        default=0.0,
+        verbose_name=gettext_lazy("cash flow"),
+    )
     modified_duration = models.FloatField(
-        default=0.0, verbose_name=gettext_lazy("modified duration")
+        default=0.0,
+        verbose_name=gettext_lazy("modified duration"),
     )
-
     procedure_modified_datetime = models.DateTimeField(
-        null=True, blank=True, verbose_name=gettext_lazy("procedure_modified_datetime")
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("procedure_modified_datetime"),
     )
-
     is_temporary_price = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is temporary price")
+        default=False,
+        verbose_name=gettext_lazy("is temporary price"),
     )
 
     class Meta:
@@ -2468,13 +2535,9 @@ class PriceHistory(DataTimeStampedModel):
         ordering = ["date"]
 
     def __str__(self):
-        # return '%s:%s:%s:%s:%s' % (
-        #     self.instrument_id, self.pricing_policy_id, self.date, self.principal_price, self.accrued_price)
-        return "%s - %s;%s @%s" % (
-            self.instrument.user_code,
-            self.principal_price,
-            self.accrued_price,
-            self.date,
+        return (
+            f"{self.instrument.user_code} - {self.principal_price};"
+            f"{self.accrued_price} @{self.date}"
         )
 
     def get_instr_ytm_data_d0_v0(self, dt):
@@ -2497,14 +2560,12 @@ class PriceHistory(DataTimeStampedModel):
         instr = self.instrument
 
         if instr.maturity_date is None or instr.maturity_date == date.max:
-            # _l.debug('get_instr_ytm_data: [], maturity_date rule')
             return []
         if (
             instr.maturity_price is None
             or isnan(instr.maturity_price)
             or isclose(instr.maturity_price, 0.0)
         ):
-            # _l.debug('get_instr_ytm_data: [], maturity_price rule')
             return []
 
         try:
@@ -2565,11 +2626,11 @@ class PriceHistory(DataTimeStampedModel):
                 / (self.principal_price * self.instrument.price_multiplier)
             )
         except Exception as e:
-            _l.error("get_instr_ytm_x0 %s" % e)
+            _l.error(f"get_instr_ytm_x0 {repr(e)}")
             return 0
 
     def calculate_ytm(self, dt):
-        _l.debug("Calculating ytm for %s for %s" % (self.instrument.name, self.date))
+        _l.debug(f"Calculating ytm for {self.instrument.name} for {self.date}")
 
         if (
             self.instrument.maturity_date is None
@@ -2586,9 +2647,8 @@ class PriceHistory(DataTimeStampedModel):
                 )
 
             except Exception as e:
-                _l.info("calculate_ytm e %s " % e)
+                _l.error(f"calculate_ytm error {repr(e)}")
                 ytm = 0
-            # _l.debug('get_instr_ytm.1: %s', ytm)
             return ytm
 
         x0 = self.get_instr_ytm_x0(dt)
@@ -2597,11 +2657,7 @@ class PriceHistory(DataTimeStampedModel):
         data = self.get_instr_ytm_data(dt)
         _l.debug("get_instr_ytm: data=%s", data)
 
-        if data:
-            ytm = f_xirr(data, x0=x0)
-        else:
-            ytm = 0.0
-
+        ytm = f_xirr(data, x0=x0) if data else 0.0
         return ytm
 
     def calculate_duration(self, dt):
@@ -2613,15 +2669,10 @@ class PriceHistory(DataTimeStampedModel):
                 duration = 1 / self.ytm
             except ArithmeticError:
                 duration = 0
-            # _l.debug('get_instr_duration.1: %s', duration)
+
             return duration
         data = self.get_instr_ytm_data(dt)
-        if data:
-            duration = f_duration(data, ytm=self.ytm)
-        else:
-            duration = 0
-        # _l.debug('get_instr_duration: %s', duration)
-        return duration
+        return f_duration(data, ytm=self.ytm) if data else 0
 
     def save(self, *args, **kwargs):
         # TODO make readable exception if currency history is missing
@@ -2637,8 +2688,6 @@ class PriceHistory(DataTimeStampedModel):
         ecosystem_default = EcosystemDefault.objects.get(
             master_user=self.instrument.master_user
         )
-
-        # if self.ytm == None: # check if correct
 
         try:
             if (
@@ -2666,21 +2715,19 @@ class PriceHistory(DataTimeStampedModel):
             self.ytm = self.calculate_ytm(self.date)
             self.modified_duration = self.calculate_duration(self.date)
 
-            # _l.debug('self.ytm %s' % self.ytm)
-            # _l.debug('self.modified_duration %s' % self.modified_duration)
-
-        except Exception as error:
-            _l.debug("Price History save ytm error %s" % error)
-            _l.debug(traceback.print_exc())
+        except Exception as e:
+            _l.debug(f"PriceHistory save ytm error {repr(e)} {traceback.print_exc()}")
 
         if not self.factor:
             try:
                 self.factor = self.instrument.get_factor(self.date)
             except Exception as e:
-                _l.debug("Price History save factor error %s" % e)
-                _l.debug(traceback.print_exc())
+                _l.debug(
+                    f"PriceHistory factor save ytm error {repr(e)}"
+                    f" {traceback.print_exc()}"
+                )
 
-        super(PriceHistory, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
 
 class InstrumentFactorSchedule(models.Model):
@@ -2691,10 +2738,12 @@ class InstrumentFactorSchedule(models.Model):
         on_delete=models.CASCADE,
     )
     effective_date = models.DateField(
-        default=date_now, verbose_name=gettext_lazy("effective date")
+        default=date_now,
+        verbose_name=gettext_lazy("effective date"),
     )
     factor_value = models.FloatField(
-        default=0.0, verbose_name=gettext_lazy("factor value")
+        default=0.0,
+        verbose_name=gettext_lazy("factor value"),
     )
 
     class Meta:
@@ -2703,7 +2752,7 @@ class InstrumentFactorSchedule(models.Model):
         ordering = ["effective_date"]
 
     def __str__(self):
-        return "%s" % self.effective_date
+        return str(self.effective_date)
 
 
 class EventSchedule(models.Model):
@@ -2713,11 +2762,9 @@ class EventSchedule(models.Model):
         verbose_name=gettext_lazy("instrument"),
         on_delete=models.CASCADE,
     )
-
-    # T O D O: name & description is expression
-    # T O D O: default settings.POMS_EVENT_*
     name = models.CharField(
-        max_length=EXPRESSION_FIELD_LENGTH, verbose_name=gettext_lazy("name")
+        max_length=EXPRESSION_FIELD_LENGTH,
+        verbose_name=gettext_lazy("name"),
     )
     description = models.CharField(
         max_length=EXPRESSION_FIELD_LENGTH,
@@ -2725,22 +2772,16 @@ class EventSchedule(models.Model):
         default="",
         verbose_name=gettext_lazy("description"),
     )
-
     event_class = models.ForeignKey(
         "transactions.EventClass",
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("event class"),
     )
-
-    # T O D O: add to MasterUser defaults
     notification_class = models.ForeignKey(
         "transactions.NotificationClass",
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("notification class"),
     )
-
-    # TODO: is first_payment_date for regular
-    # TODO: is instrument.maturity for one-off
     effective_date = models.CharField(
         max_length=255,
         null=True,
@@ -2752,11 +2793,10 @@ class EventSchedule(models.Model):
         default=SystemValueType.DATE,
         verbose_name=gettext_lazy("effective date value type"),
     )
-
     notify_in_n_days = models.PositiveIntegerField(
-        default=0, verbose_name=gettext_lazy("notify in N days")
+        default=0,
+        verbose_name=gettext_lazy("notify in N days"),
     )
-
     periodicity = models.ForeignKey(
         Periodicity,
         null=True,
@@ -2775,18 +2815,20 @@ class EventSchedule(models.Model):
         default=SystemValueType.NUMBER,
         verbose_name=gettext_lazy("periodicity n value type"),
     )
-    # TODO: =see next accrual_calculation_schedule.accrual_start_date or instrument.maturity_date (if last)
     final_date = models.CharField(
-        max_length=255, null=True, blank=True, verbose_name=gettext_lazy("final date")
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("final date"),
     )  # excluded date
     final_date_value_type = models.PositiveSmallIntegerField(
         choices=SYSTEM_VALUE_TYPES,
         default=SystemValueType.DATE,
         verbose_name=gettext_lazy("final_date value type"),
     )
-
     is_auto_generated = models.BooleanField(
-        default=False, verbose_name=gettext_lazy("is auto generated")
+        default=False,
+        verbose_name=gettext_lazy("is auto generated"),
     )
     accrual_calculation_schedule = models.ForeignKey(
         AccrualCalculationSchedule,
@@ -2808,19 +2850,20 @@ class EventSchedule(models.Model):
         help_text=gettext_lazy("Used for store link when is_auto_generated is True"),
         on_delete=models.SET_NULL,
     )
-
     json_data = models.TextField(
-        null=True, blank=True, verbose_name=gettext_lazy("json data")
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("json data"),
     )
 
     @property
     def data(self):
-        if self.json_data:
-            try:
-                return json.loads(self.json_data)
-            except (ValueError, TypeError):
-                return None
-        else:
+        if not self.json_data:
+            return None
+
+        try:
+            return json.loads(self.json_data)
+        except (ValueError, TypeError):
             return None
 
     @data.setter
@@ -2836,37 +2879,27 @@ class EventSchedule(models.Model):
         ordering = ["effective_date"]
 
     def __str__(self):
-        return "#%s/#%s" % (self.id, self.instrument_id)
+        return f"#{self.id}/#{self.instrument_id}"
 
     @cached_property
     def all_dates(self):
         from poms.transactions.models import EventClass
 
         notify_in_n_days = timedelta(days=self.notify_in_n_days)
-
-        # sdate = self.effective_date
-        # edate = self.final_date
-
-        edate = datetime.date(datetime.strptime(self.effective_date, "%Y-%m-%d"))
-        fdate = datetime.date(datetime.strptime(self.final_date, "%Y-%m-%d"))
+        edate = datetime.date(datetime.strptime(self.effective_date, DATE_FORMAT))
+        fdate = datetime.date(datetime.strptime(self.final_date, DATE_FORMAT))
 
         dates = []
 
         def add_date(edate):
             ndate = edate - notify_in_n_days
-            # if self.effective_date <= ndate < self.final_date or self.effective_date <= edate < self.final_date:
-            #     dates.append((edate, ndate))
             dates.append((edate, ndate))
 
         if self.event_class_id == EventClass.ONE_OFF:
-            # effective_date = self.effective_date
-            # notification_date = effective_date - notify_in_n_days
-            # if self.effective_date <= notification_date <= self.final_date or self.effective_date <= effective_date <= self.final_date:
-            #     dates.append((effective_date, notification_date))
             add_date(edate)
 
         elif self.event_class_id == EventClass.REGULAR:
-            for i in range(0, 3652058):
+            for i in range(3652058):
                 stop = False
                 try:
                     effective_date = edate + self.periodicity.to_timedelta(
@@ -2875,8 +2908,6 @@ class EventSchedule(models.Model):
                         same_date=edate,
                     )
                 except (OverflowError, ValueError):  # year is out of range
-                    # effective_date = date.max
-                    # stop = True
                     break
 
                 if (
@@ -2886,9 +2917,6 @@ class EventSchedule(models.Model):
                     effective_date = fdate - timedelta(days=1)
                     stop = True
 
-                # notification_date = effective_date - notify_in_n_days
-                # if self.effective_date <= notification_date <= self.final_date or self.effective_date <= effective_date <= self.final_date:
-                #     dates.append((effective_date, notification_date))
                 add_date(effective_date)
 
                 if stop or effective_date >= fdate:
@@ -2897,44 +2925,6 @@ class EventSchedule(models.Model):
         return dates
 
     def check_date(self, now):
-        # from poms.transactions.models import EventClass
-        #
-        # notification_date_correction = timedelta(days=self.notify_in_n_days)
-        #
-        # if self.event_class_id == EventClass.ONE_OFF:
-        #     effective_date = self.effective_date
-        #     notification_date = effective_date - notification_date_correction
-        #     # _l.debug('effective_date=%s, notification_date=%s', effective_date, notification_date)
-        #
-        #     if notification_date == now or effective_date == now:
-        #         return True, effective_date, notification_date
-        #
-        # elif self.event_class_id == EventClass.REGULAR:
-        #     for i in range(0, settings.INSTRUMENT_EVENTS_REGULAR_MAX_INTERVALS):
-        #         try:
-        #             effective_date = self.effective_date + self.periodicity.to_timedelta(
-        #                 n=self.periodicity_n, i=i, same_date=self.effective_date)
-        #         except (OverflowError, ValueError):  # year is out of range
-        #             effective_date = date.max
-        #
-        #         if self.accrual_calculation_schedule_id is not None:
-        #             if effective_date > self.final_date:
-        #                 # magic date
-        #                 effective_date = self.final_date - timedelta(days=1)
-        #
-        #         notification_date = effective_date - notification_date_correction
-        #
-        #         if notification_date == now or effective_date == now:
-        #             return True, effective_date, notification_date
-        #
-        #         if notification_date > now and effective_date > now:
-        #             break
-        #
-        # return False, None, None
-
-        # _l.debug('self.all_dates %s' % self.all_dates)
-        # _l.debug('now %s' % now)
-
         for edate, ndate in self.all_dates:
             if edate == now or ndate == now:
                 return True, edate, ndate
@@ -2954,55 +2944,50 @@ class EventSchedule(models.Model):
 
 
 class EventScheduleAction(models.Model):
-    # TODO: for auto generated always one
     event_schedule = models.ForeignKey(
         EventSchedule,
         related_name="actions",
         verbose_name=gettext_lazy("event schedule"),
         on_delete=models.CASCADE,
     )
-    # transaction_type = models.ForeignKey('transactions.TransactionType', on_delete=models.PROTECT,
-    #                                      verbose_name=gettext_lazy('transaction type'))
-
     transaction_type = models.CharField(
         max_length=255,
         null=True,
         blank=True,
         verbose_name=gettext_lazy("transaction type"),
     )
-
-    # T O D O: on auto generate fill 'Book: ' + transaction_type
     text = models.CharField(
         max_length=EXPRESSION_FIELD_LENGTH,
         blank=True,
         default="",
         verbose_name=gettext_lazy("text"),
     )
-    # T O D O: add to MasterUser defaults
     is_sent_to_pending = models.BooleanField(
-        default=True, verbose_name=gettext_lazy("is sent to pending")
+        default=True,
+        verbose_name=gettext_lazy("is sent to pending"),
     )
-    # T O D O: add to MasterUser defaults
-    # T O D O: rename to: is_book_automatic (used when now notification)
     is_book_automatic = models.BooleanField(
-        default=True, verbose_name=gettext_lazy("is book automatic")
+        default=True,
+        verbose_name=gettext_lazy("is book automatic"),
     )
     button_position = models.IntegerField(
-        default=0, verbose_name=gettext_lazy("button position")
+        default=0,
+        verbose_name=gettext_lazy("button position"),
     )
-
     json_data = models.TextField(
-        null=True, blank=True, verbose_name=gettext_lazy("json data")
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("json data"),
     )
 
     @property
     def data(self):
-        if self.json_data:
-            try:
-                return json.loads(self.json_data)
-            except (ValueError, TypeError):
-                return None
-        else:
+        if not self.json_data:
+            return None
+
+        try:
+            return json.loads(self.json_data)
+        except (ValueError, TypeError):
             return None
 
     @data.setter
@@ -3055,9 +3040,10 @@ class GeneratedEvent(models.Model):
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-
     effective_date = models.DateField(
-        default=date_now, db_index=True, verbose_name=gettext_lazy("effective date")
+        default=date_now,
+        db_index=True,
+        verbose_name=gettext_lazy("effective date"),
     )
     effective_date_notified = models.BooleanField(
         default=False,
@@ -3065,14 +3051,15 @@ class GeneratedEvent(models.Model):
         verbose_name=gettext_lazy("effective date notified"),
     )
     notification_date = models.DateField(
-        default=date_now, db_index=True, verbose_name=gettext_lazy("notification date")
+        default=date_now,
+        db_index=True,
+        verbose_name=gettext_lazy("notification date"),
     )
     notification_date_notified = models.BooleanField(
         default=False,
         db_index=True,
         verbose_name=gettext_lazy("notification date notified"),
     )
-
     status = models.PositiveSmallIntegerField(
         default=NEW,
         choices=STATUS_CHOICES,
@@ -3080,16 +3067,16 @@ class GeneratedEvent(models.Model):
         verbose_name=gettext_lazy("status"),
     )
     status_date = models.DateTimeField(
-        default=timezone.now, db_index=True, verbose_name=gettext_lazy("status date")
+        default=timezone.now,
+        db_index=True,
+        verbose_name=gettext_lazy("status date"),
     )
-
     event_schedule = models.ForeignKey(
         EventSchedule,
         on_delete=models.CASCADE,
         related_name="generated_events",
         verbose_name=gettext_lazy("event schedule"),
     )
-
     instrument = models.ForeignKey(
         "instruments.Instrument",
         null=True,
@@ -3138,8 +3125,10 @@ class GeneratedEvent(models.Model):
         related_name="generated_events",
         verbose_name=gettext_lazy("strategy3"),
     )
-    position = models.FloatField(default=0.0, verbose_name=gettext_lazy("position"))
-
+    position = models.FloatField(
+        default=0.0,
+        verbose_name=gettext_lazy("position"),
+    )
     action = models.ForeignKey(
         EventScheduleAction,
         null=True,
@@ -3171,19 +3160,19 @@ class GeneratedEvent(models.Model):
         on_delete=models.SET_NULL,
         verbose_name=gettext_lazy("member"),
     )
-
     json_data = models.TextField(
-        null=True, blank=True, verbose_name=gettext_lazy("json data")
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("json data"),
     )
 
     @property
     def data(self):
-        if self.json_data:
-            try:
-                return json.loads(self.json_data)
-            except (ValueError, TypeError):
-                return None
-        else:
+        if not self.json_data:
+            return None
+        try:
+            return json.loads(self.json_data)
+        except (ValueError, TypeError):
             return None
 
     @data.setter
@@ -3199,7 +3188,7 @@ class GeneratedEvent(models.Model):
         ordering = ["effective_date"]
 
     def __str__(self):
-        return "Event #%s" % self.id
+        return f"Event #{self.id}"
 
     def processed(
         self, member, action, complex_transaction, status=BOOKED_SYSTEM_DEFAULT
@@ -3208,61 +3197,59 @@ class GeneratedEvent(models.Model):
 
         self.member = member
         self.action = action
-
         self.status = status
-
         self.status_date = timezone.now()
-
         self.transaction_type = TransactionType.objects.get(
             user_code=action.transaction_type, master_user=member.master_user
         )
         self.complex_transaction = complex_transaction
 
     def is_notify_on_effective_date(self, now=None):
-        if not self.effective_date_notified:
-            now = now or date_now()
-            notification_class = self.event_schedule.notification_class
+        if self.effective_date_notified:
+            return False
 
-            print("self event %s " % self)
-            print("self.event_schedule %s " % self.event_schedule)
-            print("self.now %s " % now)
-            print("self.effective_date %s " % self.effective_date)
-            print(
-                "self.notification_class.is_notify_on_effective_date %s "
-                % notification_class.is_notify_on_effective_date
-            )
+        now = now or date_now()
+        notification_class = self.event_schedule.notification_class
 
-            return (
-                self.effective_date == now
-                and notification_class.is_notify_on_effective_date
-            )
-        return False
+        print(f"self event {self} ")
+        print(f"self.event_schedule {self.event_schedule} ")
+        print(f"self.now {now} ")
+        print(f"self.effective_date {self.effective_date} ")
+        print(
+            f"self.notification_class.is_notify_on_effective_date {notification_class.is_notify_on_effective_date} "
+        )
+
+        return (
+            self.effective_date == now
+            and notification_class.is_notify_on_effective_date
+        )
 
     def is_notify_on_notification_date(self, now=None):
-        if not self.effective_date_notified:
-            now = now or date_now()
+        if self.effective_date_notified:
+            return False
 
-            notification_class = self.event_schedule.notification_class
+        now = now or date_now()
 
-            print("self event %s " % self)
-            print("self.event_schedule %s " % self.event_schedule)
-            print("self.now %s " % now)
-            print("self.notification_date %s " % self.notification_date)
-            print(
-                "self.notification_class.is_notify_on_notification_date %s "
-                % notification_class.is_notify_on_notification_date
-            )
+        notification_class = self.event_schedule.notification_class
 
-            return (
-                self.notification_date == now
-                and notification_class.is_notify_on_notification_date
-            )
-        return False
+        print(f"self event {self} ")
+        print(f"self.event_schedule {self.event_schedule} ")
+        print(f"self.now {now} ")
+        print(f"self.notification_date {self.notification_date} ")
+        print(
+            f"self.notification_class.is_notify_on_notification_date {notification_class.is_notify_on_notification_date} "
+        )
+
+        return (
+            self.notification_date == now
+            and notification_class.is_notify_on_notification_date
+        )
 
     def is_notify_on_date(self, now=None):
-        return self.is_notify_on_effective_date(
-            now
-        ) or self.is_notify_on_notification_date(now)
+        return bool(
+            self.is_notify_on_effective_date(now)
+            or self.is_notify_on_notification_date(now)
+        )
 
     def is_apply_default_on_effective_date(self, now=None):
         if self.status == GeneratedEvent.NEW:
@@ -3272,6 +3259,7 @@ class GeneratedEvent(models.Model):
                 self.effective_date == now
                 and notification_class.is_apply_default_on_effective_date
             )
+
         return False
 
     def is_apply_default_on_notification_date(self, now=None):
@@ -3282,12 +3270,14 @@ class GeneratedEvent(models.Model):
                 self.notification_date == now
                 and notification_class.is_apply_default_on_notification_date
             )
+
         return False
 
     def is_apply_default_on_date(self, now=None):
-        return self.is_apply_default_on_effective_date(
-            now
-        ) or self.is_apply_default_on_notification_date(now)
+        return bool(
+            self.is_apply_default_on_effective_date(now)
+            or self.is_apply_default_on_notification_date(now)
+        )
 
     def is_need_reaction_on_effective_date(self, now=None):
         if self.status == GeneratedEvent.NEW:
@@ -3297,6 +3287,7 @@ class GeneratedEvent(models.Model):
                 self.effective_date == now
                 and notification_class.is_need_reaction_on_effective_date
             )
+
         return False
 
     def is_need_reaction_on_notification_date(self, now=None):
@@ -3307,19 +3298,22 @@ class GeneratedEvent(models.Model):
                 self.notification_date == now
                 and notification_class.is_need_reaction_on_notification_date
             )
+
         return False
 
     def is_need_reaction_on_date(self, now=None):
-        return self.is_need_reaction_on_effective_date(
-            now
-        ) or self.is_need_reaction_on_notification_date(now)
+        return bool(
+            self.is_need_reaction_on_effective_date(now)
+            or self.is_need_reaction_on_notification_date(now)
+        )
 
     def get_default_action(self, actions=None):
         if actions is None:
             actions = self.event_schedule.actions.all()
-        for a in actions:
-            if a.is_book_automatic:
-                return a
+        for action in actions:
+            if action.is_book_automatic:
+                return action
+
         return None
 
     def generate_text(self, exr, names=None, context=None):
@@ -3337,15 +3331,13 @@ class GeneratedEvent(models.Model):
                 "position": self.position,
             }
         )
-        # import json
-        # print(json.dumps(names, indent=2))
         try:
             return formula.safe_eval(exr, names=names, context=context)
-        except formula.InvalidExpression as e:
+        except formula.InvalidExpression:
             return "<InvalidExpression>"
 
     def save(self, *args, **kwargs):
-        super(GeneratedEvent, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
         try:
             if self.status == GeneratedEvent.NEW:
@@ -3360,7 +3352,7 @@ class GeneratedEvent(models.Model):
                     linked_event=self,
                 )
         except Exception as e:
-            _l.error("Could not send system message on generating event %s" % e)
+            _l.error(f"Could not send system message on generating event {repr(e)}")
 
 
 class EventScheduleConfig(models.Model):
@@ -3370,7 +3362,6 @@ class EventScheduleConfig(models.Model):
         verbose_name=gettext_lazy("master user"),
         on_delete=models.CASCADE,
     )
-
     name = models.CharField(
         max_length=EXPRESSION_FIELD_LENGTH,
         blank=True,
@@ -3391,16 +3382,22 @@ class EventScheduleConfig(models.Model):
         verbose_name=gettext_lazy("notification class"),
     )
     notify_in_n_days = models.PositiveSmallIntegerField(
-        default=0, verbose_name=gettext_lazy("notify in N days")
+        default=0,
+        verbose_name=gettext_lazy("notify in N days"),
     )
     action_text = models.CharField(
-        max_length=255, blank=True, default="", verbose_name=gettext_lazy("action text")
+        max_length=255,
+        blank=True,
+        default="",
+        verbose_name=gettext_lazy("action text"),
     )
     action_is_sent_to_pending = models.BooleanField(
-        default=True, verbose_name=gettext_lazy("action is sent to pending")
+        default=True,
+        verbose_name=gettext_lazy("action is sent to pending"),
     )
     action_is_book_automatic = models.BooleanField(
-        default=True, verbose_name=gettext_lazy("action is book automatic")
+        default=True,
+        verbose_name=gettext_lazy("action is book automatic"),
     )
 
     class Meta:
@@ -3418,7 +3415,6 @@ class EventScheduleConfig(models.Model):
             master_user=master_user,
             name='""',
             description='""',
-            # notification_class=NotificationClass.objects.get(pk=NotificationClass.DONT_REACT),
             notification_class_id=NotificationClass.DONT_REACT,
             notify_in_n_days=0,
             action_text='""',

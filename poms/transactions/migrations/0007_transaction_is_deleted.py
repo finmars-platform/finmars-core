@@ -4,15 +4,16 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0006_complextransaction_source_data'),
+        ("transactions", "0006_complextransaction_source_data"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='transaction',
-            name='is_deleted',
-            field=models.BooleanField(db_index=True, default=False, verbose_name='is deleted'),
+            model_name="transaction",
+            name="is_deleted",
+            field=models.BooleanField(
+                db_index=True, default=False, verbose_name="is deleted"
+            ),
         ),
     ]

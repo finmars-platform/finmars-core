@@ -5,10 +5,12 @@ import re
 import time
 import zipfile
 
+
 import requests
 from django.apps import apps
 from django.core.files.base import ContentFile
 from django.http import FileResponse
+from django.core.exceptions import FieldDoesNotExist
 
 from poms.common.storage import get_storage
 from poms.common.utils import get_serializer, get_content_type_by_name
@@ -101,6 +103,13 @@ def remove_object_keys(d: dict) -> dict:
             filtered_dict[key] = value
     return filtered_dict
 
+def model_has_field(model, field_name):
+    try:
+        model._meta.get_field(field_name)
+        return True
+    except FieldDoesNotExist:
+        return False
+
 
 def save_serialized_entity(content_type, configuration_code, source_directory, context):
     try:
@@ -110,7 +119,10 @@ def save_serialized_entity(content_type, configuration_code, source_directory, c
 
     dash = configuration_code + ':' + '-'
 
-    filtered_objects = model.objects.filter(configuration_code=configuration_code).exclude(user_code=dash)
+    if model_has_field(model, 'is_deleted'):
+        filtered_objects = model.objects.filter(configuration_code=configuration_code, is_deleted=False).exclude(user_code=dash)
+    else:
+        filtered_objects = model.objects.filter(configuration_code=configuration_code).exclude(user_code=dash)
 
     SerializerClass = get_serializer(content_type)
 

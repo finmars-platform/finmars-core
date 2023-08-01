@@ -417,14 +417,14 @@ def handler_instrument_object(
     else:
         object_data["maturity_date"] = None
 
-    try:
-        if "country" in source_data:
-            country = Country.objects.get(alpha_2=source_data["country"]["code"])
 
+    if "country" in source_data and source_data["country"].get("alpha_3"):
+        try:
+            country = Country.objects.get(alpha_3=source_data["country"]["alpha_3"])
             object_data["country"] = country.id
 
-    except Exception as e:
-        _l.error(f"{func} Could not set country {repr(e)}")
+        except Country.DoesNotExist:
+            _l.error(f"{func} no such country {source_data['country']['alpha_3']}")
 
     try:
         if "sector" in source_data:
@@ -1177,10 +1177,7 @@ class SimpleImportProcess(object):
                     ] = formula.safe_eval(
                         scheme_input.name_expr,
                         names=names,
-                        context={
-                            "master_user": self.master_user,
-                            "member": self.member,
-                        },
+                        context=self.context
                     )
                 except Exception as e:
                     conversion_item.conversion_inputs[scheme_input.name] = None
@@ -1246,6 +1243,7 @@ class SimpleImportProcess(object):
                         context={
                             "master_user": self.master_user,
                             "member": self.member,
+                            "request": self.proxy_request,
                             "transaction_import": {"items": self.preprocessed_items},
                         },
                     )
@@ -1303,7 +1301,8 @@ class SimpleImportProcess(object):
                                 ]
 
                         if attribute_type.value_type == GenericAttributeType.NUMBER:
-                            if item.final_inputs[entity_field.attribute_user_code]:
+
+                            if item.final_inputs[entity_field.attribute_user_code] or item.final_inputs[entity_field.attribute_user_code] == 0:
                                 attribute["value_float"] = item.final_inputs[
                                     entity_field.attribute_user_code
                                 ]

@@ -4,19 +4,24 @@ from django.db import migrations, models
 
 
 def forwards_func(apps, schema_editor):
-    from poms.transactions.models import Transaction
-    from django.db.models import Min, Count
+    from django.db.models import Count, Min
 
-    from poms.transactions.models import ComplexTransaction
-    complex_distinct_codes = ComplexTransaction.objects.values('code').annotate(min_id=Min('id'),
-                                                                                num=Count("code")).filter(
-        code__isnull=False, num__gt=1)
+    from poms.transactions.models import ComplexTransaction, Transaction
 
-    print("going to delete %s complex transaction duplicates" % len(complex_distinct_codes))
+    complex_distinct_codes = (
+        ComplexTransaction.objects.values("code")
+        .annotate(min_id=Min("id"), num=Count("code"))
+        .filter(code__isnull=False, num__gt=1)
+    )
+
+    print(
+        "going to delete %s complex transaction duplicates"
+        % len(complex_distinct_codes)
+    )
 
     for code_info in complex_distinct_codes:
-        code = code_info['code']
-        min_id = code_info['min_id']
+        code = code_info["code"]
+        min_id = code_info["min_id"]
 
         # Get all objects with the same `code` except the first one (the one with the minimum id)
         duplicates = ComplexTransaction.objects.filter(code=code).exclude(id=min_id)
@@ -24,21 +29,28 @@ def forwards_func(apps, schema_editor):
         # Delete the duplicate objects
         duplicates.delete()
 
-    print("going to delete %s complex transaction duplicates DONE" % len(complex_distinct_codes))
+    print(
+        "going to delete %s complex transaction duplicates DONE"
+        % len(complex_distinct_codes)
+    )
 
-    distinct_codes = Transaction.objects.values('transaction_code').annotate(min_id=Min('id'),
-                                                                             num=Count("transaction_code")).filter(
-        transaction_code__isnull=False, num__gt=1)
+    distinct_codes = (
+        Transaction.objects.values("transaction_code")
+        .annotate(min_id=Min("id"), num=Count("transaction_code"))
+        .filter(transaction_code__isnull=False, num__gt=1)
+    )
 
     print("going to delete %s transaction duplicates" % len(distinct_codes))
 
     # Iterate through the distinct `code` values
     for code_info in distinct_codes:
-        transaction_code = code_info['transaction_code']
-        min_id = code_info['min_id']
+        transaction_code = code_info["transaction_code"]
+        min_id = code_info["min_id"]
 
         # Get all objects with the same `code` except the first one (the one with the minimum id)
-        duplicates = Transaction.objects.filter(transaction_code=transaction_code).exclude(id=min_id)
+        duplicates = Transaction.objects.filter(
+            transaction_code=transaction_code
+        ).exclude(id=min_id)
 
         # Delete the duplicate objects
         duplicates.delete()
@@ -46,15 +58,13 @@ def forwards_func(apps, schema_editor):
     print("going to delete %s transaction duplicates DONE" % len(distinct_codes))
 
 
-
 def reverse_func(apps, schema_editor):
     pass
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('transactions', '0020_transactiontypeactiontransaction_is_canceled'),
+        ("transactions", "0020_transactiontypeactiontransaction_is_canceled"),
     ]
 
     operations = [

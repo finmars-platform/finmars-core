@@ -782,8 +782,8 @@ def get_model_data(
 
 
 def _get_supported_models_serializer_class():
-    from poms.accounts.models import Account
-    from poms.accounts.serializers import AccountEvalSerializer
+    from poms.accounts.models import Account, AccountType
+    from poms.accounts.serializers import AccountEvalSerializer, AccountTypeEvalSerializer
     from poms.counterparties.models import Counterparty, Responsible
     from poms.counterparties.serializers import (
         CounterpartyEvalSerializer,
@@ -829,8 +829,13 @@ def _get_supported_models_serializer_class():
     from poms.users.models import Member
     from poms.users.serializers import MemberSerializer
 
+    from poms.instruments.models import PriceHistory
+    from poms.currencies.models import CurrencyHistory
+    from poms.instruments.serializers import PriceHistorySerializer
+    from poms.currencies.serializers import CurrencyHistorySerializer
     return {
         Account: AccountEvalSerializer,
+        AccountType: AccountTypeEvalSerializer,
         Counterparty: CounterpartyEvalSerializer,
         Responsible: ResponsibleEvalSerializer,
         Instrument: InstrumentEvalSerializer,
@@ -842,6 +847,8 @@ def _get_supported_models_serializer_class():
         Strategy3: Strategy3EvalSerializer,
         DailyPricingModel: DailyPricingModelSerializer,
         PaymentSizeDetail: PaymentSizeDetailSerializer,
+        PriceHistory: PriceHistorySerializer,
+        CurrencyHistory: CurrencyHistorySerializer,
         Periodicity: PeriodicitySerializer,
         PriceDownloadScheme: PriceDownloadSchemeSerializer,
         # Transaction: TransactionTextRenderSerializer,

@@ -263,7 +263,7 @@ class TransactionImportProcess(object):
 
         file_report = FileReport()
 
-        _l.info('TransactionImportProcess.generate_file_report uploading file')
+        # _l.info('TransactionImportProcess.generate_file_report uploading file')
 
         file_report.upload_file(file_name=file_name, text=result, master_user=self.master_user)
         file_report.master_user = self.master_user
@@ -275,8 +275,8 @@ class TransactionImportProcess(object):
 
         file_report.save()
 
-        _l.info('TransactionImportProcess.file_report %s' % file_report)
-        _l.info('TransactionImportProcess.file_report %s' % file_report.file_url)
+        # _l.info('TransactionImportProcess.file_report %s' % file_report)
+        # _l.info('TransactionImportProcess.file_report %s' % file_report.file_url)
 
         return file_report
 
@@ -297,7 +297,7 @@ class TransactionImportProcess(object):
 
         _l.info('TransactionImportProcess.generate_json_report uploading file')
 
-        _l.info('Uploading result len %s' % len(result))
+        # _l.info('Uploading result len %s' % len(result))
 
         file_report.upload_file(file_name=file_name, text=json.dumps(result, indent=4, default=str),
                                 master_user=self.master_user)
@@ -310,8 +310,8 @@ class TransactionImportProcess(object):
 
         file_report.save()
 
-        _l.info('TransactionImportProcess.json_report %s' % file_report)
-        _l.info('TransactionImportProcess.json_report %s' % file_report.file_url)
+        # _l.info('TransactionImportProcess.json_report %s' % file_report)
+        # _l.info('TransactionImportProcess.json_report %s' % file_report.file_url)
 
         return file_report
 
@@ -369,7 +369,7 @@ class TransactionImportProcess(object):
     def get_rule_value_for_item(self, item):
 
         try:
-            return formula.safe_eval(self.scheme.rule_expr, names=item.inputs)
+            return formula.safe_eval(self.scheme.rule_expr, names=item.inputs, context=self.context)
         except Exception as e:
 
             _l.info('TransactionImportProcess.Task %s. get_rule_value_for_item Exception %s' % (self.task, e))
@@ -683,8 +683,8 @@ class TransactionImportProcess(object):
 
                         os.link(tmpf.name, tmpf.name + '.xlsx')
 
-                        _l.info('self.file_path %s' % self.file_path)
-                        _l.info('tmpf.name %s' % tmpf.name)
+                        # _l.info('self.file_path %s' % self.file_path)
+                        # _l.info('tmpf.name %s' % tmpf.name)
 
                         wb = load_workbook(filename=tmpf.name + '.xlsx')
 
@@ -812,10 +812,7 @@ class TransactionImportProcess(object):
 
                     conversion_item.conversion_inputs[scheme_input.name] = formula.safe_eval(scheme_input.name_expr,
                                                                                              names=names,
-                                                                                             context={
-                                                                                                 "master_user": self.master_user,
-                                                                                                 "member": self.member
-                                                                                             })
+                                                                                             context=self.context)
                 except Exception as e:
 
                     conversion_item.conversion_inputs[scheme_input.name] = None
@@ -881,6 +878,7 @@ class TransactionImportProcess(object):
                     value = formula.safe_eval(scheme_calculated_input.name_expr, names=names,
                                               context={"master_user": self.master_user,
                                                        "member": self.member,
+                                                       "request": self.proxy_request,
                                                        "transaction_import": {
                                                            "items": self.preprocessed_items
                                                        }})
@@ -938,6 +936,9 @@ class TransactionImportProcess(object):
 
         for item in self.items:
 
+            item.processed_rule_scenarios = []
+            item.booked_transactions = []
+
             try:
 
                 _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ========' % (
@@ -965,9 +966,6 @@ class TransactionImportProcess(object):
 
                 rule_value = self.get_rule_value_for_item(item)
 
-                item.processed_rule_scenarios = []
-                item.booked_transactions = []
-
                 _l.info('TransactionImportProcess.Task %s. ========= process row %s/%s ======== %s ' % (
                     self.task, str(item.row_number), str(self.result.total_rows), rule_value))
 
@@ -986,19 +984,19 @@ class TransactionImportProcess(object):
                                 if selector_value.value == rule_value:
 
                                     # sid = transaction.savepoint()
-                                    _l.info("Create checkpoint for %s" % index)
+                                    # _l.info("Create checkpoint for %s" % index)
 
                                     found = True
                                     try:
 
                                         self.book(item, rule_scenario)
 
-                                        _l.info("Savepoint commit for %s" % index)
+                                        # _l.info("Savepoint commit for %s" % index)
                                         # _l.error("Could not book error scenario %s" % e)
                                         # transaction.savepoint_commit(sid)
 
                                     except BookSkipException:
-                                        _l.info("BookSkipException")
+                                        # _l.info("BookSkipException")
                                         # transaction.savepoint_rollback(sid)
                                         continue
 
@@ -1007,12 +1005,12 @@ class TransactionImportProcess(object):
 
                                         try:
                                             self.book(item, self.error_rule_scenario, error=e)
-                                            _l.info("Error Handler Savepoint commit for %s" % index)
+                                            # _l.info("Error Handler Savepoint commit for %s" % index)
                                             # transaction.savepoint_commit(sid)
 
                                         except Exception as e:  # any exception will work on error scenario
                                             _l.error("Could not book error scenario %s" % e)
-                                            _l.info("Error Handler Savepoint rollback for %s" % index)
+                                            # _l.info("Error Handler Savepoint rollback for %s" % index)
                                             # transaction.savepoint_rollback(sid)
                         else:
                             ''' For case when its actually skip mode'''
@@ -1026,7 +1024,7 @@ class TransactionImportProcess(object):
                     if not found:
 
                         # sid = transaction.savepoint()
-                        _l.info("Create checkpoint for %s" % index)
+                        # _l.info("Create checkpoint for %s" % index)
 
                         item.status = 'skip'
                         item.message = 'Selector %s does not match anything in scheme' % rule_value
@@ -1113,7 +1111,8 @@ class TransactionImportProcess(object):
             if item.status == 'error':
                 error_count = error_count + 1
 
-            booked_count = booked_count + len(item.booked_transactions)
+            if item.booked_transactions:
+                booked_count = booked_count + len(item.booked_transactions)
 
         result = 'Processed %s rows and successfully booked %s transactions. Error rows %s' % (
             len(self.items), booked_count, error_count)

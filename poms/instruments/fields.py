@@ -1,30 +1,35 @@
-from __future__ import unicode_literals
-
-from poms.common.fields import PrimaryKeyRelatedFilteredField, UserCodeOrPrimaryKeyRelatedField
-from poms.instruments.models import Instrument, InstrumentType, PricingPolicy, AccrualCalculationModel, Periodicity, \
-    EventSchedule, CostMethod, Country, PricingCondition, PaymentSizeDetail, DailyPricingModel
+from poms.common.fields import (
+    PrimaryKeyRelatedFilteredField,
+    UserCodeOrPrimaryKeyRelatedField,
+)
+from poms.instruments.models import (
+    AccrualCalculationModel,
+    CostMethod,
+    Country,
+    DailyPricingModel,
+    EventSchedule,
+    Instrument,
+    InstrumentType,
+    PaymentSizeDetail,
+    Periodicity,
+    PricingCondition,
+    PricingPolicy,
+)
 from poms.portfolios.models import PortfolioBundle
-from poms.transactions.models import NotificationClass, EventClass, TransactionTypeInputSettings, TransactionTypeInput
-from poms.users.filters import OwnerByMasterUserFilter, LinkedWithPortfolioFilter
-
-
-# class InstrumentClassifierField(AttributeClassifierBaseField):
-#     queryset = InstrumentClassifier.objects
-#
-#
-# class InstrumentAttributeTypeField(PrimaryKeyRelatedFilteredField):
-#     queryset = InstrumentAttributeType.objects
-#     filter_backends = [
-#         OwnerByMasterUserFilter,
-#         ObjectPermissionBackend,
-#     ]
+from poms.transactions.models import (
+    EventClass,
+    NotificationClass,
+    TransactionTypeInput,
+    TransactionTypeInputSettings,
+)
+from poms.users.filters import LinkedWithPortfolioFilter, OwnerByMasterUserFilter
 
 
 class InstrumentTypeDefault(object):
     requires_context = True
 
     def set_context(self, serializer_field):
-        request = serializer_field.context['request']
+        request = serializer_field.context["request"]
         self._master_user = request.user.master_user
 
     def __call__(self, serializer_field):
@@ -43,7 +48,7 @@ class InstrumentDefault(object):
     requires_context = True
 
     def set_context(self, serializer_field):
-        request = serializer_field.context['request']
+        request = serializer_field.context["request"]
         self._master_user = request.user.master_user
 
     def __call__(self, serializer_field):
@@ -53,25 +58,18 @@ class InstrumentDefault(object):
 
 class InstrumentField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Instrument.objects
-    # Probably Deprecated
-    # filter_backends = [
-    #     OwnerByMasterUserFilter,
-    # ]
 
 
 class CountryField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Country.objects
 
 
-
 class PricingConditionField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PricingCondition.objects
 
 
-
 class PaymentSizeDetailField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PaymentSizeDetail.objects
-
 
 
 class DailyPricingModelField(UserCodeOrPrimaryKeyRelatedField):
@@ -80,26 +78,15 @@ class DailyPricingModelField(UserCodeOrPrimaryKeyRelatedField):
 
 class RegisterField(UserCodeOrPrimaryKeyRelatedField):
     queryset = Instrument.objects
-    filter_backends = [
-        OwnerByMasterUserFilter,
-        LinkedWithPortfolioFilter
-    ]
+    filter_backends = [OwnerByMasterUserFilter, LinkedWithPortfolioFilter]
 
 
 class BundleField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PortfolioBundle.objects
-    # Probably Deprecated
-    # filter_backends = [
-    #     OwnerByMasterUserFilter
-    # ]
 
 
 class PricingPolicyField(UserCodeOrPrimaryKeyRelatedField):
     queryset = PricingPolicy.objects
-    # Possibly Deprecated
-    # filter_backends = UserCodeOrPrimaryKeyRelatedField.filter_backends + [
-    #     OwnerByMasterUserFilter,
-    # ]
 
 
 class CostMethodField(PrimaryKeyRelatedFilteredField):

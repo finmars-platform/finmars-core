@@ -6,11 +6,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.utils.translation import gettext_lazy
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from rest_framework.fields import empty
 from rest_framework.validators import UniqueTogetherValidator
-from rest_framework.exceptions import ValidationError
-
-from poms_app import settings
 
 from poms.accounts.fields import AccountField, AccountTypeField
 from poms.celery_tasks.models import CeleryTask
@@ -92,10 +90,9 @@ from poms.integrations.models import (
     Strategy1Mapping,
     Strategy2Mapping,
     Strategy3Mapping,
-    TransactionFileResult,
+    TransactionFileResult, MappingTable, MappingTableKeyValue,
 )
 from poms.integrations.providers.base import ProviderException, get_provider
-
 # from poms.integrations.tasks import (
 #     # download_unified_data,
 #     # import_instrument_finmars_database,
@@ -113,6 +110,7 @@ from poms.portfolios.fields import PortfolioField
 from poms.strategies.fields import Strategy1Field, Strategy2Field, Strategy3Field
 from poms.users.fields import HiddenMemberField, MasterUserField
 from poms.users.models import EcosystemDefault
+from poms_app import settings
 
 _l = getLogger("poms.integrations")
 
@@ -245,8 +243,8 @@ class InstrumentDownloadSchemeAttributeSerializer(serializers.ModelSerializer):
         attribute_type = attrs.get("attribute_type", None)
         if attribute_type:
             if (
-                attribute_type.content_type_id
-                != ContentType.objects.get_for_model(Instrument).id
+                    attribute_type.content_type_id
+                    != ContentType.objects.get_for_model(Instrument).id
             ):
                 self.fields["attribute_type"].fail(
                     "does_not_exist", pk_value=attribute_type.id
@@ -503,6 +501,54 @@ class PriceDownloadSchemeViewSerializer(serializers.ModelSerializer):
 
 
 # ------------------
+
+
+class MappingTableKeyValueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MappingTableKeyValue
+        fields = [
+            "key",
+            "value",
+        ]
+
+
+class MappingTableSerializer(ModelMetaSerializer):
+    master_user = MasterUserField()
+
+    items = MappingTableKeyValueSerializer(many=True)
+
+    class Meta:
+        model = MappingTable
+        fields = [
+            'id', 'master_user', 'name', 'user_code', 'short_name', 'notes', 'configuration_code',
+            'items'
+        ]
+
+    def create(self, validated_data):
+        items_data = validated_data.pop('items')
+        mapping_table = MappingTable.objects.create(**validated_data)
+
+        for item_data in items_data:
+            MappingTableKeyValue.objects.create(mapping_table=mapping_table, **item_data)
+
+        return mapping_table
+
+    def update(self, instance, validated_data):
+        items_data = validated_data.pop('items')
+        instance.name = validated_data.get('name', instance.name)
+        instance.short_name = validated_data.get('short_name', instance.short_name)
+        instance.notes = validated_data.get('notes', instance.notes)
+
+        instance.save()
+
+        _l.info('items_data %s' % items_data)
+
+        MappingTableKeyValue.objects.filter(mapping_table=instance).delete()
+
+        for item_data in items_data:
+            MappingTableKeyValue.objects.create(mapping_table=instance, **item_data)
+
+        return MappingTable.objects.get(pk=instance.pk)
 
 
 # class CurrencyMappingSerializer(serializers.ModelSerializer):
@@ -852,8 +898,8 @@ class InstrumentAttributeValueMappingSerializer(AbstractMappingSerializer):
         content_object = attrs.get("content_object", None)
         if content_object:
             if (
-                content_object.content_type_id
-                != ContentType.objects.get_for_model(Instrument).id
+                    content_object.content_type_id
+                    != ContentType.objects.get_for_model(Instrument).id
             ):
                 self.fields["content_object"].fail(
                     "does_not_exist", pk_value=content_object.id
@@ -1281,17 +1327,17 @@ class ImportInstrumentViewSerializer(
 
 class ImportInstrumentEntry(object):
     def __init__(
-        self,
-        master_user=None,
-        member=None,
-        instrument_code=None,
-        instrument_name=None,
-        instrument_type_code=None,
-        instrument_download_scheme=None,
-        task=None,
-        task_result_overrides=None,
-        instrument=None,
-        errors=None,
+            self,
+            master_user=None,
+            member=None,
+            instrument_code=None,
+            instrument_name=None,
+            instrument_type_code=None,
+            instrument_download_scheme=None,
+            task=None,
+            task_result_overrides=None,
+            instrument=None,
+            errors=None,
     ):
         self.master_user = master_user
         self.member = member
@@ -1319,14 +1365,14 @@ class ImportInstrumentEntry(object):
 
 class UnifiedDataEntry(object):
     def __init__(
-        self,
-        master_user=None,
-        member=None,
-        id=None,
-        entity_type=None,
-        task=None,
-        task_result_overrides=None,
-        errors=None,
+            self,
+            master_user=None,
+            member=None,
+            id=None,
+            entity_type=None,
+            task=None,
+            task_result_overrides=None,
+            errors=None,
     ):
         self.master_user = master_user
         self.member = member
@@ -1382,7 +1428,7 @@ class ImportInstrumentSerializer(serializers.Serializer):
                     "instrument_download_scheme": gettext_lazy(
                         'Check "%(provider)s" provider configuration.'
                     )
-                    % {"provider": instrument_download_scheme.provider}
+                                                  % {"provider": instrument_download_scheme.provider}
                 }
             )
 
@@ -1392,10 +1438,10 @@ class ImportInstrumentSerializer(serializers.Serializer):
                     "instrument_code": gettext_lazy(
                         'Invalid value for "%(provider)s" provider.'
                     )
-                    % {
-                        "reference": instrument_code,
-                        "provider": instrument_download_scheme.provider,
-                    }
+                                       % {
+                                           "reference": instrument_code,
+                                           "provider": instrument_download_scheme.provider,
+                                       }
                 }
             )
 
@@ -1738,20 +1784,20 @@ class ImportTestCertificate(object):
 
 class ImportPricingEntry(object):
     def __init__(
-        self,
-        master_user=None,
-        member=None,
-        instruments=None,
-        currencies=None,
-        date_from=None,
-        date_to=None,
-        is_yesterday=None,
-        balance_date=None,
-        fill_days=None,
-        override_existed=False,
-        task=None,
-        instrument_histories=None,
-        currency_histories=None,
+            self,
+            master_user=None,
+            member=None,
+            instruments=None,
+            currencies=None,
+            date_from=None,
+            date_to=None,
+            is_yesterday=None,
+            balance_date=None,
+            fill_days=None,
+            override_existed=False,
+            task=None,
+            instrument_histories=None,
+            currency_histories=None,
     ):
         self.master_user = master_user
         self.member = member
@@ -2519,27 +2565,27 @@ class ComplexTransactionImportSchemeLightSerializer(serializers.ModelSerializer)
 
 class ComplexTransactionCsvFileImport:
     def __init__(
-        self,
-        task_id=None,
-        task_status=None,
-        master_user=None,
-        member=None,
-        scheme=None,
-        file_path=None,
-        skip_first_line=None,
-        delimiter=None,
-        quotechar=None,
-        encoding=None,
-        error_handling=None,
-        missing_data_handler=None,
-        error=None,
-        error_message=None,
-        error_row_index=None,
-        error_rows=None,
-        total_rows=None,
-        processed_rows=None,
-        file_name=None,
-        stats_file_report=None,
+            self,
+            task_id=None,
+            task_status=None,
+            master_user=None,
+            member=None,
+            scheme=None,
+            file_path=None,
+            skip_first_line=None,
+            delimiter=None,
+            quotechar=None,
+            encoding=None,
+            error_handling=None,
+            missing_data_handler=None,
+            error=None,
+            error_message=None,
+            error_row_index=None,
+            error_rows=None,
+            total_rows=None,
+            processed_rows=None,
+            file_name=None,
+            stats_file_report=None,
     ):
         self.task_id = task_id
         self.task_status = task_status
@@ -2669,7 +2715,6 @@ class DataProviderSerializer(serializers.ModelSerializer):
     class Meta:
         model = DataProvider
         fields = ["id", "name", "user_code", "notes"]
-
 
 # class ComplexTransactionCsvFileImportSerializer(serializers.Serializer):
 #     task_id = serializers.CharField(allow_null=True, allow_blank=True, required=False)

@@ -1,47 +1,131 @@
-
 # https://blog.callr.tech/building-docker-images-with-gitlab-ci-best-practices/
 
 stages:
+  - test
   - build
-  - push
+  - release
 
-before_script:
-  - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
+default:
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  before_script:
+    - docker info
+
+
+variables:
+  POSTGRES_DB: test_finmars
+  POSTGRES_USER: test_finmars_user
+  POSTGRES_PASSWORD: test_finmars_password
+
+  RABBITMQ_DEFAULT_USER: test_finmars_user
+  RABBITMQ_DEFAULT_PASS: test_finmars_password
+
+  # When using dind service, you must instruct docker to talk with the
+  # daemon started inside of the service. The daemon is available with
+  # a network connection instead of the default /var/run/docker.sock socket.
+  #
+  # The 'docker' hostname is the alias of the service container as described at
+  # https://docs.gitlab.com/ee/ci/docker/using_docker_images.html#accessing-the-services
+  #
+  # If you're using GitLab Runner 12.7 or earlier with the Kubernetes executor and Kubernetes 1.6 or earlier,
+  # the variable must be set to tcp://localhost:2375 because of how the
+  # Kubernetes executor connects services to the job container
+  # DOCKER_HOST: tcp://localhost:2375
+  #
+  DOCKER_HOST: tcp://docker:2375
+  #
+  # This instructs Docker not to start over TLS.
+  DOCKER_TLS_CERTDIR: ""
+
+
+
+Test:
+  stage: test
+  image: python:3.10-bullseye  # adjust the Python version as necessary
+
+  services:
+    - postgres:latest
+    - rabbitmq:latest
+
+  variables:
+    DB_HOST: postgres
+    DB_NAME: test_finmars
+    DB_USER: test_finmars_user
+    DB_PASSWORD: test_finmars_password
+    DB_PORT: 5432
+
+    RABBITMQ_HOST: rabbitmq
+    RABBITMQ_USER: test_finmars_user
+    RABBITMQ_PASSWORD: test_finmars_password
+    RABBITMQ_PORT: 5672
+
+  before_script:
+    - |
+      apt-get update && apt-get install -y --no-install-recommends \
+      gcc \
+      musl-dev \
+      python3-dev \
+      libpq-dev \
+      libgnutls28-dev \
+      git \
+      && rm -rf /var/lib/apt/lists/*
+    - python -m pip install --upgrade pip
+    - pip install uwsgi
+    - pip install -r requirements.txt
+    - mkdir /var/log/finmars
+    - mkdir /var/log/finmars/backend
+  script:
+    - python manage.py test
+
 
 Build:
   stage: build
+
+  before_script:
+    # to debug runner
+    - df
+    - cat /etc/resolv.conf
+    - cat /etc/hosts
+    #
+    - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
+
   script:
     # fetches the latest image (not failing if image is not found)
     - docker pull $CI_REGISTRY_IMAGE:latest || true
     - docker build --pull --cache-from $CI_REGISTRY_IMAGE:latest --tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME .
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
 
-Push latest:
+Release latest:
   variables:
     # We are just playing with Docker here.
     # We do not need GitLab to clone the source code.
     GIT_STRATEGY: none
-  stage: push
+  stage: release
   only:
     # Only "master" should be tagged "latest"
     - master
+  before_script:
+    - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
   script:
     # Because we have no guarantee that this job will be picked up by the same runner
     # that built the image in the previous step, we pull it again locally
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
     # Then we tag it "latest"
     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME $CI_REGISTRY_IMAGE:latest
-    # Annnd we push it.
+    # And we push it.
     - docker push $CI_REGISTRY_IMAGE:latest
 
-Push tag:
+Release version:
   variables:
     # Again, we do not need the source code here. Just playing with Docker.
     GIT_STRATEGY: none
-  stage: push
+  stage: release
   only:
     # We want this job to be run on tags only.
     - tags
+  before_script:
+    - echo -n $CI_REGISTRY_PASSWORD | docker login -u $CI_REGISTRY_USER --password-stdin registry.finmars.com
   script:
     - docker pull $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME

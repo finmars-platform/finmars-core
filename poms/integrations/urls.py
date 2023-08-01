@@ -12,6 +12,11 @@ router.register(
     basename="import_config",
 )
 router.register(
+    "mapping-table",
+    integrations.MappingTableViewSet,
+    basename="mapping-table",
+)
+router.register(
     "provide",
     integrations.ProviderClassViewSet,
     basename="provider_class",

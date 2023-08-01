@@ -4,15 +4,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('instruments', '0009_alter_accrualcalculationschedule_accrual_start_date_and_more'),
+        (
+            "instruments",
+            "0009_alter_accrualcalculationschedule_accrual_start_date_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='instrumenttype',
-            name='configuration_code',
-            field=models.CharField(default='com.finmars.local', max_length=255, verbose_name='Configuration Code'),
+            model_name="instrumenttype",
+            name="configuration_code",
+            field=models.CharField(
+                default="com.finmars.local",
+                max_length=255,
+                verbose_name="Configuration Code",
+            ),
         ),
     ]

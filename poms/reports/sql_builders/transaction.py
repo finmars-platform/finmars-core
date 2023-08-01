@@ -245,25 +245,35 @@ class TransactionReportBuilderSql:
 
                         _l.info('currencies_ids %s' % currencies_ids)
 
-                        currency_expression = ''
+                        settlement_currency_expression = ''
+                        transaction_currency_expression = ''
 
                         if currencies_ids:
                             res = "'" + "\',\'".join(currencies_ids)
                             res = res + "'"
 
-                            currency_expression = 't.settlement_currency_id IN (%s)' % res
+                            settlement_currency_expression = 't.settlement_currency_id IN (%s)' % res
+                            # TODO add or for transaction_currency_id
+
+
+                        if currencies_ids:
+                            res = "'" + "\',\'".join(currencies_ids)
+                            res = res + "'"
+
+                            transaction_currency_expression = 't.transaction_currency_id IN (%s)' % res
+                            # TODO add or for transaction_currency_id
 
                         _l.info('result %s' % result)
 
-                        if instrument_expression and currency_expression:
+                        if instrument_expression and (settlement_currency_expression and transaction_currency_expression):
 
-                            result = result + 'and (%s or %s)' % (instrument_expression, currency_expression)
+                            result = result + 'and (%s or %s or %s)' % (instrument_expression, settlement_currency_expression, transaction_currency_expression)
 
-                        elif instrument_expression and not currency_expression:
+                        elif instrument_expression and not (settlement_currency_expression and transaction_currency_expression):
                             result = result + 'and %s' % instrument_expression
 
-                        elif not instrument_expression and currency_expression:
-                            result = result + 'and %s' % currency_expression
+                        elif not instrument_expression and (settlement_currency_expression and transaction_currency_expression):
+                            result = result + 'and (%s or %s)' % (settlement_currency_expression, transaction_currency_expression)
 
         except Exception as e:
 
@@ -384,7 +394,7 @@ class TransactionReportBuilderSql:
                     INNER JOIN transactions_transactiontype tt on tc.transaction_type_id = tt.id
                     --INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id--
                     INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
-                    WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND NOT tc.is_deleted AND tc.status_id IN {statuses} {filter_sql_string}
+                    WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND NOT tc.is_deleted AND NOT tc.is_canceled AND tc.status_id IN {statuses} {filter_sql_string}
                     
                     
                 """
@@ -544,7 +554,7 @@ class TransactionReportBuilderSql:
                     --INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id--
                     INNER JOIN instruments_instrument i on t.instrument_id = i.id
                     INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
-                    WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND NOT t.is_deleted AND tc.status_id IN {statuses} {filter_sql_string}
+                    WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND NOT t.is_deleted AND NOT t.is_canceled AND tc.status_id IN {statuses} {filter_sql_string}
                     {user_filters}
                     
                 """
@@ -707,7 +717,7 @@ class TransactionReportBuilderSql:
                     INNER JOIN instruments_instrument i on t.instrument_id = i.id
                     --INNER JOIN transactions_transactiontypegroup tt2 on tt.group_id = tt2.id--
                     INNER JOIN transactions_complextransactionstatus cts on tc.status_id = cts.id
-                    WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND NOT t.is_deleted AND tc.status_id IN {statuses} {filter_sql_string}
+                    WHERE {date_filter_sql_string} AND t.master_user_id = {master_user_id} AND NOT t.is_deleted AND NOT t.is_canceled AND tc.status_id IN {statuses} {filter_sql_string}
                     {user_filters}
                     
                     

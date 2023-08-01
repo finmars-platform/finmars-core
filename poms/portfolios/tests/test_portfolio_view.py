@@ -1,9 +1,8 @@
 from django.conf import settings
 
 from poms.common.common_base_test import BaseTestCase
-from poms.portfolios.models import Portfolio, PortfolioRegister
 from poms.expressions_engine import formula
-
+from poms.portfolios.models import Portfolio, PortfolioRegister
 
 PORTFOLIO_DATA_SHORT = {
     "id": 3,
@@ -197,9 +196,9 @@ class PortfolioViewSetTest(BaseTestCase):
             'generate_user_code("del", "", 0)',
             context={"master_user": self.master_user},
         )
-        self.assertEqual(n1, 'del00000000000000001')
-        self.assertEqual(n2, 'del00000000000000002')
-        self.assertEqual(n3, 'del00000000000000003')
+        self.assertEqual(n1, "del00000000000000001")
+        self.assertEqual(n2, "del00000000000000002")
+        self.assertEqual(n3, "del00000000000000003")
 
     def test_retrieve(self):
         response = self.client.get(f"{self.url}{self.portfolio.id}/")
@@ -218,7 +217,7 @@ class PortfolioViewSetTest(BaseTestCase):
 
         self.portfolio.refresh_from_db()
         self.assertTrue(self.portfolio.is_deleted)
-        self.assertEqual(self.portfolio.user_code, 'del00000000000000001')
+        self.assertEqual(self.portfolio.user_code, "del00000000000000001")
 
     def test_read_destroy_create(self):
         response = self.client.get(f"{self.url}{self.portfolio.id}/")
@@ -231,7 +230,6 @@ class PortfolioViewSetTest(BaseTestCase):
         response = self.client.delete(f"{self.url}{id_0}/", format="json")
         self.assertEqual(response.status_code, 204, response.content)
 
-
         # create portfolio with the same name & delete it
         response = self.client.post(self.url, data=portfolio_data, format="json")
         self.assertEqual(response.status_code, 201, response.content)
@@ -241,7 +239,6 @@ class PortfolioViewSetTest(BaseTestCase):
 
         response = self.client.delete(f"{self.url}{id_1}/", format="json")
         self.assertEqual(response.status_code, 204, response.content)
-
 
         # all portfolios with the user_code == self.user_code must be marked deleted
         portfolio = Portfolio.objects.filter(user_code=self.user_code).first()

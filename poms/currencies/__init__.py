@@ -1,3 +1,1 @@
-from __future__ import unicode_literals
-
-default_app_config = 'poms.currencies.apps.CurrenciesConfig'
+default_app_config = "poms.currencies.apps.CurrenciesConfig"
