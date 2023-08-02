@@ -792,12 +792,14 @@ def generate_events_do_not_inform_apply_default(self):
 
 @shared_task(name="instruments.process_events", bind=True)
 @transaction.atomic()
-def process_events(self):
+def process_events(self, *args, **kwargs):
     from poms.celery_tasks.models import CeleryTask
+    from poms.instruments.handlers import GeneratedEventProcess
 
     master_user = MasterUser.objects.all()[0]  # TODO refactor to get by base_api_url
     # member = Member.objects.get(master_user=master_user, is_owner=True)
     finmars_bot = Member.objects.get(username="finmars_bot")
+
     celery_task = CeleryTask.objects.create(
         master_user=master_user,
         member=finmars_bot,
@@ -806,8 +808,6 @@ def process_events(self):
     )
 
     try:
-        from poms.instruments.handlers import GeneratedEventProcess
-
         _l.debug("process_events0: master_user=%s", master_user.id)
 
         now = date_now()
