@@ -1,20 +1,21 @@
 from logging import getLogger
 
-
-from django_filters.rest_framework import FilterSet, DjangoFilterBackend
+from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+
 from celery.result import AsyncResult
 
 from poms.common.filters import CharFilter
 from poms.common.views import AbstractApiView
 from poms.users.filters import OwnerByMasterUserFilter
-from .filters import CeleryTaskQueryFilter, CeleryTaskDateRangeFilter
-from .models import CeleryTask
-from .serializers import CeleryTaskSerializer, CeleryTaskLightSerializer
 
-_l = getLogger('poms.celery_tasks')
+from .filters import CeleryTaskDateRangeFilter, CeleryTaskQueryFilter
+from .models import CeleryTask
+from .serializers import CeleryTaskLightSerializer, CeleryTaskSerializer
+
+_l = getLogger("poms.celery_tasks")
 
 
 class CeleryTaskFilterSet(FilterSet):
@@ -31,15 +32,12 @@ class CeleryTaskFilterSet(FilterSet):
 
 class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
     queryset = CeleryTask.objects.select_related(
-        'master_user',
-        'member',
-        'parent',
-        'file_report',
-        'parent__file_report',
-    ).prefetch_related(
-        'attachments',
-        'children'
-    )
+        "master_user",
+        "member",
+        "parent",
+        "file_report",
+        "parent__file_report",
+    ).prefetch_related("attachments", "children")
     serializer_class = CeleryTaskSerializer
     filter_class = CeleryTaskFilterSet
     filter_backends = [
@@ -49,21 +47,22 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         OwnerByMasterUserFilter,
     ]
 
-    @action(detail=False, methods=['get'], url_path='light', serializer_class=CeleryTaskLightSerializer)
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="light",
+        serializer_class=CeleryTaskLightSerializer,
+    )
     def list_light(self, request, *args, **kwargs):
-
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginator.post_paginate_queryset(queryset, request)
         serializer = self.get_serializer(page, many=True)
 
-        result = self.get_paginated_response(serializer.data)
+        return self.get_paginated_response(serializer.data)
 
-        return result
-
-
-    @action(detail=True, methods=['get'], url_path='status')
+    @action(detail=True, methods=["get"], url_path="status")
     def status(self, request, pk=None):
-        celery_task_id = request.query_params.get('celery_task_id', None)
+        celery_task_id = request.query_params.get("celery_task_id", None)
         async_result = AsyncResult(celery_task_id)
 
         result = {
@@ -77,36 +76,41 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         return Response(result)
 
-    @action(detail=False, methods=['post'], url_path='execute')
+    @action(detail=False, methods=["post"], url_path="execute")
     def execute(self, request, pk=None):
         from poms_app import celery_app
 
-        task_name = request.data.get('task_name')
-        options = request.data.get('options')
+        task_name = request.data.get("task_name")
+        options = request.data.get("options")
 
         celery_task = CeleryTask.objects.create(
             master_user=request.user.master_user,
             member=request.user.member,
             type=task_name,
-            options_object=options
+            options_object=options,
         )
 
-        result = celery_app.send_task(task_name, kwargs={'task_id': celery_task.id})
+        result = celery_app.send_task(task_name, kwargs={"task_id": celery_task.id})
 
-        _l.info('result %s' % result)
+        _l.info(f"result {result}")
 
-        return Response({'status': 'ok', 'task_id': celery_task.id, 'celery_task_id': result.id})
+        return Response(
+            {
+                "status": "ok",
+                "task_id": celery_task.id,
+                "celery_task_id": result.id,
+            }
+        )
 
-    @action(detail=True, methods=['PUT'], url_path='cancel')
+    @action(detail=True, methods=["PUT"], url_path="cancel")
     def cancel(self, request, pk=None):
-
         task = CeleryTask.objects.get(pk=pk)
 
         task.cancel()
 
-        return Response({'status': 'ok'})
+        return Response({"status": "ok"})
 
-    @action(detail=True, methods=['PUT'], url_path='abort-transaction-import')
+    @action(detail=True, methods=["PUT"], url_path="abort-transaction-import")
     def abort_transaction_import(self, request, pk=None):
         task = CeleryTask.objects.get(pk=pk)
 
@@ -114,14 +118,19 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         count = ComplexTransaction.objects.filter(linked_import_task=pk).count()
 
-        codes = ComplexTransaction.objects.filter(linked_import_task=pk).values_list('code', flat=True)
+        codes = ComplexTransaction.objects.filter(linked_import_task=pk).values_list(
+            "code", flat=True
+        )
 
         complex_transactions_ids = list(
-            ComplexTransaction.objects.filter(linked_import_task=pk).values_list('id', flat=True))
+            ComplexTransaction.objects.filter(linked_import_task=pk).values_list(
+                "id", flat=True
+            )
+        )
 
         options_object = {
-            'content_type': 'transactions.complextransaction',
-            'ids': complex_transactions_ids
+            "content_type": "transactions.complextransaction",
+            "ids": complex_transactions_ids,
         }
 
         celery_task = CeleryTask.objects.create(
@@ -129,21 +138,24 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
             member=request.user.member,
             options_object=options_object,
             verbose_name="Bulk Delete",
-            type='bulk_delete'
+            type="bulk_delete",
         )
 
         from poms_app import celery_app
 
-        celery_app.send_task('celery_tasks.bulk_delete', kwargs={"task_id": celery_task.id},
-                             queue='backend-delete-queue')
+        celery_app.send_task(
+            "celery_tasks.bulk_delete",
+            kwargs={"task_id": celery_task.id},
+            queue="backend-delete-queue",
+        )
 
-        _l.info("%s complex transactions were deleted" % count)
+        _l.info(f"{count} complex transactions were deleted")
 
-        task.notes = '%s Transactions were aborted \n' % count
+        task.notes = "%s Transactions were aborted \n" % count
 
-        task.notes = task.notes + (', '.join(str(x) for x in codes))
+        task.notes = task.notes + (", ".join(str(x) for x in codes))
         task.status = CeleryTask.STATUS_TRANSACTIONS_ABORTED
 
         task.save()
 
-        return Response({'status': 'ok'})
+        return Response({"status": "ok"})

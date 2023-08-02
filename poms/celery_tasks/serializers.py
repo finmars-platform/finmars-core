@@ -8,12 +8,18 @@ from .models import CeleryTask, CeleryTaskAttachment
 class CeleryTaskAttachmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = CeleryTaskAttachment
-        fields = ("id", "file_url", "file_name", "notes", "file_report")
+        fields = (
+            "id",
+            "file_url",
+            "file_name",
+            "notes",
+            "file_report",
+        )
 
     def __init__(self, *args, **kwargs):
-        super(CeleryTaskAttachmentSerializer, self).__init__(*args, **kwargs)
-
         from poms.file_reports.serializers import FileReportSerializer
+
+        super().__init__(*args, **kwargs)
 
         self.fields["file_report_object"] = FileReportSerializer(
             source="file_report", read_only=True
@@ -52,15 +58,14 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
             "error_message",
             "finished_at",
             "file_report",
-
-            'ttl',
-            'expiry_at'
+            "ttl",
+            "expiry_at",
         )
 
     def __init__(self, *args, **kwargs):
-        super(CeleryTaskSerializer, self).__init__(*args, **kwargs)
-
         from poms.users.serializers import MemberViewSerializer
+
+        super().__init__(*args, **kwargs)
 
         self.fields["member_object"] = MemberViewSerializer(
             source="member", read_only=True
@@ -98,9 +103,9 @@ class CeleryTaskLightSerializer(serializers.ModelSerializer):
         )
 
     def __init__(self, *args, **kwargs):
-        super(CeleryTaskLightSerializer, self).__init__(*args, **kwargs)
-
         from poms.users.serializers import MemberViewSerializer
+
+        super().__init__(*args, **kwargs)
 
         self.fields["member_object"] = MemberViewSerializer(
             source="member", read_only=True
