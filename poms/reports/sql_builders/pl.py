@@ -3976,6 +3976,13 @@ class PLReportBuilderSql:
             # You can get the result of the task with its .result property.
             all_dicts.extend(result.result)
 
+        for task in tasks:
+            # refresh the task instance to get the latest status from the database
+            task.refresh_from_db()
+
+            if task.status != CeleryTask.STATUS_ERROR:
+                task.delete()
+
         # 'all_dicts' is now a list of all dicts returned by the tasks
         self.instance.items = all_dicts
 
