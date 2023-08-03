@@ -49,7 +49,7 @@ def calculate_simple_balance_report(report_date, portfolio_register, pricing_pol
     instance.portfolios = [portfolio_register.portfolio]
 
     builder = BalanceReportBuilderSql(instance=instance)
-    instance = builder.build_balance()
+    instance = builder.build_balance_sync()
 
     return instance
 
