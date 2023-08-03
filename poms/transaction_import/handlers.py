@@ -1003,7 +1003,7 @@ class TransactionImportProcess(object):
                                     except (Exception, BookUnhandledException, BookException) as e:
                                         # transaction.savepoint_rollback(sid)
 
-                                        _l.info("Catch BookUnhandledException trying to book error_rule_scenario %s" % e)
+                                        _l.error("Catch BookUnhandledException trying to book error_rule_scenario %s" % e)
 
                                         try:
                                             self.book(item, self.error_rule_scenario, error=e)
