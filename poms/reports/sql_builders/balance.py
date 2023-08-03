@@ -4135,7 +4135,7 @@ class BalanceReportBuilderSql:
         result = self.build_sync(task.id)
 
         # 'all_dicts' is now a list of all dicts returned by the tasks
-        self.instance.items = result.items
+        self.instance.items = result
 
         _l.info('parallel_build done: %s',
                 "{:3.3f}".format(time.perf_counter() - st))
