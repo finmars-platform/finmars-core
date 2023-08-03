@@ -2676,6 +2676,49 @@ def _set_instrument_field(evaluator, instrument, parameter_name, parameter_value
 _set_instrument_field.evaluator = True
 
 
+def _set_instrument_user_attribute(evaluator, instrument, user_code, value):
+    context = evaluator.context
+
+    instrument = _safe_get_instrument(evaluator, instrument)
+
+    try:
+
+        for attribute in instrument.attributes.all():
+
+            if attribute.attribute_type.user_code == user_code:
+
+                if attribute.attribute_type.value_type == 10:
+                    attribute.value_string = value
+
+                if attribute.attribute_type.value_type == 20:
+                    attribute.value_float = value
+
+                if attribute.attribute_type.value_type == 30:
+                    try:
+                        from poms.obj_attrs.models import GenericClassifier
+                        classifier = GenericClassifier.objects.get(
+                            attribute_type=attribute.attribute_type, name=value
+                        )
+
+                        attribute["classifier"] = classifier.id
+
+                    except Exception:
+                        attribute["classifier"] = None
+
+                if attribute.attribute_type.value_type == 40:
+                    attribute.value_date = value
+
+
+
+
+        instrument.save()
+    except AttributeError:
+        raise InvalidExpression("Invalid Property")
+
+
+_set_instrument_user_attribute.evaluator = True
+
+
 def _set_currency_field(evaluator, currency, parameter_name, parameter_value):
     context = evaluator.context
 
@@ -4284,6 +4327,7 @@ FINMARS_FUNCTIONS = [
     SimpleEval2Def("set_currency_field", _set_currency_field),
     SimpleEval2Def("get_instrument_field", _get_instrument_field),
     SimpleEval2Def("set_instrument_field", _set_instrument_field),
+    SimpleEval2Def("set_instrument_user_attribute", _set_instrument_user_attribute),
     SimpleEval2Def("get_instrument_accrual_size", _get_instrument_accrual_size),
     SimpleEval2Def("get_instrument_accrual_factor", _get_instrument_accrual_factor),
     SimpleEval2Def("calculate_accrued_price", _calculate_accrued_price),
