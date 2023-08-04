@@ -50,7 +50,7 @@ def delete_selected_records(records_to_delete: Iterable):
         records.delete()
 
 
-@shared_task(name="history_tasks.clear_old_journal_records")
+@finmars_task(name="history_tasks.clear_old_journal_records")
 def clear_old_journal_records():
     """
     Remove historical records older than ttl days, and save them into a file

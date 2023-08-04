@@ -10,6 +10,7 @@ from celery import shared_task
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.timezone import now
 
+from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyRequest, ProxyUser
 from poms.common.storage import get_storage
@@ -28,7 +29,7 @@ User = get_user_model()
 storage = get_storage()
 
 
-@shared_task(name='configuration.import_configuration', bind=True)
+@finmars_task(name='configuration.import_configuration', bind=True)
 def import_configuration(self, task_id):
     _l.info("import_configuration")
     _l.info("import_configuration %s" % task_id)
@@ -277,7 +278,7 @@ def import_configuration(self, task_id):
         task.save()
 
 
-@shared_task(name='configuration.export_configuration', bind=True)
+@finmars_task(name='configuration.export_configuration', bind=True)
 def export_configuration(self, task_id):
     _l.info("export_configuration")
 
@@ -366,7 +367,7 @@ def export_configuration(self, task_id):
         task.save()
 
 
-@shared_task(name='configuration.push_configuration_to_marketplace', bind=True)
+@finmars_task(name='configuration.push_configuration_to_marketplace', bind=True)
 def push_configuration_to_marketplace(self, task_id):
     _l.info("push_configuration_to_marketplace")
 
@@ -467,7 +468,7 @@ def push_configuration_to_marketplace(self, task_id):
         task.save()
 
 
-@shared_task(name='configuration.install_configuration_from_marketplace', bind=True)
+@finmars_task(name='configuration.install_configuration_from_marketplace', bind=True)
 def install_configuration_from_marketplace(self, **kwargs):
     task_id = kwargs.get('task_id')
 
@@ -649,7 +650,7 @@ def install_configuration_from_marketplace(self, **kwargs):
         task.save()
 
 
-@shared_task(name='configuration.finish_package_install', bind=True)
+@finmars_task(name='configuration.finish_package_install', bind=True)
 def finish_package_install(self, task_id):
     task = CeleryTask.objects.get(id=task_id)
     task.status = CeleryTask.STATUS_DONE
@@ -668,7 +669,7 @@ def finish_package_install(self, task_id):
     task.save()
 
 
-@shared_task(name='configuration.install_package_from_marketplace', bind=True)
+@finmars_task(name='configuration.install_package_from_marketplace', bind=True)
 def install_package_from_marketplace(self, task_id):
     _l.info("install_configuration_from_marketplace")
 

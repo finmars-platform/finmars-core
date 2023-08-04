@@ -52,6 +52,7 @@ class CeleryTaskSerializer(serializers.ModelSerializer):
             "error_message",
             "finished_at",
             "file_report",
+            "worker_name",
 
             'ttl',
             'expiry_at'

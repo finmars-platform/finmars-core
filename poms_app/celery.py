@@ -2,6 +2,8 @@ import os
 
 from celery import Celery
 from celery.signals import task_failure
+
+
 # from django.conf import settings
 # from poms.common.kombu_serializers import register_pickle_signed
 # register_pickle_signed(salt='poms-pickle-signed', compress=True)
@@ -16,7 +18,6 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 
 app.conf.task_routes = {"*": {"queue": "backend-general-queue"}}
-
 
 @task_failure.connect
 def handle_task_failure(**kwargs):

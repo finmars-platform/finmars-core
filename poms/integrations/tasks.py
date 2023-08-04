@@ -33,6 +33,7 @@ from openpyxl import load_workbook
 from openpyxl.utils import column_index_from_string
 
 from poms.accounts.models import Account
+from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.expressions_engine import formula
 from poms.common.middleware import activate
@@ -103,7 +104,7 @@ TYPE_PREFIX = "com.finmars.initial-instrument-type:"
 storage = get_storage()
 
 
-@shared_task(name="integrations.health_check")
+@finmars_task(name="integrations.health_check")
 def health_check_async():
     return True
 
@@ -116,7 +117,7 @@ def health_check():
     return False
 
 
-@shared_task(name="integrations.send_mail_async", ignore_result=True)
+@finmars_task(name="integrations.send_mail_async", ignore_result=True)
 def send_mail_async(subject, message, from_email, recipient_list, html_message=None):
     django_send_mail(
         subject,
@@ -140,7 +141,7 @@ def send_mail(subject, message, from_email, recipient_list, html_message=None):
     )
 
 
-@shared_task(name="integrations.send_mass_mail", ignore_result=True)
+@finmars_task(name="integrations.send_mass_mail", ignore_result=True)
 def send_mass_mail_async(messages):
     django_send_mass_mail(messages, fail_silently=True)
 
@@ -153,7 +154,7 @@ def send_mass_mail(messages):
     )
 
 
-@shared_task(name="integrations.mail_admins", ignore_result=True)
+@finmars_task(name="integrations.mail_admins", ignore_result=True)
 def mail_admins_async(subject, message):
     django_mail_admins(
         subject,
@@ -171,7 +172,7 @@ def mail_admins(subject, message):
     )
 
 
-@shared_task(name="integrations.mail_managers", ignore_result=True)
+@finmars_task(name="integrations.mail_managers", ignore_result=True)
 def mail_managers_async(subject, message):
     django_mail_managers(
         subject,
@@ -214,7 +215,7 @@ def task_done_with_instrument_info(instrument: Instrument, task: CeleryTask):
     task.save()
 
 
-@shared_task(name="integrations.download_instrument", bind=True, ignore_result=False)
+@finmars_task(name="integrations.download_instrument", bind=True, ignore_result=False)
 def download_instrument_async(self, task_id=None):
     task = CeleryTask.objects.get(pk=task_id)
     _l.debug(
@@ -930,7 +931,7 @@ def create_simple_instrument(task: CeleryTask) -> Optional[Instrument]:
     return instrument
 
 
-@shared_task(
+@finmars_task(
     name="integrations.download_instrument_cbond_task", bind=True, ignore_result=False
 )
 def download_instrument_cbond_task(self, task_id):
@@ -1038,7 +1039,7 @@ def download_unified_data(
         return None, errors
 
 
-@shared_task(
+@finmars_task(
     name="integrations.download_instrument_pricing_async",
     bind=True,
     ignore_result=False,
@@ -1109,7 +1110,7 @@ def download_instrument_pricing_async(self, task_id):
     return task_id
 
 
-@shared_task(name="integrations.test_certificate_async", bind=True, ignore_result=False)
+@finmars_task(name="integrations.test_certificate_async", bind=True, ignore_result=False)
 def test_certificate_async(self, task_id):
     task = CeleryTask.objects.get(pk=task_id)
     _l.debug(
@@ -1214,7 +1215,7 @@ def test_certificate_async(self, task_id):
 
 
 # DEPRECATED SINCE 22.09.2020 DELETE SOON
-@shared_task(
+@finmars_task(
     name="integrations.download_currency_pricing_async", bind=True, ignore_result=False
 )
 def download_currency_pricing_async(self, task_id):
@@ -1801,7 +1802,7 @@ def generate_file_report_old(instance, master_user, type, name, context=None):
     return file_report.pk
 
 
-@shared_task(
+@finmars_task(
     name="integrations.complex_transaction_csv_file_import_parallel_finish", bind=True
 )
 def complex_transaction_csv_file_import_parallel_finish(self, task_id):
@@ -1890,7 +1891,7 @@ def complex_transaction_csv_file_import_parallel_finish(self, task_id):
 
 
 # DEPRECATED
-@shared_task(name="integrations.complex_transaction_csv_file_import", bind=True)
+@finmars_task(name="integrations.complex_transaction_csv_file_import", bind=True)
 def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=None):
     try:
         from poms.integrations.serializers import ComplexTransactionCsvFileImport
@@ -2883,7 +2884,7 @@ def complex_transaction_csv_file_import(self, task_id, procedure_instance_id=Non
 
 
 # DEPRECATED
-# @shared_task(name='integrations.complex_transaction_csv_file_import_parallel', bind=True)
+# @finmars_task(name='integrations.complex_transaction_csv_file_import_parallel', bind=True)
 def complex_transaction_csv_file_import_parallel(task_id):
     try:
         _l.info("complex_transaction_csv_file_import_parallel: task_id %s" % task_id)
@@ -3045,7 +3046,7 @@ def complex_transaction_csv_file_import_parallel(task_id):
 
 
 # DEPRECATED
-@shared_task(
+@finmars_task(
     name="integrations.complex_transaction_csv_file_import_validate_parallel_finish",
     bind=True,
 )
@@ -3130,7 +3131,7 @@ def complex_transaction_csv_file_import_validate_parallel_finish(self, task_id):
 
 
 # DEPRECATED
-@shared_task(
+@finmars_task(
     name="integrations.complex_transaction_csv_file_import_validate", bind=True
 )
 def complex_transaction_csv_file_import_validate(self, task_id):
@@ -3911,7 +3912,7 @@ def complex_transaction_csv_file_import_validate(self, task_id):
 
 
 # DEPRECATED
-# @shared_task(name='integrations.complex_transaction_csv_file_import_validate_parallel', bind=True)
+# @finmars_task(name='integrations.complex_transaction_csv_file_import_validate_parallel', bind=True)
 def complex_transaction_csv_file_import_validate_parallel(task_id):
     try:
         _l.info(
@@ -4027,7 +4028,7 @@ def complex_transaction_csv_file_import_validate_parallel(task_id):
         _l.info(traceback.format_exc())
 
 
-@shared_task(
+@finmars_task(
     name="integrations.complex_transaction_csv_file_import_by_procedure", bind=True
 )
 def complex_transaction_csv_file_import_by_procedure(
@@ -4294,7 +4295,7 @@ def complex_transaction_csv_file_import_by_procedure(
             procedure_instance.save()
 
 
-@shared_task(
+@finmars_task(
     name="integrations.complex_transaction_csv_file_import_by_procedure_json", bind=True
 )
 def complex_transaction_csv_file_import_by_procedure_json(
@@ -4712,7 +4713,7 @@ def import_instrument_finmars_database(task_id: int):
     import_from_database_task(task_id=task_id, operation="instrument")
 
 
-@shared_task(name="integrations.download_instrument_finmars_database_async", bind=True)
+@finmars_task(name="integrations.download_instrument_finmars_database_async", bind=True)
 def download_instrument_finmars_database_async(self, task_id):
     _l.info(f"download_instrument_finmars_database_async {task_id}")
     import_instrument_finmars_database(task_id)
@@ -4722,7 +4723,7 @@ def import_currency_finmars_database(task_id: int):
     import_from_database_task(task_id=task_id, operation="currency")
 
 
-@shared_task(name="integrations.download_instrument_finmars_database_async", bind=True)
+@finmars_task(name="integrations.download_instrument_finmars_database_async", bind=True)
 def download_currency_finmars_database_async(self, task_id):
     _l.info(f"download_currency_finmars_database_async {task_id}")
     import_currency_finmars_database(task_id)
@@ -4732,7 +4733,7 @@ def import_company_finmars_database(task_id: int):
     import_from_database_task(task_id=task_id, operation="company")
 
 
-@shared_task(name="integrations.download_instrument_finmars_database_async", bind=True)
+@finmars_task(name="integrations.download_instrument_finmars_database_async", bind=True)
 def download_company_finmars_database_async(self, task_id):
     _l.info(f"download_company_finmars_database_async {task_id}")
     import_company_finmars_database(task_id)
@@ -4742,7 +4743,7 @@ def import_price_finmars_database(task_id: int):
     import_from_database_task(task_id=task_id, operation="price")
 
 
-@shared_task(name="integrations.download_instrument_finmars_database_async", bind=True)
+@finmars_task(name="integrations.download_instrument_finmars_database_async", bind=True)
 def download_price_finmars_database_async(self, task_id):
     _l.info(f"download_price_finmars_database_async {task_id}")
     import_company_finmars_database(task_id)
@@ -4757,7 +4758,7 @@ FINAL_STATUSES = {
 }
 
 
-@shared_task(name="integrations.ttl_finisher")
+@finmars_task(name="integrations.ttl_finisher")
 def ttl_finisher(task_id: int):
     func = f"ttl_finisher for task.id={task_id}"
     _l.info(f"{func} started")

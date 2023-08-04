@@ -6,6 +6,7 @@ from tempfile import NamedTemporaryFile
 from celery import shared_task
 from django.utils.translation import gettext_lazy
 
+from poms.celery_tasks import finmars_task
 from poms.expressions_engine import formula
 from poms.common.utils import date_now
 from poms.reconciliation.models import ReconciliationNewBankFileField, ReconciliationBankFileField
@@ -19,7 +20,7 @@ from poms.common.storage import get_storage
 storage = get_storage()
 
 
-@shared_task(name='reconciliation.process_bank_file_for_reconcile', bind=True)
+@finmars_task(name='reconciliation.process_bank_file_for_reconcile', bind=True)
 def process_bank_file_for_reconcile(self, instance):
     _l.debug('complex_transaction_file_import: %s', instance)
 

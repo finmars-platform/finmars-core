@@ -8,6 +8,7 @@ from django.conf import settings
 from django.db import connection
 
 from poms.accounts.models import Account, AccountType
+from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_last_business_day
 from poms.currencies.models import Currency
@@ -105,7 +106,7 @@ class BalanceReportBuilderSql:
 
         return self.instance
 
-    @shared_task(name='reports.build_balance_report', bind=True)
+    @finmars_task(name='reports.build_balance_report', bind=True)
     def build(self, task_id):
 
         try:

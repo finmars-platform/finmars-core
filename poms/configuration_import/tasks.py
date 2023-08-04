@@ -11,6 +11,7 @@ from rest_framework.exceptions import ValidationError
 
 from poms.accounts.models import Account, AccountType
 from poms.accounts.serializers import AccountTypeSerializer
+from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import get_content_type_by_name
@@ -3282,7 +3283,7 @@ class ConfigurationImportManager(object):
             _l.info(traceback.format_exc())
 
 
-@shared_task(name='configuration_import.configuration_import_as_json', bind=True)
+@finmars_task(name='configuration_import.configuration_import_as_json', bind=True)
 def configuration_import_as_json(self, task_id):
     _l.info("Start configuration_import_as_json task_id %s" % task_id)
 
@@ -3364,7 +3365,7 @@ def configuration_import_as_json(self, task_id):
         _l.error("configuration_import_as_json %s" % traceback.format_exc())
 
 
-@shared_task(name='configuration_import.generate_configuration_entity_archetype', bind=True)
+@finmars_task(name='configuration_import.generate_configuration_entity_archetype', bind=True)
 def generate_configuration_entity_archetype(self, instance):
     _l.info('generate_configuration_entity_archetype init')
 

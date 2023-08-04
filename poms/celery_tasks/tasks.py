@@ -21,7 +21,7 @@ celery_logger = get_task_logger(__name__)
 
 
 # TODO Refactor to task_id
-@shared_task(name='celery_tasks.remove_old_tasks')
+@finmars_task(name='celery_tasks.remove_old_tasks')
 def remove_old_tasks():
     try:
 
@@ -49,7 +49,7 @@ def remove_old_tasks():
         _l.error("remove_old_tasks.exception %s" % traceback.format_exc())
 
 
-@shared_task(name='celery_tasks.auto_cancel_task_by_ttl')
+@finmars_task(name='celery_tasks.auto_cancel_task_by_ttl')
 def auto_cancel_task_by_ttl():
     try:
 
@@ -80,7 +80,7 @@ def auto_cancel_task_by_ttl():
         _l.error("auto_cancel_task_by_ttl.exception %s" % traceback.format_exc())
 
 
-@shared_task(name='celery_tasks.bulk_delete', bind=True)
+@finmars_task(name='celery_tasks.bulk_delete', bind=True)
 def bulk_delete(self, task_id):
     # is_fake = bool(request.query_params.get('is_fake'))
 
@@ -217,7 +217,7 @@ def import_item(item, context):
         serializer.save()
 
 
-@shared_task(name='celery_tasks.universal_input', bind=True)
+@finmars_task(name='celery_tasks.universal_input', bind=True)
 def universal_input(self, task_id):
     # is_fake = bool(request.query_params.get('is_fake'))
 

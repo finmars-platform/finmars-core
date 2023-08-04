@@ -4,6 +4,7 @@ import traceback
 from celery import shared_task
 from celery.utils.log import get_task_logger
 
+from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.expressions_engine import formula
 from poms.transactions.models import (
@@ -53,7 +54,7 @@ def get_transaction_access_type(
     return result
 
 
-@shared_task(name="transactions.recalculate_permissions_transaction", bind=True)
+@finmars_task(name="transactions.recalculate_permissions_transaction", bind=True)
 def recalculate_permissions_transaction(self, instance):
     # DEPRECATED, NEED REFACTOR
     pass
@@ -160,7 +161,7 @@ def recalculate_permissions_transaction(self, instance):
     # return instance
 
 
-@shared_task(name="transactions.recalculate_permissions_complex_transaction", bind=True)
+@finmars_task(name="transactions.recalculate_permissions_complex_transaction", bind=True)
 def recalculate_permissions_complex_transaction(self, instance):
     # DEPRECATED, NEED REFACTOR
     pass
@@ -407,7 +408,7 @@ def execute_user_fields_expressions(complex_transaction, values, context, target
                     setattr(complex_transaction, field_key, None)
 
 
-@shared_task(name="transactions.recalculate_user_fields", bind=True)
+@finmars_task(name="transactions.recalculate_user_fields", bind=True)
 def recalculate_user_fields(self, task_id):
     task = CeleryTask.objects.get(id=task_id)
     task.celery_task_id = self.request.id

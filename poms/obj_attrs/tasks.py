@@ -2,6 +2,7 @@ from logging import getLogger
 
 from celery import shared_task
 
+from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.expressions_engine.formula import safe_eval, ExpressionEvalError
 from poms.common.utils import datetime_now
@@ -52,7 +53,7 @@ def get_json_objs(target_model, target_model_serializer, target_model_content_ty
     return result
 
 
-@shared_task(name='obj_attrs.recalculate_attributes', bind=True)
+@finmars_task(name='obj_attrs.recalculate_attributes', bind=True)
 def recalculate_attributes(self, instance):
     _l.debug('recalculate_attributes: instance', instance)
     # _l.debug('recalculate_attributes: context', context)

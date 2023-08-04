@@ -2,12 +2,13 @@ from logging import getLogger
 
 from celery import shared_task, current_task
 
+from poms.celery_tasks import finmars_task
 from poms.users.models import MasterUser
 
 _l = getLogger('poms.users')
 
 
-@shared_task(name='users.clone_master_user', bind=True)
+@finmars_task(name='users.clone_master_user', bind=True)
 def clone_master_user(self, instance, name, current_user):
     from poms.users.cloner import FullDataCloner
 

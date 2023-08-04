@@ -8,7 +8,7 @@ from poms.file_reports.models import FileReport
 _l = logging.getLogger('poms.file_reports')
 
 
-@shared_task(name='file_reports.clear_old_file_reports', bind=True, ignore_result=True)
+@finmars_task(name='file_reports.clear_old_file_reports', bind=True, ignore_result=True)
 def clear_old_file_reports(self, ):
     _l.debug("File Reports: clear_old_file_reports")
 
