@@ -506,6 +506,7 @@ else:
     CELERY_RESULT_EXPIRES = 60
     CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = True
 
+WORKER_MAX_MEMORY = ENV_INT('WORKER_MAX_MEMORY', 500) * 1024 * 1024  # 500 MB
 CELERY_WORKER_LOG_COLOR = True
 CELERY_WORKER_LOG_FORMAT = "[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s"
 try:

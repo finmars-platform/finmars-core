@@ -6,7 +6,6 @@ DB_USER=postgres \
 DB_PASSWORD=postgres \
 DB_HOST=localhost \
 DB_PORT=5434 \
-DEBUG=True \
 LOCAL=True \
 PROFILER=True \
 ENV_CSRF_TRUSTED_ORIGINS=http://0.0.0.0:8080 \
@@ -22,5 +21,4 @@ SECRET_KEY=mv83o5mq \
 FINMARS_DATABASE_URL=https://database.finmars.com/ \
 FINMARS_DATABASE_USER=finmars \
 FINMARS_DATABASE_PASSWORD=8ah9o7zq2nw10oud2ictqvgxw6ja81007m \
-DIRECTOR_DATABASE_URI="sqlite:////Users/szhitenev/projects/finmars/repositories/backend/director/local/director.db" \
 celery --app=poms_app worker --autoscale=4,2 -Q backend-general-queue,backend-delete-queue --loglevel=INFO -n backend
