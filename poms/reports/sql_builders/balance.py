@@ -3,9 +3,10 @@ import os
 import time
 from datetime import timedelta
 
-from celery import shared_task, group
 from django.conf import settings
 from django.db import connection
+
+from celery import group, shared_task
 
 from poms.accounts.models import Account, AccountType
 from poms.celery_tasks import finmars_task
@@ -13,53 +14,72 @@ from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_last_business_day
 from poms.currencies.models import Currency
 from poms.iam.utils import get_allowed_queryset
-from poms.instruments.models import Instrument, InstrumentType, LongUnderlyingExposure, ShortUnderlyingExposure, \
-    ExposureCalculationModel
+from poms.instruments.models import (
+    ExposureCalculationModel,
+    Instrument,
+    InstrumentType,
+    LongUnderlyingExposure,
+    ShortUnderlyingExposure,
+)
 from poms.portfolios.models import Portfolio
 from poms.reports.common import Report
 from poms.reports.models import BalanceReportCustomField, ReportInstanceModel
-from poms.reports.sql_builders.helpers import get_transaction_filter_sql_string, get_report_fx_rate, \
-    get_fx_trades_and_fx_variations_transaction_filter_sql_string, get_where_expression_for_position_consolidation, \
-    get_position_consolidation_for_select, get_pl_left_join_consolidation, dictfetchall, \
-    get_cash_consolidation_for_select, get_cash_as_position_consolidation_for_select, \
-    get_transaction_date_filter_for_initial_position_sql_string
+from poms.reports.sql_builders.helpers import (
+    dictfetchall,
+    get_cash_as_position_consolidation_for_select,
+    get_cash_consolidation_for_select,
+    get_fx_trades_and_fx_variations_transaction_filter_sql_string,
+    get_pl_left_join_consolidation,
+    get_position_consolidation_for_select,
+    get_report_fx_rate,
+    get_transaction_date_filter_for_initial_position_sql_string,
+    get_transaction_filter_sql_string,
+    get_where_expression_for_position_consolidation,
+)
 from poms.reports.sql_builders.pl import PLReportBuilderSql
 from poms.strategies.models import Strategy1, Strategy2, Strategy3
 from poms.users.models import EcosystemDefault
 
-_l = logging.getLogger('poms.reports')
+_l = logging.getLogger("poms.reports")
 
 
 class BalanceReportBuilderSql:
-
     def __init__(self, instance=None):
-
-        _l.debug('ReportBuilderSql init')
+        _l.debug("ReportBuilderSql init")
 
         self.instance = instance
 
         self.instance.allocation_mode = Report.MODE_IGNORE
 
-        self.ecosystem_defaults = EcosystemDefault.objects.get(master_user=self.instance.master_user)
+        self.ecosystem_defaults = EcosystemDefault.objects.get(
+            master_user=self.instance.master_user
+        )
 
-        _l.debug('self.instance master_user %s' % self.instance.master_user)
-        _l.debug('self.instance report_date %s' % self.instance.report_date)
+        _l.debug(
+            f"self.instance master_user {self.instance.master_user} "
+            f"report_date {self.instance.report_date}"
+        )
 
-        '''TODO IAM_SECURITY_VERIFY need to check, if user somehow passes id of object he has no access to we should throw error'''
+        """
+        TODO IAM_SECURITY_VERIFY need to check, if user somehow passes 
+        id of object he has no access to we should throw error
+        """
 
-        '''Important security methods'''
+        """Important security methods"""
         self.transform_to_allowed_portfolios()
         self.transform_to_allowed_accounts()
 
     def transform_to_allowed_portfolios(self):
-
         if not len(self.instance.portfolios):
-            self.instance.portfolios = get_allowed_queryset(self.instance.member, Portfolio.objects.all())
+            self.instance.portfolios = get_allowed_queryset(
+                self.instance.member, Portfolio.objects.all()
+            )
 
     def transform_to_allowed_accounts(self):
-
         if not len(self.instance.accounts):
-            self.instance.accounts = get_allowed_queryset(self.instance.member, Account.objects.all())
+            self.instance.accounts = get_allowed_queryset(
+                self.instance.member, Account.objects.all()
+            )
 
     # For internal usage, when celery tasks got simple balances
     def build_balance_sync(self):
@@ -93,79 +113,106 @@ class BalanceReportBuilderSql:
 
         self.instance.execution_time = float("{:3.3f}".format(time.perf_counter() - st))
 
-        _l.debug('items total %s' % len(self.instance.items))
+        _l.debug(f"items total {len(self.instance.items)}")
 
         relation_prefetch_st = time.perf_counter()
 
         if not self.instance.only_numbers:
             self.add_data_items()
 
-        self.instance.relation_prefetch_time = float("{:3.3f}".format(time.perf_counter() - relation_prefetch_st))
+        self.instance.relation_prefetch_time = float(
+            "{:3.3f}".format(time.perf_counter() - relation_prefetch_st)
+        )
 
-        _l.debug('build_st done: %s' % self.instance.execution_time)
+        _l.debug(f"build_st done: {self.instance.execution_time}")
 
         return self.instance
 
-    @finmars_task(name='reports.build_balance_report', bind=True)
+    @finmars_task(name="reports.build_balance_report", bind=True)
     def build(self, task_id):
+        celery_task = CeleryTask.objects.filter(id=task_id).first()
+        if not celery_task:
+            _l.error(f"build_balance_report, error: no such celery task.id={task_id}")
+            return
 
         try:
-
             st = time.perf_counter()
-
-            celery_task = CeleryTask.objects.get(id=task_id)
 
             report_settings = celery_task.options_object
 
-            instance = ReportInstanceModel(**report_settings, master_user=celery_task.master_user)
+            instance = ReportInstanceModel(
+                **report_settings, master_user=celery_task.master_user
+            )
 
             # _l.info('report_settings %s' % report_settings)
 
             with connection.cursor() as cursor:
-
                 st = time.perf_counter()
 
-                ecosystem_defaults = EcosystemDefault.objects.get(master_user=celery_task.master_user)
+                ecosystem_defaults = EcosystemDefault.objects.get(
+                    master_user=celery_task.master_user
+                )
 
-                pl_query = PLReportBuilderSql.get_source_query(cost_method=instance.cost_method.id)
+                pl_query = PLReportBuilderSql.get_source_query(
+                    cost_method=instance.cost_method.id
+                )
 
-                transaction_filter_sql_string = get_transaction_filter_sql_string(instance)
-                transaction_date_filter_for_initial_position_sql_string = get_transaction_date_filter_for_initial_position_sql_string(
-                    instance.report_date, has_where=bool(len(transaction_filter_sql_string)))
+                transaction_filter_sql_string = get_transaction_filter_sql_string(
+                    instance
+                )
+                transaction_date_filter_for_initial_position_sql_string = (
+                    get_transaction_date_filter_for_initial_position_sql_string(
+                        instance.report_date,
+                        has_where=bool(len(transaction_filter_sql_string)),
+                    )
+                )
                 report_fx_rate = get_report_fx_rate(instance, instance.report_date)
                 # fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
                 #     report_settings)
-                transactions_all_with_multipliers_where_expression = get_where_expression_for_position_consolidation(
-                    instance,
-                    prefix="tt_w_m.", prefix_second="t_o.")
+                transactions_all_with_multipliers_where_expression = (
+                    get_where_expression_for_position_consolidation(
+                        instance, prefix="tt_w_m.", prefix_second="t_o."
+                    )
+                )
                 consolidation_columns = get_position_consolidation_for_select(instance)
-                tt_consolidation_columns = get_position_consolidation_for_select(instance, prefix="tt.")
-                tt_in1_consolidation_columns = get_position_consolidation_for_select(instance, prefix="tt_in1.")
-                balance_q_consolidated_select_columns = get_position_consolidation_for_select(instance,
-                                                                                              prefix="balance_q.")
+                tt_consolidation_columns = get_position_consolidation_for_select(
+                    instance, prefix="tt."
+                )
+                tt_in1_consolidation_columns = get_position_consolidation_for_select(
+                    instance, prefix="tt_in1."
+                )
+                balance_q_consolidated_select_columns = (
+                    get_position_consolidation_for_select(instance, prefix="balance_q.")
+                )
                 pl_left_join_consolidation = get_pl_left_join_consolidation(instance)
-                fx_trades_and_fx_variations_filter_sql_string = get_fx_trades_and_fx_variations_transaction_filter_sql_string(
-                    instance)
+                fx_trades_and_fx_variations_filter_sql_string = (
+                    get_fx_trades_and_fx_variations_transaction_filter_sql_string(
+                        instance
+                    )
+                )
 
-                self.bday_yesterday_of_report_date = get_last_business_day(instance.report_date - timedelta(days=1),
-                                                                           to_string=True)
+                self.bday_yesterday_of_report_date = get_last_business_day(
+                    instance.report_date - timedelta(days=1), to_string=True
+                )
 
-                pl_query = pl_query.format(report_date=instance.report_date,
-                                           master_user_id=celery_task.master_user.id,
-                                           default_currency_id=ecosystem_defaults.currency_id,
-                                           report_currency_id=instance.report_currency.id,
-                                           pricing_policy_id=instance.pricing_policy.id,
-                                           report_fx_rate=report_fx_rate,
-                                           transaction_filter_sql_string=transaction_filter_sql_string,
-                                           transaction_date_filter_for_initial_position_sql_string=transaction_date_filter_for_initial_position_sql_string,
-                                           fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
-                                           consolidation_columns=consolidation_columns,
-                                           balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
-                                           tt_consolidation_columns=tt_consolidation_columns,
-                                           tt_in1_consolidation_columns=tt_in1_consolidation_columns,
-                                           transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
-                                           filter_query_for_balance_in_multipliers_table='',
-                                           bday_yesterday_of_report_date=self.bday_yesterday_of_report_date)
+                pl_query = pl_query.format(
+                    report_date=instance.report_date,
+                    master_user_id=celery_task.master_user.id,
+                    default_currency_id=ecosystem_defaults.currency_id,
+                    report_currency_id=instance.report_currency.id,
+                    pricing_policy_id=instance.pricing_policy.id,
+                    report_fx_rate=report_fx_rate,
+                    transaction_filter_sql_string=transaction_filter_sql_string,
+                    transaction_date_filter_for_initial_position_sql_string=transaction_date_filter_for_initial_position_sql_string,
+                    fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
+                    consolidation_columns=consolidation_columns,
+                    balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
+                    tt_consolidation_columns=tt_consolidation_columns,
+                    tt_in1_consolidation_columns=tt_in1_consolidation_columns,
+                    transactions_all_with_multipliers_where_expression=transactions_all_with_multipliers_where_expression,
+                    filter_query_for_balance_in_multipliers_table="",
+                    bday_yesterday_of_report_date=self.bday_yesterday_of_report_date,
+                )
                 # filter_query_for_balance_in_multipliers_table=' where multiplier = 1') # TODO ask for right where expression
 
                 ######################################
@@ -1659,47 +1706,61 @@ class BalanceReportBuilderSql:
                 """
 
                 consolidated_cash_columns = get_cash_consolidation_for_select(instance)
-                consolidated_position_columns = get_position_consolidation_for_select(instance)
-                consolidated_cash_as_position_columns = get_cash_as_position_consolidation_for_select(instance)
+                consolidated_position_columns = get_position_consolidation_for_select(
+                    instance
+                )
+                consolidated_cash_as_position_columns = (
+                    get_cash_as_position_consolidation_for_select(instance)
+                )
 
-                _l.debug('consolidated_cash_columns %s' % consolidated_cash_columns)
-                _l.debug('consolidated_position_columns %s' % consolidated_position_columns)
-                _l.debug('consolidated_cash_as_position_columns %s' % consolidated_cash_as_position_columns)
+                _l.debug("consolidated_cash_columns %s" % consolidated_cash_columns)
+                _l.debug(
+                    "consolidated_position_columns %s" % consolidated_position_columns
+                )
+                _l.debug(
+                    "consolidated_cash_as_position_columns %s"
+                    % consolidated_cash_as_position_columns
+                )
 
-                query = query.format(report_date=instance.report_date,
-                                     master_user_id=celery_task.master_user.id,
-                                     default_currency_id=ecosystem_defaults.currency_id,
-                                     report_currency_id=instance.report_currency.id,
-                                     pricing_policy_id=instance.pricing_policy.id,
-
-                                     consolidated_cash_columns=consolidated_cash_columns,
-                                     consolidated_position_columns=consolidated_position_columns,
-                                     consolidated_cash_as_position_columns=consolidated_cash_as_position_columns,
-
-                                     balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
-                                     transaction_filter_sql_string=transaction_filter_sql_string,
-                                     transaction_date_filter_for_initial_position_sql_string=transaction_date_filter_for_initial_position_sql_string,
-
-                                     pl_query=pl_query,
-                                     pl_left_join_consolidation=pl_left_join_consolidation,
-                                     fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
-                                     bday_yesterday_of_report_date=self.bday_yesterday_of_report_date
-                                     )
+                query = query.format(
+                    report_date=instance.report_date,
+                    master_user_id=celery_task.master_user.id,
+                    default_currency_id=ecosystem_defaults.currency_id,
+                    report_currency_id=instance.report_currency.id,
+                    pricing_policy_id=instance.pricing_policy.id,
+                    consolidated_cash_columns=consolidated_cash_columns,
+                    consolidated_position_columns=consolidated_position_columns,
+                    consolidated_cash_as_position_columns=consolidated_cash_as_position_columns,
+                    balance_q_consolidated_select_columns=balance_q_consolidated_select_columns,
+                    transaction_filter_sql_string=transaction_filter_sql_string,
+                    transaction_date_filter_for_initial_position_sql_string=transaction_date_filter_for_initial_position_sql_string,
+                    pl_query=pl_query,
+                    pl_left_join_consolidation=pl_left_join_consolidation,
+                    fx_trades_and_fx_variations_filter_sql_string=fx_trades_and_fx_variations_filter_sql_string,
+                    bday_yesterday_of_report_date=self.bday_yesterday_of_report_date,
+                )
 
                 if settings.DEBUG:
-                    with open(os.path.join(settings.BASE_DIR, 'balance_query_result_before_execution.txt'),
-                              'w') as the_file:
-                        the_file. \
-                            write(query)
+                    with open(
+                        os.path.join(
+                            settings.BASE_DIR,
+                            "balance_query_result_before_execution.txt",
+                        ),
+                        "w",
+                    ) as the_file:
+                        the_file.write(query)
 
                 cursor.execute(query)
 
-                _l.debug('Balance report query execute done: %s', "{:3.3f}".format(time.perf_counter() - st))
+                _l.debug(
+                    "Balance report query execute done: %s",
+                    "{:3.3f}".format(time.perf_counter() - st),
+                )
 
-                query_str = str(cursor.query, 'utf-8')
+                query_str = str(cursor.query, "utf-8")
 
-                if settings.SERVER_TYPE == 'local':
-                    with open('/tmp/query_result.txt', 'w') as the_file:
+                if settings.SERVER_TYPE == "local":
+                    with open("/tmp/query_result.txt", "w") as the_file:
                         the_file.write(query_str)
 
                 result = dictfetchall(cursor)
@@ -1714,81 +1775,110 @@ class BalanceReportBuilderSql:
                 updated_result = []
 
                 for item in result:
-
                     result_item = {}
 
                     # item["currency_id"] = item["settlement_currency_id"]
 
-                    result_item['name'] = item['name']
-                    result_item['short_name'] = item['short_name']
-                    result_item['user_code'] = item['user_code']
-                    result_item['item_type'] = item['item_type']
-                    result_item['item_type_name'] = item['item_type_name']
+                    result_item["name"] = item["name"]
+                    result_item["short_name"] = item["short_name"]
+                    result_item["user_code"] = item["user_code"]
+                    result_item["item_type"] = item["item_type"]
+                    result_item["item_type_name"] = item["item_type_name"]
 
-                    result_item['market_value'] = item['market_value']
-                    result_item['exposure'] = item['exposure']
+                    result_item["market_value"] = item["market_value"]
+                    result_item["exposure"] = item["exposure"]
 
-                    result_item['market_value_loc'] = item['market_value_loc']
-                    result_item['exposure_loc'] = item['exposure_loc']
+                    result_item["market_value_loc"] = item["market_value_loc"]
+                    result_item["exposure_loc"] = item["exposure_loc"]
 
                     if "portfolio_id" not in item:
                         result_item["portfolio_id"] = ecosystem_defaults.portfolio_id
                     else:
-                        result_item["portfolio_id"] = item['portfolio_id']
+                        result_item["portfolio_id"] = item["portfolio_id"]
 
                     if "account_cash_id" not in item:
                         result_item["account_cash_id"] = ecosystem_defaults.account_id
                     else:
-                        result_item["account_cash_id"] = item['account_cash_id']
+                        result_item["account_cash_id"] = item["account_cash_id"]
 
                     if "strategy1_cash_id" not in item:
-                        result_item["strategy1_cash_id"] = ecosystem_defaults.strategy1_id
+                        result_item[
+                            "strategy1_cash_id"
+                        ] = ecosystem_defaults.strategy1_id
                     else:
-                        result_item["strategy1_cash_id"] = item['strategy1_cash_id']
+                        result_item["strategy1_cash_id"] = item["strategy1_cash_id"]
 
                     if "strategy2_cash_id" not in item:
-                        result_item["strategy2_cash_id"] = ecosystem_defaults.strategy2_id
+                        result_item[
+                            "strategy2_cash_id"
+                        ] = ecosystem_defaults.strategy2_id
                     else:
-                        result_item["strategy2_cash_id"] = item['strategy2_cash_id']
+                        result_item["strategy2_cash_id"] = item["strategy2_cash_id"]
 
                     if "strategy3_cash_id" not in item:
-                        result_item["strategy3_cash_id"] = ecosystem_defaults.strategy3_id
+                        result_item[
+                            "strategy3_cash_id"
+                        ] = ecosystem_defaults.strategy3_id
                     else:
-                        result_item["strategy3_cash_id"] = item['strategy3_cash_id']
+                        result_item["strategy3_cash_id"] = item["strategy3_cash_id"]
 
                     if "account_position_id" not in item:
-                        result_item["account_position_id"] = ecosystem_defaults.account_id
+                        result_item[
+                            "account_position_id"
+                        ] = ecosystem_defaults.account_id
                     else:
-                        result_item["account_position_id"] = item['account_position_id']
+                        result_item["account_position_id"] = item["account_position_id"]
 
                     if "strategy1_position_id" not in item:
-                        result_item["strategy1_position_id"] = ecosystem_defaults.strategy1_id
+                        result_item[
+                            "strategy1_position_id"
+                        ] = ecosystem_defaults.strategy1_id
                     else:
-                        result_item["strategy1_position_id"] = item['strategy1_position_id']
+                        result_item["strategy1_position_id"] = item[
+                            "strategy1_position_id"
+                        ]
 
                     if "strategy2_position_id" not in item:
-                        result_item["strategy2_position_id"] = ecosystem_defaults.strategy2_id
+                        result_item[
+                            "strategy2_position_id"
+                        ] = ecosystem_defaults.strategy2_id
                     else:
-                        result_item["strategy2_position_id"] = item['strategy2_position_id']
+                        result_item["strategy2_position_id"] = item[
+                            "strategy2_position_id"
+                        ]
 
                     if "strategy3_position_id" not in item:
-                        result_item["strategy3_position_id"] = ecosystem_defaults.strategy3_id
+                        result_item[
+                            "strategy3_position_id"
+                        ] = ecosystem_defaults.strategy3_id
                     else:
-                        result_item["strategy3_position_id"] = item['strategy3_position_id']
+                        result_item["strategy3_position_id"] = item[
+                            "strategy3_position_id"
+                        ]
 
                     if "allocation_pl_id" not in item:
                         result_item["allocation_pl_id"] = None
                     else:
-                        result_item["allocation_pl_id"] = item['allocation_pl_id']
+                        result_item["allocation_pl_id"] = item["allocation_pl_id"]
 
-                    result_item["exposure_currency_id"] = item["co_directional_exposure_currency_id"]
-                    result_item['instrument_id'] = item['instrument_id']
-                    result_item['currency_id'] = item["currency_id"]
+                    result_item["exposure_currency_id"] = item[
+                        "co_directional_exposure_currency_id"
+                    ]
+                    result_item["instrument_id"] = item["instrument_id"]
+                    result_item["currency_id"] = item["currency_id"]
                     result_item["pricing_currency_id"] = item["pricing_currency_id"]
-                    result_item["instrument_pricing_currency_fx_rate"] = item["instrument_pricing_currency_fx_rate"]
-                    result_item["instrument_accrued_currency_fx_rate"] = item["instrument_accrued_currency_fx_rate"]
-                    result_item["instrument_principal_price"] = item["instrument_principal_price"]
-                    result_item["instrument_accrued_price"] = item["instrument_accrued_price"]
+                    result_item["instrument_pricing_currency_fx_rate"] = item[
+                        "instrument_pricing_currency_fx_rate"
+                    ]
+                    result_item["instrument_accrued_currency_fx_rate"] = item[
+                        "instrument_accrued_currency_fx_rate"
+                    ]
+                    result_item["instrument_principal_price"] = item[
+                        "instrument_principal_price"
+                    ]
+                    result_item["instrument_accrued_price"] = item[
+                        "instrument_accrued_price"
+                    ]
                     result_item["instrument_factor"] = item["instrument_factor"]
                     result_item["instrument_ytm"] = item["instrument_ytm"]
                     result_item["daily_price_change"] = item["daily_price_change"]
@@ -1796,8 +1886,12 @@ class BalanceReportBuilderSql:
                     result_item["fx_rate"] = item["fx_rate"]
 
                     # _l.info('item %s' % item)
-                    result_item['position_size'] = round(item['position_size'], settings.ROUND_NDIGITS)
-                    result_item['nominal_position_size'] = round(item['nominal_position_size'], settings.ROUND_NDIGITS)
+                    result_item["position_size"] = round(
+                        item["position_size"], settings.ROUND_NDIGITS
+                    )
+                    result_item["nominal_position_size"] = round(
+                        item["nominal_position_size"], settings.ROUND_NDIGITS
+                    )
 
                     result_item["ytm"] = item["ytm"]
                     result_item["ytm_at_cost"] = item["ytm_at_cost"]
@@ -1808,13 +1902,20 @@ class BalanceReportBuilderSql:
                     result_item["position_return"] = item["position_return"]
                     result_item["position_return_loc"] = item["position_return_loc"]
                     result_item["net_position_return"] = item["net_position_return"]
-                    result_item["net_position_return_loc"] = item["net_position_return_loc"]
+                    result_item["net_position_return_loc"] = item[
+                        "net_position_return_loc"
+                    ]
 
                     result_item["position_return_fixed"] = item["position_return_fixed"]
-                    result_item["position_return_fixed_loc"] = item["position_return_fixed_loc"]
-                    result_item["net_position_return_fixed"] = item["net_position_return_fixed"]
-                    result_item["net_position_return_fixed_loc"] = item["net_position_return_fixed_loc"]
-
+                    result_item["position_return_fixed_loc"] = item[
+                        "position_return_fixed_loc"
+                    ]
+                    result_item["net_position_return_fixed"] = item[
+                        "net_position_return_fixed"
+                    ]
+                    result_item["net_position_return_fixed_loc"] = item[
+                        "net_position_return_fixed_loc"
+                    ]
 
                     result_item["net_cost_price"] = item["net_cost_price"]
                     result_item["net_cost_price_loc"] = item["net_cost_price_loc"]
@@ -1822,16 +1923,24 @@ class BalanceReportBuilderSql:
                     result_item["gross_cost_price_loc"] = item["gross_cost_price_loc"]
 
                     result_item["principal_invested"] = item["principal_invested"]
-                    result_item["principal_invested_loc"] = item["principal_invested_loc"]
+                    result_item["principal_invested_loc"] = item[
+                        "principal_invested_loc"
+                    ]
 
                     result_item["amount_invested"] = item["amount_invested"]
                     result_item["amount_invested_loc"] = item["amount_invested_loc"]
 
-                    result_item["principal_invested_fixed"] = item["principal_invested_fixed"]
-                    result_item["principal_invested_fixed_loc"] = item["principal_invested_fixed_loc"]
+                    result_item["principal_invested_fixed"] = item[
+                        "principal_invested_fixed"
+                    ]
+                    result_item["principal_invested_fixed_loc"] = item[
+                        "principal_invested_fixed_loc"
+                    ]
 
                     result_item["amount_invested_fixed"] = item["amount_invested_fixed"]
-                    result_item["amount_invested_fixed_loc"] = item["amount_invested_fixed_loc"]
+                    result_item["amount_invested_fixed_loc"] = item[
+                        "amount_invested_fixed_loc"
+                    ]
 
                     result_item["time_invested"] = item["time_invested"]
                     result_item["return_annually"] = item["return_annually"]
@@ -1866,9 +1975,13 @@ class BalanceReportBuilderSql:
                     result_item["overheads_fx_loc"] = item["overheads_fx_opened_loc"]
                     result_item["total_fx_loc"] = item["total_fx_opened_loc"]
 
-                    result_item["principal_fixed_loc"] = item["principal_fixed_opened_loc"]
+                    result_item["principal_fixed_loc"] = item[
+                        "principal_fixed_opened_loc"
+                    ]
                     result_item["carry_fixed_loc"] = item["carry_fixed_opened_loc"]
-                    result_item["overheads_fixed_loc"] = item["overheads_fixed_opened_loc"]
+                    result_item["overheads_fixed_loc"] = item[
+                        "overheads_fixed_opened_loc"
+                    ]
                     result_item["total_fixed_loc"] = item["total_fixed_opened_loc"]
 
                     # Position * ( Long Underlying Exposure - Short Underlying Exposure)
@@ -1879,39 +1992,65 @@ class BalanceReportBuilderSql:
                     long = 0
                     short = 0
 
-                    if item["long_underlying_exposure_id"] == LongUnderlyingExposure.ZERO:
+                    if (
+                        item["long_underlying_exposure_id"]
+                        == LongUnderlyingExposure.ZERO
+                    ):
                         long = item["exposure_long_underlying_zero"]
-                    if item[
-                        "long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE:
+                    if (
+                        item["long_underlying_exposure_id"]
+                        == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE
+                    ):
                         long = item["exposure_short_underlying_price"]
-                    if item[
-                        "long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_DELTA:
+                    if (
+                        item["long_underlying_exposure_id"]
+                        == LongUnderlyingExposure.LONG_UNDERLYING_INSTRUMENT_PRICE_DELTA
+                    ):
                         long = item["exposure_long_underlying_price_delta"]
-                    if item[
-                        "long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE:
+                    if (
+                        item["long_underlying_exposure_id"]
+                        == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE
+                    ):
                         long = item["exposure_long_underlying_fx_rate"]
-                    if item[
-                        "long_underlying_exposure_id"] == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE:
+                    if (
+                        item["long_underlying_exposure_id"]
+                        == LongUnderlyingExposure.LONG_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE
+                    ):
                         long = item["exposure_long_underlying_fx_rate_delta"]
 
-                    if item["short_underlying_exposure_id"] == ShortUnderlyingExposure.ZERO:
+                    if (
+                        item["short_underlying_exposure_id"]
+                        == ShortUnderlyingExposure.ZERO
+                    ):
                         short = item["exposure_short_underlying_zero"]
-                    if item[
-                        "short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE:
+                    if (
+                        item["short_underlying_exposure_id"]
+                        == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_EXPOSURE
+                    ):
                         short = item["exposure_short_underlying_price"]
-                    if item[
-                        "short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA:
+                    if (
+                        item["short_underlying_exposure_id"]
+                        == ShortUnderlyingExposure.SHORT_UNDERLYING_INSTRUMENT_PRICE_DELTA
+                    ):
                         short = item["exposure_short_underlying_price_delta"]
-                    if item[
-                        "short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE:
+                    if (
+                        item["short_underlying_exposure_id"]
+                        == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_EXPOSURE
+                    ):
                         short = item["exposure_short_underlying_fx_rate"]
-                    if item[
-                        "short_underlying_exposure_id"] == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE:
+                    if (
+                        item["short_underlying_exposure_id"]
+                        == ShortUnderlyingExposure.SHORT_UNDERLYING_CURRENCY_FX_RATE_DELTA_ADJUSTED_EXPOSURE
+                    ):
                         short = item["exposure_short_underlying_fx_rate_delta"]
 
-                    if item[
-                        "exposure_calculation_model_id"] == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_NET:
-                        result_item["exposure"] = result_item["position_size"] * (long - short)
+                    if (
+                        item["exposure_calculation_model_id"]
+                        == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_NET
+                    ):
+                        result_item["exposure"] = result_item["position_size"] * (
+                            long - short
+                        )
 
                     # (i )   Position * Long Underlying Exposure
                     # (ii)  -Position * Short Underlying Exposure
@@ -1919,18 +2058,20 @@ class BalanceReportBuilderSql:
                     if long is None:
                         long = 0
 
-                    if item[
-                        "exposure_calculation_model_id"] == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT:
+                    if (
+                        item["exposure_calculation_model_id"]
+                        == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT
+                    ):
                         result_item["exposure"] = result_item["position_size"] * long
 
-                    if round(item['position_size'], settings.ROUND_NDIGITS):
-
+                    if round(item["position_size"], settings.ROUND_NDIGITS):
                         updated_result.append(result_item)
 
                         if ITEM_TYPE_INSTRUMENT == 1:
-
-                            if item['has_second_exposure_currency'] and instance.show_balance_exposure_details:
-
+                            if (
+                                item["has_second_exposure_currency"]
+                                and instance.show_balance_exposure_details
+                            ):
                                 new_exposure_item = {
                                     "name": item["name"],
                                     "user_code": item["user_code"],
@@ -1939,17 +2080,20 @@ class BalanceReportBuilderSql:
                                     "currency_id": item["currency_id"],
                                     "instrument_id": item["instrument_id"],
                                     "portfolio_id": item["portfolio_id"],
-
                                     "account_cash_id": item["account_cash_id"],
                                     "strategy1_cash_id": item["strategy1_cash_id"],
                                     "strategy2_cash_id": item["strategy2_cash_id"],
                                     "strategy3_cash_id": item["strategy3_cash_id"],
-
                                     "account_position_id": item["account_position_id"],
-                                    "strategy1_position_id": item["strategy1_position_id"],
-                                    "strategy2_position_id": item["strategy2_position_id"],
-                                    "strategy3_position_id": item["strategy3_position_id"],
-
+                                    "strategy1_position_id": item[
+                                        "strategy1_position_id"
+                                    ],
+                                    "strategy2_position_id": item[
+                                        "strategy2_position_id"
+                                    ],
+                                    "strategy3_position_id": item[
+                                        "strategy3_position_id"
+                                    ],
                                     "instrument_pricing_currency_fx_rate": None,
                                     "instrument_accrued_currency_fx_rate": None,
                                     "instrument_principal_price": None,
@@ -1957,20 +2101,24 @@ class BalanceReportBuilderSql:
                                     "instrument_factor": None,
                                     "instrument_ytm": None,
                                     "daily_price_change": None,
-
                                     "market_value": None,
                                     "market_value_loc": None,
-
                                     "item_type": 7,
                                     "item_type_name": "Exposure",
                                     "exposure": item["exposure_2"],
                                     "exposure_loc": item["exposure_2_loc"],
-                                    "exposure_currency_id": item["counter_directional_exposure_currency_id"]
+                                    "exposure_currency_id": item[
+                                        "counter_directional_exposure_currency_id"
+                                    ],
                                 }
 
-                                if item[
-                                    "exposure_calculation_model_id"] == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT:
-                                    new_exposure_item["exposure"] = -item["position_size"] * short
+                                if (
+                                    item["exposure_calculation_model_id"]
+                                    == ExposureCalculationModel.UNDERLYING_LONG_SHORT_EXPOSURE_SPLIT
+                                ):
+                                    new_exposure_item["exposure"] = (
+                                        -item["position_size"] * short
+                                    )
 
                                 new_exposure_item["position_size"] = None
                                 new_exposure_item["nominal_position_size"] = None
@@ -1988,7 +2136,9 @@ class BalanceReportBuilderSql:
                                 new_exposure_item["position_return_fixed"] = None
                                 new_exposure_item["position_return_fixed_loc"] = None
                                 new_exposure_item["net_position_return_fixed"] = None
-                                new_exposure_item["net_position_return_fixed_loc"] = None
+                                new_exposure_item[
+                                    "net_position_return_fixed_loc"
+                                ] = None
 
                                 new_exposure_item["net_cost_price"] = None
                                 new_exposure_item["net_cost_price_loc"] = None
@@ -2047,9 +2197,9 @@ class BalanceReportBuilderSql:
 
                                 updated_result.append(new_exposure_item)
 
-                _l.debug('build balance result %s ' % len(result))
+                _l.debug("build balance result %s " % len(result))
 
-                _l.info('single build done: %s' % (time.perf_counter() - st))
+                _l.info("single build done: %s" % (time.perf_counter() - st))
 
                 celery_task.status = CeleryTask.STATUS_DONE
                 celery_task.save()
@@ -4016,13 +4166,11 @@ class BalanceReportBuilderSql:
             raise e
 
     def parallel_build(self):
-
         st = time.perf_counter()
 
         tasks = []
 
         if self.instance.portfolio_mode == Report.MODE_INDEPENDENT:
-
             for portfolio in self.instance.portfolios:
                 task = CeleryTask.objects.create(
                     master_user=self.instance.master_user,
@@ -4032,10 +4180,18 @@ class BalanceReportBuilderSql:
                     options_object={
                         "report_date": self.instance.report_date,
                         "portfolios_ids": [portfolio.id],
-                        "accounts_ids": [instance.id for instance in self.instance.accounts],
-                        "strategies1_ids": [instance.id for instance in self.instance.strategies1],
-                        "strategies2_ids": [instance.id for instance in self.instance.strategies2],
-                        "strategies3_ids": [instance.id for instance in self.instance.strategies3],
+                        "accounts_ids": [
+                            instance.id for instance in self.instance.accounts
+                        ],
+                        "strategies1_ids": [
+                            instance.id for instance in self.instance.strategies1
+                        ],
+                        "strategies2_ids": [
+                            instance.id for instance in self.instance.strategies2
+                        ],
+                        "strategies3_ids": [
+                            instance.id for instance in self.instance.strategies3
+                        ],
                         "report_currency_id": self.instance.report_currency.id,
                         "pricing_policy_id": self.instance.pricing_policy.id,
                         "cost_method_id": self.instance.cost_method.id,
@@ -4045,14 +4201,13 @@ class BalanceReportBuilderSql:
                         "strategy1_mode": self.instance.strategy1_mode,
                         "strategy2_mode": self.instance.strategy2_mode,
                         "strategy3_mode": self.instance.strategy3_mode,
-                        "allocation_mode": self.instance.allocation_mode
-                    }
+                        "allocation_mode": self.instance.allocation_mode,
+                    },
                 )
 
                 tasks.append(task)
 
         else:
-
             task = CeleryTask.objects.create(
                 master_user=self.instance.master_user,
                 member=self.instance.member,
@@ -4060,11 +4215,21 @@ class BalanceReportBuilderSql:
                 type="calculate_balance_report",
                 options_object={
                     "report_date": self.instance.report_date,
-                    "portfolios_ids": [instance.id for instance in self.instance.portfolios],
-                    "accounts_ids": [instance.id for instance in self.instance.accounts],
-                    "strategies1_ids": [instance.id for instance in self.instance.strategies1],
-                    "strategies2_ids": [instance.id for instance in self.instance.strategies2],
-                    "strategies3_ids": [instance.id for instance in self.instance.strategies3],
+                    "portfolios_ids": [
+                        instance.id for instance in self.instance.portfolios
+                    ],
+                    "accounts_ids": [
+                        instance.id for instance in self.instance.accounts
+                    ],
+                    "strategies1_ids": [
+                        instance.id for instance in self.instance.strategies1
+                    ],
+                    "strategies2_ids": [
+                        instance.id for instance in self.instance.strategies2
+                    ],
+                    "strategies3_ids": [
+                        instance.id for instance in self.instance.strategies3
+                    ],
                     "report_currency_id": self.instance.report_currency.id,
                     "pricing_policy_id": self.instance.pricing_policy.id,
                     "cost_method_id": self.instance.cost_method.id,
@@ -4074,12 +4239,11 @@ class BalanceReportBuilderSql:
                     "strategy1_mode": self.instance.strategy1_mode,
                     "strategy2_mode": self.instance.strategy2_mode,
                     "strategy3_mode": self.instance.strategy3_mode,
-                    "allocation_mode": self.instance.allocation_mode
-                }
+                    "allocation_mode": self.instance.allocation_mode,
+                },
             )
 
             tasks.append(task)
-
 
         _l.info("Going to run %s tasks" % len(tasks))
 
@@ -4109,8 +4273,7 @@ class BalanceReportBuilderSql:
         # 'all_dicts' is now a list of all dicts returned by the tasks
         self.instance.items = all_dicts
 
-        _l.info('parallel_build done: %s',
-                "{:3.3f}".format(time.perf_counter() - st))
+        _l.info("parallel_build done: %s", "{:3.3f}".format(time.perf_counter() - st))
 
     def serial_build(self):
 
@@ -4151,104 +4314,132 @@ class BalanceReportBuilderSql:
                 "{:3.3f}".format(time.perf_counter() - st))
 
     def add_data_items_instruments(self, ids):
-
-        self.instance.item_instruments = Instrument.objects.select_related(
-            'instrument_type',
-            'instrument_type__instrument_class',
-            'pricing_currency',
-            'accrued_currency',
-        ).prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user) \
+        self.instance.item_instruments = (
+            Instrument.objects.select_related(
+                "instrument_type",
+                "instrument_type__instrument_class",
+                "pricing_currency",
+                "accrued_currency",
+            )
+            .prefetch_related(
+                "attributes",
+                "attributes__attribute_type",
+                "attributes__classifier",
+            )
+            .filter(master_user=self.instance.master_user)
             .filter(id__in=ids)
+        )
 
     def add_data_items_instrument_types(self, instruments):
-
         ids = []
 
         for instrument in instruments:
             ids.append(instrument.instrument_type_id)
 
-        self.instance.item_instrument_types = InstrumentType.objects.prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user) \
+        self.instance.item_instrument_types = (
+            InstrumentType.objects.prefetch_related(
+                "attributes",
+                "attributes__attribute_type",
+                "attributes__classifier",
+            )
+            .filter(master_user=self.instance.master_user)
             .filter(id__in=ids)
+        )
 
     def add_data_items_portfolios(self, ids):
-
-        self.instance.item_portfolios = Portfolio.objects.prefetch_related(
-            'attributes'
-        ).defer('responsibles', 'counterparties', 'transaction_types', 'accounts') \
-            .filter(master_user=self.instance.master_user) \
-            .filter(
-            id__in=ids)
+        self.instance.item_portfolios = (
+            Portfolio.objects.prefetch_related("attributes")
+            .defer("responsibles", "counterparties", "transaction_types", "accounts")
+            .filter(master_user=self.instance.master_user)
+            .filter(id__in=ids)
+        )
 
     def add_data_items_accounts(self, ids):
-
-        self.instance.item_accounts = Account.objects.select_related('type').prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+        self.instance.item_accounts = (
+            Account.objects.select_related("type")
+            .prefetch_related(
+                "attributes",
+                "attributes__attribute_type",
+                "attributes__classifier",
+            )
+            .filter(master_user=self.instance.master_user)
+            .filter(id__in=ids)
+        )
 
     def add_data_items_account_types(self, accounts):
-
         ids = []
 
         for account in accounts:
             ids.append(account.type_id)
 
-        self.instance.item_account_types = AccountType.objects.prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user) \
+        self.instance.item_account_types = (
+            AccountType.objects.prefetch_related(
+                "attributes",
+                "attributes__attribute_type",
+                "attributes__classifier",
+            )
+            .filter(master_user=self.instance.master_user)
             .filter(id__in=ids)
+        )
 
     def add_data_items_currencies(self, ids):
-
-        self.instance.item_currencies = Currency.objects.prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+        self.instance.item_currencies = (
+            Currency.objects.prefetch_related(
+                "attributes",
+                "attributes__attribute_type",
+                "attributes__classifier",
+            )
+            .filter(master_user=self.instance.master_user)
+            .filter(id__in=ids)
+        )
 
     def add_data_items_strategies1(self, ids):
-        self.instance.item_strategies1 = Strategy1.objects.prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+        self.instance.item_strategies1 = (
+            Strategy1.objects.prefetch_related(
+                "attributes",
+                "attributes__attribute_type",
+                "attributes__classifier",
+            )
+            .filter(master_user=self.instance.master_user)
+            .filter(id__in=ids)
+        )
 
     def add_data_items_strategies2(self, ids):
-        self.instance.item_strategies2 = Strategy2.objects.prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+        self.instance.item_strategies2 = (
+            Strategy2.objects.prefetch_related(
+                "attributes",
+                "attributes__attribute_type",
+                "attributes__classifier",
+            )
+            .filter(master_user=self.instance.master_user)
+            .filter(id__in=ids)
+        )
 
     def add_data_items_strategies3(self, ids):
-        self.instance.item_strategies3 = Strategy3.objects.prefetch_related(
-            'attributes',
-            'attributes__attribute_type',
-            'attributes__classifier',
-        ).filter(master_user=self.instance.master_user).filter(id__in=ids)
+        self.instance.item_strategies3 = (
+            Strategy3.objects.prefetch_related(
+                "attributes",
+                "attributes__attribute_type",
+                "attributes__classifier",
+            )
+            .filter(master_user=self.instance.master_user)
+            .filter(id__in=ids)
+        )
 
     def add_data_items(self):
-
         instance_relations_st = time.perf_counter()
 
-        _l.debug('_refresh_with_perms_optimized instance relations done: %s',
-                 "{:3.3f}".format(time.perf_counter() - instance_relations_st))
+        _l.debug(
+            "_refresh_with_perms_optimized instance relations done: %s",
+            "{:3.3f}".format(time.perf_counter() - instance_relations_st),
+        )
 
         permissions_st = time.perf_counter()
 
-        _l.debug('_refresh_with_perms_optimized permissions done: %s',
-                 "{:3.3f}".format(time.perf_counter() - permissions_st))
+        _l.debug(
+            "_refresh_with_perms_optimized permissions done: %s",
+            "{:3.3f}".format(time.perf_counter() - permissions_st),
+        )
 
         item_relations_st = time.perf_counter()
 
@@ -4261,45 +4452,44 @@ class BalanceReportBuilderSql:
         strategies3_ids = []
 
         for item in self.instance.items:
+            if "portfolio_id" in item and item["portfolio_id"] != "-":
+                portfolio_ids.append(item["portfolio_id"])
 
-            if 'portfolio_id' in item and item['portfolio_id'] != '-':
-                portfolio_ids.append(item['portfolio_id'])
+            if "instrument_id" in item:
+                instrument_ids.append(item["instrument_id"])
 
-            if 'instrument_id' in item:
-                instrument_ids.append(item['instrument_id'])
+            if "allocation_pl_id" in item:
+                instrument_ids.append(item["allocation_pl_id"])
 
-            if 'allocation_pl_id' in item:
-                instrument_ids.append(item['allocation_pl_id'])
+            if "account_position_id" in item and item["account_position_id"] != "-":
+                account_ids.append(item["account_position_id"])
+            if "account_cash_id" in item and item["account_cash_id"] != "-":
+                account_ids.append(item["account_cash_id"])
 
-            if 'account_position_id' in item and item['account_position_id'] != '-':
-                account_ids.append(item['account_position_id'])
-            if 'account_cash_id' in item and item['account_cash_id'] != '-':
-                account_ids.append(item['account_cash_id'])
+            if "currency_id" in item:
+                currencies_ids.append(item["currency_id"])
+            if "pricing_currency_id" in item:
+                currencies_ids.append(item["pricing_currency_id"])
+            if "exposure_currency_id" in item:
+                currencies_ids.append(item["exposure_currency_id"])
 
-            if 'currency_id' in item:
-                currencies_ids.append(item['currency_id'])
-            if 'pricing_currency_id' in item:
-                currencies_ids.append(item['pricing_currency_id'])
-            if 'exposure_currency_id' in item:
-                currencies_ids.append(item['exposure_currency_id'])
+            if "strategy1_position_id" in item:
+                strategies1_ids.append(item["strategy1_position_id"])
 
-            if 'strategy1_position_id' in item:
-                strategies1_ids.append(item['strategy1_position_id'])
+            if "strategy2_position_id" in item:
+                strategies2_ids.append(item["strategy2_position_id"])
 
-            if 'strategy2_position_id' in item:
-                strategies2_ids.append(item['strategy2_position_id'])
+            if "strategy3_position_id" in item:
+                strategies3_ids.append(item["strategy3_position_id"])
 
-            if 'strategy3_position_id' in item:
-                strategies3_ids.append(item['strategy3_position_id'])
+            if "strategy1_cash_id" in item:
+                strategies1_ids.append(item["strategy1_cash_id"])
 
-            if 'strategy1_cash_id' in item:
-                strategies1_ids.append(item['strategy1_cash_id'])
+            if "strategy2_cash_id" in item:
+                strategies2_ids.append(item["strategy2_cash_id"])
 
-            if 'strategy2_cash_id' in item:
-                strategies2_ids.append(item['strategy2_cash_id'])
-
-            if 'strategy3_cash_id' in item:
-                strategies3_ids.append(item['strategy3_cash_id'])
+            if "strategy3_cash_id" in item:
+                strategies3_ids.append(item["strategy3_cash_id"])
 
         instrument_ids = list(set(instrument_ids))
         portfolio_ids = list(set(portfolio_ids))
@@ -4309,7 +4499,7 @@ class BalanceReportBuilderSql:
         strategies2_ids = list(set(strategies2_ids))
         strategies3_ids = list(set(strategies3_ids))
 
-        _l.info('strategies1_ids %s' % strategies1_ids)
+        _l.info("strategies1_ids %s" % strategies1_ids)
 
         self.add_data_items_instruments(instrument_ids)
         self.add_data_items_portfolios(portfolio_ids)
@@ -4319,15 +4509,19 @@ class BalanceReportBuilderSql:
         self.add_data_items_strategies2(strategies2_ids)
         self.add_data_items_strategies3(strategies3_ids)
 
-        _l.info('add_data_items_strategies1 %s ' % self.instance.item_strategies1)
+        _l.info("add_data_items_strategies1 %s " % self.instance.item_strategies1)
 
         self.add_data_items_instrument_types(self.instance.item_instruments)
         self.add_data_items_account_types(self.instance.item_accounts)
 
-        self.instance.custom_fields = BalanceReportCustomField.objects.filter(master_user=self.instance.master_user)
+        self.instance.custom_fields = BalanceReportCustomField.objects.filter(
+            master_user=self.instance.master_user
+        )
 
-        _l.info('_refresh_with_perms_optimized item relations done: %s',
-                "{:3.3f}".format(time.perf_counter() - item_relations_st))
+        _l.info(
+            "_refresh_with_perms_optimized item relations done: %s",
+            "{:3.3f}".format(time.perf_counter() - item_relations_st),
+        )
 
         # Execute lazy fetch?
 

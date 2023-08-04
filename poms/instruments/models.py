@@ -158,7 +158,6 @@ class PricingCondition(AbstractClassModel):
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("pricing condition")
         verbose_name_plural = gettext_lazy("pricing conditions ")
-
         base_manager_name = "objects"
 
 
@@ -634,7 +633,6 @@ class InstrumentType(
         on_delete=models.PROTECT,
         verbose_name=gettext_lazy("instrument class"),
     )
-
     one_off_event = models.ForeignKey(
         "transactions.TransactionType",
         null=True,
@@ -793,7 +791,6 @@ class InstrumentType(
         default=0.0,
         verbose_name=gettext_lazy("maturity price"),
     )
-
     pricing_currency = models.ForeignKey(
         "currencies.Currency",
         null=True,
@@ -803,15 +800,14 @@ class InstrumentType(
         verbose_name=gettext_lazy("pricing currency"),
     )
     price_multiplier = models.FloatField(
-        default=1.0, verbose_name=gettext_lazy("price multiplier")
+        default=1.0,
+        verbose_name=gettext_lazy("price multiplier"),
     )
-
     position_reporting = models.PositiveSmallIntegerField(
         choices=VALUE_TYPES,
         default=DIRECT_POSITION,
         verbose_name=gettext_lazy("position reporting"),
     )
-
     pricing_condition = models.ForeignKey(
         PricingCondition,
         null=True,
@@ -819,7 +815,6 @@ class InstrumentType(
         verbose_name=gettext_lazy("pricing condition"),
         on_delete=models.SET_NULL,
     )
-
     reference_for_pricing = models.CharField(
         max_length=100,
         blank=True,
@@ -833,7 +828,12 @@ class InstrumentType(
         Returns attributes that front end uses
         """
         return [
-            {"key": "name", "name": "Name", "value_type": 10, "allow_null": False},
+            {
+                "key": "name",
+                "name": "Name",
+                "value_type": 10,
+                "allow_null": False,
+            },
             {
                 "key": "short_name",
                 "name": "Short name",
@@ -1028,6 +1028,7 @@ class InstrumentType(
     def instrument_factor_schedule_data(self):
         if not self.instrument_factor_schedule_json_data:
             return None
+
         try:
             return json.loads(self.instrument_factor_schedule_json_data)
         except (ValueError, TypeError):
