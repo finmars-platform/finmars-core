@@ -7,6 +7,7 @@ from celery import shared_task
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 
+from poms.celery_tasks import finmars_task
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import MasterUser
 from poms_app import settings
@@ -21,8 +22,8 @@ celery_logger = get_task_logger(__name__)
 
 
 # TODO Refactor to task_id
-@finmars_task(name='celery_tasks.remove_old_tasks')
-def remove_old_tasks():
+@finmars_task(name='celery_tasks.remove_old_tasks', bind=True)
+def remove_old_tasks(self):
     try:
 
         tasks = CeleryTask.objects.filter(created__lte=now() - timedelta(days=30))

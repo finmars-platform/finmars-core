@@ -3,6 +3,7 @@ import traceback
 
 from celery import shared_task
 
+from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import get_closest_bday_of_yesterday, get_list_of_dates_between_two_dates

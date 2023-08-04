@@ -5,6 +5,7 @@ from celery import shared_task
 from django.conf import settings
 from django.utils import timezone
 
+from poms.celery_tasks import finmars_task
 from poms.pricing.handlers import PricingProcedureProcess
 from poms.procedures.handlers import DataProcedureProcess, ExpressionProcedureProcess
 from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, ExpressionProcedure

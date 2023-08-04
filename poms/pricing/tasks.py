@@ -3,13 +3,14 @@ import logging
 from celery import shared_task
 from django.utils.timezone import now
 
+from poms.celery_tasks import finmars_task
 from poms.pricing.models import PricingProcedureInstance
 from poms.procedures.models import PricingParentProcedureInstance
 
 _l = logging.getLogger('poms.pricing')
 
 
-@finmars_task(name='pricing.clear_old_pricing_procedure_instances', bind=True, ignore_result=True)
+@finmars_task(name='pricing.clear_old_pricing_procedure_instances', bind=True)
 def clear_old_pricing_procedure_instances():
     _l.debug("Pricing: clear_old_pricing_procedure_instances")
 

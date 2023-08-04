@@ -12,6 +12,7 @@ from django.conf import settings
 
 from celery import shared_task
 
+from poms.celery_tasks import finmars_task
 from poms.common.storage import get_storage
 from poms.history.models import HistoricalRecord
 from poms.history.utils import (

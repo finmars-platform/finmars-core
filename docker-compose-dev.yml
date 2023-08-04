@@ -6,6 +6,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: finmars_dev
+      POSTGRESQL_MAX_OPEN_CONNS: 500
     stdin_open: true
     tty: true
     ports:
