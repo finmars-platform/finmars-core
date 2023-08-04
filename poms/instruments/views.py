@@ -1,7 +1,6 @@
 import contextlib
 import datetime
 import logging
-import traceback
 
 import django_filters
 from django.contrib.contenttypes.models import ContentType
@@ -516,24 +515,24 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
         permission_classes=[IsAuthenticated],
     )
     def update_pricing(self, request, pk=None):
+        from poms.pricing.models import InstrumentPricingPolicy
+
         instrument_type = self.get_object()
-
-        print("detail_route: /update-pricing: process update_pricing")
-
         instruments = Instrument.objects.filter(
             instrument_type=instrument_type, master_user=request.user.master_user
         )
 
-        _l.info(f"request.data {request.data} instruments affected {len(instruments)}")
-
-        from poms.pricing.models import InstrumentPricingPolicy
+        _l.info(
+            f"update_pricing request.data={request.data} "
+            f"instruments affected={len(instruments)}"
+        )
 
         for instrument in instruments:
             try:
                 policy = InstrumentPricingPolicy.objects.get(
-                    instrument=instrument, pricing_policy=request.data["pricing_policy"]
+                    instrument=instrument,
+                    pricing_policy=request.data["pricing_policy"],
                 )
-
                 if request.data["overwrite_default_parameters"]:
                     policy.pricing_scheme_id = request.data.get("pricing_scheme", None)
                     policy.default_value = request.data.get("default_value", None)
@@ -541,15 +540,14 @@ class InstrumentTypeViewSet(AbstractModelViewSet):
                     policy.attribute_key = request.data.get("attribute_key", None)
                     policy.save()
 
-                    _l.info(f"Policy {policy} updated")
+                    _l.info(f"update_pricing policy.id={policy.id} updated")
 
                 else:
-                    _l.info(f"Nothing changed for {policy}")
+                    _l.info(f"update_pricing nothing changed in policy.id={policy.id}")
 
-            except Exception as e:
+            except InstrumentPricingPolicy.DoesNotExist:
                 _l.error(
-                    f"Policy is not found for instrument, due to {repr(e)}\n "
-                    f"{traceback.format_exc()}"
+                    f"Policy was not found for instrument.id={instrument.id}"
                 )
 
         return Response(

@@ -1,20 +1,20 @@
 import importlib
+import logging
 from dataclasses import asdict, dataclass, field
 from typing import List, Union
 
 from django.conf import settings
 from django.db.models import prefetch_related_objects
-from pyparsing import infixNotation, opAssoc
 from rest_framework import permissions
+
+from pyparsing import infixNotation, opAssoc
 
 from .exceptions import AccessPolicyException
 from .parsing import BoolAnd, BoolNot, BoolOperand, BoolOr, ConditionOperand
-
-import logging
-
 from .utils import action_statement_into_object
 
-_l = logging.getLogger('poms.iam')
+_l = logging.getLogger("poms.iam")
+
 
 class AnonymousUser(object):
     def __init__(self):
@@ -50,10 +50,10 @@ class Statement:
     condition_expression: Union[List[str], str] = field(default_factory=list)
 
     def __post_init__(self):
-        permitted = ("allow", "deny")
-
         if self.effect not in ("allow", "deny"):
-            raise Exception(f"effect must be one of {permitted}")
+            permitted = ("allow", "deny")
+
+            raise RuntimeError(f"effect must be one of {permitted}")
 
 
 class AccessPolicy(permissions.BasePermission):
@@ -64,16 +64,11 @@ class AccessPolicy(permissions.BasePermission):
     id_prefix = "id:"
 
     def has_permission(self, request, view) -> bool:
-
-        allowed = False
-
         if request.user.is_superuser:
-            allowed = True
-            return allowed
+            return True
 
-        if request.user.member.is_admin:
-            allowed = True
-            return allowed
+        if request.user.member and request.user.member.is_admin:
+            return True
 
         action = self._get_invoked_action(view)
         statements = self.get_policy_statements(request, view)
@@ -119,7 +114,7 @@ class AccessPolicy(permissions.BasePermission):
         raise AccessPolicyException("Could not determine action of request")
 
     def _evaluate_statements(
-            self, statements: List[Union[dict, Statement]], request, view, action: str
+        self, statements: List[Union[dict, Statement]], request, view, action: str
     ) -> bool:
         statements = self._normalize_statements(statements)
 
@@ -136,10 +131,9 @@ class AccessPolicy(permissions.BasePermission):
 
         denied = [_ for _ in matched if _["effect"].lower() != "allow"]
 
-
-        '''TODO IAM_SECURITY_VERIFY check approach if one deny cancels all access'''
-        _l.debug('len(matched) %s' % len(matched))
-        _l.debug('len(denied) %s' % len(denied))
+        # TODO IAM_SECURITY_VERIFY check approach
+        #  if one deny cancels all access"
+        _l.debug(f"len(matched) {len(matched)}  len(denied) {len(denied)}")
 
         if len(matched) == 0 or len(denied) > 0:
             return False
@@ -147,7 +141,7 @@ class AccessPolicy(permissions.BasePermission):
         return True
 
     def _normalize_statements(
-            self, statements: List[Union[dict, Statement]]
+        self, statements: List[Union[dict, Statement]]
     ) -> List[dict]:
         normalized = []
 
@@ -155,7 +149,7 @@ class AccessPolicy(permissions.BasePermission):
             if isinstance(statement, Statement):
                 statement = asdict(statement)
 
-            _l.debug('_normalize_statements.statement %s ' % statement)
+            _l.debug(f"_normalize_statements.statement {statement} ")
 
             if isinstance(statement["principal"], str):
                 statement["principal"] = [statement["principal"]]
@@ -179,7 +173,7 @@ class AccessPolicy(permissions.BasePermission):
 
     @classmethod
     def _get_statements_matching_principal(
-            cls, request, statements: List[dict]
+        cls, request, statements: List[dict]
     ) -> List[dict]:
         user = request.user or AnonymousUser()
         user_roles = None
@@ -216,7 +210,7 @@ class AccessPolicy(permissions.BasePermission):
         return matched
 
     def _get_statements_matching_action(
-            self, request, view, action: str, statements: List[dict]
+        self, request, view, action: str, statements: List[dict]
     ):
         """
         Filter statements and return only those that match the specified
@@ -226,36 +220,37 @@ class AccessPolicy(permissions.BasePermission):
         SAFE_METHODS = ("GET", "HEAD", "OPTIONS")
         http_method = f"<method:{request.method.lower()}>"
 
-        _l.debug('_get_statements_matching_action.action %s' % action)
-        _l.debug('_get_statements_matching_action.view name %s' % view.basename.lower() )
+        _l.debug(
+            f"_get_statements_matching_action.action {action} "
+            f"name {view.basename.lower()}"
+        )
         # _l.info('_get_statements_matching_action.view %s' % view.__dict__)
         # _l.info('_get_statements_matching_action.self %s' % self)
         # _l.info('_get_statements_matching_action.request %s' % request)
 
         for statement in statements:
-
             for action_statement in statement["action"]:
-
                 action_object = action_statement_into_object(action_statement)
                 # _l.debug('_get_statements_matching_action.action_object %s' % action_object)
 
-                if settings.SERVICE_NAME in action_object['service']:
+                if settings.SERVICE_NAME in action_object["service"]:
+                    """
+                    TODO IAM_SECURITY_VERIFY here is good place, it would work as intended because we have access to view
+                    but in Field filter we do not have access to view so we compare with model.name
+                    maybe its a problem, see  utils.py#get_allowed_resources
 
-                    '''
-                        TODO IAM_SECURITY_VERIFY here is good place, it would work as intended because we have access to view
-                        but in Field filter we do not have access to view so we compare with model.name
-                        maybe its a problem, see  utils.py#get_allowed_resources
-                    
-                    '''
-                    if view.basename.lower() in action_object['viewset']:
-
-                        if action in action_object['action'] or "*" in action_object['action']:
+                    """
+                    if view.basename.lower() in action_object["viewset"]:
+                        if (
+                            action in action_object["action"]
+                            or "*" in action_object["action"]
+                        ):
                             matched.append(statement)
-                        elif http_method in action_object['action']:
+                        elif http_method in action_object["action"]:
                             matched.append(statement)
                         elif (
-                                "<safe_methods>" in action_object['action']
-                                and request.method in SAFE_METHODS
+                            "<safe_methods>" in action_object["action"]
+                            and request.method in SAFE_METHODS
                         ):
                             matched.append(statement)
 
@@ -264,7 +259,7 @@ class AccessPolicy(permissions.BasePermission):
         return matched
 
     def _get_statements_matching_conditions(
-            self, request, view, *, action: str, statements: List[dict], is_expression: bool
+        self, request, view, *, action: str, statements: List[dict], is_expression: bool
     ):
         """
         Filter statements and only return those that match all of their
