@@ -72,7 +72,7 @@ echo "[${timestamp}] Start celery"
 
 #!/bin/bash
 
-: "${WORKERS:=2}"
+: "${WORKERS:="2"}"
 
 if [ "$WORKERS" = "2" ]
 then
