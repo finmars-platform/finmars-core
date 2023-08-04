@@ -52,7 +52,7 @@ class BaseTask(_Task):
             new_limit_mb = new_limit / 1024 / 1024
 
             # Make sure we're not trying to set the limit beyond the current hard limit
-            resource.setrlimit(resource.RLIMIT_AS, (new_limit, new_limit*2))
+            resource.setrlimit(resource.RLIMIT_AS, (new_limit, new_limit*4))
             logger.info(f"New limit set to {new_limit_mb} MB")
 
             # Get the current memory limit
