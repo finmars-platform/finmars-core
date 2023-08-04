@@ -12,7 +12,7 @@ from poms.counterparties.models import Counterparty, CounterpartyGroup, Responsi
 from poms.currencies.models import Currency
 from poms.instruments.models import Instrument, InstrumentType
 from poms.portfolios.models import Portfolio
-from poms.reports.models import BalanceReport
+from poms.reports.models import BalanceReport, TransactionReport
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy2, Strategy2Subgroup, Strategy3, \
     Strategy3Subgroup
 from poms.transactions.models import TransactionType, TransactionTypeGroup
@@ -621,6 +621,7 @@ class SystemAttributesViewSet(AbstractViewSet):
             'strategies.strategy3subgroup': Strategy3Subgroup.get_system_attrs(),
 
             'reports.balancereport': BalanceReport.get_system_attrs(),
+            'reports.transactionreport': TransactionReport.get_system_attrs(),
         }
 
         return Response(props)
