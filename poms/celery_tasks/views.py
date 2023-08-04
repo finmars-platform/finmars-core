@@ -8,7 +8,7 @@ from rest_framework.viewsets import ModelViewSet
 from celery.result import AsyncResult
 
 from poms.common.filters import CharFilter
-from poms.common.views import AbstractApiView
+from poms.common.views import AbstractApiView, AbstractViewSet
 from poms.users.filters import OwnerByMasterUserFilter
 
 from .filters import CeleryTaskDateRangeFilter, CeleryTaskQueryFilter
@@ -159,3 +159,18 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         task.save()
 
         return Response({"status": "ok"})
+
+
+class CeleryStatsViewSet(AbstractViewSet):
+
+    def list(self, request, *args, **kwargs):
+
+        from poms_app.celery import app
+
+        i = app.control.inspect()
+        d = i.active()
+        workers = list(d.keys()) if d else []
+
+        stats = i.stats()
+
+        return Response(stats)

@@ -136,6 +136,12 @@ router.register(
     "CeleryTask",
 )
 router.register(
+    r"tasks/stats",
+    celery_tasks.CeleryStatsViewSet,
+    "CeleryStats",
+)
+
+router.register(
     r"configuration/configuration",
     configuration.ConfigurationViewSet,
 )
