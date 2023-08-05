@@ -5,7 +5,7 @@ import sys
 from celery import Celery
 from celery.signals import task_failure
 import resource
-
+from celery.signals import worker_ready
 # from django.conf import settings
 # from poms.common.kombu_serializers import register_pickle_signed
 # register_pickle_signed(salt='poms-pickle-signed', compress=True)
@@ -55,10 +55,8 @@ def handle_task_failure(**kwargs):
     except Exception as e:
         _l.error("Could not handle task failure %s" % e)
 
-@worker_process_init.connect
+@worker_ready.connect
 def configure_worker(sender=None, **kwargs):
-
-
 
     from celery.utils.log import get_task_logger
     logger = get_task_logger('poms.celery_tasks')
