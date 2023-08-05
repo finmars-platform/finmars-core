@@ -58,8 +58,12 @@ def handle_task_failure(**kwargs):
 @worker_process_init.connect
 def configure_worker(sender=None, **kwargs):
 
+
+
     from celery.utils.log import get_task_logger
     logger = get_task_logger(__name__)
+
+    logger.info("worker_process_init")
 
     if platform.system() == 'Linux':
 

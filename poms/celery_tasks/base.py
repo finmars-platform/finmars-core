@@ -31,8 +31,8 @@ class BaseTask(_Task):
 
     max_memory = settings.WORKER_MAX_MEMORY
 
-    def __init__(self):
-        self.run = self.decorated_run(self.run)
+    # def __init__(self):
+        # self.run = self.decorated_run(self.run)
 
     def print_memory_usage(self, ):
         process = psutil.Process()
