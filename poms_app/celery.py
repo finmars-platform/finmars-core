@@ -61,7 +61,7 @@ def configure_worker(sender=None, **kwargs):
 
 
     from celery.utils.log import get_task_logger
-    logger = get_task_logger('celery')
+    logger = get_task_logger('poms.celery_tasks')
 
     logger.info("worker_process_init")
 
