@@ -113,7 +113,7 @@ class BaseTask(_Task):
             from poms.celery_tasks.models import CeleryTask
 
             self.finmars_task.status = CeleryTask.STATUS_ERROR
-            self.finmars_task.result = {"exception": str(exc), "traceback": einfo.traceback}
+            self.finmars_task.result_object = {"exception": str(exc), "traceback": einfo.traceback}
             self.finmars_task.error_message = str(exc)
             self.finmars_task.mark_task_as_finished()
             self.finmars_task.save()
