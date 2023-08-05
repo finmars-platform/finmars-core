@@ -74,16 +74,19 @@ echo "[${timestamp}] Start celery"
 
 : "${WORKERS:="2"}"
 
-if [ "$WORKERS" = "2" ]
-then
-    cp /etc/supervisor/conf.d/celery_2_workers.conf /etc/supervisor/conf.d/celery.conf
-elif [ "$WORKERS" = "4" ]
+
+if [ "$WORKERS" = "4" ]
 then
     cp /etc/supervisor/conf.d/celery_4_workers.conf /etc/supervisor/conf.d/celery.conf
+elif [ "$WORKERS" = "2" ]
+then
+    cp /etc/supervisor/conf.d/celery_2_workers.conf /etc/supervisor/conf.d/celery.conf
 else
     echo "Invalid number of workers specified"
     exit 1
 fi
+
+echo "Number of workers: $WORKERS"
 
 supervisord
 
