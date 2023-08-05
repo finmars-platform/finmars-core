@@ -136,7 +136,11 @@ class BaseTask(_Task):
                 pass # TODO fix it later
                 # self.finmars_task.result_object = retval
             else:
-                self.finmars_task.result_object = {"message": "Task finished successfully. No results returned"}
+                result_object = {
+                    "message": "Task finished successfully. No results returned"
+                }
+                self.finmars_task.result_object = result_object
+
             self.finmars_task.mark_task_as_finished()
             self.finmars_task.save()
 
