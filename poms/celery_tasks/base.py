@@ -1,3 +1,5 @@
+import sys
+
 from celery import Task as _Task
 from celery.signals import task_prerun
 from celery.utils.log import get_task_logger
@@ -41,24 +43,28 @@ class BaseTask(_Task):
 
         if platform.system() == 'Linux':
 
-            self.print_memory_usage()
-            logger.info('decorated_run limit %s MB' % (settings.WORKER_MAX_MEMORY  / 1024 / 1024))
+            if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
+                logger.info("Memory Limit is not set. Probably Test or Migration context")
+            else:
 
-            soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_AS)
-            logger.info(f"Soft limit: {soft_limit / 1024 / 1024} MB")
-            logger.info(f"Hard limit: {hard_limit / 1024 / 1024} MB")
+                self.print_memory_usage()
+                logger.info('decorated_run limit %s MB' % (settings.WORKER_MAX_MEMORY  / 1024 / 1024))
 
-            new_limit = settings.WORKER_MAX_MEMORY
-            new_limit_mb = new_limit / 1024 / 1024
+                soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_AS)
+                logger.info(f"Soft limit: {soft_limit / 1024 / 1024} MB")
+                logger.info(f"Hard limit: {hard_limit / 1024 / 1024} MB")
 
-            # Make sure we're not trying to set the limit beyond the current hard limit
-            resource.setrlimit(resource.RLIMIT_AS, (new_limit, resource.RLIM_INFINITY))
-            logger.info(f"New limit set to {new_limit_mb} MB")
+                new_limit = settings.WORKER_MAX_MEMORY
+                new_limit_mb = new_limit / 1024 / 1024
 
-            # Get the current memory limit
-            soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_AS)
-            logger.info(f"Updated Soft limit: {soft_limit / 1024 / 1024} MB")
-            logger.info(f"Updated Hard limit: {hard_limit / 1024 / 1024} MB")
+                # Make sure we're not trying to set the limit beyond the current hard limit
+                resource.setrlimit(resource.RLIMIT_AS, (new_limit, resource.RLIM_INFINITY))
+                logger.info(f"New limit set to {new_limit_mb} MB")
+
+                # Get the current memory limit
+                soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_AS)
+                logger.info(f"Updated Soft limit: {soft_limit / 1024 / 1024} MB")
+                logger.info(f"Updated Hard limit: {hard_limit / 1024 / 1024} MB")
         else:
             logger.info("Running not on Linux. Memory limit not changed.")
 
