@@ -510,9 +510,9 @@ WORKER_MAX_MEMORY = ENV_INT('WORKER_MAX_MEMORY', 500) * 1024 * 1024  # 500 MB
 CELERY_WORKER_LOG_COLOR = True
 CELERY_WORKER_LOG_FORMAT = "[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s"
 try:
-    CELERY_WORKER_CONCURRENCY = int(os.environ.get("CELERY_WORKER_CONCURRENCY", "1"))
+    CELERY_WORKER_CONCURRENCY = int(os.environ.get("CELERY_WORKER_CONCURRENCY", "2"))
 except (ValueError, TypeError):
-    CELERY_WORKER_CONCURRENCY = 1
+    CELERY_WORKER_CONCURRENCY = 2
 
 # CELERY_ACKS_LATE: If this is True, the task messages will be acknowledged after the task has been executed, not just before, which is the default behavior.
 # This means the tasks can be recovered when a worker crashes, as the tasks won't be removed from the queue until they are completed.
