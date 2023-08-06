@@ -122,6 +122,7 @@ INSTALLED_APPS = [
 
 if USE_DEBUGGER:
     INSTALLED_APPS.append("debug_toolbar")
+    INSTALLED_APPS.append("pympler")
 
 # MIDDLEWARE_CLASSES = [
 MIDDLEWARE = [
@@ -147,12 +148,15 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "corsheaders.middleware.CorsPostCsrfMiddleware",
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
+
     # 'poms.common.middleware.LogRequestsMiddleware',
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
 ]
 
 if USE_DEBUGGER:
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
+    MIDDLEWARE.append("poms.common.middleware.MemoryMiddleware")  # memory tracking
+
 
 PROFILER = ENV_BOOL("PROFILER", False)
 
@@ -289,17 +293,17 @@ USE_WEBSOCKETS = ENV_BOOL("USE_WEBSOCKETS", False)
 WEBSOCKET_HOST = ENV_STR("WEBSOCKET_HOST", "ws://0.0.0.0:6969")
 WEBSOCKET_APP_TOKEN = ENV_STR("WEBSOCKET_APP_TOKEN", "943821230")
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-    },
-    "throttling": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-    },
-    "http_session": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-    },
-}
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+#     },
+#     "throttling": {
+#         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+#     },
+#     "http_session": {
+#         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+#     },
+# }
 
 # Maybe in future, we will return to Redis
 # CACHES = {
@@ -431,10 +435,10 @@ REST_FRAMEWORK = {
     #     'rest_framework.parsers.FormParser',
     #     'rest_framework.parsers.MultiPartParser',
     # ),
-    "DEFAULT_THROTTLE_CLASSES": (
-        "poms.api.throttling.AnonRateThrottleExt",
-        "poms.api.throttling.UserRateThrottleExt",
-    ),
+    # "DEFAULT_THROTTLE_CLASSES": (
+    #     "poms.api.throttling.AnonRateThrottleExt",
+    #     "poms.api.throttling.UserRateThrottleExt",
+    # ),
     "DEFAULT_THROTTLE_RATES": {
         # 'anon': '5/second',
         # 'user': '50/second',
@@ -610,6 +614,7 @@ if USE_DEBUGGER:
         "debug_toolbar.panels.logging.LoggingPanel",
         "debug_toolbar.panels.redirects.RedirectsPanel",
         "debug_toolbar.panels.profiling.ProfilingPanel",
+        "pympler.panels.MemoryPanel",
     ]
 
     DEBUG_TOOLBAR_CONFIG = {

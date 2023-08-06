@@ -279,3 +279,41 @@ class LogRequestsMiddleware:
         _l.info('LogRequestsMiddleware. response time %s' % elapsed)
 
         return response
+
+
+
+from pympler.muppy import summary, get_objects
+from memory_profiler import profile
+
+class MemoryMiddleware(object):
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    @profile
+    def __call__(self, request):
+        # Code to be executed for each request before the view (and later middleware) are called.
+        all_objects = get_objects()
+
+        before = summary.summarize(all_objects)
+        # before = sum([x[2] for x in summary.summarize(all_objects)])
+        # before.sort(key=lambda x: x[2], reverse=True)  # Sort by size
+        # print('Memory consumption before request:')
+        for item in before[:5]:
+            print(item)
+
+        response = self.get_response(request)
+
+        # Code to be executed for each request/response after the view is called.
+        # all_objects = get_objects()
+        # after = summary.summarize(all_objects)
+        # after = sum([x[2] for x in summary.summarize(all_objects)])
+
+        # print(f'Memory consumption: {after - before} bytes')
+        # after.sort(key=lambda x: x[2], reverse=True)  # Sort by size
+        # # print('Memory consumption after request:')
+        # for item in after[:10]:
+        #     print(item)
+
+
+        return response

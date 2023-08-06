@@ -121,3 +121,4 @@ drf_yasg==1.21.5
 sentry-sdk==1.28.1
 coverage==7.2.7
 haikunator==2.1.0
+memory-profile==5.9.4
