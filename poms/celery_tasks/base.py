@@ -1,3 +1,5 @@
+import sys
+
 from celery import Task as _Task
 from celery.utils.log import get_task_logger
 from django.utils.timezone import now
@@ -95,24 +97,34 @@ class BaseTask(_Task):
         self.finmars_task.add_attachment(file_report.id)
 
     def __call__(self, *args, **kwargs):
-        pr = cProfile.Profile()
-        pr.enable()
 
-        # call the actual task
-        result = super().__call__(*args, **kwargs)
+        if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
+            logger.info("Memory Limit is not set. Probably Test or Migration context")
 
-        pr.disable()
-        s = io.StringIO()
-        ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
-        ps.print_stats()
+            # call the actual task
+            result = super().__call__(*args, **kwargs)
 
-        # Here s.getvalue() contains the profiling info, you can log it,
-        # save it to a file or do whatever you want with it.
-        current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-        verbose_name = 'Execution Profile %s (Task %s).txt' % (current_date_time, self.finmars_task.id)
-        file_name = 'execution_profile_%s_%s.txt' % (current_date_time, self.finmars_task.id)
+        else:
 
-        self.generate_file(verbose_name, file_name, s.getvalue())
+
+            pr = cProfile.Profile()
+            pr.enable()
+
+            # call the actual task
+            result = super().__call__(*args, **kwargs)
+
+            pr.disable()
+            s = io.StringIO()
+            ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
+            ps.print_stats()
+
+            # Here s.getvalue() contains the profiling info, you can log it,
+            # save it to a file or do whatever you want with it.
+            current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+            verbose_name = 'Execution Profile %s (Task %s).txt' % (current_date_time, self.finmars_task.id)
+            file_name = 'execution_profile_%s_%s.txt' % (current_date_time, self.finmars_task.id)
+
+            self.generate_file(verbose_name, file_name, s.getvalue())
 
 
 
