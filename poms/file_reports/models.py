@@ -21,7 +21,7 @@ class FileReport(models.Model):
     master_user = models.ForeignKey('users.MasterUser', verbose_name=gettext_lazy('master user'),
                                     on_delete=models.CASCADE)
 
-    file_url = models.TextField(blank=True, default='', verbose_name=gettext_lazy('File URL'))
+    file_url = models.TextField(blank=True, default='', verbose_name=gettext_lazy('File URL')) # probably deprecated
     file_name = models.CharField(max_length=255, blank=True, default='')
     notes = models.TextField(blank=True, default='', verbose_name=gettext_lazy('notes'))
     content_type = models.CharField(max_length=255, blank=True, default='', )
@@ -43,7 +43,7 @@ class FileReport(models.Model):
             encoded_text = text.encode('utf-8')
 
 
-            storage.save(file_url, ContentFile(encoded_text))
+            storage.save('/' + settings.BASE_API_URL + '' + file_url, ContentFile(encoded_text))
 
 
         except Exception as e:
@@ -51,6 +51,9 @@ class FileReport(models.Model):
             _l.info('upload_file.Exception traceback %s' % traceback.format_exc())
 
         self.file_url = file_url
+
+        _l.info('FileReport.upload_file.file_url %s' % file_url)
+
 
         return file_url
 
@@ -60,8 +63,19 @@ class FileReport(models.Model):
 
         print('get_file self.file_url %s' % self.file_url)
 
+        path = self.file_url
+
+        if not path:
+            path = settings.BASE_API_URL
+        else:
+            if path[0] == '/':
+                path = settings.BASE_API_URL + path
+            else:
+                path = settings.BASE_API_URL + '/' + path
+
+
         try:
-            with storage.open(self.file_url, 'rb') as f:
+            with storage.open(path, 'rb') as f:
 
                 result = f.read()
 
@@ -71,4 +85,4 @@ class FileReport(models.Model):
         return result
 
     def _get_path(self, master_user, file_name):
-        return '%s/.system/file_reports/%s' % (settings.BASE_API_URL, file_name)
+        return '/.system/file_reports/%s' % (file_name)
