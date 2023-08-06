@@ -506,13 +506,14 @@ else:
     CELERY_RESULT_EXPIRES = 60
     CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = True
 
-WORKER_MAX_MEMORY = ENV_INT('WORKER_MAX_MEMORY', 500) * 1024 * 1024  # 500 MB
+CELERY_MAX_MEMORY_PER_CHILD = ENV_INT("CELERY_MAX_MEMORY_PER_CHILD", 512 * 1024) # Maximum amount of resident memory, in KiB
+CELERY_MAX_TASKS_PER_CHILD = ENV_INT("CELERY_MAX_TASKS_PER_CHILD", 1) # Maximum number of tasks a pool worker can execute before it’s terminated and replaced by a new worker.
+
 CELERY_WORKER_LOG_COLOR = True
 CELERY_WORKER_LOG_FORMAT = "[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s"
-try:
-    CELERY_WORKER_CONCURRENCY = int(os.environ.get("CELERY_WORKER_CONCURRENCY", "2"))
-except (ValueError, TypeError):
-    CELERY_WORKER_CONCURRENCY = 2
+
+CELERY_WORKER_CONCURRENCY = ENV_INT("CELERY_WORKER_CONCURRENCY", 2) # Number of child processes processing the queue. The default is the number of CPUs available on your system.
+
 
 # CELERY_ACKS_LATE: If this is True, the task messages will be acknowledged after the task has been executed, not just before, which is the default behavior.
 # This means the tasks can be recovered when a worker crashes, as the tasks won't be removed from the queue until they are completed.
@@ -524,7 +525,7 @@ CELERY_ACKS_LATE = True
 # This increases the resiliency of the system as the tasks are not lost, they are retried.
 # But, it can also increase the load on the system as tasks could potentially be executed multiple times in the event of frequent worker failures.
 # Make sure your tasks are safe to be retried in such cases (idempotent).
-CELERY_TASK_REJECT_ON_WORKER_LOST = False # Make tasks rejected
+CELERY_TASK_REJECT_ON_WORKER_LOST = False  # Make tasks rejected
 
 # ===================
 # = Django Storages =
@@ -639,7 +640,6 @@ REDOC_SETTINGS = {
 }
 
 VAULT_TOKEN = ENV_STR("VAULT_TOKEN", None)
-
 
 # SENTRY
 
