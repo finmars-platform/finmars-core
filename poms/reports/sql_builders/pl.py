@@ -3964,7 +3964,7 @@ class PLReportBuilderSql:
         _l.info("Going to run %s tasks" % len(tasks))
 
         # Run the group of tasks
-        job = group(self.build.s(task.id) for task in tasks)
+        job = group(self.build.s(task_id=task.id) for task in tasks)
 
         group_result = job.apply_async()
         # Wait for all tasks to finish and get their results

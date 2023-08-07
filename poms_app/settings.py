@@ -155,7 +155,7 @@ MIDDLEWARE = [
 
 if USE_DEBUGGER:
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
-    MIDDLEWARE.append("poms.common.middleware.MemoryMiddleware")  # memory tracking
+    # MIDDLEWARE.append("poms.common.middleware.MemoryMiddleware")  # memory tracking
 
 
 PROFILER = ENV_BOOL("PROFILER", False)
