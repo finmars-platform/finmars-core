@@ -6,7 +6,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.db import connection
 
-from celery import group, shared_task
+from celery import group
 
 from poms.accounts.models import Account, AccountType
 from poms.celery_tasks import finmars_task
@@ -132,11 +132,12 @@ class BalanceReportBuilderSql:
 
     def build_sync(self, task_id):
 
+        celery_task = CeleryTask.objects.filtert(id=task_id).first()
+        if not celery_task:
+            _l.error(f"Invalid celery task_id={task_id}")
+            return
+
         try:
-
-            st = time.perf_counter()
-
-            celery_task = CeleryTask.objects.get(id=task_id)
 
             report_settings = celery_task.options_object
 
@@ -2286,10 +2287,7 @@ class BalanceReportBuilderSql:
         )
 
     def add_data_items_account_types(self, accounts):
-        ids = []
-
-        for account in accounts:
-            ids.append(account.type_id)
+        ids = [account.type_id for account in accounts]
 
         self.instance.item_account_types = (
             AccountType.objects.prefetch_related(

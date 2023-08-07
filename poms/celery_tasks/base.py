@@ -21,11 +21,12 @@ class BaseTask(_Task):
     def log(self, message):
         # Append the message to the task's log
 
-        if not self.task.log:
-            self.finmars_task.log = ''
+        if hasattr(self, 'finmars_task') and hasattr(self, 'task'):
+            if not self.task.log:
+                self.finmars_task.log = ''
 
-        self.finmars_task.log = self.task.log + message + '\n'
-        self.finmars_task.save()
+            self.finmars_task.log = self.task.log + message + '\n'
+            self.finmars_task.save()
 
     # max_memory = settings.WORKER_MAX_MEMORY
 
@@ -121,8 +122,9 @@ class BaseTask(_Task):
             # Here s.getvalue() contains the profiling info, you can log it,
             # save it to a file or do whatever you want with it.
             current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-            verbose_name = 'Execution Profile %s (Task %s).txt' % (current_date_time, self.finmars_task.id)
-            file_name = 'execution_profile_%s_%s.txt' % (current_date_time, self.finmars_task.id)
+            task_id = self.finmars_task.id if hasattr(self, 'finmars_task') else 'unknown'
+            verbose_name = f'Execution Profile {current_date_time} (Task {task_id}).txt'
+            file_name = f'execution_profile_{current_date_time}_{task_id}.txt'
 
             self.generate_file(verbose_name, file_name, s.getvalue())
 
@@ -184,10 +186,7 @@ class BaseTask(_Task):
             from poms.celery_tasks.models import CeleryTask
 
             self.finmars_task.status = CeleryTask.STATUS_DONE
-            if retval:
-                pass  # TODO fix it later
-                # self.finmars_task.result_object = retval
-            else:
+            if not retval:
                 result_object = {
                     "message": "Task finished successfully. No results returned"
                 }

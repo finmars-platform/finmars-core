@@ -18,7 +18,6 @@ import poms.counterparties.urls as counterparty_router
 import poms.credentials.views as credentials
 import poms.csv_import.urls as csv_import_router
 import poms.currencies.urls as currency_router
-import poms.currencies.views as currencies
 import poms.explorer.urls as explorer_router
 import poms.file_reports.views as file_reports
 import poms.history.views as history
@@ -46,7 +45,6 @@ import poms.vault.urls as vault_router
 import poms.widgets.views as widgets
 from poms.auth_tokens.views import (
     CreateMasterUser,
-    CreateMember,
     CreateUser,
     DeleteMember,
     MasterUserChangeOwner,
