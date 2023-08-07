@@ -371,6 +371,25 @@ class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
 
 class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
 
+    def path(self, name):
+
+        if name[0] == '/':
+            return settings.MEDIA_ROOT + name
+
+        return settings.MEDIA_ROOT + '/' + name
+
+
+    def listdir(self, path):
+        path = self.path(path)
+        directories, files = [], []
+        with os.scandir(path) as entries:
+            for entry in entries:
+                if entry.is_dir():
+                    directories.append(entry.name)
+                else:
+                    files.append(entry.name)
+        return directories, files
+
     def delete_directory(self, directory_path):
         shutil.rmtree(os.path.join(settings.MEDIA_ROOT, directory_path))
 
@@ -388,6 +407,7 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
 
         zip_file_path = download_local_folder_as_zip(path)
         return zip_file_path
+
 
 
 def get_storage():
