@@ -141,7 +141,7 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
                             description=text)
 
         transaction.on_commit(lambda: simple_import.apply_async(
-            kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
+            kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}, queue='backend-background-queue'))
 
 
     except Exception as e:

@@ -4049,7 +4049,7 @@ def _run_data_import(evaluator, filepath, scheme):
         celery_task.options_object = options_object
         celery_task.save()
 
-        simple_import.apply(kwargs={"task_id": celery_task.id})
+        simple_import.apply(kwargs={"task_id": celery_task.id}, queue='backend-background-queue')
 
         return {"task_id": celery_task.id}
 
@@ -4122,7 +4122,7 @@ def _run_transaction_import(evaluator, filepath, scheme):
         celery_task.options_object = options_object
         celery_task.save()
 
-        transaction_import.apply(kwargs={"task_id": celery_task.id})
+        transaction_import.apply(kwargs={"task_id": celery_task.id}, queue='backend-background-queue')
 
         return None
 

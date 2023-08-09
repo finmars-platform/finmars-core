@@ -4248,7 +4248,8 @@ def complex_transaction_csv_file_import_by_procedure(
 
                     transaction.on_commit(
                         lambda: transaction_import.apply_async(
-                            kwargs={"task_id": sub_task.id}
+                            kwargs={"task_id": sub_task.id},
+                            queue='backend-background-queue'
                         )
                     )
 
@@ -4356,7 +4357,8 @@ def complex_transaction_csv_file_import_by_procedure_json(
                 kwargs={
                     "task_id": celery_task.id,
                     "procedure_instance_id": procedure_instance_id,
-                }
+                },
+                queue='backend-background-queue'
             )
         )
 

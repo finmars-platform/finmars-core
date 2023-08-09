@@ -146,7 +146,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         celery_app.send_task(
             "celery_tasks.bulk_delete",
             kwargs={"task_id": celery_task.id},
-            queue="backend-delete-queue",
+            queue="backend-background-queue",
         )
 
         _l.info(f"{count} complex transactions were deleted")
