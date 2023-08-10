@@ -137,8 +137,8 @@ class BaseTask(_Task):
         try:
 
             logger.info('before_start.task_id %s' % task_id)
-            logger.info('before_start.args %s' % args)
-            logger.info('before_start.kwargs %s' % kwargs)
+            # logger.info('before_start.args %s' % args)
+            # logger.info('before_start.kwargs %s' % kwargs)
 
             from poms.celery_tasks.models import CeleryTask
 
