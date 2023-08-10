@@ -151,9 +151,9 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
         _l.info(f"{count} complex transactions were deleted")
 
-        task.notes = "%s Transactions were aborted \n" % count
-
-        task.notes = task.notes + (", ".join(str(x) for x in codes))
+        task.notes = f"{count} Transactions were aborted \n" + (
+            ", ".join(str(x) for x in codes)
+        )
         task.status = CeleryTask.STATUS_TRANSACTIONS_ABORTED
 
         task.save()
@@ -162,14 +162,12 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
 
 class CeleryStatsViewSet(AbstractViewSet):
-
     def list(self, request, *args, **kwargs):
-
         from poms_app.celery import app
 
         i = app.control.inspect()
-        d = i.active()
-        workers = list(d.keys()) if d else []
+        # d = i.active()
+        # workers = list(d.keys()) if d else []
 
         stats = i.stats()
 

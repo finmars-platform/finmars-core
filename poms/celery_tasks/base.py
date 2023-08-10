@@ -1,33 +1,17 @@
+import cProfile
+import io
+import pstats
 import sys
+
+from django.utils.timezone import now
 
 from celery import Task as _Task
 from celery.utils.log import get_task_logger
-from django.utils.timezone import now
 
 logger = get_task_logger(__name__)
-import cProfile
-import pstats
-import io
 
 
 class BaseTask(_Task):
-
-    def update_progress(self, progress):
-
-        self.finmars_task.progress = progress
-
-        self.finmars_task.save()
-
-    def log(self, message):
-        # Append the message to the task's log
-
-        if hasattr(self, 'finmars_task') and hasattr(self, 'task'):
-            if not self.task.log:
-                self.finmars_task.log = ''
-
-            self.finmars_task.log = self.task.log + message + '\n'
-            self.finmars_task.save()
-
     # max_memory = settings.WORKER_MAX_MEMORY
 
     # def __init__(self):
@@ -39,20 +23,17 @@ class BaseTask(_Task):
     #     logger.info(f"Current memory usage: {mem_info.rss / 1024 / 1024} MB")
 
     # def decorated_run(self, func):
-    #
     #     if platform.system() == 'Linux':
     #
     #         if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
     #             logger.info("Memory Limit is not set. Probably Test or Migration context")
     #         else:
-    #
     #             self.print_memory_usage()
     #             logger.info('decorated_run limit %s MB' % (settings.WORKER_MAX_MEMORY  / 1024 / 1024))
     #
     #             soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_AS)
     #             logger.info(f"Soft limit: {soft_limit / 1024 / 1024} MB")
     #             logger.info(f"Hard limit: {hard_limit / 1024 / 1024} MB")
-    #
     #             new_limit = settings.WORKER_MAX_MEMORY
     #             new_limit_mb = new_limit / 1024 / 1024
     #
@@ -66,7 +47,6 @@ class BaseTask(_Task):
     #             logger.info(f"Updated Hard limit: {hard_limit / 1024 / 1024} MB")
     #     else:
     #         logger.info("Running not on Linux. Memory limit not changed.")
-
     # return func
 
     # def run(self, *args, **kwargs):
@@ -77,28 +57,30 @@ class BaseTask(_Task):
     #     # resource.setrlimit(resource.RLIMIT_AS, (self.max_memory, resource.RLIM_INFINITY))
     #     return super().run(*args, **kwargs)
 
-    def generate_file(self, verbose_name, file_name, text):
+    finmars_task = None
 
+    def _generate_file(self, verbose_name, file_name, text):
         from poms.file_reports.models import FileReport
+
+        logger.info(f"generate_file uploading file {file_name} verbose {verbose_name}")
+
         file_report = FileReport()
-
-        logger.info('TransactionImportProcess.generate_json_report uploading file')
-
-        file_report.upload_file(file_name=file_name, text=text,
-                                master_user=self.finmars_task.master_user)
+        file_report.upload_file(
+            file_name=file_name,
+            text=text,
+            master_user=self.finmars_task.master_user,
+        )
         file_report.master_user = self.finmars_task.master_user
         file_report.name = verbose_name
         file_report.file_name = file_name
-        file_report.type = 'task.metadata'
-        file_report.notes = 'System File'
-        file_report.content_type = 'plain/txt'
-
+        file_report.type = "task.metadata"
+        file_report.notes = "System File"
+        file_report.content_type = "plain/txt"
         file_report.save()
 
         self.finmars_task.add_attachment(file_report.id)
 
     def __call__(self, *args, **kwargs):
-
         if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
             logger.info("Memory Limit is not set. Probably Test or Migration context")
 
@@ -106,8 +88,6 @@ class BaseTask(_Task):
             result = super().__call__(*args, **kwargs)
 
         else:
-
-
             pr = cProfile.Profile()
             pr.enable()
 
@@ -116,88 +96,104 @@ class BaseTask(_Task):
 
             pr.disable()
             s = io.StringIO()
-            ps = pstats.Stats(pr, stream=s).sort_stats('cumulative')
+            ps = pstats.Stats(pr, stream=s).sort_stats("cumulative")
             ps.print_stats()
 
             # Here s.getvalue() contains the profiling info, you can log it,
             # save it to a file or do whatever you want with it.
-            current_date_time = now().strftime("%Y-%m-%d-%H-%M")
-            task_id = self.finmars_task.id if hasattr(self, 'finmars_task') else 'unknown'
-            verbose_name = f'Execution Profile {current_date_time} (Task {task_id}).txt'
-            file_name = f'execution_profile_{current_date_time}_{task_id}.txt'
+            text = s.getvalue()
+            if self.finmars_task and text:
+                current_date_time = now().strftime("%Y-%m-%d-%H-%M")
+                task_id = self.finmars_task.id
+                verbose_name = (
+                    f"Execution Profile {current_date_time} (Task {task_id}).txt"
+                )
+                file_name = f"execution_profile_{current_date_time}_{task_id}.txt"
 
-            self.generate_file(verbose_name, file_name, s.getvalue())
-
-
+                self._generate_file(verbose_name, file_name, text)
 
         return result
 
+    def _update_celery_task_with_run_info(self, kwargs: dict):
+        from poms.celery_tasks.models import CeleryTask
+
+        task_id = kwargs.get("task_id")
+        if not task_id:
+            return None
+
+        task = CeleryTask.objects.filter(id=task_id).first()
+        if not task:
+            return None
+
+        task.status = CeleryTask.STATUS_PENDING
+        task.celery_task_id = self.request.id
+        task.worker_name = self.request.hostname
+        task.save()
+
+        return task
+
     def before_start(self, task_id, args, kwargs):
+        logger.info(f"before_start task_id={task_id} args={args} kwargs={kwargs}")
 
-        try:
+        if kwargs:
+            self.finmars_task = self._update_celery_task_with_run_info(kwargs)
 
-            logger.info('before_start.task_id %s' % task_id)
-            # logger.info('before_start.args %s' % args)
-            # logger.info('before_start.kwargs %s' % kwargs)
+        super().before_start(task_id, args, kwargs)
 
-            from poms.celery_tasks.models import CeleryTask
+    def _update_celery_task_with_error(self, exc, einfo):
+        from poms.celery_tasks.models import CeleryTask
 
-            task = CeleryTask.objects.get(id=kwargs['task_id'])
-            task.status = CeleryTask.STATUS_PENDING
-
-            task.celery_task_id = self.request.id
-
-            task.worker_name = self.request.hostname
-
-            task.save()
-
-            self.finmars_task = task
-
-            logger.info(f"Task {task_id} is now in progress")
-
-        except Exception as e:
-            logger.error("BaseTask.before_start %s" % e)
-
-        super(BaseTask, self).before_start(task_id, args, kwargs)
+        self.finmars_task.status = CeleryTask.STATUS_ERROR
+        self.finmars_task.result_object = {
+            "exception": str(exc),
+            "traceback": einfo.traceback,
+        }
+        self.finmars_task.error_message = str(exc)
+        self.finmars_task.mark_task_as_finished()
+        self.finmars_task.save()
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
+        logger.info(
+            f"on_failure exc={exc} task_id={task_id} args={args} "
+            f"kwargs={kwargs} einfo={einfo}"
+        )
 
-        try:
+        if self.finmars_task:
+            self._update_celery_task_with_error(exc, einfo)
 
-            from poms.celery_tasks.models import CeleryTask
+        super().on_failure(exc, task_id, args, kwargs, einfo)
 
-            self.finmars_task.status = CeleryTask.STATUS_ERROR
-            self.finmars_task.result_object = {"exception": str(exc), "traceback": einfo.traceback}
-            self.finmars_task.error_message = str(exc)
-            self.finmars_task.mark_task_as_finished()
-            self.finmars_task.save()
+    def _update_celery_task_with_success(self, retval, task_id):
+        from poms.celery_tasks.models import CeleryTask
 
-            logger.info(f"Task {task_id} is now in error")
+        self.finmars_task.status = CeleryTask.STATUS_DONE
+        if not retval:
+            result_object = {
+                "message": f"Task {task_id} finished successfully. No results"
+            }
+            self.finmars_task.result_object = result_object
 
-        except Exception as e:
-            logger.error("BaseTask.on_failure %s" % e)
-
-        super(BaseTask, self).on_failure(exc, task_id, args, kwargs, einfo)
+        self.finmars_task.mark_task_as_finished()
+        self.finmars_task.save()
 
     def on_success(self, retval, task_id, args, kwargs):
+        logger.info(
+            f"on_success retval={retval} task_id={task_id} args={args} kwargs={kwargs}"
+        )
 
-        try:
+        if self.finmars_task:
+            self._update_celery_task_with_success(retval, task_id)
 
-            from poms.celery_tasks.models import CeleryTask
+        super().on_success(retval, task_id, args, kwargs)
 
-            self.finmars_task.status = CeleryTask.STATUS_DONE
-            if not retval:
-                result_object = {
-                    "message": "Task finished successfully. No results returned"
-                }
-                self.finmars_task.result_object = result_object
-
-            self.finmars_task.mark_task_as_finished()
+    def update_progress(self, progress):
+        if self.finmars_task:
+            self.finmars_task.progress = progress
             self.finmars_task.save()
 
-            logger.info(f"Task {task_id} is now in success. Retval {retval}")
-
-        except Exception as e:
-            logger.error("BaseTask.on_success %s" % e)
-
-        super(BaseTask, self).on_success(retval, task_id, args, kwargs)
+    # CeleryTask has no log attribute!
+    # def log(self, message):
+    #     # Append the message to the task's log
+    #     if self.finmars_task:
+    #         self.finmars_task.log += f"{message} \n"
+    #         self.finmars_task.save()
