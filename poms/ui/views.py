@@ -82,6 +82,18 @@ class ComplexTransactionUserFieldViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
     ]
 
+    @action(detail=False, methods=['get'], url_path='primary')
+    def primary(self, request, pk=None):
+        from poms.configuration.models import Configuration
+        active_configuration = Configuration.objects.get(is_primary=True)
+
+        queryset = self.get_queryset().filter(configuration_code=active_configuration.configuration_code)
+
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        return self.get_paginated_response(serializer.data)
+
 
 class TransactionUserFieldFilterSet(FilterSet):
     id = NoOpFilter()
@@ -104,6 +116,18 @@ class TransactionUserFieldViewSet(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
+
+    @action(detail=False, methods=['get'], url_path='primary')
+    def primary(self, request, pk=None):
+        from poms.configuration.models import Configuration
+        active_configuration = Configuration.objects.get(is_primary=True)
+
+        queryset = self.get_queryset().filter(configuration_code=active_configuration.configuration_code)
+
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        return self.get_paginated_response(serializer.data)
 
 
 class TemplateLayoutFilterSet(FilterSet):
@@ -225,6 +249,18 @@ class InstrumentUserFieldViewSet(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
+
+    @action(detail=False, methods=['get'], url_path='primary')
+    def primary(self, request, pk=None):
+        from poms.configuration.models import Configuration
+        active_configuration = Configuration.objects.get(is_primary=True)
+
+        queryset = self.get_queryset().filter(configuration_code=active_configuration.configuration_code)
+
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        return self.get_paginated_response(serializer.data)
 
 
 class TemplateLayoutFilterSet(FilterSet):
