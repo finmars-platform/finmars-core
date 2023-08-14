@@ -2700,9 +2700,10 @@ def _set_instrument_user_attribute(evaluator, instrument, user_code, value):
                             attribute_type=attribute.attribute_type, name=value
                         )
 
-                        attribute.classifier = classifier.id
+                        attribute.classifier = classifier
 
-                    except Exception:
+                    except Exception as e:
+                        _l.error("Error setting classifier: %s" % e)
                         attribute.classifier = None
 
                 if attribute.attribute_type.value_type == 40:
@@ -2710,7 +2711,7 @@ def _set_instrument_user_attribute(evaluator, instrument, user_code, value):
 
                 attribute.save()
 
-        # instrument.save()
+        instrument.save()
     except AttributeError:
         raise InvalidExpression("Invalid Property")
 
