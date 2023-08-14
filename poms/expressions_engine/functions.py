@@ -2700,10 +2700,10 @@ def _set_instrument_user_attribute(evaluator, instrument, user_code, value):
                             attribute_type=attribute.attribute_type, name=value
                         )
 
-                        attribute["classifier"] = classifier.id
+                        attribute.classifier = classifier.id
 
                     except Exception:
-                        attribute["classifier"] = None
+                        attribute.classifier = None
 
                 if attribute.attribute_type.value_type == 40:
                     attribute.value_date = value
