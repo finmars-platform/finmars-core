@@ -15,7 +15,7 @@ from tempfile import NamedTemporaryFile
 from typing import Optional
 
 import requests
-from celery import chord, shared_task
+from celery import chord
 from celery.exceptions import MaxRetriesExceededError, TimeoutError
 from dateutil.rrule import DAILY, rrule
 from django.conf import settings
