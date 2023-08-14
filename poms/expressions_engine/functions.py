@@ -2708,7 +2708,9 @@ def _set_instrument_user_attribute(evaluator, instrument, user_code, value):
                 if attribute.attribute_type.value_type == 40:
                     attribute.value_date = value
 
-        instrument.save()
+                attribute.save()
+
+        # instrument.save()
     except AttributeError:
         raise InvalidExpression("Invalid Property")
 
