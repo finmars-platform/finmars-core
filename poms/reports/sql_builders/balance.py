@@ -132,7 +132,7 @@ class BalanceReportBuilderSql:
 
     def build_sync(self, task_id):
 
-        celery_task = CeleryTask.objects.filtert(id=task_id).first()
+        celery_task = CeleryTask.objects.filter(id=task_id).first()
         if not celery_task:
             _l.error(f"Invalid celery task_id={task_id}")
             return
