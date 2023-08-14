@@ -389,4 +389,5 @@ class DraftSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
     class Meta:
         model = Draft
         fields = ['id', 'member', 'name',
+                  'modified', 'created',
                   'user_code', 'data']
