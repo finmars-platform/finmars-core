@@ -2,8 +2,10 @@
 
 stages:
   - test
+  - versioning
   - build
   - release
+  - pushVersion
 
 default:
   image: docker:20.10.16
@@ -81,6 +83,53 @@ Test:
   artifacts:
     paths:
       - ./coverage_html_report
+
+
+# This new job will handle the versioning mechanism
+Versioning:
+  image: python:3.9
+  stage: versioning
+  before_script:
+    - pip install haikunator
+  script:
+    - |
+      if [[ $CI_COMMIT_REF_NAME == *"-rc" ]]; then
+      
+        # Fancy Name Generation using Haikunator
+        FANCY_NAME=$(python -c 'from haikunator import Haikunator; print(Haikunator().haikunate(token_length=0))')
+
+        # Construct full version name
+        FULL_VERSION_NAME="$CI_COMMIT_REF_NAME-$CI_PIPELINE_ID-$FANCY_NAME"
+      
+        # Export the generated version name for later stages to use
+        echo "IMAGE_TAG=$(echo $FULL_VERSION_NAME)" >> build.env
+      
+      fi
+  artifacts:
+    reports:
+      dotenv: build.env
+  only:
+    - /^.*-rc$/
+
+
+Push Version:
+  stage: pushVersion
+  image: python:3.9
+  before_script:
+    - apt install curl git
+  script:
+    - |
+      # Create the JSON payload
+      NOTES=$(git log -1 --pretty=%B)
+      JSON_PAYLOAD="{ \"app\": \"$CI_PROJECT_NAME\", \"version\": \"$IMAGE_TAG\", \"build_number\": $CI_PIPELINE_ID, \"notes\": \"$NOTES\" }"
+
+      # Pass the payload to curl
+      curl --request POST https://license.finmars.com/api/v1/version/ \
+      --header "Content-Type: application/json" \
+      --data "$JSON_PAYLOAD"
+  only:
+    - /^.*-rc$/
+    - tags
 
 
 Build:
