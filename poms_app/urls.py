@@ -15,7 +15,8 @@ if "django.contrib.admin" in settings.INSTALLED_APPS:
 urlpatterns = urlpatterns + [
     re_path(r"^" + settings.BASE_API_URL + "/api/", include("poms.api.urls")),
     re_path(r"^" + settings.BASE_API_URL + "/healthcheck", HealthcheckView.as_view()),
-    re_path(r"^/healthcheck", HealthcheckView.as_view()), # needed for k8s healthcheck
+    re_path(r"^" + settings.BASE_API_URL + "/healthz", HealthcheckView.as_view()),
+    re_path(r"^/healthz", HealthcheckView.as_view()), # needed for k8s healthcheck
 ]
 
 if "drf_yasg" in settings.INSTALLED_APPS:
