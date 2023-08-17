@@ -17,11 +17,11 @@ BACKEND_CALLBACK_URLS = {
     "company": f"{BACKEND_URL}/{COMMON_PART}/company/callback/",
 }
 
-V1 = "api/v1"
+V1_EXPORT = "api/v1/export"
 FINMARS_DATABASE_URLS = {
-    "currency": f"{settings.FINMARS_DATABASE_URL}{V1}/export/currency",
-    "instrument": f"{settings.FINMARS_DATABASE_URL}{V1}/export/instrument",
-    "company": f"{settings.FINMARS_DATABASE_URL}{V1}/export/company",
+    "currency": f"{settings.FINMARS_DATABASE_URL}{V1_EXPORT}/currency/",
+    "instrument": f"{settings.FINMARS_DATABASE_URL}{V1_EXPORT}/instrument/",
+    "company": f"{settings.FINMARS_DATABASE_URL}{V1_EXPORT}/company/",
 }
 
 
