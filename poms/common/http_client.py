@@ -54,9 +54,9 @@ class HttpClient:
             return response.json()
 
         except RequestException as ex:
-            err_msg = response.text if response and response.text else ""
+            err_msg = response.text if response and response.text else "*"
             raise HttpClientError(
-                f"method={method} url={url} err='{err_msg}' except={ex}",
+                f"method={method} url={url} err={err_msg} ex={repr(ex)}",
             ) from ex
 
     def get(self, url, **kwargs) -> dict:
