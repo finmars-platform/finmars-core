@@ -1800,6 +1800,10 @@ class SimpleImportProcess(object):
                 instance=self.result, context=self.context
             ).data
 
+            _l.info('self.task.result_object %s' % self.task.result_object)
+
+            self.task.save()
+
             self.result.reports = []
 
             self.result.reports.append(self.generate_file_report())

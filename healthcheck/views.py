@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django.views.decorators.cache import never_cache
 from rest_framework.views import APIView
-
+from rest_framework.permissions import AllowAny
 from concurrent.futures import ThreadPoolExecutor
 from django.utils.decorators import method_decorator
 
@@ -11,7 +11,8 @@ from healthcheck.handlers import DatabasePlugin, MemoryUsagePlugin, DiskUsagePlu
 
 class HealthcheckView(APIView):
 
-    permission_classes = []
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
     _errors = None
     _plugins = None
