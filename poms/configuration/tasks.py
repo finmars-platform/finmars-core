@@ -10,6 +10,7 @@ from celery import shared_task
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.timezone import now
 
+from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyRequest, ProxyUser
 from poms.common.storage import get_storage
@@ -28,7 +29,7 @@ User = get_user_model()
 storage = get_storage()
 
 
-@shared_task(name='configuration.import_configuration', bind=True)
+@finmars_task(name='configuration.import_configuration', bind=True)
 def import_configuration(self, task_id):
     _l.info("import_configuration")
     _l.info("import_configuration %s" % task_id)
@@ -277,7 +278,7 @@ def import_configuration(self, task_id):
         task.save()
 
 
-@shared_task(name='configuration.export_configuration', bind=True)
+@finmars_task(name='configuration.export_configuration', bind=True)
 def export_configuration(self, task_id):
     _l.info("export_configuration")
 
@@ -366,7 +367,7 @@ def export_configuration(self, task_id):
         task.save()
 
 
-@shared_task(name='configuration.push_configuration_to_marketplace', bind=True)
+@finmars_task(name='configuration.push_configuration_to_marketplace', bind=True)
 def push_configuration_to_marketplace(self, task_id):
     _l.info("push_configuration_to_marketplace")
 
@@ -467,7 +468,7 @@ def push_configuration_to_marketplace(self, task_id):
         task.save()
 
 
-@shared_task(name='configuration.install_configuration_from_marketplace', bind=True)
+@finmars_task(name='configuration.install_configuration_from_marketplace', bind=True)
 def install_configuration_from_marketplace(self, **kwargs):
     task_id = kwargs.get('task_id')
 
@@ -649,7 +650,7 @@ def install_configuration_from_marketplace(self, **kwargs):
         task.save()
 
 
-@shared_task(name='configuration.finish_package_install', bind=True)
+@finmars_task(name='configuration.finish_package_install', bind=True)
 def finish_package_install(self, task_id):
     task = CeleryTask.objects.get(id=task_id)
     task.status = CeleryTask.STATUS_DONE
@@ -668,119 +669,119 @@ def finish_package_install(self, task_id):
     task.save()
 
 
-@shared_task(name='configuration.install_package_from_marketplace', bind=True)
+@finmars_task(name='configuration.install_package_from_marketplace', bind=True)
 def install_package_from_marketplace(self, task_id):
     _l.info("install_configuration_from_marketplace")
 
     task = CeleryTask.objects.get(id=task_id)
-    task.celery_task_id = self.request.id
-    task.status = CeleryTask.STATUS_PENDING
+    # task.celery_task_id = self.request.id
+    # task.status = CeleryTask.STATUS_PENDING
+    # task.save()
+
+    # try:
+
+    options_object = task.options_object
+
+    # TODO Implement when keycloak refactored
+    # access_token = options_object['access_token']
+    #
+    # del options_object['access_token']
+
+    task.options_object = options_object
     task.save()
 
+    data = {
+        'configuration_code': options_object['configuration_code'],
+        'version': options_object['version'],
+
+    }
+    headers = {}
+    # headers['Authorization'] = 'Token ' + access_token
+
+    # _l.info('push_configuration_to_marketplace.headers %s' % headers)
+
+    response = requests.post(url='https://marketplace.finmars.com/api/v1/configuration/find-release/', data=data,
+                             headers=headers)
+
+    if response.status_code != 200:
+        task.status = CeleryTask.STATUS_ERROR
+        task.error_message = str(response.text)
+        task.save()
+        raise Exception(response.text)
+
+    remote_configuration_release = response.json()
+    remote_configuration = remote_configuration_release['configuration_object']
+
+    _l.info('remote_configuration %s' % remote_configuration_release)
+
     try:
+        configuration = Configuration.objects.get(configuration_code=remote_configuration['configuration_code'])
+    except Exception as e:
+        configuration = Configuration.objects.create(configuration_code=remote_configuration['configuration_code'])
 
-        options_object = task.options_object
+    configuration.name = remote_configuration['name']
+    configuration.description = remote_configuration['description']
+    configuration.version = remote_configuration_release['version']
+    configuration.is_package = True
+    configuration.manifest = remote_configuration_release['manifest']
+    configuration.is_from_marketplace = True
 
-        # TODO Implement when keycloak refactored
-        # access_token = options_object['access_token']
-        #
-        # del options_object['access_token']
+    configuration.save()
 
-        task.options_object = options_object
-        task.save()
+    task_list = []
 
-        data = {
-            'configuration_code': options_object['configuration_code'],
-            'version': options_object['version'],
+    step = 1
 
+    options_object['dependencies'] = configuration.manifest['dependencies']
+
+    task.options_object = options_object
+    task.save()
+
+    for dependency in configuration.manifest['dependencies']:
+        module_celery_task = CeleryTask.objects.create(master_user=task.master_user,
+                                                       member=task.member,
+                                                       parent=task,
+                                                       verbose_name="Install Configuration From Marketplace",
+                                                       type='install_configuration_from_marketplace')
+
+        options_object = {
+            'configuration_code': dependency['configuration_code'],
+            'version': dependency['version'],
+            'is_package': False,
+            'step': step
+            # "access_token": access_token
         }
-        headers = {}
-        # headers['Authorization'] = 'Token ' + access_token
 
-        # _l.info('push_configuration_to_marketplace.headers %s' % headers)
-
-        response = requests.post(url='https://marketplace.finmars.com/api/v1/configuration/find-release/', data=data,
-                                 headers=headers)
-
-        if response.status_code != 200:
-            task.status = CeleryTask.STATUS_ERROR
-            task.error_message = str(response.text)
-            task.save()
-            raise Exception(response.text)
-
-        remote_configuration_release = response.json()
-        remote_configuration = remote_configuration_release['configuration_object']
-
-        _l.info('remote_configuration %s' % remote_configuration_release)
-
-        try:
-            configuration = Configuration.objects.get(configuration_code=remote_configuration['configuration_code'])
-        except Exception as e:
-            configuration = Configuration.objects.create(configuration_code=remote_configuration['configuration_code'])
-
-        configuration.name = remote_configuration['name']
-        configuration.description = remote_configuration['description']
-        configuration.version = remote_configuration_release['version']
-        configuration.is_package = True
-        configuration.manifest = remote_configuration_release['manifest']
-        configuration.is_from_marketplace = True
-
-        configuration.save()
-
-        task_list = []
-
-        step = 1
-
-        options_object['dependencies'] = configuration.manifest['dependencies']
-
-        task.options_object = options_object
-        task.save()
-
-        for dependency in configuration.manifest['dependencies']:
-            module_celery_task = CeleryTask.objects.create(master_user=task.master_user,
-                                                           member=task.member,
-                                                           parent=task,
-                                                           verbose_name="Install Configuration From Marketplace",
-                                                           type='install_configuration_from_marketplace')
-
-            options_object = {
-                'configuration_code': dependency['configuration_code'],
-                'version': dependency['version'],
-                'is_package': False,
-                'step': step
-                # "access_token": access_token
-            }
-
-            module_celery_task.options_object = options_object
-            module_celery_task.save()
-
-            # .si is important, we do not need to pass result from previous task
-            task_list.append(install_configuration_from_marketplace.si(task_id=module_celery_task.id))
-
-            step = step + 1
+        module_celery_task.options_object = options_object
+        module_celery_task.save()
 
         # .si is important, we do not need to pass result from previous task
-        task_list.append(finish_package_install.si(task_id=task.id))
+        task_list.append(install_configuration_from_marketplace.si(task_id=module_celery_task.id))
 
-        workflow = chain(*task_list)
+        step = step + 1
 
-        task.update_progress(
-            {
-                'current': 0,
-                'total': len(task.options_object['dependencies']),
-                'percent': 0,
-                'description': 'Installation started'
-            }
-        )
+    # .si is important, we do not need to pass result from previous task
+    task_list.append(finish_package_install.si(task_id=task.id))
 
-        # execute the chain
-        workflow.apply_async()
+    workflow = chain(*task_list)
 
-    except Exception as e:
+    task.update_progress(
+        {
+            'current': 0,
+            'total': len(task.options_object['dependencies']),
+            'percent': 0,
+            'description': 'Installation started'
+        }
+    )
 
-        _l.error('install_configuration_from_marketplace error: %s' % str(e))
-        _l.error('install_configuration_from_marketplace traceback: %s' % traceback.format_exc())
+    # execute the chain
+    workflow.apply_async()
 
-        task.status = CeleryTask.STATUS_ERROR
-        task.error_message = str(e)
-        task.save()
+    # except Exception as e:
+    #
+    #     _l.error('install_configuration_from_marketplace error: %s' % str(e))
+    #     _l.error('install_configuration_from_marketplace traceback: %s' % traceback.format_exc())
+    #
+    #     task.status = CeleryTask.STATUS_ERROR
+    #     task.error_message = str(e)
+    #     task.save()

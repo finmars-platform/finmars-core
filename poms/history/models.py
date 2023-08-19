@@ -4,18 +4,18 @@ import logging
 import sys
 import traceback
 
-from deepdiff import DeepDiff
 from django.contrib.contenttypes.models import ContentType
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.forms.models import model_to_dict
 from django.utils.translation import gettext_lazy
 
-from poms.common.celery import get_active_celery_task, get_active_celery_task_id
-from poms.common.middleware import get_request
+from deepdiff import DeepDiff
 from poms_app import settings
 
-# from datetime import datetime, timedelta
+from poms.common.celery import get_active_celery_task, get_active_celery_task_id
+from poms.common.middleware import get_request
+
 
 _l = logging.getLogger("poms.history")
 
@@ -351,8 +351,8 @@ def get_notes_for_history_record(user_code, content_type, serialized_data):
 
 
 def get_record_context():
-    from poms.users.models import MasterUser, Member
     from poms.common.models import ProxyRequest
+    from poms.users.models import MasterUser, Member
 
     result = {"master_user": None, "member": None, "context_url": "Unknown"}
 
@@ -365,7 +365,9 @@ def get_record_context():
 
         else:
             # _l.info(f'get_record_contex: User {request.user}')
-            result["master_user"] = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+            result["master_user"] = MasterUser.objects.get(
+                base_api_url=settings.BASE_API_URL
+            )
             result["member"] = Member.objects.get(user=request.user)
             result["context_url"] = request.path
 
@@ -510,8 +512,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
                 )
 
     except Exception as e:
-        _l.error("history.post_save error %s" % e)
-        _l.error("history.post_save traceback %s" % traceback.format_exc())
+        _l.error(f"history.post_save error {repr(e)} {traceback.format_exc()}")
 
 
 def post_delete(sender, instance, using=None, **kwargs):
@@ -524,7 +525,7 @@ def post_delete(sender, instance, using=None, **kwargs):
             post_delete_action(sender, instance)
         except Exception as e:
             _l.error(
-                f"Could not save history record exception {e} "
+                f"Could not save history record exception {repr(e)} "
                 f"traceback {traceback.format_exc()} "
             )
 
@@ -566,7 +567,7 @@ def add_history_listeners(sender, **kwargs):
 
 
 def record_history():
-    _l = logging.getLogger('provision')
+    _l = logging.getLogger("provision")
 
     if "test" in sys.argv or "makemigrations" in sys.argv or "migrate" in sys.argv:
         _l.info("History is not recording. Probably Test or Migration context")

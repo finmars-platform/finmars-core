@@ -10,7 +10,7 @@ from poms.ui.fields import LayoutContentTypeField, ListLayoutField
 from poms.ui.models import ListLayout, EditLayout, Bookmark, \
     ConfigurationExportLayout, ComplexTransactionUserField, InstrumentUserField, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPaletteColor, ColorPalette, \
-    CrossEntityAttributeExtension, ColumnSortData, TransactionUserField, MobileLayout, MemberLayout
+    CrossEntityAttributeExtension, ColumnSortData, TransactionUserField, MobileLayout, MemberLayout, Draft
 from poms.users.fields import MasterUserField, HiddenMemberField
 
 
@@ -249,7 +249,6 @@ class MemberLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
                   'sourced_from_global_layout']
 
 
-
 class MobileLayoutSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
     member = HiddenMemberField()
     data = serializers.JSONField(allow_null=False)
@@ -373,6 +372,7 @@ class BookmarkSerializer(serializers.ModelSerializer):
         for c in children:
             self.save_child(instance, c, o, processed)
 
+
 # class ConfigurationSerializer(serializers.ModelSerializer):
 #     master_user = MasterUserField()
 #     data = serializers.JSONField(allow_null=False)
@@ -380,3 +380,14 @@ class BookmarkSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = Configuration
 #         fields = ['id', 'master_user', 'name', 'description', 'data']
+
+
+class DraftSerializer(ModelWithTimeStampSerializer, ModelMetaSerializer):
+    member = HiddenMemberField()
+    data = serializers.JSONField(allow_null=False)
+
+    class Meta:
+        model = Draft
+        fields = ['id', 'member', 'name',
+                  'modified', 'created',
+                  'user_code', 'data']

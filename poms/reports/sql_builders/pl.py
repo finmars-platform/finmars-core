@@ -11,6 +11,7 @@ from django.conf import settings
 from django.db import connection
 
 from poms.accounts.models import Account, AccountType
+from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_closest_bday_of_yesterday, get_last_business_day
 from poms.currencies.models import Currency
@@ -3274,7 +3275,7 @@ class PLReportBuilderSql:
 
         return query
 
-    @shared_task(name='reports.build_pl_report', bind=True)
+    @finmars_task(name='reports.build_pl_report', bind=True)
     def build(self, task_id):
 
         try:
@@ -3963,7 +3964,7 @@ class PLReportBuilderSql:
         _l.info("Going to run %s tasks" % len(tasks))
 
         # Run the group of tasks
-        job = group(self.build.s(task.id) for task in tasks)
+        job = group(self.build.s(task_id=task.id) for task in tasks)
 
         group_result = job.apply_async()
         # Wait for all tasks to finish and get their results
@@ -3975,6 +3976,13 @@ class PLReportBuilderSql:
             # Each result is an AsyncResult instance.
             # You can get the result of the task with its .result property.
             all_dicts.extend(result.result)
+
+        for task in tasks:
+            # refresh the task instance to get the latest status from the database
+            task.refresh_from_db()
+
+            if task.status != CeleryTask.STATUS_ERROR:
+                task.delete()
 
         # 'all_dicts' is now a list of all dicts returned by the tasks
         self.instance.items = all_dicts

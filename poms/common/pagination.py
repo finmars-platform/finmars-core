@@ -47,7 +47,7 @@ class PageNumberPaginationExt(PageNumberPagination):
         if request.data.get('page', None):
             page_number = request.data.get('page', 1)
 
-        _l.info('here page_number %s' % page_number)
+        # _l.info('here page_number %s' % page_number)
         if page_number in self.last_page_strings:
             page_number = paginator.num_pages
 

@@ -318,3 +318,7 @@ WHERE t.row_num > 1 );
 
 frn:[service]:[content_type]:[user_code]
 frn:finmars:portfolios.portfolio:portfolio_1
+
+# Celery articles
+https://engineering.backmarket.com/a-story-of-kubernetes-celery-resource-and-a-rabbit-ec2ef9e37e9f
+https://ayushshanker.com/posts/celery-in-production-bugfixes/

@@ -142,6 +142,17 @@ class Configuration(models.Model):
             "created",
         ]
 
+    def save(self, *args, **kwargs):
+
+        if self.is_primary:
+            qs = Configuration.objects.filter(is_primary=True)
+            if self.pk:
+                qs = qs.exclude(pk=self.pk)
+            qs.update(is_primary=False)
+
+        super().save(*args, **kwargs)
+
+
     @property
     def manifest(self):
         return None if self.manifest_data is None else json.loads(self.manifest_data)

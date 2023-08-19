@@ -73,17 +73,6 @@ class AccountTypeViewSetTest(BaseTestCase):
         self.attribute = None
         self.account_type = None
 
-    def create_account_type(self) -> AccountType:
-        self.account_type = AccountType.objects.create(
-            master_user=self.master_user,
-            user_code=self.random_string(),
-            short_name=self.random_string(3),
-            transaction_details_expr=self.random_string(),
-        )
-        self.account_type.attributes.set([self.create_attribute()])
-        self.account_type.save()
-        return self.account_type
-
     def test__list_and_default(self):
         response = self.client.get(path=self.url)
         self.assertEqual(response.status_code, 200, response.content)

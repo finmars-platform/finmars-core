@@ -19,14 +19,14 @@ from poms.transactions.models import TransactionType, TransactionTypeGroup
 from poms.ui.models import ListLayout, EditLayout, Bookmark, \
     ConfigurationExportLayout, ComplexTransactionUserField, InstrumentUserField, PortalInterfaceAccessModel, \
     DashboardLayout, TemplateLayout, ContextMenuLayout, EntityTooltip, ColorPalette, CrossEntityAttributeExtension, \
-    ColumnSortData, TransactionUserField, MobileLayout, MemberLayout
+    ColumnSortData, TransactionUserField, MobileLayout, MemberLayout, Draft
 from poms.ui.serializers import ListLayoutSerializer, \
     EditLayoutSerializer, BookmarkSerializer, ConfigurationExportLayoutSerializer, \
     ComplexTransactionUserFieldSerializer, InstrumentUserFieldSerializer, PortalInterfaceAccessModelSerializer, \
     DashboardLayoutSerializer, TemplateLayoutSerializer, ContextMenuLayoutSerializer, EntityTooltipSerializer, \
     ColorPaletteSerializer, ListLayoutLightSerializer, DashboardLayoutLightSerializer, \
     CrossEntityAttributeExtensionSerializer, ColumnSortDataSerializer, TransactionUserFieldSerializer, \
-    MobileLayoutSerializer, MemberLayoutSerializer
+    MobileLayoutSerializer, MemberLayoutSerializer, DraftSerializer
 from poms.users.filters import OwnerByMasterUserFilter, OwnerByMemberFilter
 
 
@@ -82,6 +82,18 @@ class ComplexTransactionUserFieldViewSet(AbstractModelViewSet):
         OwnerByMasterUserFilter,
     ]
 
+    @action(detail=False, methods=['get'], url_path='primary')
+    def primary(self, request, pk=None):
+        from poms.configuration.models import Configuration
+        active_configuration = Configuration.objects.get(is_primary=True)
+
+        queryset = self.get_queryset().filter(configuration_code=active_configuration.configuration_code)
+
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        return self.get_paginated_response(serializer.data)
+
 
 class TransactionUserFieldFilterSet(FilterSet):
     id = NoOpFilter()
@@ -104,6 +116,18 @@ class TransactionUserFieldViewSet(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
+
+    @action(detail=False, methods=['get'], url_path='primary')
+    def primary(self, request, pk=None):
+        from poms.configuration.models import Configuration
+        active_configuration = Configuration.objects.get(is_primary=True)
+
+        queryset = self.get_queryset().filter(configuration_code=active_configuration.configuration_code)
+
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        return self.get_paginated_response(serializer.data)
 
 
 class TemplateLayoutFilterSet(FilterSet):
@@ -225,6 +249,18 @@ class InstrumentUserFieldViewSet(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByMasterUserFilter,
     ]
+
+    @action(detail=False, methods=['get'], url_path='primary')
+    def primary(self, request, pk=None):
+        from poms.configuration.models import Configuration
+        active_configuration = Configuration.objects.get(is_primary=True)
+
+        queryset = self.get_queryset().filter(configuration_code=active_configuration.configuration_code)
+
+        page = self.paginator.post_paginate_queryset(queryset, request)
+        serializer = self.get_serializer(page, many=True)
+
+        return self.get_paginated_response(serializer.data)
 
 
 class TemplateLayoutFilterSet(FilterSet):
@@ -624,3 +660,25 @@ class SystemAttributesViewSet(AbstractViewSet):
         }
 
         return Response(props)
+
+
+class DraftFilterSet(FilterSet):
+    id = NoOpFilter()
+    name = CharFilter()
+    user_code = CharFilter()
+
+    class Meta:
+        model = Draft
+        fields = []
+
+
+class DraftViewSet(AbstractModelViewSet):
+    queryset = Draft.objects.select_related(
+        'member'
+    )
+    serializer_class = DraftSerializer
+    filter_backends = AbstractModelViewSet.filter_backends + [
+        OwnerByMemberFilter,
+    ]
+    filter_class = DraftFilterSet
+    ordering_fields = ['name', 'is_default']

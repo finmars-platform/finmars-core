@@ -3,6 +3,7 @@ from logging import getLogger
 
 from celery import shared_task
 
+from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.csv_import.handlers import SimpleImportProcess
 from poms.csv_import.models import CsvImportScheme
@@ -16,7 +17,7 @@ from poms.common.storage import get_storage
 storage = get_storage()
 
 
-@shared_task(name='csv_import.simple_import', bind=True)
+@finmars_task(name='csv_import.simple_import', bind=True)
 def simple_import(self, task_id, procedure_instance_id=None):
 
     try:
@@ -99,7 +100,7 @@ def simple_import(self, task_id, procedure_instance_id=None):
         _l.error('simple_import general traceback %s' % traceback.format_exc())
 
 
-@shared_task(name='csv_import.data_csv_file_import_by_procedure_json', bind=True)
+@finmars_task(name='csv_import.data_csv_file_import_by_procedure_json', bind=True)
 def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_task_id):
 
     _l.info('data_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (
@@ -140,7 +141,7 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
                             description=text)
 
         transaction.on_commit(lambda: simple_import.apply_async(
-            kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}))
+            kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}, queue='backend-background-queue'))
 
 
     except Exception as e:

@@ -91,6 +91,11 @@ class CeleryTask(TimeStampedModel):
         choices=STATUS_CHOICES,
         verbose_name="status",
     )
+    worker_name = models.CharField(
+        null=True,
+        max_length=255,
+        verbose_name="worker name",
+    )
     type = models.CharField(
         max_length=255,
         blank=True,

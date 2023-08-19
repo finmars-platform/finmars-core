@@ -12,6 +12,7 @@ from django.conf import settings
 
 from celery import shared_task
 
+from poms.celery_tasks import finmars_task
 from poms.common.storage import get_storage
 from poms.history.models import HistoricalRecord
 from poms.history.utils import (
@@ -50,7 +51,7 @@ def delete_selected_records(records_to_delete: Iterable):
         records.delete()
 
 
-@shared_task(name="history_tasks.clear_old_journal_records")
+@finmars_task(name="history_tasks.clear_old_journal_records")
 def clear_old_journal_records():
     """
     Remove historical records older than ttl days, and save them into a file

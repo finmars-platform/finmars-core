@@ -5,6 +5,7 @@ import requests
 from celery import shared_task
 from django.conf import settings
 
+from poms.celery_tasks import finmars_task
 from poms.common.models import ProxyUser, ProxyRequest
 
 from poms.procedures.models import RequestDataFileProcedureInstance
@@ -17,7 +18,7 @@ _l = logging.getLogger('poms.procedures')
 
 
 
-@shared_task(name='procedures.execute_data_procedure', bind=True, ignore_result=True)
+@finmars_task(name='procedures.execute_data_procedure', bind=True)
 def execute_data_procedure(self, procedure_instance_id, date_from=None, date_to=None, options=None):
 
     from poms.procedures.handlers import DataProcedureProcess
@@ -48,7 +49,7 @@ def execute_data_procedure(self, procedure_instance_id, date_from=None, date_to=
 
 
 
-@shared_task(name='procedures.procedure_request_data_file', bind=True, ignore_result=True)
+@finmars_task(name='procedures.procedure_request_data_file', bind=True, ignore_result=True)
 def procedure_request_data_file(self,
                                 master_user,
                                 procedure_instance,
@@ -132,7 +133,7 @@ def procedure_request_data_file(self,
         raise Exception("Data File Service is unavailable")
 
 
-@shared_task(name='procedures.run_data_procedure_from_formula', bind=True)
+@finmars_task(name='procedures.run_data_procedure_from_formula', bind=True)
 def run_data_procedure_from_formula(self, master_user_id, member_id, user_code, user_context, **kwargs):
     _l.info('run_data_procedure_from_formula init')
 
@@ -172,7 +173,7 @@ def run_data_procedure_from_formula(self, master_user_id, member_id, user_code, 
 
 
 # TODO Refactor to task_id
-@shared_task(name='procedures.remove_old_data_procedures')
+@finmars_task(name='procedures.remove_old_data_procedures')
 def remove_old_data_procedures():
     try:
 

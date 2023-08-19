@@ -1114,7 +1114,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
             % (request.user.member.username, instance.scheme.name),
         )
 
-        transaction_import.apply_async(kwargs={"task_id": celery_task.pk})
+        transaction_import.apply_async(kwargs={"task_id": celery_task.pk}, queue='backend-background-queue')
 
         _l.info(
             "ComplexTransactionCsvFileImportViewSet done: %s",
@@ -1164,7 +1164,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
             % (request.user.member.username, options_object["scheme_user_code"]),
         )
 
-        transaction_import.apply_async(kwargs={"task_id": celery_task.pk})
+        transaction_import.apply_async(kwargs={"task_id": celery_task.pk}, queue='backend-background-queue')
 
         _l.info(
             "ComplexTransactionCsvFileImportViewSet done: %s",
@@ -1207,7 +1207,7 @@ class TransactionImportViewSet(AbstractAsyncViewSet):
 
         _l.info("celery_task %s created " % celery_task.pk)
 
-        task_result = transaction_import.apply(kwargs={"task_id": celery_task.pk})
+        task_result = transaction_import.apply(kwargs={"task_id": celery_task.pk}, queue='backend-background-queue')
 
         result = []
         error_message = None
@@ -1434,7 +1434,7 @@ class ComplexTransactionCsvFileImportViewSet(AbstractAsyncViewSet):
             % (request.user.member.username, instance.scheme.name),
         )
 
-        transaction_import.apply_async(kwargs={"task_id": celery_task.pk})
+        transaction_import.apply_async(kwargs={"task_id": celery_task.pk}, queue='backend-background-queue')
 
         _l.info(
             "ComplexTransactionCsvFileImportViewSet done: %s",
