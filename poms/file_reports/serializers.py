@@ -21,4 +21,4 @@ class FileReportSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FileReport
-        fields = ('id', 'master_user', 'name', 'notes', 'type', 'created_at', 'content_type', 'content_type_verbose')
+        fields = ('id', 'master_user', 'name', 'notes', 'type', 'created_at', 'content_type', 'content_type_verbose', 'file_url')

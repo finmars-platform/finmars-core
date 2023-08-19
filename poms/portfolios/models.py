@@ -378,7 +378,7 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
         )
 
 
-class PortfolioBundle(NamedModel, FakeDeletableModel, DataTimeStampedModel):
+class PortfolioBundle(NamedModel,  DataTimeStampedModel):
     master_user = models.ForeignKey(
         MasterUser,
         related_name="portfolio_bundles",
@@ -396,3 +396,4 @@ class PortfolioBundle(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     class Meta(NamedModel.Meta, FakeDeletableModel.Meta):
         verbose_name = gettext_lazy("portfolio bundle")
         verbose_name_plural = gettext_lazy("portfolio bundles")
+        index_together = [["master_user", "user_code"]]

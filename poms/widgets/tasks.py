@@ -3,6 +3,7 @@ import traceback
 
 from celery import shared_task
 
+from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.common.models import ProxyUser, ProxyRequest
 from poms.common.utils import get_closest_bday_of_yesterday, get_list_of_dates_between_two_dates
@@ -48,7 +49,7 @@ def start_new_balance_history_collect(task):
         task.save()
 
 
-@shared_task(name='widgets.collect_balance_report_history', bind=True)
+@finmars_task(name='widgets.collect_balance_report_history', bind=True)
 def collect_balance_report_history(self, task_id):
     '''
 
@@ -241,7 +242,7 @@ def start_new_pl_history_collect(task):
         task.save()
 
 
-@shared_task(name='widgets.collect_pl_report_history', bind=True)
+@finmars_task(name='widgets.collect_pl_report_history', bind=True)
 def collect_pl_report_history(self, task_id):
     '''
 
@@ -433,7 +434,7 @@ def start_new_collect_stats(task):
         task.save()
 
 
-@shared_task(name='widgets.collect_stats', bind=True)
+@finmars_task(name='widgets.collect_stats', bind=True)
 def collect_stats(self, task_id):
     '''
 
@@ -552,7 +553,7 @@ def collect_stats(self, task_id):
         start_new_collect_stats(task)
 
 
-@shared_task(name='widgets.calculate_historical', bind=True)
+@finmars_task(name='widgets.calculate_historical', bind=True)
 def calculate_historical(self, task_id):
     task = CeleryTask.objects.get(id=task_id)
 

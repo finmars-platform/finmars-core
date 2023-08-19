@@ -7,9 +7,8 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from celery import shared_task
-
 from poms import notifications
+from poms.celery_tasks import finmars_task
 from poms.common.utils import date_now, isclose
 from poms.instruments.models import EventSchedule, GeneratedEvent, Instrument
 from poms.reports.common import Report, ReportItem
@@ -23,7 +22,7 @@ _l = logging.getLogger("poms.instruments")
 
 @transaction.atomic()
 def calculate_prices_accrued_price(
-    master_user=None, begin_date=None, end_date=None, instruments=None
+        master_user=None, begin_date=None, end_date=None, instruments=None
 ):
     instruments_qs = Instrument.objects.all()
     if master_user:
@@ -34,10 +33,11 @@ def calculate_prices_accrued_price(
         instrument.calculate_prices_accrued_price(begin_date, end_date)
 
 
-@shared_task(name="instruments.calculate_prices_accrued_price", ignore_result=False)
+@finmars_task(name="instruments.calculate_prices_accrued_price", ignore_result=False, bind=True)
 @transaction.atomic()
 def calculate_prices_accrued_price_async(
-    master_user=None, begin_date=None, end_date=None, instruments=None
+        self,
+        master_user=None, begin_date=None, end_date=None, instruments=None
 ):
     if begin_date:
         begin_date = date.fromordinal(begin_date)
@@ -99,7 +99,7 @@ def fill_parameters_from_instrument(event_schedule, instrument):
     return result
 
 
-@shared_task(name="instruments.only_generate_events_at_date", bind=True)
+@finmars_task(name="instruments.only_generate_events_at_date", bind=True)
 def only_generate_events_at_date(self, master_user_id, date):
     try:
         master_user = MasterUser.objects.get(id=master_user_id)
@@ -119,7 +119,7 @@ def only_generate_events_at_date(self, master_user_id, date):
             item
             for item in instance.items
             if item["item_type"] == ReportItem.TYPE_INSTRUMENT
-            and not isclose(item["position_size"], 0.0)
+               and not isclose(item["position_size"], 0.0)
         ]
         if not opened_instrument_items:
             return
@@ -153,7 +153,7 @@ def only_generate_events_at_date(self, master_user_id, date):
             )
 
             if final_date >= date and effective_date - timedelta(
-                days=event_schedule.notify_in_n_days
+                    days=event_schedule.notify_in_n_days
             ):
                 result.append(event_schedule)
 
@@ -252,11 +252,11 @@ def only_generate_events_at_date(self, master_user_id, date):
         )
 
 
-@shared_task(
+@finmars_task(
     name="instruments.only_generate_events_at_date_for_single_instrument", bind=True
 )
 def only_generate_events_at_date_for_single_instrument(
-    self, master_user_id, date, instrument_id
+        self, master_user_id, date, instrument_id
 ):
     try:
         date = datetime.date(datetime.strptime(date, "%Y-%m-%d"))
@@ -280,9 +280,9 @@ def only_generate_events_at_date_for_single_instrument(
             item
             for item in instance.items
             if (
-                item["item_type"] == ReportItem.TYPE_INSTRUMENT
-                and not isclose(item["position_size"], 0.0)
-                and item["instrument_id"] == instrument.id
+                    item["item_type"] == ReportItem.TYPE_INSTRUMENT
+                    and not isclose(item["position_size"], 0.0)
+                    and item["instrument_id"] == instrument.id
             )
         ]
         _l.info(f"opened_instrument_items len {len(opened_instrument_items)}")
@@ -319,7 +319,7 @@ def only_generate_events_at_date_for_single_instrument(
             )
 
             if final_date >= date and effective_date - timedelta(
-                days=event_schedule.notify_in_n_days
+                    days=event_schedule.notify_in_n_days
             ):
                 result.append(event_schedule)
 
@@ -420,7 +420,7 @@ def only_generate_events_at_date_for_single_instrument(
         _l.info(traceback.format_exc())
 
 
-@shared_task(name="instruments.generate_events", bind=True)
+@finmars_task(name="instruments.generate_events", bind=True)
 def generate_events(self, task_id):
     from poms.celery_tasks.models import CeleryTask
 
@@ -456,7 +456,7 @@ def generate_events(self, task_id):
             item
             for item in instance.items
             if item["item_type"] == ReportItem.TYPE_INSTRUMENT
-            and not isclose(item["position_size"], 0.0)
+               and not isclose(item["position_size"], 0.0)
         ]
         if not opened_instrument_items:
             return
@@ -489,7 +489,7 @@ def generate_events(self, task_id):
             )
 
             if final_date >= now and effective_date - timedelta(
-                days=event_schedule.notify_in_n_days
+                    days=event_schedule.notify_in_n_days
             ):
                 result.append(event_schedule)
 
@@ -629,7 +629,7 @@ def generate_events(self, task_id):
         _l.info(traceback.format_exc())
 
 
-@shared_task(name="instruments.generate_events_do_not_inform_apply_default", bind=True)
+@finmars_task(name="instruments.generate_events_do_not_inform_apply_default", bind=True)
 def generate_events_do_not_inform_apply_default(self):
     try:
         master_user = MasterUser.objects.all()[0]
@@ -649,7 +649,7 @@ def generate_events_do_not_inform_apply_default(self):
             item
             for item in instance.items
             if item["item_type"] == ReportItem.TYPE_INSTRUMENT
-            and not isclose(item["position_size"], 0.0)
+               and not isclose(item["position_size"], 0.0)
         ]
         _l.info(f"opened_instrument_items len {len(opened_instrument_items)}")
 
@@ -681,7 +681,7 @@ def generate_events_do_not_inform_apply_default(self):
             )
 
             if final_date >= now and effective_date - timedelta(
-                days=event_schedule.notify_in_n_days
+                    days=event_schedule.notify_in_n_days
             ):
                 result.append(event_schedule)
 
@@ -790,7 +790,7 @@ def generate_events_do_not_inform_apply_default(self):
         )
 
 
-@shared_task(name="instruments.process_events", bind=True)
+@finmars_task(name="instruments.process_events", bind=True)
 @transaction.atomic()
 def process_events(self, *args, **kwargs):
     from poms.celery_tasks.models import CeleryTask
@@ -915,8 +915,8 @@ def process_events(self, *args, **kwargs):
                     )
 
             if (
-                is_apply_default_on_notification_date
-                or is_apply_default_on_effective_date
+                    is_apply_default_on_notification_date
+                    or is_apply_default_on_effective_date
             ):
                 action = next(
                     (
@@ -944,10 +944,10 @@ def process_events(self, *args, **kwargs):
                 processed_count = processed_count + 1
 
             if (
-                is_notify_on_notification_date
-                or is_notify_on_effective_date
-                or is_apply_default_on_notification_date
-                or is_apply_default_on_effective_date
+                    is_notify_on_notification_date
+                    or is_notify_on_effective_date
+                    or is_apply_default_on_notification_date
+                    or is_apply_default_on_effective_date
             ):
                 gevent.save()
 

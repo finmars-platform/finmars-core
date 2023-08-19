@@ -1000,8 +1000,10 @@ class TransactionImportProcess(object):
                                         # transaction.savepoint_rollback(sid)
                                         continue
 
-                                    except (BookUnhandledException, BookException) as e:
+                                    except (Exception, BookUnhandledException, BookException) as e:
                                         # transaction.savepoint_rollback(sid)
+
+                                        _l.error("Catch BookUnhandledException trying to book error_rule_scenario %s" % e)
 
                                         try:
                                             self.book(item, self.error_rule_scenario, error=e)
@@ -1242,14 +1244,12 @@ class TransactionImportProcess(object):
         if self.procedure_instance and self.procedure_instance.schedule_instance:
             self.procedure_instance.schedule_instance.run_next_procedure()
 
+        self.task.verbose_result = self.get_verbose_result()
+
         if len(self.result.reports):
             self.task.add_attachment(self.result.reports[0].id)
             self.task.add_attachment(self.result.reports[1].id)
 
-        self.task.verbose_result = self.get_verbose_result()
-
-        self.task.status = CeleryTask.STATUS_DONE
-        self.task.mark_task_as_finished()
         self.task.save()
 
         return self.result

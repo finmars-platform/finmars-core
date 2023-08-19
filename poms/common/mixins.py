@@ -130,7 +130,7 @@ class BulkDestroyModelMixin(DestroyModelMixin):
         celery_app.send_task(
             "celery_tasks.bulk_delete",
             kwargs={"task_id": celery_task.id},
-            queue="backend-delete-queue",
+            queue="backend-background-queue",
         )
 
         # queryset = self.filter_queryset(self.get_queryset())

@@ -8,7 +8,7 @@ from rest_framework.viewsets import ModelViewSet
 from celery.result import AsyncResult
 
 from poms.common.filters import CharFilter
-from poms.common.views import AbstractApiView
+from poms.common.views import AbstractApiView, AbstractViewSet
 from poms.users.filters import OwnerByMasterUserFilter
 
 from .filters import CeleryTaskDateRangeFilter, CeleryTaskQueryFilter
@@ -104,6 +104,7 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
 
     @action(detail=True, methods=["PUT"], url_path="cancel")
     def cancel(self, request, pk=None):
+
         task = CeleryTask.objects.get(pk=pk)
 
         task.cancel()
@@ -146,16 +147,29 @@ class CeleryTaskViewSet(AbstractApiView, ModelViewSet):
         celery_app.send_task(
             "celery_tasks.bulk_delete",
             kwargs={"task_id": celery_task.id},
-            queue="backend-delete-queue",
+            queue="backend-background-queue",
         )
 
         _l.info(f"{count} complex transactions were deleted")
 
-        task.notes = "%s Transactions were aborted \n" % count
-
-        task.notes = task.notes + (", ".join(str(x) for x in codes))
+        task.notes = f"{count} Transactions were aborted \n" + (
+            ", ".join(str(x) for x in codes)
+        )
         task.status = CeleryTask.STATUS_TRANSACTIONS_ABORTED
 
         task.save()
 
         return Response({"status": "ok"})
+
+
+class CeleryStatsViewSet(AbstractViewSet):
+    def list(self, request, *args, **kwargs):
+        from poms_app.celery import app
+
+        i = app.control.inspect()
+        # d = i.active()
+        # workers = list(d.keys()) if d else []
+
+        stats = i.stats()
+
+        return Response(stats)

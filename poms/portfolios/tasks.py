@@ -7,6 +7,7 @@ from celery.utils.log import get_task_logger
 from dateutil import parser
 from django.views.generic.dates import timezone_today
 
+from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.common.utils import get_list_of_dates_between_two_dates
 from poms.currencies.models import CurrencyHistory
@@ -49,7 +50,7 @@ def calculate_simple_balance_report(report_date, portfolio_register, pricing_pol
     instance.portfolios = [portfolio_register.portfolio]
 
     builder = BalanceReportBuilderSql(instance=instance)
-    instance = builder.build_balance()
+    instance = builder.build_balance_sync()
 
     return instance
 
@@ -118,7 +119,7 @@ def calculate_cash_flow(master_user, date, pricing_policy, portfolio_register):
     return cash_flow
 
 
-@shared_task(name="portfolios.calculate_portfolio_register_record", bind=True)
+@finmars_task(name="portfolios.calculate_portfolio_register_record", bind=True)
 def calculate_portfolio_register_record(self, task_id):
     """
     Now as it a part of Finmars Backend project its specific task over portfolio
@@ -405,7 +406,7 @@ def calculate_portfolio_register_record(self, task_id):
         _l.error(f"{log} error {e}\n{traceback.format_exc()}")
 
 
-@shared_task(name="portfolios.calculate_portfolio_register_price_history", bind=True)
+@finmars_task(name="portfolios.calculate_portfolio_register_price_history", bind=True)
 def calculate_portfolio_register_price_history(self, task_id):
     """
     It should be triggered after calculate_portfolio_register_record finished

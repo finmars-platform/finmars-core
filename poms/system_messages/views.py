@@ -3,26 +3,29 @@ from logging import getLogger
 import django_filters
 from django.db.models import Q
 from django_filters.rest_framework import FilterSet
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from poms.common.filters import CharFilter
 from poms.common.views import AbstractModelViewSet
-from poms.system_messages.filters import SystemMessageOnlyNewFilter, OwnerBySystemMessageMember
+from poms.system_messages.filters import (
+    OwnerBySystemMessageMember,
+    SystemMessageOnlyNewFilter,
+)
 from poms.system_messages.models import SystemMessage, SystemMessageComment
-from poms.system_messages.serializers import SystemMessageSerializer, SystemMessageActionSerializer
+from poms.system_messages.serializers import (
+    SystemMessageActionSerializer,
+    SystemMessageSerializer,
+)
 from poms.users.filters import OwnerByMasterUserFilter
 
-_l = getLogger('poms.system_messages')
-from rest_framework.decorators import action
+_l = getLogger("poms.system_messages")
 
 
 class SystemMessageFilterSet(FilterSet):
     title = CharFilter()
     description = CharFilter()
     created = django_filters.DateFromToRangeFilter()
-    # section = django_filters.MultipleChoiceFilter(choices = SystemMessage.SECTION_CHOICES)
-    # type = django_filters.MultipleChoiceFilter(choices = SystemMessage.TYPE_CHOICES)
-    # action_status = django_filters.MultipleChoiceFilter(choices=SystemMessage.ACTION_STATUS_CHOICES)
 
     class Meta:
         model = SystemMessage
@@ -38,62 +41,72 @@ class SystemMessageViewSet(AbstractModelViewSet):
         OwnerBySystemMessageMember,
         SystemMessageOnlyNewFilter,
     ]
-    permission_classes = AbstractModelViewSet.permission_classes + [
-
-    ]
+    permission_classes = AbstractModelViewSet.permission_classes + []
     ordering_fields = [
-        'members__is_pinned', 'created', 'section', 'type', 'action_status', 'title'
+        "members__is_pinned",
+        "created",
+        "section",
+        "type",
+        "action_status",
+        "title",
     ]
 
     def list(self, request, *args, **kwargs):
-
-        if not hasattr(request.user, 'master_user'):
+        if not hasattr(request.user, "master_user"):
             return Response([])
 
         queryset = self.filter_queryset(self.get_queryset())
 
-        ordering = request.GET.get('ordering', None)
-        type = request.GET.get('type', None)
-        section = request.GET.get('section', None)
-        action_status = request.GET.get('action_status', None)
-        query = request.GET.get('query', None)
-        page = request.GET.get('page', None)
-        only_new = request.GET.get('only_new', False)
+        ordering = request.GET.get("ordering", None)
+        type = request.GET.get("type", None)
+        section = request.GET.get("section", None)
+        action_status = request.GET.get("action_status", None)
+        query = request.GET.get("query", None)
+        page = request.GET.get("page", None)
+        only_new = request.GET.get("only_new", False)
 
-        if only_new == 'true':
+        if only_new == "true":
             only_new = True
         else:
             only_new = False
 
         if only_new:
-            queryset = queryset.filter(members__is_read=False, members__member=request.user.member)
+            queryset = queryset.filter(
+                members__is_read=False, members__member=request.user.member
+            )
 
-        queryset = queryset.filter(members__is_pinned=False, members__member=request.user.member)
+        queryset = queryset.filter(
+            members__is_pinned=False, members__member=request.user.member
+        )
 
         if type:
-            type = type.split(',')
+            type = type.split(",")
             queryset = queryset.filter(type__in=type)
 
         if section:
-            section = section.split(',')
+            section = section.split(",")
             queryset = queryset.filter(section__in=section)
 
         if action_status:
-            action_status = action_status.split(',')
+            action_status = action_status.split(",")
             queryset = queryset.filter(action_status__in=action_status)
 
         if query:
-            queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
+            queryset = queryset.filter(
+                Q(title__icontains=query) | Q(description__icontains=query)
+            )
 
         if ordering:
             queryset = queryset.order_by(ordering)
         else:
-            queryset = queryset.order_by('-created')
+            queryset = queryset.order_by("-created")
 
         if page is None or page == "1":
-
-            pinned_queryset = self.get_queryset().filter(members__is_pinned=True, members__is_read=True,
-                                                         members__member=request.user.member)
+            pinned_queryset = self.get_queryset().filter(
+                members__is_pinned=True,
+                members__is_read=True,
+                members__member=request.user.member,
+            )
 
             if type:
                 pinned_queryset = pinned_queryset.filter(type__in=type)
@@ -102,7 +115,9 @@ class SystemMessageViewSet(AbstractModelViewSet):
                 pinned_queryset = pinned_queryset.filter(section__in=section)
 
             if query:
-                pinned_queryset = pinned_queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
+                pinned_queryset = pinned_queryset.filter(
+                    Q(title__icontains=query) | Q(description__icontains=query)
+                )
 
             if len(pinned_queryset):
                 _l.info("Inject %s pinned messages " % len(pinned_queryset))
@@ -122,46 +137,50 @@ class SystemMessageViewSet(AbstractModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
-    def get_stats_for_section(self, section, only_new, query, created_before, created_after, action_status, member):
-
-        # SECTION_GENERAL = 0
-        # SECTION_EVENTS = 1
-        # SECTION_TRANSACTIONS = 2
-        # SECTION_INSTRUMENTS = 3
-        # SECTION_DATA = 4
-        # SECTION_PRICES = 5
-        # SECTION_REPORT = 6
-        # SECTION_IMPORT = 7
-        # SECTION_ACTIVITY_LOG = 8
-        # SECTION_SCHEDULES = 9
-        # OTHER = 10
+    def get_stats_for_section(
+        self,
+        section,
+        only_new,
+        query,
+        created_before,
+        created_after,
+        action_status,
+        member,
+    ):
 
         section_mapping = {
-            0: 'General',
-            1: 'Events',
-            2: 'Transactions',
-            3: 'Instruments',
-            4: 'Data',
-            5: 'Prices',
-            6: 'Report',
-            7: 'Import',
-            8: 'Activity Log',
-            9: 'Schedules',
-            10: 'Other'
+            0: "General",
+            1: "Events",
+            2: "Transactions",
+            3: "Instruments",
+            4: "Data",
+            5: "Prices",
+            6: "Report",
+            7: "Import",
+            8: "Activity Log",
+            9: "Schedules",
+            10: "Other",
         }
 
         def get_count(type, is_pinned=False):
-
             queryset = SystemMessage.objects.filter(section=section, type=type)
 
             if only_new and not is_pinned:
-                queryset = queryset.filter(members__is_read=False, members__is_pinned=False, members__member=member)
+                queryset = queryset.filter(
+                    members__is_read=False,
+                    members__is_pinned=False,
+                    members__member=member,
+                )
 
             if is_pinned:
-                queryset = queryset.filter(members__is_pinned=True, members__member=member)
+                queryset = queryset.filter(
+                    members__is_pinned=True, members__member=member
+                )
 
             if query:
-                queryset = queryset.filter(Q(title__icontains=query) | Q(description__icontains=query))
+                queryset = queryset.filter(
+                    Q(title__icontains=query) | Q(description__icontains=query)
+                )
 
             if created_before:
                 queryset = queryset.filter(created__lte=created_before)
@@ -175,33 +194,34 @@ class SystemMessageViewSet(AbstractModelViewSet):
             return queryset.count()
 
         stats = {
-            'id': section,
-            'name': section_mapping[section],
-            'errors': get_count(SystemMessage.TYPE_ERROR) + get_count(SystemMessage.TYPE_ERROR, is_pinned=True),
-            'warning': get_count(SystemMessage.TYPE_WARNING) + get_count(SystemMessage.TYPE_WARNING, is_pinned=True),
-            'information': get_count(SystemMessage.TYPE_INFORMATION) + get_count(SystemMessage.TYPE_INFORMATION,
-                                                                                 is_pinned=True),
-            'success': get_count(SystemMessage.TYPE_SUCCESS) + get_count(SystemMessage.TYPE_SUCCESS, is_pinned=True)
+            "id": section,
+            "name": section_mapping[section],
+            "errors": get_count(SystemMessage.TYPE_ERROR)
+            + get_count(SystemMessage.TYPE_ERROR, is_pinned=True),
+            "warning": get_count(SystemMessage.TYPE_WARNING)
+            + get_count(SystemMessage.TYPE_WARNING, is_pinned=True),
+            "information": get_count(SystemMessage.TYPE_INFORMATION)
+            + get_count(SystemMessage.TYPE_INFORMATION, is_pinned=True),
+            "success": get_count(SystemMessage.TYPE_SUCCESS)
+            + get_count(SystemMessage.TYPE_SUCCESS, is_pinned=True),
         }
 
         return stats
 
-    @action(detail=False, methods=['get'], url_path='stats')
+    @action(detail=False, methods=["get"], url_path="stats")
     def stats(self, request, pk=None):
+        only_new = request.query_params.get("only_new", False)
+        query = request.query_params.get("query", None)
 
-        only_new = request.query_params.get('only_new', False)
-        query = request.query_params.get('query', None)
+        created_before = request.query_params.get("created_before", None)
+        created_after = request.query_params.get("created_after", None)
 
-        created_before = request.query_params.get('created_before', None)
-        created_after = request.query_params.get('created_after', None)
+        action_status = request.query_params.get("action_status", None)
 
-        action_status = request.query_params.get('action_status', None)
+        if action_status and ("," in action_status):
+            action_status = action_status.split(",")
 
-        if action_status:
-            if ',' in action_status:
-                action_status = action_status.split(',')
-
-        if only_new == 'true':
+        if only_new == "true":
             only_new = True
         else:
             only_new = False
@@ -210,90 +230,153 @@ class SystemMessageViewSet(AbstractModelViewSet):
 
         member = request.user.member
 
-        # SECTION_GENERAL = 0
-        # SECTION_EVENTS = 1
-        # SECTION_TRANSACTIONS = 2
-        # SECTION_INSTRUMENTS = 3
-        # SECTION_DATA = 4
-        # SECTION_PRICES = 5
-        # SECTION_REPORT = 6
-        # SECTION_IMPORT = 7
-        # SECTION_ACTIVITY_LOG = 8
-        # SECTION_SCHEDULES = 9
-
-        # result.append(self.get_stats_for_section(SystemMessage.SECTION_GENERAL, only_new, member))
         result.append(
-            self.get_stats_for_section(SystemMessage.SECTION_EVENTS, only_new, query, created_before, created_after,
-                                       action_status, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_TRANSACTIONS, only_new, query, created_before,
-                                                 created_after, action_status, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_INSTRUMENTS, only_new, query, created_before,
-                                                 created_after, action_status, member))
+            self.get_stats_for_section(
+                SystemMessage.SECTION_EVENTS,
+                only_new,
+                query,
+                created_before,
+                created_after,
+                action_status,
+                member,
+            )
+        )
         result.append(
-            self.get_stats_for_section(SystemMessage.SECTION_DATA, only_new, query, created_before, created_after,
-                                       action_status, member))
+            self.get_stats_for_section(
+                SystemMessage.SECTION_TRANSACTIONS,
+                only_new,
+                query,
+                created_before,
+                created_after,
+                action_status,
+                member,
+            )
+        )
         result.append(
-            self.get_stats_for_section(SystemMessage.SECTION_PRICES, only_new, query, created_before, created_after,
-                                       action_status, member))
+            self.get_stats_for_section(
+                SystemMessage.SECTION_INSTRUMENTS,
+                only_new,
+                query,
+                created_before,
+                created_after,
+                action_status,
+                member,
+            )
+        )
         result.append(
-            self.get_stats_for_section(SystemMessage.SECTION_REPORT, only_new, query, created_before, created_after,
-                                       action_status, member))
+            self.get_stats_for_section(
+                SystemMessage.SECTION_DATA,
+                only_new,
+                query,
+                created_before,
+                created_after,
+                action_status,
+                member,
+            )
+        )
         result.append(
-            self.get_stats_for_section(SystemMessage.SECTION_IMPORT, only_new, query, created_before, created_after,
-                                       action_status, member))
-        result.append(self.get_stats_for_section(SystemMessage.SECTION_ACTIVITY_LOG, only_new, query, created_before,
-                                                 created_after, action_status, member))
+            self.get_stats_for_section(
+                SystemMessage.SECTION_PRICES,
+                only_new,
+                query,
+                created_before,
+                created_after,
+                action_status,
+                member,
+            )
+        )
         result.append(
-            self.get_stats_for_section(SystemMessage.SECTION_SCHEDULES, only_new, query, created_before, created_after,
-                                       action_status, member))
+            self.get_stats_for_section(
+                SystemMessage.SECTION_REPORT,
+                only_new,
+                query,
+                created_before,
+                created_after,
+                action_status,
+                member,
+            )
+        )
         result.append(
-            self.get_stats_for_section(SystemMessage.SECTION_OTHER, only_new, query, created_before, created_after,
-                                       action_status, member))
-
-        # [
-        #     {
-        #         name: 'Events',
-        #         errors: 123,
-        #         warning: 123,
-        #         information: 123,
-        #         success: 123,
-        #     }
-        # ]
+            self.get_stats_for_section(
+                SystemMessage.SECTION_IMPORT,
+                only_new,
+                query,
+                created_before,
+                created_after,
+                action_status,
+                member,
+            )
+        )
+        result.append(
+            self.get_stats_for_section(
+                SystemMessage.SECTION_ACTIVITY_LOG,
+                only_new,
+                query,
+                created_before,
+                created_after,
+                action_status,
+                member,
+            )
+        )
+        result.append(
+            self.get_stats_for_section(
+                SystemMessage.SECTION_SCHEDULES,
+                only_new,
+                query,
+                created_before,
+                created_after,
+                action_status,
+                member,
+            )
+        )
+        result.append(
+            self.get_stats_for_section(
+                SystemMessage.SECTION_OTHER,
+                only_new,
+                query,
+                created_before,
+                created_after,
+                action_status,
+                member,
+            )
+        )
 
         return Response(result)
 
-    @action(detail=False, methods=['get'], url_path='mark-all-as-read')
+    @action(detail=False, methods=["get"], url_path="mark-all-as-read")
     def mark_all_as_read(self, request, pk=None):
-
         member = request.user.member
 
         messages = SystemMessage.objects.all()
 
         for message in messages:
-
             for member_message in message.members.all():
                 if member_message.member_id == member.id:
                     member_message.is_read = True
                     member_message.save()
 
-        return Response({'status': 'ok'})
+        return Response({"status": "ok"})
 
-    @action(detail=False, methods=['post'], url_path='mark-as-read', serializer_class=SystemMessageActionSerializer)
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="mark-as-read",
+        serializer_class=SystemMessageActionSerializer,
+    )
     def mark_as_read(self, request, pk=None):
-
-        ids = request.data.get('ids')
-        sections = request.data.get('sections')
+        ids = request.data.get("ids")
+        sections = request.data.get("sections")
 
         queryset = SystemMessage.objects.all()
 
-        print('mark_as_read ids %s' % ids)
+        print("mark_as_read ids %s" % ids)
         if ids:
             if not isinstance(ids, list):
                 ids = [ids]
 
             queryset = queryset.filter(id__in=ids)
 
-        print('mark_as_read sections %s' % sections)
+        print("mark_as_read sections %s" % sections)
         if sections:
             if not isinstance(sections, list):
                 sections = [sections]
@@ -303,23 +386,25 @@ class SystemMessageViewSet(AbstractModelViewSet):
         index = 0
 
         for message in queryset:
-
             for member_message in message.members.all():
-
                 if request.user.member.id == member_message.member_id:
                     member_message.is_read = True
                     member_message.save()
 
                     index = index + 1
 
-        print('marked as read %s' % index)
+        print("marked as read %s" % index)
 
-        return Response({'status': 'ok'})
+        return Response({"status": "ok"})
 
-    @action(detail=False, methods=['post'], url_path='mark-as-solved', serializer_class=SystemMessageActionSerializer)
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="mark-as-solved",
+        serializer_class=SystemMessageActionSerializer,
+    )
     def mark_as_solved(self, request, pk=None):
-
-        ids = request.data['ids']
+        ids = request.data["ids"]
 
         if not isinstance(ids, list):
             ids = [ids]
@@ -330,12 +415,16 @@ class SystemMessageViewSet(AbstractModelViewSet):
             message.action_status = SystemMessage.ACTION_STATUS_SOLVED
             message.save()
 
-        return Response({'status': 'ok'})
+        return Response({"status": "ok"})
 
-    @action(detail=False, methods=['post'], url_path='pin', serializer_class=SystemMessageActionSerializer)
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="pin",
+        serializer_class=SystemMessageActionSerializer,
+    )
     def pin(self, request, pk=None):
-
-        ids = request.data['ids']
+        ids = request.data["ids"]
 
         if not isinstance(ids, list):
             ids = [ids]
@@ -343,17 +432,20 @@ class SystemMessageViewSet(AbstractModelViewSet):
         messages = SystemMessage.objects.filter(id__in=ids)
 
         for message in messages:
-
             for member_message in message.members.all():
                 member_message.is_pinned = True
                 member_message.save()
 
-        return Response({'status': 'ok'})
+        return Response({"status": "ok"})
 
-    @action(detail=False, methods=['post'], url_path='unpin', serializer_class=SystemMessageActionSerializer)
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="unpin",
+        serializer_class=SystemMessageActionSerializer,
+    )
     def unpin(self, request, pk=None):
-
-        ids = request.data['ids']
+        ids = request.data["ids"]
 
         if not isinstance(ids, list):
             ids = [ids]
@@ -361,44 +453,47 @@ class SystemMessageViewSet(AbstractModelViewSet):
         messages = SystemMessage.objects.filter(id__in=ids)
 
         for message in messages:
-
             for member_message in message.members.all():
                 member_message.is_pinned = False
                 member_message.save()
 
-        return Response({'status': 'ok'})
+        return Response({"status": "ok"})
 
-    @action(detail=True, methods=['put'], url_path='solve')
+    @action(detail=True, methods=["put"], url_path="solve")
     def solve(self, request, pk=None):
-
         system_message = SystemMessage.objects.get(id=pk)
-        context = {'request': request, 'master_user': request.user.master_user}
+        context = {"request": request, "master_user": request.user.master_user}
         system_message.action_status = SystemMessage.ACTION_STATUS_SOLVED
         system_message.save()
 
-        comment = request.data.get('comment', None)
+        comment = request.data.get("comment", None)
 
         if comment:
-            SystemMessageComment.objects.create(comment=comment, system_message=system_message,
-                                                member=request.user.member)
+            SystemMessageComment.objects.create(
+                comment=comment,
+                system_message=system_message,
+                member=request.user.member,
+            )
 
         serializer = SystemMessageSerializer(instance=system_message, context=context)
 
         return Response(serializer.data)
 
-    @action(detail=True, methods=['put'], url_path='comment')
+    @action(detail=True, methods=["put"], url_path="comment")
     def comment(self, request, pk=None):
-
         system_message = SystemMessage.objects.get(id=pk)
-        context = {'request': request, 'master_user': request.user.master_user}
+        context = {"request": request, "master_user": request.user.master_user}
 
-        _l.info('request.data %s' % request.data)
+        _l.info("request.data %s" % request.data)
 
-        comment = request.data.get('comment', None)
+        comment = request.data.get("comment", None)
 
         if comment:
-            SystemMessageComment.objects.create(comment=comment, system_message=system_message,
-                                                member=request.user.member)
+            SystemMessageComment.objects.create(
+                comment=comment,
+                system_message=system_message,
+                member=request.user.member,
+            )
 
         serializer = SystemMessageSerializer(instance=system_message, context=context)
 

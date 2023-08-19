@@ -122,11 +122,16 @@ INSTALLED_APPS = [
 
 if USE_DEBUGGER:
     INSTALLED_APPS.append("debug_toolbar")
+    INSTALLED_APPS.append("pympler")
 
 # MIDDLEWARE_CLASSES = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+
+    "corsheaders.middleware.CorsMiddleware",
+    "corsheaders.middleware.CorsPostCsrfMiddleware",
+
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -144,15 +149,17 @@ MIDDLEWARE = [
     # 'django.contrib.auth.middleware.AuthenticationMiddleware',
     # 'django.contrib.messages.middleware.MessageMiddleware',
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    "corsheaders.middleware.CorsMiddleware",
-    "corsheaders.middleware.CorsPostCsrfMiddleware",
+
     "poms.common.middleware.CommonMiddleware",  # required for getting request object anywhere
+
     # 'poms.common.middleware.LogRequestsMiddleware',
     "finmars_standardized_errors.middleware.ExceptionMiddleware",
 ]
 
 if USE_DEBUGGER:
     MIDDLEWARE.append("debug_toolbar.middleware.DebugToolbarMiddleware")
+    # MIDDLEWARE.append("poms.common.middleware.MemoryMiddleware")  # memory tracking
+
 
 PROFILER = ENV_BOOL("PROFILER", False)
 
@@ -245,23 +252,25 @@ USE_ETAGS = True
 # TODO Refactor csrf protection later
 
 ENV_CSRF_COOKIE_DOMAIN = os.environ.get("ENV_CSRF_COOKIE_DOMAIN", ".finmars.com")
-ENV_CSRF_TRUSTED_ORIGINS = os.environ.get(
-    "ENV_CSRF_TRUSTED_ORIGINS", "https://finmars.com"
-)
+ENV_CSRF_TRUSTED_ORIGINS = os.environ.get("ENV_CSRF_TRUSTED_ORIGINS", None)
 
 if SERVER_TYPE == "production":
     CORS_URLS_REGEX = r"^/api/.*$"
-    CORS_REPLACE_HTTPS_REFERER = True
+    # CORS_REPLACE_HTTPS_REFERER = True
     CORS_ALLOW_CREDENTIALS = True
     CORS_PREFLIGHT_MAX_AGE = 300
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SECURE_REDIRECT_EXEMPT = ["healthcheck"]
+    USE_X_FORWARDED_HOST = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_REDIRECT_EXEMPT = ['healthcheck']
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
-    CSRF_COOKIE_SAMESITE = "Strict"
-    CSRF_COOKIE_DOMAIN = ENV_CSRF_COOKIE_DOMAIN
-    CSRF_TRUSTED_ORIGINS = ENV_CSRF_TRUSTED_ORIGINS.split(",")
+    CSRF_COOKIE_SAMESITE = 'Strict'
+
+
+
+CORS_ALLOW_ALL_ORIGINS = ENV_BOOL('CORS_ALLOW_ALL_ORIGINS', False)
+
 
 if SERVER_TYPE == "development":
     CORS_ORIGIN_ALLOW_ALL = True
@@ -275,6 +284,28 @@ if SERVER_TYPE == "local":
     CORS_ALLOW_ALL_ORIGINS = True
     CORS_ORIGIN_ALLOW_ALL = True
     CORS_ALLOW_CREDENTIALS = True
+    CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+]
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 STATIC_URL = f"/{BASE_API_URL}/api/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")  # creates when collectstatic
@@ -289,17 +320,17 @@ USE_WEBSOCKETS = ENV_BOOL("USE_WEBSOCKETS", False)
 WEBSOCKET_HOST = ENV_STR("WEBSOCKET_HOST", "ws://0.0.0.0:6969")
 WEBSOCKET_APP_TOKEN = ENV_STR("WEBSOCKET_APP_TOKEN", "943821230")
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-    },
-    "throttling": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-    },
-    "http_session": {
-        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-    },
-}
+# CACHES = {
+#     "default": {
+#         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+#     },
+#     "throttling": {
+#         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+#     },
+#     "http_session": {
+#         "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+#     },
+# }
 
 # Maybe in future, we will return to Redis
 # CACHES = {
@@ -431,10 +462,10 @@ REST_FRAMEWORK = {
     #     'rest_framework.parsers.FormParser',
     #     'rest_framework.parsers.MultiPartParser',
     # ),
-    "DEFAULT_THROTTLE_CLASSES": (
-        "poms.api.throttling.AnonRateThrottleExt",
-        "poms.api.throttling.UserRateThrottleExt",
-    ),
+    # "DEFAULT_THROTTLE_CLASSES": (
+    #     "poms.api.throttling.AnonRateThrottleExt",
+    #     "poms.api.throttling.UserRateThrottleExt",
+    # ),
     "DEFAULT_THROTTLE_RATES": {
         # 'anon': '5/second',
         # 'user': '50/second',
@@ -506,12 +537,14 @@ else:
     CELERY_RESULT_EXPIRES = 60
     CELERY_TASK_STORE_ERRORS_EVEN_IF_IGNORED = True
 
+CELERY_MAX_MEMORY_PER_CHILD = ENV_INT("CELERY_MAX_MEMORY_PER_CHILD", 512 * 1024) # Maximum amount of resident memory, in KiB
+CELERY_MAX_TASKS_PER_CHILD = ENV_INT("CELERY_MAX_TASKS_PER_CHILD", 1) # Maximum number of tasks a pool worker can execute before it’s terminated and replaced by a new worker.
+
 CELERY_WORKER_LOG_COLOR = True
 CELERY_WORKER_LOG_FORMAT = "[%(levelname)1.1s %(asctime)s %(process)d:%(thread)d %(name)s %(module)s:%(lineno)d] %(message)s"
-try:
-    CELERY_WORKER_CONCURRENCY = int(os.environ.get("CELERY_WORKER_CONCURRENCY", "1"))
-except (ValueError, TypeError):
-    CELERY_WORKER_CONCURRENCY = 1
+
+CELERY_WORKER_CONCURRENCY = ENV_INT("CELERY_WORKER_CONCURRENCY", 2) # Number of child processes processing the queue. The default is the number of CPUs available on your system.
+
 
 # CELERY_ACKS_LATE: If this is True, the task messages will be acknowledged after the task has been executed, not just before, which is the default behavior.
 # This means the tasks can be recovered when a worker crashes, as the tasks won't be removed from the queue until they are completed.
@@ -523,7 +556,7 @@ CELERY_ACKS_LATE = True
 # This increases the resiliency of the system as the tasks are not lost, they are retried.
 # But, it can also increase the load on the system as tasks could potentially be executed multiple times in the event of frequent worker failures.
 # Make sure your tasks are safe to be retried in such cases (idempotent).
-CELERY_TASK_REJECT_ON_WORKER_LOST = False # Make tasks rejected
+CELERY_TASK_REJECT_ON_WORKER_LOST = False  # Make tasks rejected
 
 # ===================
 # = Django Storages =
@@ -608,6 +641,7 @@ if USE_DEBUGGER:
         "debug_toolbar.panels.logging.LoggingPanel",
         "debug_toolbar.panels.redirects.RedirectsPanel",
         "debug_toolbar.panels.profiling.ProfilingPanel",
+        "pympler.panels.MemoryPanel",
     ]
 
     DEBUG_TOOLBAR_CONFIG = {
@@ -638,7 +672,6 @@ REDOC_SETTINGS = {
 }
 
 VAULT_TOKEN = ENV_STR("VAULT_TOKEN", None)
-
 
 # SENTRY
 

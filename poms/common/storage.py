@@ -137,6 +137,25 @@ class FinmarsStorage(EncryptedStorage):
     To ensure that storage overwrite passed filepath insead of appending a number to it
     '''
 
+    def save(self, name, content, max_length=None):
+        """
+        Save new content to the file specified by name. The content should be
+        a proper File object or any Python file-like object, ready to be read
+        from the beginning.
+        """
+        # Get the proper name for the file, as it will actually be saved.
+        if name is None:
+            name = content.name
+
+        if not hasattr(content, "chunks"):
+            content = File(content, name)
+
+        name = self.get_available_name(name, max_length=max_length)
+        name = self._save(name, content)
+        # Ensure that the name returned from the storage system is still valid.
+        # validate_file_name(name, allow_relative_path=True) # TODO Not needed
+        return name
+
     def get_available_name(self, name, max_length=None):
         self.delete(name)
         return super().get_available_name(name, max_length)
@@ -371,6 +390,25 @@ class FinmarsS3Storage(FinmarsStorage, S3Boto3Storage):
 
 class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
 
+    def path(self, name):
+
+        if name[0] == '/':
+            return settings.MEDIA_ROOT + name
+
+        return settings.MEDIA_ROOT + '/' + name
+
+
+    def listdir(self, path):
+        path = self.path(path)
+        directories, files = [], []
+        with os.scandir(path) as entries:
+            for entry in entries:
+                if entry.is_dir():
+                    directories.append(entry.name)
+                else:
+                    files.append(entry.name)
+        return directories, files
+
     def delete_directory(self, directory_path):
         shutil.rmtree(os.path.join(settings.MEDIA_ROOT, directory_path))
 
@@ -388,6 +426,7 @@ class FinmarsLocalFileSystemStorage(FinmarsStorage, FileSystemStorage):
 
         zip_file_path = download_local_folder_as_zip(path)
         return zip_file_path
+
 
 
 def get_storage():

@@ -6,7 +6,7 @@ from datetime import timedelta
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 
-from celery import shared_task
+from poms.celery_tasks import finmars_task
 from celery.utils.log import get_task_logger
 from poms_app import settings
 
@@ -19,8 +19,8 @@ _l = logging.getLogger("poms.celery_tasks")
 
 
 # TODO Refactor to task_id
-@shared_task(name="celery_tasks.remove_old_tasks")
-def remove_old_tasks(*args, **kwargs):
+@finmars_task(name='celery_tasks.remove_old_tasks', bind=True)
+def remove_old_tasks(self, *args, **kwargs):
     try:
         tasks = CeleryTask.objects.filter(created__lte=now() - timedelta(days=30))
 
@@ -51,7 +51,7 @@ def remove_old_tasks(*args, **kwargs):
         _l.error(f"remove_old_tasks.exception {repr(e)} {traceback.format_exc()}")
 
 
-@shared_task(name="celery_tasks.auto_cancel_task_by_ttl")
+@finmars_task(name="celery_tasks.auto_cancel_task_by_ttl")
 def auto_cancel_task_by_ttl():
     try:
         tasks = CeleryTask.objects.filter(
@@ -83,7 +83,7 @@ def auto_cancel_task_by_ttl():
         )
 
 
-@shared_task(name="celery_tasks.bulk_delete", bind=True)
+@finmars_task(name="celery_tasks.bulk_delete", bind=True)
 def bulk_delete(self, task_id):
     # is_fake = bool(request.query_params.get('is_fake'))
 
@@ -220,7 +220,7 @@ def import_item(item, context):
         serializer.save()
 
 
-@shared_task(name="celery_tasks.universal_input", bind=True)
+@finmars_task(name="celery_tasks.universal_input", bind=True)
 def universal_input(self, task_id):
     # is_fake = bool(request.query_params.get('is_fake'))
 
@@ -232,7 +232,6 @@ def universal_input(self, task_id):
     celery_task.save()
 
     result = {}
-
     try:
         data = celery_task.options_object
 
@@ -252,12 +251,9 @@ def universal_input(self, task_id):
         if isinstance(data, dict):
             data = [data]
 
-        i = 1
-
-        for item in data:
+        for i, item in enumerate(data, start=1):
             try:
                 import_item(item, context)
-
                 result[str(i)] = {"status": "success"}
 
             except Exception as e:
@@ -271,8 +267,6 @@ def universal_input(self, task_id):
                     "description": f"Going to import {i}",
                 }
             )
-
-            i = i + 1
 
         celery_task.result_object = result
         celery_task.status = CeleryTask.STATUS_DONE

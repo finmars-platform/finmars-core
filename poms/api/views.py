@@ -829,7 +829,7 @@ class RecycleBinViewSet(AbstractViewSet, ModelViewSet):
         from poms_app import celery_app
 
         celery_app.send_task('celery_tasks.bulk_delete', kwargs={"task_id": celery_task.id},
-                             queue='backend-delete-queue')
+                             queue='backend-background-queue')
 
         return Response({"task_id": celery_task.id})
 

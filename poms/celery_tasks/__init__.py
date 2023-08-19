@@ -1,3 +1,9 @@
-from __future__ import unicode_literals
+from functools import partial
 
-default_app_config = 'poms.celery_tasks.apps.CeleryTasksConfig'
+from poms_app.celery import app
+
+from poms.celery_tasks.base import BaseTask
+
+default_app_config = "poms.celery_tasks.apps.CeleryTasksConfig"
+
+finmars_task = partial(app.task, base=BaseTask)

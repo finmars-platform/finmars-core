@@ -3,13 +3,14 @@ import logging
 from celery import shared_task
 from django.utils.timezone import now
 
+from poms.celery_tasks import finmars_task
 from poms.pricing.models import PricingProcedureInstance
 from poms.procedures.models import PricingParentProcedureInstance
 
 _l = logging.getLogger('poms.pricing')
 
 
-@shared_task(name='pricing.clear_old_pricing_procedure_instances', bind=True, ignore_result=True)
+@finmars_task(name='pricing.clear_old_pricing_procedure_instances', bind=True)
 def clear_old_pricing_procedure_instances():
     _l.debug("Pricing: clear_old_pricing_procedure_instances")
 
@@ -48,7 +49,7 @@ def clear_old_pricing_procedure_instances():
     _l.debug("PricingParentProcedureInstance items deleted %s" % len(ids_to_delete))
 
 
-@shared_task(name='pricing.set_old_processing_procedure_instances_to_error', bind=True, ignore_result=True)
+@finmars_task(name='pricing.set_old_processing_procedure_instances_to_error', bind=True, ignore_result=True)
 def set_old_processing_procedure_instances_to_error():
     _l.debug("Pricing: set_old_processing_procedure_instances_to_error")
 

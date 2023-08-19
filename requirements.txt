@@ -120,3 +120,6 @@ suds==1.1.2
 drf_yasg==1.21.5
 sentry-sdk==1.28.1
 coverage==7.2.7
+haikunator==2.1.0
+memory-profiler==0.61.0
+pympler==1.0.1

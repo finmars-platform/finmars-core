@@ -114,7 +114,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
                             description='Member %s started Simple Import (scheme %s)' % (
                                 request.user.member.username, instance.scheme.name))
 
-        simple_import.apply_async(kwargs={'task_id': celery_task.pk})
+        simple_import.apply_async(kwargs={'task_id': celery_task.pk}, queue='backend-background-queue')
 
         _l.info('CsvDataImportViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
 
@@ -156,7 +156,7 @@ class CsvDataImportViewSet(AbstractAsyncViewSet):
                             description='Member %s started Simple Import (scheme %s)' % (
                                 request.user.member.username, options_object['scheme_user_code']))
 
-        simple_import.apply_async(kwargs={'task_id': celery_task.pk})
+        simple_import.apply_async(kwargs={'task_id': celery_task.pk}, queue='backend-background-queue')
 
         _l.info('CsvDataImportViewSet done: %s', "{:3.3f}".format(time.perf_counter() - st))
 

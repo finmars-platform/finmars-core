@@ -329,11 +329,12 @@ class ColumnSortData(models.Model):
 class BaseUIModel(ConfigurationModel):
     json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
 
+    # DEPRECATED
     origin_for_global_layout = models.ForeignKey(SharedConfigurationFile,
                                                  related_name="%(class)s_origins",
                                                  on_delete=models.SET_NULL, null=True, blank=True,
                                                  verbose_name=gettext_lazy('origin for global layout'))
-
+    # DEPRECATED
     sourced_from_global_layout = models.ForeignKey(SharedConfigurationFile, on_delete=models.SET_NULL, null=True,
                                                    blank=True,
                                                    related_name="%(class)s_subscribers",
@@ -447,11 +448,11 @@ class ListLayout(BaseLayout, TimeStampedModel):
                 qs = qs.exclude(pk=self.pk)
             qs.update(is_active=False)
         else:
-            count = ListLayout.objects.filter(member=self.member, content_type=self.content_type, is_default=True).count()
+            count = ListLayout.objects.filter(member=self.member, content_type=self.content_type,
+                                              is_default=True).count()
 
             if count == 0:
                 self.is_default = True
-
 
         return super(ListLayout, self).save(*args, **kwargs)
 
@@ -533,7 +534,6 @@ class MobileLayout(BaseUIModel, TimeStampedModel):
 
     def __str__(self):
         return self.name
-
 
 
 class MemberLayout(BaseUIModel, TimeStampedModel):
@@ -666,6 +666,7 @@ class Dashboard(models.Model):
         verbose_name = gettext_lazy('dashboard')
         verbose_name_plural = gettext_lazy('dashboard')
 
+
 # Deprecated
 # class Configuration(BaseUIModel):
 #     master_user = models.ForeignKey(MasterUser, related_name='configuration_files',
@@ -679,3 +680,42 @@ class Dashboard(models.Model):
 #         ]
 #
 #     ordering = ['name']
+
+
+class Draft(TimeStampedModel):
+
+    member = models.ForeignKey(Member, related_name='drafts', verbose_name=gettext_lazy('member'),
+                               on_delete=models.CASCADE)
+    name = models.CharField(max_length=255, blank=True, default="", db_index=True, verbose_name=gettext_lazy('name'))
+    user_code = models.CharField(max_length=1024, null=True, blank=True, verbose_name=gettext_lazy('user code'))
+
+    json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
+
+    class Meta(BaseLayout.Meta):
+        unique_together = [
+            ['member', 'user_code'],
+        ]
+        ordering = ['name']
+
+    @property
+    def data(self):
+        if self.json_data:
+            try:
+                return json.loads(self.json_data)
+            except (ValueError, TypeError):
+                return None
+        else:
+            return None
+
+    @data.setter
+    def data(self, val):
+        if val:
+            self.json_data = json.dumps(val, cls=DjangoJSONEncoder, sort_keys=True)
+        else:
+            self.json_data = None
+
+    def save(self, *args, **kwargs):
+        return super(Draft, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.name
