@@ -293,7 +293,7 @@ class TransactionReport(BaseReport):
         self.begin_date = begin_date
         self.end_date = end_date
         self.portfolios = portfolios or []
-        self.bundle = bundle or []
+        self.bundle = bundle or None
         self.accounts = accounts or []
         self.accounts_position = accounts_position or []
         self.accounts_cash = accounts_cash or []
