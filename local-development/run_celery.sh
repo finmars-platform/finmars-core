@@ -7,6 +7,7 @@ DB_PASSWORD=postgres \
 DB_HOST=localhost \
 DB_PORT=5434 \
 LOCAL=True \
+DEBUG=False \
 PROFILER=True \
 ENV_CSRF_TRUSTED_ORIGINS=http://0.0.0.0:8080 \
 AWS_STORAGE_BUCKET_NAME=finmars-client00000local \
