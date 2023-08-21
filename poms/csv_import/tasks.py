@@ -83,21 +83,25 @@ def simple_import(self, task_id, procedure_instance_id=None):
             )
             instance.process()
 
-            return {"message": "import finished"}
+            return instance.result
 
         except Exception as e:
-
-            celery_task.error_message = str(e)
-            celery_task.status = CeleryTask.STATUS_ERROR
-            celery_task.save()
-
             _l.error('simple_import error %s' % e)
             _l.error('simple_import traceback %s' % traceback.format_exc())
+
+            raise Exception(e)
+
+            # celery_task.error_message = str(e)
+            # celery_task.status = CeleryTask.STATUS_ERROR
+            # celery_task.save()
+            #
+
 
     except Exception as e:
 
         _l.error('simple_import general error %s' % e)
         _l.error('simple_import general traceback %s' % traceback.format_exc())
+        raise Exception(e)
 
 
 @finmars_task(name='csv_import.data_csv_file_import_by_procedure_json', bind=True)

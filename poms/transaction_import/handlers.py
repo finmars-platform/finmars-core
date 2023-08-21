@@ -1168,7 +1168,9 @@ class TransactionImportProcess(object):
             # }, level="member",
             #     context=self.context)
 
-            self.task.result_object = TransactionImportResultSerializer(instance=self.result, context=self.context).data
+            self.instance.result = TransactionImportResultSerializer(instance=self.result, context=self.context).data
+
+            self.task.result_object = self.instance.result
 
             self.result.reports = []
 

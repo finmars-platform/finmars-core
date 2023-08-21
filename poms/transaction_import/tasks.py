@@ -1,8 +1,6 @@
 import logging
 import traceback
 
-from celery import shared_task
-
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.transaction_import.handlers import TransactionImportProcess
@@ -12,7 +10,6 @@ _l = logging.getLogger('poms.transaction_import')
 
 @finmars_task(name='transaction_import.transaction_import', bind=True)
 def transaction_import(self, task_id, procedure_instance_id=None):
-
     try:
 
         try:
@@ -40,8 +37,7 @@ def transaction_import(self, task_id, procedure_instance_id=None):
 
                 except Exception as e:
                     _l.error('transaction_import.preprocess errors %s' % e)
-                    raise Exception ("Could not preprocess raw items %s" % e)
-
+                    raise Exception("Could not preprocess raw items %s" % e)
 
             instance.fill_with_raw_items()
 
@@ -73,20 +69,23 @@ def transaction_import(self, task_id, procedure_instance_id=None):
             )
             instance.process()
 
-            return {"message": "import finished"}
+            return self.instance.result
             # return instance
 
         except Exception as e:
 
             _l.error("transaction_import error %s" % e)
             _l.error("transaction_import traceback %s" % traceback.format_exc())
+            raise Exception(e)
 
-            self.finmars_task.error_message = "Error %s. \n Traceback: %s" % (e, traceback.format_exc())
-            self.finmars_task.status = CeleryTask.STATUS_ERROR
-            self.finmars_task.mark_task_as_finished()
-            self.finmars_task.save()
+            # self.finmars_task.error_message = "Error %s. \n Traceback: %s" % (e, traceback.format_exc())
+            # self.finmars_task.status = CeleryTask.STATUS_ERROR
+            # self.finmars_task.mark_task_as_finished()
+            # self.finmars_task.save()
 
     except Exception as e:
 
         _l.error('transaction_import.General Exception occurred %s' % e)
         _l.error(traceback.format_exc())
+
+        raise Exception(e)
