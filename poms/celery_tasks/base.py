@@ -133,7 +133,7 @@ class BaseTask(_Task):
         return task
 
     def before_start(self, task_id, args, kwargs):
-        logger.info(f"before_start task_id={task_id} args={args} kwargs={kwargs}")
+        # logger.info(f"before_start task_id={task_id} args={args} kwargs={kwargs}")
 
         if kwargs:
             self.finmars_task = self._update_celery_task_with_run_info(kwargs)
@@ -153,10 +153,10 @@ class BaseTask(_Task):
         self.finmars_task.save()
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
-        logger.info(
-            f"on_failure exc={exc} task_id={task_id} args={args} "
-            f"kwargs={kwargs} einfo={einfo}"
-        )
+        # logger.info(
+        #     f"on_failure exc={exc} task_id={task_id} args={args} "
+        #     f"kwargs={kwargs} einfo={einfo}"
+        # )
 
         if self.finmars_task:
             self._update_celery_task_with_error(exc, einfo)
@@ -198,9 +198,9 @@ class BaseTask(_Task):
         self.finmars_task.save()
 
     def on_success(self, retval, task_id, args, kwargs):
-        logger.info(
-            f"on_success retval={retval} task_id={task_id} args={args} kwargs={kwargs}"
-        )
+        # logger.info(
+        #     f"on_success retval={retval} task_id={task_id} args={args} kwargs={kwargs}"
+        # )
 
         if self.finmars_task:
             self._update_celery_task_with_success(retval, task_id)
