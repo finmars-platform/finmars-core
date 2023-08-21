@@ -69,7 +69,7 @@ def transaction_import(self, task_id, procedure_instance_id=None):
             )
             instance.process()
 
-            return self.instance.result
+            return instance.result
             # return instance
 
         except Exception as e:
