@@ -1738,6 +1738,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
     def get_quantlib_bond(self):
 
+        import QuantLib as ql
+
         bond = None
 
         face_value = 100.  # TODO OG commented: probably we need to add parameter notional
