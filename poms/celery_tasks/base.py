@@ -192,7 +192,7 @@ class BaseTask(_Task):
             except Exception as e:
                 pass
 
-        self.finmars_task.result_object = result_object
+        # self.finmars_task.result_object = result_object
 
         self.finmars_task.mark_task_as_finished()
         self.finmars_task.save()
