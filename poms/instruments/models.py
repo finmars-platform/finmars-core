@@ -2861,10 +2861,10 @@ class PriceHistory(DataTimeStampedModel):
             _l.error(f"get_instr_ytm_x0 {repr(e)}")
             return 0
 
-    def calculate_ytm(self, dt):
-        _l.debug(f"Calculating ytm for {self.instrument.name} for {self.date}")
+    def calculate_ytm(self, date):
+        _l.debug(f"Calculating ytm for {self.instrument.name} for {date}")
 
-        ytm = self.instrument.calculate_quantlib_ytm(date=self.date, price=self.principal_price)
+        ytm = self.instrument.calculate_quantlib_ytm(date=date, price=self.principal_price)
 
         # if (
         #     self.instrument.maturity_date is None
@@ -2894,9 +2894,9 @@ class PriceHistory(DataTimeStampedModel):
         # ytm = f_xirr(data, x0=x0) if data else 0.0
         return ytm
 
-    def calculate_duration(self, ytm):
+    def calculate_duration(self, date, ytm):
 
-        duration = self.instrument.calculate_quantlib_modified_duration(date=self.date, ytm=ytm)
+        duration = self.instrument.calculate_quantlib_modified_duration(date=date, ytm=ytm)
 
         # if (
         #         self.instrument.maturity_date is None
