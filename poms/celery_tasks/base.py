@@ -1,5 +1,6 @@
 import cProfile
 import io
+import json
 import pstats
 import sys
 
@@ -163,6 +164,13 @@ class BaseTask(_Task):
 
         super().on_failure(exc, task_id, args, kwargs, einfo)
 
+    def is_valid_json(self, retval):
+        try:
+            json.loads(retval)
+            return True
+        except json.JSONDecodeError:
+            return False
+
     def _update_celery_task_with_success(self, retval, task_id):
         from poms.celery_tasks.models import CeleryTask
 
@@ -172,6 +180,14 @@ class BaseTask(_Task):
                 "message": f"Task {task_id} finished successfully. No results"
             }
             self.finmars_task.result_object = result_object
+        else:
+            if self.is_valid_json(retval):
+                self.finmars_task.result_object = json.loads(retval) ## TODO strange logic, probably refactor # but we can pass only string in celery
+            else:
+                result_object = {
+                    "message": f"Task {task_id} returned result is not JSON"
+                }
+                self.finmars_task.result_object = result_object
 
         self.finmars_task.mark_task_as_finished()
         self.finmars_task.save()

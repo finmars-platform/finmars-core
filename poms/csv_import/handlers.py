@@ -7,6 +7,8 @@ import traceback
 from logging import getLogger
 from tempfile import NamedTemporaryFile
 
+
+
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 
@@ -1796,9 +1798,11 @@ class SimpleImportProcess(object):
             else:
                 pass
 
-            self.task.result_object = SimpleImportResultSerializer(
+            self.import_result = SimpleImportResultSerializer(
                 instance=self.result, context=self.context
             ).data
+
+            self.task.result_object = self.import_result
 
             _l.info('self.task.result_object %s' % self.task.result_object)
 
@@ -1885,4 +1889,4 @@ class SimpleImportProcess(object):
         self.task.mark_task_as_finished()
         self.task.save()
 
-        return self.result
+

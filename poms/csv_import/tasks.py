@@ -1,14 +1,15 @@
+import json
 import traceback
 from logging import getLogger
 
-from celery import shared_task
+from django.db import transaction
+from rest_framework.renderers import JSONRenderer
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.csv_import.handlers import SimpleImportProcess
 from poms.csv_import.models import CsvImportScheme
 from poms.system_messages.handlers import send_system_message
-from django.db import IntegrityError, transaction
 
 _l = getLogger('poms.csv_import')
 
@@ -19,7 +20,6 @@ storage = get_storage()
 
 @finmars_task(name='csv_import.simple_import', bind=True)
 def simple_import(self, task_id, procedure_instance_id=None):
-
     try:
         celery_task = CeleryTask.objects.get(pk=task_id)
         celery_task.celery_task_id = self.request.id  # Important (record history rely on that)
@@ -51,7 +51,7 @@ def simple_import(self, task_id, procedure_instance_id=None):
 
                 except Exception as e:
                     _l.error('transaction_import.preprocess errors %s' % e)
-                    raise Exception ("Could not preprocess raw items %s" % e)
+                    raise Exception("Could not preprocess raw items %s" % e)
 
             instance.fill_with_raw_items()
 
@@ -83,7 +83,7 @@ def simple_import(self, task_id, procedure_instance_id=None):
             )
             instance.process()
 
-            return instance.result
+            return json.dumps(instance.import_result)
 
         except Exception as e:
             _l.error('simple_import error %s' % e)
@@ -106,7 +106,6 @@ def simple_import(self, task_id, procedure_instance_id=None):
 
 @finmars_task(name='csv_import.data_csv_file_import_by_procedure_json', bind=True)
 def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_task_id):
-
     _l.info('data_csv_file_import_by_procedure_json  procedure_instance_id %s celery_task_id %s' % (
         procedure_instance_id, celery_task_id))
 
@@ -145,7 +144,8 @@ def data_csv_file_import_by_procedure_json(self, procedure_instance_id, celery_t
                             description=text)
 
         transaction.on_commit(lambda: simple_import.apply_async(
-            kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id}, queue='backend-background-queue'))
+            kwargs={"task_id": celery_task.id, "procedure_instance_id": procedure_instance_id},
+            queue='backend-background-queue'))
 
 
     except Exception as e:

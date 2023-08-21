@@ -35,6 +35,7 @@ from poms.transaction_import.serializers import TransactionImportResultSerialize
 from poms.transactions.handlers import TransactionTypeProcess
 from poms.transactions.models import TransactionTypeInput, TransactionType
 from poms.users.models import EcosystemDefault
+from rest_framework.renderers import JSONRenderer
 
 storage = get_storage()
 
@@ -1168,9 +1169,9 @@ class TransactionImportProcess(object):
             # }, level="member",
             #     context=self.context)
 
-            self.instance.result = TransactionImportResultSerializer(instance=self.result, context=self.context).data
+            self.import_result = TransactionImportResultSerializer(instance=self.result, context=self.context).data
 
-            self.task.result_object = self.instance.result
+            self.task.result_object = self.import_result
 
             self.result.reports = []
 
@@ -1254,7 +1255,6 @@ class TransactionImportProcess(object):
 
         self.task.save()
 
-        return self.result
 
     def whole_file_preprocess(self):
 

@@ -1,10 +1,11 @@
+import json
 import logging
 import traceback
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
 from poms.transaction_import.handlers import TransactionImportProcess
-
+from rest_framework.renderers import JSONRenderer
 _l = logging.getLogger('poms.transaction_import')
 
 
@@ -69,7 +70,9 @@ def transaction_import(self, task_id, procedure_instance_id=None):
             )
             instance.process()
 
-            return instance.result
+            _l.info('instance.import_result %s' % instance.import_result)
+
+            return json.dumps(instance.import_result)
             # return instance
 
         except Exception as e:
