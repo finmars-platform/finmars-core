@@ -4,10 +4,9 @@ import json
 import pstats
 import sys
 
-from django.utils.timezone import now
-
 from celery import Task as _Task
 from celery.utils.log import get_task_logger
+from django.utils.timezone import now
 
 logger = get_task_logger(__name__)
 
@@ -181,13 +180,19 @@ class BaseTask(_Task):
             }
             self.finmars_task.result_object = result_object
         else:
-            if self.is_valid_json(retval):
-                self.finmars_task.result_object = json.loads(retval) ## TODO strange logic, probably refactor # but we can pass only string in celery
-            else:
-                result_object = {
-                    "message": f"Task {task_id} returned result is not JSON"
-                }
-                self.finmars_task.result_object = result_object
+            try:
+                if self.is_valid_json(retval):
+                    self.finmars_task.result_object = json.loads(
+                        retval)  ## TODO strange logic, probably refactor # but we can pass only string in celery
+                else:
+                    result_object = {
+                        "message": f"Task {task_id} returned result is not JSON"
+                    }
+                    self.finmars_task.result_object = result_object
+            except Exception as e:
+                pass
+
+        self.finmars_task.result_object = result_object
 
         self.finmars_task.mark_task_as_finished()
         self.finmars_task.save()
