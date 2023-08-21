@@ -5,6 +5,7 @@ import traceback
 from datetime import date, datetime, timedelta
 from math import isnan
 
+from dateutil import relativedelta, rrule
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core import serializers
 from django.core.exceptions import ObjectDoesNotExist
@@ -14,10 +15,8 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy
 
-from dateutil import relativedelta, rrule
-
 from poms.common.constants import SYSTEM_VALUE_TYPES, SystemValueType
-from poms.common.formula_accruals import f_duration, f_xirr, get_coupon
+from poms.common.formula_accruals import f_duration, get_coupon
 from poms.common.models import (
     EXPRESSION_FIELD_LENGTH,
     AbstractClassModel,
@@ -293,6 +292,15 @@ class AccrualCalculationModel(AbstractClassModel):
 
     DEFAULT = 25
 
+    # NEW DAY COUNT CONVENTION
+    # 2023-08-21
+
+    AFB = 26
+    FIXED = 27
+
+    BOND_BASIS_30_360 = 28
+    EUROBOND_BASIS_30E_360 = 29
+
     CLASSES = (
         (NONE, "NONE", gettext_lazy("none")),
         (ACT_ACT, "ACT_ACT", gettext_lazy("ACT/ACT")),
@@ -335,7 +343,43 @@ class AccrualCalculationModel(AbstractClassModel):
         (REVERSED_ACT_365, "REVERSED_ACT_365", gettext_lazy("Reversed ACT/365")),
         (C_30E_P_360, "C_30E_P_360", gettext_lazy("30E+/360")),
         (DEFAULT, "-", gettext_lazy("Default")),
+
+        # NEW DAY COUNT CONVENTION
+
+        (AFB, "AFB", gettext_lazy("Actual/Actual (AFB)")),
+        (FIXED, "FIXED", gettext_lazy("Actual/365 (Fixed)")),
+
+        (BOND_BASIS_30_360, "BOND_BASIS_30_360", gettext_lazy("30/360 (Bond Basis)")),
+        (EUROBOND_BASIS_30E_360, "EUROBOND_BASIS_30E_360", gettext_lazy("30E/360 (Eurobond Basis)")),
     )
+
+    @staticmethod
+    def get_quantlib_day_count(finmars_accrual_calculation_model):
+        import QuantLib as ql
+
+        default = ql.SimpleDayCounter()
+
+        map_daycount_convention = {
+            AccrualCalculationModel.ACT_ACT_ISDA: ql.ActualActual(ql.ActualActual.ISDA),
+            AccrualCalculationModel.ACT_ACT: ql.ActualActual(ql.ActualActual.ISMA),
+            AccrualCalculationModel.ACT_365_366: ql.ActualActual(ql.ActualActual.ISMA),
+            AccrualCalculationModel.AFB: ql.ActualActual(ql.ActualActual.AFB),
+            AccrualCalculationModel.FIXED: ql.Actual365Fixed(),
+            AccrualCalculationModel.ACT_360: ql.Actual360(),
+            AccrualCalculationModel.BOND_BASIS_30_360: ql.Thirty360(ql.Thirty360.BondBasis),
+            AccrualCalculationModel.EUROBOND_BASIS_30E_360: ql.Thirty360(ql.Thirty360.EurobondBasis),
+            # TODO possibly add new day count conventions
+            # TODO add later EOM/NO EOM in quantilib
+            # "30/360 (Italian)": ql.Thirty360(ql.Thirty360.Italian),
+            # "30/360 (German)": ql.Thirty360(ql.Thirty360.German),
+            # "30/360 US": ql.Thirty360(ql.Thirty360.BondBasis),
+            AccrualCalculationModel.ACT_365: ql.Thirty365(),
+            AccrualCalculationModel.DEFAULT: ql.SimpleDayCounter()
+        }
+
+        result = map_daycount_convention.get(finmars_accrual_calculation_model, default)
+
+        return result
 
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("accrual calculation model")
@@ -397,6 +441,28 @@ class Periodicity(AbstractClassModel):
         (ANNUALLY, "ANNUALLY", gettext_lazy("Annually")),
         (DEFAULT, "-", gettext_lazy("-")),
     )
+
+    @staticmethod
+    def get_quantlib_periodicity(finmars_periodicity):
+
+        import QuantLib as ql
+
+        default = ql.Period(12, ql.Months)  # default semi-annually
+
+        mapping = {
+            # TODO probably add mapping for other finmars periodicities
+            Periodicity.N_DAY: ql.Period(1, ql.Days),
+            Periodicity.WEEKLY: ql.Period(1, ql.Weeks),
+            Periodicity.MONTHLY: ql.Period(1, ql.Months),
+            Periodicity.BIMONTHLY: ql.Period(2, ql.Months),
+            Periodicity.QUARTERLY: ql.Period(3, ql.Months),
+            Periodicity.SEMI_ANNUALLY: ql.Period(6, ql.Months),
+            Periodicity.ANNUALLY: ql.Period(12, ql.Months)
+        }
+
+        result = mapping.get(finmars_periodicity, default)
+
+        return result
 
     class Meta(AbstractClassModel.Meta):
         verbose_name = gettext_lazy("periodicity")
@@ -1658,6 +1724,161 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             self.master_user.instrument_id == self.id if self.master_user_id else False
         )
 
+    date_pattern = '%Y-%m-%d'  # YYYY-MM-DD, used in calculate_ytm method
+
+    def get_first_accrual(self):
+
+        result = None
+
+        accruals = self.accrual_calculation_schedules.all()
+        if len(accruals):
+            result = accruals[0]
+
+        return result
+
+    def get_quantlib_bond(self):
+
+        bond = None
+
+        face_value = 100.  # TODO OG commented: probably we need to add parameter notional
+        calendar = ql.TARGET()
+
+        if self.maturity_date:
+
+            maturity = ql.Date(self.maturity_date, self.date_pattern)
+
+            if self.has_factor_schedules():
+
+                factor_schedules = self.get_factors()
+
+                factor_dates = [item.effective_date for item in factor_schedules]
+                factor_values = [item.factor_value for item in factor_schedules]
+
+                # TODO OG commented: we need issue date
+
+                first_accrual = self.get_first_accrual()
+
+                business_convention = ql.Following
+
+                periodicity = Periodicity.get_quantlib_periodicity(
+                    first_accrual.periodicity)
+
+                float_accrual_size = float(accrual.accrual_size) / 100
+                # yield_guess = 0.1
+                day_count = AccrualCalculationModel.get_quantlib_day_count(
+                    first_accrual.accrual_calculation_model)
+                # build accrual schedule
+                # schedule = ql.MakeSchedule(start_date, maturity_date, period )
+
+                schedule = ql.Schedule(start_date, maturity, periodicity,
+                                       calendar, business_convention, business_convention,
+                                       ql.DateGeneration.Backward, False)
+
+                # cast to dates list
+                schedule_dates = list(schedule)
+
+                notionals = []
+
+                # TODO probably need to move somewhere else
+                def active_factor(date, factors, factor_dates):
+                    tmp_list = {idate for idate in factor_dates if idate <= date}
+                    factor = 1
+                    if len(tmp_list) > 0:
+                        active_date = max(tmp_list)
+                        index = factor_dates.index(active_date)
+                        factor = factors[index]
+                    return factor
+
+                # we need notinals (factors) list to be of same length as accrual schedule
+                for date in schedule_dates:
+                    val = active_factor(date=date, factors=factor_values, factor_dates=factor_dates) * face_value
+
+                    notionals.append(val)
+
+                bond = ql.AmortizingFixedRateBond(0, notionals, schedule, [float_accrual_size], day_count)
+
+            else:
+
+                first_accrual = self.get_first_accrual()
+
+                settlementDays = 0
+
+                if first_accrual:
+
+                    start = ql.Date(first_accrual.accrual_start_date, self.date_pattern)  # Start accrual date
+                    periodicity = Periodicity.get_quantlib_periodicity(
+                        first_accrual.periodicity)
+
+                    schedule = ql.MakeSchedule(start,
+                                               maturity,
+                                               periodicity
+                                               )  # period - semiannual
+
+                    float_accrual_size = float(accrual.accrual_size) / 100
+                    day_count = AccrualCalculationModel.get_quantlib_day_count(
+                        first_accrual.accrual_calculation_model)
+
+                    interest = ql.FixedRateLeg(schedule,
+                                               day_count,
+                                               [face_value],
+                                               [float_accrual_size])
+
+                    bond = ql.Bond(settlementDays, calendar, start, interest)
+
+                else:
+
+                    bond = ql.ZeroCouponBond(
+                        settlementDays=settlementDays,
+                        calendar=calendar,
+                        faceAmount=face_value,
+                        maturityDate=maturity
+                    )
+
+        return bond
+
+    # Important function for calculating YTM
+    # 2023-08-21
+    def calculate_quantlib_ytm(self, date, price):
+
+        import QuantLib as ql
+
+        ytm = 0
+
+        bond = self.get_quantlib_bond()
+
+        if bond:
+            ql.Settings.instance().evaluationDate = ql.Date(date, self.date_pattern)
+
+            frequency = bond.paymentFrequency()
+
+            ytm = bond.bondYield(price, ql.Actual360(), ql.Compounded, frequency)
+
+        return ytm
+
+    def calculate_quantlib_modified_duration(self, date, ytm):
+
+        import QuantLib as ql
+
+        modified_duration = 0
+
+        bond = self.get_quantlib_bond()
+
+        if bond:
+            ql.Settings.instance().evaluationDate = ql.Date(date, self.date_pattern)
+
+            frequency = bond.paymentFrequency()
+            first_cashflow = fixed_rate_bond.cashflows()[0]
+            day_count_convention = first_cashflow.dayCounter()
+
+            # Macaulay Duration
+            # TODO probably do not need right now
+            #macaulay_duration = ql.BondFunctions.duration(amort_bond, ytm, day_count, ql.Compounded, frequency, ql.Duration.Macaulay)
+
+            # Modified Duration
+            modified_duration = ql.BondFunctions.duration(bond, ytm, day_count_convention, ql.Compounded, frequency, ql.Duration.Modified)
+
+        return modified_duration
+
     def rebuild_event_schedules(self):
         from poms.transactions.models import EventClass, NotificationClass
 
@@ -1758,10 +1979,10 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             eold = None
             for e0 in events:
                 if (
-                    e0.is_auto_generated
-                    and e0.event_class_id == EventClass.ONE_OFF
-                    and e0.accrual_calculation_schedule_id is None
-                    and e0.factor_schedule_id is None
+                        e0.is_auto_generated
+                        and e0.event_class_id == EventClass.ONE_OFF
+                        and e0.accrual_calculation_schedule_id is None
+                        and e0.factor_schedule_id is None
                 ):
                     eold = e0
                     break
@@ -2119,6 +2340,14 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             res.append((self.maturity_date, val_or_factor))
 
         return res
+
+    # Need in new ytm calculation
+    # 2023-08-21
+    def has_factor_schedules(self):
+
+        factors = list(self.factor_schedules.all())
+
+        return bool(len(factors))
 
     def get_factors(self):
         factors = list(self.factor_schedules.all())
@@ -2543,13 +2772,13 @@ class PriceHistory(DataTimeStampedModel):
 
     def get_instr_ytm_data_d0_v0(self, dt):
         v0 = -(
-            self.principal_price
-            * self.instrument.price_multiplier
-            * self.instrument.get_factor(dt)
-            + self.accrued_price
-            * self.instrument.accrued_multiplier
-            * self.instrument.get_factor(dt)
-            * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+                self.principal_price
+                * self.instrument.price_multiplier
+                * self.instrument.get_factor(dt)
+                + self.accrued_price
+                * self.instrument.accrued_multiplier
+                * self.instrument.get_factor(dt)
+                * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
         )
 
         return dt, v0
@@ -2563,9 +2792,9 @@ class PriceHistory(DataTimeStampedModel):
         if instr.maturity_date is None or instr.maturity_date == date.max:
             return []
         if (
-            instr.maturity_price is None
-            or isnan(instr.maturity_price)
-            or isclose(instr.maturity_price, 0.0)
+                instr.maturity_price is None
+                or isnan(instr.maturity_price)
+                or isclose(instr.maturity_price, 0.0)
         ):
             return []
 
@@ -2577,14 +2806,14 @@ class PriceHistory(DataTimeStampedModel):
         data = [(d0, v0)]
 
         for cpn_date, cpn_val in instr.get_future_coupons(
-            begin_date=d0, with_maturity=False
+                begin_date=d0, with_maturity=False
         ):
             try:
                 factor = instr.get_factor(cpn_date)
                 k = (
-                    instr.accrued_multiplier
-                    * factor
-                    * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+                        instr.accrued_multiplier
+                        * factor
+                        * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
                 )
             except ArithmeticError:
                 k = 0
@@ -2593,8 +2822,8 @@ class PriceHistory(DataTimeStampedModel):
         prev_factor = None
         for factor in instr.factor_schedules.all():
             if (
-                factor.effective_date < d0
-                or factor.effective_date > instr.maturity_date
+                    factor.effective_date < d0
+                    or factor.effective_date > instr.maturity_date
             ):
                 prev_factor = factor
                 continue
@@ -2622,9 +2851,9 @@ class PriceHistory(DataTimeStampedModel):
             accrual_size = self.instrument.get_accrual_size(dt)
 
             return (
-                (accrual_size * self.instrument.accrued_multiplier)
-                * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
-                / (self.principal_price * self.instrument.price_multiplier)
+                    (accrual_size * self.instrument.accrued_multiplier)
+                    * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+                    / (self.principal_price * self.instrument.price_multiplier)
             )
         except Exception as e:
             _l.error(f"get_instr_ytm_x0 {repr(e)}")
@@ -2633,47 +2862,54 @@ class PriceHistory(DataTimeStampedModel):
     def calculate_ytm(self, dt):
         _l.debug(f"Calculating ytm for {self.instrument.name} for {self.date}")
 
-        if (
-            self.instrument.maturity_date is None
-            or self.instrument.maturity_date == date.max
-            or str(self.instrument.maturity_date) == "2999-01-01"
-            or str(self.instrument.maturity_date) == "2099-01-01"
-        ):
-            try:
-                accrual_size = self.instrument.get_accrual_size(dt)
-                ytm = (
-                    (accrual_size * self.instrument.accrued_multiplier)
-                    * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
-                    / (self.principal_price * self.instrument.price_multiplier)
-                )
+        ytm = self.instrument.calculate_quantlib_ytm(date=self.date, price=self.principal_price)
 
-            except Exception as e:
-                _l.error(f"calculate_ytm error {repr(e)}")
-                ytm = 0
-            return ytm
-
-        x0 = self.get_instr_ytm_x0(dt)
-        _l.debug("get_instr_ytm: x0=%s", x0)
-
-        data = self.get_instr_ytm_data(dt)
-        _l.debug("get_instr_ytm: data=%s", data)
-
-        ytm = f_xirr(data, x0=x0) if data else 0.0
+        # if (
+        #     self.instrument.maturity_date is None
+        #     or self.instrument.maturity_date == date.max
+        #     or str(self.instrument.maturity_date) == "2999-01-01"
+        #     or str(self.instrument.maturity_date) == "2099-01-01"
+        # ):
+        #     try:
+        #         accrual_size = self.instrument.get_accrual_size(dt)
+        #         ytm = (
+        #             (accrual_size * self.instrument.accrued_multiplier)
+        #             * (self.instr_accrued_ccy_cur_fx / self.instr_pricing_ccy_cur_fx)
+        #             / (self.principal_price * self.instrument.price_multiplier)
+        #         )
+        #
+        #     except Exception as e:
+        #         _l.error(f"calculate_ytm error {repr(e)}")
+        #         ytm = 0
+        #     return ytm
+        #
+        # x0 = self.get_instr_ytm_x0(dt)
+        # _l.debug("get_instr_ytm: x0=%s", x0)
+        #
+        # data = self.get_instr_ytm_data(dt)
+        # _l.debug("get_instr_ytm: data=%s", data)
+        #
+        # ytm = f_xirr(data, x0=x0) if data else 0.0
         return ytm
 
-    def calculate_duration(self, dt):
-        if (
-            self.instrument.maturity_date is None
-            or self.instrument.maturity_date == date.max
-        ):
-            try:
-                duration = 1 / self.ytm
-            except ArithmeticError:
-                duration = 0
+    def calculate_duration(self, ytm):
 
-            return duration
-        data = self.get_instr_ytm_data(dt)
-        return f_duration(data, ytm=self.ytm) if data else 0
+        duration = self.instrument.calculate_quantlib_modified_duration(date=self.date, ytm=ytm)
+
+        # if (
+        #         self.instrument.maturity_date is None
+        #         or self.instrument.maturity_date == date.max
+        # ):
+        #     try:
+        #         duration = 1 / self.ytm
+        #     except ArithmeticError:
+        #         duration = 0
+        #
+        #     return duration
+        # data = self.get_instr_ytm_data(dt)
+        # return f_duration(data, ytm=self.ytm) if data else 0
+
+        return duration
 
     def save(self, *args, **kwargs):
         # TODO make readable exception if currency history is missing
@@ -2692,8 +2928,8 @@ class PriceHistory(DataTimeStampedModel):
 
         try:
             if (
-                self.instrument.accrued_currency_id
-                == self.instrument.pricing_currency_id
+                    self.instrument.accrued_currency_id
+                    == self.instrument.pricing_currency_id
             ):
                 self.instr_accrued_ccy_cur_fx = 1
                 self.instr_pricing_ccy_cur_fx = 1
@@ -2714,7 +2950,7 @@ class PriceHistory(DataTimeStampedModel):
                     ).fx_rate
 
             self.ytm = self.calculate_ytm(self.date)
-            self.modified_duration = self.calculate_duration(self.date)
+            self.modified_duration = self.calculate_duration(self.date, self.ytm)
 
         except Exception as e:
             _l.debug(f"PriceHistory save ytm error {repr(e)} {traceback.print_exc()}")
@@ -2912,8 +3148,8 @@ class EventSchedule(models.Model):
                     break
 
                 if (
-                    self.accrual_calculation_schedule_id is not None
-                    and effective_date >= fdate
+                        self.accrual_calculation_schedule_id is not None
+                        and effective_date >= fdate
                 ):
                     effective_date = fdate - timedelta(days=1)
                     stop = True
@@ -3192,7 +3428,7 @@ class GeneratedEvent(models.Model):
         return f"Event #{self.id}"
 
     def processed(
-        self, member, action, complex_transaction, status=BOOKED_SYSTEM_DEFAULT
+            self, member, action, complex_transaction, status=BOOKED_SYSTEM_DEFAULT
     ):
         from poms.transactions.models import TransactionType
 
@@ -3221,8 +3457,8 @@ class GeneratedEvent(models.Model):
         )
 
         return (
-            self.effective_date == now
-            and notification_class.is_notify_on_effective_date
+                self.effective_date == now
+                and notification_class.is_notify_on_effective_date
         )
 
     def is_notify_on_notification_date(self, now=None):
@@ -3242,8 +3478,8 @@ class GeneratedEvent(models.Model):
         )
 
         return (
-            self.notification_date == now
-            and notification_class.is_notify_on_notification_date
+                self.notification_date == now
+                and notification_class.is_notify_on_notification_date
         )
 
     def is_notify_on_date(self, now=None):
@@ -3257,8 +3493,8 @@ class GeneratedEvent(models.Model):
             now = now or date_now()
             notification_class = self.event_schedule.notification_class
             return (
-                self.effective_date == now
-                and notification_class.is_apply_default_on_effective_date
+                    self.effective_date == now
+                    and notification_class.is_apply_default_on_effective_date
             )
 
         return False
@@ -3268,8 +3504,8 @@ class GeneratedEvent(models.Model):
             now = now or date_now()
             notification_class = self.event_schedule.notification_class
             return (
-                self.notification_date == now
-                and notification_class.is_apply_default_on_notification_date
+                    self.notification_date == now
+                    and notification_class.is_apply_default_on_notification_date
             )
 
         return False
@@ -3285,8 +3521,8 @@ class GeneratedEvent(models.Model):
             now = now or date_now()
             notification_class = self.event_schedule.notification_class
             return (
-                self.effective_date == now
-                and notification_class.is_need_reaction_on_effective_date
+                    self.effective_date == now
+                    and notification_class.is_need_reaction_on_effective_date
             )
 
         return False
@@ -3296,8 +3532,8 @@ class GeneratedEvent(models.Model):
             now = now or date_now()
             notification_class = self.event_schedule.notification_class
             return (
-                self.notification_date == now
-                and notification_class.is_need_reaction_on_notification_date
+                    self.notification_date == now
+                    and notification_class.is_need_reaction_on_notification_date
             )
 
         return False
