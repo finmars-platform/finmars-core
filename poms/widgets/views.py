@@ -414,9 +414,12 @@ class StatsViewSet(AbstractViewSet):
         _l.info("StatsViewSet.date %s" % date)
         _l.info("StatsViewSet.portfolio %s" % portfolio_instance)
 
-        widget = WidgetStats.objects.get(date=date, portfolio=portfolio_instance, benchmark=benchmark)
+        if not date:
+            widget = WidgetStats.objects.filter(portfolio=portfolio_instance, benchmark=benchmark).last()
+        else:
+            widget = WidgetStats.objects.get(date=date, portfolio=portfolio_instance, benchmark=benchmark)
 
-        serializer = WidgetStatsSerializer(instance=widget)
+        serializer = WidgetStatsSerializer(instance=widget, context={'request': request})
 
         return Response(serializer.data)
 
