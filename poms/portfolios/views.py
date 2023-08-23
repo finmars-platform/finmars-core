@@ -201,6 +201,51 @@ class PortfolioViewSet(AbstractModelViewSet):
 
         return Response(result)
 
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="get-inception-date",
+    )
+    def get_inception_date(self, request, *args, **kwargs):
+
+        result = {
+            "date": None
+        }
+
+        portfolio = self.get_object()
+
+        first_record = PortfolioRegisterRecord.objects.filter(portfolio=portfolio).order_by('transaction_date').first()
+
+        if first_record:
+            result['date'] = first_record.transaction_date
+
+        return Response(result)
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="get-inception-date",
+    )
+    def get_inception_date(self, request, *args, **kwargs):
+
+        user_code = request.query_params.get('user_code', None)
+
+        if not user_code:
+            raise Exception('user_code is required')
+
+        result = {
+            "date": None
+        }
+
+        portfolio = Portfolio.objects.get(user_code=user_code)
+
+        first_record = PortfolioRegisterRecord.objects.filter(portfolio=portfolio).order_by('transaction_date').first()
+
+        if first_record:
+            result['date'] = first_record.transaction_date
+
+        return Response(result)
+
 
 class PortfolioRegisterAttributeTypeViewSet(GenericAttributeTypeViewSet):
     target_model = PortfolioRegister
