@@ -1,8 +1,9 @@
 from datetime import timedelta
 
 from django.contrib.contenttypes.models import ContentType
-
 from django.utils.timezone import now
+
+from django_celery_beat.models import CrontabSchedule, PeriodicTask
 
 from poms.common.common_base_test import BaseTestCase, change_created_time
 from poms.history.models import HistoricalRecord
@@ -34,3 +35,13 @@ class CalculateDailySumTestCase(BaseTestCase):
         clear_old_journal_records()
 
         self.assertEqual(HistoricalRecord.objects.count(), 0)
+
+    def test__periodic_task_created(self):
+        crontabs = CrontabSchedule.objects.all()
+        self.assertEqual(crontabs.count(), 4)
+
+        periodic_tasks = PeriodicTask.objects.all()
+        self.assertEqual(periodic_tasks.count(), 1)
+
+        task = periodic_tasks.filter(id=6).first()
+        self.assertEqual(task.name, "Clean Old Historical Records")
