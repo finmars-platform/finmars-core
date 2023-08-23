@@ -2,72 +2,97 @@ import json
 import logging
 from datetime import datetime
 
-from croniter import croniter
 from django.core.exceptions import ValidationError
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy
 
-from poms.common.models import NamedModel, DataTimeStampedModel
+from croniter import croniter
+
+from poms.common.models import DataTimeStampedModel, NamedModel
 from poms.configuration.models import ConfigurationModel
 from poms.system_messages.handlers import send_system_message
 from poms.users.models import MasterUser
 
-_l = logging.getLogger('poms.schedules')
+_l = logging.getLogger("poms.schedules")
 
 
 def validate_crontab(value):
     try:
-        # to_crontab(value)
         croniter(value, timezone.now())
-    except (ValueError, KeyError, TypeError):
-        raise ValidationError(gettext_lazy('A valid cron string is required.'))
+
+    except (ValueError, KeyError, TypeError) as e:
+        raise ValidationError(gettext_lazy("A valid cron string is required.")) from e
 
 
 class Schedule(NamedModel, ConfigurationModel):
-    '''
-        Simply schedules, User Defined
+    """
+    Simply schedules, User Defined
 
-        User chooses time (server UTC) and setting up Actions and their order
-        When its time, actions just executes one after another (Thanks to Celery Beat)
+    User chooses time (server UTC) and setting up Actions and their order
+    When its time, actions just executes one after another (Thanks to Celery Beat)
 
-        Possibly be deprecated soon. Everything background-task related will move to Workflow/Olap
+    Possibly be deprecated soon. Everything background-task related will
+    move to Workflow/Olap
 
-        ==== Important ====
-        Part of Finmars Configuration
-        Part of FInmars Marketplace
+    ==== Important ====
+    Part of Finmars Configuration
+    Part of Finmars Marketplace
 
-    '''
+    """
+
     ERROR_HANDLER_CHOICES = [
-        ['break', 'Break'],
-        ['continue', 'Continue'],
+        ["break", "Break"],
+        ["continue", "Continue"],
     ]
 
-    master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
-
-    cron_expr = models.CharField(max_length=255, blank=True, default='', validators=[validate_crontab],
-                                 verbose_name=gettext_lazy('cron expr'),
-                                 help_text=gettext_lazy(
-                                     'Format is "* * * * *" (minute / hour / day_month / month / day_week)'))
-
-    last_run_at = models.DateTimeField(default=timezone.now, editable=False, db_index=True,
-                                       verbose_name=gettext_lazy('last run at'))
-
-    next_run_at = models.DateTimeField(default=timezone.now, editable=True, db_index=True,
-                                       verbose_name=gettext_lazy('next run at'))
-
-    error_handler = models.CharField(max_length=255, choices=ERROR_HANDLER_CHOICES, default='break')
-
-    json_data = models.TextField(null=True, blank=True, verbose_name=gettext_lazy('json data'))
+    master_user = models.ForeignKey(
+        MasterUser,
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
+    )
+    cron_expr = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        validators=[validate_crontab],
+        verbose_name=gettext_lazy("cron expr"),
+        help_text=gettext_lazy(
+            'Format is "* * * * *" (minute / hour / day_month / month / day_week)'
+        ),
+    )
+    last_run_at = models.DateTimeField(
+        default=timezone.now,
+        editable=False,
+        db_index=True,
+        verbose_name=gettext_lazy("last run at"),
+    )
+    next_run_at = models.DateTimeField(
+        default=timezone.now,
+        editable=True,
+        db_index=True,
+        verbose_name=gettext_lazy("next run at"),
+    )
+    error_handler = models.CharField(
+        max_length=255,
+        choices=ERROR_HANDLER_CHOICES,
+        default="break",
+    )
+    json_data = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("json data"),
+    )
 
     @property
     def data(self):
-        if self.json_data:
-            try:
-                return json.loads(self.json_data)
-            except (ValueError, TypeError):
-                return None
-        else:
+        if not self.json_data:
+            return None
+
+        try:
+            return json.loads(self.json_data)
+        except (ValueError, TypeError):
             return None
 
     @data.setter
@@ -77,136 +102,194 @@ class Schedule(NamedModel, ConfigurationModel):
         else:
             self.json_data = None
 
-    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+    def save(
+        self, force_insert=False, force_update=False, using=None, update_fields=None
+    ):
+        from poms.schedules.utils import sync_schedules
+
         if self.is_enabled:
             self.schedule(save=False)
-        super(Schedule, self).save(force_insert=force_insert, force_update=force_update, using=using,
-                                   update_fields=update_fields)
 
-        from poms.schedules.utils import sync_schedules
+        super(Schedule, self).save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
+
         sync_schedules()
 
     def schedule(self, save=False):
         start_time = timezone.localtime(timezone.now())
         cron = croniter(self.cron_expr, start_time)
 
-        _l.info('schedule cron_expr %s ' % self.cron_expr)
-        _l.info('schedule start_time %s ' % start_time)
+        _l.info(f"schedule cron_expr {self.cron_expr} start_time {start_time} ")
 
         next_run_at = cron.get_next(datetime)
 
-        _l.info('schedule next_run_at %s ' % next_run_at)
-
-        # next_run_at = cron.get_next(datetime)
-        #
-        # _l.info('schedule next_run_at after %s ' % next_run_at)
+        _l.info(f"schedule next_run_at {next_run_at} ")
 
         self.next_run_at = next_run_at
 
         if save:
-            self.save(update_fields=['last_run_at', 'next_run_at', ])
+            self.save(
+                update_fields=[
+                    "last_run_at",
+                    "next_run_at",
+                ]
+            )
 
     class Meta(NamedModel.Meta):
-        unique_together = (
-            ('user_code', 'master_user')
-        )
+        unique_together = ("user_code", "master_user")
 
     def __str__(self):
         return self.user_code
 
 
 class ScheduleProcedure(models.Model):
-    '''
+    """
     Schedule Action itself, for now we support 3 types
-    1 - Data Procedure (which executes transaction import/simple import -> generates Intstruments and Transactions)
+    1 - Data Procedure (which executes transaction import/simple import ->
+    generates Instruments and Transactions)
     2 - Pricing Procedure (runs pricing and fetching PriceHistory and CurrencyHistory)
-    3 - Expression Procedure (user defined scripts, executes rolling of prices, or other finmars tasks)
-    '''
-    schedule = models.ForeignKey(Schedule, verbose_name=gettext_lazy('schedule'), related_name="procedures",
-                                 on_delete=models.CASCADE)
-    type = models.CharField(max_length=25, null=True, blank=True, verbose_name=gettext_lazy('type'))
-    user_code = models.CharField(max_length=255, null=True, blank=True, verbose_name=gettext_lazy('user code'))
-    order = models.IntegerField(default=0, verbose_name=gettext_lazy('order'))
+    3 - Expression Procedure (user defined scripts, executes rolling of prices,
+    or other finmars tasks)
+    """
+
+    schedule = models.ForeignKey(
+        Schedule,
+        verbose_name=gettext_lazy("schedule"),
+        related_name="procedures",
+        on_delete=models.CASCADE,
+    )
+    type = models.CharField(
+        max_length=25,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("type"),
+    )
+    user_code = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("user code"),
+    )
+    order = models.IntegerField(
+        default=0,
+        verbose_name=gettext_lazy("order"),
+    )
 
     class Meta:
         unique_together = [
-            ['schedule', 'order'],
+            ["schedule", "order"],
         ]
 
 
 class ScheduleInstance(DataTimeStampedModel):
-    '''
-        Actual Instance of schedule
-        Needs just to be control of Schedule Status
-        Its really important to keep track of Pricing Procedures/Data Procedures daily
-        External data feeds keeps our Reports in latest state. And we should be sure that schedules processed correctly
-    '''
-    STATUS_INIT = 'I'
-    STATUS_PENDING = 'P'
-    STATUS_DONE = 'D'
-    STATUS_ERROR = 'E'
+    """
+    Actual Instance of schedule
+    Needs just to be control of Schedule Status
+    Its really important to keep track of Pricing Procedures/Data Procedures daily
+    External data feeds keeps our Reports in latest state. And we should be sure
+    that schedules processed correctly
+    """
+
+    STATUS_INIT = "I"
+    STATUS_PENDING = "P"
+    STATUS_DONE = "D"
+    STATUS_ERROR = "E"
 
     STATUS_CHOICES = (
-        (STATUS_INIT, gettext_lazy('Init')),
-        (STATUS_PENDING, gettext_lazy('Pending')),
-        (STATUS_DONE, gettext_lazy('Done')),
-        (STATUS_ERROR, gettext_lazy('Error')),
+        (STATUS_INIT, gettext_lazy("Init")),
+        (STATUS_PENDING, gettext_lazy("Pending")),
+        (STATUS_DONE, gettext_lazy("Done")),
+        (STATUS_ERROR, gettext_lazy("Error")),
     )
 
-    master_user = models.ForeignKey(MasterUser, verbose_name=gettext_lazy('master user'), on_delete=models.CASCADE)
-
-    schedule = models.ForeignKey(Schedule, verbose_name=gettext_lazy('schedule'), related_name="instances",
-                                 on_delete=models.CASCADE)
-    current_processing_procedure_number = models.IntegerField(default=0, verbose_name=gettext_lazy(
-        'current processing procedure number'))
-
-    status = models.CharField(max_length=1, default=STATUS_INIT, choices=STATUS_CHOICES,
-                              verbose_name=gettext_lazy('status'))
+    master_user = models.ForeignKey(
+        MasterUser,
+        verbose_name=gettext_lazy("master user"),
+        on_delete=models.CASCADE,
+    )
+    schedule = models.ForeignKey(
+        Schedule,
+        verbose_name=gettext_lazy("schedule"),
+        related_name="instances",
+        on_delete=models.CASCADE,
+    )
+    current_processing_procedure_number = models.IntegerField(
+        default=0,
+        verbose_name=gettext_lazy("current processing procedure number"),
+    )
+    status = models.CharField(
+        max_length=1,
+        default=STATUS_INIT,
+        choices=STATUS_CHOICES,
+        verbose_name=gettext_lazy("status"),
+    )
 
     def run_next_procedure(self):
-
         from poms.schedules.tasks import process_procedure_async
 
         total_procedures = len(self.schedule.procedures.all())
 
-        send_system_message(master_user=self.master_user,
-                            performed_by='system',
-                            section='schedules',
-                            description="Schedule %s. Step  %s/%s finished" % (
-                            self.schedule.name, self.current_processing_procedure_number, total_procedures))
+        send_system_message(
+            master_user=self.master_user,
+            performed_by="system",
+            section="schedules",
+            description=(
+                f"Schedule {self.schedule.name}. "
+                f"Step {self.current_processing_procedure_number}/{total_procedures} "
+                f"finished"
+            ),
+        )
 
-        self.current_processing_procedure_number = self.current_processing_procedure_number + 1
+        self.current_processing_procedure_number = (
+            self.current_processing_procedure_number + 1
+        )
 
-        _l.debug('run_next_procedure schedule %s procedure number %s' % (
-        self.schedule, self.current_processing_procedure_number))
+        _l.debug(
+            f"run_next_procedure schedule {self.schedule} "
+            f"procedure number {self.current_processing_procedure_number}"
+        )
 
         for procedure in self.schedule.procedures.all():
-
             try:
+                if (
+                    self.status != ScheduleInstance.STATUS_ERROR
+                    or self.schedule.error_handler == "continue"
+                ) and procedure.order == self.current_processing_procedure_number:
+                    self.save()
 
-                if self.status != ScheduleInstance.STATUS_ERROR or self.schedule.error_handler == 'continue':
+                    send_system_message(
+                        master_user=self.master_user,
+                        performed_by="system",
+                        section="schedules",
+                        description=(
+                            f"Schedule {self.schedule.name}. Start processing step"
+                            f" {self.current_processing_procedure_number}"
+                            f"/{total_procedures} "
+                        ),
+                    )
 
-                    if procedure.order == self.current_processing_procedure_number:
-                        self.save()
+                    process_procedure_async.apply_async(
+                        kwargs={
+                            "procedure_id": procedure.id,
+                            "master_user_id": self.master_user.id,
+                            "schedule_instance_id": self.id,
+                        }
+                    )
 
-                        send_system_message(master_user=self.master_user,
-                                            performed_by='system',
-                                            section='schedules',
-                                            description="Schedule %s. Start processing step %s/%s " % (
-                                            self.schedule.name, self.current_processing_procedure_number,
-                                            total_procedures))
-
-                        process_procedure_async.apply_async(
-                            kwargs={'procedure_id': procedure.id, 'master_user_id': self.master_user.id,
-                                    'schedule_instance_id': self.id})
-
-            except Exception as e:
-
+            except Exception:
                 self.status = ScheduleInstance.STATUS_ERROR
                 self.save()
 
-                send_system_message(master_user=self.master_user,
-                                    performed_by='system',
-                                    section='schedules',
-                                    description="Schedule %s. Error occurred at step %s/%s" % (
-                                    self.schedule.name, self.current_processing_procedure_number, total_procedures))
+                send_system_message(
+                    master_user=self.master_user,
+                    performed_by="system",
+                    section="schedules",
+                    description=(
+                        f"Schedule {self.schedule.name}. Error occurred at step "
+                        f"{self.current_processing_procedure_number}/{total_procedures}"
+                    ),
+                )
