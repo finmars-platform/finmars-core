@@ -148,6 +148,11 @@ class HistoricalRecord(models.Model):
         blank=True,
         verbose_name=gettext_lazy("notes"),
     )
+    diff = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=gettext_lazy("diff"),
+    )
     created = models.DateTimeField(
         auto_now_add=True,
         editable=False,
@@ -318,7 +323,31 @@ def get_serialized_data(sender, instance):
     return result
 
 
+def deepdiff_to_human_readable(diff):
+    messages = []
+
+    _l.info('deepdiff_to_human_readable.diff %s' % diff)
+
+    _l.info(type(diff))
+
+    if "values_changed" in diff:
+        for key, changes in diff["values_changed"].items():
+            # Removing "root" from the key for clarity
+            clean_key = key.replace("root", "").replace("[", "").replace("]", "").replace("'", "")
+            if isinstance(changes['new_value'], str) and isinstance(changes['old_value'], str):
+                message = f"Value for {clean_key} changed from '{changes['old_value']}' to '{changes['new_value']}'."
+            else:
+                message = f"Value for {clean_key} changed from {changes['old_value']} to {changes['new_value']}."
+            messages.append(message)
+
+    # Similarly, handle other diff types like type_changes, dictionary_item_added, etc.
+
+    _l.info('messages %s' % messages)
+
+    return "\n".join(messages)
+
 def get_notes_for_history_record(user_code, content_type, serialized_data):
+    diff = None
     notes = None
     with contextlib.suppress(Exception):
         last_record = HistoricalRecord.objects.filter(
@@ -337,8 +366,8 @@ def get_notes_for_history_record(user_code, content_type, serialized_data):
         )  # because deep diff counts different Dict and Ordered dict
 
         result = DeepDiff(
-            last_record.data,
-            everything_is_dict,
+            json.loads(last_record.data),
+            json.loads(everything_is_dict),
             ignore_string_type_changes=True,
             ignore_order=True,
             ignore_type_subclasses=True,
@@ -346,9 +375,10 @@ def get_notes_for_history_record(user_code, content_type, serialized_data):
 
         # _l.info('result %s' % result)
 
-        notes = result.to_json()
+        diff = result.to_json()
+        notes = deepdiff_to_human_readable(result)
 
-    return notes
+    return diff, notes
 
 
 def get_record_context():
@@ -489,9 +519,10 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
 
                 if action != HistoricalRecord.ACTION_RECYCLE_BIN:
                     data = get_serialized_data(sender, instance)
-                    notes = get_notes_for_history_record(user_code, content_type, data)
+                    diff, notes = get_notes_for_history_record(user_code, content_type, data)
                 else:
                     data = None
+                    diff = None
                     notes = {"message": "User moved object to Recycle Bin"}
 
                 HistoricalRecord.objects.create(
@@ -500,6 +531,7 @@ def post_save(sender, instance, created, using=None, update_fields=None, **kwarg
                     action=action,
                     context_url=record_context["context_url"],
                     data=data,
+                    diff=diff,
                     notes=notes,
                     user_code=user_code,
                     content_type=content_type,

@@ -25,6 +25,7 @@ class HistoricalRecordSerializer(serializers.ModelSerializer):
             "member_object",
             "id",
             "notes",
+            "diff",
             "user_code",
             "context_url",
             "action",

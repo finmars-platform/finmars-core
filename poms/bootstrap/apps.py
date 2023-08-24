@@ -60,7 +60,7 @@ class BootstrapConfig(AppConfig):
         self.load_master_user_data()
         self.create_finmars_bot()
         self.sync_users_at_authorizer_service()
-        self.create_member_layouts()
+        # self.create_member_layouts()
         self.create_base_folders()
         self.register_at_authorizer_service()
 
@@ -343,6 +343,7 @@ class BootstrapConfig(AppConfig):
 
     def create_member_layouts(self):
 
+        # TODO wtf is default member layout?
         from poms.users.models import Member
         from poms.ui.models import MemberLayout
 

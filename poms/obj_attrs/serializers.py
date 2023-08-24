@@ -219,7 +219,7 @@ class ModelWithAttributesSerializer(serializers.ModelSerializer):
                 attr.save()
 
     def save_attributes(self, instance, attributes, created):
-        _l.info(f"save_attributes: attributes={attributes}")
+        # _l.info(f"save_attributes: attributes={attributes}")
 
         if not attributes:
             return

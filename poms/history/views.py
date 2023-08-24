@@ -1,3 +1,5 @@
+import json
+
 import django_filters
 from django_filters.rest_framework import FilterSet
 from django_filters.fields import Lookup
@@ -78,7 +80,7 @@ class HistoricalRecordViewSet(AbstractModelViewSet):
     @action(detail=True, methods=['get'], url_path='data')
     def get_data(self, request, pk):
         instance = self.get_object()
-        return Response(instance.data)
+        return Response(json.loads(instance.data))
 
     @action(detail=False, methods=['get'], url_path='content-types')
     def get_content_types(self, request):
