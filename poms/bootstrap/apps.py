@@ -285,8 +285,7 @@ class BootstrapConfig(AppConfig):
                 url = settings.AUTHORIZER_URL + '/backend-sync-users/'
 
                 response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
-                _l.info(
-                    "sync_users_at_authorizer_service backend-sync-users response.status_code %s" % response.status_code)
+                _l.info("sync_users_at_authorizer_service backend-sync-users response.status_code %s" % response.status_code)
                 # _l.info("sync_users_at_authorizer_service backend-sync-users response.text %s" % response.text)
 
                 response_data = response.json()
