@@ -67,6 +67,7 @@ excluded_to_track_history_models = [
     "instruments.dailypricingmodel",
     "instruments.instrumentclass",
     "ui.portalinterfaceaccessmodel",
+    "ui.draft",
     "instruments.accrualcalculationmodel",
     "instruments.pricehistory",
     "currencies.currencyhistory",
