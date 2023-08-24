@@ -4,18 +4,16 @@ import logging
 import sys
 import traceback
 
+from deepdiff import DeepDiff
 from django.contrib.contenttypes.models import ContentType
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db import models
 from django.forms.models import model_to_dict
 from django.utils.translation import gettext_lazy
 
-from deepdiff import DeepDiff
-from poms_app import settings
-
 from poms.common.celery import get_active_celery_task, get_active_celery_task_id
 from poms.common.middleware import get_request
-
+from poms_app import settings
 
 _l = logging.getLogger("poms.history")
 
@@ -326,25 +324,36 @@ def get_serialized_data(sender, instance):
 def deepdiff_to_human_readable(diff):
     messages = []
 
-    _l.info('deepdiff_to_human_readable.diff %s' % diff)
+    # _l.info('deepdiff_to_human_readable.diff %s' % diff)
 
-    _l.info(type(diff))
+    # _l.info(type(diff))
 
-    if "values_changed" in diff:
-        for key, changes in diff["values_changed"].items():
-            # Removing "root" from the key for clarity
-            clean_key = key.replace("root", "").replace("[", "").replace("]", "").replace("'", "")
-            if isinstance(changes['new_value'], str) and isinstance(changes['old_value'], str):
-                message = f"Value for {clean_key} changed from '{changes['old_value']}' to '{changes['new_value']}'."
-            else:
-                message = f"Value for {clean_key} changed from {changes['old_value']} to {changes['new_value']}."
-            messages.append(message)
+    values_changed = diff.get('values_changed', {})
+    for key, details in values_changed.items():
+        field_name = key.split('[')[-1].replace("']", "")
+
+
+        if 'execution_log' not in field_name:  # special case for transaction execution log
+            old_value = details['old_value']
+            new_value = details['new_value']
+            messages.append(f"Value for {field_name} changed from {old_value} to {new_value}.")
+
+    # Handling type_changes
+    type_changes = diff.get('type_changes', {})
+    for key, details in type_changes.items():
+        field_name = key.split('[')[-1].replace("']", "")
+        old_type = details['old_type']
+        new_type = details['new_type']
+        old_value = details['old_value']
+        new_value = details['new_value']
+        messages.append(f"Type for {field_name} changed from {old_type} ({old_value}) to {new_type} ({new_value}).")
 
     # Similarly, handle other diff types like type_changes, dictionary_item_added, etc.
 
-    _l.info('messages %s' % messages)
+    # _l.info('messages %s' % messages)
 
     return "\n".join(messages)
+
 
 def get_notes_for_history_record(user_code, content_type, serialized_data):
     diff = None
