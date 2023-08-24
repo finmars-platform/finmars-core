@@ -658,12 +658,11 @@ class MasterUserSetCurrentSerializer(serializers.Serializer):
 
 
 class MemberSerializer(serializers.ModelSerializer):
-    # url = serializers.HyperlinkedIdentityField(view_name='member-detail')
+
     master_user = MasterUserField()
     username = serializers.CharField(read_only=True)
-    # username = serializers.SlugRelatedField(queryset=User.objects.all(), slug_field='username')
-    is_current = serializers.SerializerMethodField()
     join_date = DateTimeTzAwareField(read_only=True)
+
     groups = GroupField(source='iam_groups', many=True, required=False)
     groups_object = serializers.PrimaryKeyRelatedField(source='iam_groups', read_only=True, many=True)
 
@@ -678,7 +677,8 @@ class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = [
-            'id', 'master_user', 'join_date', 'is_owner', 'is_admin', 'is_superuser', 'is_current',
+            'id', 'master_user',
+            'join_date', 'is_owner', 'is_admin', 'is_superuser',
             'notification_level', 'interface_level',
             'is_deleted', 'username', 'first_name', 'last_name',
 
@@ -688,7 +688,7 @@ class MemberSerializer(serializers.ModelSerializer):
             'data'
         ]
         read_only_fields = [
-            'master_user', 'join_date', 'is_owner', 'is_superuser', 'is_current', 'is_deleted',
+            'master_user', 'join_date', 'is_owner', 'is_superuser', 'is_deleted',
             'username', 'first_name', 'last_name', 'display_name',
         ]
 
@@ -699,27 +699,11 @@ class MemberSerializer(serializers.ModelSerializer):
         self.fields['access_policies_object'] = IamAccessPolicySerializer(source='iam_access_policies', many=True, read_only=True)
         self.fields['roles_object'] = IamRoleSerializer(source='iam_roles', many=True, read_only=True)
 
-        if self.instance:
-            self.fields['username'].read_only = True
-        else:
-            self.fields['username'].read_only = False
-            self.fields['username'].required = True
-
-    def get_is_current(self, obj):
-        member = get_member_from_context(self.context)
-        return obj.id == member.id
 
     def validate(self, attrs):
         if not self.instance:
             master_user = attrs['master_user']
             username = attrs['username']
-            # serializers.CharField(read_only=True).field_name
-            # try:
-            #     ub = UniqueValidator(queryset=Member.objects.filter(master_user=master_user))
-            #     ub.set_context(self.fields['username'])
-            #     ub(username)
-            # except serializers.ValidationError as e:
-            #     raise serializers.ValidationError({'username': e.detail})
 
             if Member.objects.filter(master_user=master_user, user__isnull=False, username=username).exists():
                 raise serializers.ValidationError({'username': UniqueValidator.message})

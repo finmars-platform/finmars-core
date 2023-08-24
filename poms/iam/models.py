@@ -36,7 +36,7 @@ class AccessPolicy(ConfigurationModel):
         verbose_name_plural = gettext_lazy("Access Policy Templates")
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
 
 class Role(ConfigurationModel):
@@ -52,7 +52,7 @@ class Role(ConfigurationModel):
     access_policies = models.ManyToManyField(AccessPolicy, related_name='iam_roles', blank=True)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
 
 
@@ -71,7 +71,7 @@ class Group(ConfigurationModel):
     access_policies = models.ManyToManyField(AccessPolicy, related_name='iam_groups', blank=True)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
 
 # Important, needs for cache clearance after Policy Updated

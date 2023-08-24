@@ -3,9 +3,8 @@ from django.urls import include, re_path
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import routers
 
-from finmars_standardized_errors.views import ErrorRecordViewSet
-
 import poms.accounts.urls as account_router
+import poms.users.urls as users_router
 import poms.api.views as api
 import poms.celery_tasks.views as celery_tasks
 import poms.common.views as common
@@ -40,9 +39,10 @@ import poms.system.views as system
 import poms.system_messages.views as system_messages
 import poms.transactions.urls as transaction_router
 import poms.ui.urls as ui_router
-import poms.users.views as users
+
 import poms.vault.urls as vault_router
 import poms.widgets.views as widgets
+from finmars_standardized_errors.views import ErrorRecordViewSet
 from poms.auth_tokens.views import (
     CreateMasterUser,
     CreateUser,
@@ -61,63 +61,7 @@ router.register(
     system.EcosystemConfigurationViewSet,
     "ecosystemconfiguration",
 )
-router.register(
-    r"users/ping",
-    users.PingViewSet,
-    "ping",
-)
-router.register(
-    r"users/user",
-    users.UserViewSet,
-)
-router.register(
-    r"users/user-member",
-    users.UserMemberViewSet,
-    "usermember",
-)
-router.register(
-    r"users/master-user",
-    users.MasterUserViewSet,
-)
-router.register(
-    r"users/master-user-light",
-    users.MasterUserLightViewSet,
-    "masteruserlight",
-)  # Deprecated at all, no light-method needed
-router.register(
-    r"users/get-current-master-user",
-    users.GetCurrentMasterUserViewSet,
-    "getcurrentmasteruser",
-)
-router.register(
-    r"users/member",
-    users.MemberViewSet,
-)
-# router.register(r'users/group', users.GroupViewSet)
-router.register(
-    r"users/group",
-    iam.GroupViewSet,
-)
-router.register(
-    r"users/language",
-    api.LanguageViewSet,
-    "language",
-)
-router.register(
-    r"users/timezone",
-    api.TimezoneViewSet,
-    "timezone",
-)
-router.register(
-    r"users/ecosystem-default",
-    users.EcosystemDefaultViewSet,
-    "ecosystemdefault",
-)
-router.register(
-    r"users/usercode-prefix",
-    users.UsercodePrefixViewSet,
-    "usercodeprefix",
-)
+
 router.register(
     r"reference-tables/reference-table",
     reference_table.ReferenceTableViewSet,
@@ -386,6 +330,7 @@ router.register(
 )
 
 urlpatterns = [
+    re_path(r"^v1/users/", include(users_router.router.urls)),
     re_path(r"^v1/accounts/", include(account_router.router.urls)),
     re_path(r"^v1/portfolios/", include(portfolio_router.router.urls)),
     re_path(r"^v1/currencies/", include(currency_router.router.urls)),

@@ -18,7 +18,7 @@ from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django_filters.rest_framework import FilterSet, DjangoFilterBackend
+from django_filters.rest_framework import FilterSet
 from rest_framework import parsers, renderers, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.serializers import AuthTokenSerializer
@@ -27,32 +27,30 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import JSONParser, MultiPartParser, FormParser
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from rest_framework.viewsets import ViewSet, ModelViewSet
+from rest_framework.viewsets import ViewSet
 
 from poms.accounts.models import AccountType, Account
 from poms.celery_tasks.models import CeleryTask
-from poms.common.filters import CharFilter, NoOpFilter, ModelExtMultipleChoiceFilter
-from poms.common.mixins import UpdateModelMixinExt, DestroyModelFakeMixin
+from poms.common.filters import CharFilter, NoOpFilter
+from poms.common.finmars_authorizer import AuthorizerService
 from poms.common.pagination import BigPagination
 from poms.common.utils import datetime_now
 from poms.common.views import AbstractModelViewSet, AbstractApiView, AbstractViewSet, AbstractAsyncViewSet
 # from poms.common.websockets import send_websocket_message
 from poms.complex_import.models import ComplexImportScheme
-from poms.counterparties.models import CounterpartyGroup, Counterparty, ResponsibleGroup, Responsible
 from poms.currencies.models import Currency
 from poms.instruments.models import InstrumentType, Instrument
 from poms.integrations.models import InstrumentDownloadScheme
-from poms.portfolios.models import Portfolio
 from poms.strategies.models import Strategy1, Strategy1Subgroup, Strategy1Group, Strategy2Subgroup, Strategy2Group, \
     Strategy2, Strategy3, Strategy3Subgroup, Strategy3Group
 from poms.transactions.models import TransactionType, TransactionTypeInput, TransactionTypeAction, \
     Transaction, ComplexTransaction
 from poms.users.filters import OwnerByMasterUserFilter, MasterUserFilter, OwnerByUserFilter, IsMemberFilterBackend, \
     MasterUserBackupsForOwnerOnlyFilter
-from poms.users.models import MasterUser, Member,  ResetPasswordToken,  EcosystemDefault, \
+from poms.users.models import MasterUser, Member, ResetPasswordToken, EcosystemDefault, \
     OtpToken, UsercodePrefix
 from poms.users.permissions import SuperUserOrReadOnly, IsCurrentMasterUser, IsCurrentUser
-from poms.users.serializers import  UserSerializer, MasterUserSerializer, MemberSerializer, \
+from poms.users.serializers import UserSerializer, MasterUserSerializer, MemberSerializer, \
     PingSerializer, UserSetPasswordSerializer, UserUnsubscribeSerializer, \
     UserRegisterSerializer, MasterUserCreateSerializer, EmailSerializer, PasswordTokenSerializer, \
     EcosystemDefaultSerializer, MasterUserLightSerializer, \
@@ -621,6 +619,7 @@ class MasterUserViewSet(AbstractModelViewSet):
 
         return Response(serializer.data)
 
+
 class MasterUserLightViewSet(AbstractModelViewSet):
     queryset = MasterUser.objects.prefetch_related('members')
     serializer_class = MasterUserLightSerializer
@@ -785,8 +784,6 @@ class MemberFilterSet(FilterSet):
 class MemberViewSet(AbstractModelViewSet):
     queryset = Member.objects.select_related(
         'user'
-    ).prefetch_related(
-
     )
     serializer_class = MemberSerializer
     permission_classes = AbstractModelViewSet.permission_classes + [
@@ -821,10 +818,19 @@ class MemberViewSet(AbstractModelViewSet):
 
         return super(MemberViewSet, self).update(request, *args, **kwargs)
 
-    def perform_destroy(self, instance):
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance, request)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def perform_destroy(self, instance, request):
 
         if instance.is_owner == True:
             raise PermissionDenied()
+
+        authorizer = AuthorizerService()
+
+        authorizer.kick_member(instance)
 
         return super(MemberViewSet, self).perform_destroy(instance)
 
