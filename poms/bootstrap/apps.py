@@ -53,11 +53,11 @@ class BootstrapConfig(AppConfig):
         self.add_view_and_manage_permissions()
         self.load_master_user_data()
         self.create_finmars_bot()
-        # self.create_member_layouts()
+        self.create_member_layouts()
         self.create_base_folders()
         self.register_at_authorizer_service()
 
-        self.create_iam_access_policies_templates()
+        # self.create_iam_access_policies_templates()
 
     def create_finmars_bot(self):
 
@@ -276,7 +276,7 @@ class BootstrapConfig(AppConfig):
                                                      is_default=True,
                                                      configuration_code=configuration_code,
                                                      name='default',
-                                                     user_code=configuration_code + ':default_member_layout')
+                                                     user_code='default_member_layout') # configuration code will be added automatically
                 _l.info("Created member layout for %s" % member.username)
 
     def create_base_folders(self):
