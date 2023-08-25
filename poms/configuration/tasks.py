@@ -611,7 +611,7 @@ def install_configuration_from_marketplace(self, **kwargs):
 
         if task.parent:
             step = task.options_object["step"]
-            total = len(task.parent.options_object.get("dependencies", []))
+            total = len(task.parent.options_object["dependencies"])
             percent = int((step / total) * 100)
 
             description = "Step %s/%s is installing. %s" % (
@@ -680,7 +680,7 @@ def install_configuration_from_marketplace(self, **kwargs):
 
         if task.parent:
             step = task.options_object["step"]
-            total = len(task.parent.options_object.get("dependencies", []))
+            total = len(task.parent.options_object["dependencies"])
             percent = int((step / total) * 100)
 
             description = "Step %s/%s is installed. %s" % (
@@ -723,17 +723,21 @@ def finish_package_install(self, task_id):
     task = CeleryTask.objects.get(id=task_id)
     task.status = CeleryTask.STATUS_DONE
 
+    options = task.options_object
+    if "dependencies" not in options:
+        raise ValueError(
+            "finish_package_install: invalid configuration, no dependencies !"
+        )
+
     task.update_progress(
         {
-            "current": len(task.options_object.get("dependencies", [])),
-            "total": len(task.options_object.get("dependencies", [])),
+            "current": len(options["dependencies"]),
+            "total": len(options["dependencies"]),
             "percent": 100,
             "description": "Installation complete",
         }
     )
-
     task.verbose_result = "Configuration package installed successfully"
-
     task.save()
 
 
@@ -806,12 +810,18 @@ def install_package_from_marketplace(self, task_id):
 
     step = 1
 
-    options_object["dependencies"] = configuration.manifest.get("dependencies", [])
+    manifest_dependencies = configuration.manifest.get("dependencies")
+    if not manifest_dependencies:
+        raise ValueError(
+            "install_package_from_marketplace: invalid configuration, no dependencies !"
+        )
+
+    options_object["dependencies"] = manifest_dependencies
 
     task.options_object = options_object
     task.save()
 
-    for dependency in configuration.manifest.get("dependencies", []):
+    for dependency in manifest_dependencies:
         module_celery_task = CeleryTask.objects.create(
             master_user=task.master_user,
             member=task.member,
@@ -846,7 +856,7 @@ def install_package_from_marketplace(self, task_id):
     task.update_progress(
         {
             "current": 0,
-            "total": len(task.options_object.get("dependencies", [])),
+            "total": len(manifest_dependencies),
             "percent": 0,
             "description": "Installation started",
         }
