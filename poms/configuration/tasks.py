@@ -809,7 +809,7 @@ def install_package_from_marketplace(self, task_id):
     configuration.save()
 
     with transaction.atomic():
-        # CeleryTask.objects.select_related().select_for_update().filter(id=task_id)
+        CeleryTask.objects.select_related().select_for_update().filter(id=task_id)
 
         task_list = []
 
@@ -866,6 +866,14 @@ def install_package_from_marketplace(self, task_id):
                 "description": "Installation started",
             }
         )
+
+    parent_task.refresh_from_db()
+    _l.info(
+        f"parent_task id={parent_task.id} options={parent_task.options_object} "
+        f"progres={parent_task.progress}"
+        f"created {len(parent_task.options_object['dependencies']) + 1} child tasks, "
+        f"starting workflow..."
+    )
 
     # execute the chain
     workflow.apply_async()
