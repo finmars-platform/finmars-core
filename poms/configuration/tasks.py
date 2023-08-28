@@ -723,8 +723,7 @@ def finish_package_install(self, task_id):
 
     options = task.options_object
 
-    _l.info("finish_package_install %s" % options)
-    _l.info("finish_package_install task %s" % task.id)
+    _l.info(f"finish_package_install task.id={task.id}  options={options}")
 
     if "dependencies" not in options:
         raise ValueError(
@@ -747,14 +746,14 @@ def finish_package_install(self, task_id):
 def install_package_from_marketplace(self, task_id):
     _l.info("install_configuration_from_marketplace")
 
-    task = CeleryTask.objects.get(id=task_id)
+    parent_task = CeleryTask.objects.get(id=task_id)
     # task.celery_task_id = self.request.id
     # task.status = CeleryTask.STATUS_PENDING
     # task.save()
 
     # try:
 
-    options_object = task.options_object
+    parent_options_object = parent_task.options_object
 
     # TODO Implement when keycloak refactored
     # access_token = options_object['access_token']
@@ -765,8 +764,8 @@ def install_package_from_marketplace(self, task_id):
     # task.save()
 
     data = {
-        "configuration_code": options_object["configuration_code"],
-        "version": options_object["version"],
+        "configuration_code": parent_options_object["configuration_code"],
+        "version": parent_options_object["version"],
     }
     headers = {}
     # headers['Authorization'] = 'Token ' + access_token
@@ -780,9 +779,9 @@ def install_package_from_marketplace(self, task_id):
     )
 
     if response.status_code != 200:
-        task.status = CeleryTask.STATUS_ERROR
-        task.error_message = str(response.text)
-        task.save()
+        parent_task.status = CeleryTask.STATUS_ERROR
+        parent_task.error_message = str(response.text)
+        parent_task.save()
         raise Exception(response.text)
 
     remote_configuration_release = response.json()
@@ -818,19 +817,20 @@ def install_package_from_marketplace(self, task_id):
         #     "install_package_from_marketplace: invalid configuration, no dependencies !"
         # )
 
-    options_object["dependencies"] = manifest_dependencies
+    parent_options_object["dependencies"] = manifest_dependencies
+    parent_options_object.pop("access_token", None)
 
-    task.options_object = options_object
-    task.save()
+    parent_task.options_object = parent_options_object
+    parent_task.save(force_update=True)
+    parent_task.refresh_from_db()
 
-    _l.info("Main Task saved %s" % task.options_object)
-    _l.info("Main Task id %s" % task.id)
+    _l.info(f"parent_task id={parent_task.id} saved options={parent_task.options_object}")
 
     for dependency in manifest_dependencies:
-        module_celery_task = CeleryTask.objects.create(
-            master_user=task.master_user,
-            member=task.member,
-            parent=task,
+        child_celery_task = CeleryTask.objects.create(
+            master_user=parent_task.master_user,
+            member=parent_task.member,
+            parent=parent_task,
             verbose_name="Install Configuration From Marketplace",
             type="install_configuration_from_marketplace",
         )
@@ -843,22 +843,22 @@ def install_package_from_marketplace(self, task_id):
             # "access_token": access_token
         }
 
-        module_celery_task.options_object = child_options_object
-        module_celery_task.save()
+        child_celery_task.options_object = child_options_object
+        child_celery_task.save()
 
         # .si is important, we do not need to pass result from previous task
         task_list.append(
-            install_configuration_from_marketplace.si(task_id=module_celery_task.id)
+            install_configuration_from_marketplace.si(task_id=child_celery_task.id)
         )
 
         step += 1
 
     # .si is important, we do not need to pass result from previous task
-    task_list.append(finish_package_install.si(task_id=task.id))
+    task_list.append(finish_package_install.si(task_id=parent_task.id))
 
     workflow = chain(*task_list)
 
-    task.update_progress(
+    parent_task.update_progress(
         {
             "current": 0,
             "total": len(manifest_dependencies),
