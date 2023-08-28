@@ -276,7 +276,7 @@ class BootstrapConfig(AppConfig):
                                                      is_default=True,
                                                      configuration_code=configuration_code,
                                                      name='default',
-                                                     user_code='default_member_layout') # configuration code will be added automatically
+                                                     user_code='default_member_layout')  # configuration code will be added automatically
                 _l.info("Created member layout for %s" % member.username)
 
     def create_base_folders(self):

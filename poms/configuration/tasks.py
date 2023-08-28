@@ -4,13 +4,11 @@ import os
 import traceback
 from datetime import date
 
+import requests
+from celery import chain
 from django.contrib.auth import get_user_model
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.timezone import now
-
-import requests
-from celery import chain
-from poms_app import settings
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
@@ -33,9 +31,9 @@ from poms.configuration.utils import (
     wait_workflow_until_end,
 )
 from poms.file_reports.models import FileReport
+from poms_app import settings
 
 _l = logging.getLogger("poms.configuration")
-
 
 User = get_user_model()
 storage = get_storage()
@@ -102,9 +100,9 @@ def import_configuration(self, task_id):
         )
 
         if not os.path.exists(
-            os.path.join(
-                settings.BASE_DIR, "configurations/" + str(task.id) + "/source"
-            )
+                os.path.join(
+                    settings.BASE_DIR, "configurations/" + str(task.id) + "/source"
+                )
         ):
             os.makedirs(output_directory, exist_ok=True)
 
@@ -247,7 +245,7 @@ def import_configuration(self, task_id):
             )
 
             dest_workflow_directory = (
-                settings.BASE_API_URL + "/workflows/" + configuration_code_as_path
+                    settings.BASE_API_URL + "/workflows/" + configuration_code_as_path
             )
 
             _l.info("dest_workflow_directory %s" % dest_workflow_directory)
@@ -363,21 +361,21 @@ def export_configuration(self, task_id):
 
         if configuration.is_from_marketplace:
             storage_directory = (
-                settings.BASE_API_URL
-                + "/configurations/"
-                + configuration.configuration_code
-                + "/"
-                + configuration.version
-                + "/"
+                    settings.BASE_API_URL
+                    + "/configurations/"
+                    + configuration.configuration_code
+                    + "/"
+                    + configuration.version
+                    + "/"
             )
         else:
             storage_directory = (
-                settings.BASE_API_URL
-                + "/configurations/custom/"
-                + configuration.configuration_code
-                + "/"
-                + configuration.version
-                + "/"
+                    settings.BASE_API_URL
+                    + "/configurations/custom/"
+                    + configuration.configuration_code
+                    + "/"
+                    + configuration.version
+                    + "/"
             )
 
         save_directory_to_storage(source_directory, storage_directory)
@@ -433,19 +431,19 @@ def push_configuration_to_marketplace(self, task_id):
 
         if configuration.is_from_marketplace:
             path = (
-                settings.BASE_API_URL
-                + "/configurations/"
-                + configuration.configuration_code
-                + "/"
-                + configuration.version
+                    settings.BASE_API_URL
+                    + "/configurations/"
+                    + configuration.configuration_code
+                    + "/"
+                    + configuration.version
             )
         else:
             path = (
-                settings.BASE_API_URL
-                + "/configurations/custom/"
-                + configuration.configuration_code
-                + "/"
-                + configuration.version
+                    settings.BASE_API_URL
+                    + "/configurations/custom/"
+                    + configuration.configuration_code
+                    + "/"
+                    + configuration.version
             )
 
         zip_file_path = storage.download_directory_as_zip(path)
@@ -533,14 +531,14 @@ def install_configuration_from_marketplace(self, **kwargs):
 
     try:
         options_object = task.options_object
-
-        # Implement when keycloak is refactored
-        # access_token = options_object['access_token']
         #
-        # del options_object['access_token']
-
-        task.options_object = options_object
-        task.save()
+        # # Implement when keycloak is refactored
+        # # access_token = options_object['access_token']
+        # #
+        # # del options_object['access_token']
+        #
+        # task.options_object = options_object
+        # task.save()
 
         headers = {}
         # headers['Authorization'] = 'Token ' + access_token
@@ -631,8 +629,8 @@ def install_configuration_from_marketplace(self, **kwargs):
 
         response = requests.get(
             url="https://marketplace.finmars.com/api/v1/configuration-release/"
-            + str(remote_configuration_release["id"])
-            + "/download/",
+                + str(remote_configuration_release["id"])
+                + "/download/",
             headers=headers,
         )
 
@@ -724,10 +722,14 @@ def finish_package_install(self, task_id):
     task.status = CeleryTask.STATUS_DONE
 
     options = task.options_object
-    if "dependencies" not in options:
-        raise ValueError(
-            "finish_package_install: invalid configuration, no dependencies !"
-        )
+
+    _l.info("finish_package_install %s" % options)
+    _l.info("finish_package_install task %s" % task.id)
+
+    # if "dependencies" not in options:
+    #     raise ValueError(
+    #         "finish_package_install: invalid configuration, no dependencies !"
+    #     )
 
     task.update_progress(
         {
@@ -759,8 +761,8 @@ def install_package_from_marketplace(self, task_id):
     #
     # del options_object['access_token']
 
-    task.options_object = options_object
-    task.save()
+    # task.options_object = options_object
+    # task.save()
 
     data = {
         "configuration_code": options_object["configuration_code"],
@@ -810,16 +812,19 @@ def install_package_from_marketplace(self, task_id):
 
     step = 1
 
-    manifest_dependencies = configuration.manifest.get("dependencies")
-    if not manifest_dependencies:
-        raise ValueError(
-            "install_package_from_marketplace: invalid configuration, no dependencies !"
-        )
+    manifest_dependencies = configuration.manifest.get("dependencies", [])
+    # if not manifest_dependencies:
+        # raise ValueError(
+        #     "install_package_from_marketplace: invalid configuration, no dependencies !"
+        # )
 
     options_object["dependencies"] = manifest_dependencies
 
     task.options_object = options_object
     task.save()
+
+    _l.info("Main Task saved %s" % task.options_object)
+    _l.info("Main Task id %s" % task.id)
 
     for dependency in manifest_dependencies:
         module_celery_task = CeleryTask.objects.create(
@@ -830,7 +835,7 @@ def install_package_from_marketplace(self, task_id):
             type="install_configuration_from_marketplace",
         )
 
-        options_object = {
+        child_options_object = {
             "configuration_code": dependency["configuration_code"],
             "version": dependency["version"],
             "is_package": False,
@@ -838,7 +843,7 @@ def install_package_from_marketplace(self, task_id):
             # "access_token": access_token
         }
 
-        module_celery_task.options_object = options_object
+        module_celery_task.options_object = child_options_object
         module_celery_task.save()
 
         # .si is important, we do not need to pass result from previous task
