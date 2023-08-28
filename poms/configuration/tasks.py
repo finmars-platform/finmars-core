@@ -9,6 +9,7 @@ from celery import chain
 from django.contrib.auth import get_user_model
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.timezone import now
+from django.db import transaction
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
@@ -807,65 +808,64 @@ def install_package_from_marketplace(self, task_id):
 
     configuration.save()
 
-    task_list = []
+    with transaction.atomic():
+        # CeleryTask.objects.select_related().select_for_update().filter(id=task_id)
 
-    step = 1
+        task_list = []
 
-    manifest_dependencies = configuration.manifest.get("dependencies", [])
-    # if not manifest_dependencies:
-        # raise ValueError(
-        #     "install_package_from_marketplace: invalid configuration, no dependencies !"
-        # )
+        step = 1
 
-    parent_options_object["dependencies"] = manifest_dependencies
-    parent_options_object.pop("access_token", None)
+        manifest_dependencies = configuration.manifest.get("dependencies", [])
 
-    parent_task.options_object = parent_options_object
-    parent_task.save(force_update=True)
-    parent_task.refresh_from_db()
+        parent_options_object["dependencies"] = manifest_dependencies
+        parent_options_object.pop("access_token", None)
 
-    _l.info(f"parent_task id={parent_task.id} saved options={parent_task.options_object}")
+        parent_task.options_object = parent_options_object
+        parent_task.save(force_update=True)
+        parent_task.refresh_from_db()
 
-    for dependency in manifest_dependencies:
-        child_celery_task = CeleryTask.objects.create(
-            master_user=parent_task.master_user,
-            member=parent_task.member,
-            parent=parent_task,
-            verbose_name="Install Configuration From Marketplace",
-            type="install_configuration_from_marketplace",
-        )
+        _l.info(f"parent_task id={parent_task.id} options={parent_task.options_object}")
 
-        child_options_object = {
-            "configuration_code": dependency["configuration_code"],
-            "version": dependency["version"],
-            "is_package": False,
-            "step": step
-            # "access_token": access_token
-        }
+        for dependency in manifest_dependencies:
+            child_celery_task = CeleryTask.objects.create(
+                master_user=parent_task.master_user,
+                member=parent_task.member,
+                parent=parent_task,
+                verbose_name="Install Configuration From Marketplace",
+                type="install_configuration_from_marketplace",
+            )
 
-        child_celery_task.options_object = child_options_object
-        child_celery_task.save()
+            child_options_object = {
+                "configuration_code": dependency["configuration_code"],
+                "version": dependency["version"],
+                "is_package": False,
+                "step": step
+                # "access_token": access_token
+            }
+
+            child_celery_task.options_object = child_options_object
+            child_celery_task.save()
+
+            # .si is important, we do not need to pass result from previous task
+            task_list.append(
+                install_configuration_from_marketplace.si(task_id=child_celery_task.id)
+            )
+
+            step += 1
 
         # .si is important, we do not need to pass result from previous task
-        task_list.append(
-            install_configuration_from_marketplace.si(task_id=child_celery_task.id)
+        task_list.append(finish_package_install.si(task_id=parent_task.id))
+
+        workflow = chain(*task_list)
+
+        parent_task.update_progress(
+            {
+                "current": 0,
+                "total": len(manifest_dependencies),
+                "percent": 0,
+                "description": "Installation started",
+            }
         )
-
-        step += 1
-
-    # .si is important, we do not need to pass result from previous task
-    task_list.append(finish_package_install.si(task_id=parent_task.id))
-
-    workflow = chain(*task_list)
-
-    parent_task.update_progress(
-        {
-            "current": 0,
-            "total": len(manifest_dependencies),
-            "percent": 0,
-            "description": "Installation started",
-        }
-    )
 
     # execute the chain
     workflow.apply_async()
