@@ -822,10 +822,6 @@ def install_package_from_marketplace(self, task_id):
     with transaction.atomic():
         CeleryTask.objects.select_related().select_for_update().filter(id=task_id)
 
-        task_list = []
-
-        step = 1
-
         manifest_dependencies = configuration.manifest.get("dependencies", [])
 
         parent_options_object["dependencies"] = manifest_dependencies
@@ -837,7 +833,8 @@ def install_package_from_marketplace(self, task_id):
 
         _l.info(f"parent_task id={parent_task.id} options={parent_task.options_object}")
 
-        for dependency in manifest_dependencies:
+        celery_task_list = []
+        for step, dependency in enumerate(manifest_dependencies, start=1):
             child_celery_task = CeleryTask.objects.create(
                 master_user=parent_task.master_user,
                 member=parent_task.member,
@@ -857,17 +854,7 @@ def install_package_from_marketplace(self, task_id):
             child_celery_task.options_object = child_options_object
             child_celery_task.save()
 
-            # .si is important, we do not need to pass result from previous task
-            task_list.append(
-                install_configuration_from_marketplace.si(task_id=child_celery_task.id)
-            )
-
-            step += 1
-
-        # .si is important, we do not need to pass result from previous task
-        task_list.append(finish_package_install.si(task_id=parent_task.id))
-
-        workflow = chain(*task_list)
+            celery_task_list.append(child_celery_task)
 
         parent_task.update_progress(
             {
@@ -878,14 +865,21 @@ def install_package_from_marketplace(self, task_id):
             }
         )
 
-    parent_task.refresh_from_db()
-    _l.info(
-        f"parent_task id={parent_task.id} options={parent_task.options_object} "
-        f"progres={parent_task.progress}"
-        f"created {len(parent_task.options_object['dependencies']) + 1} child tasks, "
-        f"starting workflow..."
-    )
+        parent_task.refresh_from_db()
+        _l.info(
+            f"parent_task id={parent_task.id} options={parent_task.options_object} "
+            f"progres={parent_task.progress}"
+            f"created {len(parent_task.options_object['dependencies']) + 1} child tasks, "
+            f"starting workflow..."
+        )
 
+    # .si is important, we do not need to pass result from previous task
+    workflow_list = [
+        install_configuration_from_marketplace.si(task_id=celery_task.id)
+        for celery_task in celery_task_list
+    ]
+    workflow_list.append(finish_package_install.si(task_id=parent_task.id))
+    workflow = chain(*workflow_list)
     # execute the chain
     workflow.apply_async()
 
