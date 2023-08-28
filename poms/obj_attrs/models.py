@@ -26,13 +26,13 @@ class GenericAttributeType(NamedModel, ConfigurationModel):
     is not the same GenericAttributeType as
         Currency.attributes.country
 
-    So each entity has own namespace for user attributes
+    So each entity has its own namespace for user attributes
 
-    Sometimes User Attributes could contain formula instead of value
+    Sometimes User Attributes could contain a formula instead of value
     In that case we call in Calculated User Attribute (look at can_recalculate checkbox)
 
     ==== Important ====
-    This entity is part of Configuration Engine
+    This entity is part of the Configuration Engine
     Also it relates to Finmars Marketplace
     """
 
@@ -171,7 +171,8 @@ class GenericClassifier(MPTTModel):
         Russia
            Moscow
 
-    But not ironically Country becomes system Relation field, and now most of the use cases are just flat lists
+    But not ironically, Country becomes system Relation field, and now most of the use
+    cases are just flat lists
 
     I wish there will be another value_type for AttributeType like: List
     and its just list of values

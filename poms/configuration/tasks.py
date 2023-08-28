@@ -726,10 +726,10 @@ def finish_package_install(self, task_id):
     _l.info("finish_package_install %s" % options)
     _l.info("finish_package_install task %s" % task.id)
 
-    # if "dependencies" not in options:
-    #     raise ValueError(
-    #         "finish_package_install: invalid configuration, no dependencies !"
-    #     )
+    if "dependencies" not in options:
+        raise ValueError(
+            "finish_package_install: invalid configuration, no dependencies !"
+        )
 
     task.update_progress(
         {
