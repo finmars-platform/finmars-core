@@ -612,24 +612,27 @@ def install_configuration_from_marketplace(self, **kwargs):
         configuration.save()
 
         if task.parent:
-            step = task.options_object["step"]
-            total = len(task.parent.options_object["dependencies"])
-            percent = int((step / total) * 100)
+            with transaction.atomic():
+                task.parent.refresh_from_db()
 
-            description = "Step %s/%s is installing. %s" % (
-                step,
-                total,
-                configuration.name,
-            )
+                step = task.options_object["step"]
+                total = len(task.parent.options_object["dependencies"])
+                percent = int((step / total) * 100)
 
-            task.parent.update_progress(
-                {
-                    "current": step,
-                    "total": total,
-                    "percent": percent,
-                    "description": description,
-                }
-            )
+                description = "Step %s/%s is installing. %s" % (
+                    step,
+                    total,
+                    configuration.name,
+                )
+
+                task.parent.update_progress(
+                    {
+                        "current": step,
+                        "total": total,
+                        "percent": percent,
+                        "description": description,
+                    }
+                )
 
         response = requests.get(
             url="https://marketplace.finmars.com/api/v1/configuration-release/"
@@ -681,24 +684,27 @@ def install_configuration_from_marketplace(self, **kwargs):
         # result = import_configuration.apply_async(kwargs={'task_id': import_configuration_celery_task.id})
 
         if task.parent:
-            step = task.options_object["step"]
-            total = len(task.parent.options_object["dependencies"])
-            percent = int((step / total) * 100)
+            with transaction.atomic():
+                task.parent.refresh_from_db()
 
-            description = "Step %s/%s is installed. %s" % (
-                step,
-                total,
-                configuration.name,
-            )
+                step = task.options_object["step"]
+                total = len(task.parent.options_object["dependencies"])
+                percent = int((step / total) * 100)
 
-            task.parent.update_progress(
-                {
-                    "current": step,
-                    "total": total,
-                    "percent": percent,
-                    "description": description,
-                }
-            )
+                description = "Step %s/%s is installed. %s" % (
+                    step,
+                    total,
+                    configuration.name,
+                )
+
+                task.parent.update_progress(
+                    {
+                        "current": step,
+                        "total": total,
+                        "percent": percent,
+                        "description": description,
+                    }
+                )
 
         result_object = {
             "configuration_import": {"task_id": import_configuration_celery_task.id}
@@ -723,27 +729,29 @@ def install_configuration_from_marketplace(self, **kwargs):
 @finmars_task(name="configuration.finish_package_install", bind=True)
 def finish_package_install(self, task_id):
     task = CeleryTask.objects.get(id=task_id)
-    task.status = CeleryTask.STATUS_DONE
 
-    options = task.options_object
+    with transaction.atomic():
+        task.refresh_from_db()
+        options = task.options_object
 
-    _l.info(f"finish_package_install task.id={task.id}  options={options}")
+        _l.info(f"finish_package_install task.id={task.id}  options={options}")
 
-    if "dependencies" not in options:
-        raise ValueError(
-            "finish_package_install: invalid configuration, no dependencies !"
+        if "dependencies" not in options:
+            raise ValueError(
+                "finish_package_install: invalid configuration, no dependencies !"
+            )
+
+        task.update_progress(
+            {
+                "current": len(options["dependencies"]),
+                "total": len(options["dependencies"]),
+                "percent": 100,
+                "description": "Installation complete",
+            }
         )
-
-    task.update_progress(
-        {
-            "current": len(options["dependencies"]),
-            "total": len(options["dependencies"]),
-            "percent": 100,
-            "description": "Installation complete",
-        }
-    )
-    task.verbose_result = "Configuration package installed successfully"
-    task.save()
+        task.status = CeleryTask.STATUS_DONE
+        task.verbose_result = "Configuration package installed successfully"
+        task.save()
 
 
 @finmars_task(name="configuration.install_package_from_marketplace", bind=True)
