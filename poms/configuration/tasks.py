@@ -523,12 +523,15 @@ def push_configuration_to_marketplace(self, task_id):
 def install_configuration_from_marketplace(self, **kwargs):
     task_id = kwargs.get("task_id")
 
-    _l.info("install_configuration_from_marketplace")
-
     task = CeleryTask.objects.get(id=task_id)
     task.celery_task_id = self.request.id
     task.status = CeleryTask.STATUS_PENDING
     task.save()
+
+    _l.info(
+        f"install_configuration_from_marketplace started: task.id={task.id} "
+        f"options={task.options_object}"
+    )
 
     try:
         options_object = task.options_object
