@@ -18,6 +18,12 @@ def get_master_user_and_member(request):
         member = Member.objects.get(user=request.user)
         master_user = member.master_user
 
+        if member.is_deleted:
+            raise PermissionDenied()
+
+        if member.status != Member.STATUS_ACTIVE:
+            raise PermissionDenied()
+
         return member, master_user
 
     except Exception:
