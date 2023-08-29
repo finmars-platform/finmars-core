@@ -858,13 +858,51 @@ class MemberViewSet(AbstractModelViewSet):
 
     def update(self, request, *args, **kwargs):
 
+        if self.get_object().username == 'finmars_bot':
+            raise PermissionDenied()
+
         if request.user.member.id != self.get_object().id:
             if not request.user.member.is_admin:
                 raise PermissionDenied()
 
+            if request.user.member.is_admin:
+
+                form_data_is_owner = request.data.get('is_owner', False)
+                form_data_is_admin = request.data.get('is_admin', False)
+
+                if self.get_object().is_owner and form_data_is_owner == False:
+
+                    raise ValidationError("Could not remove owner rights from owner")
+
+                if self.get_object().is_owner and self.get_object().is_admin and form_data_is_admin == False:
+
+                    raise ValidationError("Could not remove admin rights from owner")
+
+        if request.user.member.id == self.get_object().id:
+            status = request.data.get('status', Member.STATUS_ACTIVE)
+            form_data_is_admin = request.data.get('is_admin', False)
+            form_data_is_owner = request.data.get('is_owner', False)
+
+            if status != Member.STATUS_ACTIVE:
+                raise ValidationError("Could not block yourself")
+
+            if request.user.member.is_admin and form_data_is_admin == False:
+                raise ValidationError("Could not remove admin rights from yourself")
+
+            if request.user.member.is_owner and form_data_is_owner == False:
+                raise ValidationError("Could not remove owner rights from yourself")
+
         return super(MemberViewSet, self).update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
+
+        if self.get_object().username == 'finmars_bot':
+            raise PermissionDenied()
+
+        if request.user.member.id != self.get_object().id:
+            if not request.user.member.is_admin:
+                raise PermissionDenied()
+
         instance = self.get_object()
         self.perform_destroy(instance, request)
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -877,6 +915,9 @@ class MemberViewSet(AbstractModelViewSet):
         authorizer = AuthorizerService()
 
         authorizer.kick_member(instance)
+
+        instance.status = Member.STATUS_DELETED
+        instance.save()
 
         return super(MemberViewSet, self).perform_destroy(instance)
 
