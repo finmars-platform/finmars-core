@@ -32,7 +32,7 @@ class AuthorizerService():
             "username": member.user.username,
         }
 
-        url = settings.AUTHORIZER_URL + '/api/v1/internal/kick-member/'
+        url = settings.AUTHORIZER_URL + '/api/v1/internal/kick-member/?space_code=%s' % settings.BASE_API_URL
 
         _l.info("load_master_user_data url %s" % url)
 
@@ -64,7 +64,7 @@ class AuthorizerService():
             "from_user_username": from_user.username
         }
 
-        url = settings.AUTHORIZER_URL + '/api/v1/internal/invite-member/'
+        url = settings.AUTHORIZER_URL + '/api/v1/internal/invite-member/?space_code=%s' % settings.BASE_API_URL
 
         _l.info("load_master_user_data url %s" % url)
 
