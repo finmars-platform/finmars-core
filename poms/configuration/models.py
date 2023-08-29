@@ -55,12 +55,10 @@ class ConfigurationModel(models.Model):
             self.configuration_code = f"local.poms.{settings.BASE_API_URL}"
 
         if not self.user_code:
-            raise Exception("user_code is required")
+            raise RuntimeError("user_code is required")
 
         if self.configuration_code not in self.user_code:
-
             self.user_code = replace_special_chars_and_spaces(self.user_code).lower()
-
             self.user_code = f"{str(self.configuration_code)}:{str(self.user_code)}"
 
         # Content types are not needed anymore FN-2046

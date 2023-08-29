@@ -9,6 +9,7 @@ from celery import chain
 from django.contrib.auth import get_user_model
 from django.core.exceptions import FieldDoesNotExist
 from django.utils.timezone import now
+from django.db import transaction
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
@@ -100,9 +101,9 @@ def import_configuration(self, task_id):
         )
 
         if not os.path.exists(
-                os.path.join(
-                    settings.BASE_DIR, "configurations/" + str(task.id) + "/source"
-                )
+            os.path.join(
+                settings.BASE_DIR, "configurations/" + str(task.id) + "/source"
+            )
         ):
             os.makedirs(output_directory, exist_ok=True)
 
@@ -245,7 +246,7 @@ def import_configuration(self, task_id):
             )
 
             dest_workflow_directory = (
-                    settings.BASE_API_URL + "/workflows/" + configuration_code_as_path
+                settings.BASE_API_URL + "/workflows/" + configuration_code_as_path
             )
 
             _l.info("dest_workflow_directory %s" % dest_workflow_directory)
@@ -361,21 +362,21 @@ def export_configuration(self, task_id):
 
         if configuration.is_from_marketplace:
             storage_directory = (
-                    settings.BASE_API_URL
-                    + "/configurations/"
-                    + configuration.configuration_code
-                    + "/"
-                    + configuration.version
-                    + "/"
+                settings.BASE_API_URL
+                + "/configurations/"
+                + configuration.configuration_code
+                + "/"
+                + configuration.version
+                + "/"
             )
         else:
             storage_directory = (
-                    settings.BASE_API_URL
-                    + "/configurations/custom/"
-                    + configuration.configuration_code
-                    + "/"
-                    + configuration.version
-                    + "/"
+                settings.BASE_API_URL
+                + "/configurations/custom/"
+                + configuration.configuration_code
+                + "/"
+                + configuration.version
+                + "/"
             )
 
         save_directory_to_storage(source_directory, storage_directory)
@@ -431,19 +432,19 @@ def push_configuration_to_marketplace(self, task_id):
 
         if configuration.is_from_marketplace:
             path = (
-                    settings.BASE_API_URL
-                    + "/configurations/"
-                    + configuration.configuration_code
-                    + "/"
-                    + configuration.version
+                settings.BASE_API_URL
+                + "/configurations/"
+                + configuration.configuration_code
+                + "/"
+                + configuration.version
             )
         else:
             path = (
-                    settings.BASE_API_URL
-                    + "/configurations/custom/"
-                    + configuration.configuration_code
-                    + "/"
-                    + configuration.version
+                settings.BASE_API_URL
+                + "/configurations/custom/"
+                + configuration.configuration_code
+                + "/"
+                + configuration.version
             )
 
         zip_file_path = storage.download_directory_as_zip(path)
@@ -522,12 +523,15 @@ def push_configuration_to_marketplace(self, task_id):
 def install_configuration_from_marketplace(self, **kwargs):
     task_id = kwargs.get("task_id")
 
-    _l.info("install_configuration_from_marketplace")
-
     task = CeleryTask.objects.get(id=task_id)
     task.celery_task_id = self.request.id
     task.status = CeleryTask.STATUS_PENDING
     task.save()
+
+    _l.info(
+        f"install_configuration_from_marketplace started: task.id={task.id} "
+        f"options={task.options_object}"
+    )
 
     try:
         options_object = task.options_object
@@ -608,29 +612,32 @@ def install_configuration_from_marketplace(self, **kwargs):
         configuration.save()
 
         if task.parent:
-            step = task.options_object["step"]
-            total = len(task.parent.options_object["dependencies"])
-            percent = int((step / total) * 100)
+            with transaction.atomic():
+                task.parent.refresh_from_db()
 
-            description = "Step %s/%s is installing. %s" % (
-                step,
-                total,
-                configuration.name,
-            )
+                step = task.options_object["step"]
+                total = len(task.parent.options_object["dependencies"])
+                percent = int((step / total) * 100)
 
-            task.parent.update_progress(
-                {
-                    "current": step,
-                    "total": total,
-                    "percent": percent,
-                    "description": description,
-                }
-            )
+                description = "Step %s/%s is installing. %s" % (
+                    step,
+                    total,
+                    configuration.name,
+                )
+
+                task.parent.update_progress(
+                    {
+                        "current": step,
+                        "total": total,
+                        "percent": percent,
+                        "description": description,
+                    }
+                )
 
         response = requests.get(
             url="https://marketplace.finmars.com/api/v1/configuration-release/"
-                + str(remote_configuration_release["id"])
-                + "/download/",
+            + str(remote_configuration_release["id"])
+            + "/download/",
             headers=headers,
         )
 
@@ -677,24 +684,27 @@ def install_configuration_from_marketplace(self, **kwargs):
         # result = import_configuration.apply_async(kwargs={'task_id': import_configuration_celery_task.id})
 
         if task.parent:
-            step = task.options_object["step"]
-            total = len(task.parent.options_object["dependencies"])
-            percent = int((step / total) * 100)
+            with transaction.atomic():
+                task.parent.refresh_from_db()
 
-            description = "Step %s/%s is installed. %s" % (
-                step,
-                total,
-                configuration.name,
-            )
+                step = task.options_object["step"]
+                total = len(task.parent.options_object["dependencies"])
+                percent = int((step / total) * 100)
 
-            task.parent.update_progress(
-                {
-                    "current": step,
-                    "total": total,
-                    "percent": percent,
-                    "description": description,
-                }
-            )
+                description = "Step %s/%s is installed. %s" % (
+                    step,
+                    total,
+                    configuration.name,
+                )
+
+                task.parent.update_progress(
+                    {
+                        "current": step,
+                        "total": total,
+                        "percent": percent,
+                        "description": description,
+                    }
+                )
 
         result_object = {
             "configuration_import": {"task_id": import_configuration_celery_task.id}
@@ -719,42 +729,43 @@ def install_configuration_from_marketplace(self, **kwargs):
 @finmars_task(name="configuration.finish_package_install", bind=True)
 def finish_package_install(self, task_id):
     task = CeleryTask.objects.get(id=task_id)
-    task.status = CeleryTask.STATUS_DONE
 
-    options = task.options_object
+    with transaction.atomic():
+        task.refresh_from_db()
+        options = task.options_object
 
-    _l.info("finish_package_install %s" % options)
-    _l.info("finish_package_install task %s" % task.id)
+        _l.info(f"finish_package_install task.id={task.id}  options={options}")
 
-    # if "dependencies" not in options:
-    #     raise ValueError(
-    #         "finish_package_install: invalid configuration, no dependencies !"
-    #     )
+        if "dependencies" not in options:
+            raise ValueError(
+                "finish_package_install: invalid configuration, no dependencies !"
+            )
 
-    task.update_progress(
-        {
-            "current": len(options["dependencies"]),
-            "total": len(options["dependencies"]),
-            "percent": 100,
-            "description": "Installation complete",
-        }
-    )
-    task.verbose_result = "Configuration package installed successfully"
-    task.save()
+        task.update_progress(
+            {
+                "current": len(options["dependencies"]),
+                "total": len(options["dependencies"]),
+                "percent": 100,
+                "description": "Installation complete",
+            }
+        )
+        task.status = CeleryTask.STATUS_DONE
+        task.verbose_result = "Configuration package installed successfully"
+        task.save()
 
 
 @finmars_task(name="configuration.install_package_from_marketplace", bind=True)
 def install_package_from_marketplace(self, task_id):
     _l.info("install_configuration_from_marketplace")
 
-    task = CeleryTask.objects.get(id=task_id)
+    parent_task = CeleryTask.objects.get(id=task_id)
     # task.celery_task_id = self.request.id
     # task.status = CeleryTask.STATUS_PENDING
     # task.save()
 
     # try:
 
-    options_object = task.options_object
+    parent_options_object = parent_task.options_object
 
     # TODO Implement when keycloak refactored
     # access_token = options_object['access_token']
@@ -765,8 +776,8 @@ def install_package_from_marketplace(self, task_id):
     # task.save()
 
     data = {
-        "configuration_code": options_object["configuration_code"],
-        "version": options_object["version"],
+        "configuration_code": parent_options_object["configuration_code"],
+        "version": parent_options_object["version"],
     }
     headers = {}
     # headers['Authorization'] = 'Token ' + access_token
@@ -780,9 +791,9 @@ def install_package_from_marketplace(self, task_id):
     )
 
     if response.status_code != 200:
-        task.status = CeleryTask.STATUS_ERROR
-        task.error_message = str(response.text)
-        task.save()
+        parent_task.status = CeleryTask.STATUS_ERROR
+        parent_task.error_message = str(response.text)
+        parent_task.save()
         raise Exception(response.text)
 
     remote_configuration_release = response.json()
@@ -808,73 +819,93 @@ def install_package_from_marketplace(self, task_id):
 
     configuration.save()
 
-    task_list = []
+    with transaction.atomic():
+        CeleryTask.objects.select_related().select_for_update().filter(id=task_id)
 
-    step = 1
+        manifest_dependencies = configuration.manifest.get("dependencies", [])
 
-    manifest_dependencies = configuration.manifest.get("dependencies", [])
-    # if not manifest_dependencies:
-        # raise ValueError(
-        #     "install_package_from_marketplace: invalid configuration, no dependencies !"
-        # )
+        parent_options_object["dependencies"] = manifest_dependencies
+        parent_options_object.pop("access_token", None)
 
-    options_object["dependencies"] = manifest_dependencies
+        parent_task.options_object = parent_options_object
+        parent_task.save(force_update=True)
+        parent_task.refresh_from_db()
 
-    task.options_object = options_object
-    task.save()
+        _l.info(f"parent_task id={parent_task.id} options={parent_task.options_object}")
 
-    _l.info("Main Task saved %s" % task.options_object)
-    _l.info("Main Task id %s" % task.id)
+        celery_task_list = []
+        for step, dependency in enumerate(manifest_dependencies, start=1):
+            child_celery_task = CeleryTask.objects.create(
+                master_user=parent_task.master_user,
+                member=parent_task.member,
+                parent=parent_task,
+                verbose_name="Install Configuration From Marketplace",
+                type="install_configuration_from_marketplace",
+            )
 
-    for dependency in manifest_dependencies:
-        module_celery_task = CeleryTask.objects.create(
-            master_user=task.master_user,
-            member=task.member,
-            parent=task,
-            verbose_name="Install Configuration From Marketplace",
-            type="install_configuration_from_marketplace",
+            child_options_object = {
+                "configuration_code": dependency["configuration_code"],
+                "version": dependency["version"],
+                "is_package": False,
+                "step": step
+                # "access_token": access_token
+            }
+
+            child_celery_task.options_object = child_options_object
+            child_celery_task.save()
+
+            celery_task_list.append(child_celery_task)
+
+        parent_task.update_progress(
+            {
+                "current": 0,
+                "total": len(manifest_dependencies),
+                "percent": 0,
+                "description": "Installation started",
+            }
         )
 
-        child_options_object = {
-            "configuration_code": dependency["configuration_code"],
-            "version": dependency["version"],
-            "is_package": False,
-            "step": step
-            # "access_token": access_token
-        }
-
-        module_celery_task.options_object = child_options_object
-        module_celery_task.save()
-
-        # .si is important, we do not need to pass result from previous task
-        task_list.append(
-            install_configuration_from_marketplace.si(task_id=module_celery_task.id)
+        parent_task.refresh_from_db()
+        _l.info(
+            f"parent_task id={parent_task.id} options={parent_task.options_object} "
+            f"progres={parent_task.progress}"
+            f"created {len(parent_task.options_object['dependencies']) + 1} child tasks, "
+            f"starting workflow..."
         )
 
-        step += 1
+    try:
+        for celery_task in celery_task_list:
+            install_configuration_from_marketplace(task_id=celery_task.id)
 
-    # .si is important, we do not need to pass result from previous task
-    task_list.append(finish_package_install.si(task_id=task.id))
+        parent_task.update_progress(
+            {
+                "current": len(manifest_dependencies),
+                "total": len(manifest_dependencies),
+                "percent": 100,
+                "description": "Installation complete",
+            }
+        )
+        parent_task.status = CeleryTask.STATUS_DONE
+        parent_task.verbose_result = "Configuration package installed successfully"
+        parent_task.save()
 
-    workflow = chain(*task_list)
-
-    task.update_progress(
-        {
-            "current": 0,
-            "total": len(manifest_dependencies),
-            "percent": 0,
-            "description": "Installation started",
-        }
-    )
-
-    # execute the chain
-    workflow.apply_async()
-
-    # except Exception as e:
+    # # .si is important, we do not need to pass result from previous task
+    # workflow_list = [
+    #     install_configuration_from_marketplace.si(task_id=celery_task.id)
+    #     for celery_task in celery_task_list
+    # ]
+    # workflow_list.append(finish_package_install.si(task_id=parent_task.id))
+    # workflow = chain(*workflow_list)
+    # # execute the chain
     #
-    #     _l.error('install_configuration_from_marketplace error: %s' % str(e))
-    #     _l.error('install_configuration_from_marketplace traceback: %s' % traceback.format_exc())
-    #
-    #     task.status = CeleryTask.STATUS_ERROR
-    #     task.error_message = str(e)
-    #     task.save()
+    # # workflow.apply_async()
+    # workflow()
+
+    except Exception as e:
+        _l.error(
+            f"install_configuration_from_marketplace error: {repr(e)} "
+            f"traceback: {traceback.format_exc()}"
+        )
+        parent_task.status = CeleryTask.STATUS_ERROR
+        parent_task.error_message = repr(e)
+        parent_task.save()
