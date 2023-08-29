@@ -672,7 +672,7 @@ class MemberSerializer(serializers.ModelSerializer):
     access_policies = AccessPolicyField(source='iam_access_policies', many=True, required=False)
     access_policies_object = serializers.PrimaryKeyRelatedField(source='iam_access_policies', read_only=True, many=True)
 
-    data = serializers.JSONField(allow_null=True)
+    data = serializers.JSONField(allow_null=True, required=False)
 
     class Meta:
         model = Member
@@ -685,7 +685,8 @@ class MemberSerializer(serializers.ModelSerializer):
             'groups', 'groups_object',
             'roles', 'roles_object',
             'access_policies', 'access_policies_object',
-            'data'
+            'data',
+            'status'
         ]
         read_only_fields = [
             'master_user', 'join_date', 'is_owner', 'is_superuser', 'is_deleted',

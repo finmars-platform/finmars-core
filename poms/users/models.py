@@ -1066,11 +1066,23 @@ class Member(FakeDeletableModel):
     SHOW_AND_EMAIL = 2
     EMAIL_ONLY = 3
     SHOW_ONLY = 4
-    STATUS_CHOICES = (
+    NOTIFICATION_STATUS_CHOICES = (
         (DO_NOT_NOTIFY, gettext_lazy("Do not notify")),
         (SHOW_AND_EMAIL, gettext_lazy("Show & Email notifications")),
         (EMAIL_ONLY, gettext_lazy("Email notifications")),
         (SHOW_ONLY, gettext_lazy("Show notifications")),
+    )
+
+    STATUS_ACTIVE = 'active'
+    STATUS_BLOCKED = 'blocked'
+    STATUS_DELETED = 'deleted'
+    STATUS_INVITED = 'invited'
+
+    MEMBER_STATUS_CHOICES = (
+        (STATUS_ACTIVE, gettext_lazy("Active")),
+        (STATUS_BLOCKED, gettext_lazy("Blocked")),
+        (STATUS_DELETED, gettext_lazy("Deleted")),
+        (STATUS_INVITED, gettext_lazy("Invited")),
     )
 
     master_user = models.ForeignKey(
@@ -1116,7 +1128,7 @@ class Member(FakeDeletableModel):
     )
     notification_level = models.PositiveSmallIntegerField(
         default=SHOW_ONLY,
-        choices=STATUS_CHOICES,
+        choices=NOTIFICATION_STATUS_CHOICES,
         db_index=True,
         verbose_name=gettext_lazy("notification level"),
     )
@@ -1142,6 +1154,8 @@ class Member(FakeDeletableModel):
         blank=True,
         verbose_name=gettext_lazy("json data"),
     )
+
+    status = models.CharField(max_length=255, choices=MEMBER_STATUS_CHOICES, default='active')
 
     @property
     def data(self):
