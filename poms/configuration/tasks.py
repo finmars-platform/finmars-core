@@ -881,7 +881,9 @@ def install_package_from_marketplace(self, task_id):
     workflow_list.append(finish_package_install.si(task_id=parent_task.id))
     workflow = chain(*workflow_list)
     # execute the chain
-    workflow.apply_async()
+
+    # workflow.apply_async()
+    workflow()
 
     # except Exception as e:
     #
