@@ -854,7 +854,7 @@ class MemberViewSet(AbstractModelViewSet):
                 transaction.set_rollback(True)
                 return Response(
                     {'error_message': 'Could not create member. Please check username existence or try later.'},
-                    status=status.HTTP_400_BAD_REQUEST)
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR) # probably 400 is better
 
     def update(self, request, *args, **kwargs):
 
