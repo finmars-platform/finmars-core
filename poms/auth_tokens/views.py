@@ -13,7 +13,8 @@ from rest_framework.views import APIView
 
 from poms.auth_tokens.models import AuthToken
 from poms.auth_tokens.serializers import SetAuthTokenSerializer, CreateUserSerializer, CreateMasterUserSerializer, \
-    CreateMemberSerializer, DeleteMemberSerializer, RenameMasterUserSerializer, MasterUserChangeOwnerSerializer
+    CreateMemberSerializer, DeleteMemberSerializer, RenameMasterUserSerializer, MasterUserChangeOwnerSerializer, \
+    AcceptInviteSerializer
 from poms.auth_tokens.utils import generate_random_string
 from poms.common.models import ProxyRequest, ProxyUser
 from poms.users.models import MasterUser, Member, UserProfile
@@ -246,6 +247,49 @@ class CreateUser(APIView):
 
         except Exception as e:
             _l.error("Could not create member Error %s" % e)
+
+        return Response({'status': 'ok'})
+
+
+class AcceptInvite(APIView):
+    parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
+    authentication_classes = ()
+    renderer_classes = (renderers.JSONRenderer,)
+    serializer_class = AcceptInviteSerializer
+
+    def get_serializer_context(self):
+        return {
+            'request': self.request,
+            'format': self.format_kwarg,
+            'view': self
+        }
+
+    def get_serializer(self, *args, **kwargs):
+        kwargs['context'] = self.get_serializer_context()
+        return self.serializer_class(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+
+        member = Member.objects.get(username="finmars_bot")
+        master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
+
+        proxy_user = ProxyUser(member, master_user)
+        proxy_request = ProxyRequest(proxy_user)
+
+        context = {
+            'request': proxy_request,
+            'master_user': master_user,
+            'member': member
+        }
+
+        serializer = self.get_serializer(data=request.data, context=context)
+        serializer.is_valid(raise_exception=True)
+
+        username = serializer.validated_data['username']
+
+        target_member = Member.objects.get(username=username)
+        target_member.status = Member.STATUS_ACTIVE
+        target_member.save()
 
         return Response({'status': 'ok'})
 

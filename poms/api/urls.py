@@ -50,7 +50,7 @@ from poms.auth_tokens.views import (
     MasterUserChangeOwner,
     ObtainAuthToken,
     RenameMasterUser,
-    SetAuthToken,
+    SetAuthToken, AcceptInvite,
 )
 from poms.explorer.views import ExplorerServeFileViewSet
 
@@ -351,6 +351,12 @@ urlpatterns = [
         r"instruments/instrument-database-search",
         instruments.InstrumentDatabaseSearchViewSet.as_view(),
     ),
+
+    # Authorizer, Workflow, Backend Internal API section
+    re_path(
+        r"^internal/accept-invite/", AcceptInvite.as_view(), name="accept-invite"
+    ),
+
     # external callbacks
     re_path(
         r"internal/brokers/bloomberg/callback",
@@ -404,6 +410,7 @@ urlpatterns = [
     re_path(
         r"^authorizer/set-token-auth/", SetAuthToken.as_view(), name="set-token-auth"
     ),
+
     re_path(
         r"^authorizer/create-user/", CreateUser.as_view(), name="create-user"
     ),  # TODO deprecated delete soon
