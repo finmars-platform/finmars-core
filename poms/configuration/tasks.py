@@ -101,9 +101,9 @@ def import_configuration(self, task_id):
         )
 
         if not os.path.exists(
-                os.path.join(
-                    settings.BASE_DIR, "configurations/" + str(task.id) + "/source"
-                )
+            os.path.join(
+                settings.BASE_DIR, "configurations/" + str(task.id) + "/source"
+            )
         ):
             os.makedirs(output_directory, exist_ok=True)
 
@@ -246,7 +246,7 @@ def import_configuration(self, task_id):
             )
 
             dest_workflow_directory = (
-                    settings.BASE_API_URL + "/workflows/" + configuration_code_as_path
+                settings.BASE_API_URL + "/workflows/" + configuration_code_as_path
             )
 
             _l.info("dest_workflow_directory %s" % dest_workflow_directory)
@@ -362,21 +362,21 @@ def export_configuration(self, task_id):
 
         if configuration.is_from_marketplace:
             storage_directory = (
-                    settings.BASE_API_URL
-                    + "/configurations/"
-                    + configuration.configuration_code
-                    + "/"
-                    + configuration.version
-                    + "/"
+                settings.BASE_API_URL
+                + "/configurations/"
+                + configuration.configuration_code
+                + "/"
+                + configuration.version
+                + "/"
             )
         else:
             storage_directory = (
-                    settings.BASE_API_URL
-                    + "/configurations/custom/"
-                    + configuration.configuration_code
-                    + "/"
-                    + configuration.version
-                    + "/"
+                settings.BASE_API_URL
+                + "/configurations/custom/"
+                + configuration.configuration_code
+                + "/"
+                + configuration.version
+                + "/"
             )
 
         save_directory_to_storage(source_directory, storage_directory)
@@ -432,19 +432,19 @@ def push_configuration_to_marketplace(self, task_id):
 
         if configuration.is_from_marketplace:
             path = (
-                    settings.BASE_API_URL
-                    + "/configurations/"
-                    + configuration.configuration_code
-                    + "/"
-                    + configuration.version
+                settings.BASE_API_URL
+                + "/configurations/"
+                + configuration.configuration_code
+                + "/"
+                + configuration.version
             )
         else:
             path = (
-                    settings.BASE_API_URL
-                    + "/configurations/custom/"
-                    + configuration.configuration_code
-                    + "/"
-                    + configuration.version
+                settings.BASE_API_URL
+                + "/configurations/custom/"
+                + configuration.configuration_code
+                + "/"
+                + configuration.version
             )
 
         zip_file_path = storage.download_directory_as_zip(path)
@@ -636,8 +636,8 @@ def install_configuration_from_marketplace(self, **kwargs):
 
         response = requests.get(
             url="https://marketplace.finmars.com/api/v1/configuration-release/"
-                + str(remote_configuration_release["id"])
-                + "/download/",
+            + str(remote_configuration_release["id"])
+            + "/download/",
             headers=headers,
         )
 
@@ -873,23 +873,39 @@ def install_package_from_marketplace(self, task_id):
             f"starting workflow..."
         )
 
-    # .si is important, we do not need to pass result from previous task
-    workflow_list = [
-        install_configuration_from_marketplace.si(task_id=celery_task.id)
-        for celery_task in celery_task_list
-    ]
-    workflow_list.append(finish_package_install.si(task_id=parent_task.id))
-    workflow = chain(*workflow_list)
-    # execute the chain
+    try:
+        for celery_task in celery_task_list:
+            install_configuration_from_marketplace(task_id=celery_task.id)
 
-    # workflow.apply_async()
-    workflow()
+        parent_task.update_progress(
+            {
+                "current": len(manifest_dependencies),
+                "total": len(manifest_dependencies),
+                "percent": 100,
+                "description": "Installation complete",
+            }
+        )
+        parent_task.status = CeleryTask.STATUS_DONE
+        parent_task.verbose_result = "Configuration package installed successfully"
+        parent_task.save()
 
-    # except Exception as e:
+    # # .si is important, we do not need to pass result from previous task
+    # workflow_list = [
+    #     install_configuration_from_marketplace.si(task_id=celery_task.id)
+    #     for celery_task in celery_task_list
+    # ]
+    # workflow_list.append(finish_package_install.si(task_id=parent_task.id))
+    # workflow = chain(*workflow_list)
+    # # execute the chain
     #
-    #     _l.error('install_configuration_from_marketplace error: %s' % str(e))
-    #     _l.error('install_configuration_from_marketplace traceback: %s' % traceback.format_exc())
-    #
-    #     task.status = CeleryTask.STATUS_ERROR
-    #     task.error_message = str(e)
-    #     task.save()
+    # # workflow.apply_async()
+    # workflow()
+
+    except Exception as e:
+        _l.error(
+            f"install_configuration_from_marketplace error: {repr(e)} "
+            f"traceback: {traceback.format_exc()}"
+        )
+        parent_task.status = CeleryTask.STATUS_ERROR
+        parent_task.error_message = repr(e)
+        parent_task.save()
