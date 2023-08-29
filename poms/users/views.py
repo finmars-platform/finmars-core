@@ -806,7 +806,6 @@ class MemberViewSet(AbstractModelViewSet):
 
         queryset = self.filter_queryset(Member.objects.all())
 
-
         page = self.paginate_queryset(queryset)
 
         if page is not None:
@@ -880,6 +879,23 @@ class MemberViewSet(AbstractModelViewSet):
         authorizer.kick_member(instance)
 
         return super(MemberViewSet, self).perform_destroy(instance)
+
+    @action(detail=True, methods=('PUT',), url_path='send-invite')
+    def send_invite(self, request, pk=None):
+
+        member = self.get_object()
+
+        if not member.is_deleted:  # Only deleted members can be invited
+            raise PermissionDenied()
+
+        member.status = Member.STATUS_INVITED
+        member.save()
+
+        authorizer = AuthorizerService()
+
+        authorizer.invite_member(member=member, from_user=request.user)
+
+        return Response({"status": "ok"})
 
 
 class UsercodePrefixFilterSet(FilterSet):

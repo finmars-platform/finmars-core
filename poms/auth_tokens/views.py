@@ -269,7 +269,6 @@ class AcceptInvite(APIView):
         return self.serializer_class(*args, **kwargs)
 
     def post(self, request, *args, **kwargs):
-
         member = Member.objects.get(username="finmars_bot")
         master_user = MasterUser.objects.get(base_api_url=settings.BASE_API_URL)
 
@@ -289,6 +288,7 @@ class AcceptInvite(APIView):
 
         target_member = Member.objects.get(username=username)
         target_member.status = Member.STATUS_ACTIVE
+        target_member.is_deleted = False
         target_member.save()
 
         return Response({'status': 'ok'})

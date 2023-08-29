@@ -59,7 +59,7 @@ class AuthorizerService():
 
         data = {
             "base_api_url": settings.BASE_API_URL,
-            "username": member.user.username,
+            "username": member.username,
             "is_admin": member.is_admin,
             "from_user_username": from_user.username
         }
