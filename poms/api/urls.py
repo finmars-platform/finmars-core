@@ -50,7 +50,7 @@ from poms.auth_tokens.views import (
     MasterUserChangeOwner,
     ObtainAuthToken,
     RenameMasterUser,
-    SetAuthToken, AcceptInvite,
+    SetAuthToken, AcceptInvite, DeclineInvite,
 )
 from poms.explorer.views import ExplorerServeFileViewSet
 
@@ -356,6 +356,11 @@ urlpatterns = [
     re_path(
         r"^internal/accept-invite/", AcceptInvite.as_view(), name="accept-invite"
     ),
+    re_path(
+        r"^internal/decline-invite/", DeclineInvite.as_view(), name="decline-invite"
+    ),
+
+
 
     # external callbacks
     re_path(

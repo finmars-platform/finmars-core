@@ -1090,12 +1090,14 @@ class Member(FakeDeletableModel):
     STATUS_BLOCKED = 'blocked'
     STATUS_DELETED = 'deleted'
     STATUS_INVITED = 'invited'
+    STATUS_INVITE_DECLINED = 'invite_declined'
 
     MEMBER_STATUS_CHOICES = (
         (STATUS_ACTIVE, gettext_lazy("Active")),
         (STATUS_BLOCKED, gettext_lazy("Blocked")),
         (STATUS_DELETED, gettext_lazy("Deleted")),
         (STATUS_INVITED, gettext_lazy("Invited")),
+        (STATUS_INVITE_DECLINED, gettext_lazy("Invite Declined")),
     )
 
     master_user = models.ForeignKey(
