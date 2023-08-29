@@ -223,6 +223,25 @@ class BootstrapConfig(AppConfig):
             except Exception as e:
                 _l.error("Could not sync base_api_url %s" % e)
 
+            try:
+
+                current_owner_member = Member.objects.get(username=response_data['owner']['username'],
+                                                          master_user=master_user)
+
+                current_owner_member.is_owner = True
+                current_owner_member.is_admin = True
+                current_owner_member.save()
+
+            except Exception as e:
+
+                _l.error("Could not find current owner member %s " % e)
+
+                user = User.objects.get(username=response_data['owner']['username'])
+
+                current_owner_member = Member.objects.create(username=response_data['owner']['username'], user=user,
+                                                             master_user=master_user,
+                                                             is_owner=True, is_admin=True)
+
         except Exception as e:
             _l.error("load_master_user_data error %s" % e)
             _l.error("load_master_user_data traceback %s" % traceback.format_exc())

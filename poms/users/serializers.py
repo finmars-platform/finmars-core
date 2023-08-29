@@ -17,6 +17,7 @@ from rest_framework.validators import UniqueValidator
 
 from poms.accounts.fields import AccountTypeField, AccountField
 from poms.common.fields import DateTimeTzAwareField
+from poms.common.finmars_authorizer import AuthorizerService
 from poms.counterparties.fields import CounterpartyField, ResponsibleField, CounterpartyGroupField, \
     ResponsibleGroupField
 from poms.currencies.fields import CurrencyField
@@ -660,7 +661,7 @@ class MasterUserSetCurrentSerializer(serializers.Serializer):
 class MemberSerializer(serializers.ModelSerializer):
 
     master_user = MasterUserField()
-    username = serializers.CharField(read_only=True)
+    username = serializers.CharField(read_only=False)
     join_date = DateTimeTzAwareField(read_only=True)
 
     groups = GroupField(source='iam_groups', many=True, required=False)
@@ -689,8 +690,8 @@ class MemberSerializer(serializers.ModelSerializer):
             'status'
         ]
         read_only_fields = [
-            'master_user', 'join_date', 'is_owner', 'is_superuser', 'is_deleted',
-            'username', 'first_name', 'last_name', 'display_name',
+            'master_user', 'join_date', 'is_superuser', 'is_deleted',
+            'first_name', 'last_name', 'display_name',
         ]
 
     def __init__(self, *args, **kwargs):
@@ -701,37 +702,15 @@ class MemberSerializer(serializers.ModelSerializer):
         self.fields['roles_object'] = IamRoleSerializer(source='iam_roles', many=True, read_only=True)
 
 
-    def validate(self, attrs):
-        if not self.instance:
-            master_user = attrs['master_user']
-            username = attrs['username']
-
-            if Member.objects.filter(master_user=master_user, user__isnull=False, username=username).exists():
-                raise serializers.ValidationError({'username': UniqueValidator.message})
-            if not User.objects.filter(username=username).exists():
-                message = serializers.SlugRelatedField.default_error_messages['does_not_exist'].format(
-                    slug_name=self.fields['username'].field_name, value=username)
-                raise serializers.ValidationError({'username': message})
-        return attrs
-
     def create(self, validated_data):
-        master_user = validated_data['master_user']
-        username = validated_data.pop('username')
-        validated_data['user'] = User.objects.get(username=username)
+
+        _l.info('member create %s' % validated_data)
+
+        username = validated_data.get('username')
+        status = Member.STATUS_INVITED
+        validated_data['status'] = status
+        validated_data['user'] = User.objects.create(username=username) # TODO maybe need to do more smart things here
         member = super(MemberSerializer, self).create(validated_data)
-
-        owner = Member.objects.filter(master_user=master_user, is_owner=True).first()
-
-        mll = []
-        for oll in ListLayout.objects.filter(member=owner):
-            mll.append(ListLayout(member=member, content_type_id=oll.content_type_id, name=oll.name,
-                                  is_default=oll.is_default, json_data=oll.json_data))
-        ListLayout.objects.bulk_create(mll)
-
-        ell = []
-        for oel in EditLayout.objects.filter(member=owner):
-            ell.append(EditLayout(member=member, content_type_id=oel.content_type_id, json_data=oel.json_data))
-        EditLayout.objects.bulk_create(ell)
 
         return member
 

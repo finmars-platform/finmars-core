@@ -1,6 +1,7 @@
 from __future__ import unicode_literals
 
 import time
+import traceback
 from datetime import timedelta
 from logging import getLogger
 
@@ -13,6 +14,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.core.signing import TimestampSigner
+from django.db import transaction
 from django.utils import timezone
 from django.utils import translation
 from django.utils.decorators import method_decorator
@@ -809,6 +811,35 @@ class MemberViewSet(AbstractModelViewSet):
                 return None
 
         return super(MemberViewSet, self).get_object()
+
+    def create(self, request, *args, **kwargs):
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        with transaction.atomic():
+            try:
+                # Create the object in the database
+                self.perform_create(serializer)
+                headers = self.get_success_headers(serializer.data)
+
+                authorizer = AuthorizerService()
+
+                authorizer.invite_member(member=serializer.instance, from_user=request.user)
+
+                return Response(
+                    serializer.data, status=status.HTTP_201_CREATED, headers=headers
+                )
+            except Exception as e:
+
+                _l.error('MemberViewset.create error %s' % e)
+                _l.error('MemberViewset.create traceback %s' % traceback.format_exc())
+
+                # API call failed, rollback the transaction
+                transaction.set_rollback(True)
+                return Response(
+                    {'error_message': 'Could not create member. Please check username existence or try later.'},
+                    status=status.HTTP_400_BAD_REQUEST)
 
     def update(self, request, *args, **kwargs):
 
