@@ -800,6 +800,22 @@ class MemberViewSet(AbstractModelViewSet):
     ]
     pagination_class = BigPagination
 
+    def list(self, request, *args, **kwargs):
+
+        # Rewriting parent list, we must show deleted members
+
+        queryset = self.filter_queryset(Member.objects.all())
+
+
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     def get_object(self):
         lookup_url_kwarg = self.lookup_url_kwarg or self.lookup_field
         lookup_value = self.kwargs[lookup_url_kwarg]
