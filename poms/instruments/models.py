@@ -1749,12 +1749,17 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         calendar = ql.TARGET()
 
         if self.maturity_date:
-            maturity = ql.Date(self.maturity_date, self.date_pattern)
+
+            _l.info('get_quantlib_bond.self.type maturity_date %s' % type(self.maturity_date))
+            _l.info('get_quantlib_bond.self.maturity_date %s' % self.maturity_date)
+            _l.info('get_quantlib_bond.self.date_pattern %s' % self.date_pattern)
+
+            maturity = ql.Date(str(self.maturity_date), self.date_pattern)
 
             if self.has_factor_schedules():
                 factor_schedules = self.get_factors()
 
-                factor_dates = [item.effective_date for item in factor_schedules]
+                factor_dates = [ql.Date(str(item.effective_date), self.date_pattern) for item in factor_schedules]
                 factor_values = [item.factor_value for item in factor_schedules]
 
                 # TODO OG commented: we need issue date
@@ -1767,7 +1772,8 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                     first_accrual.periodicity
                 )
 
-                float_accrual_size = float(accrual.accrual_size) / 100
+                start_date = ql.Date(str(first_accrual.accrual_start_date), self.date_pattern)
+                float_accrual_size = float(first_accrual.accrual_size) / 100
                 # yield_guess = 0.1
                 day_count = AccrualCalculationModel.get_quantlib_day_count(
                     first_accrual.accrual_calculation_model
@@ -1823,7 +1829,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
                 if first_accrual:
                     start = ql.Date(
-                        first_accrual.accrual_start_date, self.date_pattern
+                        str(first_accrual.accrual_start_date), self.date_pattern
                     )  # Start accrual date
                     periodicity = Periodicity.get_quantlib_periodicity(
                         first_accrual.periodicity
@@ -1863,12 +1869,21 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
 
         bond = self.get_quantlib_bond()
 
+        # _l.info('calculate_quantlib_ytm %s ' % bond)
+        # _l.info('calculate_quantlib_ytm type price %s ' % type(price))
+        # _l.info('calculate_quantlib_ytm price %s ' % price)
+
         if bond:
-            ql.Settings.instance().evaluationDate = ql.Date(date, self.date_pattern)
+            ql.Settings.instance().evaluationDate = ql.Date(str(date), self.date_pattern)
 
-            frequency = bond.paymentFrequency()
+            frequency = bond.frequency()
 
-            ytm = bond.bondYield(price, ql.Actual360(), ql.Compounded, frequency)
+            # _l.info('calculate_quantlib_ytm type price %s ' % type(price))
+            # _l.info('calculate_quantlib_ytm type ql.Actual360 %s ' % bond.dayCounter())
+            # _l.info('calculate_quantlib_ytm type ql.Compounded %s ' % type(ql.Compounded))
+            # _l.info('calculate_quantlib_ytm type frequency %s ' % type(frequency))
+
+            ytm = bond.bondYield(price, bond.dayCounter(), ql.Compounded, frequency)
 
         return ytm
 
@@ -1880,11 +1895,12 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         bond = self.get_quantlib_bond()
 
         if bond:
-            ql.Settings.instance().evaluationDate = ql.Date(date, self.date_pattern)
+            ql.Settings.instance().evaluationDate = ql.Date(str(date), self.date_pattern)
 
-            frequency = bond.paymentFrequency()
-            first_cashflow = fixed_rate_bond.cashflows()[0]
-            day_count_convention = first_cashflow.dayCounter()
+            frequency = bond.frequency()
+            # first_cashflow = bond.cashflows()[0]
+            # day_count_convention = first_cashflow.dayCounter()
+            day_count_convention = bond.dayCounter()
 
             # Macaulay Duration
             # TODO probably do not need right now
@@ -2980,7 +2996,7 @@ class PriceHistory(DataTimeStampedModel):
             self.modified_duration = self.calculate_duration(self.date, self.ytm)
 
         except Exception as e:
-            _l.debug(f"PriceHistory save ytm error {repr(e)} {traceback.print_exc()}")
+            _l.info(f"PriceHistory save ytm error {repr(e)} {traceback.format_exc()}")
 
         if not self.factor:
             try:
@@ -2988,7 +3004,7 @@ class PriceHistory(DataTimeStampedModel):
             except Exception as e:
                 _l.debug(
                     f"PriceHistory factor save ytm error {repr(e)}"
-                    f" {traceback.print_exc()}"
+                    f" {traceback.format_exc()}"
                 )
 
         super().save(*args, **kwargs)
