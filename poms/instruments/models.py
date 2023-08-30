@@ -1857,6 +1857,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                         faceAmount=face_value,
                         maturityDate=maturity,
                     )
+                    _l.info("ZeroCouponBond %s" % bond)
 
         return bond
 
@@ -1881,7 +1882,9 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
             # _l.info('calculate_quantlib_ytm type price %s ' % type(price))
             # _l.info('calculate_quantlib_ytm type ql.Actual360 %s ' % bond.dayCounter())
             # _l.info('calculate_quantlib_ytm type ql.Compounded %s ' % type(ql.Compounded))
-            # _l.info('calculate_quantlib_ytm type frequency %s ' % type(frequency))
+            _l.info('calculate_quantlib_ytm type frequency %s ' % type(frequency))
+            _l.info('calculate_quantlib_ytm frequency %s ' % frequency)
+
 
             ytm = bond.bondYield(price, bond.dayCounter(), ql.Compounded, frequency)
 
