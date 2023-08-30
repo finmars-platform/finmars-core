@@ -657,11 +657,17 @@ class MasterUserSetCurrentSerializer(serializers.Serializer):
 #         member = get_member_from_context(self.context)
 #         return obj.id == member.id
 
+class SimpleUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', ]
+        read_only_fields = ['id', 'username', 'first_name', 'last_name', 'email', ]
 
 class MemberSerializer(serializers.ModelSerializer):
 
     master_user = MasterUserField()
     username = serializers.CharField(read_only=False)
+    user = SimpleUserSerializer(read_only=True)
     join_date = DateTimeTzAwareField(read_only=True)
 
     groups = GroupField(source='iam_groups', many=True, required=False)
@@ -678,7 +684,7 @@ class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = [
-            'id', 'master_user',
+            'id', 'master_user', 'user',
             'join_date', 'is_owner', 'is_admin', 'is_superuser',
             'notification_level', 'interface_level',
             'is_deleted', 'username', 'first_name', 'last_name',
