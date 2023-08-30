@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.schemas import ManualSchema
 from rest_framework.schemas import coreapi as coreapi_schema
 from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from poms.auth_tokens.models import AuthToken
 from poms.auth_tokens.serializers import SetAuthTokenSerializer, CreateUserSerializer, CreateMasterUserSerializer, \
@@ -252,8 +253,9 @@ class CreateUser(APIView):
 
 
 class AcceptInvite(APIView):
+    permission_classes = (AllowAny,) # TODO consider change, maybe add more sophisticated permissions
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
-    authentication_classes = ()
+    authentication_classes = (JWTAuthentication,)
     renderer_classes = (renderers.JSONRenderer,)
     serializer_class = AcceptInviteSerializer
 
@@ -294,8 +296,9 @@ class AcceptInvite(APIView):
         return Response({'status': 'ok'})
 
 class DeclineInvite(APIView):
+    permission_classes = (AllowAny,) # TODO consider change, maybe add more sophisticated permissions
     parser_classes = (parsers.FormParser, parsers.MultiPartParser, parsers.JSONParser,)
-    authentication_classes = ()
+    authentication_classes = (JWTAuthentication,)
     renderer_classes = (renderers.JSONRenderer,)
     serializer_class = AcceptInviteSerializer
 
