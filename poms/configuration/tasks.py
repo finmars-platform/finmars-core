@@ -5,11 +5,10 @@ import traceback
 from datetime import date
 
 import requests
-from celery import chain
 from django.contrib.auth import get_user_model
 from django.core.exceptions import FieldDoesNotExist
-from django.utils.timezone import now
 from django.db import transaction
+from django.utils.timezone import now
 
 from poms.celery_tasks import finmars_task
 from poms.celery_tasks.models import CeleryTask
@@ -101,9 +100,9 @@ def import_configuration(self, task_id):
         )
 
         if not os.path.exists(
-            os.path.join(
-                settings.BASE_DIR, "configurations/" + str(task.id) + "/source"
-            )
+                os.path.join(
+                    settings.BASE_DIR, "configurations/" + str(task.id) + "/source"
+                )
         ):
             os.makedirs(output_directory, exist_ok=True)
 
@@ -246,7 +245,7 @@ def import_configuration(self, task_id):
             )
 
             dest_workflow_directory = (
-                settings.BASE_API_URL + "/workflows/" + configuration_code_as_path
+                    settings.BASE_API_URL + "/workflows/" + configuration_code_as_path
             )
 
             _l.info("dest_workflow_directory %s" % dest_workflow_directory)
@@ -362,21 +361,21 @@ def export_configuration(self, task_id):
 
         if configuration.is_from_marketplace:
             storage_directory = (
-                settings.BASE_API_URL
-                + "/configurations/"
-                + configuration.configuration_code
-                + "/"
-                + configuration.version
-                + "/"
+                    settings.BASE_API_URL
+                    + "/configurations/"
+                    + configuration.configuration_code
+                    + "/"
+                    + configuration.version
+                    + "/"
             )
         else:
             storage_directory = (
-                settings.BASE_API_URL
-                + "/configurations/custom/"
-                + configuration.configuration_code
-                + "/"
-                + configuration.version
-                + "/"
+                    settings.BASE_API_URL
+                    + "/configurations/custom/"
+                    + configuration.configuration_code
+                    + "/"
+                    + configuration.version
+                    + "/"
             )
 
         save_directory_to_storage(source_directory, storage_directory)
@@ -432,19 +431,19 @@ def push_configuration_to_marketplace(self, task_id):
 
         if configuration.is_from_marketplace:
             path = (
-                settings.BASE_API_URL
-                + "/configurations/"
-                + configuration.configuration_code
-                + "/"
-                + configuration.version
+                    settings.BASE_API_URL
+                    + "/configurations/"
+                    + configuration.configuration_code
+                    + "/"
+                    + configuration.version
             )
         else:
             path = (
-                settings.BASE_API_URL
-                + "/configurations/custom/"
-                + configuration.configuration_code
-                + "/"
-                + configuration.version
+                    settings.BASE_API_URL
+                    + "/configurations/custom/"
+                    + configuration.configuration_code
+                    + "/"
+                    + configuration.version
             )
 
         zip_file_path = storage.download_directory_as_zip(path)
@@ -636,8 +635,8 @@ def install_configuration_from_marketplace(self, **kwargs):
 
         response = requests.get(
             url="https://marketplace.finmars.com/api/v1/configuration-release/"
-            + str(remote_configuration_release["id"])
-            + "/download/",
+                + str(remote_configuration_release["id"])
+                + "/download/",
             headers=headers,
         )
 
@@ -883,6 +882,18 @@ def install_package_from_marketplace(self, task_id):
                 "description": "Installation complete",
             }
         )
+
+        try:
+            if configuration.manifest:
+                if 'primary_module' in configuration.manifest:
+                    primary_configuration = Configuration.objects.get(
+                        configuration_code=configuration.manifest['primary_module'])
+                    primary_configuration.is_primary = True
+                    primary_configuration.save()
+
+        except Exception as e:
+            _l.error("install_package_from_marketplace error: %s" % str(e))
+
         parent_task.status = CeleryTask.STATUS_DONE
         parent_task.verbose_result = "Configuration package installed successfully"
         parent_task.save()
