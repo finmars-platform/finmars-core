@@ -789,17 +789,16 @@ def install_package_from_marketplace(self, task_id):
         data=data,
         headers=headers,
     )
-
     if response.status_code != 200:
         parent_task.status = CeleryTask.STATUS_ERROR
-        parent_task.error_message = str(response.text)
+        parent_task.error_message = response.text
         parent_task.save()
-        raise Exception(response.text)
+        raise RuntimeError(response.text)
 
     remote_configuration_release = response.json()
     remote_configuration = remote_configuration_release["configuration_object"]
 
-    _l.info("remote_configuration %s" % remote_configuration_release)
+    _l.info(f"remote_configuration {remote_configuration_release}")
 
     try:
         configuration = Configuration.objects.get(
@@ -829,7 +828,6 @@ def install_package_from_marketplace(self, task_id):
 
         parent_task.options_object = parent_options_object
         parent_task.save(force_update=True)
-        parent_task.refresh_from_db()
 
         _l.info(f"parent_task id={parent_task.id} options={parent_task.options_object}")
 
