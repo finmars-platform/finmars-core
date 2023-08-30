@@ -15,7 +15,7 @@ def handle_schedules():
     for schedule in schedules:
         try:
             periodic_task = PeriodicTask.objects.get(name=schedule.user_code)
-        except Exception:
+        except PeriodicTask.DoesNotExist:
             periodic_task = PeriodicTask(name=schedule.user_code)
 
         cron_pieces = schedule.cron_expr.split(" ")
@@ -41,7 +41,11 @@ def handle_schedules():
         f"deleted {PeriodicTask.objects.exclude(id__in=existing_ids).count()}"
     )
 
-    PeriodicTask.objects.exclude(id__in=existing_ids).delete()
+    PeriodicTask.objects.exclude(
+        id__in=existing_ids,
+    ).exclude(
+        name__icontains="SYSTEM",
+    ).delete()
 
 
 def sync_schedules():

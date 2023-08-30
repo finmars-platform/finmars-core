@@ -44,4 +44,4 @@ class CalculateDailySumTestCase(BaseTestCase):
         self.assertEqual(periodic_tasks.count(), 1)
 
         task = periodic_tasks.filter(id=6).first()
-        self.assertEqual(task.name, "Clean Old Historical Records")
+        self.assertEqual(task.name, "SYSTEM: Clean Old Historical Records")
