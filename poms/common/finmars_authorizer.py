@@ -29,7 +29,7 @@ class AuthorizerService():
 
         data = {
             "base_api_url": settings.BASE_API_URL,
-            "username": member.user.username,
+            "username": member.username,
         }
 
         url = settings.AUTHORIZER_URL + '/api/v1/internal/kick-member/?space_code=%s' % settings.BASE_API_URL
