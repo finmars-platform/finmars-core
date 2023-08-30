@@ -709,8 +709,10 @@ class MemberSerializer(serializers.ModelSerializer):
         username = validated_data.get('username')
         status = Member.STATUS_INVITED
         validated_data['status'] = status
-        validated_data['user'] = User.objects.create(username=username) # TODO maybe need to do more smart things here
         member = super(MemberSerializer, self).create(validated_data)
+
+        member.user = User.objects.create(username=username)# TODO maybe need to do more smart things here
+        member.save()
 
         return member
 
