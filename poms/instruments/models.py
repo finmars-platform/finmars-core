@@ -1877,8 +1877,11 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         if bond:
             ql.Settings.instance().evaluationDate = ql.Date(str(date), self.date_pattern)
 
-            frequency = bond.frequency()
-
+            try:
+                frequency = bond.frequency()
+            except Exception as e:
+                _l.error("Could not take frequency from bond %s" % e)
+                frequency = 1
             # _l.info('calculate_quantlib_ytm type price %s ' % type(price))
             # _l.info('calculate_quantlib_ytm type ql.Actual360 %s ' % bond.dayCounter())
             # _l.info('calculate_quantlib_ytm type ql.Compounded %s ' % type(ql.Compounded))
@@ -1900,7 +1903,11 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
         if bond:
             ql.Settings.instance().evaluationDate = ql.Date(str(date), self.date_pattern)
 
-            frequency = bond.frequency()
+            try:
+                frequency = bond.frequency()
+            except Exception as e:
+                _l.error("Could not take frequency from bond %s" % e)
+                frequency = 1
             # first_cashflow = bond.cashflows()[0]
             # day_count_convention = first_cashflow.dayCounter()
             day_count_convention = bond.dayCounter()
