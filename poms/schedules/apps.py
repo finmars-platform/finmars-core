@@ -7,8 +7,8 @@ class SchedulesConfig(AppConfig):
     name = "poms.schedules"
 
     def ready(self):
-        post_migrate.connect(self.sync_user_schedules_with_celery_beat, sender=self)
         post_migrate.connect(self.update_periodic_tasks, sender=self)
+        post_migrate.connect(self.sync_user_schedules_with_celery_beat, sender=self)
 
     # TODO update with auto_cancel_ttl_task
     def update_periodic_tasks(
@@ -78,7 +78,7 @@ class SchedulesConfig(AppConfig):
             # },
             {
                 "id": 6,
-                "name": "Clean Old Historical Records",
+                "name": "SYSTEM: Clean Old Historical Records",
                 "task": "history_tasks.clear_old_journal_records",
                 "crontab": crontabs["daily_morning"],
             },
@@ -89,11 +89,9 @@ class SchedulesConfig(AppConfig):
         for task in periodic_tasks:
             if task["id"] in periodic_tasks_exists:
                 item = PeriodicTask.objects.get(id=task["id"])
-
                 item.name = task["name"]
                 item.task = task["task"]
                 item.crontab = task["crontab"]
-
                 item.save()
 
             else:
