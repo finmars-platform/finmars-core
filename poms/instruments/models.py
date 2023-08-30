@@ -1839,7 +1839,7 @@ class Instrument(NamedModelAutoMapping, FakeDeletableModel, DataTimeStampedModel
                         start, maturity, periodicity
                     )  # period - semiannual
 
-                    float_accrual_size = float(accrual.accrual_size) / 100
+                    float_accrual_size = float(first_accrual.accrual_size) / 100
                     day_count = AccrualCalculationModel.get_quantlib_day_count(
                         first_accrual.accrual_calculation_model
                     )
