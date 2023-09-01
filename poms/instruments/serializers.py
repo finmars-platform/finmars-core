@@ -1786,6 +1786,7 @@ class PriceHistorySerializer(ModelMetaSerializer):
             "short_delta",
             "is_temporary_price",
             "ytm",
+            "modified_duration"
         ]
 
     @staticmethod

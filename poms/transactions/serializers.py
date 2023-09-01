@@ -5592,6 +5592,7 @@ class ComplexTransactionDeleteSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "code",
+            "date",
             "transaction_unique_code",
             "deleted_transaction_unique_code",
             "modified",

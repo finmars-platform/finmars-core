@@ -53,3 +53,7 @@ class DeleteMemberSerializer(serializers.Serializer):
     username = serializers.CharField(label=_("username"))
     # user_id = serializers.CharField(label=_("User Id"))
     # master_user_id = serializers.CharField(label=_("Master User id"))
+
+
+class AcceptInviteSerializer(serializers.Serializer):
+    username = serializers.CharField(label=_("Username"))

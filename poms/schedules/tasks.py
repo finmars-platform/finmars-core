@@ -1,150 +1,172 @@
 import logging
 import traceback
 
-from celery import shared_task
 from django.conf import settings
 from django.utils import timezone
 
 from poms.celery_tasks import finmars_task
 from poms.pricing.handlers import PricingProcedureProcess
 from poms.procedures.handlers import DataProcedureProcess, ExpressionProcedureProcess
-from poms.procedures.models import RequestDataFileProcedure, PricingProcedure, ExpressionProcedure
+from poms.procedures.models import (
+    ExpressionProcedure,
+    PricingProcedure,
+    RequestDataFileProcedure,
+)
 from poms.schedules.models import Schedule, ScheduleInstance, ScheduleProcedure
 from poms.system_messages.handlers import send_system_message
-from poms.users.models import Member, MasterUser
+from poms.users.models import MasterUser, Member
 
-_l = logging.getLogger('poms.schedules')
+_l = logging.getLogger("poms.schedules")
 
 
-@finmars_task(name='schedules.process_procedure_async', bind=True)
+@finmars_task(name="schedules.process_procedure_async", bind=True)
 def process_procedure_async(self, procedure_id, master_user_id, schedule_instance_id):
     try:
-        _l.info("Schedule: Subprocess process. Master User: %s. Procedure: %s" % (master_user_id, procedure_id))
+        _l.info(
+            f"Schedule: Subprocess process. Master User: {master_user_id}."
+            f" Procedure: {procedure_id}"
+        )
 
         procedure = ScheduleProcedure.objects.get(id=procedure_id)
 
-        _l.info("Schedule: Subprocess process.  Procedure type: %s" % (procedure.type))
+        _l.info(f"Schedule: Subprocess process.  Procedure type: {procedure.type}")
         master_user = MasterUser.objects.get(id=master_user_id)
         schedule_instance = ScheduleInstance.objects.get(id=schedule_instance_id)
 
         schedule = Schedule.objects.get(id=schedule_instance.schedule_id)
 
-        # owner_member = Member.objects.filter(master_user=master_user, is_owner=True)[0]
-        finmars_bot = Member.objects.get(username='finmars_bot')
+        finmars_bot = Member.objects.get(username="finmars_bot")
 
         context = {
-            'execution_context': {
-                'source': 'schedule',
-                'actor': schedule.user_code,
-                'schedule_object': {
-                    'id': schedule.id,
-                    'user_code': schedule.user_code
-                },
+            "execution_context": {
+                "source": "schedule",
+                "actor": schedule.user_code,
+                "schedule_object": {"id": schedule.id, "user_code": schedule.user_code},
             }
         }
 
-        if procedure.type == 'pricing_procedure':
-
+        if procedure.type == "pricing_procedure":
             try:
-
-                item = PricingProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
+                item = PricingProcedure.objects.get(
+                    master_user=master_user, user_code=procedure.user_code
+                )
 
                 date_from = None
                 date_to = None
 
                 if schedule.data:
-                    if 'pl_first_date' in schedule.data:
-                        date_from = schedule.data['date_from']
-                        if 'report_date' in schedule.data:
-                            date_to = schedule.data['report_date']
-                    elif 'report_date' in schedule_instance.data:
-                        date_from = schedule.data['report_date']
-                        date_to = schedule.data['report_date']
-                    elif 'begin_date' in schedule.data:
-                        date_from = schedule.data['begin_date']
-                        if 'end_date' in schedule.data:
-                            date_to = schedule.data['end_date']
+                    if "pl_first_date" in schedule.data:
+                        date_from = schedule.data["date_from"]
+                        if "report_date" in schedule.data:
+                            date_to = schedule.data["report_date"]
+                    elif "report_date" in schedule_instance.data:
+                        date_from = schedule.data["report_date"]
+                        date_to = schedule.data["report_date"]
+                    elif "begin_date" in schedule.data:
+                        date_from = schedule.data["begin_date"]
+                        if "end_date" in schedule.data:
+                            date_to = schedule.data["end_date"]
 
-                instance = PricingProcedureProcess(procedure=item, master_user=master_user, member=finmars_bot,
-                                                   schedule_instance=schedule_instance, date_from=date_from,
-                                                   context=context,
-                                                   date_to=date_to)
+                instance = PricingProcedureProcess(
+                    procedure=item,
+                    master_user=master_user,
+                    member=finmars_bot,
+                    schedule_instance=schedule_instance,
+                    date_from=date_from,
+                    context=context,
+                    date_to=date_to,
+                )
                 instance.process()
 
             except Exception as e:
+                send_system_message(
+                    master_user=master_user,
+                    action_status="required",
+                    type="warning",
+                    title=f"Schedule Pricing Procedure Failed. User Code: {procedure.user_code}",
+                    description=str(e),
+                )
 
-                send_system_message(master_user=master_user, action_status="required", type="warning",
-                                    title='Schedule Pricing Procedure Failed. User Code: %s' % procedure.user_code,
-                                    description=str(e))
+                _l.info(
+                    f"Can't find Pricing Procedure error {e}  user_code {procedure.user_code}"
+                )
 
-                _l.info("Can't find Pricing Procedure error %s" % e)
-                _l.info("Can't find Pricing Procedure  user_code %s" % procedure.user_code)
-
-        if procedure.type == 'data_procedure':
-
+        if procedure.type == "data_procedure":
             try:
+                item = RequestDataFileProcedure.objects.get(
+                    master_user=master_user, user_code=procedure.user_code
+                )
 
-                item = RequestDataFileProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
-
-                instance = DataProcedureProcess(procedure=item, master_user=master_user,
-                                                member=finmars_bot,
-                                                context=context,
-                                                schedule_instance=schedule_instance)
+                instance = DataProcedureProcess(
+                    procedure=item,
+                    master_user=master_user,
+                    member=finmars_bot,
+                    context=context,
+                    schedule_instance=schedule_instance,
+                )
                 instance.process()
 
             except Exception as e:
+                send_system_message(
+                    master_user=master_user,
+                    action_status="required",
+                    type="warning",
+                    title=f"Schedule Data Procedure Failed. User Code: {procedure.user_code}",
+                    description=str(e),
+                )
 
-                send_system_message(master_user=master_user, action_status="required", type="warning",
-                                    title='Schedule Data Procedure Failed. User Code: %s' % procedure.user_code,
-                                    description=str(e))
+                _l.info(f"Can't find Request Data File Procedure {procedure.user_code}")
 
-                _l.info("Can't find Request Data File Procedure %s" % procedure.user_code)
-
-        if procedure.type == 'expression_procedure':
-
+        if procedure.type == "expression_procedure":
             try:
+                item = ExpressionProcedure.objects.get(
+                    master_user=master_user, user_code=procedure.user_code
+                )
 
-                item = ExpressionProcedure.objects.get(master_user=master_user, user_code=procedure.user_code)
-
-                instance = ExpressionProcedureProcess(procedure=item, master_user=master_user, member=finmars_bot,
-                                                      context=context)
+                instance = ExpressionProcedureProcess(
+                    procedure=item,
+                    master_user=master_user,
+                    member=finmars_bot,
+                    context=context,
+                )
                 instance.process()
 
             except Exception as e:
+                send_system_message(
+                    master_user=master_user,
+                    action_status="required",
+                    type="warning",
+                    title=f"Schedule Expression Procedure Failed. User Code: {procedure.user_code}",
+                    description=str(e),
+                )
 
-                send_system_message(master_user=master_user, action_status="required", type="warning",
-                                    title='Schedule Expression Procedure Failed. User Code: %s' % procedure.user_code,
-                                    description=str(e))
-
-                _l.info("Can't find ExpressionProcedure %s" % procedure.user_code)
+                _l.info(f"Can't find ExpressionProcedure {procedure.user_code}")
 
     except Exception as e:
-        _l.error('process_procedure_async e %s' % e)
-        _l.error('process_procedure_async traceback %s' % traceback.format_exc())
+        _l.error(f"process_procedure_async e {e} traceback {traceback.format_exc()}")
 
 
-@finmars_task(name='schedules.process', bind=True)
+@finmars_task(name="schedules.process", bind=True)
 def process(self, schedule_user_code):
-    _l.info('schedule_user_code %s' % schedule_user_code)
+    _l.info(f"schedule_user_code {schedule_user_code}")
 
-    s = Schedule.objects.select_related('master_user').get(
-        user_code=schedule_user_code
-    )
+    s = Schedule.objects.select_related("master_user").get(user_code=schedule_user_code)
 
     procedures_count = 0
 
     master_user = s.master_user
 
     try:
-
         with timezone.override(master_user.timezone or settings.TIME_ZONE):
-            next_run_at = timezone.localtime(s.next_run_at)
             s.schedule(save=True)
 
-            _l.info('Schedule: master_user=%s, next_run_at=%s. STARTED',
-                    master_user.id, s.next_run_at)
+            _l.info(
+                "Schedule: master_user=%s, next_run_at=%s. STARTED",
+                master_user.id,
+                s.next_run_at,
+            )
 
-            _l.info('Schedule: schedule procedures count %s' % len(s.procedures.all()))
+            _l.info(f"Schedule: schedule procedures count {len(s.procedures.all())}")
 
             schedule_instance = ScheduleInstance(schedule=s, master_user=master_user)
             schedule_instance.save()
@@ -152,68 +174,82 @@ def process(self, schedule_user_code):
             total_procedures = len(s.procedures.all())
 
             for procedure in s.procedures.all():
-
                 try:
-
-                    _l.info('Schedule : schedule procedure order %s' % procedure.order)
+                    _l.info(f"Schedule : schedule procedure order {procedure.order}")
 
                     if procedure.order == 0:
-                        _l.info('Schedule : start processing first procedure')
+                        _l.info("Schedule : start processing first procedure")
 
                         schedule_instance.current_processing_procedure_number = 0
                         schedule_instance.status = ScheduleInstance.STATUS_PENDING
                         schedule_instance.save()
 
-                        send_system_message(master_user=master_user,
-                                            performed_by='System',
-                                            section='schedules',
-                                            description="Schedule %s. Start processing step %s/%s" % (
-                                                s.name, schedule_instance.current_processing_procedure_number,
-                                                total_procedures))
+                        send_system_message(
+                            master_user=master_user,
+                            performed_by="System",
+                            section="schedules",
+                            description=f"Schedule {s.name}. Start processing step {schedule_instance.current_processing_procedure_number}/{total_procedures}",
+                        )
 
                         process_procedure_async.apply_async(
-                            kwargs={'procedure_id': procedure.id, 'master_user_id': master_user.id,
-                                    'schedule_instance_id': schedule_instance.id})
+                            kwargs={
+                                "procedure_id": procedure.id,
+                                "master_user_id": master_user.id,
+                                "schedule_instance_id": schedule_instance.id,
+                            }
+                        )
 
-                        _l.info('Schedule: Process first procedure master_user=%s, next_run_at=%s', master_user.id,
-                                s.next_run_at)
+                        _l.info(
+                            "Schedule: Process first procedure master_user=%s, next_run_at=%s",
+                            master_user.id,
+                            s.next_run_at,
+                        )
 
-                        procedures_count = procedures_count + 1
+                        procedures_count += 1
 
                 except Exception as e:
-
-                    send_system_message(master_user=master_user, action_status="required", type="warning",
-                                        title='Schedule Instance Failed. User Code: %s' % schedule_user_code,
-                                        description=str(e))
+                    send_system_message(
+                        master_user=master_user,
+                        action_status="required",
+                        type="warning",
+                        title=f"Schedule Instance Failed. User Code: {schedule_user_code}",
+                        description=str(e),
+                    )
 
                     schedule_instance.status = ScheduleInstance.STATUS_ERROR
                     schedule_instance.save()
 
-                    send_system_message(master_user=master_user,
-                                        performed_by='System',
-                                        type='error',
-                                        section='schedules',
-                                        description="Schedule %s. Error occurred" % s.name)
+                    send_system_message(
+                        master_user=master_user,
+                        performed_by="System",
+                        type="error",
+                        section="schedules",
+                        description=f"Schedule {s.name}. Error occurred",
+                    )
 
-                    _l.info('Schedule: master_user=%s, next_run_at=%s. Error',
-                            master_user.id, s.next_run_at)
+                    _l.info(
+                        "Schedule: master_user=%s, next_run_at=%s. Error",
+                        master_user.id,
+                        s.next_run_at,
+                    )
 
-                    _l.info('Schedule: Error %s' % e)
-
-                    pass
+                    _l.info(f"Schedule: Error {e}")
 
         s.last_run_at = timezone.now()
-        s.save(update_fields=['last_run_at'])
+        s.save(update_fields=["last_run_at"])
 
-        _l.info("Schedule %s executed successfuly" % s)
+        _l.info(f"Schedule {s} executed successfully")
 
         if procedures_count:
-            _l.info('Schedules Finished. Procedures initialized: %s' % procedures_count)
+            _l.info(f"Schedules Finished. Procedures initialized: {procedures_count}")
 
     except Exception as e:
+        send_system_message(
+            master_user=master_user,
+            action_status="required",
+            type="error",
+            title=f"Schedule Failed. User Code: {schedule_user_code}",
+            description=str(e),
+        )
 
-        send_system_message(master_user=master_user, action_status="required", type="error",
-                            title='Schedule Failed. User Code: %s' % schedule_user_code, description=str(e))
-
-        _l.error('schedules.process. error %s' % e)
-        _l.error('schedules.process. traceback %s' % traceback.format_exc())
+        _l.error(f"schedules.process. error {e} traceback {traceback.format_exc()}")

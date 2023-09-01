@@ -44,6 +44,14 @@ class TransactionReportBuilderSql:
 
         '''TODO IAM_SECURITY_VERIFY need to check, if user somehow passes id of object he has no access to we should throw error'''
 
+        if self.instance.bundle and self.instance.portfolios:
+            raise Exception("Both portfolios and bundle provided. Only one of them should be provided.")
+
+        if self.instance.bundle:
+            self.instance.portfolios = []
+            for register in self.instance.bundle.registers.all():
+                self.instance.portfolios.append(register.portfolio)
+
         '''Important security methods'''
         self.transform_to_allowed_portfolios()
         self.transform_to_allowed_accounts()

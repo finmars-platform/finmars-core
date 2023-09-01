@@ -123,3 +123,4 @@ coverage==7.2.7
 haikunator==2.1.0
 memory-profiler==0.61.0
 pympler==1.0.1
+QuantLib==1.31.1

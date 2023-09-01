@@ -7,6 +7,7 @@ import traceback
 from logging import getLogger
 from tempfile import NamedTemporaryFile
 
+
 from django.contrib.contenttypes.models import ContentType
 from django.utils.timezone import now
 
@@ -417,8 +418,11 @@ def handler_instrument_object(
     else:
         object_data["maturity_date"] = None
 
-
-    if "country" in source_data and source_data["country"].get("alpha_3"):
+    if (
+        "country" in source_data
+        and source_data["country"]
+        and source_data["country"].get("alpha_3")
+    ):
         try:
             country = Country.objects.get(alpha_3=source_data["country"]["alpha_3"])
             object_data["country"] = country.id
@@ -1175,9 +1179,7 @@ class SimpleImportProcess(object):
                     conversion_item.conversion_inputs[
                         scheme_input.name
                     ] = formula.safe_eval(
-                        scheme_input.name_expr,
-                        names=names,
-                        context=self.context
+                        scheme_input.name_expr, names=names, context=self.context
                     )
                 except Exception as e:
                     conversion_item.conversion_inputs[scheme_input.name] = None
@@ -1301,8 +1303,11 @@ class SimpleImportProcess(object):
                                 ]
 
                         if attribute_type.value_type == GenericAttributeType.NUMBER:
-
-                            if item.final_inputs[entity_field.attribute_user_code] or item.final_inputs[entity_field.attribute_user_code] == 0:
+                            if (
+                                item.final_inputs[entity_field.attribute_user_code]
+                                or item.final_inputs[entity_field.attribute_user_code]
+                                == 0
+                            ):
                                 attribute["value_float"] = item.final_inputs[
                                     entity_field.attribute_user_code
                                 ]
@@ -1796,11 +1801,13 @@ class SimpleImportProcess(object):
             else:
                 pass
 
-            self.task.result_object = SimpleImportResultSerializer(
+            self.import_result = SimpleImportResultSerializer(
                 instance=self.result, context=self.context
             ).data
 
-            _l.info('self.task.result_object %s' % self.task.result_object)
+            self.task.result_object = self.import_result
+
+            _l.info("self.task.result_object %s" % self.task.result_object)
 
             self.task.save()
 
@@ -1884,5 +1891,3 @@ class SimpleImportProcess(object):
         self.task.status = CeleryTask.STATUS_DONE
         self.task.mark_task_as_finished()
         self.task.save()
-
-        return self.result

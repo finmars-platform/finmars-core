@@ -144,10 +144,10 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
     """
     Portfolio Register
 
-    Entity that create link between portfolio and instrument - That allow us
+    Entity that creates a link between portfolio and instrument - That allows us
     to treat portfolio as an instrument
     It means it appears as a position in reports, and also we could calculate
-    performance of that instrument
+    the performance of that instrument
     """
 
     master_user = models.ForeignKey(
@@ -195,7 +195,7 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
         verbose_name_plural = gettext_lazy("portfolio registers")
 
     def save(self, *args, **kwargs):
-        super(PortfolioRegister, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
         if self.linked_instrument:
             self.linked_instrument.has_linked_with_portfolio = True
@@ -208,13 +208,12 @@ class PortfolioRegister(NamedModel, FakeDeletableModel, DataTimeStampedModel):
             )
             _l.info("Bundle already exists")
 
-        except Exception:
+        except PortfolioBundle.DoesNotExist:
             bundle = PortfolioBundle.objects.create(
                 master_user=self.master_user,
                 user_code=self.user_code,
             )
             bundle.registers.set([self])
-
             bundle.save()
 
     def __str__(self):
@@ -313,12 +312,6 @@ class PortfolioRegisterRecord(DataTimeStampedModel):
         verbose_name=gettext_lazy("dealing price valuation currency"),
         help_text=gettext_lazy("Dealing price valuation currency"),
     )
-
-    # n_shares_end_of_the_day = models.FloatField(
-    #     default=0.0,
-    #     verbose_name=gettext_lazy("n shares end of the day"),
-    # )
-
     rolling_shares_of_the_day = models.FloatField(
         default=0.0,
         verbose_name=gettext_lazy("rolling shares  of the day"),

@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import json
 import logging
 import sys
-import time
 import traceback
 
 import requests
@@ -11,9 +10,6 @@ from django.apps import AppConfig
 from django.db import DEFAULT_DB_ALIAS
 from django.db.models.signals import post_migrate
 from django.utils.translation import gettext_lazy
-
-
-
 
 from poms_app import settings
 
@@ -53,18 +49,15 @@ class BootstrapConfig(AppConfig):
         :return:
         '''
 
-
-
         self.create_local_configuration()
         self.add_view_and_manage_permissions()
         self.load_master_user_data()
         self.create_finmars_bot()
-        self.sync_users_at_authorizer_service()
         self.create_member_layouts()
         self.create_base_folders()
         self.register_at_authorizer_service()
 
-        self.create_iam_access_policies_templates()
+        # self.create_iam_access_policies_templates()
 
     def create_finmars_bot(self):
 
@@ -101,7 +94,6 @@ class BootstrapConfig(AppConfig):
     def create_iam_access_policies_templates(self):
 
         if not "test" in sys.argv:
-
             _l.info("create_iam_access_policies_templates")
 
             from poms.iam.policy_generator import create_base_iam_access_policies_templates
@@ -231,6 +223,25 @@ class BootstrapConfig(AppConfig):
             except Exception as e:
                 _l.error("Could not sync base_api_url %s" % e)
 
+            try:
+
+                current_owner_member = Member.objects.get(username=response_data['owner']['username'],
+                                                          master_user=master_user)
+
+                current_owner_member.is_owner = True
+                current_owner_member.is_admin = True
+                current_owner_member.save()
+
+            except Exception as e:
+
+                _l.error("Could not find current owner member %s " % e)
+
+                user = User.objects.get(username=response_data['owner']['username'])
+
+                current_owner_member = Member.objects.create(username=response_data['owner']['username'], user=user,
+                                                             master_user=master_user,
+                                                             is_owner=True, is_admin=True)
+
         except Exception as e:
             _l.error("load_master_user_data error %s" % e)
             _l.error("load_master_user_data traceback %s" % traceback.format_exc())
@@ -262,87 +273,9 @@ class BootstrapConfig(AppConfig):
         except Exception as e:
             _l.info("register_at_authorizer_service error %s" % e)
 
-    def sync_users_at_authorizer_service(self):
-
-        from django.contrib.auth.models import User
-
-        from poms.users.models import Member, MasterUser
-
-        if not settings.AUTHORIZER_URL:
-            return
-
-        try:
-            _l.info("sync_users_at_authorizer_service processing")
-
-            headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-
-            data = {
-                "base_api_url": settings.BASE_API_URL,
-            }
-
-            try:
-
-                url = settings.AUTHORIZER_URL + '/backend-sync-users/'
-
-                response = requests.post(url=url, data=json.dumps(data), headers=headers, verify=settings.VERIFY_SSL)
-                _l.info(
-                    "sync_users_at_authorizer_service backend-sync-users response.status_code %s" % response.status_code)
-                # _l.info("sync_users_at_authorizer_service backend-sync-users response.text %s" % response.text)
-
-                response_data = response.json()
-
-                members = response_data['members']
-
-                master_user = MasterUser.objects.all()[0]
-
-                _members = Member.objects.all()
-
-                for _member in _members:
-                    _member.is_owner = False
-                    _member.save()
-
-                for member in members:
-
-                    user = None
-                    _member = None
-
-                    try:
-
-                        user = User.objects.get(username=member['username'])
-
-                    except Exception as e:
-
-                        user = User.objects.create(username=member['username'])
-
-                        _l.info("User %s created " % member['username'])
-
-                    try:
-
-                        _member = Member.objects.get(user=user, master_user=master_user)
-
-                        _member.is_owner = member['is_owner']
-                        _member.is_admin = member['is_admin']
-                        _member.save()
-
-                    except Exception as e:
-
-                        _member = Member.objects.create(user=user,
-                                                        username=member['username'],
-                                                        master_user=master_user,
-                                                        is_owner=member['is_owner'],
-                                                        is_admin=member['is_admin'])
-
-                        _l.info("Member %s created " % member['username'])
-
-            except Exception as e:
-                _l.error("Could not sync users %s" % e)
-
-
-        except Exception as e:
-            _l.info("sync_users_at_authorizer_service error %s" % e)
-
     def create_member_layouts(self):
 
+        # TODO wtf is default member layout?
         from poms.users.models import Member
         from poms.ui.models import MemberLayout
 
@@ -362,9 +295,8 @@ class BootstrapConfig(AppConfig):
                                                      is_default=True,
                                                      configuration_code=configuration_code,
                                                      name='default',
-                                                     user_code=configuration_code + ':default_member_layout')
+                                                     user_code='default_member_layout')  # configuration code will be added automatically
                 _l.info("Created member layout for %s" % member.username)
-
 
     def create_base_folders(self):
         from poms.common.storage import get_storage

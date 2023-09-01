@@ -8,9 +8,6 @@ from zipfile import ZIP_DEFLATED, ZipFile
 
 from django.db import transaction
 from django.utils.timezone import now
-from django.conf import settings
-
-from celery import shared_task
 
 from poms.celery_tasks import finmars_task
 from poms.common.storage import get_storage
@@ -60,6 +57,10 @@ def clear_old_journal_records():
     _l.info(f"{log} started...")
 
     master = MasterUser.objects.first()
+    if not master:
+        _l.error(f"{log} aborted, no master user")
+        return
+
     ttl = MasterUser.JOURNAL_POLICY_DAYS.get(master.journal_storage_policy, 30)
 
     delete_time = now() - timedelta(days=ttl)

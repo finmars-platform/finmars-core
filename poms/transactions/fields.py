@@ -31,10 +31,12 @@ class TransactionTypeGroupField(UserCodeOrPrimaryKeyRelatedField):
                 return queryset.get(user_code=data).user_code
             else:
                 return queryset.get(pk=data).user_code
-        except ObjectDoesNotExist:
-            self.fail("does_not_exist", value=str(data))
-        except (TypeError, ValueError):
-            self.fail("invalid")
+        except Exception as e:
+            return data
+        # except ObjectDoesNotExist:
+        #     self.fail("does_not_exist", value=str(data))
+        # except (TypeError, ValueError):
+        #     self.fail("invalid")
 
     def to_representation(self, obj):
         try:

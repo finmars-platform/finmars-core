@@ -16,7 +16,7 @@ from poms.common.filters import (
     NoOpFilter,
 )
 from poms.common.views import AbstractModelViewSet
-from poms.currencies.filters import OwnerByCurrencyFilter
+from poms.currencies.filters import OwnerByCurrencyFilter, ListDatesFilter
 from poms.currencies.models import Currency, CurrencyHistory
 from poms.currencies.serializers import (
     CurrencyHistorySerializer,
@@ -184,6 +184,7 @@ class CurrencyHistoryViewSet(AbstractModelViewSet):
     filter_backends = AbstractModelViewSet.filter_backends + [
         OwnerByCurrencyFilter,
         AttributeFilter,
+        ListDatesFilter,
         GroupsAttributeFilter,
     ]
     filter_class = CurrencyHistoryFilterSet

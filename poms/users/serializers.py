@@ -17,6 +17,7 @@ from rest_framework.validators import UniqueValidator
 
 from poms.accounts.fields import AccountTypeField, AccountField
 from poms.common.fields import DateTimeTzAwareField
+from poms.common.finmars_authorizer import AuthorizerService
 from poms.counterparties.fields import CounterpartyField, ResponsibleField, CounterpartyGroupField, \
     ResponsibleGroupField
 from poms.currencies.fields import CurrencyField
@@ -656,14 +657,19 @@ class MasterUserSetCurrentSerializer(serializers.Serializer):
 #         member = get_member_from_context(self.context)
 #         return obj.id == member.id
 
+class SimpleUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', ]
+        read_only_fields = ['id', 'username', 'first_name', 'last_name', 'email', ]
 
 class MemberSerializer(serializers.ModelSerializer):
-    # url = serializers.HyperlinkedIdentityField(view_name='member-detail')
+
     master_user = MasterUserField()
-    username = serializers.CharField(read_only=True)
-    # username = serializers.SlugRelatedField(queryset=User.objects.all(), slug_field='username')
-    is_current = serializers.SerializerMethodField()
+    username = serializers.CharField(read_only=False)
+    user = SimpleUserSerializer(read_only=True)
     join_date = DateTimeTzAwareField(read_only=True)
+
     groups = GroupField(source='iam_groups', many=True, required=False)
     groups_object = serializers.PrimaryKeyRelatedField(source='iam_groups', read_only=True, many=True)
 
@@ -673,23 +679,25 @@ class MemberSerializer(serializers.ModelSerializer):
     access_policies = AccessPolicyField(source='iam_access_policies', many=True, required=False)
     access_policies_object = serializers.PrimaryKeyRelatedField(source='iam_access_policies', read_only=True, many=True)
 
-    data = serializers.JSONField(allow_null=True)
+    data = serializers.JSONField(allow_null=True, required=False)
 
     class Meta:
         model = Member
         fields = [
-            'id', 'master_user', 'join_date', 'is_owner', 'is_admin', 'is_superuser', 'is_current',
+            'id', 'master_user', 'user',
+            'join_date', 'is_owner', 'is_admin', 'is_superuser',
             'notification_level', 'interface_level',
             'is_deleted', 'username', 'first_name', 'last_name',
 
             'groups', 'groups_object',
             'roles', 'roles_object',
             'access_policies', 'access_policies_object',
-            'data'
+            'data',
+            'status'
         ]
         read_only_fields = [
-            'master_user', 'join_date', 'is_owner', 'is_superuser', 'is_current', 'is_deleted',
-            'username', 'first_name', 'last_name', 'display_name',
+            'master_user', 'join_date', 'is_superuser', 'is_deleted',
+            'first_name', 'last_name', 'display_name',
         ]
 
     def __init__(self, *args, **kwargs):
@@ -699,54 +707,18 @@ class MemberSerializer(serializers.ModelSerializer):
         self.fields['access_policies_object'] = IamAccessPolicySerializer(source='iam_access_policies', many=True, read_only=True)
         self.fields['roles_object'] = IamRoleSerializer(source='iam_roles', many=True, read_only=True)
 
-        if self.instance:
-            self.fields['username'].read_only = True
-        else:
-            self.fields['username'].read_only = False
-            self.fields['username'].required = True
-
-    def get_is_current(self, obj):
-        member = get_member_from_context(self.context)
-        return obj.id == member.id
-
-    def validate(self, attrs):
-        if not self.instance:
-            master_user = attrs['master_user']
-            username = attrs['username']
-            # serializers.CharField(read_only=True).field_name
-            # try:
-            #     ub = UniqueValidator(queryset=Member.objects.filter(master_user=master_user))
-            #     ub.set_context(self.fields['username'])
-            #     ub(username)
-            # except serializers.ValidationError as e:
-            #     raise serializers.ValidationError({'username': e.detail})
-
-            if Member.objects.filter(master_user=master_user, user__isnull=False, username=username).exists():
-                raise serializers.ValidationError({'username': UniqueValidator.message})
-            if not User.objects.filter(username=username).exists():
-                message = serializers.SlugRelatedField.default_error_messages['does_not_exist'].format(
-                    slug_name=self.fields['username'].field_name, value=username)
-                raise serializers.ValidationError({'username': message})
-        return attrs
 
     def create(self, validated_data):
-        master_user = validated_data['master_user']
-        username = validated_data.pop('username')
-        validated_data['user'] = User.objects.get(username=username)
+
+        _l.info('member create %s' % validated_data)
+
+        username = validated_data.get('username')
+        status = Member.STATUS_INVITED
+        validated_data['status'] = status
         member = super(MemberSerializer, self).create(validated_data)
 
-        owner = Member.objects.filter(master_user=master_user, is_owner=True).first()
-
-        mll = []
-        for oll in ListLayout.objects.filter(member=owner):
-            mll.append(ListLayout(member=member, content_type_id=oll.content_type_id, name=oll.name,
-                                  is_default=oll.is_default, json_data=oll.json_data))
-        ListLayout.objects.bulk_create(mll)
-
-        ell = []
-        for oel in EditLayout.objects.filter(member=owner):
-            ell.append(EditLayout(member=member, content_type_id=oel.content_type_id, json_data=oel.json_data))
-        EditLayout.objects.bulk_create(ell)
+        member.user = User.objects.create(username=username)# TODO maybe need to do more smart things here
+        member.save()
 
         return member
 

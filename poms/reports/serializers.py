@@ -795,6 +795,7 @@ class TransactionReportSerializer(ReportSerializerWithLogs):
                                        default=date_now() - timedelta(days=365))
     end_date = serializers.DateField(required=False, allow_null=True, initial=date_now, default=date_now)
     portfolios = PortfolioField(many=True, required=False, allow_null=True, allow_empty=True)
+    bundle = BundleField(required=False, allow_null=True, allow_empty=True)
     accounts = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
     accounts_position = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
     accounts_cash = AccountField(many=True, required=False, allow_null=True, allow_empty=True)
